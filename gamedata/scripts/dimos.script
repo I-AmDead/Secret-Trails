@@ -1,0 +1,116 @@
+--удаляем Васильева из леса
+function del_vas()
+local sim = alife()
+local se_obj = sim:story_object(30148)
+if se_obj then
+sim:release(se_obj, true)
+end
+end
+
+---------------------------------------------mandra-----------------------------------------
+
+--спавним корень Мандрагоры
+function spawn_mandra()
+  local obj=alife():create("mandra",vector():set(-238.432,-55.750,-211.401),463003,2981)
+end
+
+function lesnik_dal_stvol(first_speaker, second_speaker)
+dialogs.relocate_item_section(second_speaker, "wpn_bm16", "in", 1)
+dialogs.relocate_item_section(second_speaker, "neytral_novice_outfit_new", "in", 1)
+flamethrower.relocate_n_items_section(second_speaker, "medkit", "in", 2)
+flamethrower.relocate_n_items_section(second_speaker, "bandage", "in", 3)
+flamethrower.relocate_n_items_section(second_speaker, "ammo_12x70_buck", "in", 2)
+end
+
+
+function mandra_have(task, objective) --проверяем, появился ли корень в инвентаре
+if db.actor ~= nil then 
+return db.actor:object("mandra") ~= nil
+end
+return false
+end
+
+function krik_mandra()
+	level.add_cam_effector("camera_effects\\prison_1.anm", 25, false, "")
+	level.add_pp_effector("yantar_underground_psi.ppe", 2007, false)
+	level.add_pp_effector("total_recall.ppe", 2008, false)
+local snd_obj = xr_sound.get_safe_sound_object([[new\mandra]])
+snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+        level.add_cam_effector("camera_effects\\hit_back_left.anm", 26, false, "")
+end
+
+--спавним кабанов после взятия корня
+function est_mandra()
+local obj=alife():create("kaban_mandra",vector():set(-179.547,-52.891,-198.505),561229,2986) 
+local obj=alife():create("kaban_mandra",vector():set(-179.547,-52.880,-198.505),561229,2986) 
+local obj=alife():create("kaban_mandra",vector():set(-192.923,-37.837,-163.825),537666,2981)
+end
+
+function nagrad_mandra(first_speaker, second_speaker)
+new_dialog.out_item_much("mandra",1) --отдаём мандру
+dialogs.relocate_item_section(second_speaker, "conserva", "in", 1)
+dialogs.relocate_item_section(second_speaker, "kolbasa", "in", 1)
+dialogs.relocate_item_section(second_speaker, "bread", "in", 1)
+flamethrower.relocate_n_items_section(second_speaker, "antirad", "in", 2)
+end
+
+----------------------------ставим метку на корень---------------------------------
+
+function set_metka_m() --ставим метку
+ for a=1,65534 do
+  local obj = alife():object(a)
+  if obj then
+   if obj:section_name()=="mandra" then
+    amk.add_spot_on_map(obj.id,"crlc_big","Корень Мандрагоры")
+    return
+   end
+  end
+ end
+end
+
+function remove_spot_m() --удаляем метку
+ for a=1,65534 do
+  local obj = alife():object(a)
+  if obj then
+   if obj:section_name()=="mandra" then
+    level.map_remove_object_spot(obj.id,"crlc_big")
+    break
+   end
+  end
+ end
+end
+
+function del_saha()
+local sim = alife()
+local se_obj = sim:story_object(9625)
+if se_obj then
+sim:release(se_obj, true)
+end
+end
+
+function del_kot()
+    for a=10,65635,1 do
+    local obj=alife():object(a)
+        if obj and string.find(obj:name(),"stalker_xutor") then
+        alife():release(obj,true)
+        end
+    end
+end
+
+function del_vovan()
+    for a=10,65635,1 do
+    local obj=alife():object(a)
+        if obj and string.find(obj:name(),"esc_new_wound") then
+        alife():release(obj,true)
+        end
+    end
+end
+
+
+
+
+
+
+
+
+

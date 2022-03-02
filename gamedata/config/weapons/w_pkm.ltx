@@ -1,0 +1,185 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Единый пулемет ПКМ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;---------------------------------------------------------------------------------------
+[wpn_pkm]:class_lmg
+GroupControlSection	= spawn_group
+discovery_dependency	= 
+$spawn              	= "weapons\pkm"	; name and section in level editor
+$npc				= on				
+$prefetch 			= 8
+scheduled			= off             ;[] option for ALife Simulator
+cform               	= skeleton
+class               	= WP_LR300		; class of the weapon that corresponding to CPP class
+description			= enc_wpn-pkm
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0		       ; во сколько раз увеличивается eye_range 
+holder_fov_modifier	= 0.7              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+
+cost					= 14500			; the price of the item
+weapon_class			= assault_rifle		; the type of the box that will be used in buy-menu in multiplayer mode	
+	
+ammo_limit				= 100				; obsolete
+ammo_elapsed			= 100				; obsolete
+	
+ammo_mag_size			= 100				; clip (magazine) size
+fire_modes				= -1
+
+ammo_class				= ammo_7.62x54r		; name of the ltx-section of used ammo 
+
+hand_dependence			= 1				; how many hands (1 or 2) we used to hold weapon in
+single_handed			= 0	
+animation_slot			= 2				; type of the animation that will be used
+
+
+inv_name	        		= wpn-pkm		; name in inventory	
+inv_name_short			= wpn-pkm	
+inv_weight				= 7.5 ;8.21			; weight in inventory
+
+inv_grid_width		= 6	 ; position and size of the icon that will be used to display weapon in the inventory menu
+inv_grid_height		= 2	 ; all icons are on the texture ui_icon_equipment.dds,   
+inv_grid_x			= 12	 ; position and size are in terms of 64x64 squares
+inv_grid_y			= 35
+
+kill_msg_x			= 0
+kill_msg_y			= 123
+kill_msg_width		= 69
+kill_msg_height		= 30
+
+;-----------------------------------------------------------------------------------
+; base dispersion
+;
+; === Setting of the weapon shooting dispersal parameter ===
+;Dispersal consists from to basic constituents - dispersal of the weapon (relatively small). In fact, this is a dispersal of a weapon griped in a vice; - dispersal of the weapon behavior in the hands of the host (if he running, or walking or shoots in single shots or in a burst) is another, more significant factor of dispersal. 
+;Dispersal of the weapon depends only from basic dispersal, basket case factor ant time of the ammo.
+;Dispersal of the way the host shooting (standing, running and etc.)
+;Two types of shooting modes can be defined: - usual mode and zoomed mode.  
+;Usual mode: - depends from the position of the player while shooting (standing, sitting, walking and running)
+;Zoomed mode - depends from the dispersal of the weapon and do NOT depends from the position of the shooter. In that mode, dispersal of the weapon &laquo switches to;&raquo;  sight swinging (created be effector). 
+;Weapon recoil in the game also created by recoil effector. 
+;
+;-----------------------------------------------------------------------------------
+;params of weapon recoil
+fire_dispersion_base			= 0.26		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+
+;отдача
+cam_dispersion         			= 0.5 ;1.0	;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc         		= 0.1 ;0.05	;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac         		= 0.45	;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle         			= 4.0	;максимальный угол отдачи
+cam_max_angle_horz         		= 6.5		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz         		= 1.0		;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+direction               		= 0, 0, 1
+
+fire_point           	    		= 0.0, 0.220, 0.8
+
+flame_particles		    		= amik\weapons\flame_particles\dtk_flame_particles_4
+smoke_particles		   		= amik\weapons\smoke_particles\smoke_particles_01
+	
+shell_point		 		= 0.00, 0.262, 0.189
+shell_dir		 		= 0.0, 1.0, 0.0
+shell_particles	 			= amik\weapons\7_62x54\7_62x54_l
+
+rpm_empty_click 	 		= 200
+
+;;;;;;  Для Народной солянки 2010
+hit_rate			= 1.95
+fire_distance		= 800
+rpm			    	= 650 
+
+hud				= wpn_pkm_hud				; name of the section of the hud
+normal          	        	= 0, 1, 0
+
+position        	        	= -0.026, -0.1, 0.03
+orientation     	        	= 0, 0, 0
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+strap_position				= -0.26, -0.11, 0.25
+strap_orientation			= -15, -9, 110		
+strap_bone0				= bip01_spine2
+strap_bone1				= bip01_spine1
+startup_ammo            		= 1000
+visual         		        	= weapons\pkm\wpn_pkm.ogf	
+
+light_color		 		= 0.6,0.5,0.3
+light_var_color		 		= 0.05
+light_time 		 		= 0.2
+
+ph_mass			 		= 7
+
+;addons
+scope_status				= 0							; 0 - no addon
+silencer_status				= 0							; 1 - permanent
+grenade_launcher_status		      = 0							; 2 - attachable
+
+zoom_enabled				= true						; (on,off)zoom mode (right mouse button)
+
+;sounds (name of the sound, volume (0.0 - 1.0), delay (sec))
+snd_draw				= weapons\pkm\pkm_draw
+snd_holster				= weapons\pkm\pkm_holster
+snd_shoot				= weapons\pkm\pkm_shoot
+snd_shoot1				= weapons\pkm\pkm_shoot1
+snd_shoot2				= weapons\pkm\pkm_shoot2
+snd_shoot3				= weapons\pkm\pkm_shoot3
+snd_empty				= weapons\pkm\pkm_empty
+snd_reload				= weapons\pkm\pkm_reload
+
+;silencer_flame_particles 		= weapons\generic_weapon01
+silencer_smoke_particles 		= amik\weapons\smoke_particles\p_smoke_particles_02
+
+silencer_light_color			= 1.0, 0.1, 0.0
+silencer_light_range			= 0.01
+silencer_light_var_color		= 0.05
+silencer_light_var_range		= 0.5
+silencer_light_time 			= 0.2
+
+;-----------------------------------------------------------------------------
+;-- HUD DESCRIPTION
+;-----------------------------------------------------------------------------
+ 
+[wpn_pkm_hud]:hud_lmg
+
+;similar to corresponding params in weapon section but for 1st person view
+
+shell_point     	   	 	= 0.1, -0.1, -0.97
+shell_dir			     	= 0.0, 1.0, 0.0
+
+fire_point				= 0,0,-0.5
+fire_point2              		= 0,0,0
+fire_bone               		= muzzle
+
+orientation             		= 2,2,0
+position                		= -0.064,-0.18,0.14
+visual                  		= weapons\pkm\wpn_pkm_hud.ogf
+
+;grenade_bone            	= wpn_grenade	; name of the bone in the model for grenade launcher
+
+; animation names
+
+anim_idle				= pkm_idle
+anim_idle_aim				= pkm_idle_aim
+anim_reload				= pkm_reload
+anim_draw				= pkm_draw
+anim_holster				= pkm_holster
+anim_shoot				= pkm_shoot
+anim_idle_sprint			= pkm_idle_sprint
+;anim_idle_moving			= pkm_idle_moving
+			
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;HUD offset in zoom mode (to all)
+;(use CONSOLE: hud_adjust_mode 0,1,2, then keys WSADQE and P to show current value in console)
+
+zoom_offset				= -0.095969,0.053700,-0.092000
+zoom_rotate_x				= 0.038200
+zoom_rotate_y				= 0.034700
+
+zoom_hide_crosshair	= true					;to hide crosshair in zoom 
+
+
+; квестовый ПКМ - подарок от Петренко, защита от уборщика, подменяется на обычный при подьеме
+[wpn_pkm_m1]:wpn_pkm
+bind_stalker.on_take_call = arhara_dialog.checking_taken_item45

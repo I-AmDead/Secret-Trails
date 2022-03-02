@@ -1,0 +1,57 @@
+-----------------------------------------------------------------------------------------------------------------------------------
+-- Схема смены рук при смене костюма
+-- Автор: Kondr48 (Вампир35).
+-- Последнее редактирование: 25.02.2016 12:00
+-- За метод замены текстуры спасибо Alpet'у
+-----------------------------------------------------------------------------------------------------------------------------------
+
+function attach( sm )
+  sm:subscribe({ signal = "on_first_update", fun = this.update })
+  sm:subscribe({ signal = "on_drop",        fun = this.update })
+  sm:subscribe({ signal = "on_take",       fun = this.update})
+  sm:subscribe({ signal = "on_item_to_ruck",       fun = this.update})
+  sm:subscribe({ signal = "on_item_to_slot",       fun = this.update})
+  sm:subscribe({ signal = "on_actor_before_use",       fun = this.update})
+end
+
+function update() -- тут у нас вызывается смена текстуры.
+  if last_outfit == nil then last_outfit = "hello" end
+  if db.actor:item_in_slot(6) == nil then
+   outfit = "sviter"
+  else
+   outfit = db.actor:item_in_slot(6):section()
+  end
+   if last_outfit ~= outfit then
+   
+    perchatka = system_ini():r_string(outfit,"texture_arm")
+  
+            local to = texture_find("act\\act_arm")
+    if to and to["act\\act_arm"] then
+     to["act\\act_arm"]:load("hands\\"..perchatka)
+    end
+    local to_b = texture_find("act\\act_arm_bump")
+    if to_b and to_b["act\\act_arm_bump"] then
+     to_b["act\\act_arm_bump"]:load("hands\\"..perchatka.."_bump")
+    end
+    
+            local too = texture_find("act\\act_arm_perchatka_cs")
+    if too and too["act\\act_arm_perchatka_cs"] then
+     too["act\\act_arm_perchatka_cs"]:load("hands\\"..perchatka)
+    end
+    local too_b = texture_find("act\\act_arm_perchatka_cs_bump")
+    if too_b and too_b["act\\act_arm_perchatka_cs_bump"] then
+     too_b["act\\act_arm_perchatka_cs_bump"]:load("hands\\"..perchatka.."_bump")
+    end
+    
+            local todo = texture_find("act\\act_arm_sleve")
+    if todo and todo["act\\act_arm_sleve"] then
+     todo["act\\act_arm_sleve"]:load("hands\\"..perchatka)
+  end
+    local todo_b = texture_find("act\\act_arm_sleve_bump")
+    if todo_b and todo_b["act\\act_arm_sleve_bump"] then
+     todo_b["act\\act_arm_sleve_bump"]:load("hands\\"..perchatka.."_bump")
+end
+
+    last_outfit = outfit  
+  end
+end

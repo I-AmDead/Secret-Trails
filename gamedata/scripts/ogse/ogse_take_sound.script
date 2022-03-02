@@ -1,0 +1,135 @@
+function attach( sm ) -- для менеджера сигналов
+	if level.main_input_receiver() then return end
+        sm:subscribe({ signal = "on_take", fun = this.on_item_take })
+end
+
+local ammo_types={
+    [clsid.wpn_ammo]=true
+}
+
+local grenade_types={
+	[clsid.wpn_ammo_m209]           = true,
+	[clsid.wpn_ammo_og7b]           = true,
+	[clsid.wpn_ammo_vog25]          = true,
+	[clsid.wpn_grenade_f1]          = true,
+	[clsid.wpn_grenade_fake]        = true,
+	[clsid.wpn_grenade_rgd5]        = true,
+	[clsid.wpn_grenade_rpg7]        = true
+}
+
+local misc_types={
+    [clsid.obj_attachable]          = true,
+    [clsid.obj_bandage]             = true,
+    [clsid.obj_bolt]                = true,
+    [clsid.obj_medkit]              = true,
+}
+
+local suit_types={
+    [clsid.equ_stalker_s]           = true
+}
+
+local bottle_types={
+    [clsid.obj_bottle]              = true
+}
+
+local food_types={
+    [clsid.obj_food]                = true
+}
+
+local weapon_types={
+	[clsid.wpn_ak74]                = true,
+	[clsid.wpn_ak74_s]              = true,
+	[clsid.wpn_groza]               = true,
+	[clsid.wpn_groza_s]             = true,
+	[clsid.wpn_hpsa]                = true,
+	[clsid.wpn_hpsa_s]              = true,
+	[clsid.wpn_knife]               = true,
+	[clsid.wpn_knife_s]             = true,
+	[clsid.wpn_lr300]               = true,
+	[clsid.wpn_lr300_s]             = true,
+	[clsid.wpn_pm]                  = true,
+	[clsid.wpn_pm_s]                = true,
+	[clsid.wpn_rg6]                 = true,
+	[clsid.wpn_rg6_s]               = true,
+	[clsid.wpn_rpg7]                = true,
+	[clsid.wpn_rpg7_s]              = true,
+	[clsid.wpn_svd]                 = true,
+	[clsid.wpn_svd_s]               = true,
+	[clsid.wpn_svu]                 = true,
+	[clsid.wpn_svu_s]               = true,
+	[clsid.wpn_usp45]               = true,
+	[clsid.wpn_usp45_s]             = true,
+	[clsid.wpn_val]                 = true,
+	[clsid.wpn_val_s]               = true,
+	[clsid.wpn_vintorez]            = true,
+	[clsid.wpn_vintorez_s]          = true,
+	[clsid.wpn_walther]             = true,
+	[clsid.wpn_walther_s]           = true
+}
+
+local shotgun_types={
+	[clsid.wpn_bm16]                = true,
+	[clsid.wpn_bm16_s]              = true,
+	[clsid.wpn_shotgun]             = true,
+	[clsid.wpn_shotgun_s]           = true,
+}
+
+
+local artefact_types={
+	[clsid.artefact_s]              = true,
+	[clsid.artefact]                = true,
+}
+
+local pills_types={
+    [clsid.obj_antirad]             = true,
+}
+
+local instrum_types={
+    [clsid.device_detector_simple]  = true,
+    [clsid.device_pda]              = true,
+    [clsid.device_torch_s]          = true,
+    [clsid.wpn_binocular]           = true,
+    [clsid.wpn_binocular_s]         = true,
+    [clsid.wpn_knife]               = true,
+    [clsid.wpn_scope_s]             = true,
+    [clsid.wpn_silencer]            = true,
+	[clsid.wpn_grenade_launcher]    = true,
+	[clsid.wpn_scope]               = true,
+	[clsid.wpn_silencer]            = true
+}
+
+-- Поднятие предмета
+function on_item_take(obj)
+
+	if level.main_input_receiver() and game_options.AmkSnd == false then return end
+
+  local snd_name
+  if ammo_types[obj:clsid()] then
+	snd_name = [[wot_sounds\ammo_take_]]..math.random(1,2)
+  elseif food_types[obj:clsid()] then
+	snd_name = [[wot_sounds\food_take_]]..math.random(1,2)
+  elseif bottle_types[obj:clsid()] then
+	snd_name = [[wot_sounds\bottle_]]..math.random(1,2)
+  elseif weapon_types[obj:clsid()] then
+	snd_name = [[wot_sounds\rifle_holster_]]..math.random(1,2)
+  elseif misc_types[obj:clsid()] then
+	snd_name = [[wot_sounds\key_take_]]..math.random(1,2)
+  elseif suit_types[obj:clsid()] then
+	snd_name = [[wot_sounds\outfit_take_]]..math.random(1,2)
+  elseif grenade_types[obj:clsid()] then
+	snd_name = [[wot_sounds\grenade_take_]]..math.random(1,2)
+  elseif artefact_types[obj:clsid()] then
+	snd_name = [[wot_sounds\artefact_take_]]..math.random(1,2)
+  elseif pills_types[obj:clsid()] then
+	snd_name = [[wot_sounds\pills_take_]]..math.random(1,2)
+  elseif instrum_types[obj:clsid()] then
+	snd_name = [[wot_sounds\instrum_take_]]..math.random(1,2)
+  elseif shotgun_types[obj:clsid()] then
+	snd_name = [[wot_sounds\shotgun_holster_]]..math.random(1,2)
+  else
+	snd_name = [[wot_sounds\pda_take_]]..math.random(1,2)
+  end
+
+  local snd_obj = sound_object(snd_name)
+  snd_obj:play(db.actor, 0, sound_object.s2d)
+end

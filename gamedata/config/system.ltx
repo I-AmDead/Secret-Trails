@@ -1,0 +1,579 @@
+#include "defines.ltx"
+#include "tuning\ogse_config.ltx"
+#include "weathers\environment.ltx"
+#include "creatures\monsters.ltx"
+#include "creatures\stalkers.ltx"
+#include "weapons\weapon_sounds.ltx"
+#include "weapons\weapons.ltx"
+#include "misc\items.ltx"
+#include "misc\monster_items.ltx"
+#include "misc\dimos_items.ltx"
+#include "misc\antreg_items.ltx"
+#include "misc\antreg_objects.ltx"
+
+#include "creatures\actor.ltx"
+
+#include "misc\zones.ltx"
+#include "misc\postprocess.ltx"
+
+#include "misc\artefacts.ltx"
+#include "misc\devices.ltx"
+#include "misc\quest_items.ltx"
+#include "misc\outfit.ltx"
+#include "misc\effectors.ltx"
+#include "creatures\helicopter.ltx"
+#include "external.ltx"
+#include "misc\unique_items.ltx"
+
+#include "misc\amk_mod_outfits.ltx"
+
+#include "creatures\game_relations.ltx"
+#include "creatures\vechicles.ltx"
+
+#include "evaluation.ltx"
+#include "fonts.ltx"
+
+#include "alife.ltx"
+
+; Smart Terrain
+#include "misc\smart_terrain.ltx"
+
+; Respawns
+#include "misc\respawn.ltx"
+#include "creatures\spawn_sections.ltx"
+#include "creatures\dimos_spawn.ltx"
+#include "creatures\antreg_spawn.ltx"
+
+; move Mod
+#include "moveable.ltx"
+
+;storage object for saving custom data
+#include "misc\custom_storage.ltx"
+
+#include "localization.ltx"
+#include "gg_kick.ltx"
+
+;--------Items Hud------------
+#include "misc\hud_items\hud_items.ltx"
+;--------Items Hud-----------
+
+; Ai Additions
+#include "misc\ai_additions\system.ltx"
+
+[zone_pick_dof]
+near    = -50 ;-1500
+far     = 100 ;10
+[sound]
+occlusion_scale			= 0.4
+snd_collide_min_volume		= 0.1
+snd_collide_max_volume		= 200
+
+[demo_record]
+show_info = false ;Отключаем красные надписи
+speed0    = 0.3
+speed1    = 3.0
+speed2    = 15.0
+speed3    = 60.0
+ang_speed0  = 0.1
+ang_speed1  = 0.5
+ang_speed2  = 7.0
+ang_speed3  = 2.0
+
+[texture_desc]
+files = ui_mp_icon_rank, ui_icons_map, ui_common, ui_old_textures, ui_ingame, ui_map_description, ui_models_multiplayer, ui_team_logo, ui_team_logo_small, ui_mainmenu, ui_mp_main, ui_statistics, ui_hud, ui_numpad, ui_inventory, ui_inventory2, ui_iconstotal, ui_pda, ui_icons_npc, ui_npc_monster, ui_npc_unique, ui_buy_menu, ui_asus_intro, ui_subtitles_intro, ui_mini_games_textures, ui_mini_games_textures2, ui_ingame2_hint_wnd, ui_ingame2_common, ui_hud2, ui_actor_menu, ui_actor_menu2, ui_actor_talk, ui_sleep_dialog, ui_dg_inventory_arc, ui_icons_weapons, a_sfz_main, a_sfz_main_2, nv_screen, ui_actor_ingame
+
+[info_portions]
+;список xml файлов, содержащих info_portions
+files = info_portions, info_portions_light, info_portions_test, info_lchanger_ico, info_level_tips, info_known_objects, info_l01escape, info_l02garbage, info_l03agroprom, info_l04agroprom_u, info_l05dark_valley, info_l06dark_valley_u, info_l07rostok, info_l08yantar, info_l08deadcity, info_l08rostok_bar, info_l09marshes, info_l09rostok_dolg, info_l10military, info_l11pripyat, info_l11yantar, info_l12yantar_u, info_l13deadcity, info_l14swamp, info_l10radar, info_l16radar_antena, info_l17monolith_control, info_l19stanciya, info_l12u_sarcofag, info_l21generators, info_l22warlab, info_stories, info_amk_recipts, info_flamequest, info_amk_objects, amk_infoportions, info_amk,info_way, info_graf_way, info_dimos_way, info_antreg_way, info_totalizator, info_surge
+
+[encyclopedia]
+files = encyclopedia_infos, storyline_info_to_diary, encyclopedia_weapons, encyclopedia_mutants, encyclopedia_zone, encyclopedia_social, encyclopedia_equipment, encyclopedia_tutorial,encyclopedia_new
+
+[dialogs]
+files = dialogs_test, dialogs, dialogs_escape, dialogs_garbage, dialogs_agroprom, dialogs_deadcity, dialogs_darkvalley, dialogs_pripyat, dialogs_bar, dialogs_yantar, dialogs_military, dialogs_labx18, dialogs_radar, dialogs_aes, dialogs_repair, dialogs_miniquest, dialogs_amk_recipts, dialogs_flamequest, dialogs_reload, dialogs_amk_escape, dialogs_amk,dialogs_new, dialogs_graf, dialogs_dimos, dialogs_antreg, dialogs_totalizator
+
+[profiles]
+;список xml файлов, содержащих профили сталкеров и торговцев
+files =  npc_profile, npc_amk, npc_new, npc_dimos, npc_antreg 
+;список xml файлов, содержащих описания конкретных сталкеров и торговцев
+specific_characters_files = character_desc_general, character_desc_simulation,character_desc_escape, character_desc_garbage, character_desc_agroprom, character_desc_darkvalley, character_desc_deadcity, character_desc_bar, character_desc_yantar, character_desc_military, character_desc_radar, character_desc_pripyat, character_desc_aes, character_desc_kishka, character_desc_sarcofag, character_desc_amk, character_desc_new, character_desc_new_zombi, character_desc_dimos, character_desc_dimos_zombi, character_desc_antreg, character_desc_antreg_zombi
+
+
+[artefacts_tasks]
+;имя скриптовой функции, которая вызывается для создания
+;списка артефактов
+script_func = ;trader_job.artefacts_task_list_text
+
+[game_tasks]
+files = game_tasks
+
+
+
+[lights_hanging_lamp]
+GroupControlSection = spawn_group
+$spawn        = "physics\hanging lamp"
+class       = O_HLAMP
+script_binding      = bind_physic_object.init
+
+
+[physic_object]
+GroupControlSection = spawn_group
+$spawn        = "physics\object"
+$prefetch       = 8
+class       = O_PHYS_S
+remove_time     = 60; after this time  unbreaked removable bone will be removed
+script_binding      = bind_physic_object.init
+
+[physic_destroyable_object]
+GroupControlSection = spawn_group
+$spawn        = "physics\destroyable_object"
+;$prefetch      = 8
+class       = P_DSTRBL
+remove_time     = 60; after this time  unbreaked removable bone will be removed
+script_binding      = bind_physic_object.init
+
+[search_light]
+GroupControlSection = spawn_group
+$spawn        = "physics\search light"
+class       = O_SEARCH
+cform       = skeleton
+visual        = equipments\projector.ogf
+script_binding      = bind_physic_object.init
+
+[explosion_marks]
+wallmarks     = wm\wm_grenade
+dist        = 0.5 ;2.4  ;
+size        = 0.6 ;0.4  ;
+max_count     = 5
+
+[bloody_marks]
+wallmarks			= wm\wm_blood_1,wm\wm_blood_2,wm\wm_blood_3,wm\wm_blood_4,wm\wm_blood_5,wm\wm_blood_6,wm\wm_blood_7,wm\wm_blood_8,wm\wm_blood_9
+dist				= 3	;2.4	;(м) max расстояние отлета крови
+max_size			= 0.8	;0.3	;(м)радиус пятна при хите силой nominal hit по большому объекту (по маленькому *0.5)
+min_size			= 0.1			;(м)минимальный радиус пятна
+nominal_hit			= 0.3			;величина номинального хита, при котором разлетается максимум крови (max_size)
+
+;капли крови
+
+blood_drops			= wm\wm_blood_drop_1,wm\wm_blood_drop_2,wm\wm_blood_drop_3,wm\wm_blood_drop_4
+start_blood_size	= 0.4			;размер раны чтоб начала капать кровь
+stop_blood_size		= 0.025			;размер раны чтоб кровь остановилась (должно быть меньше start_blood_size)
+
+blood_drop_time     = 0.1			;OBSOLETE
+blood_drop_time_min = 0.3			;
+blood_drop_time_max = 2.0			;
+blood_drop_size		= 0.2			;размер капли (м) крови, которая упала
+
+
+[entity_fire_particles]
+fire_particles = damage_fx\burn_creatures00 ;damage_fx\burn_creatures
+start_burn_size = 0.0003    ;размер ожега после которого начать играть партиклы огня
+stop_burn_size  = 0.0001    ;размер ожега после которого остановить партиклы
+min_burn_time = 10000   ;минимальное время отыгрыша партиклов (даже если рана уже зажила)
+
+[hud_cursor]
+;все размеры в процентах от длины экрана
+cross_length		= 0.005					;длина "палочки" прицела
+min_radius			= 0.0					;минимальный радиус прицела (при нулевой дисперсии)
+max_radius			= 2.0					;максимальный радиус
+radius_lerp_speed	= 0.08					;скорость интерполяции положений прицела
+cross_color			= 0.7,0.7,0.7,1.0		;цвет прицела
+disp_scale			= 0.08					;масштаб прицела (относительно радиан)
+
+[hud_hitmark]
+hit_mark_texture = ui\ui_hud_hit_mark
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; inventory items
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+[document]
+GroupControlSection = spawn_group
+;discovery_dependency = 
+$spawn        = "documents\document 01"
+;$prefetch      = 32
+class       = II_DOC
+cform       = skeleton
+visual        = equipments\item_document_01.ogf
+
+inv_name      = Document
+inv_name_short    = Document
+inv_weight      = 1 ;0.2
+
+inv_grid_width    = 1
+inv_grid_height   = 1
+inv_grid_x      = 0
+inv_grid_y      = 0
+cost        = 0
+
+
+
+
+[spectator]
+ $player        = on
+class                   = SPECT
+
+      
+[??tg_event]
+class        = EVENT
+      
+
+[tg_event]
+class        = EVENT
+
+[m_car]
+GroupControlSection = spawn_group
+discovery_dependency = 
+$spawn      = "vehicles\car"
+cform                   = skeleton
+class                   = SCRPTCAR
+
+inv_weight        = 1000
+cost          = 100000
+inv_grid_width      = 1
+inv_grid_height     = 1
+
+script_binding      = bind_physic_object.init
+
+
+[actor_firsteye_cam]
+lim_pitch                = -1.5, 1.5
+lim_yaw                  = 0, 0
+rot_speed                = 3.14, 3.14, 0
+
+[actor_ladder_cam]
+lim_pitch                = -1.5, 1.5
+lim_yaw                  = -1.0, 1.0
+rot_speed                = 3.14, 3.14, 0
+
+[actor_free_cam]
+;----------------
+lim_pitch                = -1.5, 1.5
+lim_yaw                  = 0, 0
+lim_zoom                 = 0.4, 10
+rot_speed                = 3.14, 1.0, 10
+ 
+[actor_look_cam]
+lim_pitch                = -0.7, 1
+lim_yaw                  = 0, 0
+lim_zoom                 = 1, 5
+rot_speed                = 3.14, 6.28, 10
+
+[actor_look_cam_psp]
+lim_pitch                = -0.7, 1
+lim_yaw                  = 0, 0
+lim_zoom                 = 1, 5
+rot_speed                = 2, 2, 2
+offset          = 0.4,0.2,-1.1
+autoaim_speed_y     = 0.5, 3.14    ;min,max speed
+autoaim_speed_x     = 0.5, 3.14
+
+[mounted_weapon_cam]
+lim_pitch                = -0.5, 0.5
+lim_yaw                  = -2.0, 2.0
+rot_speed                = 3.14, 1.0, 0
+
+[car_firsteye_cam]
+lim_pitch                = -0.5, 0.3
+lim_yaw                  = -2.0, 2.0
+rot_speed                = 3.14, 1.0, 0
+ 
+[car_free_cam]
+lim_pitch                = -1, 1.56 ;0, 1.56
+lim_yaw                  = 0, 0 ;0, 0
+lim_zoom                 = 1, 10 ;1, 7
+rot_speed                = 3.14, 1.0, 10 ;3.14, 1.0, 10
+
+[car_look_cam]
+lim_pitch                = 0, 1.56
+lim_yaw                  = 0  , 0
+lim_zoom                 = 1, 7
+rot_speed                = 25, 1.0, 10
+
+[heli_free_cam]
+lim_pitch                = -1.5, 1.5
+lim_yaw                  = 0, 0
+lim_zoom                 = 5, 25
+rot_speed                = 3.14, 1.0, 10
+ 
+[heli_front_cam]
+;lim_yaw    = -0.01,0.01
+lim_pitch                = -1.2, 1.2
+lim_yaw                  = -1.5, 1.5
+rot_speed                = 3.14, 1.5, 0
+ 
+[heli_look_cam]
+lim_pitch                = 0, 1.56
+lim_yaw                  = 0, 0
+lim_zoom                 = 5, 15
+rot_speed                = 3.14, 1.0, 10
+ 
+[interface]
+font_game                = font_game
+font_small               = font_small
+ 
+
+[graph_point]
+class                = AI_GRAPH
+$spawn               = "ai\graph point"
+
+
+;-----------------------------------------------------------------
+; Trade
+;-----------------------------------------------------------------
+[trade]
+;коэффициенты изменения цены при торговле в зависимости от отношения к персонажу
+;линейно апроксимируются между значения
+buy_price_factor_hostile  = 1   ;коэффициент покупки при goodwill = -100
+buy_price_factor_friendly = 1   ;коэффициент покупки при goodwill = 100
+sell_price_factor_hostile = 1   ;коэффициент покупки при goodwill = -100
+sell_price_factor_friendly  = 1   ;коэффициент покупки при goodwill = 100
+
+; Если у сталкеров не хватает денег купить все, что им предлагает
+; актор, в этом режиме они купят это все за те деньги, что у них есть.
+others_zero_trade = false
+;-----------------------------------------------------------------
+
+
+[spawn_group_zone]
+GroupControlSection     = spawn_group_zone
+$spawn            = "ai\group zone"                 ; option for Level Editor
+class           = AI_SPGRP
+
+[spawn_group]
+GroupControlSection     = spawn_group
+$spawn            = "ai\spawn group"                ; option for Level Editor
+class           = AI_SPGRP
+
+[level_changer]
+GroupControlSection = 
+$spawn      = "ai\level changer"
+;$prefetch    = 4
+class     = LVL_CHNG
+script_binding  = amk.bind_lc
+
+[script_zone]
+GroupControlSection = 
+$spawn      = "ai\script zone"
+;$prefetch    = 4
+class     = SCRIPTZN
+script_binding  = xr_zones.bind
+
+[physics]
+object_damage_factor    = 1.2f
+
+;*****************************************
+; ГЕНЕРАТОРЫ ИМЕН
+;*****************************************
+[stalker_names_stalker]
+name_cnt		= 102
+last_name_cnt = 599
+
+[stalker_names_bandit]
+name_cnt		= 36
+last_name_cnt	= 180
+
+[stalker_names_science]
+name_cnt		= 14
+last_name_cnt	= 27
+
+[stalker_names_private]
+name_cnt		= 1
+last_name_cnt	= 200
+
+[stalker_names_sergeant]
+name_cnt		= 1
+last_name_cnt	= 200
+
+[stalker_names_lieutenant]
+name_cnt		= 1
+last_name_cnt	= 200
+
+[stalker_names_captain]
+name_cnt		= 1
+last_name_cnt	= 200
+
+
+[script_object]
+GroupControlSection			= spawn_group
+$spawn						= "script\script object"						; option for Level Editor
+$npc						= on											; option for Level Editor
+; $prefetch 					= 32										;
+Scheduled					= on											; option for ALife Simulator
+Human		     			= off											; option for ALife Simulator
+cform                       = skeleton										; collision class
+class                       = SCRPTOBJ										; AI class
+
+;параметры показывания входящих сообщений PDA в главном меню
+[maingame_ui]
+pda_msgs_max_show_time = 20000
+info_msgs_max_show_time = 10000
+snd_new_contact         = detectors\contact_1
+snd_new_contact1        = detectors\contact_8
+
+[attachable_item]
+GroupControlSection   = spawn_group
+discovery_dependency  = 
+$spawn          = "equipment\attachable_item"
+cform                   = skeleton
+class         = II_ATTCH
+cost          = 100
+inv_name        = "Attachable item"
+inv_name_short      = "Attachable item"
+inv_weight        = .5
+inv_grid_width      = 2
+inv_grid_height     = 1
+inv_grid_x        = 16
+inv_grid_y        = 12
+attach_angle_offset   = 0, -3.14, 1.6
+attach_position_offset  = 0.105, 0.00, 0.085
+attach_bone_name    = bip01_head
+
+[new_attachable_item]
+GroupControlSection   = spawn_group
+discovery_dependency  = 
+$spawn          = "equipment\new_attachable_item"
+cform                   = skeleton
+class         = II_BTTCH
+cost          = 100
+inv_name        = "Attachable item"
+inv_name_short      = "Attachable item"
+inv_weight        = .5
+inv_grid_width      = 2
+inv_grid_height     = 1
+inv_grid_x        = 16
+inv_grid_y        = 12
+attach_angle_offset   = 0, -3.14, 1.6
+attach_position_offset  = 0.105, 0.00, 0.085
+attach_bone_name    = bip01_head
+
+[hand_radio]:identity_immunities
+GroupControlSection   = spawn_group
+discovery_dependency  = 
+$spawn          = "equipment\hand_radio"
+cform                   = skeleton
+class         = II_ATTCH
+visual                  = equipments\item_fmradio.ogf
+cost          = 0
+inv_name        = "Рация"
+inv_name_short      = "Рация"
+inv_weight        = .5
+inv_grid_width      = 2
+inv_grid_height     = 1
+inv_grid_x        = 16
+inv_grid_y        = 12
+attach_angle_offset   = -1.5708,0.1919,3.1416    ;устанавливается в радианах Angle*PI/180
+attach_position_offset  = 0.075, 0.066, 0.023
+attach_bone_name    = bip01_l_hand
+auto_attach       = false
+
+[breakable_object]
+class           = O_BRKBL
+remove_time         = 10      ;after remove_time seconds object will be removed after it is breaked
+hit_break_threthhold    = 0.      ;weapon impact can stand breakable_object
+collision_break_threthhold  = 2000.f  ;collision impact can stand breakable_object
+immunity_factor       = 1.3     ;hit power multiplier
+
+[climable_object]
+class           = O_CLMBL
+
+[zone_team_base]
+$spawn      = "network\team base"
+class     = Z_TEAMBS
+GroupControlSection = spawn_group_zone
+
+[multiplayer_skins]
+stalker_killer_head_1 = 0,380
+stalker_killer_antigas  = 128,380
+stalker_killer_head_3 = 256,380
+stalker_killer_mask   = 384,380
+stalker_killer_exoskeleton  = 512,380
+stalker_sci_killer    = 640,380
+stalker_killer_military = 768,380
+
+stalker_sv_balon_10   = 0,705
+stalker_sv_hood_9   = 128,705
+stalker_sv_rukzak_3   = 256,705
+stalker_sv_rukzak_2   = 384,705
+stalker_sv_exoskeleton  = 512,705
+stalker_sci_svoboda   = 640,705
+stalker_sv_military   = 768,705
+
+[main_ingame_indicators_thresholds]
+radiation       = 0.1,0.25,0.4,0.55,0.7
+wounds          = 0.01,0.2,0.4,0.6,0.8
+jammed          = 0.5,0.6,0.7,0.8,0.9
+starvation        = 0.5,0.6,0.7,0.8,0.9
+fatigue         = 0.3,0.6,0.7,0.8,0.9
+
+[tutorial_conditions_thresholds]
+max_power       = 0.75
+power         = 0.1
+bleeding        = 0.4
+satiety         = 0.5
+radiation       = 0.1
+weapon_jammed     = 0.9
+psy_health        = 0.5
+
+[squad_manager]
+schedule_min      =   1
+schedule_max      = 999
+
+[agent_manager]
+schedule_min      = 100
+schedule_max      = 1000
+
+[custom_script_object]
+GroupControlSection   = spawn_group
+discovery_dependency  = 
+$spawn          = "scripts\custom_object"
+cform                   = skeleton
+class         = NW_ATTCH
+visual                  = equipments\item_fmradio.ogf
+cost          = 0
+inv_name        = "custom_script_object"
+inv_name_short      = "custom_script_object"
+inv_weight        = .5
+inv_grid_width      = 2
+inv_grid_height     = 1
+inv_grid_x        = 16
+inv_grid_y        = 12
+attach_angle_offset   = 0, 0, 0
+attach_position_offset  = 0.08, 0.04, 0.03
+attach_bone_name    = bip01_r_hand
+
+[ph_skeleton_object]
+class         = P_SKELET
+remove_time       = 120
+
+[script]
+current_server_entity_version = 7
+
+[space_restrictor]
+GroupControlSection   = spawn_group_restrictor
+$spawn          = "ai\space_restrictor"
+;$prefetch        = 64
+class         = SPC_RS_S
+script_binding          = bind_restrictor.bind
+
+[collision_damage]
+bonce_damage_factor_for_objects = 1.
+
+[details]
+swing_normal_amp1		= 0.07 ;амплитуда - насколько далеко отклонится верхняя точка травы. чем больше, тем дальше отклонится.
+swing_normal_amp2		= 0.03
+swing_normal_rot1		= 30.0 ;вращение - насколько сильно будет идти вращение вокруг центра. чем меньше, тем быстрей
+swing_normal_rot2		= 15.0
+swing_normal_speed		= 1.0 ;скорость смены колебаний
+// fast
+swing_fast_amp1			= 0.35	;0.25
+swing_fast_amp2			= 0.20	;0.15
+swing_fast_rot1			= 5
+swing_fast_rot2			= 0.5	;0.75
+swing_fast_speed		= 0.5	;1
+
+
+#include "arc\arc.ltx"
+#include "weapons\grenadier.ltx"
+
+#include "dsh\respawners.ltx"

@@ -1,0 +1,88 @@
+function init(obj)
+	local new_binder = explosion_binder(obj)
+	obj:bind_object(new_binder)
+end
+
+---------------------------------------------------------------------------------------------
+class "explosion_binder" (object_binder)
+function explosion_binder:__init(obj) super(obj)
+	self.initialized = false
+	self.loaded = false
+end 
+
+function explosion_binder:reload(section)
+	object_binder.reload(self, section)
+end
+
+function explosion_binder:reinit()
+	object_binder.reinit(self)
+end
+
+function explosion_binder:net_spawn(data)
+	if not object_binder.net_spawn(self, data) then
+		return false
+	end
+	self.object:explode()
+	return true
+end
+
+function explosion_binder:update(delta)
+	object_binder.update(self, delta)
+end
+
+function explosion_binder:net_destroy()
+	object_binder.net_destroy(self)
+end
+
+function explosion_binder:net_save_relevant()
+	return true
+end
+
+function explosion_binder:save(packet)
+	object_binder.save(self, packet)
+end
+
+function explosion_binder:load(reader)
+	self.loaded = true
+	object_binder.load(self, reader)
+end
+
+------------------------- Copyright 2007-2008 DEXXX ---------------------------
+-- Атака насекомых чумного зомби
+function zombie_insect(p_obj)
+if p_obj then
+
+	local posit = p_obj:position()
+	local actor = db.actor:position()
+	local zh = hit()
+	zh.draftsman = db.actor
+	zh.type = hit.wound
+	zh.direction = p_obj:position():sub(actor)
+	zh:bone("pelvis")
+	zh.power = 0.35
+	zh.impulse = 0.1
+
+	if not insect_particle:playing() then 
+
+		insect_particle:play_at_pos(vector():set(actor.x, actor.y+1.8, actor.z))
+
+		if not insect_sound:playing() then 
+			insect_sound:play_at_pos(db.actor, actor)
+			db.actor:hit(zh)
+		else
+			insect_sound:set_position(actor)
+		end
+
+	else
+
+		insect_particle:move_to(vector():set(actor.x, actor.y+1.8, actor.z),vector():set(actor.x, actor.y+1.8, actor.z))
+
+		if not insect_sound:playing() then 
+			insect_sound:play_at_pos(db.actor, actor)
+			db.actor:hit(zh)
+		else
+			insect_sound:set_position(actor)
+		end
+	end
+end
+end

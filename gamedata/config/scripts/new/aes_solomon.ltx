@@ -1,0 +1,64 @@
+[logic]
+active = walker@aes_solomon_start
+combat_ignore = combat_ignore
+trade = misc\new_trader\no_trade.ltx
+on_hit = hit@aes_solomon
+on_death = death
+
+[walker@aes_solomon_start]
+path_walk = aes_solomon_start_walk
+path_look = aes_solomon_start_look
+combat_ignore_cond = always
+meet = no_meet
+on_info = {+aes_solmon_hit} walker@aes_solomon_hit
+on_actor_dist_le_nvis = 5 | remark@aes_solomon_start
+
+[remark@aes_solomon_start]
+snd = aes_solomon_start
+anim = guard
+target = actor
+meet = no_meet
+combat_ignore_cond = always
+on_info = {+aes_solmon_hit} walker@aes_solomon_hit
+on_signal = sound_end| remark@aes_solomon
+
+[remark@aes_solomon]
+anim = guard
+target = actor
+meet = meet@aes_solomon
+combat_ignore_cond = always
+on_info = {+aes_solmon_start} walker@aes_solomon_atak
+on_info2 = {+aes_solmon_hit} walker@aes_solomon_hit
+
+[walker@aes_solomon_atak]
+path_walk = aes_solomon_atak_walk
+path_look = aes_solomon_atak_look
+danger = danger_ignore@aes_solomon
+def_state_moving1 = assault
+def_state_moving2 = assault
+def_state_moving3 = assault
+on_info = {+monolit_bunker_doc_have} kamp@aes_solomon
+
+[walker@aes_solomon_hit]
+path_walk = aes_solomon_start_walk
+path_look = aes_solomon_start_look
+danger = danger_ignore@aes_solomon
+
+[kamp@aes_solomon]
+center_point = aes_solomon_kamp
+meet = meet@aes_solomon 
+danger = danger_ignore@aes_solomon
+
+[meet@aes_solomon]
+use = true
+use_wpn = true
+meet_talk_enabled = true
+
+[hit@aes_solomon]
+on_info = {=hit_by_actor} %+aes_solmon_hit%
+
+[danger_ignore@aes_solomon]
+ignore_distance = 0
+
+[death]
+on_info = %+aes_solmon_dead%

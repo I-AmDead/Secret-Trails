@@ -1,0 +1,69 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = camper@voronin_ohr3
+danger = danger_condition@voronin_ohr3
+on_hit = hit@voronin_ohr3
+
+[camper@voronin_ohr3]
+path_walk = voronin_ohr3_walk
+path_look = voronin_ohr3_look
+meet = meet
+danger = danger_condition@voronin_ohr3
+on_info = {+voronin_bar_dialog_start} remark@voronin_ohr3
+
+[remark@voronin_ohr3]
+anim = guard
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@voronin_ohr3
+meet = no_meet
+on_timer = 2000 | walker@voronin_ohr3
+
+[walker@voronin_ohr3]
+path_walk = voronin_ohr3_walk1
+path_look = voronin_ohr3_look1
+meet = no_meet
+def_state_moving1 = assault
+def_state_moving2 = assault
+def_state_moving3 = assault
+danger = danger_condition@voronin_ohr3
+on_info = {+voronin_ohr3_hit} walker@voronin_ohr3_hit
+on_info2 = {+voronin_bar_dialog_done} remark@voronin_ohr33
+
+[walker@voronin_ohr3_hit]
+path_walk = voronin_ohr3_walk1
+path_look = voronin_ohr3_look1
+meet = no_meet
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+danger = danger_condition@voronin_ohr3
+on_info = {+voronin_bar_dialog_done} remark@voronin_ohr33
+
+[remark@voronin_ohr33]
+anim = guard
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@voronin_ohr3
+meet = no_meet
+on_timer = 4000 | camper@voronin_ohr33
+
+[camper@voronin_ohr33]
+path_walk = voronin_ohr3_walk1
+path_look = voronin_ohr3_look1
+meet = meet
+danger = danger_condition@voronin_ohr3
+
+[danger_condition@voronin_ohr3]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet]
+use = true
+use_wpn = false
+meet_talk_enabled = true
+
+[hit@voronin_ohr3]
+on_info = %+voronin_ohr3_hit%

@@ -1,0 +1,52 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_use", fun = this.use_repkit })
+end
+
+function use_repkit( obj )
+  if obj:section() == "repair_kit" then
+level.start_stop_menu(interfase.ui_repair(), true) --запускаем меню
+    return true -- ремнабор больше никому не надо использовать
+  end
+end
+ 
+function DeleteItem(iId) --добавляем функцию удаления предмета из инвентаря
+    if iId then
+        local seObj=alife():object(iId)
+        if seObj then alife():release(seObj,true) 
+        end
+    end
+end
+
+function repair_wpn_1()
+    local item_in_slot = db.actor:item_in_slot(1)
+    local medusa = db.actor:object("af_medusa") --и везде добавим проверку на медузу
+    if item_in_slot ~= nil and 1 > item_in_slot:condition() and medusa then 
+       item_in_slot:set_condition(1)
+       DeleteItem(medusa:id()) --удаляем артефакт после ремонта
+    end    
+end
+
+function repair_wpn_2()
+    local item_in_slot = db.actor:item_in_slot(2)
+    local medusa = db.actor:object("af_medusa")
+    if item_in_slot ~= nil and 1 > item_in_slot:condition() and medusa then 
+    item_in_slot:set_condition(1)
+    DeleteItem(medusa:id())
+    end
+end
+
+function repair_armora()
+	local item_in_slot = db.actor:item_in_slot(6)
+	if item_in_slot ~= nil and 1 > item_in_slot:condition() then 
+       item_in_slot:set_condition(1)
+	end
+end
+
+--/ спавн предметов в инвентори
+function spawn_item_in_inv(section,npc)
+	if npc == nil then npc = db.actor end
+	return alife():create(section, npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id())
+end
+

@@ -1,0 +1,162 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;;; USP-45 «Expert» ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;---------------------------------------------------------------------
+[wpn_usp]:class_pistol,hud_wpn_fx.usp45
+GroupControlSection			= spawn_group
+discovery_dependency 		= 
+$spawn                   	= "weapons\usp"					; option for Level Editor
+$npc			 			= on		; option for Level Editor
+$prefetch 					= 8
+scheduled            		= off              ; option for ALife Simulator
+cform                    	= skeleton
+class                    	= WP_USP45
+description					= enc_weapons1_wpn-usp
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0               ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 1.0              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+cost					 	= 1500
+
+ammo_limit		 			= 120
+ammo_current		 		= 96
+ammo_elapsed		 		= 12
+
+ammo_mag_size		 		= 12
+ammo_class		 			= ammo_11.43x23_fmj, ammo_11.43x23_hydro 
+
+hand_dependence		 		= 1
+single_handed				= 1
+
+animation_slot				= 1		; type of the animation that will be used
+
+inv_name					= wpn_usp
+inv_name_short				= wpn_usp
+inv_weight					= 0.86
+
+icon_name = icon_usp
+inv_grid_width     = 2
+inv_grid_height    = 1
+inv_grid_x         = 14
+inv_grid_y         = 57
+
+kill_msg_x			= 134
+kill_msg_y			= 177
+kill_msg_width		= 31
+kill_msg_height		= 25
+
+;-----------------------------------------------------------------------------------
+;отдача
+cam_dispersion          	= 0.6	;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc		= 0.0	;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac		= 0.25	;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle			= 6.0	;максимальный угол отдачи
+cam_max_angle_horz		= 8.0	;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 0.16	;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+direction                	= 0, 0, 1
+fire_point               	= 0.0, 0.132, 0.137
+
+flame_particles					= amik\weapons\flame_particles\pistol\p_flame_particles_3
+smoke_particles 				= amik\weapons\smoke_particles\p_smoke_particles_02
+;shell_particles	 				= amik\weapons\45_shells_r
+
+shell_point		 			= 0.0, 0.132, 0.03
+shell_dir		 			= 0.0, 0.0, 0.4
+
+rpm_empty_click 	 			= 200
+
+;-----------------------------------------------------------------------------------
+; ttc
+hit_rate	        = 1.85
+bullet_speed	  = 385	;начальная скорость пули
+; end ttc
+
+silencer_hit_power       	= 0.55
+silencer_hit_impulse	 	= 42
+silencer_fire_distance   	= 60
+silencer_bullet_speed	 	= 345
+
+hud                      			= wpn_usp_hud
+normal                   	= 0, 1, 0
+position                 	= -0.021, -0.085, 0.0
+orientation              	= 0, 0, 0
+
+visual						= weapons\usp_45\wpn_usp_45.ogf
+
+light_color		 			= 0.6,0.5,0.3
+light_var_color		 			= 0.05
+light_time 		 			= 0.2
+
+ph_mass			 			= 1
+;cost			 			= 350
+
+;addons
+scope_status				= 0
+silencer_status				= 2
+grenade_launcher_status		      = 0
+
+zoom_enabled				= true
+
+snd_draw					= weapons\pistol_draw
+snd_holster					= weapons\pistol_holster
+snd_shoot					= weapons\usp\usp_shoot
+snd_shoot1					= weapons\usp\usp_shoot1
+snd_shoot2					= weapons\usp\usp_shoot2
+snd_shoot3					= weapons\usp\usp_shoot3
+snd_empty					= weapons\usp\usp_empty
+snd_reload					= weapons\usp\usp_reload
+snd_holster					= weapons\pistol_holster
+snd_silncer_shot			= weapons\sig226\shoot_sil
+;snd_silncer_shot			= weapons\usp\usp_shot_sil
+snd_close					= weapons\usp\usp_close
+snd_razgruzka				= weapons\razgruzka\ammo_2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; silencer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+silencer_name  				= wpn_addon_sil_1143_p		; section name for the attachable silencer
+silencer_x 					= 70
+silencer_y 					= -17					
+
+;params when silencer is attached 
+;similar to corresponding params without prefix silencer_
+
+;silencer_flame_particles 			= weapons\generic_weapon01
+silencer_smoke_particles 			= amik\weapons\smoke_particles\p_smoke_particles_02
+silencer_light_color				= 0.6,0.5,0.3
+silencer_light_range				= 0.01
+silencer_light_var_color			= 0.05
+silencer_light_var_range			= 0.5
+silencer_light_time 				= 0.2
+ 
+
+[wpn_usp_hud]:hud_pistol
+shell_point					= -0.320000,-0.010000,0.070000
+fire_point					= -0.000000,-0.005000,-0.353000
+fire_bone                	= wpn_body
+
+position					= 0.009500,-0.021000,0.150000
+orientation					= 0.000000,0.000000,0.000000
+
+visual                   	= weapons\usp_45\wpn_usp_45_hud.ogf
+
+anim_holster				= holster
+anim_idle					= idle
+anim_empty					= idle_empty
+anim_reload					= reload
+anim_reload_empty			= reload_empty
+anim_draw					= draw
+anim_draw_empty				= draw_empty
+anim_shoot					= shoot
+anim_shot_last				= shoot_last
+anim_close					= holster_empty
+anim_idle_aim				= idle_aim
+anim_idle_sprint			= idle_sprint
+
+zoom_offset					= -0.145000,0.053300,0.062000
+zoom_rotate_x				= -0.002900
+zoom_rotate_y				= 0.000200

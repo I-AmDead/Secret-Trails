@@ -1,0 +1,79 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = walker@brown
+on_death = death@brown
+
+[walker@brown]
+path_walk = brown_walk
+path_look = brown_look
+meet = no_meet@brown
+danger = danger_condition@brown
+on_info = {+brown_razgovor} walker@brown1
+
+[walker@brown1]
+path_walk = brown_walk
+path_look = brown_look
+meet = meet@brown
+danger = danger_condition@brown
+on_info = {+brown_gotov_idti} remark@brown1
+
+[remark@brown1]
+target = actor
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@brown
+on_timer = 2000 | walker@brown11
+
+[walker@brown11]
+path_walk = brown1_walk
+path_look = brown1_look
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+meet = no_meet
+danger = danger_condition@brown
+on_signal = rep | %+brown_mesto1% walker@brown111
+
+[walker@brown111]
+path_walk = brown1_walk
+path_look = brown1_look
+meet = meet@brown
+danger = danger_condition@brown
+on_info = {+start_monstry_mir} remark@brown2
+
+[remark@brown2]
+target = actor
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@brown
+on_timer = 4000 | walker@brown2
+
+[walker@brown2]
+path_walk = brown2_walk
+path_look = brown2_look
+meet = no_meet
+def_state_moving1 = assault
+def_state_moving2 = assault
+def_state_moving3 = assault
+danger = danger_condition@brown
+on_signal = brown | walker@brown22
+
+[walker@brown22]
+path_walk = brown2_walk
+path_look = brown2_look
+meet = meet@brown
+danger = danger_condition@brown
+
+[danger_condition@brown]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet@brown]
+use = true
+use_wpn = false
+meet_talk_enabled = true
+
+[death@brown]
+on_info = %+brown_dead%

@@ -1,0 +1,69 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = camper@dolg_attak1
+danger = danger_condition@dolg_attak1
+on_hit = hit@dolg_attak1
+
+[camper@dolg_attak1]
+path_walk = dolg_attak1_walk
+path_look = dolg_attak1_look
+meet = meet
+danger = danger_condition@dolg_attak1
+on_info = {+dolg_attak_dialog_start} remark@dolg_attak1
+
+[remark@dolg_attak1]
+anim = guard
+target = actor
+danger = danger_condition@dolg_attak1
+meet = no_meet
+combat_ignore_cond = always
+on_timer = 8000 | walker@dolg_attak1
+
+[walker@dolg_attak1]
+path_walk = dolg_attak1_walk1
+path_look = dolg_attak1_look1
+meet = no_meet
+combat_ignore_cond = always
+def_state_moving1 = assault
+def_state_moving2 = assault
+def_state_moving3 = assault
+danger = danger_condition@dolg_attak1
+on_info = {+dolg_attak1_hit} walker@dolg_attak1_hit
+on_info2 = {+dolg_attak_dialog_done} remark@dolg_attak11
+
+[walker@dolg_attak1_hit]
+path_walk = dolg_attak1_walk1
+path_look = dolg_attak1_look1
+meet = no_meet
+def_state_moving1 = assault
+def_state_moving2 = assault
+def_state_moving3 = assault
+danger = danger_condition@dolg_attak1
+on_info = {+dolg_attak_dialog_done} remark@dolg_attak11
+
+[remark@dolg_attak11]
+anim = guard
+target = actor
+danger = danger_condition@dolg_attak1
+meet = no_meet
+on_timer = 4000 | walker@dolg_attak11
+
+[walker@dolg_attak11]
+path_walk = dolg_attak1_walk2
+path_look = dolg_attak1_look2
+meet = meet
+danger = danger_condition@dolg_attak1
+
+[danger_condition@dolg_attak1]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet]
+use = true
+use_wpn = false
+meet_talk_enabled = true
+
+[hit@dolg_attak1]
+on_info = %+dolg_attak1_hit%

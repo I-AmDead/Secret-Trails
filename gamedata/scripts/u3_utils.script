@@ -1,0 +1,70 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+-----------------------------------------------------------------------------
+-- u3_utils.script
+-- zestawik maіych funkcji i klas, przydatnych w innych skryptach.
+-- tam, gdzie nie jest napisane inaczej, autor: utak3r.
+--
+-- Last update: 2009.12.29
+-----------------------------------------------------------------------------
+
+--
+-- Zapis do logu
+--
+function printf( str, ... )
+  if not str then
+    str = "((string is nil))"
+  end
+  log2( str, ... )
+end
+
+
+--
+-- Sprawdzenie, czy jest gra i czy aktor jest їywy
+--
+function isGameOn()
+	if level.present() and db.actor ~= nil and db.actor:alive() then
+		return true
+	end
+	return false
+end
+
+
+--
+-- Zapis stanu gry (save)
+--
+function savegame( save_name)
+	if save_name == nil then
+		printf("Trying to save a game without any name!")
+		return false
+	end
+
+	if isGameOn() then
+		local save_param = save_name
+                            cmd( "save " .. save_param )
+	end
+end
+
+
+function savegame_date( save_name )
+  savegame(save_name .. " - " .. game.translate_string( level.name() )
+  )
+end
+
+function can_save()
+  -- не сохраняем во время открытых окон, когда нельзя сделать квиксейв
+  return not (
+    db.actor:is_talking()
+    or has_alife_info( "ui_car_body" )
+    or has_alife_info( "ui_inventory" )
+    or has_alife_info( "ui_pda" )
+  )
+end
+
+
+function cant_save( reason )
+  -- сообщение, что нельзя сохраняться во время определенных действий
+  local hud = get_hud()
+  hud:AddCustomStatic( "cant_walk", true )
+  local wnd = hud:GetCustomStatic( "cant_walk" ):wnd()
+  wnd:SetText( reason )
+end

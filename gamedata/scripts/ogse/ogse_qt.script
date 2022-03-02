@@ -1,0 +1,253 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+-------------------------------------------------------------------------------
+--| ogse_qt.script                                                          |--
+--| Quick Timers module                                                     |--
+--| Malandrinus, OGS Evolution Team, 2011                                   |--
+--| version 2.0                                                             |--
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- базовый класс легковесного таймера для отслеживания произвольного события
+-------------------------------------------------------------------------------
+--
+-- зависит от модуля сигналов ogse_signals. Используется динамическая
+-- подписка и отписка метода класса на событие периодической проверки
+--
+-- Комментарии:
+--
+-- 1. Наличие вашего конструктора обязательно. Вызов конструктора
+--    базового класса super( timeout ) нужен только если используется
+--    возможность завершения по таймауту.
+--
+-- 2. При останове по таймауту действие, заданное методом action,
+--    выполнено не будет. Вместо него выполнится действие, заданное
+--    taction
+--
+-- 3. Пока таймер работает, можно остановить его работу принудительно
+-- так timer_object:stop() В этом случае действие также выполнено не
+-- будет.
+--
+-- 6. Таймеров одного класса можно запускать несколько. Сколько
+--    именно, определяется только памятью и резервами процессора
+--
+-- 7. Эти таймеры в сейве не сохраняются. Это означает, что с их
+--    помощью можно отслеживать только события, которые должны
+--    произойти "скоро", т.е. с гарантией до ближайшей загрузки или
+--    перехода на другой уровень.
+
+-- Пример 1 простейшего таймера, делающего что-то через заданное время
+-- после запуска:
+--
+-- class "simple_timer" ( ogse_qt.quick_timer )
+-- function simple_timer:__init( time ) super( time )
+-- end
+-- function simple_timer:taction() -- наше действие по таймауту
+--   здесь что-то делаем по факту срабатывания таймера
+-- end
+--
+-- Использование:
+-- simple_timer( 3000 ):start() -- сработает через три секунды
+
+-- Пример 2 использования таймера для отслеживания удаления объекта из
+-- инвентаря:
+--
+-- class "release_watch_timer" ( ogse_qt.quick_timer )
+-- function release_watch_timer:__init( id ) -- здесь решили не использовать таймаут
+--   self.client_id = id -- запомнили объект, за которым следим
+-- end
+-- function release_watch_timer:condition()
+--  return not level.object_by_id( self.client_id ) -- сработает по исчезновению клиентского объекта
+-- end
+-- function release_watch_timer:action() -- наше действие
+--   здесь что-то делаем по факту ухода объекта в оффлайн
+-- end
+--
+-- Использование:
+-- alife():release(sobj, true)
+-- release_watch_timer(sobj.id):start()
+
+
+function attach(sm)
+end
+
+
+-- конструктор таймера в базовом классе
+class "quick_timer"
+function quick_timer:__init( timeout )
+  self.timeout = timeout
+end
+
+
+function quick_timer:prepare_start()
+  self.start_time = time_global()
+  if self.timeout then          -- если при создании задавали таймаут
+    -- то запоминаем время останова
+    self.termination_time = self.start_time + self.timeout
+  end
+end
+
+
+-- Запуск таймера
+function quick_timer:start( sname )
+  self:prepare_start()
+  if not self.script_name then
+    local d = debug.getinfo( 2, "S" )
+    if d then
+      self.script_name = d.source
+    end
+  end
+  self.slot_desc = {
+    signal = ( sname or "on_update" ), self = self, fun = self.aux_cond,
+    script_name = self.script_name,
+  }
+  self.sm = ogse_signals.get_mgr()
+  self.sm:subscribe( self.slot_desc )
+  return self
+end
+
+
+-- времени прошло с момента запуска.
+-- возвращает два числа: в миллисекундах и относительное от 0 до 1
+function quick_timer:elapsed()
+  local elapsed = time_global() - self.start_time
+  local fe
+  if self.termination_time then
+    fe = elapsed / ( self.termination_time - self.start_time )
+  end
+  return elapsed, fe
+end
+
+
+-- функция принудительного останова, никаких действий при этом не
+-- выполняется
+function quick_timer:stop()
+  self.sm:unsubscribe( self.slot_desc )
+  self.slot_desc = nil
+end
+
+
+function quick_timer:stopped()
+  return not self.slot_desc
+end
+
+
+-- проверка в базовом классе таймера обеспечивает сервис остановки по
+-- таймауту и возможность принудительной остановки
+function quick_timer:aux_cond()
+  self:update()
+  if self.termination_time then -- если имеется таймаут
+    -- и он сработал на первом апдейте
+    if self.termination_time <= time_global() then
+      self:taction()            -- выполняем действие по таймауту
+      self:stop()               -- останавливаем проверки
+    else                        -- засыпаем до срабатывания
+      self:reschedule( self.termination_time - time_global() )
+    end
+  elseif self:condition() then  -- если сработало условие
+    self:action()               -- выполняем действие по условия
+    self:stop()
+  end
+end
+
+
+-- условие-заглушка на случай использования только с таймаутом
+function quick_timer:condition()
+  return false
+end
+
+
+-- пустое действие в базовом классе. Нужно для того случая, когда по
+-- каким-то причинам не задаём действие в унаследованном классе
+function quick_timer:action()
+end
+
+
+-- аналогичная заглушка для действия по таймауту
+function quick_timer:taction()
+end
+
+
+-- заглушка для периодического действия
+function quick_timer:update()
+end
+
+
+-- пауза на ms миллисекунд
+function quick_timer:reschedule( ms )
+  self.sm:reschedule( ms )
+end
+
+
+function quick_timer:set_script_name( name )
+  self.script_name = name
+  if self.slot_desc then
+    self.slot_desc.script_name = self.script_name
+  end
+end
+
+
+class "quick_level_timer" ( quick_timer )
+function quick_level_timer:__init( timeout ) super( timeout )
+end
+
+
+function quick_level_timer:start()
+  self:prepare_start()
+  if not self.script_name then
+    local d = debug.getinfo( 2, "S" )
+    if d then
+      self.script_name = d.source
+    end
+  end
+  self.level_call = level.add_call( self, self.aux_cond, self.aux_action )
+  if self.timeout then
+    self.level_call:set_pause( self.timeout )
+  end
+  return self
+end
+
+
+function quick_level_timer:stop()
+  level.remove_call( self, self.aux_cond, self.aux_action )
+  self.level_call = nil
+end
+
+
+function quick_level_timer:aux_cond()
+  ASSERT(
+    self.level_call,
+    "[%s]: script_name = %s: oops, we've lost self.level_call",
+    script_name(), self.script_name
+  )
+  if device():is_paused() then
+    self.level_call:set_pause( 1 )
+    return
+  end
+  self:update()
+  return self.termination_time or self:condition()
+end
+
+
+function quick_level_timer:aux_action()
+  if self.termination_time then -- если имеется таймаут
+    self:taction()              -- выполняем действие по таймауту
+  else
+    self:action()               -- выполняем действие по условию
+  end
+  self.level_call = nil
+end
+
+
+function quick_level_timer:reschedule( ms )
+  ASSERT(
+    self.level_call,
+    "[%s]: script_name = %s: oops, we've lost self.level_call",
+    script_name(), self.script_name
+  )
+  self.level_call:set_pause( ms )
+end
+
+
+function quick_level_timer:set_script_name( name )
+  self.script_name = name
+end

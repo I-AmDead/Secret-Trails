@@ -1,0 +1,370 @@
+---- AI Additions ----
+---- Rulix aka Bak ----
+---- 27.07.2016
+
+function printf(s, ...)
+--	rx_utils.printf("com:"..s,...)
+end
+
+ASSERTX(rx_ai.rx_ini:section_exist("combat"),"no section [combat] in rx_ini")
+local run_on_hit = rx_utils.read_from_ini(rx_ai.rx_ini,"combat","run_on_hit",false,0)
+
+----------------------------------------------------------------------------------------------------------------------
+-- MONSTER DEFEND
+----------------------------------------------------------------------------------------------------------------------
+
+local md_enabled = rx_utils.read_from_ini(rx_ai.rx_ini,"combat","monster_defend",false,0)
+local md_max_dist = 12*12
+local md_walk_dist = 9*9
+local md_run_dist = 5*5
+local md_min_rank = 0.4/rx_utils.rank_unit
+local md_monsters = {
+--	actor = 0,
+--	stalker = 0,
+	bloodsucker = math.pi*0.25,
+	boar = math.pi*0.35,
+	burer = 0,
+	cat = 0,
+	chimera = math.pi*0.15,
+--	controller = 0,
+	dog = math.pi*0.2,
+	flesh = 0,
+	fracture = 0,
+	giant = 0,
+--	poltergeist = 0,
+	pseudodog = 0,
+	psy_dog = math.pi*0.8,
+	psy_dog_phantom = 0,
+	snork = math.pi*0.1,
+	tushkano = 0,
+	zombie = 0,
+}
+
+local t = {}
+for name,cls_id in pairs(rx_utils.creatures_clslist) do
+	t[cls_id] = md_monsters[name] or nil
+end
+md_monsters = t
+t = nil
+
+local function suitable_target(npc,target)
+	return target:alive() and target:get_enemy() and md_monsters[target:clsid()] and npc:position():distance_to_sqr(target:position()) < md_max_dist	--npc:max_ignore_monster_distance()
+end
+
+class "evaluator_monster_defend" (property_evaluator)
+function evaluator_monster_defend:__init(npc,storage,name) super (nil,name)
+	self.st = storage
+	self.st.check_time = 0
+	rx_ai.subscribe_for_events(npc,self)
+end
+function evaluator_monster_defend:evaluate()
+	local npc = self.object
+	local be = npc:best_enemy()
+	if not (be and npc:best_weapon()) then
+		return false
+	end
+	if npc:critically_wounded() or xr_wounded.is_wounded(npc) then
+		return false
+	end
+	local target = self.st.target and level.object_by_id(self.st.target)
+	if target and suitable_target(npc,target) and (npc:see(target) or target:see(npc)) then
+		return true
+	else
+		self.st.target = nil
+	end
+	if self.st.check_time > time_global() then
+		return false
+	end
+	self.st.check_time = time_global()+700
+	if npc:see(be) and suitable_target(npc,be) then
+		self.st.target = be:id()
+		return true
+	end
+	return false
+end
+function evaluator_monster_defend:hit_callback(amount,_,who)
+	local npc = self.object
+	if who and amount > 0.02 and suitable_target(npc,who) then
+		self.st.target = who:id()
+	end
+end
+
+class "action_monster_defend" (action_base)
+function action_monster_defend:__init (npc,storage,action_name) super (nil,action_name)
+	self.st = storage
+	self.rand_dif = math.random(-30,30)/100
+	self.ddr = math.random() < 0.5 and 1 or -1
+end
+function action_monster_defend:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+	npc:set_desired_position()
+	npc:set_desired_direction()
+	npc:set_mental_state(anim.danger)
+	npc:set_path_type(game_object.level_path)
+	npc:set_dest_level_vertex_id(npc:level_vertex_id())
+	state_mgr.lock(npc,true)
+end
+function action_monster_defend:execute()
+	action_base.execute(self)
+	local npc = self.object
+	local target = self.st.target and (db.storage[self.st.target] and db.storage[self.st.target].object or level.object_by_id(self.st.target))
+	if not target then
+		return
+	end
+	if npc:path_type() ~= game_object.level_path then
+		npc:set_path_type(game_object.level_path)
+	end
+	local wpn = npc:best_weapon()
+	if not wpn then
+		return
+	end
+
+--[[	if self.evaluator_ready_to_kill:evaluate() ~= true and wpn:get_ammo_in_magazine() ~= 0 then	--	заклинило?
+		if self.weapon_fix_time then
+			if self.weapon_fix_time < time_global() then
+				self.st.target = nil
+				self.st.check_time = time_global()+5000
+				return
+			end
+		else
+			self.weapon_fix_time = time_global()+4000
+		end
+	else
+		self.weapon_fix_time = nil
+	end]]
+
+	local dist = npc:position():distance_to_sqr(target:position())
+
+	local be = npc:best_enemy()
+	if be and be:id() ~= self.st.target and npc:see(be) and suitable_target(npc,be) and npc:position():distance_to_sqr(be:position())+1 < dist then
+		self.st.target = be:id()	-- сменится на слудующем апдейте
+	end
+
+	-- если мы не в фокусе - прицел на объект
+	-- если идем кругом - прицел на объект
+	-- если пятимся задом - прицел по направлению
+
+	local target_be = target:get_enemy()
+	local focus = target_be and target_be:id() == npc:id()
+
+	if npc:id()%2 == 0 and wpn:get_ammo_in_magazine() == 0 and not npc:path_completed() then
+		npc:set_sight(look.path_dir,nil,0)
+		npc:set_item(object.aim1,wpn)
+	elseif not npc:see(target) then
+		npc:set_sight(target,true,false)
+		npc:set_item(object.aim1,wpn)
+	else
+		if focus then
+			npc:set_sight(target,true,true)
+		else
+			npc:set_sight(target,true,true)
+		end
+		local magsize = math.max(rx_utils.get_mag_size(wpn:section()),25)
+		local min_queue = math.floor(magsize/7)
+		local max_queue = math.ceil(magsize/3)
+		npc:set_item(object.fire1,wpn,math.random(min_queue,max_queue),700)
+	end
+
+	if not focus then
+		if dist < md_walk_dist then
+			npc:set_movement_type(move.walk)
+			local vertex = self:get_dodge_vertex(npc:level_vertex_id(),target:position(),0,1)
+			if vertex then
+				npc:set_dest_level_vertex_id(vertex)
+			end
+		end
+		return
+	end
+
+	if dist < md_run_dist then
+		npc:set_movement_type(move.run)
+		npc:set_body_state(move.standing)
+	elseif dist < md_walk_dist then
+		npc:set_movement_type(move.walk)
+	else
+		return
+	end
+
+	local dodge_angle = md_monsters[target:clsid()]
+	if dodge_angle < 0.5 then
+		local fire_point = target:bone_position(rx_utils.get_fire_bone(target:section()))	--	 target:center()	rx_utils.safe_bone_pos(target,"bip01_neck")	target:bone_position(rx_utils.get_fire_bone(target:section()))
+--		fire_point.y = fire_point.y+0.15
+		npc:set_sight(look.direction,fire_point:sub(npc:bone_position("bip01_neck")),true)
+--		npc:set_sight(look.point,fire_point,true)
+	end
+
+	local vertex = self:get_dodge_vertex(npc:level_vertex_id(),target:position(),dodge_angle)
+	if not vertex then
+		self.ddr = -self.ddr
+		self.st.target = nil
+		self.st.check_time = time_global()+4000
+		return
+	end
+	npc:set_dest_level_vertex_id(vertex)
+end
+function action_monster_defend:finalize()
+    action_base.finalize(self)
+	local npc = self.object
+	npc:set_item(object.idle,npc:active_item())
+	state_mgr.lock(npc,false)
+	self.weapon_fix_time = nil
+end
+
+local _H_step = math.pi/6
+function action_monster_defend:get_dodge_vertex(lvid,pos,imod,tc)
+	local npc = self.object
+	local npc_pos = npc:position()
+	local dir = vector():sub(npc:position(),pos)
+	local dH,dP,res = dir:getH()+self.rand_dif,dir:getP()
+	local found,mod
+	imod = imod or 0
+	for i=0,(tc or 5) do
+		mod = imod > 0 and imod+i*_H_step or imod-i*_H_step
+		if mod > 2.6 then
+			break
+		end
+		res = npc:vertex_in_direction(lvid,vector():setHP(dH+mod*self.ddr,dP),4)
+		if (lvid ~= res and npc:accessible(res) and level.vertex_position(res):distance_to_sqr(npc_pos) > 8) then
+			found = true
+			break
+		end
+	end
+	return found and res
+end
+----------------------------------------------------------------------------------------------------------------------
+-- BINDER
+----------------------------------------------------------------------------------------------------------------------
+
+evid_monster_defend = rx_ai.base_id+50
+actid_monster_defend = evid_monster_defend
+
+if rx_knife then
+	rx_knife.knife_actions_permitted[actid_monster_defend] = true
+end
+
+function add_to_binder(npc,ini,scheme,section,storage)
+	local manager = npc:motivation_action_manager()
+
+	if md_enabled and npc:character_rank() >= md_min_rank and npc:alive() then
+	-- MONSTER DEFEND
+	manager:add_evaluator(evid_monster_defend,evaluator_monster_defend(npc,storage,"eva_monster_defend"))
+	local new_action = action_monster_defend(npc,storage,"monster_defend")
+	new_action:add_precondition(world_property(stalker_ids.property_alive,true))
+--	new_action:add_precondition(world_property(stalker_ids.property_critically_wounded,false))
+--	new_action:add_precondition(world_property(stalker_ids.property_enemy,true))
+--	new_action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base,false))
+	new_action:add_precondition(world_property(xr_evaluators_id.state_mgr+3,true))	--!!
+	if rx_bandage then
+		new_action:add_precondition(world_property(rx_bandage.evid_bandage,false))
+	end
+	if rx_facer then
+--		new_action:add_precondition(world_property(rx_facer.evid_facer,false))
+	end
+	if rx_ff then
+		new_action:add_precondition(world_property(rx_ff.evid_dont_shoot,false))
+	end
+	if rx_gl then
+		new_action:add_precondition(world_property(rx_gl.evid_gl_fire,false))
+		new_action:add_precondition(world_property(rx_gl.evid_gl_reload,false))
+	end
+	if rx_knife then
+		new_action:add_precondition(world_property(rx_knife.evid_knife_attack,false))
+	end
+	if xrs_grenade then
+		new_action:add_precondition(world_property(xrs_grenade.evid_crazy_grenadier,false))
+		new_action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
+		new_action:add_precondition(world_property(xrs_grenade.evid_psyh,false))
+	end
+	new_action:add_precondition(world_property(evid_monster_defend,true))
+	new_action:add_effect(world_property(evid_monster_defend,false))
+
+	manager:add_action(actid_monster_defend,new_action)
+
+	-- включение в планировщик
+	local action = manager:action(stalker_ids.action_combat_planner)
+	action:add_precondition(world_property(evid_monster_defend,false))
+
+	else
+		manager:add_evaluator(evid_monster_defend,property_evaluator_const(false))
+	end
+end
+
+function set_scheme(npc,ini,scheme,section)
+	xr_logic.assign_storage_and_bind(npc,ini,scheme,section)
+end
+
+----------------------------------------------------------------------------------------------------------------------
+-- UPDATE
+----------------------------------------------------------------------------------------------------------------------
+
+local function set_run(npc)
+	npc:set_movement_type(move.run)
+	if math.random() < 0.15 then
+		npc:set_body_state(move.crouch)
+	end
+end
+
+function combat_planner_update(npc,st)
+	if (st.combat_update_time or 0) > time_global() then
+		return
+	end
+	-- фикс набегания без оружия
+	st.combat_update_time = time_global() + 2820
+	local actwpn,bestwpn = npc:active_item(),npc:best_weapon()
+	if bestwpn and (actwpn and actwpn:id()) ~= bestwpn:id() and npc:mental_state() ~= anim.panic and npc:best_enemy() and not npc:best_enemy():wounded() then
+		if st.combat_sa_weapon_fix then
+			npc:set_item(object.idle,npc:best_weapon())
+		end
+		st.combat_sa_weapon_fix = not st.combat_sa_weapon_fix or nil
+	else
+		st.combat_sa_weapon_fix = nil
+	end
+	-- бежать, если подстрелили
+	if st.combat_set_run then
+		if st.combat_set_run > time_global() then
+			if not npc:critically_wounded() and npc:movement_type() == move.walk then
+				set_run(npc)
+			end
+		else
+			st.combat_set_run = nil
+		end
+	end
+end
+
+function npc_hit_combat(npc,st,who,bone_id)
+	if run_on_hit and npc:movement_type() == move.walk then
+		if npc:critically_wounded() then
+			st.combat_set_run = time_global() + 4000
+		else
+			set_run(npc)
+		end
+	end
+	if bone_id > 0 and who and who:id() ~= npc:id() then
+		if npc:relation(who) == game_object.enemy and npc:position():distance_to_sqr(who:position()) < 20*20 then
+			local enemy = npc:best_enemy()
+			if not enemy or (enemy:id() ~= who:id()) then
+				npc:make_object_visible_somewhen(who)
+				if enemy and not npc:see(enemy) then
+					npc:enable_memory_object(enemy,false)
+				end
+			end
+		end
+	end
+end
+
+-- фикс бага critically_wounded для danger_planner
+function npc_hit_danger(npc,who,bone_id,amount)
+	if bone_id > 0 or amount < 0.05 or (who and who:id()) == npc:id() then
+		return
+	end
+	if npc:active_item() and math.random() < 0.7 then
+		local slots = {[1] = 1,[2] = 2,[3] = 3,[8] = 8,[9] = 2}
+		local slot = npc:active_item():animation_slot()
+		if slots[slot] then
+			rx_ai.play_animation(npc,{animation = "norm_"..slots[slot].."_critical_hit_torso_0",weapon = object.idle,sound_theme = 'npc_hit'})
+			return
+		end
+	end
+	rx_ai.play_animation(npc,{animation = "wounded_2_out",weapon = object.drop,sound_theme = 'npc_hit'})
+end

@@ -1,0 +1,58 @@
+-- -*- mode: lua; encoding: windows-1251 -*-
+local wnd = nil
+local wndX = { wide = 96, normal = 19 }
+
+
+function body_open()
+	if not wnd then	
+		wnd = BodyWnd(level.main_input_receiver())
+	end
+end
+
+function body_close()
+	if wnd then
+		wnd:DetachWnd()
+		wnd = nil
+	end
+end
+
+class "BodyWnd" (CUIScriptWnd)
+
+function BodyWnd:__init(owner) super()
+	self.owner = owner
+	self:Init(0, 0, 1024, 768)
+
+
+
+	self.stat = CUIStatic()
+	self.stat:Init(0, 0, 1024, 768)
+	self.owner:AttachChild(self.stat)
+	self.stat:Show(true)
+
+        self.stat:SetAutoDelete(true) 
+
+
+
+
+	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
+end
+
+
+function BodyWnd:__finalize() end
+
+function BodyWnd:DetachWnd() 
+
+self.DescrWnd:Remove() 
+
+self.DescrWnd = nil 
+
+self.owner:DetachChild(self.stat) 
+
+end 
+
+function attach( sm )
+
+	sm:subscribe({signal = "on_body_open", fun = this.body_open  })
+	sm:subscribe({signal = "on_body_hide", fun = this.body_close })
+
+end

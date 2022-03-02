@@ -1,0 +1,170 @@
+--------------------------------------------------------------------------------
+-- Ёффект стрельбы
+-- by Rulix aka Bak
+-- јдаптаци€ by Shadows
+--------------------------------------------------------------------------------
+local dh_ini = ini_file("misc\\rx_shoot_enable.ltx")
+local shoot_enable = rx_tool.read_from_ini(dh_ini,"main","shoot_enable",true,0)
+
+local wpn_tbl = {}
+local ammon = 0
+local shotc = 1
+local curwpn
+local shott
+local function parse_anims(sec)
+	local hud = rx_tool.read_from_ini(nil,sec,"hud","o_O",1)
+	local anim = rx_tool.read_from_ini(nil,hud,"shoot_effect",nil,1) or rx_tool.read_from_ini(dh_ini,hud,"shoot_effect",nil,1)
+	if not anim then
+		rx_tool.read_from_ini(dh_ini,rx_tool.read_from_ini(nil,sec,"class","O_o",1),"shoot_effect",nil,1)
+	end
+	if anim and dh_ini:section_exist(anim) then
+		local tbl = {}
+		tbl.s = rx_tool.parse_list(dh_ini,anim,"strength")
+		tbl.r = rx_tool.read_from_ini(dh_ini,anim,"strength_rnd",1)
+		tbl.e = {}
+		for i=0,5 do
+			tbl.e[i] = rx_tool.parse_list(dh_ini,anim,tostring(i))
+			for k,v in pairs(tbl.e[i]) do
+				tbl.e[i][k] = v and tonumber(v)
+			end
+		end
+		tbl.p = {}
+		tbl.c = {}
+		local n = dh_ini:line_count(anim)
+		if n > 8 then
+			for i=6,n-1 do
+				local r,id,val = dh_ini:r_line(anim,i,"","")
+				val = rx_tool.str_explode(",",val,true)
+				local shr = "ppe"
+				if val[2] then
+					shr = val[2]
+				end
+				local ex
+				if getFS():exist("$game_anims$",string.format("shoot\\%s.%s",id,shr)) then
+					ex = false
+				elseif getFS():exist("$game_anims$",string.format("shoot\\%s_s1.%s",id,shr)) then
+					ex = true
+				end
+				val[1] = tonumber(val[1])
+				if ex ~= nil and val[1] and val[1] ~= 0 then
+					if shr == "ppe" then
+						tbl.p[id] = {f = val[1],s = ex}
+					else
+						tbl.c[id] = {f = val[1],s = ex}
+					end
+				end
+			end
+		end
+		wpn_tbl[sec] = tbl
+	else
+		wpn_tbl[sec] = true
+	end
+end
+
+function shoot_effect()
+	if not shoot_enable then
+		return
+	end
+	if shott and shott < time_global() then
+		shotc = 1
+		shott = nil
+	end
+	local wpn = db.actor:active_item()
+	if rx_tool.item_is_fa(wpn) then
+		local sect = wpn:section()
+		if not wpn_tbl[sect] then
+			parse_anims(sect)
+		end
+		if wpn_tbl[sect] ~= true then
+			if wpn:name() == curwpn then
+				local aminmag = wpn:get_ammo_in_magazine()
+				if (aminmag == 0 and aminmag == ammon-1) or (aminmag ~= 0 and aminmag < ammon) then
+					shoot_anim(sect)
+				end
+				ammon = aminmag
+			else
+				curwpn = wpn:name()
+				ammon = wpn:get_ammo_in_magazine()
+			end
+		else
+			curwpn = nil
+		end
+	else
+		curwpn = nil
+	end
+end
+
+function shoot_anim(sect)
+	local anims = {}
+	local s = wpn_tbl[sect].s
+	if #s > 1 then
+		if wpn_tbl[sect].r == 1 then
+			s = s[math.random(#s)]
+		elseif wpn_tbl[sect].r == 2 then
+			if shotc == 1 then
+				s = shotc
+			else
+				s = s[math.random(2,#s)]
+			end
+		else
+			local sc = #s
+			sc = shotc <= sc and shotc or (sc > 2 and math.random(sc-1,sc)) or sc
+			s = s[sc]
+		end
+	else
+		s = s[1]
+	end
+	for i,v in pairs(wpn_tbl[sect].e) do
+		local cnt,r = math.modf(v[1])
+		if r ~= 0 and cnt > 4 then --fmb
+			cnt = cnt-cnt*math.random(0,r*100)/100 --fmb
+			cnt,r = math.modf(cnt)
+		end
+		if r ~= 0 and math.random() < r then
+			cnt = cnt+1
+		end
+		if cnt > 0 then
+			local dir = v[2]
+			if not dir then
+				dir = math.random(0,1)
+			end
+			table.insert(anims,{e = i,d = dir,c = cnt})
+		end
+	end
+	for i,a in ipairs(anims) do
+		local n = string.format([[shoot\s%s_e%s_%s.anm]],s,a.e,a.d)
+		for ii=1,a.c do
+			level.add_cam_effector(n,math.random(5000,8000),false,"")
+		end
+	end
+	for k,v in pairs(wpn_tbl[sect].c) do
+		local cnt,r = math.modf(v.f)
+		if r ~= 0 and cnt > 4 then
+			cnt = cnt-cnt*math.random(0,r*100)/100
+			cnt,r = math.modf(cnt)
+		end
+		if r ~= 0 and math.random() < r then
+			cnt = cnt+1
+		end
+		local n = v.s and string.format([[shoot\%s_s%s.anm]],k,s) or string.format([[shoot\%s.anm]],k)
+		for i=1,cnt do
+			level.add_cam_effector(n,math.random(8000,9000),false,"")
+		end
+	end
+	for k,v in pairs(wpn_tbl[sect].p) do
+		local n = v.s and string.format([[shoot\%s_s%s.ppe]],k,s) or string.format([[shoot\%s.ppe]],k)
+		local cnt,f = math.modf(v.f)
+		if f > 0 then
+			cnt = cnt+1
+		end
+		for i=1,cnt do
+			local eid = math.random(5000,8000)
+			level.add_pp_effector(n,eid,false)
+			if i == 1 then
+				level.set_pp_effector_factor(eid,f)
+			end
+		end
+	end
+	shotc = shotc+1
+	shott = time_global()+300
+end

@@ -1,0 +1,559 @@
+---- AI Additions ----
+---- Rulix aka Bak ----
+---- 2.7.2009,09.01.2016
+
+local function printf(s, ...)
+--	rx_utils.printf("ads:"..s,...)
+end
+
+local function printw(s, ...)
+	rx_utils.printf("ads:"..s.."!!!",...)
+end
+
+local function read_from_ini(ini,sec,val,def,typ)
+	return rx_utils.read_from_ini(ini,sec,val,def,typ)
+end
+
+local sc = clsid.wpn_scope_s
+local sl = clsid.wpn_silencer
+local gl = clsid.wpn_grenade_launcher
+ASSERTX(sc and sl and gl,"rx_addons: bad clsid %s %s %s",sc,sl,gl)
+
+local section_lines = {[sc] = "scope_name",[sl] = "silencer_name",[gl] = "grenade_launcher_name"}
+local flags_vals = {[sc] = 1,[sl] = 4,[gl] = 2}
+local flags_table = {[sc] = {[1] = true,[3] = true,[5] = true,[7] = true},
+					[sl] = {[4] = true,[5] = true,[6] = true,[7] = true},
+					[gl] = {[2] = true,[3] = true,[6] = true,[7] = true}}
+
+local cont = {}
+local keep_items = death_manager.always_keep_item
+
+ASSERTX(rx_ai.rx_ini:section_exist("addons"),"no section [addons] in rx_ini")
+local ad_enabled = read_from_ini(rx_ai.rx_ini,"addons","addons",false,0)
+local ss_enabled = read_from_ini(rx_ai.rx_ini,"addons","surplus_sales",false,0)
+local online_mode = read_from_ini(rx_ai.rx_ini,"addons","online_mode",true,0)
+local addons_sets = {
+	check_prd = read_from_ini(rx_ai.rx_ini,"addons","check_period",60)*1000,
+	maxw = read_from_ini(rx_ai.rx_ini,"addons","max_upg_weapons",5),
+	ss_exclude_items = read_from_ini(rx_ai.rx_ini,"addons","no_sale_items","",1)}
+local forbidden_factions = rx_utils.parse_list(rx_ai.rx_ini,"addons","forbidden_factions",true)
+local forbidden_npcs = rx_utils.parse_list(rx_ai.rx_ini,"addons","forbidden_npcs",true)
+
+function update()
+	local job = false
+	for id,t in pairs(cont) do
+		if t[2] < time_global() then
+			local wpn,npc = level.object_by_id(id),level.object_by_id(t[1])
+			printw("transfer[%s:%s]:fail %s",npc and npc:character_name(),wpn and wpn:name(),alife():object(k))
+			cont[id] = nil
+			local obj = alife():object(id)
+			if obj then
+				alife():release(obj)
+			end
+		end
+		job = true
+	end
+	return not job
+end
+
+function process_spawn_callback(ct,id,wpn)
+	cont[id] = nil
+	if wpn:section() ~= ct.sec then
+		printw("spawn_callback[%s:%s]:sect not match(%s)",ct.npc,wpn:name(),ct.sec)
+		return
+	end
+	local npc = level.object_by_id(ct.npc)
+	if npc then
+		printf("spawn_callback[%s:%s]:transfer (%s)",npc:character_name(),wpn:name(),id)
+		wpn:transfer_item(wpn,npc)
+		table.insert(rx_ai.ids_to_remove,ct.pid)
+		if ct.at then
+			for i,aid in ipairs(ct.at) do
+				printf("transfer[%s%s]:remove addon [%s]",sect,id,aid)
+				table.insert(rx_ai.ids_to_remove,aid)
+			end
+		end
+	else
+		printw("spawn_callback[%s:%s]:not npc",ct.npc,id)
+	end
+end
+
+function actor_save()
+	if not (online_mode and ad_enabled) then
+		return
+	end
+	for id,t in pairs(cont) do
+		local obj = alife():object(id)
+		if obj then
+			printw("actor_save[%s]:release %s",t[1],obj:name())
+			alife():release(obj)
+		end
+	end
+	cont = {}
+end
+
+function npc_switch_offline(npc_id)
+	if online_mode then
+		local sim = alife()
+		for id,t in pairs(cont) do
+			if t[1] == npc_id then
+				local obj = sim:object(id)
+				if obj then
+					printw("npc_switch_offline[%s]:release %s",t[1],obj:name())
+					sim:release(obj)
+				end
+				cont[id] = nil
+			end
+		end
+		if not ss_enabled then
+			return
+		end
+	end
+	local npc = level.object_by_id(npc_id)
+	if not npc or npc:wounded() or npc:best_enemy() or forbidden_factions[npc:character_community()] or forbidden_npcs[npc:name()] or rx_utils.IsTrader(npc) then
+		return
+	end
+	if not online_mode then
+		if ad_enabled then
+			process_addons(npc)
+		end
+	end
+	if ss_enabled then
+		surplus_sales(npc,true)
+	end
+end
+
+function npc_item_take(npc,item)
+	if not (ad_enabled and online_mode) then
+		return
+	end
+	local st,tg = rx_ai.get_storage(npc:id()),time_global()
+	if st.addons_somev and st.addons_somev < tg and (item_is_addon(item) or rx_utils.item_is_fa(item) and rx_utils.get_addon_flag(item) > 0) then
+		local wm = npc:get_wm(true)
+		if not (wm and wm.wpns_prstor[item:id()]) then	-- не реагировать на возвращаемое оружие
+			st.addons_time = tg+5000
+		end
+	end
+end
+
+function npc_update(npc,st)
+	if not (online_mode and (ad_enabled or ss_enabled)) then
+		return
+	end
+	local tg = time_global()
+	if not st.addons_time then
+		st.addons_time = tg+math.random(addons_sets.check_prd/2,addons_sets.check_prd)
+		st.addons_somev = tg+3000
+		if ss_enabled then
+			if not (forbidden_factions[npc:character_community()] or forbidden_npcs[npc:name()] or rx_utils.IsTrader(npc))
+				and npc:position():distance_to_sqr(db.actor:position()) > 100*100
+				then	surplus_sales(npc)
+			end
+		end
+	elseif st.addons_time < tg then
+		if forbidden_factions[npc:character_community()] or rx_utils.IsTrader(npc) or forbidden_npcs[npc:name()] then
+			st.addons_time = tg+60000
+		elseif npc:best_enemy() or xr_wounded.is_wounded(npc) or npc:is_talking() then
+			st.addons_time = tg+math.max(10000,addons_sets.check_prd/6)
+		else
+			if ad_enabled then
+				process_addons(npc)
+			end
+			st.addons_time = tg+math.random(addons_sets.check_prd,addons_sets.check_prd*1.5)
+			st.addons_somev = tg+4000
+		end
+	end
+end
+
+---------------------------------- addons -------------------------------------
+function process_addons(npc)
+	local wm,res = npc:get_wm()
+	local wmgr = wm and not wm.disabled
+	if wmgr and wm.pr_state then
+		return	-- не дрыгаться до отдупления оружия
+	end
+	local weapons = get_weapon_list(npc,wmgr,wm)
+	if #weapons > 0 then
+		local addons,acnt = get_addon_list(npc,weapons)
+		if acnt > 0 then
+			local convert = {}
+			for i,w in ipairs(weapons) do
+				convert[w.id] = 0
+			end
+			weapons = get_upd_weapons(weapons,wmgr,wm)
+			if wmgr then
+				local fpt = {}
+				for i,w in ipairs(weapons) do
+					for c,f in pairs(flags_table) do
+						local sect = w.ast[c]
+						if sect then			-- если есть секция аддона
+							for ii,a in ipairs(addons[c]) do
+--								if string.find(sect,a.sec) then	-- for COP
+								if a.sec == sect then		-- если присутствует подходящий аддон
+									fpt[w.id] = {t = w,adf = (fpt[w.id] and fpt[w.id].adf or 0)+flags_vals[c]}
+									break
+								end
+							end
+						end
+					end
+				end
+				for id,w in pairs(fpt) do	-- пересчитываем приоритет
+					local prm = wm:get_weapon_prior(level.object_by_id(id),w.adf)+w.t.adf/10
+--					printf("process[%s] recalc for %s[%s]:(%s change to %s)",npc:character_name(),w.t.sec,id,w.t.prm,prm)
+					w.t.prm = prm
+				end
+			else
+				local twt = {}
+				for i,w in ipairs(weapons) do
+					for c,f in pairs(flags_table) do
+						local sect = w.ast[c]
+						if sect then			-- если есть секция аддона
+							local brek
+							for ii,a in ipairs(addons[c]) do
+--								if string.find(sect,a.sec) then	-- for COP
+								if a.sec == sect then		-- если присутствует подходящий аддон
+									table.insert(twt,w)
+									brek = true
+									break
+								end
+							end
+							if brek then
+								break
+							end
+						end
+					end
+				end
+				weapons = twt
+			end
+			table.sort(weapons,function(a,b) return a.prm > b.prm end)
+			while #weapons > addons_sets.maxw do	--  or weapons[#weapons].prm < weapons[1].prm/3
+				table.remove(weapons)
+			end
+			local saveb = {}
+			for c,t in pairs(addons) do
+				for i,a in ipairs(t) do
+					local attach
+					for ii,w in ipairs(weapons) do
+--						if w.ast[c] and string.find(w.ast[c],a.sec) and not flags_table[c][convert[w.id]] then	-- for COP
+						if w.ast[c] and w.ast[c] == a.sec and not flags_table[c][convert[w.id]] then
+							convert[w.id] = convert[w.id]+flags_vals[c]
+							if not a.wpn then
+								if not saveb[w.id] then
+									saveb[w.id] = {}
+								end
+								table.insert(saveb[w.id],a.id)
+							end
+							attach = true
+--							printf("process[%s]:%s[%s] ---> %s[%s]",npc:character_name(),a.sec,a.id,w.sec,w.id)
+							break
+						end
+					end
+					if a.wpn then
+						if not attach then
+--							printf("process[%s]:spawn addon %s",npc:character_name(),a.sec)
+							alife():create(a.sec,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+						end
+					end
+				end
+			end
+			for id,f in pairs(convert) do
+				if f ~= rx_utils.get_addon_flag(level.object_by_id(id)) then
+--					printf("process[%s] convert %s(%s)",npc:character_name(),id,f)
+					convert_weapon(npc,id,f,saveb[id])
+					res = true
+				end
+			end
+			if res and online_mode then
+				if wmgr then
+					wm:disable(time_global()+4000)
+				end
+				db.actor:set_fastcall(update,npc)
+			end
+		end
+	end
+	return res
+end
+
+function get_weapon_list(npc,wmgr,wm)
+	local weapons,aws = {},{}
+	if wm then
+		weapons = wm:get_full_weapon_list()
+	else
+		local function weapon_iterator(q,item)
+			if rx_utils.item_is_fa(item) then
+				table.insert(weapons,{sec = item:section(),id = item:id(),prm = 0})
+			end
+		end
+		npc:iterate_inventory(weapon_iterator)
+	end
+--	printf("get_weapon_list[%s]:wpncnt=[%s]",npc:character_name() or npc:name(),#weapons)
+	if #weapons > 0 then
+		for i,w in ipairs(weapons) do
+			if not rx_utils.read_from_ini(nil,w.sec,"story_id",nil,1) then
+				local wpn = level.object_by_id(w.id)
+				local wt = {id = w.id,sec = w.sec,prm = w.prm,adf = rx_utils.get_addon_flag(wpn),ast = {}}
+				local ast = get_addons_status(wpn)
+				for c,_ in pairs(ast) do
+					wt.ast[c] = get_addon_section(wt.sec,c)
+				end
+				if wmgr then
+					for c,s in pairs(wt.ast) do
+						table.insert(aws,wt)
+						break
+					end
+				else
+					table.insert(aws,wt)
+				end
+			end
+		end
+	end
+--	printf("get_weapon_list[%s]:cnt=[%s]",npc:character_name() or npc:name(),#aws)
+	return aws
+end
+
+function get_addon_list(npc,weapons)
+	local addons = {[sc] = {},[sl] = {},[gl] = {}}
+	local cnt = 0
+	local function addon_iterator(q,item)
+		local c = item:clsid()
+		if item_is_addon(nil,c) then
+--			printf("gal[%s] addon! %s[%s](%s)",npc:character_name(),item:section(),item:id(),c)
+			table.insert(addons[c],{id = item:id(),sec = item:section()})
+			cnt = cnt+1
+		end
+	end
+	for c,f in pairs(flags_table) do
+		for i,w in ipairs(weapons) do
+			if w.adf ~= 0 and w.ast[c] then
+				if f[w.adf] then
+					local sec = get_addon_section(w.sec,c)
+					if sec then
+--						printf("gal[%s]: %s on weapon %s[%s]!(adf = %s)",npc:character_name(),sec,w.sec,w.id,w.adf)
+						table.insert(addons[c],{id = w.id,sec = sec,wpn = true})
+						cnt = cnt+1
+					end
+				end
+			end
+		end
+	end
+	npc:iterate_inventory(addon_iterator)
+--	printf("get_addon_list[%s]:cnt=[%s]",npc:character_name(),cnt)
+	return addons,cnt
+end
+
+function get_upd_weapons(weapons,wmgr,wm)	-- получить список оружия для надевания аддонов
+	if wmgr == true then
+		local remt,wmw = {},wm.weapons
+		if #wmw == 0 then
+			return remt
+		end
+		for i=1,#weapons do
+			local id,pr = weapons[i].id
+			for ii=1,#wmw do
+				if id == wmw[ii].id then
+					pr = true
+					break
+				end
+			end
+			if not pr then
+				remt[#remt+1] = i
+			end
+		end
+		if #remt ~= 0 then
+			table.sort(remt,function(a,b) return a > b end)
+			for i=1,#remt do
+				table.remove(weapons,remt[i])									-- удаляем с конца массива
+			end
+		end
+		return weapons
+	end
+	local tct,twt = {},{}
+	for i,t in ipairs(weapons) do
+		local typ = read_from_ini(nil,t.sec,"ef_weapon_type",0,3)
+		if not tct[typ] then
+			t.prm = typ
+			table.insert(twt,t)
+			tct[typ] = true
+		end
+	end
+	return twt
+end
+
+function convert_weapon(npc,id,flags,at)
+	local wpn = alife():object(id)
+	if not wpn then
+		return
+	end
+	local data = rx_utils.get_weapon_data(wpn)
+	if data.addon_flags ~= flags then
+		data.condition = data.addon_flags > flags and data.condition or math.min(1,data.condition+0.1)	-- при добавлении аддона починить оружие на 10%
+		data.addon_flags = flags
+		if online_mode then
+			local pos = level.vertex_position(npc:level_vertex_id())
+			pos.y = pos.y+3
+			local cwpn = alife():create(wpn:section_name(),pos,npc:level_vertex_id(),npc:game_vertex_id())
+			if cwpn then
+				rx_utils.set_weapon_data(data,cwpn)
+				rx_utils.switch_online(cwpn.id)
+				local ct = {pid = id,npc = npc:id(),sec = wpn:section_name(),at = at}
+				level.client_spawn_manager():add(cwpn.id,-1,process_spawn_callback,ct)
+--				printf("convert_weapon[%s%s]:create [%s] dist = %s",wpn:section_name(),id,cwpn.id,npc:position():distance_to(db.actor:position()))
+				cont[cwpn.id] = {npc:id(),time_global()+6000}
+			end
+		else
+			local cwpn = alife():create(wpn:section_name(),npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+			if cwpn then
+				rx_utils.set_weapon_data(data,cwpn)
+--				printf("convert offline [%s]->[%s] flags [%s]",id,cwpn.id,data.addon_flags)
+				table.insert(rx_ai.ids_to_remove,id)
+				if at then
+					for _,aid in ipairs(at) do
+--						printf("convert_weapon[%s%s]:remove addon [%s]",wpn:section_name(),id,aid)
+						table.insert(rx_ai.ids_to_remove,aid)
+					end
+				end
+			end
+		end
+	end
+end
+
+function item_is_addon(o,c)
+	if not c then
+		c = o and o:clsid()
+	end
+	return flags_vals[c] ~= nil
+end
+
+-- какие аддоны можно навесить на оружие
+function get_addons_status(wpn)
+	return {[sc] = (rx_utils.get_addon_status(wpn,"sc") == 2) or nil,
+			[sl] = (rx_utils.get_addon_status(wpn,"sl") == 2) or nil,
+			[gl] = (rx_utils.get_addon_status(wpn,"gl") == 2) or nil}
+end
+
+function get_addon_section(sec,c)
+--[[	if c == sc then
+		local list
+		local tbl = rx_utils.parse_list(nil,sec,"scopes_sect")
+		for i,v in pairs(tbl) do	-- конвертация scopes_sect в список названий прицелов
+			local ss = read_from_ini(nil,v,section_lines[c],nil,1)
+			if ss then
+				if list then
+					list = list..","..ss
+				else
+					list = ss
+				end
+			end
+		end
+		return list
+	end]]	-- COP
+	return read_from_ini(nil,sec,section_lines[c],nil,1)
+end
+
+---------------------------------- upgrades -----------------------------------
+
+-- для ТЧ недоступно
+
+--------------------------------- ssales --------------------------------------
+local max_count_grenade = 2
+local max_count_shell = 1
+function surplus_sales(npc,offl)
+	if not npc or npc:best_enemy() then
+		return
+	end
+	local rem = {}
+	local knives,consumables = {},{}
+	local clsid_count,gren_count = {},0
+	for i=0,npc:object_count()-1 do
+		local item = npc:object(i)
+		local cls_id = item:clsid()
+		if cls_id == clsid.wpn_knife_s then
+			table.insert(knives,item)
+--		elseif offl and cls_id == clsid.artefact_s then
+--			if math.random() < 0.5 then
+--				rem[item:id()] = item:section()
+--			end
+--		elseif cls_id == clsid.obj_food_s then
+--			table.insert(consumables,item)
+		elseif cls_id == clsid.wpn_grenade_rgd5 or cls_id == clsid.wpn_grenade_f1 then
+			gren_count = gren_count+1
+			if gren_count > max_count_grenade then
+				rem[item:id()] = item:section()
+			end
+		elseif cls_id == clsid.wpn_ammo_vog25 or cls_id == clsid.wpn_ammo_m209 then	-- or cls_id == clsid.wpn_ammo_og7b
+			clsid_count[cls_id] = (clsid_count[cls_id] or 0) + 1
+			if clsid_count[cls_id] > max_count_shell then
+				rem[item:id()] = item:section()
+			end
+		end
+	end
+-- выбор лучшего ножа
+	if #knives > 1 then
+		local best_prm,best_item = 0
+		for i,item in ipairs(knives) do
+			local prm = rx_utils.read_from_ini(nil,item:section(),"hit_power",1)*(item:condition()+0.6)
+			if prm > best_prm then
+				best_item = i
+			end
+		end
+		for i,item in ipairs(knives) do
+			if i ~= best_item then
+				rem[item:id()] = item:section()
+			end
+		end
+	end
+-- выбор еды и аптечек
+--[[	if #consumables > 1 then
+		if rx_bandage then
+			local medkits = rx_bandage.bandage_sets.medkits
+			local bandages = rx_bandage.bandage_sets.bandages
+		end
+	end]]
+-- выбор оружия
+	local wm = npc:get_wm(true)
+	if wm then
+		if not offl then
+			wm:update_weapon_list()	-- если вызов на первом апдейте, менеджер оружия ещё не обновлялся
+		end
+		local wpns = wm:get_full_weapon_list()
+--		printf("#wpns = %s, #wm.weapons = %s",#wpns,#wm.weapons)
+		if #wpns > #wm.weapons and #wm.weapons > 1 then
+			for _,w in ipairs(wpns) do
+				rem[w.id] = w.sec
+			end
+			for _,w in ipairs(wm.weapons) do
+				rem[w.id] = nil
+			end
+		end
+	else
+		local types = {}
+		for i=0,npc:object_count()-1 do
+			local item = npc:object(i)
+			if rx_utils.item_is_fa(item) then
+				local typ = rx_utils.read_from_ini(nil,item:section(),"ef_weapon_type",0,3)
+				if not types[typ] and item:get_ammo_total() > item:get_ammo_in_magazine() then
+					types[typ] = true
+				else
+					rem[item:id()] = item:section()
+				end
+			end
+		end
+	end
+	-- удаление
+	local sim = alife()
+	for id,sec in pairs(rem) do
+		-- not (rx_utils.read_from_ini(nil,sec,"story_id",nil,1) or rx_utils.read_from_ini(nil,sec,"quest_item",false,0)) and rx_utils.read_from_ini(nil,sec,"can_trade",true,0)
+		if not (keep_items[sec] or string.find(addons_sets.ss_exclude_items,sec)) then
+			local obj = sim:object(id)
+			if obj then
+				local cls_id = obj:clsid()
+				if rx_utils.item_is_fa(nil,cls_id) or cls_id == clsid.wpn_knife_s or cls_id == clsid.artefact_s then
+					local cost = math.floor(rx_utils.read_from_ini(nil,sec,"cost",10)/8)
+					npc:give_money(cost)
+				end
+--				printf("release[%s]:%s",npc:character_name(),obj:name())
+				table.insert(rx_ai.ids_to_remove,id)
+			end
+		end
+	end
+end

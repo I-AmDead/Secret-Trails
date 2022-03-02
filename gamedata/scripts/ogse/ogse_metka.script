@@ -1,0 +1,137 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+--/ ogse_metka.script /--
+--/ GPS beacon module /--
+--/ OGS Evolution Team 2015 /--
+--/ version 1.0 (28/12/2015)/--
+
+--/ Модуль GPS маячка (основан на наработках АМК) /--
+
+function attach(sm)
+	sm:subscribe({signal = "on_take", fun = this.on_item_take})
+	sm:subscribe({signal = "on_drop", fun = this.on_item_drop})
+end
+
+local setup_gps_beacon_wnd = nil
+
+--local beakons={}
+
+class "gps_drop_timer" (ogse_qt.quick_timer)
+function gps_drop_timer:__init(gps_obj)
+	self.gps_obj = gps_obj
+	ASSERT(self.gps_obj, "[gps_drop_timer:__init] invalid object id - no online object found!")
+end
+function gps_drop_timer:condition()
+	local parent = self.gps_obj:parent()
+	if parent == nil then  -- если родителя нет, значит просто выкинули на землю
+		level.start_stop_menu(setup_gps_beacon(self.gps_obj), true) -- ставим метку
+		return true 
+	else -- в противном случае
+		if not parent:alive() then -- если выложили в ящик или труп
+			level.start_stop_menu(setup_gps_beacon(self.gps_obj), true) -- ставм метку
+			return true 
+		elseif parent:id() ~= db.actor:id() then -- если отдали или продали живому персонажу
+			return true -- то просто ничего не делаем
+		end
+	end
+	return false -- оставшийся вариант - это "всё ещё находится у актора". Просто продолжаем ждать.
+end
+
+dropped_to_box = 0
+
+function on_item_drop(obj)
+	if obj:section() == "amk_metka" then
+		if dropped_to_box > 0 then 
+			dropped_to_box = dropped_to_box - 1 
+			return true
+		end
+
+			gps_drop_timer(obj):start()
+		return true
+	end
+end
+
+function on_item_take(obj)
+	if obj:section() == "amk_metka" then
+		-- подбираем с земли
+		if level.map_has_object_spot(obj:id(), "red_location") == 1 then
+			level.map_remove_object_spot( obj:id(), "red_location" )
+		end
+		return true
+	end
+end
+
+-- инициализация
+class "setup_gps_beacon" (CUIScriptWnd)
+
+function setup_gps_beacon:__init(gps_obj) super()
+	self.gps_obj = gps_obj
+	self:InitControls()
+	self:InitCallBacks()
+	setup_gps_beacon_wnd = self
+	self:SetWindowName("gps_metka")
+	
+	--log1("--setup_gps_beacon:__init")
+end
+
+function setup_gps_beacon:__finalize()
+	--log1("--setup_gps_beacon:__finalize")
+end
+
+function setup_gps_beacon:InitControls()
+	-- файл-описатель наших элементов
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_dots_wnd.xml")
+	xml:InitWindow("main", 0, self)
+
+	-- видео на заднем плане
+	xml:InitStatic("back_video", self)
+
+	-- рамка
+	xml:InitStatic("background", self)
+
+	-- кнопки
+	self:Register(xml:Init3tButton("caption", self),"caption")
+	self.btn_set_gps = xml:Init3tButton("btn_set_gps", self)
+	self:Register(self.btn_set_gps,"btn_set_gps")
+	self.btn_set_gps:Enable(false)
+	-- кнопка выхода
+	self:Register(xml:Init3tButton("btn_quit", self),"btn_quit")
+	self.edit_box = xml:InitEditBox("edit_box", self)
+	self:Register(self.edit_box, "edit_box")
+
+end
+
+function setup_gps_beacon:InitCallBacks()
+	-- тут интерактивные элементы, при определенном действии выполняется заданная ф-ия
+	self:AddCallback( "btn_set_gps", ui_events.BUTTON_CLICKED, self.set_gps, self )
+	self:AddCallback( "btn_quit", ui_events.BUTTON_CLICKED, self.on_quit, self )
+end
+function setup_gps_beacon:Update()
+	CUIScriptWnd.Update(self)
+	self.btn_set_gps:Enable(self.edit_box:GetText() ~= "")
+end
+function setup_gps_beacon:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:set_gps()
+		end
+		if dik == DIK_keys.DIK_RETURN then
+			if self.edit_box:GetText() ~= "" then
+				self:on_quit()
+			end
+		end
+	end
+	return true
+end
+
+function setup_gps_beacon:set_gps()
+	level.map_add_object_spot_ser(self.gps_obj:id(), "red_location", "%c[red]"..self.edit_box:GetText() )
+	self:on_quit()
+end
+
+function setup_gps_beacon:on_quit()
+	self:GetHolder():start_stop_menu(self, true)
+	self:ClearCallbacks()
+end

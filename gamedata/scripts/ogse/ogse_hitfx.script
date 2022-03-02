@@ -1,0 +1,72 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach(sm)
+  sm:subscribe({ signal = "on_monster_death", fun = this.npc_on_death })
+  sm:subscribe({ signal = "on_npc_death",     fun = this.npc_on_death })
+end
+
+
+function on_hit( obj, amount, local_direction, who, bone_index )
+  if not ( who and who:id() == db.actor:id() ) then return end
+  local wpn = who:active_item()
+  if not wpn then return end
+  if not get_bool( wpn:section(), "ogse_hitfx.on_hit" ) then
+    return
+  end
+  local ammo = get_ammo_sect( obj )
+  if ammo then
+    process_flame_hit( obj, ammo, who )
+  end
+end
+
+
+function process_flame_hit( obj, ammo, who )
+  local fx = get_string( ammo, "hit_fx_particle" )
+  if fx then
+    dsh_particles.play_particle(
+      obj, {
+        obj      = obj,
+        particle = fx,
+        bone     = "bip01_spine"
+    })
+  end
+end
+
+
+function npc_on_death( victim, who )
+  if not ( who and who:id() == db.actor:id() ) then return end
+  local ammo, wpn = get_ammo_sect( victim )
+  if ammo then
+    if get_bool( wpn:section(), "ogse_hitfx.on_hit" ) then
+      process_flame_hit( victim, ammo, who )
+    else
+      local fx = get_string( ammo, "hit_fx_particle" )
+      if fx then
+        action(
+          victim,
+          particle(
+            fx, "bip01_head",
+            particle_params(
+              vector():set( 0, 0, 0.3 ),
+              vector():set( 0, 0,   0 ),
+              vector():set( 1, 0,   0 )
+            ),
+            false
+          ),
+          cond( cond.time_end, 1000 )
+        )
+      end
+    end
+  end
+end
+
+
+function get_ammo_sect( victim )
+  local binder = victim:binded_object()
+  local hit    = binder.last_hit_data
+  if not hit then return end
+  if not ( hit.weapon_id or hit.who_id ) then return end
+  local wpn = level.object_by_id( hit.weapon_id or hit.who_id )
+  if not wpn then return end
+  return ( dsh.get_cur_wpn_ammo( wpn ) or wpn:section() ), wpn
+end

@@ -1,0 +1,101 @@
+[smart_terrains]
+none = true
+
+[logic]
+active=sleeper@vano
+danger = danger_ignore@vano
+combat_ignore = combat_ignore
+on_death = death@vano
+on_hit = hit@vano
+
+[sleeper@vano]
+path_main = vano_walk
+combat_ignore_cond = always
+meet = meet
+danger = danger_condition@vano
+on_actor_dist_le_nvis = 5 | {-vano_start_dialog_start} sleeper@vano1, {+vano_start_dialog_start -vano_start_dialog_have} walker@vano1, {+vano_start_dialog_have -vano_start_dialog_done} remark@vano1, {+vano_start_dialog_done -vano_finish} remark@vano2, {+vano_finish} walker@vano4  
+
+[sleeper@vano1]
+path_main = vano_walk
+combat_ignore_cond = always
+meet = no_meet
+danger = danger_condition@vano
+on_timer = 8000 | walker@vano
+
+[walker@vano]
+path_walk = vano_walk
+path_look = vano_look
+def_state_standing = eat_vodka
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_timer = 26000 | walker@vano1
+ 
+[walker@vano1]
+path_walk = vano_walk
+path_look = vano_look
+meet = meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_info = {+vano_hit} walker@vano5
+
+[remark@vano1]
+target = actor
+snd = vano1
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_signal = sound_end | walker@vano2
+
+[walker@vano2]
+path_walk = vano_walk
+path_look = vano_look
+meet = meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_info = {+vano_start_dialog_done} remark@vano2
+on_info2 = {+vano_hit} walker@vano5
+
+[remark@vano2]
+target = actor
+snd = vano2
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_signal = sound_end | %+vano_finish% walker@vano3
+
+[walker@vano3]
+path_walk = vano_walk
+path_look = vano_look
+meet = meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_info = {+vano_hit} walker@vano5
+
+[walker@vano4]
+path_walk = vano_walk
+path_look = vano_look
+meet = meet
+combat_ignore_cond = always
+danger = danger_condition@vano
+on_info = {+vano_hit} walker@vano5
+
+[walker@vano5]
+path_walk = vano_walk
+path_look = vano_look
+meet = meet
+danger = danger_condition@vano
+On_timer = 60000 | walker@vano4
+
+[danger_condition@vano]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[death@vano]
+on_info = %+vano_dead%
+
+[hit@vano]
+on_info = %+vano_hit% 
+
+[combat_ignore]
+combat_ignore_cond = always

@@ -1,0 +1,1126 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+-----------------------------------------------------------------------
+--- ogse_addons.script
+--- Модуль сменных аддонов.
+--- для работы необходим модуль функций работы с оружием ogse_wpn_utils.script
+--- Dusty79, Malandrinus (c) OGS Evolution Team
+--- version 3.0 (01/08/2011)
+-----------------------------------------------------------------------
+
+function attach(sm)
+	sm:subscribe({signal = "on_spawn",        fun = this.on_spawn})
+	sm:subscribe({signal = "on_use",          fun = this.on_use})
+	sm:subscribe({signal = "on_key_down",     fun = this.on_key_down})
+	sm:subscribe({signal = "on_item_to_ruck", fun = this.on_item_to_ruck})
+	sm:subscribe({signal = "on_take",         fun = this.on_take})
+	sm:subscribe({signal = "on_inventory_open", fun = this.on_inventory_open})
+	sm:subscribe({signal = "on_inventory_hide", fun = this.on_inventory_hide})
+end
+
+-- флаги аддонов
+local addons_flags = ogse_wpn_utils.addons_flags
+
+flag2status_param = {
+	[1]  = "scope_status",
+	[2]  = "grenade_launcher_status",
+	[4]  = "silencer_status",
+	[8]  = "grip_status",
+	[16] = "magazine_status",
+	[32] = "scope_mount_status",
+}
+flag2name_param = {
+	[1]  = "scope_name",
+	[2]  = "grenade_launcher_name",
+	[4]  = "silencer_name",
+	[8]  = "grip_name",
+	[16] = "magazine_name",
+	[32] = "scope_mount_name",
+}
+
+local sim = alife()
+
+function on_spawn() -- при появлении актора проинитить используемые в будущем глобальные переменные
+	sim = alife()
+end
+-- 
+local slot_actions = {do_nothing = 0, install = 1, take = 2,}
+-- функция проверяет, что можно сделать с аддоном заданного типа в заданном слоте в данный момент
+-- результат возвращается в виде комбинации флажков из slot_actions
+function get_available_actions_for_slot(addon_sec, slot_num)
+	--log1("get_available_actions_for_slot")
+	local available_actions = flags16():assign(slot_actions.do_nothing)
+	-- проверяем, что аддон можно поставить в ствол в данном слоте
+	local wpn = db.actor:item_in_slot(slot_num)
+	if wpn then -- проверяем, что вообще есть куда устанавливать
+		local wpn_section = wpn:section()
+		-- проверяем, что аддон подходит для этого ствола
+		local addon_type = get_addon_type(addon_sec)
+		local new_wpn_sect = get_converted_wpn_section(wpn_section, addon_sec)
+		if
+			is_addon_removable(wpn_section, addon_type)
+			and new_wpn_sect
+			and not ( is_addon_installed(wpn, addon_type) and new_wpn_sect == wpn_section and get_string(wpn_section, flag2name_param[addon_type]) == addon_sec ) --KRodin: запретим повторную установку аддона на ствол, на котором такой же аддон уже установлен
+		then
+			-- не должно быть ситуации когда в конфиге ствола есть данные по установке аддона 
+			-- и при этом в стволе прописано, что аддона такого типа нет вообще 
+			-- или ствол имеет несъёмный аддон этого же типа.
+			-- То и другое не имеет смысла и должно быть исключено конфигами
+			-- проверяем, если вообще нет аддона
+			--[[ASSERT(not no_such_addon(wpn_section, addon_type),
+				string.format("get_available_actions_for_slot: Addon '%s' has switching config in weapon's section '%s', \nbut this weapon has no addon of this type.",
+				addon_sec,
+				wpn_section))
+			-- если несъёмный
+			ASSERT(is_addon_removable(wpn_section, addon_type),
+				string.format("get_available_actions_for_slot: Addon '%s' has switching config in weapon's section '%s', \nbut this weapon has a permanent addon of this type.",
+				addon_sec,
+				wpn_section))
+				]]
+			available_actions:set(slot_actions.install, true) -- можно установить
+		end
+	end
+	--
+	-- проверяем, что аддон можно установить в данный слот в автономной конфигурации (наличие оружия в слоте в данном случае не важно)
+	local new_wpn_sec = get_string(addon_sec, "standalone_shotgun_section")
+	if new_wpn_sec then -- этот аддон можно сконвертировать в ствол
+		if --[[slot_num == get_u32(new_wpn_sec, "slot")]] slot_num ==  1 or slot_num == 2  then -- и этот слот совпадает с заданным --KRodin: сейчас слоты равнозначные, поэтому так.
+			available_actions:set(slot_actions.take, true) -- можно взять
+		end
+	end
+	--
+	--log1(string.format("a=%x",available_actions:get()))
+	return available_actions
+end
+local monitored_addon_classes = {
+	[clsid.wpn_grenade_launcher] = true,
+	[clsid.wpn_scope]            = true,
+	[clsid.wpn_scope_s]          = true,
+}
+function always_fake_item(section)
+	return get_bool(section, "always_fake", false)
+end
+
+--[=[
+секции аддонов без конвертации
+local monitored_addon_sections = {
+	["wpn_addon_grip"] = true,
+	["wpn_addon_grip_fake"] = true,
+	["wpn_addon_scope_mount"] = true,
+	["wpn_addon_scope_mount_fake"] = true,
+	["fake_wpn_addon_mtk83"] = true,
+	["fake_wpn_addon_mtk83_fake"] = true,
+}--]=]
+
+-- колбек на использование инвентарного предмета
+function on_use(obj, sobj)
+	--if sobj == nil then return end
+	local real_addon_section = get_real_addon_section(obj) -- секция реального аддона для фейкового
+	if not real_addon_section then return end -- если её нет, значит это не аддон
+	--log3("real_addon_section: %s", real_addon_section)
+	if -- если аддон не входит в число управляемых данным менеджером
+		not monitored_addon_classes[get_class(real_addon_section)]
+		and not always_fake_item(obj:section())
+		--and not monitored_addon_sections[obj:section()]
+	then
+		--log1("not addon")
+		return 
+	end
+	--
+	-- использованный фейковый создали заново (вне зависимости от дальнейших действий предмет останется в инвентаре,
+	-- если надо будет удалить, то удалим повторно уже по факту установки аддона)
+	--log3("~~Spawning object with section [%s] %s", obj:section(), debug.traceback())
+	local s_new_fake_addon = ogse.spawn_item_in_inv(obj:section())
+	-- переносим кастомдату из удалённого аддона в свежесозданный
+	s_new_fake_addon.custom_data = sobj.custom_data
+	-- Теперь выясняем, что можно сделать с этим аддоном в каждом из слотов
+	local slot1_actions = get_available_actions_for_slot(real_addon_section, 1)
+	local slot2_actions = get_available_actions_for_slot(real_addon_section, 2)
+	--log3("s1=%x s2=%x",slot1_actions:get(), slot2_actions:get())
+	if slot1_actions:get()==slot_actions.do_nothing and slot2_actions:get()==slot_actions.do_nothing then -- ни с одним слотом ничего не сделать
+		ogse.autohiding_msg("ogse_addons_warn_text", 1500)
+	elseif slot1_actions:get()==slot_actions.take and slot2_actions:get()==slot_actions.do_nothing then -- можно только взять в первый слот
+		convert_addon_to_slot(s_new_fake_addon, 1)
+	elseif slot1_actions:get()==slot_actions.do_nothing and slot2_actions:get()==slot_actions.take then -- можно только взять во второй слот
+		-- поступаем аналогично. Примечание, учитывая, что этот вариант почти исключительно будет использоваться
+		-- для подствольного дробовика XM26, а он при конвертации будет превращаться в дробовик для первого слота, то
+		-- эта ветка вряд ли когда-либо сработает. Но мало ли...
+		convert_addon_to_slot(s_new_fake_addon, 2)
+	elseif slot1_actions:get()==slot_actions.install and slot2_actions:get()==slot_actions.do_nothing then -- можно только установить на оружие в первый слот
+		local wpn = db.actor:item_in_slot(1)
+		ASSERT(wpn, "ogse_addons.on_use: slot 1 is empty!")
+		install_remove_addon(wpn, s_new_fake_addon)
+	elseif slot1_actions:get()==slot_actions.do_nothing and slot2_actions:get()==slot_actions.install then -- можно только установить на оружие во втором слоте
+		local wpn = db.actor:item_in_slot(2)
+		ASSERT(wpn, "ogse_addons.on_use: slot 1 is empty!")
+		install_remove_addon(wpn, s_new_fake_addon)
+	else -- в случае неопределённости даём игроку решает, что делать
+		level.start_stop_menu(addon_control(slot1_actions, slot2_actions, s_new_fake_addon), true)
+	end
+	return true -- закончили цепочку вызовов
+end -- on_use
+
+-- вспомогательная функция. Освобождает слот и конвертирует аддон, так что полученное оружие займёт этот слот
+function convert_addon_to_slot(saddon, slot_number)
+	local wpn = db.actor:item_in_slot(slot_number)
+	if wpn then db.actor:move_to_ruck(wpn) end -- освобождаем слот
+	convert_addon_to_shg(saddon, slot_number) -- конвертируем аддон, появившийся ствол займёт нужный слот
+end
+
+function is_scope(section)
+	return (sys_ini:r_clsid(section, "class") == clsid.wpn_scope_s) -- "WP_SCOPE"
+end
+function is_grenade_launcher(section)
+	return (sys_ini:r_clsid(section, "class") == clsid.wpn_grenade_launcher) -- "W_GLAUNC"
+end
+function is_silencer(section)
+	return (sys_ini:r_clsid(section, "class") == clsid.wpn_silencer)
+end
+
+function is_grip_addon(section)
+	return get_bool(section, "is_grip_addon") == true
+end
+function is_magazine_addon(section)
+	return get_bool(section, "is_magazine_addon") == true
+end
+function is_scope_mount_addon(section)
+	return get_bool(section, "is_scope_mount_addon") == true
+end
+--function is_handle(section)
+-- по фейковому объекту получить секцию реального аддона
+function get_real_addon_section(item)
+	ASSERT(item, "get_real_addon_section: item is nil")
+	local sec
+	if type(item.section) == "function" then
+		sec = item:section()
+	elseif type(item.section_name) == "function" then
+		sec = item:section_name()
+	else
+		abort("get_real_addon_section: unknown object type")
+	end
+	return get_string(sec, "real_item_section", nil)
+end
+-- по секции аддона получить маску для поля флажков аддонов
+function get_addon_type(addon_sec)
+	--log3("get_addon_type: %s", addon_sec)
+	local addon_type = 0
+	if     is_scope(addon_sec)            then addon_type = 1
+	elseif is_grenade_launcher(addon_sec) then addon_type = 2
+	elseif is_silencer(addon_sec)         then addon_type = 4
+	elseif is_grip_addon(addon_sec)       then addon_type = 8
+	elseif is_magazine_addon(addon_sec)   then addon_type = 16
+	elseif is_scope_mount_addon(addon_sec)then addon_type = 32
+	end
+	--log3("get_addon_type: %s, %d", addon_sec, addon_type)
+	return addon_type
+end
+-- допустим ли аддон такого типа
+-- 0 - no addon; 1 - permanent; 2 - attachable
+function no_such_addon(wpn_section, addon_flag)
+	return (0 == get_u32(wpn_section, flag2status_param[addon_flag]))
+end
+-- является ли аддон отъёмным
+function is_addon_removable(wpn_section, addon_flag)
+	--log3("is_addon_removable: wpn_section = %s, addon_flag = %s", tostring(wpn_section), tostring(addon_flag))
+	return (2 == get_u32(wpn_section, flag2status_param[addon_flag]))
+end
+-- является ли аддон несъёмным
+function is_addon_permanent(wpn_section, addon_flag)
+	return (1 == get_u32(wpn_section, flag2status_param[addon_flag]))
+end
+--
+function is_scope_removable(wpn_section)
+	return is_addon_removable(wpn_section, addons_flags.scope)
+end
+function is_grenade_launcher_removable(wpn_section)
+	return is_addon_removable(wpn_section, addons_flags.gl)
+end
+-- установлен ли аддон
+function is_addon_installed(obj, addon_flag)
+	return obj and (bit_and(ogse_wpn_utils.get_addon_flags(obj), addon_flag) ~= 0)
+end
+--
+function is_scope_installed(obj)
+	return is_addon_installed(obj, addons_flags.scope)
+end
+function is_grenade_launcher_installed(obj)
+	return is_addon_installed(obj, addons_flags.gl)
+end
+function is_silencer_installed(obj)
+	return is_addon_installed(obj, addons_flags.silencer)
+end
+function is_grip_installed(obj)
+	return is_addon_installed(obj, addons_flags.grip)
+end
+function is_scope_mount_installed(obj)
+	return is_addon_installed(obj, addons_flags.scope_mount)
+end
+
+
+function get_converted_wpn_section(wpn_section, addon_section)
+	--if is_scope(addon_section) and get_u32(wpn_section, "scope_status", nil) ~= 2 then return nil end
+	--if is_grenade_launcher(addon_section) and get_u32(wpn_section, "grenade_launcher_status", nil) ~= 2 then return nil end
+	--if is_silencer(addon_section) and get_u32(wpn_section, "silencer_status", nil) ~= 2 then return nil end
+
+	--log3("converted_wpn_section: %s, %s", wpn_section, addon_section)
+	local param_name = flag2name_param[get_addon_type(addon_section)]-- имя параметра с именем аддона
+	--log3("param_name: %s", param_name)
+	ASSERT(param_name, "get_converted_wpn_section: Incorrect addon section. Check logic of code/configs.")
+
+	if addon_section == get_string(wpn_section, param_name, nil) then -- если этот аддон подходит для стола без специальной конвертации
+		return wpn_section -- то просто возвращаем ту-же секцию ствола, что и была
+	end
+	-- в противном случае ищем в секции ствола параметр с именем аддона или nil (т.е. аддон никаким боком не подошёл)
+	local new_sec = get_string(wpn_section, addon_section, nil)
+	--log3("new_sec: %s", tostring(new_sec))
+	return new_sec
+end
+-- функция получения параметров подствольного дробовика сохранённых в кастомдате
+function get_shg_params_from_cd(swpn)
+	local cd = swpn:spawn_ini()
+	ASSERT(cd:section_exist("shg_params"), "get_shg_params_from_cd: No 'shg_params' section in object custom data")
+	t = cd:r_u32("shg_params", "ammo_type")
+	n = cd:r_u32("shg_params", "ammo_elapsed")
+	s = cd:r_string("shg_params", "ammo_section")
+	cond = cd:r_float("shg_params", "condition")
+	return t,n,s,cond
+end
+function replace_shg_cd(sobj,t,n,s,cond)
+  local ini = sobj:spawn_ini()
+  ini.readonly = false
+  ini:w_u32( "shg_params", "ammo_type", t )
+  ini:w_u32( "shg_params", "ammo_elapsed", n )
+  ini:w_string( "shg_params", "ammo_section", s )
+  ini:w_float( "shg_params", "condition", cond )
+  sobj:save_spawn_ini()
+end
+-- Функция установки свойств подствольника.
+-- Сразу после создания объекта надо с помощью этой функции прописать ему кастомдату
+-- в противном случае будут вылеты!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function set_addon_shg_params_to_cd(sobj,t,n,s,cond)
+	ASSERT(s and s ~= "", "") --Надо проверить, бывает ли такое.
+	--if s == "" or s == nil then s = "-" end --KRodin: ???
+	replace_shg_cd(sobj,t,n,s,cond)
+end
+
+function set_default_shg_params(sitem) --Функция для вызова из вне. Используется при спавне аддона-дробовика.
+	set_addon_shg_params_to_cd(sitem,0,0,"ammo_12x70_kart",1.0)
+end
+
+function get_wpn_parameters(wpn, swpn_, sec_)
+	local swpn = swpn_ or sim:object(wpn:id())
+	local section = sec_ or wpn:section()
+	ASSERT(swpn, "get_shg_parameters: swpn")
+	local shg = {}
+	local rif = {}
+	local cur_t, cur_n = wpn:get_ammo_type(), wpn:get_ammo_in_magazine()
+	local ammo_sections = get_names(section, "ammo_class") -- получаем список секций патронов
+	local cur_s, cur_c = ammo_sections[cur_t+1], wpn:condition()
+	local cd_t,cd_n,cd_s,cd_c = get_shg_params_from_cd(swpn) -- получаем данные из кастомдаты текущего ствола
+	if get_string(section, "shotgun_mode_section") then -- в режиме винтовки
+		-- заряды дробовика - в кастомдате, параметры винтовки - это активный боеприпас
+		shg.ammo_type, shg.ammo_elapsed, shg.ammo_sections, shg.condition = cd_t,cd_n,cd_s,cd_c
+		rif.ammo_type, rif.ammo_elapsed, rif.ammo_sections, rif.condition = cur_t,cur_n,cur_s,cur_c
+	elseif get_string(section, "rifle_mode_section") then -- в режиме дробовика
+		-- заряды дробовика - это активный боеприпас, параметры винтовки - в кастомдате
+		shg.ammo_type, shg.ammo_elapsed, shg.ammo_sections, shg.condition = cur_t,cur_n,cur_s,cur_c
+		rif.ammo_type, rif.ammo_elapsed, rif.ammo_sections, rif.condition = cd_t,cd_n,cd_s,cd_c
+	else
+		abort("get_shg_parameters: gun's section doesn't has appropriate parameters.")
+	end
+	return rif, shg
+end
+
+local function move_weapon_to_slot(sobj, slot, is_slot_active) --KRodin: Сделано для поддержки равнозначных слотов
+  level.client_spawn_manager():add(
+    sobj.id, -1, function( tbl, id, obj )
+		if db.actor:is_in_slot( obj ) then
+			db.actor:move_to_ruck( obj ) --Необходимо, иначе будут глюки и непонятные вылеты
+		end
+		set_inv_item_slot( obj, tbl[1] )
+		db.actor:move_to_slot(obj)
+		if tbl[2] then
+			db.actor:activate_slot( tbl[1] )
+		end
+		--db.actor:invalidate_inventory() --Вроде как теперь обновлять инвентарь не требуется.
+		--update_inventory_window()
+    end, {slot, is_slot_active}
+  )
+end
+
+-- назначение функции - по факту снятия аддона-дробовика сконвертировать ствол
+-- в версию без дробовика (фактически, с одним из стандартных подствольных гранатомётов, но снятым)
+function convert_after_shg_detached(cur_weapon)
+	ASSERT(cur_weapon, "convert_after_shg_detached: 'cur_weapon' is a nil reference. Check logic of your code.")
+	local cur_weapon_sect = cur_weapon:section()
+	
+	local new_wpn_section = get_sect_to_convert_after_shg_removed(cur_weapon)
+	ASSERT(new_wpn_section, "convert_after_shg_detached: Can't get section for new weapon")
+	local s_cur_weapon = sim:object(cur_weapon:id())
+    --
+	local cur_wpn = s_cur_weapon:get_weapon()
+	local cur_wpn_addon_flags = cur_wpn.addon_flags
+ 	local cur_wpn_cd = s_cur_weapon.custom_data
+   --
+	-- безусловно "снимаем" аддон. На самом деле он здесь уже снят, но "неправильно", движковым действием,
+	-- наша задача снять его "правильно", т.е. попросту создать и задать нужные параметры (в кастомдате)
+	local removed_real_gl_sec = get_string(cur_weapon_sect, "grenade_launcher_name", nil)
+	ASSERT(removed_real_gl_sec, "convert_after_shg_detached: Addon flag is set, but there is no addon section defined! Check logic of code/configs.")
+	
+	local removed_fake_gl_sec = get_string(removed_real_gl_sec, "fake_item_section", nil)
+	ASSERT(removed_fake_gl_sec, "convert_after_shg_detached: No fake addon section defined! Check section: "..removed_real_gl_sec)
+	
+	--log3("~~Spawning object with section [%s] %s", removed_fake_gl_sec, debug.traceback())
+	local s_new_fake_addon = ogse.spawn_item_in_inv(removed_fake_gl_sec) -- собственно создаём
+	-- надо добавить из него заряды в кастомдату снятого подствольного дробовика
+	-- проверяем текущий ствол
+	ASSERT(get_u32(removed_fake_gl_sec, "is_shotgun") == 1, "convert_after_shg_detached: detached addon doesn't has 'is_shotgun' parameter in its section '"..removed_fake_gl_sec.."'")
+
+	local rif, shg = get_wpn_parameters(cur_weapon, s_cur_weapon, cur_weapon_sect)
+
+	-- переносим данные дробовика в кастомдату аддона
+	set_addon_shg_params_to_cd(s_new_fake_addon,shg.ammo_type,shg.ammo_elapsed,shg.ammo_sections,shg.condition)
+
+	local cur_wpn_slot_engine = get_inv_item_slot( cur_weapon )
+	local cur_wpn_slot_cfg = get_u32(cur_weapon:section(), "slot")
+	local is_slot_active = db.actor:active_slot() == cur_wpn_slot_engine
+
+	db.actor:drop_item(cur_weapon)
+	sim:release(s_cur_weapon, true) -- удаляем старый ствол
+  --
+  local sm_slot = {
+    signal = "se_item:on_before_register",
+	fun = function( sobj )
+      local iitem = sobj:get_inventory_item()
+      iitem.item_condition = rif.condition -- переносим состояние ствола
+      sobj.custom_data = "" --cur_wpn_cd -- кастомдату --KRodin: Надо подумать, переносить кастомдату или нет.
+      local wpn = sobj:get_weapon()
+      wpn.ammo_type    = rif.ammo_type -- тип боеприпаса
+      wpn.ammo_elapsed = rif.ammo_elapsed -- количество боеприпаса
+      wpn.addon_flags = cur_wpn_addon_flags:set( addons_flags.gl, false ) -- снимаем флажок аддона
+    end
+  }
+  ogse_signals.get_mgr():subscribe( sm_slot )
+  --log3("~~Spawning object with section [%s] %s", new_wpn_section, debug.traceback())
+  local s_new_weapon = ogse.spawn_item_in_inv(new_wpn_section)
+  ogse_signals.get_mgr():unsubscribe( sm_slot )
+  --
+  --if cur_wpn_slot_engine ~= cur_wpn_slot_cfg then
+    move_weapon_to_slot(s_new_weapon, cur_wpn_slot_engine, is_slot_active)
+  --end
+  --
+  soundtrack.s_play_no_feedback([[interface\inv_attach_addon]])
+end
+-- служебная функция: по секции ствола и индексу типа патронов заспавнить нужное количество БП актору
+-- дополнительно указывается, что БП - это граната (для выбора секции из нужного списка)
+local function aux_spawn_ammo_by_type(wpn_section, ammo_type_idx, amount, is_grenade)
+	local ammo_sections = get_names(wpn_section, is_grenade and "grenade_class" or "ammo_class") -- получаем список секций БП
+	local ammo_sec = ammo_sections[ammo_type_idx+1] -- и узнаём заряженную секцию
+	if amount == 0 then return end -- на всякий случай, хотя такая же проверка есть и внутри ogse.spawn_ammo_in_inv
+	ogse.spawn_ammo_in_inv(ammo_sec, amount) -- спавним в инвентарь требуемое количество боеприпасов 
+end
+
+-- Установка аддона методом пересоздания объекта ствола
+function install_remove_addon(cur_weapon, sfake_addon_or_addon_flag, remove_addon)
+	ASSERT(cur_weapon, "install_remove_addon: 'cur_weapon' is a nil reference. Check logic of your code.")
+	local cur_weapon_sect = cur_weapon:section()
+	local s_cur_weapon = sim:object(cur_weapon:id())
+	--
+	local cur_wpn = s_cur_weapon:get_weapon()
+    local cur_wpn_ammo_type = cur_wpn.ammo_type
+    local cur_wpn_ammo_elapsed = cur_wpn.ammo_elapsed
+	local cur_wpn_addon_flags = cur_wpn.addon_flags
+	local cur_wpn_condition = s_cur_weapon:get_inventory_item().item_condition
+	local cur_wpn_cd = s_cur_weapon.custom_data
+	--
+	local modified_params = {}
+	modified_params.condition    = cur_wpn_condition       -- переносим состояние ствола
+	modified_params.ammo_type    = cur_wpn_ammo_type       -- тип боеприпаса
+	modified_params.ammo_elapsed = cur_wpn_ammo_elapsed    -- количество боеприпаса
+	modified_params.custom_data  = cur_wpn_cd              -- кастомдату
+	--
+	local sfake_addon = nil
+	local removed_addon_flags = 0
+	local installed_addon_flag = 0
+	local new_wpn_section = nil
+	local real_addon_section = nil
+	
+	if remove_addon then -- если снимаем аддон
+		-- то надо определить секцию нового ствола иначе, чем если меняем
+		removed_addon_flags = sfake_addon_or_addon_flag
+		ASSERT( cur_wpn_addon_flags:is( removed_addon_flags ), 
+			"[install_remove_addon] trying to remove addon which is not installed! obj_name = '%s', removed_addon_flags = %x",
+			cur_weapon:name(),
+			removed_addon_flags)
+		-- для тактических рукояток и магазинов новая секция задаётся специальными параметрами перехода
+		if     removed_addon_flags == addons_flags.grip then
+			new_wpn_section = get_string(cur_weapon_sect, "grip_removed_section")
+		elseif removed_addon_flags == addons_flags.scope_mount then -- если снимаем планку для прицелов
+			-- то вместе с ней снимаем и прицел, если установлен
+			if is_scope_installed(cur_weapon) then
+				removed_addon_flags = bit_or(removed_addon_flags, addons_flags.scope)
+			end
+			
+			new_wpn_section = get_string(cur_weapon_sect, "scope_mount_removed_section")
+		elseif removed_addon_flags == addons_flags.magazine then
+			-- ствол без магазина. Размер магазина нулевой (и стрелять не может), анимации перезарядки нет.
+			-- не знаю, будет ли это нужно, но по идее может пригодиться
+			new_wpn_section = get_string(cur_weapon_sect, "magazine_removed_section")
+		else
+			new_wpn_section = cur_weapon_sect-- для стандартных аддонов секция остаётся той же
+		end
+		
+	else
+		sfake_addon = sfake_addon_or_addon_flag
+		real_addon_section = get_real_addon_section(sfake_addon)
+		installed_addon_flag = get_addon_type(real_addon_section)
+		if cur_wpn_addon_flags:is( installed_addon_flag ) then
+			removed_addon_flags = installed_addon_flag
+		elseif installed_addon_flag == addons_flags.grip and cur_wpn_addon_flags:is( addons_flags.gl ) then
+			removed_addon_flags = addons_flags.gl
+		elseif installed_addon_flag == addons_flags.gl and cur_wpn_addon_flags:is( addons_flags.grip ) then
+			removed_addon_flags = addons_flags.grip
+		elseif installed_addon_flag == addons_flags.scope_mount and cur_wpn_addon_flags:is( addons_flags.scope ) then
+			removed_addon_flags = addons_flags.scope
+		end
+		new_wpn_section = get_converted_wpn_section(cur_weapon_sect, real_addon_section) -- получаем секцию сконвертированного ствола
+		ASSERT(new_wpn_section, "install_remove_addon: Can't get section for new weapon")
+	end
+
+	if cur_wpn_addon_flags:is( addons_flags.gl ) then
+		if cur_weapon:is_weapon_gl() and ogse_wpn_utils.get_gl_mode(cur_weapon) then -- в режиме подствольника
+			-- то гранаты - это активный боеприпас
+			modified_params.ammo_type2, modified_params.ammo_elapsed2 = cur_wpn_ammo_type, cur_wpn_ammo_elapsed
+			modified_params.ammo_type = cur_weapon:get_underbarrel_ammo_type()
+			modified_params.ammo_elapsed = cur_weapon:get_ammo_in_magazine2()
+		else -- обычный ствол в обычном режиме
+			-- то гранаты - это скрытый боеприпас
+			modified_params.ammo_type2 = cur_weapon:get_underbarrel_ammo_type()
+			modified_params.ammo_elapsed2 = cur_weapon:get_ammo_in_magazine2()
+		end
+	end
+
+	-- "снимаем" указанный аддон, т.е. спавним его в инвентарь
+	if removed_addon_flags ~= 0 then -- есть флаги аддонов
+		for flag_name,removed_addon_flag in pairs(addons_flags) do
+			if bit_and(removed_addon_flags, removed_addon_flag) ~= 0 then
+				ASSERT(is_addon_removable(cur_weapon_sect, removed_addon_flag), "install_remove_addon: Trying detach a permanent addon")
+				-- выясняем секцию параметра с именем аддона
+				local addon_param = flag2name_param[removed_addon_flag]
+				-- оттуда читаем саму секцию аддона
+				local removed_real_addon_sec = get_string(cur_weapon_sect, addon_param, nil)
+				ASSERT(removed_real_addon_sec, "install_remove_addon: Addon flag is set, but there is no addon section defined! Check logic of code/configs.")
+				local removed_fake_addon_sec = get_string(removed_real_addon_sec, "fake_item_section", nil)
+				ASSERT(removed_fake_addon_sec, "install_remove_addon: No fake addon section defined! Check section: "..removed_real_addon_sec)
+				--log3("~~Spawning object with section [%s] %s", removed_fake_addon_sec, debug.traceback())
+				local s_new_fake_addon = ogse.spawn_item_in_inv(removed_fake_addon_sec) -- собственно создаём
+				
+				if get_u32(removed_fake_addon_sec, "is_shotgun") == 1 then -- если "снятый" снятый аддон - подствольный дробовик
+					-- то надо заряды из него перенести в кастомдату снятого подствольного аддона-дробовика
+					ASSERT(removed_addon_flag == addons_flags.gl, "install_remove_addon: shotgun was installed, but newly installed addon is not shg. or gl. class")
+					
+					local rif, shg = get_wpn_parameters(cur_weapon, s_cur_weapon, cur_weapon_sect)
+					modified_params.condition    = rif.condition           -- переносим состояние ствола
+					modified_params.ammo_type    = rif.ammo_type           -- тип боеприпаса
+					modified_params.ammo_elapsed = rif.ammo_elapsed        -- количество боеприпаса
+
+					set_addon_shg_params_to_cd(s_new_fake_addon,shg.ammo_type,shg.ammo_elapsed,shg.ammo_sections,shg.condition)
+					
+				elseif removed_addon_flag == addons_flags.magazine then -- если снимаем магазин
+					-- надо вынуть все патроны и задать их нулевыми в стволе
+					local ammo_type, ammo_num --, gren_type, gren_num
+					if cur_weapon:is_weapon_gl() and ogse_wpn_utils.get_gl_mode(cur_weapon) then
+						-- гранаты - первичный БП
+						ammo_type = cur_weapon:get_underbarrel_ammo_type()
+						ammo_num  = cur_weapon:get_ammo_in_magazine2()
+					else
+						-- наоборот
+						ammo_type, ammo_num = cur_wpn_ammo_type, cur_wpn_ammo_elapsed
+					end
+					-- пересоздаваемый ствол всегда в режиме обычных выстрелов
+					--modified_params.ammo_type = ammo_type
+					modified_params.ammo_elapsed = 0
+					-- вынимаем весь БЗ
+					aux_spawn_ammo_by_type(cur_weapon_sect, ammo_type, ammo_num)
+				end
+			end
+		end
+	end
+
+	local cur_wpn_slot_engine = get_inv_item_slot( cur_weapon )
+	local cur_wpn_slot_cfg = get_u32(cur_weapon:section(), "slot")
+	local is_slot_active = db.actor:active_slot() == cur_wpn_slot_engine
+
+	--KRodin: здесь вместо перемещения в рюкзак будем выкидывать для предотвращения двойного удаления
+	--(шотган при перемещении из слота в рюкзак конвертируется в фейк, а сам удаляется. И тут мы пытаемся второй раз удалить - получаем завис алайфа или вылет).
+	db.actor:drop_item(cur_weapon)
+	--log3("--[%s] release wpn [%s]", script_name(), cur_weapon:name())
+	sim:release(s_cur_weapon, true) -- удаляем старый ствол
+	--	
+  local sm_slot = {
+    signal = "se_item:on_before_register",
+	fun = function( sobj )
+      local iitem = sobj:get_inventory_item()
+      iitem.item_condition = modified_params.condition -- переносим состояние ствола
+      sobj.custom_data = modified_params.custom_data -- кастомдату
+      local wpn = sobj:get_weapon()
+      wpn.ammo_type    = modified_params.ammo_type -- тип боеприпаса
+      wpn.ammo_elapsed = modified_params.ammo_elapsed -- количество боеприпаса
+      -- снимаем флажок снимаемого аддона и накатываем флажок надеваемого аддона. Если снимали, то флажок будет 0 и аддон не будет надет
+      cur_wpn_addon_flags:set( removed_addon_flags, false )
+	  cur_wpn_addon_flags:set( installed_addon_flag, true )
+	  wpn.addon_flags = cur_wpn_addon_flags
+      local wpn_gl = sobj:get_weapon_gl()
+      if wpn_gl then
+        wpn.ammo_type_2    = modified_params.ammo_type2
+        wpn.ammo_elapsed_2 = modified_params.ammo_elapsed2
+      end
+	  --
+      -- обрабатываем перенос данных их кастомдаты аддона (подствольного дробовика) в кастомдату ствола
+      -- подразумевается, что ствол всегда преобразуется в режим винтовки и свойства подствольного дробовика
+      -- всегда попадают при этом в кастомдату скрытого ствола
+      --- внимание!!!!!1 не так !!!!!!!!!!!!!!!!!!
+      if sfake_addon and get_u32(real_addon_section, "is_shotgun") == 1 then
+        local t,n,s,c = get_shg_params_from_cd(sfake_addon)
+        replace_shg_cd(sobj,t,n,s,c)
+      end
+    end
+  }
+  ogse_signals.get_mgr():subscribe( sm_slot )
+  --log3("~~Spawning object with section [%s] %s", new_wpn_section, debug.traceback())
+  local s_new_weapon = ogse.spawn_item_in_inv(new_wpn_section)
+  ogse_signals.get_mgr():unsubscribe( sm_slot )
+	--
+	--
+	--if cur_wpn_slot_engine ~= cur_wpn_slot_cfg then
+		move_weapon_to_slot(s_new_weapon, cur_wpn_slot_engine, is_slot_active)
+	--end
+	--
+	soundtrack.s_play_no_feedback([[interface\inv_attach_addon]])
+	-- удаляем  фейковый аддон, если не снимали
+	if sfake_addon then
+		sim:release(sfake_addon, true)
+	end
+end
+
+
+-- элемент управления - надстройка для окна инвентаря
+-- представляет собой кнопки "присоединить" и "Х" (отменить), 
+-- расположенные в углах слотов
+-- использование: необходимо создать один раз и запомнить в глобальной переменной
+-- перед показом надо вызвать метод setup и настроить видимость кнопок для слотов
+-- а также запомнить информацию, которая используется при нажатии на кнопки установки
+-- потом активизировать с помощью level.start_stop_menu
+-- контрол исчезает при нажатии ESC или любой из кнопок отмены
+-- при нажатии на установку контрол скрывается и выполняется действие по установке аддона
+class "addon_control" (CUIScriptWnd)
+
+function addon_control:__init(slot_1_actions, slot_2_actions, sfake_addon) super()
+	self.sfake_addon = sfake_addon
+	
+	self.xml = CScriptXmlInit()
+	self.xml:ParseFile("ui_ogse_addon_control.xml")
+	self.xml:InitWindow("main", 0, self)
+	--
+	self.slot_buttons = {}
+	self:setup_slot_buttons(1, slot_1_actions, self.install_to_slot, self.take_to_slot, self.close)
+	self:setup_slot_buttons(2, slot_2_actions, self.install_to_slot, self.take_to_slot, self.close)
+	--log1("--addon_control:__init")
+end
+function addon_control:__finalize()
+	--log1("~~addon_control:__finalize")
+end
+
+function addon_control:create_button(template, action, slot)
+	local btn = self.xml:Init3tButton(template, self)
+	self:Register(btn,template)
+	self:Connect(template, ui_events.BUTTON_CLICKED, action, self, slot)
+	return btn
+end
+
+function addon_control:setup_slot_buttons(slot, available_actions, install_fun, take_fun)
+	if available_actions:get() == slot_actions.do_nothing then return end
+	local btns = {["q"] = self:create_button("main:slot"..slot..":btn_q", self.close)}
+	self.slot_buttons[slot] = btns
+	local take_available = available_actions:test(slot_actions.take)
+	if available_actions:test(slot_actions.install) then
+		btns.a = self:create_button("main:slot"..slot..":btn_1", install_fun, slot)
+		if take_available then
+			btns.t = self:create_button("main:slot"..slot..":btn_2", take_fun, slot)
+		end
+	elseif take_available then
+		btns.t = self:create_button("main:slot"..slot..":btn_1", take_fun, slot)
+		btns.t:SetTextST("st_ogse_addons_take_addon")
+	end
+end
+
+function addon_control:close()
+	level.start_stop_menu(self, false)
+	self:ClearCallbacks()
+end
+
+function addon_control:take_to_slot(slot)
+	convert_addon_to_slot(self.sfake_addon, slot)
+	self:close()
+end
+
+function addon_control:install_to_slot(slot)
+	local wpn = db.actor:item_in_slot(slot)
+	ASSERT(wpn, "addon_control:btn_a1_action: slot "..slot.." is empty!")
+	install_remove_addon(wpn, self.sfake_addon)
+	self:close()
+end
+
+function addon_control:OnKeyboard(dik, key_act) CUIScriptWnd.OnKeyboard(self,dik,key_act)
+	if key_act == ui_events.WINDOW_KEY_PRESSED and dik == DIK_keys.DIK_ESCAPE then
+		self:close()
+	end
+	return true
+end
+
+-------------------------------------------------------------------------------
+--                    Функции управления оружием с подствольным дробовиком   --
+-------------------------------------------------------------------------------
+
+-- управление подствольным дробовиком включает следующие действия:
+-- 1. Надеть дробовик. Релизуется в общей функции установки аддона.
+-- 2. Переключить ствол в/из режима дробовика. Выполняется по нажатию на клавишу перехода в режим подствола
+-- 3. Снять дробовик из любого режима. Выполняется по снятию аддона и попаданию его в инвентарь.
+
+function on_key_down(key, bind)
+	if bind == key_bindings.kWPN_FUNC then
+		local wpn = db.actor:active_item()
+		if wpn then switch_shg_mode(wpn) end
+	end
+end
+
+function is_wpn_w_shg(item)
+	ASSERT(item, "is_wpn_w_shg: nil argument")
+	local item_section = item:section()
+	local shg_status = get_string(item_section, "rifle_mode_section", nil)
+	if shg_status then return shg_status end
+	shg_status = get_string(item_section, "shotgun_mode_section", nil)
+	if shg_status then return shg_status end
+	return nil
+end
+-- смена режима стрельбы с винтовочного патрона на подствольный дробовик методом пересоздания объекта ствола
+-- спавним ствол с новой секцией
+-- в новом стволе в кастомдате сохраняем текущие параметры старого ствола:
+-- тип патронов, количество патронов, состояние, предельное состояние для взрыва
+-- параметры нового ствола устанавливаем в соответствие с кастомдатой старого
+-- старый удаляем
+function switch_shg_mode(wpn)
+	local s_cur_weapon = sim:object(wpn:id())
+	if not s_cur_weapon then return end -- нет серверного объекта, возможно в процессе удаления - не делаем ничего
+	local new_wpn_section = is_wpn_w_shg(wpn)
+	if not new_wpn_section then return end -- нет секции для конвертации. Отдыхаем
+	local cur_weapon_sect = wpn:section()
+	ASSERT(sys_ini:section_exist(new_wpn_section), "switch_shg_mode: Section for shotgun convertion '"..new_wpn_section.."' doesn't exists. Check section: "..cur_weapon_sect)
+	--
+    local cur_wpn = s_cur_weapon:get_weapon()
+    local cur_wpn_ammo_type = cur_wpn.ammo_type
+    local cur_wpn_ammo_elapsed = cur_wpn.ammo_elapsed
+	local cur_wpn_addon_flags = cur_wpn.addon_flags
+	local cur_wpn_condition = s_cur_weapon:get_inventory_item().item_condition
+	local cd_t,cd_n,cd_s,cd_c = get_shg_params_from_cd(s_cur_weapon) -- получаем данные из кастомдаты текущего ствола
+	--
+	-- если НЕ установлен подствольник и НЕ перманентный подствольник, то это ошибка. Такое оружие не должно встречаться без подствольника.
+	ASSERT( cur_wpn_addon_flags:is( addons_flags.gl ) or is_addon_permanent(cur_weapon_sect, addons_flags.gl),
+		"switch_shg_mode: Gun with attachible shotgun has no addon at the moment of mode switching")
+	--
+	--Для поддержки равнозначных слотов
+	local cur_wpn_slot_engine = get_inv_item_slot( wpn )
+	local cur_wpn_slot_cfg = get_u32(wpn:section(), "slot")
+	local is_slot_active = db.actor:active_slot() == cur_wpn_slot_engine
+	--
+	--Удаляем старый ствол
+	db.actor:drop_item(wpn)
+	sim:release(s_cur_weapon, true)
+  --
+  local sm_slot = {
+    signal = "se_item:on_before_register",
+	fun = function( sobj ) --Переносим в новый ствол параметры старого
+      local ammo_sections = get_names(cur_weapon_sect, "ammo_class") -- получаем список секций текущих патронов
+      replace_shg_cd( sobj, cur_wpn_ammo_type, cur_wpn_ammo_elapsed, ammo_sections[cur_wpn_ammo_type + 1], cur_wpn_condition )
+      local wpn = sobj:get_weapon()
+      wpn.addon_flags = cur_wpn_addon_flags
+      --Заменяем информацию на свойства второго ствола, полученные из кастомдаты
+      wpn.ammo_type    = cd_t -- тип боеприпаса
+      wpn.ammo_elapsed = cd_n -- количество боеприпаса
+      local iitem = sobj:get_inventory_item()
+      iitem.item_condition = cd_c -- состояние ствола
+    end
+  }
+  ogse_signals.get_mgr():subscribe( sm_slot )
+  --log3("~~Spawning object with section [%s] %s", new_wpn_section, debug.traceback())
+  local s_new_weapon = ogse.spawn_item_in_inv(new_wpn_section) --Спавним новый
+  ogse_signals.get_mgr():unsubscribe( sm_slot )
+  --
+  --Для поддержки равнозначных слотов
+  --if cur_wpn_slot_engine ~= cur_wpn_slot_cfg then
+    move_weapon_to_slot(s_new_weapon, cur_wpn_slot_engine, is_slot_active)
+  --end
+end
+
+function get_sect_to_convert_after_shg_removed(wpn)
+	local new_sec = get_string(wpn:section(), "shotgun_removed_section")
+	if new_sec then
+		local gl_status = ogse_wpn_utils.get_grenade_launcher_status(wpn)
+		if gl_status == 0 then 
+			abort("get_sect_to_convert_after_shg_removed: Incorrect gl status '0' for the weapon with attached shotgun")
+		elseif gl_status == 2 and not ogse_wpn_utils.get_grenade_launcher_flag(wpn) then -- аддон съёмный и отсутствует
+			return new_sec
+		end
+	end
+	return nil
+end
+-- функции преобразования оддона подствольного дробовика в автономное оружие
+-- предназначены для работы с оддноном XM-26 LSS, который в реале может использоваться и как подствол и как отдельное оружие
+function convert_shg_to_addon(swpn)
+	local cur_weapon_sect = swpn:section_name()
+	local fake_addon_section = get_string(cur_weapon_sect, "addon_mode_section")
+	ASSERT(fake_addon_section, "convert_shg_to_addon: no section for convertion defined. Check parameter 'addon_mode_section' in section: "..cur_weapon_sect)
+	--
+	local cur_wpn = swpn:get_weapon()
+	local cur_wpn_ammo_type = cur_wpn.ammo_type
+	local cur_wpn_ammo_elapsed = cur_wpn.ammo_elapsed
+	local cur_wpn_condition = swpn:get_inventory_item().item_condition
+	--
+	local ammo_sections = get_names(cur_weapon_sect, "ammo_class") -- получаем список секций патронов
+	local ammo_sec = ammo_sections[cur_wpn_ammo_type + 1] -- и узнаём заряженную секцию
+	--log3("~~Spawning object with section [%s] %s", fake_addon_section, debug.traceback())
+	local s_new_fake_addon = ogse.spawn_item_in_inv(fake_addon_section)
+	set_addon_shg_params_to_cd(s_new_fake_addon, cur_wpn_ammo_type, cur_wpn_ammo_elapsed, ammo_sec, cur_wpn_condition)
+	sim:release(swpn, true)
+end
+
+function is_addon_shotgun( obj )
+	return get_string( obj:section(), "standalone_shotgun_section" )
+end
+
+function convert_addon_to_shg(saddon, slot_number)
+  local cur_addon_sect = saddon:section_name()
+  local wpn_section = get_string(cur_addon_sect, "standalone_shotgun_section")
+  ASSERT(wpn_section, "convert_addon_to_shg: no section for convertion defined. Check parameter 'standalone_shotgun_section' in section: "..cur_addon_sect)
+  local t,n,s,cond = get_shg_params_from_cd(saddon)
+  sim:release(saddon, true)
+	--
+  local sm_slot = {
+    signal = "se_item:on_before_register",
+	fun = function( sobj )
+      local iitem = sobj:get_inventory_item()
+      iitem.item_condition = cond
+      local wpn = sobj:get_weapon()
+      wpn.ammo_type    = t
+      wpn.ammo_elapsed = n
+    end
+  }
+  ogse_signals.get_mgr():subscribe( sm_slot )
+  --log3("~~Spawning object with section [%s] %s", wpn_section, debug.traceback())
+  local s_new_weapon = ogse.spawn_item_in_inv( wpn_section )
+  ogse_signals.get_mgr():unsubscribe( sm_slot )
+  --
+  --if slot_number ~= get_u32(wpn_section, "slot") then
+    move_weapon_to_slot(s_new_weapon, slot_number, db.actor:active_slot() == slot_number)
+  --end
+end
+
+-- следим за попаданием в инвентарь ствола XM-26 LSS в режиме автономного оружия для конвертации в аддон
+function on_item_to_ruck(obj, sobj)
+	-- обработка всех полученных фейк-предметов при открытом инвентаре
+	if db.actor:has_info("ui_inventory") then
+		local sec = obj:section()
+		-- проверяем, а не прицел ли снимаем
+		if is_scope(sec) then
+			-- таки прицел. Надо проверить, а не надо ли заменить оружие в инвентаре.
+			-- Условия - на стволе нет прицела, но есть параметр scope_removed_section в секции
+			-- KRodin: в оригинале проверялось оружие только в слотах, и в при снятии прицела со ствола в инвентаре, он не конвертировался в нужную секцию.
+			-- Теперь же будем перебирать весь инвентарь.
+			db.actor:inventory_for_each( function(wpn, actor)
+				if wpn and wpn:is_weapon_magazined() then
+					local new_wpn_section = get_string(wpn:section(), "scope_removed_section")
+					local s_cur_weapon = sim:object(wpn:id())
+					if not s_cur_weapon then return end -- Такое удалось поймать при ремонте СВД ремкомплектом
+					--
+					local cur_wpn = s_cur_weapon:get_weapon()
+					local cur_wpn_ammo_type = cur_wpn.ammo_type
+					local cur_wpn_ammo_elapsed = cur_wpn.ammo_elapsed
+					local cur_wpn_addon_flags = cur_wpn.addon_flags
+					local cur_wpn_condition = s_cur_weapon:get_inventory_item().item_condition
+					local cur_wpn_cd = s_cur_weapon.custom_data
+					--
+					if not is_scope_installed(wpn) and new_wpn_section then
+						--log1("~~[ogse_addons] ON_ITEM_TO_RUCK: weapon "..wpn:name().." has no scope and has parameter scope_removed_section ("..new_wpn_section..")")
+						--
+						local cur_wpn_slot_engine, cur_wpn_slot_cfg, is_slot_active
+						local is_wpn_in_slot = actor:is_in_slot( wpn )
+						if is_wpn_in_slot then
+							cur_wpn_slot_engine = get_inv_item_slot( wpn )
+							cur_wpn_slot_cfg = get_u32(wpn:section(), "slot")
+							is_slot_active = actor:active_slot() == cur_wpn_slot_engine
+						end
+						--
+						actor:drop_item(wpn)
+						sim:release(s_cur_weapon, true) -- удаляем старый ствол
+						--
+						local sm_slot = {
+							signal = "se_item:on_before_register",
+							fun = function( sobj )
+								local iitem = sobj:get_inventory_item()
+								iitem.item_condition = cur_wpn_condition -- переносим состояние ствола
+								sobj.custom_data = cur_wpn_cd -- кастомдату
+								local wpn = sobj:get_weapon()
+								wpn.ammo_type    = cur_wpn_ammo_type -- тип боеприпаса
+								wpn.ammo_elapsed = cur_wpn_ammo_elapsed -- количество боеприпаса
+								wpn.addon_flags = cur_wpn_addon_flags:set( addons_flags.scope, false ) -- снимаем флаг прицела, т.к. он не снимается сам
+							end
+						}
+						ogse_signals.get_mgr():subscribe( sm_slot )
+						--log3("~~Spawning object with section [%s] %s", new_wpn_section, debug.traceback())
+						local s_new_weapon = ogse.spawn_item_in_inv(new_wpn_section)
+						ogse_signals.get_mgr():unsubscribe( sm_slot )
+						--
+						if is_wpn_in_slot --[[and cur_wpn_slot_engine ~= cur_wpn_slot_cfg]] then
+							move_weapon_to_slot(s_new_weapon, cur_wpn_slot_engine, is_slot_active)
+						end
+					end
+				end
+			end )
+		end
+		
+		local fake_item_section = get_string(sec, "fake_item_section")
+		if fake_item_section then
+			convert_item_to_fake_in_inventory(obj)
+			return true
+		end
+	end
+
+	-- обработка снятия шотгана-аддона из слота в рюкзак
+	local addon_mode_section = get_string(sobj:section_name(), "addon_mode_section")
+	if addon_mode_section then
+		convert_shg_to_addon(sobj)
+		return true -- закончили цепочку вызовов, поскольку объекта больше нет
+	end
+end
+
+-- 1. установка состояния аддонов в соответствии с данными из кастомдаты при их попадании в инвентарь
+-- 2. проверка того, что аддон сняли из ствола. В этом случае надо сконвертировать ствол в обычный
+function on_take(obj, sobj)
+	if get_sect_to_convert_after_shg_removed(obj) then
+		-- ствол с дробовиком и при этом с отнятым аддоном подствольника не должен существовать в игре
+		abort("ogse_addons.on_take: Incorrect weapon obtained. Check spawn of section: "..obj:section())
+	elseif get_u32(obj:section(), "is_shotgun") == 1 then
+		local scd = sobj:spawn_ini()
+		ASSERT(scd, "no custom data")
+		if scd:section_exist("shg_params") then -- есть кастомдата, аддон был снят скриптом
+			local cond = scd:r_float("shg_params", "condition") -- получаем из кастомдаты состояние
+			obj:set_condition(cond) -- устанавливаем его для отображения в инвентаре
+		else -- нет кастомдаты, аддон был снят движковым действием "снять аддон"
+			-- надо перебрать инвентарь, найти ствол со снятым аддоном и сконвертировать его в обычный
+			local items_for_convertion = {}
+			for i=0,db.actor:object_count()-1 do
+				local item = db.actor:object(i)
+				if get_sect_to_convert_after_shg_removed(item) then
+					table.insert(items_for_convertion, item)
+				end
+			end
+			if #items_for_convertion == 0 then  -- аддон есть, а ствола нету
+				--KRodin: посмотрим, бывает ли такое вообще.
+				--set_addon_shg_params_to_cd(sobj,0,0,"",1.0)-- это какой-то приблудный аддон, надо бы ему вписать нормальные данные
+				abort("on_take: Shotgun addon found without appropriate custom data")
+			elseif #items_for_convertion == 1 then -- найден один ствол, это тот ствол, с которого сняли. Так и должно быть.
+				convert_after_shg_detached(items_for_convertion[1])
+				sim:release(sobj,true) -- аддон удаляем
+				return true -- закончили цепочку вызовов, поскольку объекта больше нет
+			else
+				-- найдено больше двух стволов. Такого быть не должно
+				abort("on_take: More then one weapons found with detached shotgun. Something wrong. Check logic of code/spawn")
+			end
+		end
+	end
+end
+
+
+class "detach_addon_ctrl" (CUIScriptWnd)
+
+function detach_addon_ctrl:__init() super()
+	self.xml = CScriptXmlInit()
+	self.xml:ParseFile("ui_ogse_addon_control.xml")
+	self.xml:InitWindow("main", 0, self)
+	--
+	self.btns = {}
+	for slot=1,2 do
+		local slot_btns = {}
+		self.btns[slot] = slot_btns
+		local btn_rem_grip = self.xml:Init3tButton("main:slot"..slot..":btn_remove_grip", self)
+		local btn_rem_grip_name = "btn"..slot.."_remove_grip"
+		self:Register(btn_rem_grip, btn_rem_grip_name)
+		slot_btns.btn_rem_grip = btn_rem_grip
+		local action = function()
+			local item = db.actor:item_in_slot(slot)
+			install_remove_addon(item, addons_flags.grip, true)
+			--log3("slot '%d' remove grip", slot)
+		end
+		self:AddCallback(btn_rem_grip_name, ui_events.BUTTON_CLICKED, action, self)
+		--
+		local btn_rem_mag = self.xml:Init3tButton("main:slot"..slot..":btn_remove_magazine", self)
+		local btn_rem_mag_name = "btn"..slot.."_remove_magazine"
+		self:Register(btn_rem_mag, btn_rem_mag_name)
+		slot_btns.btn_rem_mag = btn_rem_mag
+		local action = function()
+			local item = db.actor:item_in_slot(slot)
+			install_remove_addon(item, addons_flags.magazine, true)
+			--log3("slot '%d' remove grip", slot)
+		end
+		self:AddCallback(btn_rem_mag_name, ui_events.BUTTON_CLICKED, action, self)
+		--
+		local btn_rem_scpmnt = self.xml:Init3tButton("main:slot"..slot..":btn_remove_scope_mount", self)
+		local btn_rem_scpmnt_name = "btn"..slot.."_remove_scope_mount"
+		self:Register(btn_rem_scpmnt, btn_rem_scpmnt_name)
+		slot_btns.btn_rem_scpmnt = btn_rem_scpmnt
+		local action = function()
+			--log3("slot '%d' remove scope_mount", slot)
+			local item = db.actor:item_in_slot(slot)
+			install_remove_addon(item, addons_flags.scope_mount, true)
+			--log1("done")
+			--
+		end
+		self:AddCallback(btn_rem_scpmnt_name, ui_events.BUTTON_CLICKED, action, self)
+	end
+
+	self:Show(true) -- без этого не увидим
+	--log1("--detach_addon_ctrl:__init")
+end
+function detach_addon_ctrl:__finalize()
+	--log1("~~detach_addon_ctrl:__finalize")
+end
+
+function detach_addon_ctrl:Update()
+	for slot=1,2 do
+		local item = db.actor:item_in_slot(slot)
+		if item then
+			local sec = item:section()
+			self.btns[slot].btn_rem_grip:Show(get_string(sec, "grip_removed_section"))
+			--
+			self.btns[slot].btn_rem_mag:Show(get_string(sec, "magazine_removed_section"))
+			--self.btns[slot].btn_rem_mag:Enable(not (cur_weapon:is_weapon_gl() and ogse_wpn_utils.get_gl_mode(item)))
+			--
+			self.btns[slot].btn_rem_scpmnt:Show(get_string(sec, "scope_mount_removed_section"))
+		else
+			self.btns[slot].btn_rem_grip:Show(false)
+			self.btns[slot].btn_rem_mag:Show(false)
+			self.btns[slot].btn_rem_scpmnt:Show(false)
+		end
+	end
+	CUIScriptWnd.Update(self)
+end
+
+-- Открытие/закрытие инвентаря
+local detach_grip_ctrl_wnd = detach_addon_ctrl()
+function on_inventory_open()
+	level.main_input_receiver():AttachChild(detach_grip_ctrl_wnd)
+	-- перенесено из модуля фейковых предметов
+	--log1("ogse_addons: on_inventory_open")
+	-- конвертируем все предметы в их фейковые эквиваленты
+	local ids = {}
+	db.actor:inventory_for_each(function(item, npc)
+		if db.actor:is_in_ruck(item) then
+			local res = convert_item_to_fake_in_inventory(item)
+			if res then
+				table.insert(ids, item:id())
+				--log3("Conv itm to fake sect: [%s]", item:section())
+			end
+		end
+	end)
+	--log3("items converted: %s", #ids)
+	if #ids > 0 then
+		wait_for_deleted_objects_to_disappear(ids)
+	end
+end
+
+function on_inventory_hide()
+	detach_grip_ctrl_wnd:DetachFromParent()
+	-- перенесено из модуля фейковых предметов
+	--log1("ogse_addons: on_inventory_hide")
+	-- конвертируем все фейки обратно в реальные предметы
+	local ids = {}
+	db.actor:inventory_for_each(function(item, npc)
+		if db.actor:is_in_ruck(item) then
+			local res = convert_fake_to_item_in_inventory(item)
+			if res then table.insert(ids, item:id()) end
+		end
+    end)
+	--log3("items converted: %s", #ids)
+	-- важная затычка. Перед тем, как дать игроку жать на клавиши после закрытия окна инвентаря,
+	-- надо дождаться, чтобы клиентские части всех удалённых предметов 
+	-- на самом деле исчезли из инвентаря. В противном случае есть риск, что игрок попытается
+	-- открыть инвентарь ещё раз до полной очистки. Тогда будет мерзкий и плохо отлавливаемый вылет.
+	if #ids > 0 then 
+		wait_for_deleted_objects_to_disappear(ids)
+	end
+end
+--перенесено из модуля фейковых предметов
+function convert_item_to_fake_in_inventory(item)
+	if item == nil or sim:object(item:id()) == nil then return false end
+	local sect = item:section()
+	local fake_obj_section = get_string(sect, "fake_item_section")
+	--log3("convert_item_to_fake_in_inventory: %s, %s", sect, tostring(fake_obj_section))
+	if fake_obj_section and fake_obj_section ~= sect then
+		--log1("1")
+		local a = recreate_transfer_data(item, fake_obj_section)
+		--log3("2: %s", a)
+		return a
+	end
+	return false
+end
+
+-----------------------------------------------------------
+local ids
+local function wfdotd_condition()
+	-- начать перебирать список
+	-- если объект существует, прекратить, вернуть false
+	-- иначе - удалить объект из списка и перейти к следующему
+	-- если объектов больше нет, вернуть true
+	while #ids > 0 do
+		local obj = level.object_by_id(ids[1])
+		if obj then return false end
+		table.remove(ids, 1)
+	end
+	return true
+end
+local function wfdotd_action()
+	level.enable_input()
+end
+function wait_for_deleted_objects_to_disappear(idss)
+	ids = idss
+	level.disable_input()
+	dsh.wait_condition(wfdotd_condition, wfdotd_action)
+end
+-----------------------------------------------------------
+
+function convert_fake_to_item_in_inventory(item)
+	if item == nil or sim:object(item:id()) == nil then return false end
+	local sect = item:section()
+	local real_obj_section = get_string(sect, "real_item_section")
+	if real_obj_section and real_obj_section ~= sect then
+		return recreate_transfer_data(item, real_obj_section)
+	end
+	return false
+end
+
+function recreate_transfer_data(obj_to_del, sec_to_create)
+	--log3("recreate_transfer_data: %s -> %s", obj_to_del:section(), sec_to_create)
+	local sobj = sim:object(obj_to_del:id())
+	if not sobj then return false end
+	-- не совсем верно проверять по секции создаваемого, 
+	-- но при правильной настройке оба (и удаляемый и создаваемый) должны иметь параметр "is_shotgun" или оба не иметь
+	if get_u32(sec_to_create, "is_shotgun") == 1 then		
+		--log3("~~Spawning object with section [%s] %s", sec_to_create, debug.traceback())
+		local s_fake_item = ogse.spawn_item_in_inv(sec_to_create)
+		s_fake_item.custom_data = sobj.custom_data
+	else
+		ogse.spawn_item_in_inv(sec_to_create)
+	end
+	sim:release(sobj, true)
+	return true
+end

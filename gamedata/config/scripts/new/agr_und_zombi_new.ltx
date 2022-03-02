@@ -1,0 +1,81 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = camper@agr_und_zombi
+on_hit = hit@agr_und_zombi
+on_death = death@agr_und_zombi
+combat_ignore = combat_ignore
+
+[camper@agr_und_zombi]
+path_walk = agr_und_zombi_walk
+path_look = agr_und_zombi_look
+combat_ignore_cond = always
+meet = no_meet  
+on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
+on_actor_dist_le_nvis = 5 | remark@agr_und_zombi
+
+[remark@agr_und_zombi]
+anim = guard
+target = actor
+snd = agr_und_zombi
+on_signal = sound_end| remark@agr_und_zombi1
+combat_ignore_cond = always
+meet = no_meet
+on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
+
+[remark@agr_und_zombi1]
+anim = guard
+target = actor
+combat_ignore_cond = always
+meet = meet@agr_und_zombi
+on_info = {+agr_und_zombi_speak} camper@agr_und_zombi2 
+on_info2 = {+agr_und_zombi_hit_new} walker@agr_und_zombi
+
+[camper@agr_und_zombi2]
+path_walk = agr_und_zombi_walk
+path_look = agr_und_zombi_look
+combat_ignore_cond = always
+meet = no_meet  
+on_actor_dist_le_nvis = 5 | remark@agr_und_zombi2
+on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
+
+[remark@agr_und_zombi2]
+anim = guard
+target = actor
+snd = agr_und_zombi2
+on_actor_dist_le_nvis = 15 | camper@agr_und_zombi2
+combat_ignore_cond = always
+meet = meet@agr_und_zombi2
+on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
+
+[walker@agr_und_zombi]
+path_walk = agr_und_zombi_walk
+path_look = agr_und_zombi_look
+meet = no_meet
+
+[hit@agr_und_zombi]
+on_info = {=hit_by_actor} %+agr_und_zombi_hit_new%
+
+[death@agr_und_zombi]
+on_info = %+agr_und_zombi_enemy_new%
+
+[meet@agr_und_zombi]
+use = true
+use_wpn = true
+meet_talk_enabled = true
+meet_state = 1|ward@agr_und_zombi|2|ward
+meet_state_wpn = 1|ward@agr_und_zombi|2|ward
+
+[meet@agr_und_zombi2]
+use = true
+use_wpn = true
+meet_talk_enabled = true
+meet_state = 1|ward@agr_und_zombi2|2|ward
+meet_state_wpn = 1|ward@agr_und_zombi2|2|ward
+
+
+
+
+
+

@@ -1,0 +1,186 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;; Ручной трофейный немецкий пулемёт Maschinengewehr 42 (MG-42) ;;;;;;;;;;;;;;;;
+;--------------------------------------------------------------------------------------------- 
+[wpn_mg42]:class_lmg
+GroupControlSection		= spawn_group
+discovery_dependency 	= 
+$spawn                  = "weapons\mg42"					; option for Level Editor
+$npc			 		= on				; option for Level Editor
+$prefetch 		 		= 8
+scheduled               = off              ; option for ALife Simulator
+cform                   = skeleton
+class                   = WP_LR300
+description				= enc_weapons1_wpn-mg42
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0		       ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.7              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+weapon_class			= assault_rifle
+
+cost					= 40000
+
+ammo_limit		 		= 650
+ammo_current			= 150
+ammo_elapsed		 	= 150
+
+ammo_mag_size		 	= 150
+ammo_class		 		= ammo_7.62x51box   ;ammo_7.92x57_fmj, ammo_7.92x57_ap 
+fire_modes				= -1
+
+hand_dependence		 	= 1
+single_handed			= 0
+
+inv_name				= wpn-mg42
+inv_name_short			= wpn-mg42
+inv_weight				= 11.6
+
+icon_name = icon_mg42
+inv_grid_width			= 6
+inv_grid_height			= 2
+inv_grid_x				= 26
+inv_grid_y				= 15
+
+kill_msg_x			= 72
+kill_msg_y			= 82
+kill_msg_width		= 56
+kill_msg_height		= 23
+
+animation_slot			= 2		; type of the animation that will be used
+
+;-----------------------------------------------------------------------------------
+;params of weapon recoil
+fire_dispersion_base			= 0.25		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+
+;отдача
+cam_dispersion          		= 0.20		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc			= 0.08		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac			= 0.25		;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle				= 6.0	    	;максимальный угол отдачи
+cam_max_angle_horz			= 8.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz			= 0.4		;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+direction               		= 0, 0, 1
+
+fire_point             			=  0,0.0432,1.468
+flame_particles		    		= amik\weapons\flame_particles\dtk_flame_particles_4
+smoke_particles		   		= amik\weapons\smoke_particles\smoke_particles_01
+
+shell_point		 		= 0.0, 0.129, 0.289	
+shell_dir		 		= 0.0, 0.0, 0.4
+shell_particles		   		= amik\weapons\7x92x57\7x92x57_r
+
+rpm_empty_click 	 	= 200
+
+; ttc
+hit_rate	            = 2.15
+fire_distance          	= 600
+rpm                     		= 1200
+
+weapon_min_queue_size_far = 1
+weapon_max_queue_size_far = 6
+weapon_min_queue_interval_far = 500
+weapon_max_queue_interval_far = 700
+
+weapon_min_queue_size_medium = 6
+weapon_max_queue_size_medium = 10
+weapon_min_queue_interval_medium = 400
+weapon_max_queue_interval_medium = 600
+
+weapon_min_queue_size_close = 20
+weapon_max_queue_size_close = 40
+weapon_min_queue_interval_close = 300
+weapon_max_queue_interval_close = 500
+
+; end ttc
+
+silencer_hit_power       	= 0.96
+silencer_hit_impulse	 	= 88
+silencer_fire_distance   	= 600
+silencer_bullet_speed	 	= 1440
+
+hud                     = wpn_mg42_hud
+normal                  		= 0, 1, 0
+position         	    		= -0.026,0.012,-0.49
+orientation      	        	= 0, 0, 0
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+strap_position         			= 0.01,-0.18,0.74 ; *, <->, |
+strap_orientation      			= -25,-189,65
+strap_bone0				= bip01_spine2
+strap_bone1				= bip01_spine1
+
+startup_ammo            = 1000
+visual                  		= weapons\mg42\wpn_mg42.ogf
+
+light_color		 		= 0.6,0.5,0.3
+light_var_color		 		= 0.05
+light_time 		 		= 0.2
+
+ph_mass			 		= 36
+
+;addons
+scope_status			= 0
+silencer_status			= 0
+grenade_launcher_status	      = 0
+
+scope_name 					= wpn_addon_scope			; section name for the attachable scope
+scope_x 					= 42						; offset in inventory icon
+scope_y 					= 3
+
+silencer_name  				= wpn_addon_silencer
+silencer_x 					= 218
+silencer_y 					= 13
+
+;silencer_flame_particles 		= weapons\generic_weapon01
+silencer_smoke_particles 		= amik\weapons\smoke_particles\p_smoke_particles_02
+
+silencer_light_color			= 1.0, 0.1, 0.0
+silencer_light_range			= 0.01
+silencer_light_var_color		= 0.05
+silencer_light_var_range		= 0.5
+silencer_light_time 			= 0.2
+
+zoom_enabled		= true
+
+;звуки
+snd_draw				= weapons\mg42\mg42_draw
+snd_holster				= weapons\mg42\mg42_holster
+;snd_shoot				= weapons\mg42\mg42_shoot1
+snd_empty				= weapons\gen_empty, 0.5
+snd_reload				= weapons\mg42\mg42_reload
+
+snd_shoot				= weapons\mg42\mg42_shoot1_v2_03-0
+;params when silencer is attached 
+;similar to corresponding params without prefix silencer_
+
+snd_silncer_shot			= weapons\w_ak74_shot1 
+
+
+[wpn_mg42_hud]:hud_lmg
+;shell_point          			= 0.00, 0.00, 0.00
+shell_point         			= 0.07, 0, 0.1 -вперёд/назад  2- вверх/вниз 3-влево/вправо
+shell_dir		 		= 0.0, 0.0, 0.0
+
+fire_point          			= 0.042,0.14,0.054 	
+fire_bone           			= wpn_body
+orientation         			= 0, 0, 0
+position                		= 0, -0.05, 0.115
+visual                  		= weapons\mg42\wpn_mg42_hud.ogf
+
+anim_idle				= idle
+anim_idle_aim				= idle_aim
+anim_reload				= reload
+anim_draw				= draw
+anim_holster				= holster
+anim_shoot				= shoot
+anim_idle_sprint			= idle_sprint
+;anim_idle_moving			= idle_moving
+
+;смещения HUD для режима приближения
+
+zoom_offset				= -0.098700,0.049300,-0.115100
+zoom_rotate_x				= -0.001650
+zoom_rotate_y				= 0.001400

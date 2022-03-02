@@ -1,0 +1,14 @@
+function zombi_blow(obj)
+	local particle_blow = particles_object([[explosions\explosion_01]])
+	particle_blow:play_at_pos(obj:bone_position("bip01_spine1"))
+	local id = obj:id()
+	local pos = obj:position()
+	local lvid = obj:level_vertex_id()
+	local gvid = obj:game_vertex_id()
+	level.add_pp_effector("rename.ppe", 1001, false)
+	level.add_cam_effector("water_blow.anm", 1002, false, "")
+	for i = 1,6 do
+	local pos1 = obj:position():add(vector():set((math.random()*2-1),1,(math.random()*2-1)))
+	end
+	alife():create("zombi_corpse_blow", pos, lvid, gvid)
+end

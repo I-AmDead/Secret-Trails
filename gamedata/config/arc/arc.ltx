@@ -1,0 +1,103 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;; Modifiers: ;;;;;;;;;;;;;;;;;;;;;;;;;;
+[_arc_no_eat_effects]
+eat_health = 0
+eat_satiety = 0
+eat_power = 0
+eat_radiation = 0
+eat_alcohol = 0
+wounds_heal_perc = 0
+
+[_arc_invisible]
+inv_grid_width = 0
+inv_grid_height = 0
+
+[_arc_weightless]
+inv_weight = 0
+
+[_arc_unnoticeable]: _arc_invisible, _arc_weightless
+
+
+;;;;;;;;;;;;;;;;;;;;;;; Base Items: ;;;;;;;;;;;;;;;;;;;;;;;;
+[arc_base]:identity_immunities
+GroupControlSection = spawn_group
+discovery_dependency =
+cform = skeleton
+
+cost = 0
+inv_weight = 0
+
+inv_grid_x = 1
+inv_grid_y = 1
+inv_grid_width = 1
+inv_grid_height = 1
+
+description		= arc_description
+inv_name		= arc_inv_name
+inv_name_short	= arc_inv_name_short
+
+
+[arc_usable]:_arc_no_eat_effects
+class = II_ANTIR
+
+eat_portions_num = 1
+
+animation_slot  = 4
+hud = wpn_vodka_hud
+
+
+[arc_ammo]:arc_base
+class = AMMO
+
+box_size = 65500
+
+k_dist = 1
+k_disp = 1
+k_hit = 1
+k_impulse = 1
+k_pierce = 1
+impair = 1
+buck_shot = 1
+tracer = off
+wm_size = 0.05
+
+[arc_outfit]:arc_base
+
+class = E_STLK
+
+ef_equipment_type = 3
+
+burn_protection = 1
+strike_protection = 1
+shock_protection = 1
+wound_protection = 1
+radiation_protection = 1
+telepatic_protection = 1
+chemical_burn_protection = 1
+explosion_protection = 1
+fire_wound_protection = 1
+
+additional_inventory_weight = 0
+
+full_icon_name = 0,0
+
+additional_inventory_weight2 = 0
+
+default_to_ruck = true
+
+visual          = equipments\novice_suit
+actor_visual	= actors\hero\stalker_novice.ogf
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; Real Items: ;;;;;;;;;;;;;;;;;;;;;;;;;;
+[arc_ballast]:arc_ammo, _arc_invisible
+inv_weight = 655
+
+;visual = physics\box\konteyner_03.ogf
+visual = physics\box\box_lab_01.ogf
+
+
+[arc_radiation]:wpn_ak74, _arc_unnoticeable
+slot = 7
+ammo_mag_size = 65500
+default_to_ruck = true
+ammo_class = arc_ammo

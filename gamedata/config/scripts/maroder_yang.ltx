@@ -1,0 +1,100 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = walker@maroder_yang
+combat_ignore = combat_ignore
+on_hit = hit
+on_death = death
+danger = danger_condition@maroder_yang
+
+[walker@maroder_yang]
+path_walk = maroder_yang_walk
+path_look = maroder_yang_look
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = meet
+on_actor_dist_le_nvis = 40 | remark@maroder_yang %+maloy_speak%
+on_info = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[remark@maroder_yang]
+anim = assault
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = no_meet
+on_actor_dist_le_nvis = 3 | remark@maroder_yang1 
+on_info = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[remark@maroder_yang1]
+anim = ward
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = meet
+on_timer = 3000 | %+maroder_otboy%
+on_info = {+maloy_dialog_start} walker@maroder_terki %+maloy_talk%
+on_info2 = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[walker@maroder_terki]
+path_walk = maroder_yang_walk
+path_look = maroder_yang1_look
+def_state_standing = sit
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = no_meet
+on_timer = 46000 | remark@maroder_yang2 
+on_info = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[remark@maroder_yang2]
+anim = ward
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = no_meet
+on_timer = 2000 | remark@maroder_yang3 %+maloy_dialog_have%
+on_info = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[remark@maroder_yang3]
+anim = ward
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = meet
+on_info = {+maloy_dialog_done} walker@maroder_uhodyat
+on_info2 = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[walker@maroder_uhodyat]
+path_walk = maroder_yang_walk
+path_look = maroder_yang_look
+def_state_standing = ward
+combat_ignore_cond = always
+danger = danger_condition@maroder_yang
+meet = no_meet
+on_actor_dist_ge_nvis = 50 | %+maloy_ushli%
+on_info = {+maroder_vrag} walker@maroder_yang11 %=killactor%
+
+[walker@maroder_yang11]
+path_walk = maroder_yang_walk
+path_look = maroder_yang_look
+def_state_standing = assault
+danger = danger_condition@maroder_yang
+meet = no_meet
+
+[meet]
+use = true
+use_wpn = false
+meet_talk_enabled = true
+
+[hit]
+on_info = {=hit_by_actor} %+maroder_vrag%
+
+[death]
+on_info = {=killed_by_actor} %+maroder_vrag%
+
+[danger_condition@maroder_yang]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[combat_ignore]
+combat_ignore_cond = always

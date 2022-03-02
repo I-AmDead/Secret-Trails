@@ -1,0 +1,64 @@
+-- -*- mode: lua; encoding: windows-1251 -*-
+
+function attach( sm )
+	sm:subscribe({signal = "on_inventory_open", fun = this.inventory_open}) 
+	sm:subscribe({signal = "on_inventory_hide", fun = this.inventory_close}) 
+	sm:subscribe({signal = "on_update", fun = this.inventory_update})
+end
+
+local wnd = nil
+
+
+function inventory_open()
+	if not wnd then	
+		wnd = InvWnd(level.main_input_receiver())
+	end
+end
+
+function inventory_close()
+	if wnd then
+		wnd:DetachWnd()
+		wnd = nil
+	end
+end
+
+function inventory_update()
+	if wnd then
+		wnd:Update() 
+	end
+end
+
+class "InvWnd" (CUIScriptWnd)
+function InvWnd:__init(owner) super()
+	self.owner = owner
+	self:Init(0, 0, 1024, 768)
+	self:InitControls()
+end
+
+function InvWnd:__finalize() end
+
+function InvWnd:InitControls()
+	self.stat = CUIStatic()
+	self.stat:Init(0, 0, 1024, 768)
+	self.owner:AttachChild(self.stat)
+	self.stat:Show(true)
+
+	self.stat:SetAutoDelete(true)
+
+	self.quick_slots_wnd = ogse_quick_slots.FastUseSlotsWnd(self)
+	self.stat:AttachChild(self.quick_slots_wnd)
+
+	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
+end
+
+
+function InvWnd:DetachWnd() 
+
+self.DescrWnd:Remove() 
+self.DescrWnd = nil 
+	self:ClearCallbacks()
+self.quick_slots_wnd = nil 
+
+self.owner:DetachChild(self.stat) 
+
+end 

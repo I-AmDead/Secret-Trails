@@ -1,0 +1,114 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = camper@karina_plen
+combat_ignore = combat_ignore
+on_death = death@karina
+
+[camper@karina_plen]
+path_walk = karina1_walk
+path_look = karina1_look
+combat_ignore_cond = always
+def_state_standing = trans_0
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+babka_kontro_dead} remark@karina_plen
+
+[remark@karina_plen]
+anim = trans_0
+meet = no_meet
+target = karina1_look, 0
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_actor_dist_le = 5 | remark@karina_help
+
+[remark@karina_help]
+snd = karina
+anim = trans_0
+meet = no_meet
+target = karina1_look, 0
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_signal = sound_end | walker@karina_wait
+
+[walker@karina_wait]
+path_walk = karina1_walk
+path_look = karina1_look
+meet = meet@karina
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+karina_help_dialog_start} remark@karina_after
+
+[remark@karina_after]
+meet = no_meet
+target = karina1_look, 0
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_timer = 1000 | walker@karina_after
+
+[walker@karina_after]
+path_walk = karina2_walk
+path_look = karina2_look
+meet = no_meet
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+karina_mesto} walker@karina_mesto
+
+[walker@karina_mesto]
+path_walk = karina2_walk
+path_look = karina2_look
+meet = meet@karina
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+karina_pda_est_start} walker@karina_last
+
+[walker@karina_last]
+path_walk = karina3_walk
+path_look = karina3_look
+meet = no_meet
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+karina_prishli} remark@kontra
+
+[remark@kontra]
+anim = psy_pain
+meet = no_meet
+target = karina3_look, 0
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_info = {+kontra_les_dead} remark@kontra1
+
+[remark@kontra1]
+anim = psy_pain
+meet = no_meet
+target = karina3_look, 0
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+on_timer = 6000 | walker@karina_last1
+
+[walker@karina_last1]
+path_walk = karina3_walk
+path_look = karina3_look
+meet = meet@karina
+combat_ignore_cond = always
+danger = danger_condition@karina_plen
+
+[danger_condition@karina_plen]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet@karina]
+use = true
+use_wpn = true
+meet_talk_enabled = true
+
+[death@karina]
+on_info = %+karina_dead%

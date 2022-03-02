@@ -1,0 +1,304 @@
+-----------------
+--- ARC Tool ----
+-----------------
+---- v0.06 ------
+-----------------
+--- by ANViL & --
+-- Wolf Unnamed -
+---- (2009) -----
+-----------------
+
+local _TXT_STRINGS_MAX = 20
+
+local txt = {"Welcome to ARC_Tool v0.06. Type 'help' to see commands list.\\n"}
+local _txt_pos = 1
+local _txt_max = 1
+
+local history = {}
+local _his_pos = 0
+local _his_max = 0
+
+local keys
+
+local item_lists = {
+arts = {"af_medusa",2},
+wpns = {"wpn_vintorez",2}
+}
+
+local _arc_tool
+
+local _called_from_main_menu = true
+
+function show(_called_from_game)
+	_called_from_main_menu = not _called_from_game
+	
+	local spwnr=arc_tool(get_hud())
+	level.start_stop_menu(spwnr,true)
+end
+
+class "arc_tool" (CUIScriptWnd)
+ 
+function arc_tool:__init(owner) super()
+--	info("__init")
+	self.owner = owner
+	_arc_tool = self
+	self:InitControls()
+	update_txt()
+end
+ 
+function arc_tool:__finalize()
+end
+
+function arc_tool:quit()
+--	info("quit")
+	if _called_from_main_menu then
+		self:GetHolder():start_stop_menu (self.owner, true)
+		self:GetHolder():start_stop_menu (self,true)
+		self.owner:Show	(true)
+		if level.present() and (db.actor ~= nil) and db.actor:alive() then
+			get_console():execute("main_menu off")
+		end
+	else
+		self:GetHolder():start_stop_menu(self,true)
+	end
+end
+
+function arc_tool:InitControls()
+	self:Init(0,0,1024,768)
+	local xml = CScriptXmlInit()
+	xml:ParseFile("arc_tool.xml")
+	
+	self:Register(xml:InitStatic("background", self), "background")
+	self:Register(xml:InitEditBox("edit_box", self), "edit_box")
+	self:Register(xml:Init3tButton("btn_quit", self),"btn_quit")
+	
+	self.edit_box = self:GetEditBox("edit_box")
+	self.background = self:GetStatic("background")
+	
+	self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.quit, self)
+	
+--	info("inited")
+end
+
+function arc_tool:exec()
+--	info("exec")
+	
+	local text = self.edit_box:GetText()
+	self.edit_box:SetText("")
+	
+	if text ~= "" then
+		--info("executing: "..text)
+		--info("%c[255,255,128,128]"..text.."%c[default]")
+		info(">"..text)
+		
+		table.insert(history, 1, text)
+		_his_max = _his_max + 1
+		_his_pos = 0
+		
+		local args = {}
+		for s in string.gmatch(text, "[-_.%w]+") do
+			table.insert(args, s)
+		end
+		
+		local cmd = args[1]
+		table.remove(args, 1)
+		
+		keys = {}
+		
+		local s = ""
+		
+		while args[1] and string.sub(args[1],1,1) == "-" do
+			s = s..args[1].." "
+			keys[args[1]] = true
+			table.remove(args, 1)
+		end
+		
+		if s~="" then s="; keys: "..s end
+		s = "cmd = "..cmd.."; args = "..(table.concat(args, ","))..s
+--		info(s)
+		
+		if not cmd then
+			warning("cmd == nil")
+			
+		elseif cmd == "spawn" then
+			local success = true
+			
+			if keys["-list"] then
+				local list_name = args[1]
+				
+				if list_name then
+					spawn_by_list(list_name)
+				else
+					success = false
+				end
+			else
+				local sec = args[1]
+				local num = tonumber(args[2])
+				
+				if not num then num = 1 end
+				
+				if not sec or not spawn_items(sec, num) then
+					success = false
+				end
+			end
+			
+			if not success then
+				info("use: spawn [-inv] <section> [items_number]\\n or: spawn [-inv] -list <list_name>")
+			end
+			
+		elseif cmd == "script" then
+			local s = string.sub(text, 8)
+			local f = loadstring(s)
+			
+			if not f or s=="" then
+				info("use: script [lua-code]")
+			else
+				info("running script:\\n"..s)
+				f()
+				info("done.")
+			end
+			
+		elseif cmd == "remove" then
+			local id = tonumber(args[1])
+			
+			if id then
+				if keys["-sid"] then
+					id = id_by_sid(id)
+				end
+				info("removing object #"..id)
+				alife():release(alife():object(id), true)
+			else
+				warning("use: remove <obj_id>\\n or: remove -sid <story_id>")
+			end
+			
+		elseif cmd == "test" then
+			info("test..")
+			
+		elseif cmd == "help" then
+			info("commands:\\n remove\\n spawn\\n script\\ntype command for more info.")
+		else
+			warning("unknown command: "..cmd)
+		end
+	end
+end
+
+function arc_tool:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	
+--	info("OnKeyboard")
+	
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if     dik == DIK_keys.DIK_ESCAPE then
+			self:quit()
+		elseif dik == DIK_keys.DIK_RETURN then
+			self:exec()
+		elseif dik == DIK_keys.DIK_UP then
+			if _his_pos < _his_max then
+				_his_pos = _his_pos + 1
+				self.edit_box:SetText(history[_his_pos])
+			end
+		elseif dik == DIK_keys.DIK_DOWN then
+			if _his_pos > 1 then
+				_his_pos = _his_pos - 1
+				self.edit_box:SetText(history[_his_pos])
+			end
+		elseif dik == DIK_keys.DIK_HOME then
+			if _txt_pos > 1 then
+				_txt_pos = _txt_pos - 1
+				update_txt()
+			end
+		elseif dik == DIK_keys.DIK_END then
+			if _txt_pos < _txt_max then
+				_txt_pos = _txt_pos + 1
+				update_txt()
+			end
+		end
+	end
+	
+	return true
+end
+
+function spawn_by_list(list_name)
+	local list = item_lists[list_name]
+	
+	if list then
+		for i = 1, table.getn(list), 2 do
+			if not spawn_items(list[i], list[i+1]) then
+				info("failed to spawn "..list[i])
+				break
+			end
+		end
+	else
+		warning("no such items list")
+	end
+end
+
+function spawn_items(section, number)
+	local a = db.actor
+	local a_pos = a:position()
+	local a_lvid = a:level_vertex_id()
+	local a_gvid = a:game_vertex_id()
+	local a_id = a:id()
+	
+	if not section or not (system_ini():section_exist(section)) then
+		info("section "..section.." not exists")
+		return false
+	end
+	
+	info("spawning: "..section.." x "..number)
+	
+	for i = 1, number do
+		local res
+		if keys["-inv"] or keys["-i"] then
+			res = alife():create(section, a_pos, a_lvid, a_gvid, a_id)
+		else
+			res = alife():create(section, a_pos, a_lvid, a_gvid)
+		end
+		if not res then
+			info("failed to spawn: "..section.." x "..(number - i + 1))
+			return false
+		end
+	end
+	
+	return true
+end
+
+function update_txt()
+	_arc_tool.background:SetText(table.concat(txt, "", _txt_pos, math.min(table.getn(txt), _txt_pos+_TXT_STRINGS_MAX-1)))
+end
+
+function echo(str)
+	table.insert(txt, str)
+	
+	local n = table.getn(txt)
+	
+	if n >_TXT_STRINGS_MAX then
+		_txt_max = _txt_max + 1
+		_txt_pos = _txt_max
+	end
+	
+	update_txt()
+end
+
+function info(str, timeout)
+	str = str.."\\n"
+	
+	for s in string.gmatch(str, "[^\\]*\\n") do
+		local l = string.len(s)
+		get_console():execute("load ~~arc_tool~~ "..string.sub(s, 1, l-2))
+		echo(s)
+--		print(1,s)
+	end
+	
+	get_console():execute("flush")
+end
+
+function warning(msg)
+	info("!!!warning!!! "..msg)
+	return false
+end
+
+function fault(msg)
+	info("!!!fault!!! "..msg)
+	return false
+end

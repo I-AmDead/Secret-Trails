@@ -1,0 +1,795 @@
+---- Ai Additions ----
+---- Rulix aka Bak ---
+rx_utils.init()
+--evaspy = rx_utils.prof_spy()
+rx_ini = ini_file([[misc\ai_additions\misc.ltx]])
+
+ids_to_remove = {}
+
+local alife = alife()
+local death_sound_prob = rx_utils.read_from_ini(rx_ini,"sound","death_probability",50)/100
+local ff_sound_prob = rx_utils.read_from_ini(rx_ini,"sound","friendlyfire_probability",50)/100
+
+function printf(str,...)
+	rx_utils.printf(str,...)
+end
+
+-----------------------------------storage-------------------------------------
+function get_storage(id,name)
+	local st = db.storage[id]
+	if not st then
+		if not id then
+			printf("get_storage[%s|%s]:not id!!!",id,name)
+			return {}
+		end
+		local obj = level.object_by_id(id)
+		local objname = obj and obj:character_name() or "<nil>"
+		printf("get_storage[%s|%s]:not npc storage!!! (%s)",id,name,objname)
+		return {}
+	end
+	if not st.rx_ai then
+		st.rx_ai = {}
+	end
+	if not name then
+		return st.rx_ai
+	end
+	if not st.rx_ai[name] then
+		st.rx_ai[name] = {}
+	end
+	return st.rx_ai[name]
+end
+
+function get_var(npc,name,def)
+	local st = npc and db.storage[npc:id()]
+	if st.pstor and st.pstor[name] then
+		return st.pstor[name]
+	end
+	return def
+end
+
+function save_var(npc,name,val)
+	local st = db.storage[npc:id()]
+	if not st.pstor then
+		st.pstor = {}
+	end
+	st.pstor[name] = val
+	return val
+end
+
+------------------------------------callbacks--------------------------------------
+function actor_update()
+	if #ids_to_remove > 0 then
+		for i=1,#ids_to_remove do
+			local sobj = alife:object(ids_to_remove[i])
+			if sobj then
+				alife:release(sobj)
+			end
+		end
+		ids_to_remove = {}
+	end
+	if rx_wmgr then
+		rx_wmgr.global_update()
+	end
+	if xrs_grenade then
+		xrs_grenade.update()
+	end
+	if xrs_armor then
+		xrs_armor.update()
+	end
+end
+
+function actor_net_spawn()
+	if rx_wmgr then
+		rx_wmgr.init()
+	end
+	if xr_corpse_detection then
+		xr_corpse_detection.actor_net_spawn()
+	end
+	rx_sound.load_sounds()
+end
+
+function actor_item_take(item)
+	if xr_corpse_detection then
+		xr_corpse_detection.actor_item_take(item)
+	end
+end
+
+function actor_save()
+	if rx_wmgr then
+		rx_wmgr.return_all()
+	end
+	if rx_addons then
+		rx_addons.actor_save()
+	end
+end
+
+function npc_update(npc,st)	-- порядок важен
+	st = st.rx_ai	--get_storage(npc:id())
+	if not st then
+		printf("npc_update[%s]:not st!!!",npc:name())
+		return
+	end
+	if rx_wmgr then
+		rx_wmgr.npc_update(npc,st)
+	end
+	if rx_addons then
+		rx_addons.npc_update(npc,st)
+	end
+	if xrs_armor then
+		xrs_armor.npc_update(npc,st)
+	end
+	eat_medkit(npc)
+	look_into_optical_sight(npc)
+	rx_sound.npc_update(npc)
+	-- planner
+	local action_id = st.planner:current_action_id()
+	if action_id ~= st.planner_action_id then
+		issue_event(npc,"action_switch",action_id,st.planner_action_id)
+		if st.planner_action_id == stalker_ids.action_combat_planner then
+			st.combat_planner_fix_timer = nil
+		end
+		st.planner_action_id = action_id
+	end
+	if action_id == stalker_ids.action_combat_planner and rx_combat then
+		rx_combat.combat_planner_update(npc,st)
+	end
+end
+
+function npc_net_spawn(npc)
+	local st = get_storage(npc:id())
+	st.planner = npc:motivation_action_manager()
+	common_planner_pair(npc,st)
+	rx_sound.init_npc_sound(npc)
+end
+
+function corpse_net_spawn(npc,loaded)
+	if xr_corpse_detection and loaded then
+		xr_corpse_detection.corpse_net_spawn(npc)
+	end
+end
+
+function npc_net_destroy(npc)
+	if not npc:alive() then
+		return
+	end
+	local id = npc:id()
+	if rx_wmgr then
+		rx_wmgr.clear_wm(npc)
+	end
+	rx_sound.release_npc(id)
+	unsubscribe_from_events(id)
+end
+
+local switch_factor = 1+system_ini():r_float("alife","switch_factor")
+local switch_distance = alife.switch_distance
+local sactor = alife:actor()
+
+function npc_can_switch_offline(sobj)
+	local can = sobj:can_switch_offline(true)
+	if can and db.actor then
+		local offline_distance = switch_distance(alife)*switch_factor
+		offline_distance = offline_distance*offline_distance
+		if not sobj:can_switch_online() or sobj.position:distance_to_sqr(sactor.position) > offline_distance then
+			-- предсказан переход в офлайн
+			npc_switch_offline(sobj.id)
+		end
+	end
+	return can
+end
+
+function npc_switch_offline(id)
+	if rx_addons then
+		rx_addons.npc_switch_offline(id)
+	end
+	if rx_wmgr then
+		rx_wmgr.kill_wm(id,nil,true)
+	end
+end
+
+function npc_death(npc,who)
+	if npc then
+		local npc_id = npc:id()
+		if rx_wmgr then
+			rx_wmgr.kill_wm(npc_id,true)
+		end
+		if xr_corpse_detection then
+			xr_corpse_detection.npc_death(npc,who)
+		end
+		rx_sound.release_npc(npc_id)
+		issue_event(npc,"death_callback",who)
+		unsubscribe_from_events(npc_id)
+		-- озвучка смерти
+		if math.random() > death_sound_prob then
+			npc:set_sound_mask(-1)
+		end
+		-- очистка пстора от мусора
+		local st = db.storage[npc_id]
+		if not (st and st.rx_ai and st.pstor) then
+			return
+		end
+		local pstor = st.pstor
+		for i,val in ipairs({'fa_target','gl_charged','kw_type','courage','kn_spawn','gr_psyh','wounded_fight','wounded_state','wounded_sound','wounded_victim','wounded_time'}) do
+			pstor[val] = nil
+		end
+		-- fixing possible afterlife evaluators activity
+		local planner = st.rx_ai.planner or npc:motivation_action_manager()
+		for id,ret in pairs(death_disable_evas) do
+			planner:remove_evaluator(id)
+			planner:add_evaluator(id,property_evaluator_const(ret))
+		end
+	end
+end
+
+function npc_hit(npc,amount,dir,who,bone_id)
+	if npc and amount > 0 then
+		local st = get_storage(npc:id())
+		issue_event(npc,"hit_callback",amount,dir,who,bone_id)
+		st.hit_by_anomaly = rx_utils.is_anomaly(who) or nil
+		if rx_combat then
+			if st.planner_action_id == stalker_ids.action_combat_planner then
+				rx_combat.npc_hit_combat(npc,st,who,bone_id)
+			elseif st.planner_action_id == stalker_ids.action_danger_planner then
+				rx_combat.npc_hit_danger(npc,who,bone_id,amount)
+			end
+		end
+		-- sound part
+		local snd
+		if math.random() < ff_sound_prob and who and who:alive() and not xr_wounded.is_wounded(npc) and who:id() ~= npc:id() then
+			if npc:relation(who) ~= game_object.enemy and who:relation(npc) ~= game_object.enemy then
+				if npc:position():distance_to_sqr(who:position()) < 1000 then
+					if bone_id == 0 then
+						snd = "friendly_grenade"
+					else
+						snd = "friendly_fire"
+					end
+				end
+			else
+				local actid = npc:motivation_action_manager():current_action_id()
+				if actid >= base_id and actid < base_id+100 then
+					snd = "npc_hit"
+				end
+			end
+		end
+		if snd then
+			rx_sound.set_sound_play(npc:id(),snd)
+		end
+	end
+end
+
+function npc_item_take(npc,item)
+	if npc then
+		if rx_addons then
+			rx_addons.npc_item_take(npc,item)
+		end
+		issue_event(npc,"on_item_take",item)
+	end
+end
+
+function npc_item_drop(npc,item)
+	if npc then
+		issue_event(npc,"on_item_drop",item)
+	end
+end
+
+function monster_death(npc,who)
+	if xr_corpse_detection then
+		xr_corpse_detection.npc_death(npc,who)
+	end
+end
+
+------------------------------------events-------------------------------------
+function issue_event(npc,name,...)
+	local st = get_storage(npc:id(),"events")
+	for k,v in pairs(st) do
+		if v and k[name] then
+			k[name](k,...)
+		end
+	end
+end
+
+function broadcast_event(name,...)
+	for id,st in pairs(db.storage) do
+		if st.rx_ai then
+			st = st.rx_ai.events
+			if st then
+				for k,v in pairs(st) do
+					if v and k[name] then
+						k[name](k,...)
+					end
+				end
+			end
+		end
+	end
+end
+
+function subscribe_for_events(npc,obj)
+	get_storage(npc:id(),"events")[obj] = true
+end
+
+function unsubscribe_from_events(npc_id,obj)
+	if obj then
+		get_storage(npc_id,"events")[obj] = nil
+	else
+		get_storage(npc_id)["events"] = nil
+	end
+end
+
+------------------------------------planner------------------------------------
+base_id = 18800
+reset_protected_actions = {}
+death_disable_evas = {
+--[xr_evaluators_id.state_mgr + 1] = true,
+[xr_evaluators_id.state_mgr + 2] = true,
+}
+
+function is_active_action(npc,actid)
+	if not actid then
+		local mgr = npc:motivation_action_manager()
+		actid = mgr and mgr:initialized() and mgr:current_action_id() or 0
+	end
+	return actid > base_id and actid < base_id+100
+end
+
+-- Попытка разобраться с этим беспределом без редактирования всех схем
+-- Для экшенов, требующих защиты, используется пара:
+-- rx_ai.reset_protected_actions[action_id] = true
+-- вызов rx_ai.process_postponed_setup(npc:id()) из action:finalize()
+function process_postponed_setup(id)
+	local stor = db.storage[id]
+	if stor and stor.active_scheme then
+		local mm = stor.move_mgr
+		if mm.path_walk and mm.setup_movement_postponed then
+			mm.setup_movement_postponed = nil
+			mm:setup_movement_by_patrol_path()
+		end
+	end
+end
+
+function is_reset_protected_action(npc,actid)
+	if not actid then
+		local mgr = npc:motivation_action_manager()
+		actid = mgr:initialized() and mgr:current_action_id() or 0
+	end
+	return reset_protected_actions[actid] == true
+end
+
+function load_schemes()
+	if rx_reload then
+		load_scheme("rx_reload","reload",modules.stype_stalker)
+	end
+	if rx_gl then
+		load_scheme("rx_gl","launch_grenade",modules.stype_stalker)
+	end
+	if rx_facer then
+		load_scheme("rx_facer","facer",modules.stype_stalker)
+	end
+	if rx_bandage then
+		load_scheme("rx_bandage","bandage",modules.stype_stalker)
+	end
+	if rx_ff then
+		load_scheme("rx_ff","rx_ff",modules.stype_stalker)
+	end
+	if rx_knife then
+		load_scheme("rx_knife","rx_knife",modules.stype_stalker)
+	end
+	if rx_kill_wounded then
+		load_scheme("rx_kill_wounded","kill_wounded",modules.stype_stalker)
+	end
+	if xr_help_wounded then
+		load_scheme("xr_help_wounded","help_wounded",modules.stype_stalker)
+	end
+	if xr_corpse_detection then
+		load_scheme("xr_corpse_detection","corpse_detection",modules.stype_stalker)
+	end
+	if post_combat_idle then
+		load_scheme("post_combat_idle","post_combat_idle",modules.stype_stalker)
+	end
+	if xrs_grenade then
+		load_scheme("xrs_grenade","grenadier",modules.stype_stalker)
+	end
+	if rx_combat then
+		load_scheme("rx_combat","rx_combat",modules.stype_stalker)
+	end
+end
+
+function disable_schemes(npc)
+--[[	if rx_bandage then
+		rx_bandage.disable_scheme(npc)
+	end
+	if rx_reload then
+		rx_reload.disable_scheme(npc,"reload")
+	end
+	if rx_gl then
+		rx_gl.disable_scheme(npc,"launch_grenade")
+	end
+	if rx_facer then
+		rx_facer.disable_scheme(npc,"facer")
+	end
+	if rx_knife then
+		rx_knife.disable_scheme(npc,"knife")
+	end]]
+end
+
+function enable_schemes(ini,npc,section_logic)
+	if rx_reload then
+		rx_reload.set_scheme(npc,ini,"reload","reload")
+	end
+	if rx_gl then
+		rx_gl.set_scheme(npc,ini,"launch_grenade","launch_grenade")
+	end
+	if rx_facer then
+		rx_facer.set_scheme(npc,ini,"facer","facer")
+	end
+	if rx_bandage then
+		rx_bandage.set_scheme(npc,ini,"bandage","bandage")
+	end
+	if rx_ff then
+		rx_ff.set_scheme(npc,ini,"rx_ff","rx_ff")
+	end
+	if rx_knife then
+		rx_knife.set_scheme(npc,ini,"rx_knife",section_logic)
+	end
+	if rx_kill_wounded then
+		rx_kill_wounded.set_scheme(npc,ini,"kill_wounded","kill_wounded")
+	end
+	if xr_help_wounded then
+		xr_help_wounded.set_help_wounded(npc,ini,"help_wounded","help_wounded")
+	end
+	if xr_corpse_detection then
+		xr_corpse_detection.set_corpse_detection(npc,ini,"corpse_detection","corpse_detection")
+	end
+	if post_combat_idle then
+		post_combat_idle.set_scheme(npc,ini,"post_combat_idle",section_logic)
+	end
+	if xrs_grenade then
+		xrs_grenade.set_scheme(npc,ini,"grenadier","grenadier")
+	end
+	if rx_combat then
+		rx_combat.set_scheme(npc,ini,"rx_combat","rx_combat")
+	end
+end
+
+function reset_schemes(npc, scheme, st, section)
+	if xr_help_wounded then
+		xr_help_wounded.reset_help_wounded(npc, scheme, st, section)
+	end
+	if xr_corpse_detection then
+		xr_corpse_detection.reset_corpse_detection(npc, scheme, st, section)
+	end
+	if rx_bandage then
+		rx_bandage.reset_scheme(npc, scheme, st, section)
+	end
+	if rx_knife then
+		rx_knife.reset_scheme(npc, scheme, st, section)
+	end
+	if rx_wmgr then
+		rx_wmgr.reset_scheme(npc, scheme, st, section)
+	end
+	if post_combat_idle then
+		post_combat_idle.reset_scheme(npc, scheme, st, section)
+	end
+	if xrs_grenade then
+		xrs_grenade.reset_scheme(npc, scheme, st, section)
+	end
+end
+
+function addCommonPrecondition(action)
+	if rx_reload then
+		action:add_precondition(world_property(rx_reload.evid_reload,false))
+	end
+	if rx_gl then
+		action:add_precondition(world_property(rx_gl.evid_gl_fire,false))
+		action:add_precondition(world_property(rx_gl.evid_gl_reload,false))
+	end
+	if rx_facer then
+		action:add_precondition(world_property(rx_facer.evid_facer,false))
+	end
+	if rx_bandage then
+		action:add_precondition(world_property(rx_bandage.evid_bandage,false))
+	end
+	if rx_knife then
+		action:add_precondition(world_property(rx_knife.evid_knife_attack,false))
+	end
+	if xr_help_wounded then
+		action:add_precondition(world_property(xr_help_wounded.evid_wounded_exist,false))
+	end
+	if xr_corpse_detection then
+		action:add_precondition(world_property(xr_corpse_detection.evid_corpse_exist,false))
+	end
+	if post_combat_idle then
+		action:add_precondition(world_property(post_combat_idle.evid_post_combat,false))
+	end
+	if xrs_grenade then
+		action:add_precondition(world_property(xrs_grenade.evid_crazy_grenadier,false))
+		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
+	end
+end
+
+------------------------------------eating----------------------------------------
+local eating = {enabled = rx_ini:section_exist("npc_eating") and rx_ini:r_bool("npc_eating","enabled")}
+function eat_init()
+	local sect = "npc_eating"
+	eating.exc_comms = rx_utils.parse_list(rx_ini,sect,"excluded_communities",true)
+	eating.exc_npcs = rx_utils.parse_list(rx_ini,sect,"excluded_npcs",true)
+	eating.ic = rx_utils.read_from_ini(rx_ini,sect,"in_combat",false,0)
+	eating.oc = rx_utils.read_from_ini(rx_ini,sect,"out_combat",true,0)
+	eating.max_h = rx_utils.read_from_ini(rx_ini,sect,"medkit_health",50)/100
+	eating.min_b = rx_utils.read_from_ini(rx_ini,sect,"bandage_bleeding",0.2)
+	eating.medkits = rx_utils.parse_list(rx_ini,sect,"medkits")
+	eating.bandages = rx_utils.parse_list(rx_ini,sect,"bandages")
+	eating.delay = rx_utils.parse_list(rx_ini,sect,"delay")
+end
+function eat_medkit(npc)
+	if not eating.enabled then
+		return
+	end
+	if not eating.max_h then
+		eat_init()
+	end
+	local st = get_storage(npc:id(),"eating")
+	if st.disabled then
+		return
+	elseif st.disabled == nil then
+		st.disabled = false
+		if eating.exc_comms[npc:character_community()] or eating.exc_npcs[npc:name()] then
+			st.disabled = true
+		end
+		return
+	end
+	local enemy = npc:best_enemy()
+	if xr_wounded.is_wounded(npc) or (not eating.ic and enemy) or (not eating.oc and not enemy) then
+		st.item = nil
+		st.time = nil
+		return
+	end
+	if st.item and st.time then
+		if st.time < time_global() then
+			local med = npc:object(st.item)
+			if med then
+				rx_utils.eat_medkit(npc,med)
+			end
+			st.item = nil
+		end
+		return
+	end
+	if npc.health < eating.max_h and not xr_wounded.is_wounded(npc) then
+		for k,v in ipairs(eating.medkits) do
+			local medkit = npc:object(v)
+			if medkit then
+				st.time = time_global()+math.random(eating.delay[1],eating.delay[2])
+				st.item = v
+				return
+			end
+		end
+	end
+	if npc:get_bleeding() > eating.min_b then
+		for k,v in ipairs(eating.bandages) do
+			local bandage = npc:object(v)
+			if bandage then
+				st.time = time_global()+math.random(eating.delay[1],eating.delay[2])
+				st.item = v
+				return
+			end
+		end
+	end
+end
+
+------------------------------------lios-----------------------------------------
+local lios = {enabled = rx_ini:section_exist("look_into_os") and rx_ini:r_bool("look_into_os","enabled")}
+function lios_init()
+	local sect = "look_into_os"
+	lios.exc_comms = rx_utils.parse_list(rx_ini,sect,"excluded_communities",true)
+	lios.exc_npcs = rx_utils.parse_list(rx_ini,sect,"excluded_npcs",true)
+	lios.range_add = rx_utils.read_from_ini(rx_ini,sect,"range_add",0.5)/100
+	lios.fov_add = rx_utils.read_from_ini(rx_ini,sect,"fov_add",-0.3)/100
+	lios.zoom_factor = {}
+	lios.fire_dist = {}
+end
+function look_into_optical_sight(npc)
+	if not lios.enabled then
+		return
+	elseif not lios.range_add then
+		lios_init()
+	end
+	local storage = get_storage(npc:id(),"lios")
+	if storage.disabled then
+		return
+	end
+	if not storage.range then
+		if lios.exc_comms[npc:character_community()] or lios.exc_npcs[npc:name()] then
+			storage.disabled = true
+		else
+			storage.range = npc:range()
+			storage.fov = npc:fov()
+			storage.ch = false
+		end
+		return
+	end
+	local act = false
+	local weapon = npc:active_item()
+	if rx_utils.item_is_fa(weapon) and rx_utils.addon_attached(weapon,"sc") then
+		local move_type,mental_state = npc:movement_type(),npc:mental_state()
+		if (move_type == move.stand or move_type == move.walk) and mental_state == anim.danger then
+			act = true
+		end
+	end
+	if storage.ch ~= act then
+		local range,fov = storage.range,storage.fov
+		if act == true then
+			local function get_zoom_factor(sect)
+				if lios.zoom_factor[sect] == nil then
+					local scope = rx_utils.read_from_ini(nil,sect,"scope_status",nil) == 2 and rx_utils.read_from_ini(nil,sect,"scope_name",nil,1)
+					if not scope then
+						scope = sect
+					end
+					lios.zoom_factor[sect] = rx_utils.read_from_ini(nil,scope,"scope_zoom_factor",30)
+					lios.fire_dist[sect] = rx_utils.read_from_ini(nil,sect,"fire_distance",150)
+				end
+				return lios.zoom_factor[sect],lios.fire_dist[sect]
+			end
+			local factor,max_range = get_zoom_factor(weapon:section())
+			if factor < 80 and max_range > storage.range then
+				factor = 30/factor
+				range = range+range*lios.range_add*factor
+				if range > max_range then
+					range = max_range
+				end
+				fov = fov+fov*lios.fov_add*factor
+				if fov < 40 then
+					fov = 40
+				end
+			end
+		end
+		npc:set_range(range)
+		npc:set_fov(fov)
+		storage.ch = act
+	end
+end
+
+------------------------------------planner-----------------------------------------
+
+-- есть ли толк от этого?
+class "evaluator_critically_wounded" (property_evaluator)
+function evaluator_critically_wounded:__init(name) super (nil,name)
+end
+function evaluator_critically_wounded:evaluate()
+	return self.object:critically_wounded()
+end
+
+-- проброс эвалуатора в общий менеджер. пока тут
+class "evaluator_danger_grenade" (property_evaluator)
+function evaluator_danger_grenade:__init(npc,name) super (nil,name)
+end
+function evaluator_danger_grenade:evaluate()
+	local best_danger = self.object:best_danger()
+	if best_danger and best_danger:dependent_object() and best_danger:type() == danger_object.grenade and db.storage[self.object:id()].danger_flag then	-- and time_global()-best_danger:time() < 7000
+		self.storage:set_property(stalker_ids.property_danger_grenade,true)
+		return true
+	end
+	self.storage:set_property(stalker_ids.property_danger_grenade,false)
+	return false
+end
+
+-- Специальный экшн для немедленного отыгравания статичных анимаций
+-- Должен иметь наивысший приоритет
+function play_animation(npc,data)
+	local planner = npc:motivation_action_manager()
+	local action = planner:action(actid_anim_play)
+	if action.is_playing then
+		return
+	end
+	action.data = data
+	action.call_time = time_global()
+	action.enabled = true
+end
+
+evid_anim_play = base_id-1
+actid_anim_play = base_id-1
+class "action_animation_player" (action_base)
+function action_animation_player:__init (npc,storage,action_name,planner) super (nil,action_name)
+	self.enabled = false
+end
+function action_animation_player:initialize()
+	action_base.initialize(self)
+	self.is_playing = true
+	if time_global()-self.call_time > 500 then
+		self.enabled = false
+		return
+	end
+	local npc = self.object
+	if npc:critically_wounded() then
+		self.enabled = false
+		return
+	end
+	state_mgr.lock(npc,true,true)
+	npc:set_desired_position()
+	npc:set_desired_direction()
+	npc:set_movement_type(move.stand)
+	npc:clear_animations()
+	if self.data.mental then
+		npc:set_mental_state(self.data.mental)
+	end
+	if self.data.body then
+		npc:set_body_state(self.data.body)
+	end
+	if self.data.weapon then
+		npc:set_item(self.data.weapon,npc:active_item(),math.random(1,7),1)
+	end
+	if self.data.sound then
+--		self.data.sound:play(npc,0,sound_object.s3d)
+		self.data.sound:play_at_pos(npc,npc:bone_position("bip01_head"),0,sound_object.s3d)
+	end
+	if self.data.sound_theme then
+		rx_sound.set_sound_play(npc:id(),self.data.sound_theme)
+	end
+	if self.data.look_object then
+		npc:set_sight(target,true,false)
+	elseif self.data.look_position then
+		npc:set_sight(look.point,self.data.look_position)
+	elseif self.data.look_direction then
+		npc:set_sight(look.direction,self.data.look_direction)
+	else
+		npc:set_sight(look.cur_dir,nil,0)
+	end
+	if type(self.data.animation) == 'string' then
+		rx_utils.add_anim(npc,self.data.animation,true)
+	else
+		for i,anim in ipairs(self.data.animation) do
+			rx_utils.add_anim(npc,anim,true)
+		end
+	end
+	self.timeout = self.data.timeout and time_global() + self.data.timeout or nil
+	self.init = true
+end
+function action_animation_player:execute()
+	action_base.execute(self)
+	local npc = self.object
+	if npc:animation_count() == 0 or self.timeout and self.timeout < time_global() then
+		self.enabled = false
+		if self.data.callback then
+			self.data.callback.func(self.data.callback.obj,self.object)
+		end
+	end
+	if self.init then
+		self.init = nil
+		return
+	end
+	if self.data.weapon == object.fire1 then
+		npc:set_item(self.data.weapon,npc:active_item(),math.random(1,7),10000)
+		self.data.weapon = nil
+	end
+end
+function action_animation_player:finalize()
+	action_base.finalize(self)
+	state_mgr.lock(self.object,false)
+	self.data = nil
+	self.is_playing = false
+	self.enabled = false
+end
+
+function common_planner_pair(npc,st)
+	local manager = st.planner
+
+	-- evaluator_critically_wounded
+	manager:add_evaluator(stalker_ids.property_critically_wounded,evaluator_critically_wounded("eva_critically_wounded"))
+
+	-- evaluator_danger_grenade
+	manager:add_evaluator(stalker_ids.property_danger_grenade,evaluator_danger_grenade(npc,"eva_danger_grenade"))
+	manager.storage:set_property(stalker_ids.property_danger_grenade,false)
+	local action = manager:action(stalker_ids.action_danger_planner)
+	action:add_effect(world_property(stalker_ids.property_danger_grenade,false))
+
+	-- action_animation_player
+	action = action_animation_player(npc,st,"animation_player",manager)
+	action:add_precondition(world_property(stalker_ids.property_alive,true))
+--	action:add_precondition(world_property(stalker_ids.property_critically_wounded,false))
+--	action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base,false))
+	action:add_precondition(world_property(evid_anim_play,true))
+	action:add_precondition(world_property(stalker_ids.property_puzzle_solved,false))
+	action:add_effect(world_property(evid_anim_play,false))
+	action:add_effect(world_property(stalker_ids.property_puzzle_solved,true))
+	manager:add_action(actid_anim_play,action)
+	manager:add_evaluator(evid_anim_play,enabled_evaluator("eva_animation_player",action))
+	action = manager:action(xr_actions_id.alife)
+	action:add_precondition(world_property(evid_anim_play,false))
+end

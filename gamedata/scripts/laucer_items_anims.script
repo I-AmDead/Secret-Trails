@@ -1,0 +1,183 @@
+
+local ANIMS_ENABLED = true
+
+local ANIM_IN_ACTION = false
+local ANIM_USED_TM, ANIM_COMPLETED_TM, CURRENT_ITEM_SECT, CURRENT_ANM_SECT = false, false, false, false
+local SLOT_RESTORE = false
+local ITEM_RELEASED = false
+
+local cfg = {
+	"eat_health",
+	"eat_power",
+	"eat_radiation",
+	"eat_satiety",
+	"eat_alcohol",
+	"eat_psy_health",
+	"wounds_heal_perc",
+}
+
+local function apply_item( sect )				
+	for k, v in ipairs( cfg ) do
+		local val = get_float( sect, v )
+		if val ~= 0	then
+			if     k == 1 then db.actor.health = val
+			elseif k == 2 then db.actor.power = val
+			elseif k == 3 then db.actor.radiation = val
+			elseif k == 4 then db.actor.satiety = val
+			elseif k == 5 then db.actor.thirst = val
+			elseif k == 6 then db.actor.alcohol = val
+			elseif k == 7 then db.actor.psy_health = val
+			elseif k == 8 then db.actor:heal_wounds( val )
+			end
+		end
+	end
+end
+
+local function respawn_item(obj)
+	obj:zero_effects()
+	alife():create( obj:section(), db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )	   
+end
+
+local snd_in_use = false
+local function play_use_sound(sect, snd_name)
+	local snd = snd_name or get_string( sect, "use_sound" )
+	if snd then
+		if snd_in_use then
+			snd_in_use:stop()
+		end
+		snd_in_use = sound_object( snd )
+		snd_in_use:play( db.actor, 0, sound_object.s2d )
+	end
+end
+
+local function on_actor_before_use( obj, sobj )
+	local sect = obj:section()
+
+	if ANIMS_ENABLED then
+
+
+
+
+
+
+		local snd = get_string( sect, "use_sound_anm" )
+
+		if not db.actor.inventory:is_active_slot_blocked() and snd and not ANIM_IN_ACTION then
+
+			CURRENT_ANM_SECT = "anm_" .. obj:section()
+
+			CURRENT_ITEM_SECT = sect
+			ITEM_RELEASED = false
+
+			ANIM_USED_TM = get_u32( CURRENT_ANM_SECT, "item_used_timing" )
+			ANIM_COMPLETED_TM = get_u32( CURRENT_ANM_SECT, "anim_timing" )
+			
+			SLOT_RESTORE = db.actor:active_slot()
+
+			alife():create( CURRENT_ANM_SECT, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )
+			if db.actor:has_info( "ui_inventory" ) then
+				level.start_stop_menu( level.main_input_receiver(), true )
+			end
+			obj:zero_effects()
+			if db.actor:dont_has_info( "ui_inventory" ) then
+				db.actor:hide_weapon()
+			end
+		elseif snd and db.actor:has_info("ui_talk") and not ANIM_IN_ACTION then --Не понятно зачем это надо, тем более с другим звуком, но ладно.
+			play_use_sound(sect, snd)
+		elseif not ANIM_IN_ACTION then
+			play_use_sound(sect)
+		else
+			respawn_item(obj)
+		end
+	else
+		play_use_sound(sect)
+	end
+end
+
+
+local anim_applied = false
+local anim_exist_tm = false
+local anim_exist_used_tm = false
+local function on_item_to_ruck( obj, sobj )
+	if not string.find( obj:section(), "^anm_" ) then return end
+
+	if not ITEM_RELEASED then
+		alife():release(sobj)
+		ITEM_RELEASED = true
+	end
+
+	db.actor:restore_weapon()
+
+	if SLOT_RESTORE then
+		db.actor:activate_slot(SLOT_RESTORE)
+		SLOT_RESTORE = false
+	end
+
+	ANIM_USED_TM = false
+	ANIM_IN_ACTION = false
+	anim_applied = false
+	ANIM_COMPLETED_TM = false
+	anim_exist_tm = false
+	anim_exist_used_tm = false
+	CURRENT_ITEM_SECT = false
+	CURRENT_ANM_SECT = false
+end
+
+
+local function on_drop( obj, sobj )
+	on_item_to_ruck( obj, sobj )
+end
+
+
+local function on_item_to_slot( obj )
+	if CURRENT_ITEM_SECT and string.find( obj:section(), "^anm_" ) then
+		db.actor:restore_weapon()
+		db.actor:activate_slot(13)
+		ANIM_IN_ACTION = true
+	end
+end
+
+
+local function on_first_update()
+	local obj = db.actor:item_in_slot(13)
+	if obj and string.find( obj:section(), "^anm_" ) then
+		db.actor:move_to_ruck(obj) 
+	end
+end
+
+local function on_update()
+	if ANIM_IN_ACTION then
+		local tg = time_global()
+		if not anim_exist_tm then
+			if db.actor:active_slot() == 13 then
+				db.actor:hide_weapon()
+				anim_exist_tm = tg + ANIM_COMPLETED_TM
+				anim_exist_used_tm = tg + ANIM_USED_TM
+			end
+		end
+		if anim_exist_used_tm and not anim_applied then
+			if anim_exist_used_tm <= tg then
+				apply_item( CURRENT_ITEM_SECT )
+				anim_applied = true
+			end
+		end
+		if anim_exist_tm then
+			if anim_exist_tm <= tg then
+				local slot13 = db.actor:item_in_slot(13)
+				if slot13 then
+					db.actor:move_to_ruck(slot13)
+				end
+			end
+		end
+	end
+end
+
+
+function attach( sm )
+	sm:subscribe({ signal = "on_first_update",     fun = on_first_update })
+	sm:subscribe({ signal = "on_update",           fun = on_update })
+	sm:subscribe({ signal = "on_item_to_slot",     fun = on_item_to_slot })
+	sm:subscribe({ signal = "on_item_to_ruck",     fun = on_item_to_ruck })
+	sm:subscribe({ signal = "on_drop",             fun = on_drop })
+	sm:subscribe({ signal = "on_actor_before_use", fun = on_actor_before_use })
+end

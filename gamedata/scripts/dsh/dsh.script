@@ -1,0 +1,4017 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+-- в этих слотах могут находиться пистолеты и обрезы
+small_wpn_slots = {
+  [ 1 ] = true,
+  [ 8 ] = true,
+}
+
+
+function attach( sm )
+  sm:subscribe({ signal = "on_before_spawn", fun = this.on_before_spawn })
+  sm:subscribe({ signal = "on_destroy",      fun = this.on_destroy      })
+  sm:subscribe({ signal = "on_save",         fun = this.on_save         })
+  sm:subscribe({ signal = "on_spawn",        fun = this.on_spawn        })
+end
+
+function init()
+  event( "se_monster:on_before_register" ):register( this.se_on_before_register )
+  event( "se_stalker:on_before_register" ):register( this.se_on_before_register )
+end
+
+
+function on_before_spawn()
+  local build = ogse.load_var_safe( "dsh.build" )
+  log2(
+    "[%s]: [%s] loaded build: %s",
+    script_name(), get_string_wq( "dsh.build", "build" ), tostring( build )
+  )
+  db.actor:disable_info_portion( "biznes_remove_special_item" )
+  if is_input_time_inactivated() then
+    level.disable_input()
+  else
+    level.enable_input()
+  end
+end
+
+
+function unbind_debug_keys()
+  cmd( "unbind cam_2" )
+  cmd( "unbind_sec cam_2" )
+end
+
+
+function on_spawn()
+  if not dsh_cfg.get_data().debug_mode then
+    for _, k in ipairs({
+      "g_crosshair_dbg", "g_god", "g_vertex_dbg", "g_zones_dbg",
+      "g_unlimitedammo", "hud_crosshair_dist", "hud_info"
+    }) do
+      cmd( k, "off" )
+    end
+    cmd( "hud_crosshair_zoom on" )
+    cmd( "hud_fov 30." )
+    for _, k in ipairs({
+      "bind", "demo_record", "g_crosshair_dbg", "g_god", "g_vertex_dbg",
+      "g_zones_dbg", "g_unlimitedammo", "hud_crosshair_dist",
+      "hud_crosshair_zoom", "hud_draw", "hud_fov", "hud_info", "jump_to_level",
+      "set_weather", "time_factor"
+    }) do
+      get_console():disable_command( k )
+    end
+    unbind_debug_keys()
+    ogse_signals.get_mgr():subscribe({
+      signal = "on_mm_return_game", fun = this.unbind_debug_keys
+    })
+  end
+  preload_free_logic_gulag()
+end
+
+
+function on_save()
+  ogse.save_var( "dsh.build", get_string_wq( "dsh.build", "build" ), "string" )
+end
+
+
+class "timeout_timer" ( ogse_qt.quick_timer )
+function timeout_timer:__init( delay, fun, ... ) super( delay )
+  self.fun  = fun
+  self.args = { ... }
+end
+function timeout_timer:taction()
+  self.fun( unpack( self.args ) )
+end
+
+function timeout( ... )
+  local t = timeout_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start()
+  return t
+end
+
+
+class "condition_timer" ( ogse_qt.quick_timer )
+function condition_timer:__init( fun1, fun2, fun3 )
+  self.fun1 = fun1
+  self.fun2 = fun2
+  self.fun3 = fun3
+end
+function condition_timer:condition()
+  return self.fun1( self )
+end
+function condition_timer:action()
+  self.fun2( self )
+end
+function condition_timer:update()
+  if self.fun3 then self.fun3( self ) end
+end
+
+function wait_condition( ... )
+  local t = condition_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start()
+  return t
+end
+
+
+class "exec_on_update_timer" ( ogse_qt.quick_timer )
+function exec_on_update_timer:__init( fun, ... )
+  self.fun  = fun
+  self.args = { ... }
+end
+function exec_on_update_timer:condition()
+  return not ogse_sleep_mgr.is_sleep_active()
+end
+function exec_on_update_timer:action()
+  self.fun( unpack( self.args ) )
+end
+
+function exec_on_update( ... )
+  local t = exec_on_update_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start()
+  return t
+end
+
+
+function set_condition( item, cond )
+  item:set_condition( cond )
+end
+
+
+-- http://www.amk-team.ru/forum/index.php?showtopic=6458&p=937442
+--
+-- local lname = level.name()
+-- local lvtab = GetLevelVertexes( lname )
+-- local lvx = math.max( unpack( lvtab ) )
+-- local lv  = math_random( 1, lvx )
+--
+-- local gvtab  = GetGameVertexes( lname )
+-- local gv_min = math.min( unpack( gvtab ) )
+-- local gv_max = math.max( unpack( gvtab ) )
+--
+function GetLevelVertexes( level )
+  local lvtab ={}
+  local i = 0
+  while game_graph():valid_vertex_id( i ) do
+    local lv = game_graph():vertex( i ):level_vertex_id()
+    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
+    if not lvtab[ ln ] then
+      lvtab[ ln ] = {}
+    end
+    table.insert( lvtab[ ln ], lv )
+    i = i + 1
+  end
+  return lvtab[ level ]
+end
+
+function GetGameVertexes( level )
+  local gvtab ={}
+  local i = 0
+  while game_graph():valid_vertex_id( i ) do
+    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
+    if not gvtab[ ln ] then
+      gvtab[ ln ] = {}
+    end
+    table.insert( gvtab[ ln ], i )
+    i = i + 1
+  end
+  return gvtab[ level ]
+end
+
+
+function is_enemy_around()
+  for id in pairs( db.creatures ) do
+    if id then
+      local obj = level.object_by_id( id )
+      if obj and obj:is_custom_monster() and obj:alive() then
+        local is_stalker = IsStalker(obj)
+        local dist = obj:position():distance_to( db.actor:position() )
+        local is_enemy_to_actor =
+          ogse.get_npc_relation( obj, db.actor ) == "enemy"
+        if
+          ( ( is_stalker and is_enemy_to_actor ) or IsMonster( obj ) )
+          and
+          ( dist < 5 or obj:see( db.actor ) )
+        then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+
+function remove_quotes( s )
+  local  s2 = string.gsub( s, "[«»\"\']", "" )
+  return s2
+end
+
+
+function strip_quotes( s )
+  return string.gsub( s, "^%s*[«»\"\']+%s*(.+)%s*[«»\"\']+%s*$", "%1" )
+end
+
+
+function is_artefact( sect )
+  if sys_ini:line_exist( sect, "dsh_is_artefact" ) then
+    return get_bool( sect, "dsh_is_artefact" )
+  end
+  return string.find( sect, "af_", 1, true )
+end
+
+
+-- Список артефактов, которые можно сварить.
+function get_creatable_arts()
+  local arts = {}
+  for anomaly, info in pairs( amk_mod.anom_recept_komp.anomalii ) do
+    for info_key, recept in pairs( info.recepti ) do
+      if
+        recept.cel and recept.komp
+        and not ( recept.remove_anomaly or recept.storyline )
+      then
+        local targets = {}
+        local parts   = {}
+        for k, _ in pairs( recept.cel  ) do
+          ASSERT( not recept.komp[ k ], "found cel %s in komp", k )
+          table.insert( targets, k )
+        end
+        for k, _ in pairs( recept.komp ) do
+          ASSERT( not recept.cel[ k ], "found komp %s in cel", k )
+          table.insert( parts, k   )
+        end
+        if
+          table.getn( targets ) == 1
+          and is_artefact( targets[ 1 ] )
+          and table.getn( parts ) > 0
+        then
+          local tgt = targets[ 1 ]
+          arts[ tgt ] = {
+            [ "next" ] = {},
+            [ "prev" ] = parts,
+          }
+        end
+      end
+    end
+  end
+  return arts
+end
+
+
+function get_art_levels()
+  local arts = {}
+  for k, v in pairs( get_creatable_arts() ) do
+    if table.getn( v.prev ) == 1 then
+      arts[ k ] = v
+    end
+  end
+
+  for af, data in pairs( arts ) do
+    local next_arts = { af }
+    local process   = { data.prev[ 1 ] }
+    while table.getn( process ) > 0 do
+      local af_prev = table.remove( process, 1 )
+      ASSERT( af ~= af_prev, "loop found: %s == %s", af, af_prev )
+      if arts[ af_prev ] then
+        if table.getn( arts[ af_prev ].next ) < table.getn( next_arts ) then
+          arts[ af_prev ].next = {}
+          for _, k in ipairs( next_arts ) do
+            table.insert( arts[ af_prev ].next, k )
+          end
+        end
+        table.insert( next_arts, 1, af_prev )
+        table.insert( process,   arts[ af_prev ].prev[ 1 ] )
+        table.insert( data.prev, arts[ af_prev ].prev[ 1 ] )
+      end
+    end
+  end
+
+  -- Для Симбиона сделано исключение. Т.к. он не является модификацией
+  -- какого-то одного артефакта, он будет считаться артефактом первого
+  -- уровня. Поэтому, принудительно сделаю его артефактом третьего
+  -- уровня.
+  if not arts[ "af_simbion" ] then
+    arts[ "af_simbion" ] = {
+      [ "next" ] = { "af_arhara_globus" },
+      [ "prev" ] = { "", "" },
+    }
+  end
+
+  -- рецептов на Глаз Ворона нет, поэтому он будет вручную приравнен к
+  -- модификатам первого уровня.
+  if not arts[ "af_eye_voron" ] then
+    arts[ "af_eye_voron" ] = {
+      [ "next" ] = { "", "" },
+      [ "prev" ] = { "" },
+    }
+  end
+
+  return arts
+end
+
+
+function get_inv_item_weight( obj )
+  return obj:get_inventory_item().inv_weight
+end
+
+function set_inv_item_weight( obj, weight )
+  obj:get_inventory_item().inv_weight = weight
+end
+
+function change_inv_item_weight( id, weight, abs_weight )
+  local obj = level.object_by_id( id )
+  if obj then
+    if abs_weight then
+      set_inv_item_weight( obj, weight )
+    else
+      local cur_weight = get_inv_item_weight( obj )
+      set_inv_item_weight( obj, cur_weight + weight )
+    end
+  end
+end
+
+
+function actor_get_art_nsimpliest( n )
+  local arts = {}
+  db.actor:iterate_inventory(
+    function( npc, obj )
+      if get_bool( obj:section(), "dsh.simpliest_art", false ) then
+        if db.actor:is_in_ruck( obj ) then
+          table.insert( arts, obj )
+        end
+      end
+    end,
+    db.actor
+  )
+  if table.getn( arts ) >= n then
+    return arts
+  end
+end
+
+function actor_has_art_nsimpliest( n )
+  if actor_get_art_nsimpliest( n ) then return true else return false end
+end
+
+function actor_give_art_nsimpliest( n )
+  local arts = actor_get_art_nsimpliest( n )
+  if arts then
+    for i = 1, n do
+      local obj = table.remove( arts, 1 )
+      ogse.remove_item_from_inventory( obj )
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+    end
+  end
+end
+
+
+function actor_has_art_simpliest()
+  if actor_get_art_nsimpliest( 1 ) then return true else return false end
+end
+
+function actor_give_art_simpliest()
+  return actor_give_art_nsimpliest( 1 )
+end
+
+
+function is_zone_bio_art( obj )
+  local props = db.artefacts[ obj:id() ]
+  if not props then return false end
+  -- ASSERT( props, "not found in db.artefacts: %s", obj:name() )
+  return not props.handmade
+end
+
+
+function actor_get_art_nsimpliest_bio( n )
+  local arts = actor_get_art_nsimpliest( n )
+  if arts then
+    local bio = {}
+    for _, obj in ipairs( arts ) do
+      if is_zone_bio_art( obj ) then
+        table.insert( bio, obj )
+      end
+    end
+    if table.getn( bio ) >= n then
+      return bio
+    end
+  end
+end
+
+function actor_has_art_nsimpliest_bio( n )
+  if actor_get_art_nsimpliest_bio( n ) then return true else return false end
+end
+
+function actor_give_art_nsimpliest_bio( n )
+  local arts = actor_get_art_nsimpliest_bio( n )
+  if arts then
+    for i = 1, n do
+      local obj = table.remove( arts, 1 )
+      ogse.remove_item_from_inventory( obj )
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+    end
+  end
+end
+
+
+function actor_has_art_simpliest_bio()
+  return actor_has_art_nsimpliest_bio( 1 )
+end
+function hasnt_art_simpliest_bio()
+  return not actor_has_art_simpliest_bio()
+end
+
+function actor_give_art_simpliest_bio()
+  return actor_give_art_nsimpliest_bio( 1 )
+end
+
+
+function actor_has_art_2simpliest_bio()
+  return actor_has_art_nsimpliest_bio( 2 )
+end
+
+function actor_give_art_2simpliest_bio()
+  return actor_give_art_nsimpliest_bio( 2 )
+end
+
+
+function actor_has_art_3simpliest_bio()
+  return actor_has_art_nsimpliest_bio( 3 )
+end
+
+function actor_give_art_3simpliest_bio()
+  return actor_give_art_nsimpliest_bio( 3 )
+end
+
+
+function actor_get_art_nl0( n )
+  local arts = {}
+  for k, v in pairs( get_art_levels() ) do
+    if
+      table.getn( v.prev ) == 1 and v.prev[ 1 ] ~= ""
+      and table.getn( v.next ) > 0
+   then
+      amk_utils.inventory_iterate_section(
+        v.prev[ 1 ],
+        function( obj )
+          if db.actor:is_in_ruck( obj ) then
+            table.insert( arts, obj )
+          end
+        end
+      )
+    end
+  end
+  if table.getn( arts ) >= n then return arts end
+end
+
+function actor_has_art_nl0( n )
+  if actor_get_art_nl0( n ) then return true else return false end
+end
+
+function actor_give_art_nl0( n )
+  local arts = actor_get_art_nl0( n )
+  if arts then
+    for i = 1, n do
+      local obj = table.remove( arts, 1 )
+      ogse.remove_item_from_inventory( obj )
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+    end
+  end
+end
+
+
+function actor_has_art_l0()
+  return actor_has_art_nl0( 1 )
+end
+
+function actor_give_art_l0()
+  return actor_give_art_nl0( 1 )
+end
+
+
+function actor_get_art_nl0_bio( n )
+  local arts = actor_get_art_nl0( n )
+  if arts then
+    local bio = {}
+    for _, obj in ipairs( arts ) do
+      if is_zone_bio_art( obj ) then
+        table.insert( bio, obj )
+      end
+    end
+    if table.getn( bio ) >= n then
+      return bio
+    end
+  end
+end
+
+function actor_has_art_nl0_bio( n )
+  if actor_get_art_nl0_bio( n ) then return true else return false end
+end
+
+function actor_give_art_nl0_bio( n )
+  local arts = actor_get_art_nl0_bio( n )
+  if arts then
+    for i = 1, n do
+      local obj = table.remove( arts, 1 )
+      ogse.remove_item_from_inventory( obj )
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+    end
+  end
+end
+
+
+function actor_has_art_l0_bio()
+  return actor_has_art_nl0_bio( 1 )
+end
+
+function actor_give_art_l0_bio()
+  return actor_give_art_nl0_bio( 1 )
+end
+
+
+function actor_has_art_2l0_bio()
+  return actor_has_art_nl0_bio( 2 )
+end
+
+function actor_give_art_2l0_bio()
+  return actor_give_art_nl0_bio( 2 )
+end
+
+
+function actor_has_art_3l0_bio()
+  return actor_has_art_nl0_bio( 3 )
+end
+
+function actor_give_art_3l0_bio()
+  return actor_give_art_nl0_bio( 3 )
+end
+
+
+function actor_get_art_check( f )
+  for k, v in pairs( get_art_levels() ) do
+    local found
+    amk_utils.inventory_iterate_section(
+      k,
+      function( obj )
+        if f( v, obj ) and db.actor:is_in_ruck( obj ) then
+          found = obj
+          return true
+        end
+      end
+    )
+    if found then return found end
+  end
+end
+
+function actor_get_art_abs()
+  return actor_get_art_check(
+    function( art )
+      return ( table.getn( art.prev ) > 0 and table.getn( art.next ) == 0 )
+    end
+  )
+end
+
+function actor_has_art_abs()
+  if actor_get_art_abs() then return true else return false end
+end
+
+function actor_give_art_abs()
+  local obj = actor_get_art_abs()
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+function actor_get_art_ln( level )
+  return actor_get_art_check(
+    function( art )
+      return ( table.getn( art.prev ) >= level and table.getn( art.next ) > 0 )
+    end
+  )
+end
+
+function actor_has_art_l1()
+  if actor_get_art_ln( 1 ) then return true else return false end
+end
+
+function actor_give_art_l1()
+  local obj = actor_get_art_ln( 1 )
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+function actor_has_art_l2()
+  if actor_get_art_ln( 2 ) then return true else return false end
+end
+
+function actor_give_art_l2()
+  local obj = actor_get_art_ln( 2 )
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+function actor_has_art_l3()
+  if actor_get_art_ln( 3 ) then return true else return false end
+end
+
+function actor_give_art_l3()
+  local obj = actor_get_art_ln( 3 )
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+
+-- Заспаунить на АТП артефакты, которые требует Калинин, что бы рассказать о
+-- переходе на Свалку.
+function spawn_arts_for_kalinin()
+  local arts = {
+    "af_dummy_glassbeads",  -- мамины бусы
+    "af_electra_moonlight", -- лунный свет
+    "af_electra_flash",     -- вспышка
+  }
+  local radius = 200
+  for _, sect in ipairs( arts ) do
+    local prop = amk_utils.get_item_props( sect )
+    if prop.has_af_dyn then
+      sect = amk_anoms.make_dyn_art_sect( sect )
+    end
+    local sobj
+    while not sobj do
+      sobj = amk_anoms.generate_art(
+        sect, function( maybe_pos )
+          if db.actor:position():distance_to( maybe_pos ) < radius then
+            return false
+          else
+            return true
+          end
+        end
+      )
+    end
+  end
+end
+
+
+local is_creating_free_mob = false
+function se_on_before_register( e )
+  if is_creating_free_mob then
+    set_none_smart_terrain( e.sobj )
+    is_creating_free_mob = false
+  end
+end
+
+function set_none_smart_terrain( sobj )
+  local ini = sobj:spawn_ini()
+  if ini:section_exist( "smart_terrains" ) then return end
+  ini.readonly = false
+  ini:w_bool( "smart_terrains", "none", true, "" )
+  sobj:save_spawn_ini()
+end
+
+-- Создать свободного моба, которого не затянет в какой-нибудь гулаг.
+function create_free_mob( ... )
+  is_creating_free_mob = true
+  local sobj = alife():create( ... )
+  ASSERT(
+    is_creating_free_mob == false,
+    "[%s]: found is_creating_free_mob after %s", script_name(), sobj:name()
+  )
+  return sobj
+end
+
+function create_free_monster( ... )
+  return create_free_mob( ... )
+end
+
+function create_free_npc( ... )
+  return create_free_mob( ... )
+end
+
+
+function actor_has_cnt_items( looking_sect, check_cnt_func )
+  local cnt = 0
+  for i = 0, db.actor:object_count() - 1 do
+    local obj  = db.actor:object( i )
+    local sect = obj:section()
+    if looking_sect == sect then
+      local ttl = dsh_item_ttl.get_ttl_info( sect )
+      if ( not ttl.ttl ) or obj:condition() > 0 then
+        cnt = cnt + 1
+        if check_cnt_func( cnt ) then return true end
+      end
+    end
+  end
+  return false
+end
+
+
+function actor_has_conserva_ge_4()
+  return actor_has_cnt_items(
+    "conserva", function( cnt ) return cnt >= 4 end
+  )
+end
+
+
+function actor_change_items( give_sect, give_num, take_sect, take_num )
+  local give_objs = {}
+  for i = 0, db.actor:object_count() - 1 do
+    local obj  = db.actor:object( i )
+    local sect = obj:section()
+    if sect == give_sect then
+      local ttl = dsh_item_ttl.get_ttl_info( sect )
+      if ( not ttl.ttl ) or obj:condition() > 0 then
+        table.insert( give_objs, obj )
+      end
+    end
+  end
+  local base_cnt = math.floor( table.getn( give_objs ) / give_num )
+  local add_cnt  = base_cnt * take_num
+  local del_cnt  = base_cnt * give_num
+  if del_cnt > 0 then
+    local cnt = 0
+    for _, obj in ipairs( give_objs ) do
+      ogse.remove_item_from_inventory( obj )
+      cnt     = cnt + 1
+      del_cnt = del_cnt - 1
+      if del_cnt == 0 then break end
+    end
+    news_manager.relocate_item( db.actor, "out", give_sect, cnt )
+  end
+  if add_cnt > 0 then
+    for i = 1, add_cnt do
+      ogse.spawn_item_in_inv( take_sect )
+    end
+    news_manager.relocate_item( db.actor, "in",  take_sect, add_cnt )
+  end
+end
+
+
+function actor_change_2conserva_1vodka()
+  actor_change_items( "conserva", 2, "vodka", 1 )
+end
+
+
+function actor_has_energy_drink_ge_6()
+  return actor_has_cnt_items(
+    "energy_drink", function( cnt ) return cnt >= 6 end
+  )
+end
+
+
+function actor_change_3energy_drink_1repair_item_outfit()
+  actor_change_items( "energy_drink", 3, "repair_item_outfit", 1 )
+end
+
+
+function actor_has_bread_ge_10()
+  return actor_has_cnt_items(
+    "bread", function( cnt ) return cnt >= 10 end
+  )
+end
+
+
+function actor_change_5bread_1repair_item_weapon()
+  actor_change_items( "bread", 5, "repair_item_weapon", 1 )
+end
+
+
+function actor_change_5bread_1grenade_f1()
+  actor_change_items( "bread", 5, "grenade_f1", 1 )
+end
+
+
+function actor_has_vodka_ge_2()
+  return actor_has_cnt_items(
+    "vodka", function( cnt ) return cnt >= 2 end
+  )
+end
+
+function actor_has_vodka_ge_4()
+  return actor_has_cnt_items(
+    "vodka", function( cnt ) return cnt >= 4 end
+  )
+end
+
+
+function actor_change_1vodka_2medkit_army()
+  actor_change_items( "vodka", 1, "medkit_army", 2 )
+end
+
+function actor_change_2vodka_1medkit_army()
+  actor_change_items( "vodka", 2, "medkit_army", 1 )
+end
+
+
+function actor_change_1vodka_1grenade_f1()
+  actor_change_items( "vodka", 1, "grenade_f1", 1 )
+end
+
+function actor_change_2vodka_1grenade_f1()
+  actor_change_items( "vodka", 2, "grenade_f1", 1 )
+end
+
+
+function actor_has_kolbasa_ge_2()
+  return actor_has_cnt_items(
+    "kolbasa", function( cnt ) return cnt >= 2 end
+  )
+end
+
+function actor_has_kolbasa_ge_4()
+  return actor_has_cnt_items(
+    "kolbasa", function( cnt ) return cnt >= 4 end
+  )
+end
+
+function actor_has_kolbasa_ge_5()
+  return actor_has_cnt_items(
+    "kolbasa", function( cnt ) return cnt >= 5 end
+  )
+end
+
+function actor_has_kolbasa_ge_8()
+  return actor_has_cnt_items(
+    "kolbasa", function( cnt ) return cnt >= 8 end
+  )
+end
+
+
+function actor_change_1kolbasa_1medkit()
+  actor_change_items( "kolbasa", 1, "medkit", 1 )
+end
+
+function actor_change_2kolbasa_1grenade_rgd()
+  actor_change_items( "kolbasa", 2, "grenade_rgd5", 1 )
+end
+
+function actor_change_4kolbasa_1grenade_rgd()
+  actor_change_items( "kolbasa", 4, "grenade_rgd5", 1 )
+end
+
+function actor_change_5kolbasa_1medkit()
+  actor_change_items( "kolbasa", 5, "medkit", 1 )
+end
+
+
+function actor_has_beer_ge_4()
+  return actor_has_cnt_items(
+    "beer_a", function( cnt ) return cnt >= 4 end
+  )
+end
+
+function actor_change_2beer_1ammo_9x19_ap()
+  actor_change_items( "beer_a", 2, "ammo_9x19_pbp", 1 )
+end
+
+
+-- Проверить расстояние от гулага до ГГ, если меньше.
+function gulag_distance_to_actor_lt( gulag_name, check_dist )
+  if db.zone_by_name[ gulag_name ] then
+    local sobj = alife():object( gulag_name )
+    if sobj then
+      local obj = level.object_by_id( sobj.id )
+      if obj then
+        local dist = obj:position():distance_to( db.actor:position() )
+        return dist < check_dist
+      end
+    end
+  end
+  return false
+end
+
+
+-- Проверка, могут ли мутанты на АС начинать рейд на Барьер. Нужна для
+-- того, что бы нападение начиналось не раньше, чем игрок дойдет до
+-- Барьера. С увеличенным алайфом все это начинается слишком рано.
+function lets_mil_monster_begin()
+  return gulag_distance_to_actor_lt( "mil_monster", 250 )
+end
+
+
+local mobs_smart_terrain = {}
+function remember_mobs_smart_terrain( id, sobj, remember )
+  if remember then
+    mobs_smart_terrain[ id ] = sobj.id
+  else
+    mobs_smart_terrain[ id ] = nil
+  end
+end
+
+
+function is_free_logic_mob( sobj )
+  local strn_id
+  if sobj.smart_terrain_id then
+    strn_id = sobj:smart_terrain_id()
+  else
+    strn_id = 65535
+  end
+  if strn_id == 65535 then
+    return mobs_smart_terrain[ sobj.id ]
+  end
+  return nil
+end
+
+
+function bar_priemnik_off()
+  return ogse.save_var( "bar_priemnik.quiet", true, "bool" )
+end
+function bar_priemnik_on()
+  return ogse.delete_var( "bar_priemnik.quiet" )
+end
+
+
+local ini_file_cache = {}
+function cached_ini_file( fname )
+  if not ini_file_cache[ fname ] then
+    ini_file_cache[ fname ] = ini_file( fname )
+  end
+  return ini_file_cache[ fname ]
+end
+
+
+function start_gtimerDHMS( name, d, h, m, s, fname, ... )
+  return ogse_st_mgr.delayed_fun_start( name )
+    :set_gdelayDHMS( d, h, m, s )
+    :init( fname, ... )
+    :start()
+end
+
+
+function begin_af_transform( d, h, m, t )
+  local res = {}
+  for k, v in pairs( t.result ) do
+    if is_artefact( k ) and not t.remove_anomaly then
+      local prop = amk_utils.get_item_props( k )
+      if prop.has_af_dyn then
+        local rand_goods = math.floor(
+          math.log( handmade_arts_exp() / 1.7 )
+        ) + 1
+        if rand_goods > 5 then rand_goods = 5 end
+        local rand_dyn = get_next_random(
+          "dsh.begin_af_transform.rand_dyn", rand_goods
+        )
+        k = k .. "_dyn" .. rand_dyn .. "d"
+      end
+    end
+    table.insert( res, k )
+  end
+  local from_komp = {}
+  for k, v in pairs( t.komp ) do
+    table.insert( from_komp, k )
+  end
+  start_gtimerDHMS(
+    nil, d, h, m, 0,
+    "dsh.end_af_transform",
+    res,
+    t.udacha,
+    t.pos.x, t.pos.y, t.pos.z, t.gv, t.lv,
+    t.info_portion,
+    from_komp,
+    t.remove_anomaly,
+    t.remove_anomaly_id,
+    level.name()
+  )
+  if table.getn( res ) > 0 and t.udacha and not t.remove_anomaly then
+    local cnt = ogse.load_var( "dsh.begin_af_transform.cnt", 0 )
+    ogse.save_var( "dsh.begin_af_transform.cnt", cnt + 1, "u32" )
+    local tname = "dsh.begin_af_transform.cnt.reset"
+    local delay = d * 24 * 3600 + ( h + math.random( 20 ) ) * 3600 + m * 60
+    if ogse_st_mgr.timer_exists( tname ) then
+      local timer = ogse_st_mgr.get_timer( tname )
+      local s     = timer:get_end_time():diffSec( game.get_game_time() )
+      if delay > s then
+        ogse_st_mgr.get_timer( tname ):stop()
+      else
+        delay = 0
+      end
+    end
+    if delay > 0 then
+      ogse_st_mgr.start_gtimer( tname, delay, "dsh.reset_af_transform_cnt" )
+    end
+  end
+  if table.getn( res ) > 0 and not t.remove_anomaly then
+    set_af_transform_ready( t.remove_anomaly_id, d, h, m )
+  end
+end
+
+function reset_af_transform_cnt()
+  ogse.delete_var( "dsh.begin_af_transform.cnt" )
+end
+
+
+function set_af_transform_ready( anom_id, d, h, m )
+  local sobj = alife():object( anom_id )
+  ASSERT( sobj, "[%s]: anomaly id = %s not found", script_name(), anom_id )
+  local ini = sobj:spawn_ini()
+  ini.readonly = false
+  local s = d * 24 * 3600 + h * 3600 + m * 60
+  local t = game.CTime()
+  t:setHMSms( 0, 0, s + math.max( s, 3600 ), 0 )
+  local ready = game.CTime( game.get_game_time() + t )
+  ini:w_string(
+    "amk_mod.af_transform_builder", "ready",
+    table.concat( { ready:get() }, "," )
+  )
+  sobj:save_spawn_ini()
+end
+
+
+function end_af_transform( res, udacha, x, y, z, gv, lv, info, komp, rm_anom, rm_anom_id, lname )
+  local t = {
+    [ "udacha" ] = udacha,
+    [ "pos"    ] = {
+      [ "x" ] = x,
+      [ "y" ] = y,
+      [ "z" ] = z,
+    },
+    [ "gv"     ] = gv,
+    [ "lv"     ] = lv,
+    [ "info_portion"      ] = info,
+    [ "remove_anomaly"    ] = rm_anom,
+    [ "remove_anomaly_id" ] = rm_anom_id,
+    [ "lname"  ] = lname,
+    [ "result" ] = res,
+    [ "komp"   ] = komp,
+  }
+  local sobj = amk_mod.af_transform_universal_end( t )
+  if rm_anom or not sobj then return end
+  sobj = alife():object( sobj.id )
+  sobj:used_ai_locations( false )
+  if udacha then
+    local cnt   = ogse.load_var( "dsh.begin_af_transform.cnt", 1 )
+    local rnd   = get_next_random( "dsh.end_af_transform.rnd" )
+    local iitem = sobj:get_inventory_item()
+    ASSERT(
+      iitem,
+      "[%s]: %s: get_inventory_item() == nil",
+      script_name(), sobj:name()
+    )
+    local rand_goods = math.min( 4, math.floor( handmade_arts_exp() / 25 ) )
+    iitem.item_condition = ( rand_goods * 0.2 + rnd * 0.2 ) / cnt
+  end
+end
+
+
+function is_this_monster_section( sect, monster_classes )
+  local comm = get_string( sect, "community" )
+  if
+    comm
+    and ( monster_classes[ comm ] or comm == "zombied" or comm == "rat" )
+  then
+    return true
+  end
+  return false
+end
+
+
+-- оставленно для совместимости, что бы не вылетело, если у кого-то
+-- уже запущен этот таймер.
+function spawn_all_respawners( next_id )
+  spawn_dsh_respawners()
+end
+
+
+local spawn_dsh_respawners_list = {}
+
+function spawn_dsh_respawners( next_name )
+  if table.getn( spawn_dsh_respawners_list ) == 0 then
+    local monsters = {}
+    for k, v in pairs( smart_terrain.get_monster_classes() ) do
+      monsters[ v ] = true
+    end
+    local found = false
+    if not next_name then
+      found = true
+    end
+    dsh_respawn.iterate_respawners(
+      function( respawner )
+        local first = respawner.respawn_section[ 1 ]
+        if is_this_monster_section( first.section, monsters ) then
+          if found then
+            table.insert( spawn_dsh_respawners_list, respawner )
+          elseif respawner.name == next_name then
+            table.insert( spawn_dsh_respawners_list, respawner )
+            found = true
+          end
+        end
+      end
+    )
+  end
+  local respawn = table.remove( spawn_dsh_respawners_list, 1 )
+  respawn:do_refresh_spawned_obj()
+  if table.getn( spawn_dsh_respawners_list ) > 0 then
+    next_name = spawn_dsh_respawners_list[ 1 ].name
+    ogse_st_mgr.start_timer( nil, 3, "dsh.spawn_dsh_respawners", next_name )
+  end
+end
+
+
+function map_add_treasure( id, icon, text )
+  local sobj = alife():object( id )
+  if sobj then
+    local spot
+    if isIndoor( object_level_name( sobj ) ) then
+      spot = icon
+    else
+      spot = "crlc_big_treasure" .. math.random( 1, 4 )
+    end
+    level.map_add_object_spot_ser( id, spot, text )
+  end
+end
+
+
+function map_remove_treasure( id )
+  level.map_remove_object_spot( id, "treasure" )
+  for spot = 1, 4 do
+    level.map_remove_object_spot( id, "crlc_big_treasure" .. spot )
+  end
+end
+
+
+function map_has_treasure_spot( id )
+  if level.map_has_object_spot( id, "treasure" ) > 0 then
+    return true
+  end
+  for spot = 1, 4 do
+    if level.map_has_object_spot( id, "crlc_big_treasure" .. spot ) > 0 then
+      return true
+    end
+  end
+  return false
+end
+
+
+function map_remove_treasure_inv( sect )
+  amk_utils.inventory_iterate_section(
+    sect,
+    function( obj ) map_remove_treasure( obj:id() ) end
+  )
+end
+
+
+function create_and_map_treasure( name, descr, sect, pos, lvid, gvid )
+  local sobj = alife():create( sect, pos, lvid, gvid )
+  local text = "%c[255,238,155,23]" .. name .. "\\n"
+    .. "%c[default]" .. descr
+  map_add_treasure( sobj.id, "treasure", text )
+  return sobj
+end
+
+
+local fraer_task = {}
+function is_fraer_task_failed()
+  if not ( fraer_task.time and fraer_task.time > time_global() ) then
+    local sobj = alife():object( "sim_stalker_fraer" )
+    if sobj or has_alife_info( "prapor_talk_need" ) then
+      fraer_task.res = false
+    else
+      fraer_task.res = true
+    end
+    fraer_task.time = time_global() + 10000
+  end
+  return fraer_task.res
+end
+
+function can_map_fraer()
+  local sobj = alife():object( "sim_stalker_fraer" )
+  if sobj then
+    if level.map_has_object_spot( sobj.id, "blue_location" ) == 0 then
+      return sobj
+    end
+  end
+  return false
+end
+
+function take_fraer_spot()
+  local sobj = can_map_fraer()
+  if sobj then
+    local trader = sobj:get_trader()
+    ASSERT(
+      trader, "[%s]: %s: get_trader() == nil", script_name(), sobj:name()
+    )
+    level.map_add_object_spot_ser(
+      sobj.id, "blue_location", trader.character_name
+    )
+  end
+end
+
+
+function join_stalker_delayed( actor, npc )
+  return ogse_st_mgr.delayed_fun_start( name )
+    :set_delay( 3 )
+    :init( "arhara_dialog.join_stalker" )
+    :start( true )
+end
+
+
+function black_doc_exo_start_sms_delayed()
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]"
+    .. "БОЛОТНЫЙ ДОКТОР:" .. "\\n"
+    .. "%c[255,255,128,128]Стрелок, я решил вернуться в Припять. Если понадоблюсь, буду на прежнем месте.",
+    nil, nil, 30000
+  )
+  story_sms_timer( 10, script_name() .. ".black_doc_exo_start_sms" )
+end
+
+function black_doc_exo_start_sms()
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]ВОЛК:\\n%c[255,255,128,128]Стрелок, будешь рядом, загляни ко мне. Дело одно есть.",
+    nil, nil, 30000
+  )
+  dsh_fixes.free_smart_terrain( "dead_city_stalkers" )
+  for _, n in ipairs({ "city_starshoy", "city_tema_likvidator" }) do
+    local sobj = alife():object( n )
+    if sobj and sobj:alive() then
+      sak.make_nepis_free( sobj )
+    end
+  end
+  db.actor:give_info_portion( "info_angel_talk" )
+end
+
+
+function blowout_modif_arts()
+  local arts = get_art_levels()
+  local step = 0.4
+  local create_later = {}
+  dsh_alife.iterate_items(
+    function( sobj )
+      if is_artefact( sobj:section_name() ) then
+        local sect      = sobj:section_name()
+        local is_af_dyn = string.find( sect, "_dyn[2-5]d" ) and true or false
+        if
+          is_af_dyn
+          or ( arts[ sect ] and table.getn( arts[ sect ].next ) < 2 )
+        then                      -- подходящий артефакт
+          local modifit = false
+          local lname   = object_level_name( sobj )
+          if actor_was_here( lname ) then
+            -- если на этой локации артефакты генерировались, то можно вырождать.
+            -- Иначе пусть лежат в тайниках или где их там заспаунили и ждут.
+            modifit = true
+          end
+          if modifit and sobj.parent_id ~= 0 and sobj.parent_id ~= 65535 then
+            local p_sobj = alife():object( sobj.parent_id )
+            if
+              p_sobj and IsStalker( p_sobj )
+              and (
+                p_sobj:get_job_online() == false
+                or not p_sobj:can_be_spawned()
+              )
+            then
+              -- если неписю еще не разрешено выходить в онлайн, то и
+              -- нечего модифицировать его артефакты. Вот так и
+              -- достается нам с трупика Шныры булыжник.
+              modifit = false
+            end
+          end
+          if modifit then
+            local cond, s_iitem
+            local obj = level.object_by_id( sobj.id )
+            if obj then
+              cond = obj:condition()
+            else
+              s_iitem = sobj:get_inventory_item()
+              ASSERT(
+                s_iitem,
+                "[%s]: %s: get_inventory_item() == nil",
+                script_name(), sobj:name()
+              )
+              cond = s_iitem.item_condition
+            end
+            local make_buliz = "af_buliz"
+            if is_af_dyn then
+              make_buliz = string.gsub(
+                sect, "_dyn(%d)d",
+                function ( d )
+                  return "_dyn" .. ( tonumber( d ) - 1 ) .. "d"
+                end
+              )
+            elseif cond then
+              if cond >= 0.01 then
+                make_buliz = false
+                cond = cond - ( math.random() * step )
+                if cond <= 0 then cond = 0 end
+                if obj then
+                  set_condition( obj, cond )
+                else
+                  s_iitem.item_condition = cond
+                end
+              end
+            end
+            if make_buliz then
+              local t = {
+                [ "online"       ] = obj and true or false,
+                [ "move_to_belt" ] = obj and obj:parent()
+                  and obj:parent():id() == db.actor:id()
+                  and db.actor:is_on_belt( obj ),
+              }
+              if make_buliz ~= "af_buliz" then t.cond = cond end
+              if sobj.parent_id == 65535 then
+                t.args = {
+                  make_buliz, sobj.position,
+                  sobj.m_level_vertex_id, sobj.m_game_vertex_id
+                }
+              else
+                t.args = {
+                  make_buliz, sobj.position,
+                  sobj.m_level_vertex_id, sobj.m_game_vertex_id,
+                  sobj.parent_id
+                }
+              end
+              table.insert( create_later, t )
+              dsh_alife.release( sobj )
+            end
+          end
+        end
+      end                -- if is_artefact( sobj:section_name() ) then
+    end
+  )
+  for _, t in ipairs( create_later ) do
+    local sobj = alife():create( unpack( t.args ) )
+    dsh_alife.add_item( sobj )
+    local id = sobj.id
+    sobj     = alife():object( id )
+    if t.cond and sobj then
+      local iitem = sobj:get_inventory_item()
+      ASSERT(
+        iitem,
+        "[%s]: %s: get_inventory_item() == nil",
+        script_name(), sobj:name()
+      )
+      iitem.item_condition = t.cond
+      t.cond = nil
+    end
+    if t.online then
+      if t.cond or t.move_to_belt then
+        level.client_spawn_manager():add(
+          id, -1, function( id, obj )
+            if t.cond         then obj:set_condition( t.cond )  end
+            if t.move_to_belt then db.actor:move_to_belt( obj ) end
+          end
+        )
+      end
+    end
+  end
+end
+
+
+function get_next_random( vname, ... )
+  local args = { ... }
+  local min, max
+  if table.getn( args ) == 1 then
+    min, max = 1, args[ 1 ]
+  elseif table.getn( args ) > 1 then
+    min, max = unpack( args )
+  end
+  if min and max and min == max then return min end
+  local nums = ogse.load_var_safe( vname ) or {}
+  while table.getn( nums ) < 100 do
+    table.insert( nums, math.random() )
+  end
+  local cur_num = tonumber( table.remove( nums, 1 ) )
+  table.insert( nums, math.random() )
+  ogse.save_var( vname, nums, "array_template", { "float" } )
+  if table.getn( args ) > 0 then
+    cur_num = min + round( cur_num * ( max - min ) )
+  end
+  return cur_num
+end
+
+function change_next_random_delayed( vname ) end
+
+
+-- сделать врагами группу Черепа, что бы долговцы в Баре не краснели
+-- после их убийства. Если они все в онлайне, то можно поменять им
+-- группировку, для надежности.
+function mil_dolg_enemy()
+  local strn = alife():object( "mil_dolg" )
+  if not strn then return end
+  local offline, online = {}, {}
+  for id, v in pairs( strn.npc_info ) do
+    local sobj = alife():object( id )
+    if sobj then
+      table.insert( offline, sobj )
+      local obj = level.object_by_id( sobj.id )
+      if obj then
+        table.insert( online,  obj  )
+      end
+    end
+  end
+  if table.getn( offline ) == table.getn( online ) then
+    for _, obj in ipairs( online ) do
+      obj:set_character_community( "killer", 0, 0 )
+      obj:set_relation( game_object.enemy, db.actor )
+    end
+  else
+    for _, sobj in ipairs( offline ) do
+      relation_registry.set_personal_goodwill( sobj.id, db.actor:id(), -9000 )
+    end
+  end
+end
+
+
+function say_blin()
+  local snd = xr_sound.get_safe_sound_object(
+    "scripts\\nlc6\\matches_no_light_" .. math.random( 3 )
+  )
+  snd:play( db.actor, 0, sound_object.s2d )
+end
+
+
+function scratch_match_sound()
+  local idx = math.random( 3 )
+  local snd = xr_sound.get_safe_sound_object( "scripts\\nlc6\\matches_" .. idx )
+  snd:play( db.actor, 0, sound_object.s2d )
+  local matches_delays = { 3500, 4000, 4600 }
+  return matches_delays[ idx ]
+end
+
+
+function actor_can_move( status )
+  ogse_actor_conditions_mgr.change_walk_accel(   )
+  ogse_actor_conditions_mgr.change_jump_speed(   )
+end
+function actor_cant_move()
+  ogse_actor_conditions_mgr.change_walk_accel( 0 )
+  ogse_actor_conditions_mgr.change_jump_speed( 0 )
+end
+
+
+local ammo_sections_cache = {}
+function get_ammo_sections( wpn )
+  local sect = wpn:section()
+  if not ammo_sections_cache[ sect ] then
+    local t = {}
+    ammo_sections_cache[ sect ] = t
+    for _, k in ipairs({ "ammo_class", "grenade_class" }) do
+      local s = get_string( sect, k )
+      if s then
+        t[ k ] = parse_names( s )
+      end
+    end
+  end
+  return ammo_sections_cache[ sect ]
+end
+
+
+function get_cur_wpn_ammo( wpn )
+  local ammo_sect
+  local has_gl = false
+  if wpn:is_weapon_gl() then
+    has_gl = (
+      ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 1
+      or (
+        ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 2
+        and ogse_wpn_utils.get_grenade_launcher_flag( wpn )
+      )
+    )
+  end
+  if wpn:is_weapon() then
+    local wpn_info_s, wpn_info_t = dsh_rukzak.get_wpn_info( wpn )
+    local ammo1_t, ammo1_n, ammo2_t, ammo2_n = unpack( wpn_info_t )
+    local ammo = get_ammo_sections( wpn )
+    if has_gl and ogse_wpn_utils.get_gl_mode( wpn ) then
+      if ammo2_n > 0 then
+        ammo_sect = ammo.grenade_class[ ammo2_t + 1 ]
+      end
+    else
+      ammo_sect = ammo.ammo_class[ ammo1_t + 1 ]
+    end
+  end
+  return ammo_sect
+end
+
+
+function find_capsule( one_of_arts )
+  if not one_of_arts then one_of_arts = { "af_capsule" } end
+  for _, sect in ipairs( one_of_arts ) do
+    local res, t = amk_utils.inventory_search_check({ [ sect ] = 1 })
+    if res then return t[ 1 ] end
+  end
+  local res, t = amk_utils.inventory_search_check({
+    [ "af_capsule" ] = 1,
+  })
+  local looking = {}
+  for _, sect in ipairs( one_of_arts ) do
+    looking[ sect ] = true
+  end
+  local found
+  amk_utils.inventory_iterate_section(
+    "arc_art_box_1basic",
+    function( item )
+      local sobj = alife():object( item:id() )
+      if sobj then
+        local artefacts = arc_ui_8container_menu.decode_custom_data(
+          sobj.custom_data, sobj:section_name()
+        )
+        for _, t in ipairs( artefacts ) do
+          local sect = t.section
+          if sect and looking[ sect ] then
+            found = item
+            return true
+          end
+        end
+      end
+    end
+  )
+  return found
+end
+
+function have_capsule()
+  return find_capsule() ~= nil
+end
+
+function transfer_any_capsule( info, minutes )
+  local obj = find_capsule()
+  if obj then
+    if obj:section() == "arc_art_box_1basic" then
+      news_manager.relocate_item( db.actor, "out", "af_capsule" )
+      ogse.remove_item_from_inventory( obj )
+      ogse.spawn_item_in_inv( "arc_art_box_1basic" )
+    else
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+      ogse.remove_item_from_inventory( obj )
+    end
+    local tname = "dsh." .. info
+    start_gtimerDHMS(
+      "dsh." .. info,
+      0, 0, minutes, 0,
+      "dsh.transfer_any_capsule_done",
+      info
+    )
+  end
+end
+
+function transfer_any_capsule_done( info )
+  db.actor:give_info_portion( info )
+end
+
+function transfer_any_capsule_barman()
+  transfer_any_capsule( "barman_capsule_ready", 50 )
+end
+
+function transfer_any_capsule_sidor()
+  transfer_any_capsule( "capsule_ready", 65 )
+end
+
+function transfer_any_capsule_sakharov()
+  transfer_any_capsule( "sakharov_capsule_ready", 15 )
+end
+
+
+function mark_art_as_handmade( sobj, flag )
+  if not sobj then return end
+  local ini = sobj:spawn_ini()
+  ini.readonly = false
+  ini:w_bool( "dsh", "handmade", flag )
+  sobj:save_spawn_ini()
+end
+
+
+function add_art_capsule()
+  local arts = get_art_levels()
+  local possible_arts = {}
+  for sect, v in pairs( arts ) do
+    if table.getn( v.prev ) > 0 and table.getn( v.next ) == 0 then
+      table.insert( possible_arts, sect )
+    end
+  end
+  local rnd  = get_next_random(
+    "dsh.add_art_capsule.rnd", table.getn( possible_arts )
+  )
+  local sect = possible_arts[ rnd ]
+  local prop = amk_utils.get_item_props( sect )
+  local sobj = ogse.spawn_item_in_inv( prop.af_bio_sect or sect )
+  news_manager.relocate_item( db.actor, "in", sect )
+end
+
+
+function has_trade_dialog( k )
+  local tname = "dsh.has_trade_dialog." .. k
+  local res   = ogse_st_mgr.timer_exists( tname )
+  if res then
+    res = ogse.load_var( tname .. ".cnt", 10 ) > 0
+  end
+  return res
+end
+
+function trade_say_come_later( name, say_str )
+  local diff_sec
+  local hasnt_trade = "dsh.hasnt_trade_dialog." .. name
+  if ogse_st_mgr.timer_exists( hasnt_trade ) then
+    local t  = ogse_st_mgr.get_timer( hasnt_trade ):get_end_time()
+    diff_sec = t:diffSec( game.get_game_time() )
+  else
+    local has_trade = "dsh.has_trade_dialog." .. name
+    local t  = ogse_st_mgr.get_timer( has_trade ):get_end_time()
+    diff_sec = t:diffSec( game.get_game_time() ) + 24 * 3600
+  end
+  local days = diff_sec / ( 24 * 3600 )
+  local when
+  if     days < 1 then
+    when = "завтра"
+  elseif days < 2 then
+    when = "через день"
+  elseif days < 3 then
+    when = "через пару дней"
+  elseif days < 4 then
+    when = "дня через три"
+  elseif days < 5 then
+    when = "дня через четыре"
+  elseif days < 6 then
+    when = "дней через пять"
+  elseif days < 7 then
+    when = "дней через шесть"
+  else
+    when = "через недельку"
+  end
+  when = string.format(
+    ( say_str or "Заходи %s, может появится что-нибудь." ), when
+  )
+  db.actor:give_talk_message(
+    when, "ui\\ui_iconstotal", Frect():set( 0, 0, 10, 10 ),
+    "simple_answer_item"
+  )
+end
+
+function start_trade_dialog_timer( k, hours, cnt )
+  if not hours then hours = math.random( 24, 72 ) end
+  local tname = "dsh.has_trade_dialog." .. k
+  start_gtimerDHMS(
+    tname, 0, hours, 0, 0,
+    "dsh.stop_trade_dialog_timer", k
+  )
+  if not cnt then cnt = math.random( 10 ) end
+  ogse.save_var( tname .. ".cnt", cnt, "u8" )
+end
+
+function stop_trade_dialog_timer( k )
+  start_gtimerDHMS(
+    "dsh.hasnt_trade_dialog." .. k,
+    0, math.random( 24, 72 ), 0, 0,
+    "dsh.start_trade_dialog_timer", k
+  )
+end
+
+function dec_trade_dialog_cnt( k )
+  local has_trade = "dsh.has_trade_dialog." .. k
+  local n         = has_trade .. ".cnt"
+  local cnt       = ogse.load_var( n, 10 )
+  if cnt > 0 then
+    cnt = cnt - 1
+  end
+  ogse.save_var( n, cnt, "u8" )
+  if cnt == 0 and ogse_st_mgr.timer_exists( has_trade ) then
+    ogse_st_mgr.get_timer( has_trade ):stop()
+    stop_trade_dialog_timer( k )
+  end
+end
+
+function has_trade_dialog_sidor()
+  return true -- has_trade_dialog( "sidor" )
+end
+function on_trade_dialog_sidor()
+  -- return dec_trade_dialog_cnt( "sidor" )
+end
+function hasnt_trade_dialog_sidor()
+  return not has_trade_dialog_sidor()
+end
+function trade_sidor_say_later()
+  trade_say_come_later( "sidor" )
+end
+
+function has_trade_dialog_barman()
+  return true -- has_trade_dialog( "barman" )
+end
+function on_trade_dialog_barman()
+  -- return dec_trade_dialog_cnt( "barman" )
+end
+function hasnt_trade_dialog_barman()
+  return not has_trade_dialog_barman()
+end
+function trade_barman_say_later()
+  trade_say_come_later( "barman" )
+end
+
+function has_trade_dialog_petrenko()
+  return true -- has_trade_dialog( "petrenko" )
+end
+function on_trade_dialog_petrenko()
+  -- return dec_trade_dialog_cnt( "petrenko" )
+end
+function hasnt_trade_dialog_petrenko()
+  return not has_trade_dialog_petrenko()
+end
+function trade_petrenko_say_later()
+  trade_say_come_later( "petrenko" )
+end
+
+function has_trade_dialog_skraga()
+  return true -- has_trade_dialog( "skraga" )
+end
+function on_trade_dialog_skraga()
+  -- return dec_trade_dialog_cnt( "skraga" )
+end
+function hasnt_trade_dialog_skraga()
+  return not has_trade_dialog_skraga()
+end
+function trade_skraga_say_later()
+  trade_say_come_later( "skraga" )
+end
+
+function has_trade_dialog_sakharov()
+  return true -- has_trade_dialog( "sakharov" )
+end
+function on_trade_dialog_sakharov()
+  -- return dec_trade_dialog_cnt( "sakharov" )
+end
+function hasnt_trade_dialog_sakharov()
+  return not has_trade_dialog_sakharov()
+end
+function trade_sakharov_say_later()
+  trade_say_come_later( "sakharov", "Заходите %s, может появится что-нибудь." )
+end
+
+function has_trade_dialog_sak()
+  return true -- has_trade_dialog( "sak" )
+end
+function on_trade_dialog_sak()
+  -- return dec_trade_dialog_cnt( "sak" )
+end
+function hasnt_trade_dialog_sak()
+  return not has_trade_dialog_sak()
+end
+function trade_sak_say_later()
+  trade_say_come_later( "sak" )
+end
+
+function has_trade_dialog_kuznezov()
+  return has_trade_dialog( "kuznezov" )
+end
+function on_trade_dialog_kuznezov()
+  return dec_trade_dialog_cnt( "kuznezov" )
+end
+function hasnt_trade_dialog_kuznezov()
+  return not has_trade_dialog( "kuznezov" )
+end
+function trade_kuznezov_say_later()
+  trade_say_come_later( "kuznezov" )
+end
+
+function has_trade_dialog_jlob()
+  return true -- has_trade_dialog( "jlob" )
+end
+function on_trade_dialog_jlob()
+  -- return dec_trade_dialog_cnt( "jlob" )
+end
+function hasnt_trade_dialog_jlob()
+  return not has_trade_dialog( "jlob" )
+end
+function trade_jlob_say_later()
+  trade_say_come_later( "jlob" )
+end
+
+function has_trade_dialog_sherstyk()
+  return has_trade_dialog( "sherstyk" )
+end
+function on_trade_dialog_sherstyk()
+  return dec_trade_dialog_cnt( "sherstyk" )
+end
+function hasnt_trade_dialog_sherstyk()
+  return not has_trade_dialog( "sherstyk" )
+end
+function trade_sherstyk_say_later()
+  trade_say_come_later( "sherstyk" )
+end
+
+function has_trade_dialog_voron()
+  return has_trade_dialog( "voron" )
+end
+function on_trade_dialog_voron()
+  return dec_trade_dialog_cnt( "voron" )
+end
+function hasnt_trade_dialog_voron()
+  return not has_trade_dialog( "voron" )
+end
+function trade_voron_say_later()
+  trade_say_come_later( "voron" )
+end
+
+function has_trade_dialog_maks()
+  return has_trade_dialog( "maks" )
+end
+function on_trade_dialog_maks()
+  return dec_trade_dialog_cnt( "maks" )
+end
+function hasnt_trade_dialog_maks()
+  return not has_trade_dialog( "maks" )
+end
+function trade_maks_say_later()
+  trade_say_come_later( "maks" )
+end
+
+function has_trade_dialog_dan()
+  return true -- has_trade_dialog( "dan" )
+end
+function on_trade_dialog_dan()
+  -- return dec_trade_dialog_cnt( "dan" )
+end
+function hasnt_trade_dialog_dan()
+  return not has_trade_dialog_dan()
+end
+function trade_dan_say_later()
+  trade_say_come_later( "dan" )
+end
+
+
+function actor_get_art_bio( sect, n )
+  local arts = {}
+  amk_utils.inventory_iterate_section(
+    sect,
+    function( obj )
+      if is_zone_bio_art( obj ) and db.actor:is_in_ruck( obj ) then
+        table.insert( arts, obj )
+        if table.getn( arts ) == n then return true end
+      end
+    end
+  )
+  if table.getn( arts ) == n then return arts end
+end
+
+function actor_has_art_bio( sect, n )
+  if actor_get_art_bio( sect, n ) then return true else return false end
+end
+
+function actor_give_art_bio( sect, n )
+  local arts = actor_get_art_bio( sect, n )
+  if arts then
+    for i = 1, n do
+      local obj = table.remove( arts, 1 )
+      ogse.remove_item_from_inventory( obj )
+      news_manager.relocate_item( db.actor, "out", obj:section() )
+    end
+  end
+end
+
+function actor_has_art_bio_af_soul()
+  return actor_has_art_bio( "af_soul", 1 )
+end
+
+function actor_give_art_bio_af_soul()
+  return actor_give_art_bio( "af_soul", 1 )
+end
+
+function has_art_bio_cristall()
+  return actor_has_art_bio( "af_cristall", 1 )
+end
+
+function give_art_bio_cristall()
+  return actor_give_art_bio( "af_cristall", 1 )
+end
+
+function has_art_bio_5cristall()
+  return actor_has_art_bio( "af_cristall", 5 )
+end
+
+function give_art_bio_5cristall()
+  return actor_give_art_bio( "af_cristall", 5 )
+end
+
+function has_art_bio_moonlight()
+  return actor_has_art_bio( "af_electra_moonlight", 1 )
+end
+
+function give_art_bio_moonlight()
+  return actor_give_art_bio( "af_electra_moonlight", 1 )
+end
+
+function has_art_bio_mica()
+  return actor_has_art_bio( "af_ameba_mica", 1 )
+end
+
+function give_art_bio_mica()
+  return actor_give_art_bio( "af_ameba_mica", 1 )
+end
+
+function has_art_bio_gravi()
+  return actor_has_art_bio( "af_gravi", 1 )
+end
+
+function give_art_bio_gravi()
+  return actor_give_art_bio( "af_gravi", 1 )
+end
+
+function has_art_bio_medusa()
+  return actor_has_art_bio( "af_medusa", 1 )
+end
+
+function give_art_bio_medusa()
+  return actor_give_art_bio( "af_medusa", 1 )
+end
+
+
+function get_handmade_cost( sect )
+  local cost = get_u32( sect, "dsh.handmade.cost" )
+  if not cost then
+    cost = get_u32( sect, "cost" ) / 10
+  end
+  return cost
+end
+
+
+function is_handmade_artefact( sobj )
+  local sect     = sobj:section_name()
+  local prop     = amk_utils.get_item_props( sect )
+  local handmade = get_bool(
+    sect, "bind_det_arts.handmade", ( not prop.is_af_bio )
+  )
+  local ini = sobj:spawn_ini()
+  if handmade and ini and ini:section_exist( "dsh" ) then
+    handmade = ( get_bool( "dsh", "handmade", nil, ini ) ~= false )
+  end
+  return handmade
+end
+
+
+function find_random_lvid_in_radius( lvid, radius )
+  local dir = vector():set(
+    math.random( -1000, 1000 ) / 1000, 0, math.random( -1000, 1000 ) / 1000
+  )
+  dir:normalize()
+  local ai_step      = 0.7 -- шаг AI сетки
+  local cur_angle    = 0
+  local math_pi_180 = 180 / math.pi
+  local pi2         = math.pi * 2
+  local rotate_angle = math.asin( ai_step / radius )
+  local found_lv
+  while math.abs( cur_angle ) < pi2 do
+    local new_lvid = level.vertex_in_direction( lvid, dir, radius )
+    if new_lvid ~= lvid then
+      local pos = level.vertex_position( new_lvid )
+      local use_vertex = true
+      for name, zone in pairs( db.sr_type_in ) do
+        if zone:inside( pos ) then
+          use_vertex = false
+          break
+        end
+      end
+      if use_vertex then
+        found_lv = new_lvid
+        break
+      end
+    end
+    -- поворачиваем направление поиска
+    cur_angle = cur_angle + rotate_angle
+    dir       = vector_rotate_y( dir, rotate_angle * math_pi_180 )
+  end
+  if found_lv then
+    local pos  = level.vertex_position( found_lv )
+    local gvid = cross_table():vertex( found_lv ):game_vertex_id()
+    return pos, found_lv, gvid
+  end
+end
+
+
+function get_this_level_difficulty()
+  local val = get_float(
+    level.name(), "dsh.this_level_difficulty", nil, game_ini()
+  )
+  ASSERT( val, "this_level_difficulty not defined for %s", level.name() )
+  return val
+end
+
+
+local knives = {}
+function is_knife( sect )
+  if knives[ sect ] == nil then
+    knives[ sect ] = get_bool( sect, "dsh.is_knife", false )
+  end
+  return knives[ sect ]
+end
+
+
+function set_inactivate_input_time( delta )
+  local tname = "dsh.disable_input_time"
+  if ogse_st_mgr.timer_exists( tname ) then
+    ogse_st_mgr.get_timer( tname ):stop()
+  end
+  level.disable_input()
+  ogse_st_mgr.delayed_fun_start( tname )
+    :set_gdelay( delta )
+    :init( "level.enable_input" )
+    :start( true )
+end
+
+function is_input_time_inactivated()
+  return ogse_st_mgr.timer_exists( "dsh.disable_input_time" )
+end
+
+
+function spawn_physic_sleep_bag( pos, lvid, gvid, vis, mass, fixed_bones )
+  local sobj = alife():create( "physic_object", pos, lvid, gvid )
+  local pk = get_netpk( sobj, 1 )
+  ASSERT( pk:isOk(), "can't read netpacket of %s", sobj:name() )
+  local data = pk:get()
+  data.visual_name = vis or "physics\\decor\\bag_01"
+  data.custom_data:setString(
+    "[logic]\ncfg = scripts\\esc_sleep.ltx\n[collide]\nignore_static\n"
+  )
+  data.physic_type = 3
+  data.mass        = mass or 1
+  data.fixed_bones = fixed_bones or "joint1, joint5"
+  pk:set( data )
+  return sobj
+end
+
+
+function find_ekza_akkumul_discharged()
+  local items = {}
+  amk_utils.inventory_iterate_section(
+    "ekza_akkumul",
+    function( item )
+      if db.actor:is_in_ruck( item ) and item:condition() < 1 then
+        table.insert( items, item )
+      end
+    end
+  )
+  table.sort(
+    items, function( a, b ) return a:condition() < b:condition() end
+  )
+  return items
+end
+
+
+function actor_has_ekza_akkumul_dis()
+  local items = find_ekza_akkumul_discharged()
+  return table.getn( items ) > 0
+end
+
+
+function give_ekza_akkumul_dis()
+  local items = find_ekza_akkumul_discharged()
+  ASSERT( table.getn( items ) > 0, "ekza_akkumul not found" )
+  ogse.remove_item_from_inventory( items[ 1 ] )
+  news_manager.relocate_item( db.actor, "out", items[ 1 ]:section() )
+end
+
+
+function add_ekza_akkumul()
+  local sobj = ogse.spawn_item_in_inv( "ekza_akkumul" )
+  news_manager.relocate_item( db.actor, "in", sobj:section_name() )
+end
+
+
+function shuffle( array )
+  local n, random, j, k = table.getn( array ), math.random
+  for i = 1, n do
+    j, k = random( n ), random( n )
+    array[ j ], array[ k ] = array[ k ], array[ j ]
+  end
+  return array
+end
+
+
+local cached_condlist_hit  = 0
+local cached_condlist_miss = 0
+
+class "cached_condlist"
+function cached_condlist:__init( parsed, ttl )
+  self.parsed = parsed
+  self.ttl    = ttl
+end
+
+function cached_condlist:pick_section_from_condlist( actor, npc )
+  if self.cached_time and self.cached_time > time_global() then
+    cached_condlist_hit = cached_condlist_hit + 1
+  else
+    self.cached_res = xr_logic.pick_section_from_condlist(
+      actor, npc, self.parsed
+    )
+    if db.actor_proxy.online then
+      self.cached_time = time_global() + self.ttl
+    end
+    cached_condlist_miss = cached_condlist_miss + 1
+  end
+  return self.cached_res
+end
+
+
+function on_destroy()
+  log2(
+    "[%s]: cached_condlist stats ( hit/miss ): %s / %s",
+    script_name(), cached_condlist_hit, cached_condlist_miss
+  )
+end
+
+
+function make_pantera_alive()
+  local sobj = alife():create( 2228 ) -- hos_new_panterka
+  ASSERT( sobj, "can't create hos_new_panterka" )
+  sobj = alife():object( sobj.id )
+  local ini = sobj:spawn_ini()
+  ini.readonly = false
+  ini:w_bool( "smart_terrains", "none", true )
+  ini:w_string( "logic", "cfg", "dsh\\logic\\pantera_is_alive.ltx" )
+  sobj:save_spawn_ini()
+  return sobj
+end
+
+
+function sms_otez_pantera_alive_run()
+  local sobj = alife():object( "hos_new_panterka" )
+  if sobj then
+    ogse_st_mgr.start_timer(
+      "dsh.sms_otez_pantera_alive",
+      30,
+      "dsh.sms_otez_pantera_alive"
+    )
+  end
+end
+
+function sms_otez_pantera_alive()
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]" .. "ОТЕЦ ПАНТЕРЫ:\\n"
+      .. "%c[255,255,128,128]Стрелок, она жива! Пантера жива! Она в Госпитале и я иду к ней. Мы пробудем там, пока Пантера не придет в себя.",
+    nil, nil, 25000
+  )
+end
+
+
+function get_current_outfit_protection( hit )
+  if not db.actor:get_current_outfit() then return 0 end
+  return db.actor:get_current_outfit_protection( hit )
+end
+
+
+function akim_hog_sms()
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]".."АКИМ:\\n"
+      .. "%c[255,255,128,128]Стрелок, тут за воротами, на Свалке, какой-то сталкер чудной. Хогом его зовут. Небылицы разные рассказывает, но думаю, тебя это может заинтересовать.\n",
+    nil, nil, 25000
+  )
+  db.actor:give_info_portion( "svalka_plot_stalk_spawn" )
+end
+
+
+function handmade_arts_cnt( inc )
+  local cnt = ogse.load_var( "dsh.handmade_arts_cnt", 0 )
+  if inc then
+    cnt = cnt + inc
+    ogse.save_var( "dsh.handmade_arts_cnt", cnt, "u32" )
+  end
+  return ( cnt > 2 and cnt or 2 )
+end
+
+
+function handmade_arts_exp( inc )
+  local cnt = ogse.load_var( "dsh.handmade_arts_exp", 0 )
+  if inc then
+    cnt = cnt + inc
+    ogse.save_var( "dsh.handmade_arts_exp", cnt, "u32" )
+  end
+  if cnt > 2 then
+    return cnt
+  end
+  return 2
+end
+
+
+function make_free_prizrak()
+  local npcs = {
+    [ "gen_prizrak_izomorf" ] = {
+      [ "story_id" ] = story_ids.gen_prizrak_izomorf, -- 19017
+    },
+    [ "pripyt_kluk"         ] = {
+      [ "story_id" ] = story_ids.pripyt_kluk, -- 19025
+    },
+    [ "village_piligrim"    ] = {
+      [ "spawn_id" ] = 13048,
+    },
+  }
+  for name, v in pairs( npcs ) do
+    local sobj = alife():object( name )
+    if sobj then
+      alife():release( sobj )
+    end
+    if not v.spawn_id then
+      v.spawn_id = alife():spawn_id( v.story_id )
+    end
+    sobj = alife():create( v.spawn_id )
+    sobj = alife():object( sobj.id )
+    sobj.custom_data = ""
+  end
+end
+
+
+function has_wpn_fot()
+  return amk_utils.inventory_search( "wpn_fot", 1 )
+end
+
+function hasnt_wpn_fot()
+  return not has_wpn_fot()
+end
+
+
+function make_free_yantar_chernomor()
+  local sobj = alife():story_object( story_ids.yantar_chernomor )
+  if sobj then
+    alife():release( sobj )
+  end
+  local spawn_id = alife():spawn_id( story_ids.yantar_chernomor )
+  sobj = alife():create( spawn_id )
+  local pk = get_netpk( sobj, 1 )
+  ASSERT( pk:isOk(), "can't read netpacket of %s", sobj:name() )
+  local data = pk:get()
+  data.custom_data:setTable( {} )
+  data.story_id = -1
+  pk:set( data )
+end
+
+
+function spawn_2soldier_outfits()
+  local sobj = alife():object( "esc_surprise_box_015" )
+  if not sobj then
+    alife():create( 3556 )
+  end
+end
+
+function del_2soldier_outfits()
+  local sobj = alife():object( "esc_surprise_box_015" )
+  if sobj then
+    alife():release( sobj )
+  end
+end
+
+
+function get_actor_name()
+  return ( has_alife_info( "esc_find_doctor_done" ) and "Стрелок" or "Меченый" )
+end
+
+
+function spawn_bland_flash( npc, actor )
+  if npc:id() == db.actor:id() then npc = actor end
+  amk.spawn_item_in_inv( "bland_flash", npc )
+  ogse_st_mgr.start_timer(
+    "dsh.spawn_bland_flash2",
+    30, "dsh.spawn_bland_flash2"
+  )
+end
+
+function spawn_bland_flash2()
+  db.actor:give_info_portion( "bland_say_war" )
+end
+
+
+function alife_find_and_release( items )
+  local need = {}
+  for _, k in ipairs( items ) do
+    need[ k ] = true
+  end
+  local cnt = table.getn( items )
+  for id, sobj in alife():objects() do
+    if need[ sobj:section_name() ] then
+      need[ sobj:section_name() ] = nil
+      cnt = cnt - 1
+      dsh_alife.release( sobj )
+      if cnt == 0 then break end
+    end
+  end
+end
+
+
+function clear_useful_for_ai( sobj )
+  local pk = get_netpk( sobj, 1 )
+  ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+  local data = pk:get()
+  data.object_flags = bit_and(
+    data.object_flags, bit_not( object_flags.UsefulForAI )
+  )
+  pk:set( data )
+end
+
+
+function portal_na_mg_start()
+  ogse_st_mgr.start_timer(
+    "dsh.portal_na_mg",
+    20.5,
+    "dsh.portal_na_mg"
+  )
+end
+
+function portal_na_mg()
+  db.actor:give_info_portion( "portal_na_mg" )
+end
+
+function backup_quicksave()
+  local cnt = ogse.load_var( "dsh.next_quicksave", 1 )
+  local f = getFS()
+  local quicksave = f:update_path(
+    "$game_saves$", user_name() .. "_quicksave.sav"
+  )
+  local next_save  = f:update_path(
+    "$game_saves$", string.format( "%s_quicksave_%u.sav", user_name(), cnt )
+  )
+  if f:exist( next_save ) then
+    f:file_delete( next_save )
+  end
+  f:file_copy( quicksave, next_save )
+
+  if f:exist("$game_saves$", user_name() .. "_quicksave.dds") then
+  f1 = f:update_path("$game_saves$", user_name() .. "_quicksave.dds")
+  f2 = f:update_path("$game_saves$", user_name() .. "_quicksave_" .. cnt .. ".dds")
+  f:file_copy( f1, f2 )
+end
+
+  if f:exist( quicksave ) then
+    f:file_delete( quicksave )
+  end
+
+	if f:exist("$game_saves$", user_name() .. "_quicksave.dds") then
+		f:file_delete("$game_saves$", user_name() .. "_quicksave.dds")
+	end
+
+  if cnt == 9 then
+    cnt = 1
+  else
+    cnt = cnt + 1
+  end
+  ogse.save_var( "dsh.next_quicksave", cnt, "u8" )
+end
+
+
+function is_exo_visual( npc )
+  local vis = npc:get_visual_name()
+  return string.find( vis, "exo" ) or string.find( vis, "tank" )
+    or string.find( vis, "_cherep" )
+    or string.find( vis, "_redeye" )
+    or string.find( vis, "stalker_arhara1" )
+end
+
+
+local cached_seensak = {}
+function actor_was_here( lname )
+  if cached_seensak[ lname ] == nil then
+    cached_seensak[ lname ] = db.actor:has_info( "seensak_" .. lname )
+  end
+  return cached_seensak[ lname ]
+end
+
+
+function uhod_iz_mg_have( obj, who )
+  db.actor:give_info_portion( "uhod_iz_mg_have" )
+end
+
+
+function npc_has_quest_item( npc )
+  local found_quest_item = false
+  npc:iterate_inventory(
+    function( npc, item )
+      if not found_quest_item then
+        if watcher_act.do_not_touch( item ) then
+          found_quest_item = true
+        end
+      end
+    end,
+    npc
+  )
+  return found_quest_item
+end
+
+
+function release_alive_npc( actor, npc )
+  if npc:alive() then
+    local sobj = alife():object( npc:id() )
+    if sobj then
+      release_mob( sobj )
+    end
+  end
+end
+
+
+-- создать костер для лагеря сталкеров
+function create_campfire( pos, lvid, gvid, vis, lamp_height )
+  -- кострище
+  local vis_sobj
+  if vis then
+    local sobj = alife():create( "physic_object", pos, lvid, gvid )
+    local pk   = get_netpk( sobj, 1 )
+    ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
+    local data = pk:get()
+    data.visual_name = vis
+    data.physic_type = 3
+    data.mass        = 10
+    data.fixed_bones = "bone01"
+    pk:set( data )
+    sobj = alife():object( sobj.id )
+    sobj:used_ai_locations( false )
+    local ini = sobj:spawn_ini()
+    ini.readonly = false
+    for _, k in ipairs({ "dynamic", "ragdoll", "static" }) do
+      local kk = "ignore_" .. k
+      ini:w_bool( "collide", kk, true )
+    end
+    sobj:save_spawn_ini()
+    vis_sobj = sobj
+  end
+
+  -- аномалия
+  local sobj = amk_anoms.spawn_anomaly(
+    "zone_flame_small",
+     pos, lvid, gvid, { shtype = 0, radius = 1, center = { 0, 0, 0 } }
+  )
+  sobj     = alife():object( sobj.id )
+  local sr = sobj:get_space_restrictor()
+  sr.restrictor_type = global_flags.eRestrictorTypeNone
+  return vis_sobj
+end
+
+
+function safe_file_name( fname )
+  fname = string.gsub( fname, "[><|?*/\\,:\"%b]", "" )
+  return fname
+end
+
+
+function create_candle( pos, lvid, gvid, vis )
+  -- газовая горелка
+  if vis then
+    local sobj = alife():create( "physic_object", pos, lvid, gvid )
+    local pk   = get_netpk( sobj, 1 )
+    ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
+    local data = pk:get()
+    data.visual_name = vis
+    data.physic_type = 3
+    data.mass        = 10
+    data.fixed_bones = "link"
+    pk:set( data )
+    sobj = alife():object( sobj.id )
+    sobj:used_ai_locations( false )
+    local ini = sobj:spawn_ini()
+    ini.readonly = false
+    for _, k in ipairs({ "dynamic", "ragdoll", "static" }) do
+      local kk = "ignore_" .. k
+      ini:w_bool( "collide", kk, true )
+    end
+    sobj:save_spawn_ini()
+  end
+
+  -- аномалия
+  local sobj = amk_anoms.spawn_anomaly(
+    "zone_flame_candle",
+     vector():set( pos.x, pos.y + 0.15, pos.z ), lvid, gvid,
+     { shtype = 0, radius = 0.1, center = { 0, 0, 0 } }
+  )
+  sobj     = alife():object( sobj.id )
+  local sr = sobj:get_space_restrictor()
+  sr.restrictor_type = global_flags.eRestrictorTypeNone
+end
+
+
+function sherstuk_enemy()
+  ogse_st_mgr.start_gtimer(
+    "dsh.sherstuk_enemy", 3600 * math.random( 12, 72 ),
+    "dsh.disable_sherstuk_enemy"
+  )
+end
+
+function disable_sherstuk_enemy()
+  db.actor:disable_info_portion( "sherstuk_enemy" )
+end
+
+
+function karta_peschera( obj )
+  db.actor:give_info_portion( "karta_peschera" )
+  ogse.remove_item_from_inventory( obj )
+end
+
+
+function barmen_noi_ok()
+  return db.actor:has_info( "marsh_razvedchik_done" )
+    and db.actor:has_info( "doki_dimak_have" )
+    and db.actor:has_info( "buusty_kvest_done" )
+end
+
+function need_barmen_noi_sms()
+    ogse_st_mgr.start_timer( "dsh.barmen_noi_sms", 30, "dsh.barmen_noi_sms" )
+  end
+
+function barmen_noi_sms()
+  if not barmen_noi_ok() then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]БАРМЕН:\\n%c[255,255,128,128]Стрелок, будешь в наших краях, заходи, поболтаем. Обменяемся, так сказать, информацией.\n",
+    nil, nil, 25000
+  )
+end
+
+
+function release_mob( sobj )
+  smart_terrain.unregister_npc( sobj )
+  ogse_signals.get_mgr():call( "on_release_npc", sobj.id )
+  dsh_alife.release( sobj )
+end
+
+
+function get_random_pos_in_radius( radius, min_radius, around_pos, dir )
+  if not around_pos then around_pos = db.actor:position() end
+  local ai_step     = 0.7 -- шаг AI сетки
+  local math_pi_180 = 180 / math.pi
+  local pi2         = math.pi * 2
+  -- выравниваем вектора по горизонтали
+  if not dir then dir = device().cam_dir end
+  dir = vector():set( dir.x, 0, dir.z ):normalize()
+  dir = vector_rotate_y( dir, math.random( 360 ) )
+  local dist = min_radius and math.random( min_radius, radius ) or radius
+  if not min_radius then min_radius = ai_step end
+  while dist >= min_radius do
+    -- итератор вращения направления
+    local rotate_angle = math.asin( ai_step / dist )
+    local cur_angle, cur_dir = 0, dir
+    while math.abs( cur_angle ) < pi2 do
+      -- подходящий угол, ищем вертекс
+      -- нужная нам позиция
+      local pos     = vector():mad( around_pos, cur_dir, dist )
+      local vert_ok = level.vertex_id_by_pos( pos )
+      if level.valid_vertex_id( vert_ok ) then
+        local vert_pos = level.vertex_position( vert_ok )
+        if battle.no_anomaly_in( vert_pos ) then
+          return vert_pos, vert_ok
+        end
+      end
+      -- поворачиваем направление поиска
+      cur_angle = cur_angle + rotate_angle
+      cur_dir   = vector_rotate_y( cur_dir, rotate_angle * math_pi_180 )
+    end
+    dist = dist - ai_step
+  end
+end
+
+
+function create_dead_mob( ... )
+  local sobj = create_free_mob( ... )
+  sobj:on_death()
+  return sobj
+end
+
+
+function get_save_list()
+  local t    = {}
+  local path = getFS():update_path( "$game_saves$", "" )
+  stdfs.directory_iterator( path, function( file ) -- C++17 FS
+    if file.extension == ".sav" then
+      table.insert( t, {
+        [ "name"  ] = file.short_filename,
+        [ "modif" ] = file.last_write_time,
+      })
+    end
+  end )
+  table.sort( t, function( a, b ) return b.modif < a.modif end )
+  return t
+end
+
+
+function load_game_internal( name )
+  if alife() then
+    cmd( "load", name )
+  else
+    cmd( "disconnect" )
+    cmd( "start server(" .. name .. "/single/alife/load) client(localhost)" )
+  end
+end
+
+
+function exec_periodic( freq, f, ... )
+  local args = { ... }
+  local t = wait_condition(
+    function() return false end,
+    function() end,
+    function( timer )
+      if freq then timer:reschedule( freq ) end
+      f( timer, unpack( args ) )
+    end
+  )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  return t
+end
+
+
+-- Взято отсюда http://www.amk-team.ru/forum/topic/7450-spravochnik-po-funkciyam-i-klassam/?do=findComment&comment=272244
+function pos_to_screen_xy( pos )
+  local dev   = device()
+  local scr_w = dev.width
+  local scr_h = dev.height
+
+  local fov2     = ( dev.fov / 2 ) * ( math.pi / 180 )
+  local scr_dist = 0.5 * scr_h / math.tan( fov2 )
+
+  local ppp = vector():sub( pos, dev.cam_pos )
+  local dp  = dev.cam_dir:dotproduct( ppp )
+
+  local x = 512 + dev.cam_right:dotproduct( ppp ) * scr_dist / dp * ( 1024 / scr_w )
+  local y = 384 - dev.cam_top:dotproduct( ppp )   * scr_dist / dp * (  768 / scr_h )
+  return x, y
+end
+
+
+-- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127456
+-- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127526
+function is_actor_looking_to_pos( pos, radius )
+  local k = vector():sub( pos, device().cam_pos )
+  local b = k:dotproduct( device().cam_dir )
+  local c = k:dotproduct( k ) - radius * radius
+  local d = b * b - c
+  return d >= 0
+end
+
+
+function spawn_volna_svidetel()
+  local patrol = patrol( "bar_volna_svidetel_volna_svidetel_camp_center_task" )
+  alife():create(
+    "volna_svidetel",
+    patrol:point( 0 ),
+    patrol:level_vertex_id( 0 ), patrol:game_vertex_id( 0 )
+  )
+end
+
+
+function unpack_time( v )
+  if not v then return end
+  local t = game.CTime()
+  t:set( unpack( v ) )
+  return t
+end
+
+
+function find_all_vertexes_in_radius( around_pos, radius )
+  local vertexes = {}
+  level.iterate_vertices_inside(
+    around_pos, radius, false,
+    function( lvid )
+      table.insert( vertexes, lvid )
+    end
+  )
+  return vertexes
+end
+
+
+function copy_hit_data( hd, t )
+  for _, k in ipairs({
+    "power", "dir", "who_id", "weapon_id", "bone_id", "impulse", "hit_type",
+  }) do
+    t[ k ] = hd[ k ]
+  end
+  return t
+end
+
+
+function actor_get_art_modif()
+  return actor_get_art_check(
+    function( art, obj )
+      return table.getn( art.prev ) > 0
+    end
+  )
+end
+
+function actor_has_art_modif()
+  if actor_get_art_modif() then return true else return false end
+end
+
+function actor_give_art_modif()
+  local obj = actor_get_art_modif()
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+
+function actor_get_art_modif_bio()
+  return actor_get_art_check(
+    function( art, obj )
+      return ( table.getn( art.prev ) > 0 and is_zone_bio_art( obj ) )
+    end
+  )
+end
+
+function actor_has_art_modif_bio()
+  if actor_get_art_modif_bio() then return true else return false end
+end
+
+function actor_give_art_modif_bio()
+  local obj = actor_get_art_modif_bio()
+  if obj then
+    ogse.remove_item_from_inventory( obj )
+    news_manager.relocate_item( db.actor, "out", obj:section() )
+  end
+end
+
+
+function get_ui_icon_equipment_name( sect )
+  local icon_group = get_u32( sect, "icon_group", 0 )
+  if icon_group > 0 then
+    return string.format( "ui\\ui_icon_equipment_%d", icon_group )
+  end
+  return "ui\\ui_icon_equipment"
+end
+
+
+-- создать аптечку, которая понадобится для лечения Толика
+function recreate_esc_medkit()
+  alife():create(
+    "medkit",
+    vector():set( -86.2782745361328, -4.92963171005249, -78.3331451416016 ),
+    594270, 0
+  )
+end
+
+
+function gar_dram_warning_sms()
+  if db.actor:has_info( "gar_dm_begin" ) then return end
+  db.actor:give_info_portion( "gar_dm_begin" )
+  for i = 1, 3 do
+    local sid    = story_ids[ "gar_dm_bandit" .. i ]
+    local bandit = level_object_by_sid( sid )
+    if bandit and bandit:alive() then
+      bandit:set_character_community( "bandit", 0, 0 )
+      bandit:set_relation( game_object.enemy, db.actor )
+    end
+  end
+  story_sms_timer( 1, script_name() .. ".gar_dram_warning_sms1" )
+end
+
+function gar_dram_warning_sms1()
+      news_manager.send_tip(
+        db.actor,
+        "%c[255,160,160,160]Меченый:\\n%c[255,255,128,128]Эге... Да тут ситуация не простая, с кондачка действовать нельзя. Надо бы сначала разобраться, кто такие и что у них за разборки.",
+        nil, nil, 30000
+      )
+  local task = CGameTask()
+  task:load( "gar_dm" )
+  db.actor:give_task( task, 0, true )
+end
+
+function gar_dm_have()
+  for i = 1, 3 do
+    if db.actor:dont_has_info( "gar_dm_bandit" .. i .. "_dead" ) then
+      return false
+    end
+  end
+  return true
+end
+
+
+-- Телепортировать Крота к костру в ТД, что бы не путался под ногами.
+function teleport_agr_krot()
+  local sobj = alife():story_object( story_ids.agr_krot )
+  if not sobj then return end
+  local patrol = patrol( "sak_lager_kamp_1" )
+  if not patrol then return end
+  alife():teleport_object(
+    sobj.id, patrol:point( 0 ),
+    patrol:level_vertex_id( 0 ), patrol:game_vertex_id( 0 )
+  )
+end
+
+
+function make_agr_krot_alive()
+  local sobj = alife():create( alife():spawn_id( story_ids.agr_krot ) )
+  if sobj.need_brain_update then
+    smart_terrain.smart_brain_update( sobj )
+    sobj.need_brain_update = false
+  end
+  if db.actor:has_info( "agr_find_gunslinger_cache_found" ) then
+    local ini = sobj:spawn_ini()
+    ini.readonly = false
+    ini:remove_line( "logic", "cfg" )
+    sobj:save_spawn_ini()
+    teleport_agr_krot()
+  end
+end
+
+
+-- заспаунить пиво в X-18
+function respawn_surprise_box_815()
+  alife():create(
+    "taynik_surprise_box_815",
+    vector():set( 39.6699981689453, -10.8100004196167, -5.53000020980835 ),
+    7423, 1136
+  )
+end
+
+
+function clear_smart_terrain_conditions( sobj )
+  sobj.need_brain_update        = nil
+  sobj.smart_terrain_conditions = nil
+  sobj.smart_terrain_str_conditions = nil
+  sobj.waiting_smart_terrain    = nil
+  sobj.was_in_smart_terrain     = true
+end
+
+
+-- отпустить от логики Сепатора и Ко, пусть в Зону идут
+function free_sepator()
+  for i = 1, 3 do
+    local sobj = alife():object( "esc_hunter_zaschita_" .. i )
+    if sobj and sobj:alive() then
+      local pk = get_netpk( sobj, 1 )
+      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+      local data = pk:get()
+      data.base_in_restrictors  = ""
+      data.base_out_restrictors = ""
+      data.custom_data:setTable( {} )
+      data.story_id = -1
+      pk:set( data )
+      smart_terrain.unregister_npc( sobj )
+      clear_smart_terrain_conditions( sobj )
+      sobj:brain():update()
+    end
+  end
+end
+
+
+function play_snd_queue( queue, k )
+  local snd = xr_sound.get_safe_sound_object( table.remove( queue, 1 ) )
+  snd:play_no_feedback(
+    db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0
+  )
+  if table.getn( queue ) > 0 then
+    if not k then k = 1.1 end
+    timeout(
+      snd:length() * k,
+      this.play_snd_queue, queue
+    )
+  end
+end
+
+
+-- радиообмен между Волкодавом и наемниками о том, что кто-то к ним лезет
+-- со стороны Бара.
+function rostok_sniper_die()
+  play_snd_queue(
+    {
+      "characters_voice\\scenario\\Rostok\\sniper_radio_see_enemy_1",
+      "characters_voice\\scenario\\Rostok\\volkodav_radio_see_enemy_1",
+      "characters_voice\\scenario\\Rostok\\sniper_radio_see_enemy_2",
+    }, 1.2
+  )
+end
+
+
+function free_xalyava()
+  for _, n in ipairs({ "xalyava", "xalyava_drug" }) do
+    local sobj = alife():object( n )
+    if sobj and sobj:alive() then
+      sobj.custom_data = ""
+      clear_smart_terrain_conditions( sobj )
+      sobj:brain():update()
+    end
+  end
+end
+
+
+function klyak_est_denis_sms()
+    ogse_st_mgr.start_timer(
+      script_name() .. ".klyak_est_denis_sms", 15,
+      script_name() .. ".klyak_est_denis_sms1"
+    )
+  end
+
+function klyak_est_denis_sms1()
+  if db.actor:dont_has_info( "denis_wound_next" ) then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]КЛЫК:\\n%c[255,255,128,128]Стрелок, будешь поблизости, загляни ко мне, есть дело.",
+    nil, nil, 30000
+  )
+end
+
+
+function free_gek_and_chuk()
+  ogse_st_mgr.start_on_signal(
+    "dsh.free_gek_and_chuk",
+    "on_spawn_another_level", "dsh.free_gek_and_chuk_next"
+  )
+end
+
+function free_gek_and_chuk_next()
+  for _, sid in ipairs({ story_ids.chuk, story_ids.gek }) do
+    local sobj = alife():story_object( sid )
+    if sobj and sobj:alive() then
+      local pk = get_netpk( sobj, 1 )
+      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+      local data = pk:get()
+      data.base_in_restrictors  = ""
+      data.base_out_restrictors = ""
+      data.custom_data:setTable( {} )
+      data.story_id = -1
+      pk:set( data )
+      smart_terrain.unregister_npc( sobj )
+      clear_smart_terrain_conditions( sobj )
+      sobj:brain():update()
+    end
+  end
+end
+
+
+function free_yakut_agro_start()
+  for _, info in ipairs({
+    "system_ecolog_done", "yakut_treasure_start", "koloda_arhara"
+  }) do
+    if db.actor:dont_has_info( info ) then return end
+  end
+  ogse_st_mgr.start_on_signal(
+    "dsh.free_yakut_agro",
+    "on_spawn_another_level", "dsh.free_yakut_agro"
+  )
+end
+
+function free_yakut_agro()
+  local sobj = alife():story_object( story_ids.yakut_agro )
+  if sobj then
+    release_mob( sobj )
+  end
+  for i = 1, 5 do
+    local sobj = alife():object( "stalker_yakut" .. i )
+    if sobj and sobj:alive() then
+      local pk = get_netpk( sobj, 1 )
+      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+      local data = pk:get()
+      data.base_in_restrictors  = ""
+      data.base_out_restrictors = ""
+      data.custom_data:setTable( {} )
+      data.story_id = -1
+      pk:set( data )
+      smart_terrain.unregister_npc( sobj )
+      clear_smart_terrain_conditions( sobj )
+      sobj:brain():update()
+    end
+  end
+end
+
+
+-- воссоздает переход в подземку Агропрома, которого не должно быть, пока о нем
+-- не расскажет Крот.
+function respawn_exit_to_agr_underground_05()
+  local sobj = alife():object( "exit_to_agr_underground_05" )
+  if sobj then
+    ASSERT( false, "[%s]: found %s", script_name(), sobj:name() )
+  end
+  alife():create( 4759 )
+end
+
+
+-- если sid жив, то только он будет принят на эту работу, иначе - любой.
+function predicate_sid_alive_or_any( sid, obj_info )
+  local sobj = alife():story_object( sid )
+  if sobj and sobj:alive() then
+    return obj_info.story_id == sid
+  end
+  return true
+end
+
+
+function clean_bar_ecolog_professor_start()
+  ogse_st_mgr.start_on_signal(
+    "dsh.clean_bar_ecolog_professor",
+    "on_spawn_another_level", "dsh.clean_bar_ecolog_professor"
+  )
+end
+
+function clean_bar_ecolog_professor()
+  for _, name in ipairs({
+    "bar_freedom_attacker_1",
+    "bar_freedom_attacker_4",
+    "bar_freedom_attacker_6",
+    "bar_freedom_attacker_2",
+    "bar_freedom_attacker_3",
+    "bar_freedom_attacker_5",
+    "bar_ecolog_professor",
+    "bar_ecolog_crush_1",
+    "bar_ecolog_crush_3",
+    "bar_ecolog_crush_2",
+    "bar_ecolog_crush_4",
+    "bar_freedom_attacker_commander",
+    "bar_freedom_attacker_7",
+    "bar_freedom_attacker_8",
+    "bar_ambush_killer_01",
+    "bar_ambush_killer_05",
+    "bar_ambush_killer_07",
+    "rostok_stalker_0001",
+    "rostok_stalker_0002",
+    "rostok_stalker_0003",
+    "rostok_stalker_0004",
+    "bar_ecolog_crush_dead_0002",
+    "bar_ecolog_crush_dead_0003",
+    "bar_ambush_killer_09",
+    "bar_freedom_attacker_10",
+    "bar_freedom_attacker_11",
+    "bar_freedom_attacker_12",
+    "bar_freedom_attacker_9",
+    "bar_freedom_attacker_0000",
+    "bar_freedom_attacker_0001",
+    "bar_freedom_attacker_0002",
+    "bar_freedom_attacker_0003",
+    "bar_ambush_killer_02",
+    "bar_ambush_killer_04",
+  }) do
+    local sobj = alife():object( name )
+    if sobj and sobj.level_name == "l06_rostok" then
+      log2( "[%s]: release %s", script_name(), sobj:name() )
+      release_mob( sobj )
+    end
+  end
+  db.actor:disable_info_portion( "bar_heli_scene_stay_online" )
+end
+
+
+function my_name_is_strelok()
+  db.actor:get_inventory_owner():SetName( "Стрелок" )
+  local sobj   = alife():object( db.actor:id() )
+  local trader = sobj:get_trader()
+  trader.character_name = "Стрелок"
+end
+
+
+function vzlet_gen_poehali()
+  game.start_tutorial( "vzlet_generators" )
+  arhara_dialog.delete_pereod_gen_bol()
+end
+
+function vzlet_gen_poehali_end()
+  level.disable_input()
+  arhara_dialog.otsek_varka_kamen()
+  timeout(
+    1000,
+    function()
+      level.change_level(
+        3484, 208062,
+        vector():set( 237.60340881348, 26.244289398193, 621.69653320313 ),
+        vector():set( 0, 0, 0 )
+      )
+    end
+  )
+end
+
+
+function vzlet_bolota_poehali()
+  game.start_tutorial( "vzlet_bolota" )
+end
+
+function vzlet_bolota_poehali_end()
+  level.disable_input()
+  arhara_dialog.otsek_varka_kamen()
+  timeout(
+    1000,
+    function()
+      level.change_level(
+        3096, 207141,
+        vector():set( -111.300003, 36.730122, -466.199982 ),
+        vector():set( 0, 0, 0 )
+      )
+    end
+  )
+end
+
+
+function kursk_poehali()
+  level.disable_input()
+  xr_effects.x18_gluk( db.actor )
+  level.add_cam_effector( "camera_effects\\radar_stop.anm", 2506, false, "" )
+  timeout( 9000, this.kursk_poehali2 )
+end
+
+function kursk_poehali2()
+  db.actor:hide_weapon()
+  level.hide_indicators()
+  level.add_pp_effector( "agr_u_fade.ppe", 2000 + math.random( 100 ), false )
+  timeout( 3000, this.kursk_poehali3 )
+end
+
+function kursk_poehali3()
+  level.remove_cam_effector( 1974 )
+  game.start_tutorial( "kursk_dream" )
+  arhara_dialog.delete_botsman_gener()
+end
+
+function kursk_poehali_end()
+  level.add_cam_effector( "camera_effects\\prison_1.anm", 2506, false, "" )
+  timeout(
+    3000,
+    function()
+      level.show_indicators()
+      db.actor:restore_weapon()
+      level.enable_input()
+    end
+  )
+end
+
+
+function is_weapon( obj )
+  return obj and obj:is_weapon() and not (
+    obj:is_binoculars()
+    or get_string( obj:section(), "dsh_rukzak.override_show_type" )
+  )
+end
+
+
+function teleport_max_to_max_walk()
+  local sobj = alife():story_object( story_ids.Mil_Master_Max )
+  if sobj then
+    local patrol = patrol( "mil_freedom_max_walk" )
+    alife():teleport_object(
+      sobj.id, patrol:point( 0 ),
+      patrol:level_vertex_id( 0 ), patrol:game_vertex_id( 0 )
+    )
+  end
+end
+
+
+function free_yakut_agro2_start()
+  for _, info in ipairs({
+    "yakut_true_done", "yakut_treasure_done", "yakut_biznes1_done",
+    "kot_find_rabi_djoker_vodka", "raritet_ykut"
+  }) do
+    if db.actor:dont_has_info( info ) then return end
+  end
+  ogse_st_mgr.start_on_signal(
+    "dsh.free_yakut_agro2",
+    "on_spawn_another_level", "dsh.free_yakut_agro2"
+  )
+end
+
+function free_yakut_agro2()
+  local sobj = alife():story_object( story_ids.yakut_agro2 )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function free_djoker()
+  local sobj = alife():object( "djoker" )
+  if sobj then
+    release_mob( sobj )
+  end
+  ogse_st_mgr.start_on_signal(
+    "dsh.free_scromnyi",
+    "on_spawn_another_level", "dsh.free_scromnyi"
+  )
+end
+
+function free_scromnyi()
+  local sobj = alife():object( "scromnyi" )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function free_mil_hunter1_start()
+  local sobj = alife():story_object( story_ids.Mil_Hunter1 )
+  if sobj and not ogse_st_mgr.timer_exists( "dsh.free_mil_hunter1" ) then
+    ogse_st_mgr.start_on_signal(
+      "dsh.free_mil_hunter1",
+      "on_spawn_another_level", "dsh.free_mil_hunter1"
+    )
+  end
+end
+
+function free_mil_hunter1()
+  local sobj = alife():story_object( story_ids.Mil_Hunter1 )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function free_mon_stalker_start()
+  ogse_st_mgr.start_on_signal(
+    "dsh.free_mon_stalker",
+    "on_spawn_another_level", "dsh.free_mon_stalker"
+  )
+end
+
+function free_mon_stalker()
+  local sobj = alife():story_object( story_ids.oso )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function free_labirint_shade_monolit()
+  local sobj = alife():story_object( story_ids.labirint_shade_monolit )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function free_land_sniper_chimaera()
+  local sobj = alife():story_object( story_ids.land_sniper_chimaera )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function kostya_b94_timer()
+  ogse_st_mgr.start_gtimer(
+    "dsh.kostya_b94_timer",
+    86400,
+    "dsh.kostya_b94_timer2"
+  )
+end
+
+function kostya_b94_timer2()
+  ogse_st_mgr.start_gtimer(
+    "dsh.kostya_b94_timer2",
+    86400,
+    "dsh.kostya_b94_enemy"
+  )
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]Костя:\\n%c[255,255,128,128]Меченый, уже сутки прошли, где тебя с моей винтовкой носит? Я надеюсь ты меня кинуть не собираешься? Я еще сутки подожду, потом по другому говорить будем!\n",
+    nil, nil, 25000
+  )
+end
+
+function stop_kostya_b94_timer()
+  for _, tn in ipairs({ "dsh.kostya_b94_timer", "dsh.kostya_b94_timer2" }) do
+    if ogse_st_mgr.timer_exists( tn ) then
+      ogse_st_mgr.get_timer( tn ):stop()
+    end
+  end
+end
+
+function kostya_b94_enemy()
+  local sobj = alife():story_object( story_ids.esc_kostya )
+  ASSERT( sobj, "[%s]: esc_kostya not found", script_name() )
+  local obj  = level.object_by_id( sobj.id )
+  if obj then
+    obj:set_relation( game_object.enemy, db.actor )
+  else
+    relation_registry.set_personal_goodwill( sobj.id, db.actor:id(), -9000 )
+  end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]Костя:\\n%c[255,255,128,128]Меченый, я эту винтовку два дня ждал, а ее так и нет. Ты ее похоже себе оставить решил. А ведь уговор есть уговор, так что ты для меня теперь крыса! Увижу - сразу пришибу!\n",
+    nil, nil, 25000
+  )
+end
+
+
+function free_mitya()
+  local sobj = alife():object( "mitya" )
+  if sobj and sobj:alive() then
+    local pk = get_netpk( sobj, 1 )
+    ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+    local data = pk:get()
+    data.base_in_restrictors  = ""
+    data.base_out_restrictors = ""
+    data.custom_data:setTable( {} )
+    data.story_id = -1
+    pk:set( data )
+    smart_terrain.unregister_npc( sobj )
+    clear_smart_terrain_conditions( sobj )
+    sobj:brain():update()
+  end
+end
+
+
+function free_grab_mitya_marsh()
+  for i = 1, 5 do
+    local sobj = alife():object( "grab_stal" .. i )
+    if sobj and sobj:alive() then
+      local pk = get_netpk( sobj, 1 )
+      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+      local data = pk:get()
+      data.base_in_restrictors  = ""
+      data.base_out_restrictors = ""
+      data.custom_data:setTable( {} )
+      data.story_id = -1
+      pk:set( data )
+      smart_terrain.unregister_npc( sobj )
+      clear_smart_terrain_conditions( sobj )
+      sobj:brain():update()
+    end
+  end
+end
+
+
+function teleport_village_pantera_to_kamp()
+  local sobj = alife():story_object( story_ids.village_pantera )
+  if sobj then
+    local patrol = patrol( "village_pantera_camp_center" )
+    alife():teleport_object(
+      sobj.id, patrol:point( 0 ),
+      patrol:level_vertex_id( 0 ), patrol:game_vertex_id( 0 )
+    )
+  end
+end
+
+
+function video_finish_dopa_restrictor()
+  level.disable_input()
+  xr_effects.x18_gluk( db.actor )
+  level.add_cam_effector( "camera_effects\\radar_stop.anm", 2506, false, "" )
+  timeout( 9000, this.video_finish_dopa_restrictor2 )
+end
+
+function video_finish_dopa_restrictor2()
+  db.actor:hide_weapon()
+  level.hide_indicators()
+  level.add_pp_effector( "agr_u_fade.ppe", 2000 + math.random( 100 ), false )
+  arhara_dialog.oruzhie_delet()
+  timeout( 3500, this.video_finish_dopa_restrictor_end )
+end
+
+function video_finish_dopa_restrictor_end()
+  level.remove_cam_effector( 1974 )
+  level.show_indicators()
+  db.actor:restore_weapon()
+  level.enable_input()
+  level.change_level(
+    3593, 100962,
+    vector():set( -239.38876342773, -2.0321259498596, 300.58901977539 ),
+    vector():set( 0, -2.5, 0 )
+  )
+end
+
+
+function npc_inside_zone( npc, zone )
+  return zone:inside( npc:position() )
+end
+
+
+function get_art_max_experience( sect )
+  local prop = amk_utils.get_item_props( sect )
+  if prop.af_base then sect = prop.af_base end
+  if get_bool( sect, "dsh.simpliest_art", false ) then return 20 end
+  local arts = get_art_levels()
+  local art  = arts[ sect ]
+  if art then
+    if table.getn( art.prev ) > 0 and table.getn( art.next ) == 0 then
+      return 100
+    end
+    return 20 + math.min( 60, table.getn( art.prev ) * 20 )
+  end
+  return 0
+end
+
+
+function add_arts_exp_points( sect, komp )
+  local max_exp = get_art_max_experience( sect )
+  local cur_exp = handmade_arts_exp()
+  if table.getn( komp ) == 1 then
+    local min_exp = get_art_max_experience( komp[ 1 ] )
+    max_exp = math.min( max_exp, min_exp + 20 )
+  end
+  if cur_exp < max_exp then
+    handmade_arts_exp( 1 )
+    if cur_exp < 20 then
+      actor_stats.add_points( "exp", "exp_art_begin", 1, 1 )
+    elseif cur_exp < 40 then
+      actor_stats.add_points( "exp", "exp_art0", 1, 1 )
+      if cur_exp == 20 then
+        archievements.send_archievement_chunk(
+          game.translate_string( "exp_art0" )
+        )
+      end
+    elseif cur_exp < 60 then
+      actor_stats.add_points( "exp", "exp_art1", 1, 1 )
+      if cur_exp == 40 then
+        archievements.send_archievement_chunk(
+          game.translate_string( "exp_art1" )
+        )
+      end
+    elseif cur_exp < 80 then
+      actor_stats.add_points( "exp", "exp_art2", 1, 1 )
+      if cur_exp == 60 then
+        archievements.send_archievement_chunk(
+          game.translate_string( "exp_art2" )
+        )
+      end
+    elseif cur_exp < 100 then
+      actor_stats.add_points( "exp", "exp_art3", 1, 1 )
+      if cur_exp == 80 then
+        archievements.send_archievement_chunk(
+          game.translate_string( "exp_art3" )
+        )
+      end
+    end
+  elseif cur_exp == 100 and db.actor:dont_has_info( "exp_art_abs" ) then
+    actor_stats.add_points( "exp", "exp_art_abs", 1, 1 )
+    archievements.send_archievement_chunk(
+      game.translate_string( "exp_art_abs" )
+    )
+    db.actor:give_info_portion( "exp_art_abs" )
+  end
+end
+
+
+function free_agr_ratcatcher()
+  local sobj = alife():story_object( story_ids.agr_ratcatcher )
+  if sobj then
+    release_mob( sobj )
+  end
+end
+
+
+function can_yakut_first_prizrak()
+  return db.actor:has_info( "info_gavr_dead" )
+    and db.actor:has_info( "system_ecolog_done" )
+end
+
+function yakut_first_prizrak_sms_start()
+  ogse_st_mgr.start_timer(
+    "dsh.yakut_first_prizrak_sms",
+    math.random( 5 ) * 60, "dsh.yakut_first_prizrak_sms"
+  )
+end
+
+function yakut_first_prizrak_sms()
+  if not can_yakut_first_prizrak() then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]ЯКУТ:\\n%c[255,255,128,128]Стрелок, появилась новая информация, тебя это может заинтересовать.",
+    nil, nil, 25000
+  )
+end
+
+
+function remove_m_teleport_9()
+  local sobj = alife():story_object( story_ids.m_teleport_9 )
+  if sobj then
+    dsh_alife.release( sobj )
+  end
+end
+
+
+function story_sms_timer( t, fn )
+  if type( t ) == "userdata" then
+    t = t:length() * 1.1 / 1000
+  end
+  ogse_st_mgr.start_timer( fn, t, fn )
+end
+
+
+function can_bland_flash_talk()
+  return db.actor:has_info( "freeman_case_done" )
+    and db.actor:has_info( "gavr_doc_done" )
+end
+
+function sms_bland_flash_talk()
+  ogse_st_mgr.start_timer(
+    "dsh.sms_bland_flash_talk",
+    math.random( 5 ) * 60, "dsh.sms_bland_flash_talk2"
+  )
+end
+
+function sms_bland_flash_talk2()
+  if not can_bland_flash_talk() then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]ФРИМЕН:\\n%c[255,255,128,128]Стрелок, появилась новая информация, тебя это может заинтересовать.",
+    nil, nil, 25000
+  )
+end
+
+
+function can_sahar_speak_group()
+  return db.actor:has_info( "sah_talk_need" )
+    and db.actor:has_info( "info_gavr_dead" )
+end
+
+function sms_sahar_speak_group()
+  ogse_st_mgr.start_timer(
+    "dsh.sms_sahar_speak_group",
+    math.random( 5 ) * 60, "dsh.sms_sahar_speak_group2"
+  )
+end
+
+function sms_sahar_speak_group2()
+  if not can_sahar_speak_group() then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]САХАРОВ:\\n%c[255,255,128,128]Стрелок, будете в наших краях - загляните. Возможно у меня есть полезная информация.",
+    nil, nil, 25000
+  )
+end
+
+
+function escape_lager_spawn_killers()
+  ogse_st_mgr.start_timer(
+    "dsh.escape_lager_spawn_killers",
+    60, "dsh.esc_killers_raid"
+  )
+end
+
+function esc_killers_raid()
+  db.actor:give_info_portion( "esc_killers_raid" )
+end
+
+function escape_lager_killers_die()
+  if xr_gulag.getGulagPopulationComed( "esc_killers" ) > 1 then return end
+  -- если погиб последний из esc_killers
+  db.actor:give_info_portion( "escape_lager_killers_die" )
+end
+
+
+function val_raid_start()
+  db.actor:give_info_portion( "esc_fanat_spawn" )
+end
+
+
+function perehov_naruzhu_restrictor()
+  if arhara_dialog.mozg_del_preplastilin() then
+    ogse_st_mgr.start_on_signal(
+      "dsh.ynt_after_perexod_sms_restrictor",
+      "on_spawn_another_level", "dsh.ynt_after_perexod_sms_restrictor"
+    )
+    braad_test.mozg_yantar()
+  end
+end
+
+function ynt_after_perexod_sms_restrictor( ver )
+  story_sms_timer( 10, "arhara_dialog.preplastilin_sms" )
+end
+
+
+function video_black_first_restrictor()
+  level.disable_input()
+  xr_effects.x18_gluk( db.actor )
+  level.add_cam_effector( "camera_effects\\radar_stop.anm", 2506, false, "" )
+  timeout( 9000, this.video_black_first_restrictor2 )
+end
+
+function video_black_first_restrictor2()
+  db.actor:hide_weapon()
+  level.hide_indicators()
+  level.add_pp_effector( "agr_u_fade.ppe", 2000 + math.random( 100 ), false )
+  timeout( 3000, this.video_black_first_restrictor3 )
+end
+
+function video_black_first_restrictor3()
+  level.remove_cam_effector( 1974 )
+  game.start_tutorial( "death_machine_dream" )
+  braad_test.delete_black_doctor()
+end
+
+function video_black_first_restrictor_end()
+  level.add_cam_effector( "camera_effects\\prison_1.anm", 2506, false, "" )
+  timeout(
+    3000,
+    function()
+      level.show_indicators()
+      db.actor:restore_weapon()
+      level.enable_input()
+    end
+  )
+end
+
+
+function perehov_na_yantar_restrictor()
+  story_sms_timer( 1, "arhara_dialog.perehov_na_yantar_sms" )
+end
+
+
+function spawn_svalka_plot_stalk_restrictor()
+  start_on_spawn_another_level(
+    script_name() .. ".spawn_svalka_plot_stalk_restrictor2", "l02_garbage"
+  )
+end
+
+function spawn_svalka_plot_stalk_restrictor2()
+  story_sms_timer( 10, script_name() .. ".akim_hog_sms" )
+end
+
+
+function kluk_vstrecha_have()
+  db.actor:give_info_portion( "spavn_kluk_sklad" )
+  arhara_dialog.kluk_sms2()
+end
+
+
+function klenov_antena_have( obj )
+  level.map_remove_object_spot( obj.id, "crlc_big" )
+end
+
+
+function can_shax_land_perehod_talk()
+  return db.actor:has_info( "arhara_shahter_zemly" )
+    and db.actor:has_info( "tretiy_kod_dost_done" )
+end
+
+function shax_land_perehod_talk_sms_start()
+  ogse_st_mgr.start_timer(
+    "dsh.shax_land_perehod_talk_sms",
+    math.random( 10, 30 ) * 60, "dsh.shax_land_perehod_talk_sms"
+  )
+end
+
+function shax_land_perehod_talk_sms()
+  if not can_shax_land_perehod_talk() then return end
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]ШАХТЁР:\\n%c[255,255,128,128]Стрелок, появилась новая информация, тебя это может заинтересовать.",
+    nil, nil, 25000
+  )
+end
+
+
+function remove_atp_to_red_forest()
+  for _, sid in ipairs({
+    story_ids.atp_to_red_forest_zone, story_ids.atp_to_red_forest
+  }) do
+    local sobj = alife():story_object( sid )
+    if sobj then
+      dsh_alife.release( sobj )
+    end
+  end
+  respawn_exit_to_rostok_105()
+  sak.info_received()
+end
+
+
+function respawn_exit_to_rostok_105()
+  local sobj = sak.add_new_lc(
+    story_ids.exit_to_rostok_105, 7482, "В Красный лес", nil, 4
+  )
+  local lc = sobj:get_level_changer()
+  lc.dest_game_vertex_id  = 3321
+  lc.dest_level_vertex_id = 155935
+  lc.dest_position        = vector():set( 259.106689453125,-1.41668105125427,-312.245361328125 )
+  lc.dest_direction       = vector():set( 0, 1.5, 0 )
+  return sobj
+end
+
+
+function free_land_arhara_sniper()
+  local smarts = {
+    "land_arhara_sniper",
+    "aver_arhara_sniper_mikrogulag1",
+    "aver_arhara_sniper_makrogulag2",
+  }
+  for _, n in ipairs( smarts ) do
+    dsh_fixes.free_smart_terrain( n );
+  end
+end
+
+
+function remove_dcity_to_zaton()
+  local sobj = alife():story_object( story_ids.dcity_to_zaton )
+  if sobj then
+    dsh_alife.release( sobj )
+  end
+end
+
+
+function HideCustomStatic( name )
+  local cs = get_hud():GetCustomStatic( name )
+  if cs then
+    cs:wnd():Show( false )
+  end
+  return cs
+end
+
+
+function ShowCustomStatic( name )
+  local cs = get_hud():AddCustomStatic( name, true )
+  cs:wnd():Show( true )
+  return cs
+end
+
+
+function remove_dead_city_atpeshka()
+  story_sms_timer( 10, "arhara_dialog.del_zasch_zent_gorod" )
+end
+
+
+function cleanup_pri_waves()
+  for _, name in ipairs({
+    "pri_wave1_monolith1_rsniper1",
+    "pri_wave1_monolith2_free1",
+    "pri_wave1_monolith3_free2",
+    "pri_wave2_monolith1_rsniper1",
+    "pri_wave2_monolith2_wsniper1",
+    "pri_wave2_monolith3_rsniper2",
+    "pri_wave2_monolith4_wsniper2",
+    "pri_wave4_monolith1_rsniper1",
+    "pri_wave4_monolith2_wsniper1",
+    "pri_wave4_monolith3_rsniper2",
+    "pri_wave4_monolith4_wsniper2",
+    "pri_wave4_monolith5_free1",
+    "pri_wave4_monolith5_free2",
+    "pri_wave4_monolith5_free3",
+    "pri_wave5_monolith1_free1",
+    "pri_wave5_monolith2_free2",
+    "pri_wave5_monolith3_free3",
+    "pri_wave5_monolith4_free4",
+    "pri_wave6_monolith1_rsniper1",
+    "pri_wave6_monolith2_wsniper1",
+    "pri_wave7_monolith1",
+    "pri_wave7_monolith2",
+    "pri_wave7_monolith3",
+    "pri_wave7_monolith4",
+    "pri_wave7_monolith5",
+  }) do
+    local sobj = alife():object( name )
+    if sobj and sobj:alive() then
+      log2(
+        "[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name
+      )
+      release_mob( sobj )
+    end
+  end
+end
+
+
+local free_logic_gulag = {}
+function is_free_logic_gulag( name )
+  if free_logic_gulag[ name ] == nil then
+    local cond = get_string( "dsh.gulag.free_logic", name, false )
+    if cond then
+      local pc = xr_logic.parse_condlist(
+        nil, "dsh.gulag.free_logic", name, cond
+      )
+      cond = xr_logic.pick_section_from_condlist(
+        db.actor_proxy, db.actor_proxy, pc
+      ) ~= nil
+    end
+    free_logic_gulag[ name ] = cond
+  end
+  return free_logic_gulag[ name ]
+end
+
+function preload_free_logic_gulag()
+  for _, name in ipairs( get_section_keys( "dsh.gulag.free_logic" ) ) do
+    is_free_logic_gulag( name )
+  end
+end
+
+
+function denis_wound_shadowman()
+  ogse_st_mgr.start_on_signal(
+    "dsh.denis_wound_shadowman2",
+    "on_spawn_another_level", "dsh.denis_wound_shadowman2"
+  )
+end
+
+function denis_wound_shadowman2()
+  local sobj = alife():story_object( story_ids.shadowman )
+  if sobj then
+    log2(
+      "[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name
+    )
+    dsh.release_mob( sobj )
+  end
+end
+
+
+function cleanup_l06_rostok_flame()
+  for i = 0, 2 do
+    local sobj = alife():object( "zone_flame_000" .. i )
+    if sobj then
+      log2(
+        "[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name
+      )
+      dsh_alife.release( sobj )
+    end
+  end
+end
+
+
+function have_1ammo_m209()
+  return sak.have_item_namber( "ammo_m209", 1 )
+end
+
+function give_1ammo_m209()
+  sak.out_item_namber( "ammo_m209", 1 )
+end
+
+function add_1ammo_vog25()
+  sak.create_items_actor( "ammo_vog-25", 1 )
+end
+
+function have_ammo_m209_ge_2()
+  return actor_has_cnt_items(
+    "ammo_m209", function( cnt ) return cnt >= 2 end
+  )
+end
+
+function change_1ammo_m209_1ammo_vog25()
+  actor_change_items( "ammo_m209", 1, "ammo_vog-25", 1 )
+end
+
+
+function have_1ammo_vog25()
+  return sak.have_item_namber( "ammo_vog-25", 1 )
+end
+
+function give_1ammo_vog25()
+  sak.out_item_namber( "ammo_vog-25", 1 )
+end
+
+function add_1ammo_m209()
+  sak.create_items_actor( "ammo_m209", 1 )
+end
+
+function have_ammo_vog25_ge_2()
+  return actor_has_cnt_items(
+    "ammo_vog-25", function( cnt ) return cnt >= 2 end
+  )
+end
+
+function change_1ammo_vog25_1ammo_m209()
+  actor_change_items( "ammo_vog-25", 1, "ammo_m209", 1 )
+end
+
+
+function good_foto_place_sms()
+  news_manager.send_tip(
+    db.actor,
+    "%c[255,160,160,160]Меченый:\\n%c[255,255,128,128]Вот это место! Отсюда должен получиться удачный снимок.",
+    nil, nil, 25000
+  )
+end
+
+
+function is_af_alias_of( sect, base )
+  local prop = amk_utils.get_item_props( sect )
+  for _, aka in ipairs( prop.aliases ) do
+    if aka == base then return true end
+  end
+  return false
+end
+
+
+function start_on_spawn_another_level( s, lname )
+  if lname then
+    ogse_st_mgr.start_on_signal( s, "on_spawn_another_level_" .. lname, s )
+  else
+    ogse_st_mgr.start_on_signal( s, "on_spawn_another_level", s )
+  end
+end
+
+
+local l10u_bunker_lights = {}
+function register_l10u_bunker_light( actor, obj )
+  if db.actor:has_info( "spawn_kluk_na_pripyti" ) then return false end
+  if db.actor:has_info( "mesto_v_bunkere_start" ) then
+    l10u_bunker_lights[ obj:id() ] = true
+  end
+  return db.actor:has_info( "spawn_radist" )
+end
+
+function turn_on_l10u_bunker_lights()
+  for id, _ in pairs( l10u_bunker_lights ) do
+    local obj = level.object_by_id( id )
+    if obj then
+      local lamp = obj:get_hanging_lamp()
+      if lamp then
+        lamp:turn_on()
+      end
+    end
+  end
+end
+
+
+function yan_sleep_restrictor()
+  story_sms_timer( 7, script_name() .. ".yan_sleep_restrictor1" )
+end
+
+function yan_sleep_restrictor1()
+  db.actor:give_info_portion( "yan_spawn_ghost" )
+  level.disable_input()
+  xr_effects.yan_gluk( db.actor )
+  timeout( 3000, this.yan_sleep_restrictor2 )
+end
+
+function yan_sleep_restrictor2()
+  level.add_pp_effector( "agr_u_fade.ppe", 2000 + math.random( 100 ), false )
+  timeout( 4500, this.yan_sleep_restrictor3 )
+end
+
+function yan_sleep_restrictor3()
+  level.add_pp_effector( "deadcity_wake.ppe", 2000 + math.random( 100 ), false )
+  xr_effects.yan_actor_sleep_1( db.actor )
+  level.add_cam_effector( "camera_effects\\dream.anm", 1002, true, "" )
+  xr_effects.yan_dream_voices( db.actor )
+  db.actor:hide_weapon()
+  level.hide_indicators()
+  timeout( 15000, this.yan_sleep_restrictor4 )
+end
+
+function yan_sleep_restrictor4()
+  level.add_pp_effector( "agr_u_fade.ppe", 2000 + math.random( 100 ), false )
+  timeout( 6000, this.yan_sleep_restrictor5 )
+end
+
+function yan_sleep_restrictor5()
+  level.remove_cam_effector( 1002 )
+  xr_effects.yan_actor_sleep( db.actor )
+  level.add_cam_effector( "camera_effects\\prison_0.anm", 1003, true, "" )
+  timeout( 3000, this.yan_sleep_restrictor6 )
+end
+
+function yan_sleep_restrictor6()
+  level.remove_cam_effector( 1003 )
+  level.add_cam_effector(
+    "camera_effects\\prison_1.anm", 1000 + math.random( 100 ), false, ""
+  )
+  timeout(
+    3000,
+    function()
+      level.show_indicators()
+      db.actor:restore_weapon()
+      level.enable_input()
+    end
+  )
+  db.actor:disable_info_portion( "yan_spawn_ghost" )
+end
+
+
+function on_before_script_gc()
+  ogse_signals.get_mgr():call( "on_update" )
+end
+
+
+function rt_timeout( ... )
+  local t = timeout_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start( "on_actor_update" )
+  return t
+end
+
+function rt_wait_condition( ... )
+  local t = condition_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start( "on_actor_update" )
+  return t
+end
+
+function rt_exec_periodic( freq, f, ... )
+  local args = { ... }
+  local t = rt_wait_condition(
+    function() return false end,
+    function() end,
+    function( timer )
+      if freq then timer:reschedule( freq ) end
+      f( timer, unpack( args ) )
+    end
+  )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  return t
+end
+
+function rt_exec_on_update( ... )
+  local t = exec_on_update_timer( ... )
+  local d = debug.getinfo( 2, "S" )
+  if d then
+    t:set_script_name( d.source )
+  end
+  t:start( "on_actor_update" )
+  return t
+end
+
+
+function level_timeout( ms, func )
+  local t = level.add_call(
+    function() return true end,
+    function() func() end
+  )
+  t:set_pause( ms )
+  return t
+end

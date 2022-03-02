@@ -1,0 +1,176 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Гладкоствольное ружье Protecta ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;------------------------------------------------------------------------------------------------------------
+[wpn_protecta]:class_sg,hud_wpn_fx.protecta
+GroupControlSection			= spawn_group
+discovery_dependency 		= 
+$spawn                   	= "weapons\spas12"					; option for Level Editor
+$npc			 			= on				; option for Level Editor
+$prefetch 		 			= 8
+scheduled                	= off              ; option for ALife Simulator
+cform                    	= skeleton
+class                    	= WP_SHOTG
+description					= enc_weapons_wpn-protecta
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0               ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.7              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+tri_state_reload			= on
+
+cost					 	= 10500	;1000
+weapon_class			 	= shotgun
+
+
+ammo_limit		 			= 60
+ammo_current		 		= 12
+ammo_elapsed		 		= 12
+
+ammo_mag_size		 		= 12
+
+;-----------------------------------------------------------------------------------
+;базовая дисперсия
+
+;отдача
+cam_dispersion          	= 0.25	;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc		= 0.15	;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac		= 0.15	;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle			= 6.0	;максимальный угол отдачи
+cam_max_angle_horz		= 8.0	;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 0.45	;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+hand_dependence 	 		= 1
+single_handed			= 0
+
+animation_slot		 		= 10  ;9		; type of the animation that will be used
+
+inv_name					= ars-wpn_protecta    
+inv_name_short				= ars-wpn_protecta                    
+inv_weight				= 4.4
+
+inv_grid_width     = 5
+inv_grid_height    = 2
+inv_grid_x         = 37
+inv_grid_y         = 44
+
+kill_msg_x			= 91
+kill_msg_y			= 104
+kill_msg_width		= 80
+kill_msg_height		= 20
+
+direction                	= 0, 0, 1
+shell_point				= 0.0, 0.138, 0.07
+fire_point               	= 0.0, 0.07, 0.56
+;fire_point2              	= 0.0, -0.103, -0.686
+
+flame_particles					= amik\weapons\flame_particles\flame_particles_00
+smoke_particles					= amik\weapons\smoke_particles\smoke_particles_pump_01
+rpm_empty_click 	   		= 200
+
+; ttc
+hit_rate			= 2.0
+rpm                     = 180
+; end ttc
+
+hud                      	= wpn_protecta_hud
+normal                   	= 0, 1, 0
+position                 	= -0.024, -0.081, 0.
+orientation              	= 0, 0, 0      ;значение устанавливается в градусах
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+;под мишкой
+strap_position         		= -0.26,-0.10,0.05			; position (offset) and orientation of the weapon when it is strapped
+strap_orientation      		= -15,-9,110				; (3rd person view in degrees)
+strap_bone0					= bip01_spine2
+strap_bone1					= bip01_spine1
+
+startup_ammo             	= 10
+visual                   	= weapons\protecta\wpn_protecta.ogf
+
+light_color		 			= 0.6,0.5,0.3
+light_var_color		 		= 0.05
+light_time 		 			= 0.2
+
+ph_mass			 			= 3
+;cost			 			= 900
+
+;addons
+scope_status				= 0
+silencer_status				= 0
+grenade_launcher_status		      = 0
+
+zoom_enabled				= true
+
+;звуки
+snd_draw				= weapons\generic_draw
+snd_holster				= weapons\generic_holster
+snd_empty				= weapons\generic_empty
+snd_reload				= weapons\toz34_reload
+snd_shoot				= weapons\striker12\shot
+snd_shoot_duplet			= weapons\striker12\shot
+snd_open_weapon			= weapons\striker12\open_load
+snd_add_cartridge			= weapons\striker12\load
+snd_close_weapon			= weapons\striker12\load_close
+ 
+[wpn_protecta_hud]:hud_sg
+
+shell_point		 			= 0.00, 0.00, -0.6
+
+fire_point      			= 0,-0.015,-0.65
+fire_point2				    = 0,0,-0.65
+fire_bone                	= muzzle
+
+orientation              	= 1.4, 1.4, 0
+position                 	= 0.1,-0.06,0.03
+
+visual                   	= weapons\protecta\wpn_protecta_hud.ogf
+
+anim_idle					= idle_1
+anim_reload					= draw_1
+anim_draw					= draw_1
+anim_holster				= holster
+anim_shoot					= shoot_1
+anim_shoot_both 			= shoot_1
+anim_idle_aim			= idle_aim_1
+anim_idle_sprint			= idle_sprint_1
+
+anim_open_weapon			= reload11
+anim_add_cartridge		= reload22
+anim_close_weapon			= reload33
+
+;смещения HUD для режима приближения
+zoom_offset			= -0.10100,0.04500,-0.0960
+zoom_rotate_x		= 0.01900
+zoom_rotate_y		= 0.02150
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Гладкоствольное ружье "Отбойник" ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[wpn_protecta_col]:wpn_protecta
+
+description		= enc_weapons_wpn-protecta_col               
+cost					= 15000
+inv_name					= ars-wpn_protecta_col    
+inv_name_short				= ars-wpn_protecta_col                    
+inv_weight				= 4.75
+
+ammo_class		 		= ammo_23x76_shrap
+inv_grid_x         = 20
+inv_grid_y         = 53
+
+hit_rate			= 2.0
+rpm                     = 450
+
+snd_shoot				= weapons-new\striker12\protecta_col_shot
+snd_shoot_duplet			= weapons-new\striker12\protecta_col_shot
+hud                      	= wpn_protecta_col_hud
+visual                   	= weapons\protecta\wpn_striker_col.ogf
+
+[wpn_protecta_col_hud]:wpn_protecta_hud
+visual                 	= weapons\protecta\wpn_striker_col_hud.ogf
+
+zoom_offset			= -0.1000,0.01300,-0.0530
+zoom_rotate_x		= 0.02400
+zoom_rotate_y		= 0.01900
+
+

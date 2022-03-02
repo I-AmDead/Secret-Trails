@@ -1,0 +1,191 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;;; Browning Auto-5 ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;---------------------------------------------------------------------
+[wpn_browningauto5]:class_sg_long
+GroupControlSection			= spawn_group
+discovery_dependency 		= 
+$spawn                   	= "weapons\spas12"					; option for Level Editor
+$npc			 			= on				; option for Level Editor
+$prefetch 		 			= 8
+scheduled                	= off              ; option for ALife Simulator
+cform                    	= skeleton
+class                    	= WP_SHOTG
+description					= enc_arsenal_browning
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0               ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.7              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+tri_state_reload			= on
+
+cost					 	= 4000	;1000
+weapon_class			 	= shotgun
+
+ammo_limit		 			= 60
+ammo_current		 		= 10
+ammo_elapsed		 		= 0
+
+f_mode				      = 1
+
+ammo_mag_size		 		= 5
+;-----------------------------------------------------------------------------------
+;базовая дисперсия
+disp_rate = 1.85
+
+;отдача
+cam_dispersion          	= 0.25	;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc		= 0.25	;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac		= 1.0	;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle			= 12.0	;максимальный угол отдачи
+cam_max_angle_horz		= 3.0	;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 6.0	;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+hand_dependence 	 		= 1
+single_handed			= 0
+
+animation_slot		 		= 9		; type of the animation that will be used
+
+inv_name					= ars-browning  
+inv_name_short				= ars-browning_s
+inv_weight				= 3.9
+
+inv_grid_width     = 6
+inv_grid_height    = 2
+inv_grid_x         = 35
+inv_grid_y         = 61
+
+kill_msg_x			= 91
+kill_msg_y			= 104
+kill_msg_width		= 80
+kill_msg_height		= 20
+
+direction                	= 0, 0, 1
+shell_point				= 0.0, 0.138, 0.07
+fire_point               	= 0.0, 0.254, 0.920
+;fire_point2              	= 0.0, 0.103, 0.686
+
+flame_particles					= amik\weapons\flame_particles\flame_particles_00
+smoke_particles					= amik\weapons\smoke_particles\smoke_particles_pump_01
+rpm_empty_click 	   		= 200
+
+; ttc
+hit_rate	            = 2.0
+
+rpm                     = 200
+; end ttc
+
+hud                      	= wpn_browningauto5_hud
+normal                   	= 0, 1, 0
+position                 	= -0.024, -0.180, -0.0215
+orientation              	= 0, 0, 0      ;значение устанавливается в градусах
+
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+;под мишкой
+strap_position         		= -0.30,-0.095,0.125			; position (offset) and orientation of the weapon when it is strapped
+strap_orientation      		= -15,-9,110				; (3rd person view in degrees)
+strap_bone0					= bip01_spine2
+strap_bone1					= bip01_spine1
+
+startup_ammo             	= 10
+visual                   	= weapons-new\shootgun\wpn_browningauto5.ogf
+
+light_color		 			= 0.6,0.5,0.3
+light_var_color		 		= 0.05
+light_time 		 			= 0.2
+
+ph_mass			 			= 3
+;cost			 			= 900
+
+;addons
+scope_status				= 0
+silencer_status				= 0
+grenade_launcher_status		      = 0
+
+zoom_enabled				= true
+scope_name 					= wpn_addon_scope_hanter
+scope_x 					= 62
+scope_y 					= 16
+
+;звуки
+;звуки
+snd_holster				= weapons\psevdo_auto5\holster, 0.4
+snd_draw				= weapons\psevdo_auto5\draw, 0.6
+snd_empty				= weapons\generic_empty
+snd_reload				= weapons\toz34_reload
+snd_open_weapon			= weapons\psevdo_auto5\open_load
+
+snd_shoot				= weapons\psevdo_auto5\shot
+snd_shoot1				= weapons\psevdo_auto5\shot1
+snd_shoot2				= weapons\psevdo_auto5\shot2
+snd_shoot_duplet			= weapons\psevdo_auto5\shot
+snd_add_cartridge			= weapons\psevdo_auto5\load
+snd_close_weapon			= weapons\psevdo_auto5\reload_end
+
+death_manager.unique_wpn = true
+treasure_manager.item_is = onetime
+
+
+[wpn_browningauto5_hud]:hud_sg_long
+shell_point		 		= 0.00, 0.00, -0.6
+
+fire_point      			= 0.00, -0.015, -0.910
+;fire_point2			= 0,0,-0.65
+fire_bone                	= muzzle
+
+orientation              	= 1.75, 1.5, 0
+position                 	= 0.09,-0.015,0.275
+visual                   	= weapons-new\shootgun\wpn_browningauto5_hud.ogf
+
+anim_idle					= idle
+anim_reload					= draw
+anim_draw					= draw
+anim_holster				= holster
+anim_shoot					= shoot  ;shoot_1 -- в этой аниме гильза вылетает быстрее
+anim_shoot_both 			= shoot_1
+anim_idle_aim			= idle_aim
+anim_idle_sprint			= idle_sprint
+
+
+anim_open_weapon			= reload1
+anim_add_cartridge		= reload2
+anim_close_weapon			= reload3
+
+;смещения HUD для режима приближения
+zoom_offset			= -0.10995,0.0595,-0.033
+zoom_rotate_x		= 0.0300
+zoom_rotate_y		= 0.0285
+
+;;;;;;;;;;;;;;;;;;;;; Обрез Браунинга ;;;;;;;;;;;;;;;;;;;;
+;---------------------------------------------------------
+[wpn_ba5short]:wpn_browningauto5,class_obrez
+description   = enc_arsenal_ba5short
+inv_name		 = ars-ba5short
+inv_name_short	 = ars-ba5short_s
+inv_weight	       = 2.6
+ammo_mag_size	 = 4
+
+inv_grid_width     = 3
+inv_grid_height    = 1
+inv_grid_x         = 21
+inv_grid_y         = 68
+cost					 	= 2000	;1000
+strap_position         		= -0.320,-0.09,0.15 ; -0.3150,-0.1100,0.025 ; -0.3150,-0.0895,0.025
+strap_orientation      		= -15,-9,110
+
+visual                   	= weapons-new\shootgun\wpn_ba5short.ogf
+fire_point               	= 0.0, 0.255, 0.5785
+smoke_particles         = amik\weapons\smoke_particles\smoke_particles_pump_01
+
+hud  =  wpn_ba5short_hud
+
+death_manager.unique_wpn = false
+treasure_manager.item_is =
+
+
+[wpn_ba5short_hud]:wpn_browningauto5_hud,hud_obrez
+fire_point      			= 0.0021,-0.0150,-1.10
+visual                   	= weapons-new\shootgun\wpn_ba5short_hud.ogf
+zoom_rotate_x		= 0.0280

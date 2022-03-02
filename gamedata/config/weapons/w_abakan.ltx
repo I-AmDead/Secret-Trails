@@ -1,0 +1,290 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;; Автомат системы Никонова АН-94 "Абакан" ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;-------------------------------------------------------------------------------------------------------
+[wpn_abakan]:class_ar,class_gp25,hud_wpn_fx.ak74
+GroupControlSection		= spawn_group
+discovery_dependency	= 
+$spawn              	= "weapons\abakan"	; name and section in level editor
+$npc					= on				
+$prefetch 				= 8
+scheduled				= off               ;[] option for ALife Simulator
+cform               	= skeleton
+class               	= WP_AK74			; class of the weapon that corresponding to CPP class
+description				= enc_weapons1_wpn-abakan
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0		       ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.7              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+cost					= 4200				; the price of the item
+weapon_class			= assault_rifle		; the type of the box that will be used in buy-menu in multiplayer mode	
+	
+ammo_limit				= 210				; obsolete
+ammo_elapsed			= 30				; obsolete
+	
+ammo_mag_size			= 30				; clip (magazine) size
+fire_modes				= 1, 2, -1
+f_mode				    = 2
+
+ammo_class				= ammo_5.45x39_ap, ammo_5.45x39_fmj  ; name of the ltx-section of used ammo 
+launch_speed			= 0
+
+hand_dependence			= 1									; how many hands (1 or 2) we used to hold weapon in
+single_handed			= 0
+	
+animation_slot			= 2									; type of the animation that will be used
+
+icon_name = icon_an94
+inv_name	        	      = wpn-abakan							; name in inventory	
+inv_name_short			= wpn-abakan
+inv_weight			      = 3.8								; weight in inventory
+
+inv_grid_width			= 5	 ; position and size of the icon that will be used to display weapon in the inventory menu
+inv_grid_height			= 2	 ; all icons are on the texture ui_icon_equipment.dds,   
+inv_grid_x				= 6  ; position and size are in terms of 64x64 squares
+inv_grid_y				= 2
+
+kill_msg_x			= 0
+kill_msg_y			= 28
+kill_msg_width		= 84
+kill_msg_height		= 28
+
+;-----------------------------------------------------------------------------------
+; base dispersion
+;
+; === Setting of the weapon shooting dispersal parameter ===
+;Dispersal consists from to basic constituents – dispersal of the weapon (relatively small). In fact, this is a dispersal of a weapon griped in a vice; - dispersal of the weapon behavior in the hands of the host (if he running, or walking or shoots in single shots or in a burst) is another, more significant factor of dispersal. 
+;Dispersal of the weapon depends only from basic dispersal, basket case factor ant time of the ammo.
+;Dispersal of the way the host shooting (standing, running and etc.)
+;Two types of shooting modes can be defined: - usual mode and zoomed mode.  
+;Usual mode: - depends from the position of the player while shooting (standing, sitting, walking and running)
+;Zoomed mode – depends from the dispersal of the weapon and do NOT depends from the position of the shooter. In that mode, dispersal of the weapon &laquo switches to;&raquo;  sight swinging (created be effector). 
+;Weapon recoil in the game also created by recoil effector. 
+;
+;-----------------------------------------------------------------------------------
+;params of weapon recoil
+dispersion_start				= 2
+fire_dispersion_base			= 0.14		;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+disp_rate = 1.88
+
+;отдача
+cam_dispersion          	      = 0.12		;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc			= 0.15		;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac			= 0.25		;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle				= 5.0	    	;максимальный угол отдачи
+cam_max_angle_horz			= 6.0		;(degree) maximum shot horizontal degree 
+cam_step_angle_horz			= 0.35;1		;(degree) size of step camera moved in horizontal position while shooting
+
+misfire_probability 	      = 0.02 ;вероятность осечки при максимальном износе
+misfire_condition_k = 3
+;-----------------------------------------------------------------------------------
+
+fire_point             				=  0,0.225,0.687
+fire_point2            				=  0,0.148,0.558
+
+flame_particles					= amik\weapons\flame_particles\dtk_flame_particles_2
+smoke_particles					= amik\weapons\smoke_particles\smoke_particles_00
+grenade_flame_particles				= amik\weapons\grenade_flame_particles\grenade_flame_particles_02
+	
+shell_point		 					= 0,0.252,0.196
+shell_particles						= amik\weapons\5_45x39\5_45x39_shells_r_01
+
+; ttc
+hit_rate	            = 1.85
+fire_distance            	= 400		; maximum fire distance that bullet can fly
+bullet_speed			= 900 ;890		; starting bullet speed
+
+rpm        =  600
+rpm_mode_2 = 1800
+cycle_down = true
+
+;params when silencer is attached 
+;similar to corresponding params without prefix silencer_
+
+silencer_hit_power       	= 0.68
+silencer_hit_impulse	 	= 50
+silencer_fire_distance   	= 320
+silencer_bullet_speed	 	= 830
+
+hud                      	= wpn_abakan_hud				; name of the section of the hud
+
+position							= -0.026,-0.172,0
+orientation							= 0,0,0
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+strap_position						= -0.16,-0.40,0.15
+strap_orientation					= -10,-5,10
+strap_bone0							= bip01_spine2
+strap_bone1							= bip01_spine1
+
+visual								= weapons\abakan\wpn_abakan
+
+light_color					= 0.6,0.5,0.3				
+light_var_color					= 0.05						
+light_time 					= 0.2						
+
+ph_mass						= 5							; physic mass (kg)
+
+;addons
+scope_status				= 2							; 0 - no addon
+silencer_status				= 0							; 1 - permanent
+grenade_launcher_status		      = 2							; 2 - attachable
+
+zoom_enabled				= true						; (on,off)zoom mode (right mouse button)
+
+ignore_scope_texture  = true
+scope_show_indicators = false
+scope_sights_lighting = wpnv\addons\pso1\cross0, wpnv\addons\pso1\cross1, wpnv\addons\pso1\kross0, wpnv\addons\pso1\kross1
+scope_zoom_hud_fov    = 4
+use_scope_zoom        = true
+
+scope_name 					= wpn_addon_scope			; section name for the attachable scope
+scope_x                     = 35		; offset in inventory icon
+scope_y                     = -4
+silencer_name  				= wpn_addon_sil_545_ar		; section name for the attachable silencer
+silencer_x                  = 225		; offset in inventory icon
+silencer_y                  = 9
+grenade_launcher_name 		= wpn_addon_grenade_launcher; section name for the attachable grenade launcher
+grenade_launcher_x          = 115		; offset in inventory icon
+grenade_launcher_y          = 23
+
+snd_draw							= weapons\ak_74x\rifle_draw
+snd_holster							= weapons\ak_74x\rifle_holster
+snd_empty							= weapons\abakan\abakan_empty
+snd_shoot							= weapons\abakan\abakan_shoot
+snd_shoot1							= weapons\abakan\abakan_shoot1
+snd_reload							= weapons\abakan\abakan_reload
+snd_shoot_grenade					= weapons\ak_74x\gp25_grenshoot
+snd_switch							= weapons\ak_74x\gp25_switch, 1.0, 0.5
+snd_reload_grenade					= weapons\abakan\abakan_reload_gl
+snd_silncer_shot					= weapons\abakan\abakan_shot_sil
+snd_razgruzka						= weapons\razgruzka\ammo_5
+
+;params when silencer is attached 
+;similar to corresponding params without prefix silencer_
+
+;silencer_flame_particles 	= weapons\generic_weapon01
+silencer_smoke_particles 			= amik\weapons\smoke_particles\p_smoke_particles_02
+
+silencer_light_color				= 0.6,0.5,0.3
+silencer_light_range				= 0.01
+silencer_light_var_color			= 0.05
+silencer_light_var_range			= 0.5
+silencer_light_time 				= 0.2
+
+
+;-----------------------------------------------------------------------------
+;-- HUD DESCRIPTION
+;-----------------------------------------------------------------------------
+ 
+[wpn_abakan_hud]:hud_ar
+allow_inertion				= true
+
+shell_point							= 0.200000,0.000000,-0.450000
+shell_dir			     			= 0.0, 0.0, 0.0
+
+fire_point							= 0.001000,0.000030,-0.187002
+fire_point2							= 0.101000,-0.320000,0.240000
+fire_bone               			= wpn_body
+
+orientation      	        		= 1.7, 1.5, 0
+position			        		= 0.040000,-0.05,-0.0250
+
+visual								= weapons\abakan\wpn_abakan_hud.ogf
+
+grenade_bone						= wpn_grenade
+
+anim_idle							= normal_idle
+anim_idle_aim						= normal_idle_aim
+anim_reload							= normal_reload
+anim_draw							= normal_draw
+anim_holster						= normal_holster
+anim_shoot							= normal_shoot
+		
+anim_idle_g							= g_idle
+anim_idle_g_aim						= g_idle_aim
+anim_reload_g						= g_reload
+anim_shoot_g						= g_shoot
+anim_switch_grenade_on				= w_gl_switch_on
+anim_switch_grenade_off				= w_gl_switch_off
+anim_draw_g							= g_draw
+anim_holster_g						= g_holster
+anim_idle_sprint_g         		= w_gl_idle_sprint
+anim_idle_sprint_gl         		= w_gl_idle_sprint
+		
+anim_idle_gl						= w_gl_idle
+anim_idle_gl_aim					= w_gl_idle_aim
+anim_reload_gl						= w_gl_reload
+anim_draw_gl						= w_gl_draw
+anim_holster_gl						= w_gl_holster
+anim_shoot_gl						= w_gl_shoot
+anim_idle_sprint					= normal_idle_sprint
+
+zoom_offset							= -0.138450,0.086520,-0.220600
+zoom_rotate_x						= 0.027300
+zoom_rotate_y						= 0.029700
+
+zoom_hide_crosshair	= true						;to hide crosshair in zoom 
+
+grenade_normal_zoom_offset			= -0.138450,0.086520,-0.220600
+grenade_normal_zoom_rotate_x		= 0.027300
+grenade_normal_zoom_rotate_y		= 0.029700
+
+grenade_zoom_offset					= -0.065800,-0.383300,-0.033000
+grenade_zoom_rotate_x				= -0.422600
+grenade_zoom_rotate_y				= 0.028000
+
+scope_zoom_offset			= -0.116520,0.028010,0.272870
+scope_zoom_rotate_x						= 0.028850
+scope_zoom_rotate_y						= 0.029150
+
+scope_grenade_normal_zoom_offset			= -0.116520,0.028010,0.272870
+scope_grenade_normal_zoom_rotate_x		= 0.028850
+scope_grenade_normal_zoom_rotate_y		= 0.029150
+
+
+[wpn_abakan_m1]:wpn_abakan
+$spawn              				= "weapons\uniq\wpn_abakan_m1"	
+
+
+[wpn_abakan_m2]:wpn_abakan
+$spawn              				= "weapons\uniq\wpn_abakan_m2"	
+description				= enc_weapons1_wpn-abakan_m2
+cost					= 5800				; the price of the item
+
+inv_name	        	      = wpn-abakan_m2					; name in inventory	
+inv_name_short			= wpn-abakan_m2
+
+icon_name = icon_an94_m2
+inv_grid_x				= 0  ; position and size are in terms of 64x64 squares
+inv_grid_y				= 28
+
+hud 						= wpn_abakan_m2_hud
+visual         		        		= weapons\abakan\wpn_abakan_cobra.ogf
+
+scope_status          = 1
+scope_show_indicators = true
+scope_sights_lighting =
+scope_zoom_hud_fov    = 0
+use_scope_dof         = false
+
+
+[wpn_abakan_m2_hud]:wpn_abakan_hud
+visual                  			= weapons\abakan\wpn_abakan_cobra_hud.ogf	
+
+zoom_offset							= -0.122180,0.019300,-0.024130
+zoom_rotate_x						= 0.034950
+zoom_rotate_y						= 0.018050
+
+grenade_normal_zoom_offset			= -0.122180,0.019300,-0.024130
+grenade_normal_zoom_rotate_x		= 0.034950
+grenade_normal_zoom_rotate_y		= 0.018050
+
+scope_zoom_offset							= -0.122180,0.019300,-0.024130
+scope_zoom_rotate_x						= 0.034950
+scope_zoom_rotate_y						= 0.018050
+
+scope_grenade_normal_zoom_offset			= -0.122180,0.019300,-0.024130
+scope_grenade_normal_zoom_rotate_x		= 0.034950
+scope_grenade_normal_zoom_rotate_y		= 0.018050

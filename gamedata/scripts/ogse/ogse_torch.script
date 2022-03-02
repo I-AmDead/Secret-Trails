@@ -1,0 +1,127 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
+  sm:subscribe({ signal = "on_update", fun = this.set_torch_mode })
+  sm:subscribe({ signal = "on_key_down",     fun = this.on_key_down    })
+end
+
+
+
+local torch_mode = "off"
+function set_torch_mode( k )
+  if db.actor:alive() then
+    local torch = db.actor:item_in_slot( 9 )
+    if torch and torch:is_torch() then
+      torch = get_torch_obj( torch )
+      if torch.on then
+        torch_mode = ogse.load_var( "ogse_torch.torch_mode", "near" )
+        if torch_mode == "far" then
+          set_far_mode( torch, k )
+        elseif torch_mode == "near" then
+          set_near_mode( torch, k )
+        end
+      else
+        set_near_mode( torch, k )
+        torch_mode = "off"
+      end
+    end
+  end
+end
+
+
+function on_key_down(key, bind ) --Действие при нажатии клавиши фонаря
+	if ( bind ~= key_bindings.kTORCH ) 
+        or level.main_input_receiver() 
+        or db.actor:item_in_slot(9) == nil then return end
+
+			db.actor:give_info_portion("torch_use")
+	db.actor:give_info_portion("near_mode")
+	db.actor:give_info_portion("far_mode")
+
+  if db.actor:alive() and (not db.actor:has_info( "ui_talk" )) and (not db.actor:has_info( "anim_action" )) then
+
+  local sobj = alife():create( "torch_use", vector():set( 0, 0, 0 ), 0, 0, 0 )
+
+  level.client_spawn_manager():add(
+    sobj.id, -1, function( id, obj )
+      dsh.exec_on_update( function() db.actor:eat( obj ) end )
+    end
+  )
+  dsh.level_timeout( 400, function() db.actor:disable_info_portion("torch_use") end )
+
+    local torch = db.actor:item_in_slot( 9 )
+    if torch and torch:is_torch() then
+
+      torch = get_torch_obj( torch )
+      if torch.on then
+        if torch_mode == "near" then
+          set_far_mode( torch )
+        torch:switch( true )
+        else
+          torch_mode = "off"
+        end
+        torch:switch( true )
+      else
+        set_near_mode( torch )
+        torch:switch( true )
+      end
+        torch:switch( true )
+      ogse.save_var( "ogse_torch.torch_mode", torch_mode )
+    end
+  end
+end
+
+
+function set_near_mode( torch, r )
+
+if db.actor:has_info("near_mode") and (not db.actor:has_info("torch_use")) and db.actor:has_info("far_mode") then
+  torch_mode = "near"
+  torch:set_range( 20 )
+  torch:set_angle( math.rad( 110 ) )
+  db.actor:disable_info_portion("far_mode")
+elseif db.actor:has_info("near_mode") and db.actor:has_info("torch_use") and db.actor:has_info("far_mode") then
+  torch_mode = "near"
+  torch:set_range( 0 )
+  torch:set_angle( 0 )
+end
+end
+
+
+function set_far_mode( torch, r )
+
+if db.actor:has_info("far_mode") and (not db.actor:has_info("torch_use")) and db.actor:has_info("near_mode") then
+  torch_mode = "far"
+  torch:set_range( 60 )
+  torch:set_angle( math.rad( 60 ) )
+  db.actor:disable_info_portion("near_mode")
+elseif db.actor:has_info("far_mode") and db.actor:has_info("torch_use") and db.actor:has_info("near_mode") then
+  torch_mode = "far"
+  torch:set_range( 20 )
+  torch:set_angle( math.rad( 110 ) )
+end
+end
+
+function set_off_mode( torch )
+
+  torch_mode = "off"
+
+end
+
+function is_torch_enabled()
+  if db.actor:alive() then
+    local torch = db.actor:item_in_slot( 9 )
+    if torch and torch:is_torch() then
+      torch = get_torch_obj( torch )
+      return torch.on
+    end
+  end
+end
+
+
+function play_click()
+  snd_obj = xr_sound.get_safe_sound_object( [[device\bad_box]] )
+  if snd_obj then
+    snd_obj:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0 )
+  end
+end

@@ -1,0 +1,23 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+local found_pda_id
+function create_pda()
+  local netpacket_pda_id = 0
+  if db.actor then
+    if not found_pda_id then
+      local pda_id = amk.load_variable( "have_netpacket_pda" )
+      if pda_id then
+        netpacket_pda_id = pda_id
+        log2(
+          "[%s]: netpacket_pda found with id = %s",
+          script_name(), netpacket_pda_id
+        )
+      end
+      found_pda_id = netpacket_pda_id
+    end
+    netpacket_pda_id = found_pda_id
+  else
+    log2( "[%s]: netpacket_pda not found, use actor", script_name() )
+  end
+  return netpacket_pda_id
+end

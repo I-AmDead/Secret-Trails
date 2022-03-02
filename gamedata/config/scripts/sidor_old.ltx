@@ -1,0 +1,40 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = walker@sidor_old
+;trade = misc\trade_trader.ltx
+danger = danger_condition@sidor_stalker
+
+[walker@sidor_old]
+path_walk = sidor_old_walk
+path_look = sidor_old_look
+danger = danger_condition@sidor_old
+def_state_standing = ward
+meet = meet@sidor_old
+on_actor_dist_le_nvis = 5 | remark@sidor
+
+[remark@sidor]
+anim = ward
+target = actor
+snd = sidor_new
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@sidor_old
+on_signal = sound_end | walker@sidor_old1
+
+[walker@sidor_old1]
+path_walk = sidor_old_walk
+path_look = sidor_old_look
+danger = danger_condition@sidor_old
+def_state_standing = ward
+meet = meet@sidor_old
+
+[danger_condition@sidor_old]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet@sidor_old]
+use = true
+use_wpn = true
+meet_talk_enabled = true

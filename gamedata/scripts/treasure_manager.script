@@ -1,0 +1,677 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+
+local rare_list = {
+
+ novice_section = {
+ "wpn_beretta",
+ "wpn_toz34",
+ "ammo_vog-25p",
+ "ammo_m209",
+ "ammo_9x39_pab9",
+ "ammo_9x39_ap",
+ "ammo_9x39_sp5",
+ "af_ameba_mica",
+ "af_soul",
+ "af_cristall",
+ "af_gold_fish",
+ "af_night_star",
+ "af_electra_moonlight"
+ },
+
+ experienced_section = {
+ "ammo_7.62x54_7h1",
+ "ammo_7.62x54_ap",
+ "ammo_7.62x54_7h14",
+ "ammo_og-7b",
+ "wpn_ak74",
+ "wpn_abakan",
+ "af_fuzz_kolobok",
+ "af_rusty_sea-urchin",
+ "af_dummy_glassbeads",
+ "af_dummy_pellicle",
+ "af_dummy_battery",
+ "af_dummy_dummy",
+ "af_dummy_spring"
+ },
+
+ veteran_section = {
+ "af_spirit_1",        
+ "af_cry_1",
+ "af_babka_1",
+ "af_pudd_1",
+ "af_dik_1",
+ "af_kol_1",
+ "af_armor_1",
+ "wpn_l85",
+ "wpn_lr300",
+ "wpn_groza"
+ },
+
+master_section = {
+ "wpn_vintorez",
+ "wpn_svu",
+ "wpn_svd",
+ "af_simbion",        
+ "wpn_g36",
+ "af_spirit_2",         
+ "af_cry_2",
+ "af_babka_2",
+ "af_pudd_2",
+ "af_dik_2",
+ "af_kol_2",
+ "af_armor_2"  
+ }
+}
+
+local solid_list = {
+ novice_section = {
+ --Артефакты--
+ "af_drops",
+ "af_ameba_slime",
+ "af_rusty_thorn",
+ "af_electra_sparkler",
+ "af_blood",
+ "af_vyvert",
+ "af_medusa",
+ --Аммуниция--
+ "grenade_rgd5",
+ "ammo_12x70_buck",     
+ "ammo_9x19_fmj",
+ "ammo_9x19_pbp",
+ "ammo_9x18_pmm",
+ "ammo_9x18_fmj",
+ --Оружие--
+ "wpn_addon_silencer",
+ "wpn_mp5",
+ "wpn_bm16",
+ "wpn_fort",
+ "wpn_pb",
+ "wpn_pm",
+ --Прочее--
+ "bread",
+ "bandage",
+ "kolbasa",
+ "medkit",
+ "vodka",
+ "conserva"
+ },
+
+experienced_section = {
+--Артефакты--
+ "af_cristall_flower",
+ "af_gravi",
+ "af_mincer_meat",
+ "af_electra_flash",
+ "af_rusty_kristall",
+ "af_ameba_slug",
+ "af_fireball",
+ --Аммуниция--
+ "grenade_rgd5",
+ "grenade_gd-05",
+ "grenade_f1",     
+ "ammo_9x19_pbp",
+ "ammo_9x18_pmm",
+ "ammo_5.45x39_fmj",
+ "ammo_11.43x23_fmj",
+ "ammo_5.56x45_ss190",
+ --Пушки--
+ "wpn_addon_scope",
+ "wpn_mp5",
+ "wpn_ak74u",
+ "wpn_ak74u_m1",
+ "wpn_walther",
+ --Прочее--
+ "mutant_dog_tail",
+ "mutant_boar_leg",
+ "kolbasa",
+ "medkit",
+ "antirad",
+ "energy_drink",
+ "conserva"
+ },
+
+ veteran_section = {
+ --Артефакты--
+ "af_night_star",
+ "af_gold_fish",
+ "af_soul",
+ "af_electra_moonlight",
+ "af_rusty_sea-urchin",
+ "af_ameba_mica",
+ "af_cristall",
+ --Аммуниция--
+ "grenade_f1",
+ "ammo_vog-25",     
+ "ammo_m209",
+ "ammo_5.45x39_ap",
+ "ammo_11.43x23_hydro",
+ "ammo_9x39_pab9",
+ "ammo_5.56x45_ss190",
+ "ammo_12x76_zhekan",
+ --Пушки--
+ "wpn_addon_scope_susat",
+ "wpn_addon_grenade_launcher",
+ "wpn_beretta",
+ "wpn_sig550",
+ "wpn_toz34",
+ "wpn_abakan_m2",
+ "wpn_desert_eagle",
+ --Прочее--
+ "mutant_psevdodog_tail",
+ "mutant_snork_leg",
+ "medkit_army",
+ "antirad"
+ },
+
+ master_section = {
+ --Артефакты--
+ "af_dummy_glassbeads",
+ "af_dummy_pellicle",
+ "af_dummy_battery",
+ "af_dummy_dummy",
+ "af_dummy_spring",
+ "af_fuzz_kolobok",
+ --Аммуниция--
+ "ammo_m209",
+ "ammo_vog-25p",     
+ "ammo_9x39_ap",
+ "ammo_12x76_dart",
+ "ammo_7.62x54_7h14",
+ "ammo_9x39_sp5",
+ "ammo_5.56x45_ap",
+ "ammo_7.62x54_7h1",
+ --Пушки--
+ "wpn_addon_grenade_launcher_m203",
+ "wpn_colt1911",
+ "wpn_spas12",
+ "wpn_l85",
+ "wpn_lr300",
+ "wpn_groza",
+ "wpn_groza_m1",
+ --Прочее--
+ "mutant_krovosos_jaw",
+ "mutant_burer_hand",
+ "medkit_army",
+ "medkit_scientic"
+ }
+}
+
+local treasure_manager = nil
+function attach( sm )
+  sm:subscribe({ signal = "on_ph_obj_use", fun = this.on_treasure_use })
+  sm:subscribe({ signal = "on_save",       fun = this.save            })
+  sm:subscribe({ signal = "on_npc_use", fun = this.on_npc_use })
+end
+
+
+function on_take_from_box( box )
+	if box:is_inv_box_empty() then
+		get_treasure_manager():treasure_empty( box, box:story_id() )
+	end
+end
+
+function on_npc_use( obj )
+	if obj:alive() then return end
+	--
+	local sobj = alife():object( obj:id() )
+	if not sobj.treasure_processed and not GetShift() then -- Проверка на шифт сделана, чтоб не срабатывало при попытке перетащить труп.
+		get_treasure_manager():use( obj )
+		--
+		give_money( obj )
+		--
+		sobj.treasure_processed = true
+	end
+end
+
+-----------------------------------------------------------------
+function give_money(npc)
+if npc ~= nil and not string.find(npc:section(),"arena") and npc:character_community()~="arena_enemy" then
+local money = npc:money()
+if money ~= nil and money ~=0 then
+local deadmoney = money
+
+local npc_rank
+npc_rank = ranks.get_obj_rank_name(npc)
+if npc_rank ~= nil then
+if npc_rank == "novice" and deadmoney >=400 then deadmoney=math.random(25,400)
+elseif npc_rank == "experienced" and deadmoney >=500 then deadmoney=math.random(50,500)
+elseif npc_rank == "veteran" and deadmoney >=600 then deadmoney=math.random(100,600)
+elseif npc_rank == "master" and deadmoney >=700 then deadmoney=math.random(200,700)
+end
+end
+local news_texti = "\\n%c[255,255,0,0]Мёртвый сталкер: %c[default]"..npc:character_name().."\\n%c[255,255,0,0]Обнаружено денег: %c[default]"..game.translate_string(tostring(deadmoney).."руб.")
+db.actor:give_game_news(news_texti, "ui\\ui_iconsTotal", Frect():set(0,0,83,47), 1, 4000)
+db.actor:give_money(deadmoney)
+game_stats.money_quest_update(deadmoney)
+npc:give_money(-money)
+game_stats.money_quest_update(-money)
+end
+end
+end
+-----------------------------------------------------------------
+
+function on_treasure_use( obj, who )
+  if obj:is_inventory_box() and obj:story_id() then
+    get_treasure_manager():treasure_empty( obj, obj:story_id() )
+  end
+end
+
+local n_rank 
+
+function parse_spawns(line)
+	if line == nil then
+		return {}
+	end
+
+	--' если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
+	local t = se_respawn.parse_names(line)
+	local n = table.getn(t)
+		
+	local ret_table = {}
+	local k = 1
+
+	while k <= n do
+		local spawn = {}
+		spawn.section = t[k]
+		-- Проверяем что это не последняя запись
+		if t[k+1] ~= nil then
+			local p = tonumber(t[k+1])
+			-- проверяем что вторым числом задана вероятность, а не другая секция спавну
+			if p then
+				-- забиваем число
+				spawn.prob = p
+				k = k + 2
+			else
+				-- забиваем дефолт 1
+				spawn.prob = 1
+				k = k + 1
+			end
+		else
+			spawn.prob = 1
+			k = k + 1
+		end
+		table.insert(ret_table, spawn)
+	end
+	return ret_table
+end
+
+
+class "CTreasure"
+function CTreasure:__init()
+	--' На конструкторе вычитываем LTX и создаем заготовки квестов.
+	self.ini = ini_file("misc\\treasure_manager.ltx")
+
+	--' Итерируемся по всем настройкам фраз
+	if not self.ini:section_exist("list") then
+		abort("There is no section [list] in treasure_manager.ltx")
+	end
+	local n = self.ini:line_count("list")
+	local id, value = "",""
+
+	--' начальная установка
+	self.treasure_info = {}
+
+	for i=0,n-1 do
+		result, id, value	= self.ini:r_line("list",i,"","")
+		
+		self.treasure_info[id] = {}
+
+		self.treasure_info[id].target		= utils.cfg_get_number(self.ini, id, "target", nil, true)
+		self.treasure_info[id].name			= utils.cfg_get_string(self.ini, id, "name", nil, true, "")
+		self.treasure_info[id].description	= utils.cfg_get_string(self.ini, id, "description", nil, true, "")
+		self.treasure_info[id].items		= parse_spawns(utils.cfg_get_string(self.ini, id, "items", nil, true, ""))
+
+		local community	= parse_names(utils.cfg_get_string(self.ini, id, "community", nil, false, "", "stalker, bandit, dolg, freedom"))
+		self.treasure_info[id].community = {}
+		for k,v in pairs(community) do
+			self.treasure_info[id].community[v] = true
+		end
+
+
+		if self.treasure_info[id].items == nil then
+			abort("cant find 'items' in %s", id)
+		end
+
+		self.treasure_info[id].condlist		= xr_logic.parse_condlist(db.actor, "treasure_manager", "condlist", utils.cfg_get_string(self.ini, id, "condlist", nil, false, "", ""))
+		
+		--' Отметим тайник как новый
+		self.treasure_info[id].active = false
+		self.treasure_info[id].done = false
+
+		--print_table(self.treasure_info)
+	end
+
+	--' Вспомогательные таблицы для облегчения поиска
+	self.treasure_by_target = {}
+	for k,v in pairs(self.treasure_info) do
+		self.treasure_by_target[v.target] = k	
+	end
+end
+--' Юзание инициатора (возможность выдать тайник)
+function CTreasure:use(npc)
+	local rarets 
+	
+	if npc ~= nil then
+	  n_rank = npc:character_rank()
+	 else 
+      n_rank = 0
+	end
+
+  if npc:character_community() == "zombied" then return end
+	
+	-- если выбран редкий тип тайников, то снизим овероятность его выпадения
+	if game_options.AmkTrs == 2 then 
+	  rarets = 85
+	else 
+      rarets = 80
+  end
+  if amk.is_debug then
+    rarets=0
+  end
+	
+	if math.random(100) < rarets then 
+	  return
+	end
+	
+	--' Нужно рандомно выбрать один из тайников.
+	local avail = {}
+	local tr_sum = 0
+
+	for k,v in pairs(self.treasure_info) do
+		if v.done == false and v.active == false and v.community[npc:character_community()] == true then
+			local treasure_prob = xr_logic.pick_section_from_condlist(db.actor, npc, v.condlist)
+
+			if treasure_prob == "" or treasure_prob == nil then
+				treasure_prob = 0
+			end
+
+			if tonumber(treasure_prob) >= 0 and
+			v.community[npc:character_community()] == true and
+			v.active == false
+			then
+				if tonumber(treasure_prob) == 100 then
+					self:give_treasure(k)
+				else
+					table.insert(avail, {k = k, prob = treasure_prob})
+					tr_sum = tr_sum + treasure_prob
+				end
+			end
+		end
+	end
+
+	if tr_sum == 0 or
+		math.random(100) < 65
+	then
+		return
+	end
+
+	local tr_w = math.random(tr_sum)
+	for k,v in pairs(avail) do
+		tr_w = tr_w - v.prob
+		if tr_w <= 0 then
+			--' Выдать тайник
+			self:give_treasure(v.k)
+			break
+		end
+	end
+ 
+end
+--' Сохранение
+function CTreasure:check()
+	--' Проверка тайников
+	for k,v in pairs(self.treasure_info) do
+		--' Выдать тайник
+		self:give_treasure(k)
+	end
+end
+--' Выдача тайника
+function CTreasure:give_treasure(k)
+	local v = self.treasure_info[k]
+	local obj = alife():story_object(v.target)
+	if obj ~= nil then
+		news_manager.send_treasure(v.name)
+
+		--' Пометить на карте		
+		local text = "%c[255,238,155,23]"..game.translate_string(v.name).."\\n".."%c[default]"..game.translate_string(v.description)
+--    if not level.map_has_object_spot(obj.id,"treasure") then
+      level.map_add_object_spot_ser(obj.id, "treasure", text)
+--    else
+--      amk.mylog("Blocking mapspot for "..obj:name())
+--    end
+
+        -- проверка, какой тип тайника выбран
+		-- если тайник не классический и не именной, то заменим содержимое
+		if game_options.AmkTrs ~= 0 and self:named_treasure(v) == false then
+		   v.items = self:give_item_list()
+		end  
+		
+		--' Сгенерить вещи
+		for kk,vv in pairs(v.items) do
+			if ammo_section[vv.section] == true then
+				se_respawn.create_ammo(vv.section,	
+						obj.position,
+						obj.m_level_vertex_id,	
+						obj.m_game_vertex_id,
+						obj.id,
+						vv.prob)
+			else
+				for i=1,vv.prob do
+					alife():create(vv.section,
+							obj.position,
+							obj.m_level_vertex_id,	
+							obj.m_game_vertex_id,
+							obj.id)
+				end
+			end
+		end
+		
+		--' Пометим тайник как выданный
+		self.treasure_info[k].active = true
+		self.treasure_info[k].done = true
+    -- Отправим тайник в оффлайн
+    local sim = alife ()
+    if sim ~= nil and obj.online then
+       sim:set_switch_online  (obj.id, false)
+       sim:set_switch_offline (obj.id, true)
+--       sim:set_switch_online  (obj.id, true)
+--       sim:set_switch_offline (obj.id, false)
+       amk.convert_npc[obj.id]=1 -- ставим в очередь на вывод в онлайн
+    end
+	else
+		printf("TREASURE %s, target doesnt exist", k)
+	end
+end
+--' Снимаем отметку с тайника
+function CTreasure:treasure_empty(box, box_story_id)
+
+	local k = self.treasure_by_target[box_story_id]
+
+	if k == nil or self.treasure_info[k] == nil then 
+		return
+	end
+
+	self.treasure_info[k].active = false
+	
+	-- если тайник не именной, то переведен его в онлайн для следующей выдачи
+	if self:named_treasure(self.treasure_info[k]) == false then
+	  self.treasure_info[k].done = false
+	end
+	
+  level.map_remove_object_spot(box:id(), "treasure")
+end
+--' Сохранение
+function CTreasure:save( p )
+  local treasures = {}
+  local active_cnt, done_cnt = 0, 0
+  for k, v in pairs( self.treasure_info ) do
+    -- пишем состояние только активных тайников
+    if v.active or v.done then
+      table.insert( treasures, { v.target, v.active, v.done } )
+      if v.active then active_cnt = active_cnt + 1 end
+      if v.done   then done_cnt   = done_cnt   + 1 end
+    end
+  end
+  ogse.save_var(
+    "treasure_manager.treasures", treasures, "array_template",
+    { "u16", "bool", "bool" }
+  )
+  log2(
+    "[%s]: %s treasures saved (active/done): %s/%s",
+    script_name(), table.getn( treasures ), active_cnt, done_cnt
+  )
+end
+
+
+-- Загрузка
+function CTreasure:load( p )
+  local treasures = ogse.load_var_safe( "treasure_manager.treasures" )
+  if not treasures then return end
+  local active_cnt, done_cnt = 0, 0
+  for _, item in ipairs( treasures ) do
+    local id, active, done = unpack( item )
+    local k    = self.treasure_by_target[ id ]
+    local info = self.treasure_info[ k ]
+    info.active = active
+    info.done   = done
+    if active then active_cnt = active_cnt + 1 end
+    if done   then done_cnt   = done_cnt   + 1 end
+  end
+  log2(
+    "[%s]: %s treasures loaded (active/done): %s/%s",
+    script_name(), table.getn( treasures ), active_cnt, done_cnt
+  )
+end
+
+
+function CTreasure:give_item_list()
+
+ local rank = 1
+ local tabla = {}
+ -- сколько наименований предметов будет в тайнике
+ local i = math.random(1, 2)
+
+
+-- считаем настройку пользователя 
+ local opt = game_options.AmkTrs
+ 
+  --~ -- определим ранг непися
+ --~ if nepis~= nil then
+--   rank = n_rank --nepis.character_rank ()
+   if n_rank == nil then n_rank = math.random(1, 9)*100 end
+   if n_rank <= 300 then
+     rank = 1
+	elseif n_rank <=600 then
+     rank = 2
+    elseif n_rank <= 900 then
+     rank = 3
+    else 
+     rank = 4
+    end	 
+ --~ else
+   --~ rank = 1
+ --~ end
+
+
+ for j = 1, i, 1 do
+   local cnt = 0
+   local spawn = {}
+  -- определим, из какой секции брать предметы, и какие именно  
+   if  opt == 1 then
+		if rank == 1 then
+			spawn.section = solid_list.novice_section[math.random(table.getn(solid_list.novice_section))]
+		elseif rank == 2 then
+			spawn.section = solid_list.experienced_section[math.random(table.getn(solid_list.experienced_section))]
+		elseif rank == 3 then
+			spawn.section = solid_list.veteran_section[math.random(table.getn(solid_list.veteran_section))]
+		else
+			spawn.section = solid_list.master_section[math.random(table.getn(solid_list.master_section))]
+		end
+   else
+		if rank == 1 then
+			spawn.section = rare_list.novice_section[math.random(table.getn(rare_list.novice_section))]
+		elseif rank == 2 then
+			spawn.section = rare_list.experienced_section[math.random(table.getn(rare_list.experienced_section))]
+		elseif rank == 3 then
+			spawn.section = rare_list.veteran_section[math.random(table.getn(rare_list.veteran_section))]
+		else
+			spawn.section = rare_list.master_section[math.random(table.getn(rare_list.master_section))]
+		end
+   end	 
+  
+  -- установка кол-ва предметов в зависимости от секции  
+   if ammo_section[spawn.section] == true then
+      local ini = system_ini()
+      local num_in_box = ini:r_u32(spawn.section, "box_size")
+      local h = math.random(1, 5)
+	  -- патроны выдаем не штуками, а пачками
+	  cnt = math.random(1, h) * num_in_box
+   else
+      local s = tostring(spawn.section)
+	  if string.find(s, "outfit") ~= nil or string.find(s, "wpn") ~= nil then
+	     cnt = 1
+	  elseif string.find(s, "addon") ~= nil or string.find(s, "af") ~= nil or string.find(s, "mutant") ~= nil then
+         cnt = math.random(1,2)
+      else 
+	     cnt = math.random(1,5)
+	  end   
+   end
+  
+  -- сохраняем инфу о текущем предмете
+  spawn.prob = cnt
+  table.insert(tabla, spawn)
+ end
+ return tabla
+end
+
+function CTreasure:named_treasure(v)
+ -- проверка, является ли тайник именным. Если да, то его наполнение не меняется
+ if   v.name == "agr_secret_0000_name" --Тайник Серого
+   or v.name == "bar_secret_0011_name" --Тайник Арни
+   or v.name == "esc_secret_0013_name" --Тайник Ворпала
+   or v.name == "gar_secret_0002_name" --Вещи Гризли
+   or v.name == "gar_secret_0011_name" --Склад группы Стрелка
+   or v.name == "gar_secret_0021_name" --Рюкзак Дохляка
+   or v.name == "pri_secret_0003_name" --Хабар Клыка
+   or v.name == "pri_secret_0004_name" --Запасы лидера Свободы
+   or v.name == "rad_secret_0000_name" --Клад Угрюмого
+   or v.name == "rad_secret_0004_name" --Запас группы отчаянных
+   or v.name == "ros_secret_0015_name" --Тайник Счастливчика
+   or v.name == "ros_secret_0018_name" --Ящик с медикаментами
+   or v.name == "val_secret_0028_name" --Тайник Борова
+   or v.name == "x18_secret_0000_name" --Тайник Копченого
+   or v.name == "yan_secret_0011_name" --Тайник учёного
+   or v.name == "rad_semeckii_treasure_box_name"
+--   or v.name == "agr_krysyk_secret_name"
+--   or v.name == "mil_borov_secret_name"
+ then
+   return true
+ else
+   return false
+ end    
+end
+
+function get_treasure_manager()
+  if not treasure_manager then
+    treasure_manager = CTreasure()
+  end
+  return treasure_manager
+end
+
+function take_item_from_box( box, box_story_id )
+  -- log2( "!!! take item from box %s", tostring( box:is_inv_box_empty() ) )
+  get_treasure_manager():treasure_empty( box, box_story_id )
+end
+
+
+function save()
+  get_treasure_manager():save()
+end
+
+function load( p )
+  get_treasure_manager():load( p )
+end
+
+function clear_treasure_manager()
+  treasure_manager = nil
+end

@@ -1,0 +1,252 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_spawn",         fun = this.on_spawn      })
+end
+
+
+function on_spawn()
+  dsh.exec_on_update(
+    function()
+      local sm = ogse_signals.get_mgr()
+      sm:subscribe({ signal = "on_item_to_belt", fun = this.actor_item_drop })
+      sm:subscribe({ signal = "on_item_to_slot", fun = this.actor_item_drop })
+    end
+  )
+end
+
+
+-- Callback на смерть монстров
+function monster_death( victim, who )
+
+end
+
+
+-- Callback на смерть непися
+function npc_death( victim, who )
+
+end
+
+
+-- Callback на взятие предмета в инвентарь гг
+local registered = {}
+function actor_item_take( obj )
+  if not registered[ obj:id() ] then
+    inventory_update( obj, 1 )
+    registered[ obj:id() ] = true
+  end
+end
+
+
+-- Callback на потерю предмета из инвенаря гг
+function actor_item_drop( obj )
+  if registered[ obj:id() ] then
+    inventory_update( obj, -1 )
+    registered[ obj:id() ] = nil
+  end
+end
+
+
+local cached_props = {}
+function get_item_props( sect )
+  if not cached_props[ sect ] then
+    local t = {}
+    t.af_base   = get_string( sect, "dsh.af_base"   )
+    t.is_af_bio = get_float(  sect, "dsh.is_af_bio", false )
+    if not t.is_af_bio then
+      t.af_bio_sect = get_string( sect, "dsh.af_bio_sect" )
+    end
+    t.aka = { sect }
+    local aka = get_string( sect, "amk_utils.aka" )
+    if aka then
+      for _, s in ipairs( parse_names( aka ) ) do
+        table.insert( t.aka, s )
+      end
+    end
+    local fake = get_string( sect, "fake_item_section" )
+    if fake then
+      table.insert( t.aka, fake )
+    end
+    if t.af_bio_sect then
+      table.insert( t.aka, t.af_bio_sect )
+    end
+    t.has_af_dyn = sys_ini:section_exist( sect .. "_dyn1d" )
+    if t.has_af_dyn then
+      for i = 1, 5 do
+        local prop = get_item_props( sect .. "_dyn" .. i .. "d" )
+        for _, s in ipairs( prop.aka ) do
+          table.insert( t.aka, s )
+        end
+      end
+    end
+    local af_aliases = get_string( sect, "dsh.af_aliases" )
+    t.aliases  = { sect }
+    if af_aliases then
+      for _, alias in ipairs( parse_names( af_aliases ) ) do
+        table.insert( t.aliases, alias )
+      end
+    end
+    if t.af_base then
+      table.insert( t.aliases, t.af_base )
+    end
+    cached_props[ sect ] = t
+  end
+  return cached_props[ sect ]
+end
+
+
+--Кеш текущего состояния инвентаря ГГ (только предметы проверяемые
+--функцией inventory_search, их обычно немного)
+local InventoryState = {}
+
+-- Проверка на количество предметов в инвентаре гг
+function inventory_search( iItemSection, iNeededCount )
+  local prop = get_item_props( iItemSection )
+  local cnt  = 0
+  for _, aka in ipairs( prop.aka ) do
+    if InventoryState[ aka ] then
+      cnt = cnt + InventoryState[ aka ].cnt
+      if cnt >= iNeededCount then return true end
+    end
+  end
+  return false
+end
+
+
+-- Обработчик появления или исчезновения предмета в инвентаре (нужно
+-- обновить кеш):
+function inventory_update( iObject, iCountDelta )
+  if not iObject then return end
+  local vItemSection = iObject:section()
+  if not InventoryState[ vItemSection ] then
+    InventoryState[ vItemSection ] = {
+      [ "cnt" ] = 0,
+      [ "obj" ] = {},
+    }
+  end
+  -- Взятие из кеша текущего состояния инвентаря:
+  local vCount = InventoryState[ vItemSection ].cnt
+  -- Обновление текущего состояния инвентаря в кеше:
+  vCount = vCount + iCountDelta
+  ASSERT(
+    vCount >= 0,
+    "negative vCount (%s) for %s, iCountDelta = %s",
+    vCount, iObject:name(), iCountDelta
+  )
+  InventoryState[ vItemSection ].cnt = vCount
+  if iCountDelta > 0 then
+    InventoryState[ vItemSection ].obj[ iObject:id() ] = iObject
+  else
+    InventoryState[ vItemSection ].obj[ iObject:id() ] = nil
+  end
+end
+
+
+function inventory_iterate_section( sect, f )
+  local prop = get_item_props( sect )
+  for _, aka in ipairs( prop.aka ) do
+    if InventoryState[ aka ] then
+      for id, obj in pairs( InventoryState[ aka ].obj ) do
+        if f( obj ) then return end
+      end
+    end
+  end
+end
+
+
+function inventory_search_check( item_counts, f )
+  local t = {}
+  for sect, need_cnt in pairs( item_counts ) do
+    if not inventory_search( sect, need_cnt ) then return false end
+    local found_cnt = 0
+    inventory_iterate_section(
+      sect,
+      function( obj )
+        if ( not f ) or f( obj ) then
+          found_cnt = found_cnt + 1
+          table.insert( t, obj )
+          if found_cnt == need_cnt then return true end
+        end
+      end
+    )
+    if found_cnt < need_cnt then return false end
+  end
+  return true, t
+end
+
+
+function out_items( items, max )
+  local found = {}
+  local t     = {}
+  for _, sect in ipairs( items ) do
+    inventory_iterate_section(
+      sect,
+      function( obj )
+        found[ sect ] = ( found[ sect ] or 0 ) + 1
+        table.insert( t, obj )
+        if max and table.getn( t ) == max then
+          return true
+        end
+      end
+    )
+  end
+  for sect, n in pairs( found ) do
+    news_manager.relocate_item( db.actor, "out", sect, n )
+  end
+  while table.getn( t ) > 0 do
+    ogse.remove_item_from_inventory( table.remove( t ) )
+  end
+  return found
+end
+
+
+function out_items_number( item_counts )
+  local res, t = inventory_search_check( item_counts )
+  ASSERT( res, "unexpected result" )
+  for sect, n in pairs( item_counts ) do
+    news_manager.relocate_item( db.actor, "out", sect, n )
+  end
+  while table.getn( t ) > 0 do
+    ogse.remove_item_from_inventory( table.remove( t ) )
+  end
+end
+
+
+function good_items_have_number( item_counts )
+  return inventory_search_check(
+    item_counts,
+    function( obj ) return obj:condition() > 0.95 end
+  )
+end
+
+
+function bad_items_have_number( item_counts )
+  return inventory_search_check(
+    item_counts,
+    function( obj ) return obj:condition() <= 0.95 end
+  )
+end
+
+
+function out_good_items_number( item_counts )
+  local res, t = good_items_have_number( item_counts )
+  ASSERT( res, "unexpected result" )
+  for sect, n in pairs( item_counts ) do
+    news_manager.relocate_item( db.actor, "out", sect, n )
+  end
+  while table.getn( t ) > 0 do
+    ogse.remove_item_from_inventory( table.remove( t ) )
+  end
+end
+
+
+function out_bad_items_number( item_counts )
+  local res, t = bad_items_have_number( item_counts )
+  ASSERT( res, "unexpected result" )
+  for sect, n in pairs( item_counts ) do
+    news_manager.relocate_item( db.actor, "out", sect, n )
+  end
+  while table.getn( t ) > 0 do
+    ogse.remove_item_from_inventory( table.remove( t ) )
+  end
+end

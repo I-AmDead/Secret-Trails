@@ -1,0 +1,165 @@
+[anm_medkit_army]:identity_immunities
+GroupControlSection	= spawn_group
+discovery_dependency = 
+$spawn                  = "weapons\apt"	; option for Level Editor
+$npc			 		= on				; option for Level Editor
+$prefetch 		 		= 8
+scheduled               = off              	; option for ALife Simulator
+cform                   = skeleton
+class                   = WP_SVD
+min_radius              = 0
+max_radius              = 50
+description				= аптечка
+
+ef_main_weapon_type		 = 3
+ef_weapon_type			 = 8
+
+is_med = true
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 2.85           ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.3              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+cost					= 11050
+weapon_class			= sniper_rifle
+
+ammo_limit				= 60
+ammo_current			= 10
+ammo_elapsed			= 0
+
+ammo_mag_size			= 10
+ammo_class				= ammo_item
+
+eat_health				= 0.4
+;-----------------------------------------------------------------------------------
+;базовая дисперсия
+fire_dispersion_base		= 0.01 ;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+control_inertion_factor		= 1.4f
+
+;отдача
+cam_relax_speed         	= 3;0.05	;скорость возврата в исходное положение
+cam_dispersion          	= 0.005	;увеличения угла (в градусах) с каждым выстрелом
+cam_max_angle			= 1.0	;максимальный угол отдачи
+cam_max_angle_horz		= 1.0	;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 0.05	;(degree) size of step camera moved in horizontal position while shooting
+
+fire_dispersion_condition_factor = 1	;увеличение дисперсии в процентах при максимальном износе 
+misfire_probability 		= 0.000000001 ;вероятность осечки при максимальном износе 
+misfire_condition_k			= 0.0005
+condition_shot_dec 			= 0.00000001 ;увеличение износа при каждом выстреле
+;-----------------------------------------------------------------------------------
+
+hand_dependence 		= 1
+single_handed				= 0
+
+slot 					= 4		; // secondary
+animation_slot			= 2		; type of the animation that will be used
+
+inv_name				= аптечка
+inv_name_short			= аптечка
+inv_weight				= 0.
+
+inv_grid_width			= 2
+inv_grid_height			= 1
+inv_grid_x				= 6
+inv_grid_y				= 14
+
+kill_msg_x			= 166
+kill_msg_y			= 59
+kill_msg_width		= 82
+kill_msg_height		= 23
+
+direction               = 0, 0, 1
+
+fire_point				= 0.00,0.0,0.0
+flame_particles         = weapons\generic_weapon00
+shell_point		 		= 0.00,0.0,0.0				; position (3rd person view) for shell to throw out
+smoke_particles	 		= weapons\generic_weapon00	; name of the particles for shells
+rpm_empty_click 		= 120
+
+; ttc
+hit_power           = 0.10, 0.10, 0.10, 0.60
+hit_impulse		 	= 300
+hit_type 			= fire_wound
+
+fire_distance           	= 0
+bullet_speed		 	= 15000	;начальная скорость пули
+rpm                     	= 30
+; end ttc
+
+hud                     = anm_medkit_army_hud
+normal                  = 0, 1, 0
+position                = -0.026, -0.070, 0.0
+orientation             = 0, 0, 0
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+;под мишкой
+strap_position         		= -0.26,-0.11,0.15			; position (offset) and orientation of the weapon when it is strapped
+strap_orientation      		= -15,-9,110				; (3rd person view in degrees)
+;под мишкой
+;strap_position         		= -0.20,-0.13,0.25			; position (offset) and orientation of the weapon when it is strapped
+;strap_orientation      		= -50,-13,110				; (3rd person view in degrees)
+;на спине
+;strap_position         		= -0.16,-0.32,0.15			; position (offset) and orientation of the weapon when it is strapped
+;strap_orientation      		= -10,-7,10					; (3rd person view in degrees)
+
+strap_bone0					= bip01_spine2
+strap_bone1					= bip01_spine1
+
+startup_ammo            = 10
+visual                  = equipments\item_aptechka.ogf
+
+light_color		 		= 1.3,1.5,2
+light_range		 		= 4.0
+light_var_color		 	= 0.05
+light_var_range		 	= 0.5
+light_time 		 		= 0
+
+ph_mass			 		= 3
+;cost			 		= 900
+
+;addons
+scope_status			= 1
+silencer_status			= 0
+grenade_launcher_status	= 0
+
+zoom_enabled			= false
+scope_zoom_factor	    = 15		;ПСО-1 4X
+
+scope_texture			= wpn\wpn_crosshair_l85
+
+scope_name 				= wpn_addon_scope
+scope_x 				= 60
+scope_y 				= -2
+
+;звуки
+snd_draw				= apt\weapons\apt\draw
+snd_holster				= weapons\generic_holster
+snd_shoot				= apt\weapons\apt\shot
+snd_empty				= apt\weapons\apt\empty, 0.5
+snd_reload				= apt\weapons\apt\reload, 1.0, 1.0
+
+show_brief_info = false
+show_ammo					= false
+
+[anm_medkit_army_hud]
+
+fire_point			= 0.0000,0.000,0.000
+fire_bone               = bip01_l_finger21
+orientation             	= 0, 0, 0		
+position                	= 0, -0.155, 0.135
+visual                  = huds\aptechka_blue.ogf
+
+shell_point			= 0.0000,0.000,0.000				; position (3rd person view) for shell to throw out
+
+anim_holster	= isp
+anim_idle		= isp
+anim_idle_aim	= isp
+anim_reload		= isp
+anim_draw		= isp
+anim_shoot		= isp
+
+;смещения HUD для режима приближения
+zoom_offset			= -0.020000,-0.030000,0.030000
+zoom_rotate_x		= 0.000000
+zoom_rotate_y		= -0.020000

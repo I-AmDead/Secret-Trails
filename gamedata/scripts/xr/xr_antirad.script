@@ -1,0 +1,66 @@
+--[[ -----------------------------------------------------------------------------------------------
+ File         : xr_antirad.script
+--]]-----------------------------------------------------------------------------------------------
+
+function attach(sm)
+	sm:subscribe({signal = "on_use", fun = this.use_antirad})
+end
+
+-- Таймер антирада
+local use_antirad_timer = nil
+
+function del_antirad()
+	use_antirad_timer = nil
+local item = db.actor:object("anm_antirad")
+    if item then
+      db.actor:drop_item(item)
+      alife():release(alife():object(item:id()), true)
+end
+end
+
+function use_antirad( obj )
+
+
+  if obj:section() == "wpn_binoc" then
+    alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+  end
+
+  if obj:section() == "antirad" then
+    alife():create("anm_antirad", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id())
+  end
+  
+
+local item = db.actor:object("anm_antirad")
+local act_it_slot = db.actor:item_in_slot(5)
+    if item then
+      db.actor:activate_slot(5)
+      db.actor:move_to_slot(item)
+end
+		if use_antirad_timer ~= nil then
+			use_antirad_timer:stop()
+		end
+		use_antirad_timer = antirad_timer()
+		use_antirad_timer:start()
+
+end
+
+function slot_weapon_active()
+		local item = db.actor:active_item()
+		if item then
+			db.actor:move_to_ruck(item)
+			db.actor:move_to_slot(item, true) -- no activate
+		end
+end
+
+-- Конструктор таймера хитмарка
+class "antirad_timer"(ogse_qt.quick_timer)
+function antirad_timer:__init() super()
+	self.limit = time_global()+2000
+end
+function antirad_timer:condition()
+	return time_global() >= self.limit
+end
+function antirad_timer:action()
+    del_antirad()
+    db.actor:restore_weapon()
+end

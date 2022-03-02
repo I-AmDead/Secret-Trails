@@ -1,0 +1,106 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_monster_death",  fun = this.on_death })
+  sm:subscribe({ signal = "on_monster_init",   fun = this.on_init })
+  sm:subscribe({ signal = "on_monster_net_destroy", fun = this.on_net_destroy })
+  sm:subscribe({ signal = "on_npc_death",      fun = this.on_death })
+  sm:subscribe({ signal = "on_npc_init",       fun = this.on_init })
+  sm:subscribe({ signal = "on_npc_net_destroy", fun = this.on_net_destroy })
+end
+
+
+function on_init( obj, binder )
+  binder.particles = {}
+end
+
+
+function on_update( obj, delta )
+  local binder      = obj:binded_object()
+  local unsubscribe = true
+  for k, v in pairs( binder.particles ) do
+    if v:is_finished() then
+      binder.particles[ k ] = nil
+    else
+      unsubscribe = false
+      v:update( delta )
+      if v.give_dmg and v.target then
+        if
+          v:get_pos():distance_to(
+            v.target:bone_position( "bip01_spine" )
+          ) < 1
+        then
+          local h = hit()
+          h.impulse   = 0
+          h.draftsman = v.target
+          h.direction = v.dir
+          h:bone( "bip01_spine" ) -- чтобы учитывалась броня
+          h.power     = math.random( 10, 50 ) / 100
+          h.type      = hit.strike
+          v.target:hit( h )
+          h.power     = math.random( 10, 50 ) / 100
+          h.type      = hit.chemical_burn
+          v.target:hit( h )
+          v:stop()
+        end
+      end
+    end
+  end
+  if unsubscribe then
+    local s = binder[ "dsh_particles.subscribed" ]
+    ASSERT( s, "not subscribed: %s", obj:name() )
+    ogse_signals.get_mgr():unsubscribe( s )
+    binder[ "dsh_particles.subscribed" ] = nil
+  else
+    local dist = obj:position():distance_to( db.actor:position() )
+    ogse_signals.get_mgr():reschedule(
+      ( dist < 25 and 100 )
+      or ( dist <  50 and 200 )
+      or ( dist < 100 and 500 )
+      or ( dist < 200 and math.random( 1000, 2000 ) )
+      or math.random( 2000, 4000 )
+    )
+  end
+end
+
+
+function on_death( obj, who )
+  local binder = obj:binded_object()
+  for k, v in pairs( binder.particles ) do
+    v:on_death()
+  end
+end
+
+
+function on_net_destroy( obj )
+  local binder     = obj:binded_object()
+  local subscribed = binder[ "dsh_particles.subscribed" ]
+  if subscribed then
+    ogse_signals.get_mgr():unsubscribe( subscribed )
+    binder[ "dsh_particles.subscribed" ] = nil
+  end
+  for k, v in pairs( binder.particles ) do
+    if not v:is_finished() then
+      v:stop()
+      binder.particles[ k ] = nil
+    end
+  end
+end
+
+
+function play_particle( obj, params )
+  local binder = obj:binded_object()
+  local key    = params.bone .. params.particle
+  if not binder.particles[ key ] then
+    binder.particles[ key ] = amk_particle.amk_particle( params )
+  end
+  if not binder[ "dsh_particles.subscribed" ] then
+    local s = {
+      [ "signal" ] = "on_update",
+      [ "self"   ] = obj,
+      [ "fun"    ] = this.on_update,
+    }
+    binder[ "dsh_particles.subscribed" ] = s
+    ogse_signals.get_mgr():subscribe( s )
+  end
+end

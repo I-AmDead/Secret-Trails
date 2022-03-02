@@ -1,0 +1,476 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+-------------------------------------------------------------------------------
+--| ogse_signals.script                                                     |--
+--| signals and slots system                                                |--
+--| Malandrinus, OGS Evolution Team, 2011                                   |--
+--| version 1.1                                                             |--
+-------------------------------------------------------------------------------
+
+-- Можно подписывать на события глобальные функции, методы классов,
+-- "методы" таблиц, функциональные объекты.
+--
+------------===< Пример для глобальной функции: >===------------------------------
+--
+-- function some_global_function(arg1, arg2)
+-- end
+-- local slot_desc = {signal = "signal_name", fun = some_global_function}
+-- ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в очередь
+-- ...
+-- ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+-- вызвали сигнал
+-- local sm = ogse_signals.get_mgr()
+-- ...
+-- sm.call("signal_name", arg1, arg2)
+--
+------------===< Пример для функционального объекта: >===-------------------------
+--
+-- class "some_luabind_class"
+-- function some_luabind_class:__init()
+--   local mt = getmetatable(self)
+--   mt.__call = self.method_to_call
+-- end
+-- function some_luabind_class:method_to_call()
+-- end
+--
+-- local slot_desc = {signal = "signal_name", fun = some_luabind_class()}
+-- ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
+-- ...
+-- ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+--
+-- Функциональный класс на таблице строится немного сложнее
+-- local t = {}
+-- function t:method_to_call()
+-- end
+-- local mt = {}
+-- mt.__call = t.method_to_call
+-- getmetatable(t, mt)
+-- end
+--
+------------===< Пример для произвольного метода класса: >===----------------------
+--
+-- class "some_luabind_class"
+-- function some_luabind_class:__init()
+-- end
+-- function some_luabind_class:method_to_call()
+-- end
+--
+-- class obj = some_luabind_class()
+-- local slot_desc = {signal = "signal_name", self = obj, fun = obj.method_to_call}
+-- ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
+-- ...
+-- ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+
+
+local mgr = false
+function get_mgr()
+  if not mgr then
+    -- this.mgr инициализируется внутри конструтора. См. комментарии там.
+    signals_mgr( "global", ogse_signals_addons_list.addons, false )
+  end
+  return mgr
+end
+
+
+-- таблица счётчиков незавершённых вызовов для всех менеджеров
+local unfinished_count = {}
+
+class "signals_mgr"             -- менеджер сигналов
+function signals_mgr:__init( name, modules_list, scan_for_autoattaching_modules )
+  -- следующая строка предотвращает повторное создание экземпляра
+  -- менеджера событий в том случае, когда функция get_mgr()
+  -- вызывается в глобальной области одного из подписываемых модулей.
+  --
+  -- код в глобальной области срабатывает во время prefetch() далее в
+  -- этой функции т.е., в этом случае этот вызов происходит до того,
+  -- как отработает конструктор __init и тогда вариант this.mgr =
+  -- this.mgr or signals_mgr() не успевает отработать, что приводит к
+  -- повторному вызову конструктора.
+  --
+  -- Теоретически это не приводит к проблемам, поскольку экземпляров
+  -- менеджера сигналов может быть несколько, но лучше от такого
+  -- застраховаться.
+  mgr = self -- а так ссылку прописываем ещё до завершения конструктора
+  self.mgr_name = name
+  self.signals  = {}
+  self.slots_in_process = {}
+  self.use_rescheduling = true
+  if modules_list then -- если задали список модулей, то начинаем их подключение
+    local registered_modules = {}
+    if scan_for_autoattaching_modules then
+      -- только если вообще подключаем модули, тогда проверяем опцию
+      -- автоподключения.
+      -- ищем и регистрируем все автоподключаемые плагины
+      local fs    = getFS()
+      local flist = fs:file_list_open_ex(
+        "$game_scripts$", FS.FS_ListFiles + FS.FS_ClampExt, "ogse_*.script"
+      )
+      for i = 0, flist:Size() - 1 do
+        local file  = flist:GetAt( i )
+        local fname = file:NameFull()
+        local module = _G[ fname ]
+        if
+          module and type( module ) == "table"
+          and type( module.attach ) == "function" and module.auto_attach == true
+        then
+          self:subscribe_module( fname )
+          registered_modules[ fname ] = true
+        end
+      end
+    end
+    -- регистрируем все явно подключаемые плагины
+    for _, fname in ipairs( modules_list ) do
+      if not registered_modules[ fname ] then
+        self:subscribe_module( fname )
+      end
+    end
+  end
+  unfinished_count[ self.mgr_name ] = 0
+end
+
+
+local function compare_safe( a, b )
+  local function a_eq_b( a, b ) return a == b end
+  local err, res = pcall( a_eq_b, a, b )
+  if err then return res end
+  local function a_neq_b( a, b ) return a ~= b end
+  local err, res = pcall( a_neq_b, a, b )
+  if err then return not res end
+  abort( "compare_safe: neither == nor ~= not working for compared objects" )
+end
+
+
+local function slots_equal( slot1, slot2 )
+  return
+    rawequal( slot1.self, slot2.self )
+    and rawequal( slot1.fun, slot2.fun )
+end
+
+
+function signals_mgr:is_already_subscribed( slot_in_question, skip_unsub )
+  local slots = self.signals[ slot_in_question.signal ]
+  if not slots then return false end
+  local check_slots = { slots.normal, slots.scheduled }
+  for _, cur in ipairs( check_slots ) do
+    for _, slot in ipairs( cur ) do
+      if
+        slots_equal( slot, slot_in_question )
+        and ( ( not skip_unsub ) or ( not slot.unsubscribed ) )
+      then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+
+function signals_mgr:subscribe( slot_to_subscribe )
+  ASSERT(
+    not self:is_already_subscribed( slot_to_subscribe, true ),
+    "signals_mgr:subscribe: can't subscrabe signal '%s', it's already subscribed",
+    slot_to_subscribe.signal
+  )
+  ASSERT(
+    slot_to_subscribe.fun,
+    "signals_mgr:subscribe: 'fun' is a nil reference while attempting to subscribe signal '%s'",
+    slot_to_subscribe.signal
+  )
+  if not slot_to_subscribe.script_name then
+    local d = debug.getinfo( 2, "S" )
+    if d then
+      slot_to_subscribe.script_name = d.source
+    end
+  end
+  local signal = slot_to_subscribe.signal
+  self.signals[ signal ] = self.signals[ signal ]
+    or self:make_empty_signal( signal )
+  table.insert( self.signals[ signal ].normal, slot_to_subscribe )
+  return slot_to_subscribe
+end
+
+
+function signals_mgr:make_empty_signal( signal )
+  local t = {
+    [ "normal" ] = {}, [ "scheduled" ] = {},
+    [ "next_in_normal"    ] = 1,
+    [ "next_in_scheduled" ] = 1,
+  }
+  if signal == "on_update" then
+    t.time_limited = true
+  else
+    t.time_limited = false
+  end
+  return t
+end
+
+
+function signals_mgr:unsubscribe( slot_to_unsubscribe )
+  ASSERT(
+    self:is_already_subscribed( slot_to_unsubscribe ),
+    "signals_mgr:unsubscribe: can't unsubscrabe signal '%s', id = %s, which is not previously subscribed",
+    slot_to_unsubscribe.signal, ( slot_to_unsubscribe.id or "" )
+  )
+  if unfinished_count[ self.mgr_name ] > 0 then
+    -- если находимся в процессе выполнения вызова, то физически
+    -- удалять слоты из очередей нельзя надо просто промаркировать их
+    -- на удаление, чтобы не менять размер очереди.  в дальнейшем
+    -- промаркированные на удаление слоты не будут вызываться, а при
+    -- ближайшем выходе из рекурсивного цикла будут удалены физически.
+    self.to_unsubscribe = self.to_unsubscribe or {}
+    self.to_unsubscribe[ slot_to_unsubscribe.signal ] =
+      self.to_unsubscribe[ slot_to_unsubscribe.signal ] or {}
+    table.insert(
+      self.to_unsubscribe[ slot_to_unsubscribe.signal ], slot_to_unsubscribe
+    )
+    -- маркируем его, чтобы игнорировался при вызовах
+    slot_to_unsubscribe.unsubscribed = true
+  else
+    -- нет незавершённых вызовов, просто удаляем слот
+    local qn, qc
+    if slot_to_unsubscribe.scheduled then
+      qn, qc = "scheduled", "next_in_scheduled"
+    else
+      qn, qc = "normal",    "next_in_normal"
+    end
+    local slots = self.signals[ slot_to_unsubscribe.signal ]
+    for i, slot in ipairs( slots[ qn ] ) do
+      if slots_equal( slot, slot_to_unsubscribe ) then
+        table.remove( slots[ qn ], i )
+        if slots[ qc ] > i then
+          slots[ qc ] = slots[ qc ] - 1
+        end
+        break
+      end
+    end
+  end
+end
+
+
+function signals_mgr:cleanup_signal_subs( signal )
+  if self.signals[ signal ] then
+    self.signals[ signal ] = self:make_empty_signal( signal )
+  end
+end
+
+
+function signals_mgr:subscribe_module( module_name )
+  local module = _G[ module_name ]
+  ASSERT(
+    module,
+    "signals_mgr:subscribe_module: Failed to subscribe module '%s'",
+    module_name
+  )
+  ASSERT(
+    type( module ) == "table",
+    "signals_mgr:subscribe_module: Failed to subscribe module '%s', must be a table",
+    module_name
+  )
+  ASSERT(
+    type( module.attach ) == "function",
+    "signals_mgr:subscribe_module: Failed to subscribe module '%s', has no 'attach' function",
+     module_name
+  )
+  module.attach( self )
+end
+
+
+function signals_mgr:call( signal_name, ... )
+  local slots = self.signals[ signal_name ]
+  if slots then
+    unfinished_count[ self.mgr_name ] = unfinished_count[ self.mgr_name ] + 1
+    self:process_call( signal_name, slots, ... )
+    unfinished_count[ self.mgr_name ] = unfinished_count[ self.mgr_name ] - 1
+    if self.to_unsubscribe and unfinished_count[ self.mgr_name ] == 0 then
+      -- если нет незавершённых вызовов, то можно по-настоящему
+      -- удалять промаркированные для отписки слоты
+      for signal, slots in pairs( self.to_unsubscribe ) do
+        for _, slot in ipairs( slots ) do
+          self:unsubscribe( slot )
+        end
+      end
+      self.to_unsubscribe = nil
+    end
+    if slots.reschedule_scheduled and slots.next_in_scheduled == 1 then
+      slots.reschedule_scheduled = false
+      if table.getn( slots.scheduled ) > 1 then
+        table.sort(
+          slots.scheduled, function( a, b ) return a.timeout < b.timeout end
+        )
+      end
+    end
+  end
+end
+
+
+local time_limited_cnt   = 0
+local time_limited_delay = 0
+local time_limited_max   = 10
+local work_time_inc      = 10000
+local work_time_limit    = 20000
+
+function signals_mgr:process_call( signal_name, slots, ... )
+  local times     = {}
+  local work_time = 0
+  -- сперва срабатывают все высокоприоритетные сигналы
+  while slots.next_in_normal <= table.getn( slots.normal ) do
+    local slot = slots.normal[ slots.next_in_normal ]
+    -- при рекурсивных вызовах отписанные, но ещё не удалённые
+    -- слоты, необходимо пропустить
+    if slot.unsubscribed then
+      slots.next_in_normal = slots.next_in_normal + 1
+    else
+      local result
+      table.insert( self.slots_in_process, slot )
+      local pt = profile_timer()
+      pt:start()
+      if slot.self then
+        result = slot.fun( slot.self, ... )
+      else
+        result = slot.fun( ... )
+      end
+      pt:stop()
+      work_time = work_time + pt:time()
+      table.insert(
+        times, {
+          [ "script_name" ] = slot.script_name,
+          [ "time"        ] = pt:time(),
+        }
+      )
+      table.remove( self.slots_in_process )
+      if slot.timeout and self.use_rescheduling then
+        slots.reschedule_scheduled = true
+        slot.scheduled = true
+        table.insert( slots.scheduled, slot )
+        table.remove( slots.normal, slots.next_in_normal )
+      else
+        slots.next_in_normal = slots.next_in_normal + 1
+      end
+      if slots.time_limited and self.use_rescheduling then
+        if
+          work_time >= work_time_limit
+          and time_limited_delay < time_global()
+        then
+          log2(
+            "[%s]: signal '%s' time limited in 'normal' queue: %s. Last call spent %s, script_name = %s. Next is %s from %s.",
+            script_name(), signal_name, work_time,
+            pt:time(), tostring( slot.script_name ),
+            slots.next_in_normal, table.getn( slots.normal )
+          )
+          time_limited_cnt = time_limited_cnt + 1
+          return
+        end
+      else
+        -- вызов заявил, что он финальный в цепочке вызовов
+        if result then break end
+      end
+    end
+  end
+  while slots.next_in_scheduled <= table.getn( slots.scheduled ) do
+    slot = slots.scheduled[ slots.next_in_scheduled ]
+    if slot.unsubscribed then
+      slots.next_in_scheduled = slots.next_in_scheduled + 1
+    else
+      if slot.timeout > time_global() and self.use_rescheduling then break end
+      local result
+      table.insert( self.slots_in_process, slot )
+      local pt = profile_timer()
+      pt:start()
+      if slot.self then
+        result = slot.fun( slot.self, ... )
+      else
+        result = slot.fun( ... )
+      end
+      pt:stop()
+      work_time = work_time + pt:time()
+      table.insert(
+        times, {
+          [ "script_name" ] = slot.script_name,
+          [ "time"        ] = pt:time(),
+        }
+      )
+      table.remove( self.slots_in_process )
+      slots.reschedule_scheduled = true
+      slots.next_in_scheduled = slots.next_in_scheduled + 1
+      if
+        slots.time_limited and self.use_rescheduling
+        and work_time >= work_time_limit
+        and time_limited_delay < time_global()
+      then
+        log2(
+          "[%s]: signal '%s' time limited in 'scheduled' queue: %s. Last call spent %s, script_name = %s. Next is %s from %s.",
+          script_name(), signal_name, work_time,
+          pt:time(), tostring( slot.script_name ),
+          slots.next_in_scheduled, table.getn( slots.scheduled )
+        )
+        time_limited_cnt = time_limited_cnt + 1
+        return
+      end
+    end
+  end
+  slots.next_in_normal    = 1
+  slots.next_in_scheduled = 1
+  if work_time > work_time_limit then
+    log2(
+      "[%s]: signal '%s' is too slow: %s",
+      script_name(), signal_name, work_time
+    )
+    for _, t in ipairs( times ) do
+      if t.time > work_time_limit then
+        log2(
+          "[%s]: %s, %s", script_name(), t.time, tostring( t.script_name )
+        )
+      end
+    end
+  end
+  if slots.time_limited then
+    if time_limited_cnt > time_limited_max then
+      log2(
+        "[%s]: signal '%s' limited too many times: %s. Increase time limit: %s -> %s.",
+        script_name(), signal_name, time_limited_cnt, work_time_limit,
+        work_time_limit + work_time_inc
+      )
+      work_time_limit = work_time_limit + work_time_inc
+    end
+    time_limited_cnt = 0
+  end
+end
+
+
+function signals_mgr:get_current_slot()
+  local n = table.getn( self.slots_in_process )
+  ASSERT( n > 0, "empty slots_in_process table" )
+  return self.slots_in_process[ n ]
+end
+
+
+function signals_mgr:reschedule( timeout )
+  local slot   = self:get_current_slot()
+  slot.timeout = time_global() + timeout
+end
+
+
+function signals_mgr:delay_time_limit( t )
+  time_limited_delay = time_global() + t
+  log2( "[%s]: time limit functionality paused: %s ms", script_name(), t )
+end
+
+
+function signals_mgr:stop_rescheduling( flag )
+  self.use_rescheduling = not flag
+end
+
+
+function signals_mgr:weakup( slot )
+  if not slot.scheduled then return end
+  slot.timeout = 0
+  local slots  = self.signals[ slot.signal ]
+  if slots.next_in_scheduled == 1 then
+    if table.getn( slots.scheduled ) > 1 then
+      table.sort(
+        slots.scheduled, function( a, b ) return a.timeout < b.timeout end
+      )
+    end
+  else
+    slots.reschedule_scheduled = true
+  end
+end

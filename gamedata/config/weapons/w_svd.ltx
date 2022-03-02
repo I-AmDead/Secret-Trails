@@ -1,0 +1,193 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;; Снайперская Винтовка Драгунова СВД ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;--------------------------------------------------------------------------------------
+[wpn_svd]:class_sr,scope.8x
+GroupControlSection	= spawn_group
+discovery_dependency    = 
+$spawn                  = "weapons\svd"		; option for Level Editor
+$npc			 		= on				; option for Level Editor
+$prefetch 		 		= 8
+scheduled               = off              	; option for ALife Simulator
+cform                   = skeleton
+class                   = WP_SVD
+description				= enc_weapons1_wpn-svd
+
+;--- scope weapons -----------------------------------------------------------------
+holder_range_modifier	= 2.15               ; во сколько раз увеличивается eye_range 
+holder_fov_modifier		= 0.3              ; во сколько раз увеличивается eye_fov
+;-----------------------------------------------------------------------------------
+
+cost					= 22500
+weapon_class			= sniper_rifle
+
+ammo_limit				= 60
+ammo_current			= 10
+ammo_elapsed			= 0
+
+ammo_mag_size			= 10
+ammo_class				= ammo_7.62x54_7h1, ammo_7.62x54_7h14, ammo_7.62x54_ap
+
+sprint_allowed			= true ;false
+;-----------------------------------------------------------------------------------
+;базовая дисперсия
+fire_dispersion_base		= 0.0075	;угол (в градусах) базовой дисперсии оружия (оружия зажатого в тисках)
+	
+;отдача
+cam_dispersion          	= 0.3	;увеличения угла (в градусах) с каждым выстрелом
+cam_dispersion_inc		= 0.5	;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac		= 1.0	;ствол будет подыматься на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle			= 5.0	;максимальный угол отдачи
+cam_max_angle_horz		= 2.0	;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 0.25	;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+hand_dependence 		      = 1
+single_handed			= 0
+
+animation_slot			= 2		; type of the animation that will be used
+
+
+inv_name				= wpn-svd
+inv_name_short			= wpn-svd
+inv_weight				= 4.9
+
+icon_name = icon_svd
+inv_grid_width			= 7
+inv_grid_height			= 2
+inv_grid_x				= 0
+inv_grid_y				= 0
+
+kill_msg_x			= 0
+kill_msg_y			= 0
+kill_msg_width		= 98
+kill_msg_height		= 23
+
+direction              			= 0, 0, 1
+
+flame_particles		    			= amik\weapons\flame_particles\dtk_flame_particles_4
+smoke_particles		   			= amik\weapons\smoke_particles\smoke_particles_01
+rpm_empty_click 				= 200
+
+shell_point		 				= 0.0, 0.23, 0.179
+shell_dir		 				= 0.0, 0.0, 0.4
+;shell_particles	 				= amik\weapons\7.62x54_shells_r
+
+; ttc
+hit_rate	            = 2.0
+fire_distance           = 1000
+bullet_speed		= 830	;начальная скорость пули
+rpm                     = 300
+; end ttc
+
+silencer_hit_power       	= 0.96
+silencer_hit_impulse	 	= 76
+silencer_fire_distance   	= 820
+silencer_bullet_speed	 	= 815
+
+hud                     = wpn_svd_hud
+normal                  		= 0, 1, 0
+position                		= -0.026,-0.172,0.015
+orientation             		= 0, 0, 0
+
+fire_point              		= 0.0, 0.223, 0.984
+
+strap_position         			= 0.01,-0.21,0.45
+strap_orientation      			= 05,-183, -99
+strap_bone0						= bip01_spine2
+strap_bone1						= bip01_spine1
+
+startup_ammo            = 10
+visual                  		= weaponsv\svd\wpn_svd.ogf
+
+light_color		 			= 0.6,0.5,0.3
+light_var_color		 			= 0.05
+light_time 		 			= 0.2
+
+ph_mass			 			= 5
+;cost			 		= 900
+
+;addons
+scope_status					= 1
+silencer_status					= 2
+grenade_launcher_status				= 0
+
+zoom_enabled			= true
+
+scope_texture			= wpn\wpn_crosshair
+;scope_sights_lighting	= sights_pso-1_light
+
+ignore_scope_texture  = true
+scope_show_indicators = false
+scope_sights_lighting = wpnv\addons\pso1\cross0, wpnv\addons\pso1\cross1, wpnv\addons\pso1\kross0, wpnv\addons\pso1\kross1
+scope_zoom_hud_fov    = 4
+use_scope_zoom        = true
+
+silencer_name  				= wpn_addon_sil_762_ar
+silencer_x 					= 252
+silencer_y 					= 18
+
+snd_draw						= weapons\ak_74x\rifle_draw
+snd_holster						= weapons\ak_74x\rifle_holster
+snd_shoot						= weapons\svd\svd_shoot
+snd_empty						= weapons\rifle_empty
+snd_reload						= weapons\svd\svd_reload
+snd_silncer_shot				= weapons\svd\svd_silent
+snd_razgruzka					= weapons\razgruzka\ammo_5
+
+silencer_flame_particles		= weapons\generic_weapon00
+silencer_smoke_particles 			= amik\weapons\smoke_particles\p_smoke_particles_02
+
+silencer_light_color			= 0.6,0.5,0.3
+silencer_light_range			= 0.01
+silencer_light_var_color		= 0.05
+silencer_light_var_range		= 0.5
+silencer_light_time 			= 0.2
+
+
+[wpn_svd_hud]:hud_sr
+shell_point						= 0.000000,0.050000,-0.08000
+shell_dir		 				= 0.0, 1.0, 0.0
+
+fire_point						= 0.133000,-0.212000,1.105000
+;fire_point						= 0.153000,-0.242000,1.105000
+;fire_point						= 0.203000,-0.242000,1.105000
+fire_point2              		= 0.037,-0.040,0.085000
+fire_bone               		= wpn_body
+
+orientation      	        	= 1.7, 1.5, 0
+position			        	= 0.040000,-0.05,-0.0250
+
+visual                  		= weaponsv\svd\wpn_svd_hud.ogf
+
+collide_hud 					= false
+
+anim_holster					= svd_holster
+anim_idle						= svd_idle
+anim_idle_aim					= svd_idle_aim
+anim_reload						= svd_reload
+anim_draw						= svd_draw
+anim_holster					= svd_holster
+anim_shoot						= svd_shoot
+anim_idle_sprint				= svd_idle_sprint
+
+zoom_offset			= -0.140810,0.066387,-0.058599
+zoom_rotate_x		= 0.030188
+zoom_rotate_y		= 0.029812
+
+
+[wpn_svd_m2]:wpn_svd,class_dyn_scope_novision
+$spawn             				= "weapons\uniq\wpn_svd_m2"	
+description				= enc_weapons1_wpn_svd_m2
+cost					= 75000
+
+inv_name				= wpn-svd_m2
+inv_name_short			= wpn-svd_m2
+
+;inv_grid_x				= 0
+;inv_grid_y				= 66
+
+hud 						= wpn_svd_m2_hud
+
+
+[wpn_svd_m2_hud]:wpn_svd_hud
+zoom_offset			= -0.140810,0.066387,0.061401

@@ -1,0 +1,90 @@
+[smart_terrains]
+none = true
+
+[dont_spawn_loot]
+
+[logic]
+active = walker@barman
+danger = danger_condition@barman_stalker
+
+[walker@barman]
+path_walk = barman_walk1
+path_look = barman_look1
+danger = danger_condition@barman_stalker
+meet = meet
+on_actor_dist_le_nvis = 5 | {-barman_strelka_dialog_start} remark@barman
+
+[remark@barman]
+target = actor
+snd = barman_mir
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@barman_stalker
+on_signal = sound_end | walker@barman1
+
+[walker@barman1]
+path_walk = barman_walk1
+path_look = barman_look1
+danger = danger_condition@barman_stalker
+meet = meet
+on_info = {+barman_strelka_dialog_start} walker@barman2
+
+[walker@barman2]
+path_walk = barman_walk2
+path_look = barman_look2
+danger = danger_condition@barman_stalker
+def_state_moving1 = run
+def_state_moving2 = run
+def_state_moving3 = run
+meet = no_meet
+on_info = {+barman_strelka_prishel} remark@barman2
+
+[remark@barman2]
+anim = hello
+snd = privet
+target = barman_look2, 0 
+combat_ignore_cond = always
+danger = danger_condition@barman_stalker
+meet = no_meet
+on_timer = 4000 | walker@barman3
+
+[walker@barman3]
+path_walk = barman_walk4
+path_look = barman_look4
+def_state_standing = sit
+danger = danger_condition@barman_stalker
+meet = no_meet
+on_timer = 4000 | remark@razgovor
+
+[remark@razgovor]
+anim = sit
+snd = vstrecha
+target = barman_look2, 0 
+combat_ignore_cond = always
+danger = danger_condition@barman_stalker
+meet = no_meet
+on_timer = 30000 | remark@barman3 %+barman_sidor_pogovorili%
+
+[remark@barman3]
+anim = guard
+target = actor
+combat_ignore_cond = always
+danger = danger_condition@barman_stalker
+meet = meet
+on_info = {+barman_posle_dialog_start} walker@barman4
+
+[walker@barman4]
+path_walk = barman_walk4
+path_look = barman_look4
+def_state_standing = sit
+danger = danger_condition@barman_stalker
+meet = no_meet
+
+[danger_condition@barman_stalker]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet]
+use = true
+use_wpn = true
+meet_talk_enabled = true

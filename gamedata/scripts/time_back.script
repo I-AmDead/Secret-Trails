@@ -1,0 +1,97 @@
+--// отладочный вывод в конcоль
+local console = false  --// true\false  - вкл\выкл
+
+function Console(fmt, ...)
+if console then 
+local msg = string.format(fmt, ...)
+   get_console():execute("load ~ "..msg)
+   end
+end 
+
+function kvest_failed_update() --Это у нас прописано в бинд сталкере(апдейдит 2 функции)
+this.UpdateBackTimer()
+this.ShowTimerOnHud()
+end
+
+local iTimer
+local iLast
+
+function StartBackTimer()
+if iLast then
+    iTimer = time_global()+iLast --/ взводим таймер на остаток времени iLast
+    else
+   iTimer = time_global() + 1020*1000 --/ 60 - это 1 минута, 1020 - это 17 минут
+   end
+end
+
+function UpdateBackTimer()
+--// если квест выполнен - таймер останавливаем и убираем
+      if has_alife_info("pobeg_finish") then
+      this.StopBackTimer()
+      return end 
+      
+     if iTimer then
+     iLast=iTimer-time_global()
+
+    --// это блок тебе не нужен - это я проверял на досрочное выполение 
+     -- if iLast<60000 then
+     -- db.actor:give_info_portion("pobeg_finish")
+      --Console("Квест выполнен")
+      --end 
+      
+        if iTimer < time_global() then
+        this.StopBackTimer()
+        -- //По истечении выкл таймер и если квест не выполнен - проваливаем его
+           if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
+           db.actor:give_info_portion("pobeg_net")
+           Console("Квест провален")
+           end
+        end
+    end
+end
+
+-- //выводим значение таймера в обратном отсчете на худ
+
+local UICustomStatic
+
+function ShowTimerOnHud()
+local hud = get_hud()
+
+    if iTimer then
+    UICustomStatic = hud:GetCustomStatic("hud_timer_kvest")
+         if UICustomStatic==nil then
+         hud:AddCustomStatic("hud_timer_kvest", true)
+         UICustomStatic = hud:GetCustomStatic("hud_timer_kvest")
+         end
+       if iLast then
+       local hours = math.floor(iLast/3600000)
+       local minutes = math.floor(iLast/60000 - hours*60)
+       local seconds = math.floor(iLast/1000 - hours*3600 - minutes*60)
+       local text = string.format("%02d:%02d:%02d",hours,minutes,seconds) -- выводим время в формате 00:00:00
+       UICustomStatic:wnd():SetTextST(text)
+       end
+    else
+      if hud:GetCustomStatic("hud_timer_kvest")~=nil then
+        hud:RemoveCustomStatic("hud_timer_kvest")
+      end
+   end
+end
+
+--//Если квест выполнится до истечения таймера, вызываем остановку
+function StopBackTimer() 
+iTimer = nil 
+iLast=nil
+end
+
+function LoadBackTimer(iVal)
+iLast = iVal
+--// перезапуск таймера на остаток времени если мы выходили из игры
+   if iLast then
+   this.StartBackTimer()
+    end
+end
+
+function SaveBackTimer()
+--// запишем значение остатка времени
+return iLast  
+end

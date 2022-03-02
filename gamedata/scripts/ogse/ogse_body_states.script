@@ -1,0 +1,30 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_update", fun = this.actor_body_state })
+end
+
+local body_states = { -- флажки состояния тела актора
+[1]		= "fwd",
+[2]		= "back",
+[4]		= "l_strafe",
+[8]		= "r_strafe",
+[16]	= "crouch",
+[32]	= "accel",
+[64]	= "turn",
+[128]	= "jump",
+[256]	= "fall",
+[512]	= "landing",
+[1024]	= "landing2",
+[2048]	= "climb",
+[4096]	= "sprint",
+[8192]	= "l_lookout",
+[16384]	= "r_lookout"
+}
+-- получения флагов состояния тела актора
+function actor_body_state()
+  local body_state = body_states[ get_actor_obj():get_body_state() ]
+  if body_state == "fall" or (body_state == "fall" and (body_state == "fwd" or body_state == "back")) then
+    level.add_cam_effector( "camera_effects\\actor_move\\landingold.anm", 8559, false, "" )
+end
+end

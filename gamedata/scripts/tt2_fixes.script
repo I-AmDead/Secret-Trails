@@ -1,0 +1,67 @@
+function attach( sm )
+  sm:subscribe({ signal = "on_before_first_update", fun = this.fix_first })
+  sm:subscribe({ signal = "on_update", fun = this.spawn_sverhprovodnik })
+end
+
+function fix_first()
+  del_lampa()
+  fix_recept()
+  fix_amk_zones()
+end
+
+function fix_recept()
+
+  if (not db.actor:has_info( "info_amk_recipt_drop_souls" )) and db.actor:has_info( "info_amk_recipt_souls" ) then
+    db.actor:give_info_portion( "info_amk_recipt_soul_drops" )
+    db.actor:give_info_portion( "info_amk_recipt_soul_fire" )
+    db.actor:give_info_portion( "info_amk_recipt_soul_cristal" )
+    db.actor:give_info_portion( "info_amk_recipt_soul_bengal" )
+end
+
+  if (not db.actor:has_info( "info_amk_recipt_drop_dummy" )) and db.actor:has_info( "info_amk_recipt_dummy" ) then
+    db.actor:give_info_portion( "info_amk_recipt_dummy_fire" )
+    db.actor:give_info_portion( "info_amk_recipt_dummy_bright" )
+    db.actor:give_info_portion( "info_amk_recipt_dummy_moon" )
+    db.actor:give_info_portion( "info_amk_recipt_dummy_puding" )
+end
+
+end
+
+
+function fix_amk_zones()
+
+local se_obj = alife():object("amk_zone_mincer_average22851")
+
+if se_obj then
+alife():release(se_obj, true)
+end
+
+end
+
+
+function del_lampa()
+    local sim = alife()
+    local s_obj = sim:object("light_uglovaya_1_glass_0006")
+    if s_obj then
+        sim:release(s_obj, true)
+    end
+end
+
+
+function spawn_sverhprovodnik()
+
+if (not db.actor:has_info( "sverhprovodnik_dialog_start" )) and db.actor:has_info( "sverhprovodnik_dialog_start_pre" ) and (level.get_time_hours() > 1 and level.get_time_hours() < 2) then
+
+       local obj=alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
+	                local sobj = alife():object( obj.id )
+                        alife():use_ai_locations(sobj, false)
+elseif level.get_time_hours() < 1 and level.get_time_hours() > 2 then
+					
+			local se_obj = alife():object("sverhprovodnik")
+
+if se_obj then
+alife():release(se_obj, true)
+end		
+
+end
+end

@@ -1,0 +1,97 @@
+local custom_msgs =
+{
+"monster_claws",
+"main_task",
+"cs_psy_danger",
+"cs_radiation_danger",
+"game_saved",
+"autosave",
+"item_used",
+"gun_jammed",
+"cant_walk",
+"cant_walk_weight",
+"not_enough_money_mine",
+"not_enough_money_other"
+}
+
+local cs_states = {}
+
+local _ARC_CS_STRING = "arc_hud"
+
+local arc_hud
+
+function on_actor_update(delta)
+	if not arc_hud then
+		local hud = get_hud()
+		
+		arc_hud = hud:GetCustomStatic(_ARC_CS_STRING)
+		
+		if not arc_hud then
+			hud:AddCustomStatic(_ARC_CS_STRING, true)
+			arc_hud = hud:GetCustomStatic(_ARC_CS_STRING)
+			
+			if not arc_hud then fault("arc_hud == nil after GetCustomStatic") return end
+		else
+
+		end
+		
+		local wnd = arc_hud:wnd()
+		
+		wnd:SetWndRect(0, 0, 1024, 768)
+	end
+	
+	for i = 1, table.getn(custom_msgs) do
+		local s = custom_msgs[i]
+		local cs = get_hud():GetCustomStatic(s)
+		
+		if cs then
+			if not cs_states[s] then
+				cs_states[s] = true
+				on_custom_static_show(s)
+			end
+		elseif cs_states[s] then
+			cs_states[s] = nil
+			on_custom_static_hide(s)
+		end
+	end
+	
+	update_hud(delta)
+end
+
+function on_custom_static_show(cs_name)	
+	if cs_name == "main_task" then
+		arc_ui_cardiogramm.show()
+		arc_ui_dosimeter.show()
+	end
+end
+
+function on_custom_static_hide(cs_name)
+	if cs_name == "main_task" then
+		arc_ui_cardiogramm.fade() --.hide()
+		arc_ui_dosimeter.fade() --.hide
+	end
+end
+
+function update_hud(delta)
+	arc_ui_cardiogramm.update(delta)
+	arc_ui_dosimeter.update(delta)
+end
+
+function get_arc_hud()
+	return arc_hud
+end
+
+-- DebugInfo:
+function info(msg)
+  arc.info(msg)
+end
+
+function warning(msg)
+  info("!!!warning!!! "..msg)
+  return false
+end
+
+function fault(msg)
+  info("!!!fault!!! "..msg)
+  return false
+end

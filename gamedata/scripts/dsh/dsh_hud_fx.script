@@ -1,0 +1,243 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+local opt_helmet_effector = false
+
+local wpn_fx  = dsh_hud_fx_data.wpn_fx
+local hud_fxs = dsh_hud_fx_data.hud_fxs
+local active_hud_fx_queue, active_hud_fx_sect, active_fx_snd
+
+
+function attach( sm )
+  sm:subscribe({
+    signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire
+  })
+  sm:subscribe({ signal = "on_update", fun = this.on_update_heart   })
+end
+
+
+function on_update_heart()
+  ogse_signals.get_mgr():reschedule( 113 )
+  if not db.actor:alive() then return end
+  nlc7_actor_heart()
+end
+
+
+local cached_wpn = {}
+function get_wpn_params( sect )
+  if not cached_wpn[ sect ] then
+    local t = {}
+    t.wpn_fx = get_string( sect, "dsh_hud_fx.wpn_fx" )
+    t.wpn_fx_creep = get_string( sect, "dsh_hud_fx.wpn_fx_creep" )
+    cached_wpn[ sect ] = t
+  end
+  return cached_wpn[ sect ]
+end
+
+
+function on_actor_weapon_fire( wpn )
+
+if game_options.AmkWpn == true then
+
+  local cur_wpn = dsh_wpn.get_wpn_info( wpn )
+  local shot_n  = wpn:is_weapon_magazined()
+    and wpn:get_weapon_m().shot_num or 1
+  if cur_wpn.dispersion_start then
+    local qs = ogse_wpn_utils.get_queue_size( wpn )
+    if qs < 0 or qs >= cur_wpn.dispersion_start then
+      if shot_n < cur_wpn.dispersion_start then return end
+    end
+  end
+  local params
+  if cur_wpn.gl_mode then
+    if cur_wpn.gl_name then
+      params = get_wpn_params( cur_wpn.gl_name )
+    else
+      return
+    end
+  else
+    params = get_wpn_params( wpn:section() )
+  end
+  local aobj = get_actor_obj()
+  local sect
+  if aobj:is_actor_creep() then
+    sect = params.wpn_fx_creep or params.wpn_fx
+  else
+    sect = params.wpn_fx
+  end
+  if not wpn_fx[ sect ] then return end
+
+  local anims = {}
+  local s     = wpn_fx[ sect ].s
+  local sc    = table.getn( s )
+
+  if sc > 1 then
+    if wpn_fx[ sect ].r == 1 then
+      s = s[ math.random( table.getn( s ) ) ]
+    elseif wpn_fx[ sect ].r == 2 then
+      if shot_n == 1 then
+        s = s[ 1 ]
+      else
+        s = s[ math.random( 2, table.getn( s ) ) ]
+      end
+    else
+      sc = ( shot_n <= sc ) and shot_n
+        or ( sc > 2 and math.random( sc - 1, sc ) )
+        or sc
+      s  = s[ sc ]
+    end
+  else
+    s = s[ 1 ]
+  end
+
+  local ammo_r = 1
+  local fov_r  = ammo_r * ( zoom_mode() and 0.13 or 1 )
+  for i, v in ipairs( wpn_fx[ sect ].e ) do
+    cnt, r = math.modf( v[ 1 ] * fov_r )
+    if r ~= 0 and cnt > 4 then -- fmb
+      cnt = cnt - cnt * math.random( 0, r * 100 ) / 100 -- fmb
+      cnt, r = math.modf( cnt )
+    end
+    if r ~= 0 and math.random() < r then
+      cnt = cnt + 1
+    end
+    if cnt > 0 then
+      table.insert( anims, {
+        e = i, d = v[ 2 ] or math.random( 0, 1 ), c = cnt
+      })
+    end
+  end
+
+  for i, a in ipairs( anims ) do
+    local n = string.format( [[shoot\s%s_e%s_%s.anm]], s, a.e, a.d )
+    for ii = 1, a.c do
+      level.add_cam_effector( n, math.random( 5000, 8000 ), false, "" )
+    end
+  end
+
+  for k, v in pairs( wpn_fx[ sect ].p ) do
+    local n   = string.format( [[shoot\%s_s%s.ppe]], k, s )
+    local eid = math.random( 5000, 8000 )
+    level.add_pp_effector( n, eid, false )
+    if v > 0 then
+      level.set_pp_effector_factor( eid, v )
+    end
+  end
+end
+end
+
+
+local delt   = 0
+local delt_h = 0
+
+function nlc7_actor_heart()
+  local npc = db.actor
+  if not npc then return end
+  local hb = npc.health
+  if hb <= 0 or not npc:alive() then return end
+  local time_curr = time_global()
+  local time_delt = 0
+  local step      = 1
+  if hb < 0.3 then
+    time_delt = time_curr - delt_h
+    if time_delt >= math.log( hb * 200 ) * 200 then
+      if     hb < 0.05 then
+        step = 3
+      elseif hb < 0.15 then
+        step = 2
+      else
+        step = 1
+      end
+      local snd_fname = "actor\\nlc7\\heartbeat_" .. step .. "_" .. math.random( 4 )
+      local snd = sound_object( snd_fname )
+      snd.volume = 1.5 - 5 * hb
+      snd:play( db.actor, 0, sound_object.s2d )
+      delt_h = time_curr
+    end
+  end
+  local r_h = npc.power
+
+  if r_h < 0.79 then
+    time_delt = time_curr - delt
+    if time_delt >= r_h * 1500 + 800 then
+      if     r_h < 0.25 then
+        step = 3
+      elseif r_h < 0.5  then
+        step = 2
+      else
+        step = 1
+      end
+      local snd_fname = "actor\\nlc7\\without_mask_" .. step .. "_" .. math.random( 6 )
+      local snd = sound_object( snd_fname )
+      snd.volume = 1.5 - 5 * r_h
+      snd:play( db.actor, 0, sound_object.s2d )
+      delt = time_curr
+    end
+end
+end
+
+
+local active_fx_t
+function run_fx( sect, fx, tail, args )
+  ASSERT( hud_fxs[ fx ], "unknown fx for %s", sect )
+  if active_fx_t then
+    active_fx_t:stop()
+    active_fx_t = nil
+  end
+  if active_fx_snd then
+    if active_fx_snd:playing() then
+      active_fx_snd:stop()
+    end
+    active_fx_snd = nil
+  end
+  active_hud_fx_queue = {}
+  for _, item in ipairs( hud_fxs[ fx ] ) do
+    table.insert( active_hud_fx_queue, item )
+  end
+  if tail then
+    for _, item in ipairs( tail ) do
+      table.insert( active_hud_fx_queue, item )
+    end
+  end
+  active_hud_fx_sect = sect
+  process_fx_next( nil, ( args or {} ) )
+end
+
+
+function is_active_hud_fx_queue()
+  return active_hud_fx_queue and table.getn( active_hud_fx_queue ) > 0
+end
+
+
+function process_fx_next( timeout, t )
+  if is_active_hud_fx_queue() then
+    local item = table.remove( active_hud_fx_queue, 1 )
+    local func = item.func
+      or ( item.use_sound and this.fx_use_sound )
+    ASSERT( func, "can't find func for %s", active_hud_fx_sect )
+    if item.timeout then timeout = item.timeout end
+    if timeout and timeout > 0 then
+      active_fx_t = dsh.timeout( timeout, function()
+        local timeout = func( item, t )
+        if item.next ~= false then
+          process_fx_next( timeout, t )
+        end
+      end )
+    else
+      active_fx_t = nil
+      local timeout = func( item, t )
+      if item.next ~= false then
+        process_fx_next( timeout, t )
+      end
+    end
+  else
+    active_fx_t         = nil
+    active_hud_fx_queue = nil
+    active_hud_fx_sect  = nil
+  end
+end
+
+function close_inventory()
+  if db.actor:has_info( "ui_inventory" ) then
+    level.start_stop_menu( level.main_input_receiver(), true )
+  end
+end

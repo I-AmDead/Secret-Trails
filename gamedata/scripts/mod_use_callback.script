@@ -1,0 +1,388 @@
+--[[ ---------------------------------------------
+ File       : mod_use_callback.script
+ Description: Колбеки на использование предметов
+ Author     : denis2000#sigerous.ru
+-------------------------------------------------]]
+
+local active_slot = nil
+local active_item_name = nil
+local binoc_in_slot = nil
+local name_binoc = nil
+local delay = 0
+---------------------------------------------------------------------------
+--Вызов колбеков использования предметов инвентаря
+---------------------------------------------------------------------------
+function use_inventory_item(section,self)
+	if not db.actor:alive() then
+        return
+    end
+	local item_name=section:section()
+	active_slot=db.actor:active_slot()
+	binoc_in_slot=db.actor:item_in_slot(4)
+	if binoc_in_slot ~= nil then
+		name_binoc = binoc_in_slot:section()
+	end
+    		
+   --Использован предмет Хлеб, в данный момент не используется другой анимационный предмет
+   if item_name=="bread" and db.actor:has_info("actor_use_anm_item") == false then
+		--Удалить бинокль у ГГ
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		--Дать анимационный объект Хлеб
+		alife():create("anm_bread",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		--Проверка, что ГГ назодиться в зоне без оружия
+		if self.weapon_hide == true then
+			--Позволить достать оружие
+			self.object:restore_weapon()
+			-- и выставить флаг, что по оканчании анимации оружие спрятать
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		--Сделать слот с Хлебом активным
+		db.actor:activate_slot(4)
+		--Проиграть звук использования Хлеба с задержкой.
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		--Задать интервал времени и установить флаги используем Хлеб и используем анимационный предмет
+		db.actor:give_info_portion("actor_use_anm_bread")
+		db.actor:give_info_portion("actor_use_anm_item")
+		--Установить засечку начала анимации предмета
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		--Задать интервал времени и установить флаги используем Хлеб и используем анимационный предмет
+		db.actor:give_info_portion("actor_use_anm_bread")
+		db.actor:give_info_portion("actor_use_anm_item")
+		--Установить засечку начала анимации предмета
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Аптечка, в данный момент не используется другой анимационный предмет
+   if string.find(item_name,"medkit") and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		--Проверка типа аптечки
+		if item_name=="medkit" then
+			alife():create("anm_medkit",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		elseif item_name=="medkit_army" then
+			alife():create("anm_medkit_army",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		elseif item_name=="medkit_scientic" then
+			alife():create("anm_medkit_scientic",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		end
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_medkit")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_medkit")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Колбаса, в данный момент не используется другой анимационный предмет
+	if item_name=="kolbasa" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_kolbasa",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_kolbasa")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_kolbasa")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Энергетик, в данный момент не используется другой анимационный предмет
+	if item_name=="energy_drink" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_energy_drink",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_softdrink]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_energy_drink")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_softdrink]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_energy_drink")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Тушенка, в данный момент не используется другой анимационный предмет
+	if item_name=="conserva" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_conserva",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_conserva")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_food]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_conserva")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Вакцина, в данный момент не используется другой анимационный предмет
+	if item_name=="antirad" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_antirad",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_antirad")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_antirad")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Бинт, в данный момент не используется другой анимационный предмет
+	if item_name=="bandage" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_bandage",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_bandage")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_medkit]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_bandage")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	--Использован предмет Водка, в данный момент не используется другой анимационный предмет
+	if item_name=="vodka" and db.actor:has_info("actor_use_anm_item") == false then
+		if name_binoc == "wpn_binoc" then
+			alife():release(alife():object(db.actor:object("wpn_binoc"):id()))
+		end
+		alife():create("anm_vodka",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+		if self.weapon_hide == true then
+			self.object:restore_weapon()
+			db.actor:give_info_portion("use_item_need_hide_weapon")
+		end
+		db.actor:activate_slot(4)
+		if db.actor:active_slot() == 4 then
+		snd = sound_object([[inv_sounds\inv_vodka]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 0, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_vodka")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+		elseif db.actor:active_slot() ~= 4 then
+		snd = sound_object([[inv_sounds\inv_vodka]])
+		snd:play_at_pos(db.actor, vector():set(0,0,0), 1, sound_object.s2d) --Третий параметр время задержки воспроизведения в сек
+		db.actor:give_info_portion("actor_use_anm_vodka")
+		db.actor:give_info_portion("actor_use_anm_item")
+		start_time_use_item = game.get_game_time()
+end
+	end
+	
+end
+
+---------------------------------------------------------------------------
+--Отработка таймеров использования предметов
+---------------------------------------------------------------------------
+function timer_use_item(self)
+	if not db.actor:alive() then
+        return
+    end
+	local time_to_use_bread = 1.5 --Игровые секунды, время использования предмета Хлеб
+	local time_to_use_medkit = 1.5 --Игровые секунды, время использования предмета Аптечка
+	local time_to_use_kolbasa = 1.5 --Игровые секунды, время использования предмета Колбаса
+	local time_to_use_energy_drink = 1.5 --Игровые секунды, время использования предмета Энергетик
+	local time_to_use_conserva = 1.5--Игровые секунды, время использования предмета Тушенка
+	local time_to_use_antirad = 1.5 --Игровые секунды, время использования предмета Антирад
+	local time_to_use_bandage = 1.5 --Игровые секунды, время использования предмета Антирад
+	local time_to_use_vodka = 1.5 --Игровые секунды, время использования предмета Водка
+	local time_to_relax = 10 --Игровые секунды, время переключения после использования предмета
+	local release_item = nil
+	--Отработка таймеров использования предметов
+	if db.actor:has_info("actor_use_anm_item") then
+		--Отработка таймера для Хлеба
+		if  db.actor:has_info("actor_use_anm_bread") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_bread) then
+			--Переключиться на старый слот
+			db.actor:activate_slot(4)
+			--Установить флаг таймаута после использования предмета
+			db.actor:give_info_portion("use_item_relax")
+			--Снять флаг используем Хлеб
+			db.actor:disable_info_portion("actor_use_anm_bread")
+			--Если нужно снова прятать оружие
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				--Прячем его с установкой переменных 
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			--Cбросо флага "по оканчании анимации оружие спрятать"
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			--Установить засечку начала таймаута после использования предмета
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Аптечки
+		if  db.actor:has_info("actor_use_anm_medkit") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_medkit) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_medkit")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Колбаса
+		if  db.actor:has_info("actor_use_anm_kolbasa") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_kolbasa) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_kolbasa")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Энергетик
+		if  db.actor:has_info("actor_use_anm_energy_drink") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_energy_drink) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_energy_drink")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Тушенка
+		if  db.actor:has_info("actor_use_anm_conserva") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_conserva) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_conserva")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Антирад
+		if  db.actor:has_info("actor_use_anm_antirad") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_antirad) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_antirad")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Бинт
+		if  db.actor:has_info("actor_use_anm_bandage") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_bandage) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_bandage")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймера для Водка
+		if  db.actor:has_info("actor_use_anm_vodka") and (start_time_use_item == nil or game.get_game_time():diffSec(start_time_use_item) >= time_to_use_vodka) then
+			db.actor:activate_slot(4)
+			db.actor:give_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_vodka")
+			if db.actor:has_info("use_item_need_hide_weapon") and self.weapon_hide == true then
+				self.object:hide_weapon()
+				self.weapon_hide = true
+			end
+			db.actor:disable_info_portion("use_item_need_hide_weapon")
+			start_time_relax = game.get_game_time()
+		end
+		--Отработка таймеров таймаута после использования предметов
+		if db.actor:has_info("use_item_relax") and (start_time_relax == nil or game.get_game_time():diffSec(start_time_relax) >= time_to_relax) then
+			--Убрать из инвентаря анимационный предмет, каким бы он ни был
+			db.actor:iterate_inventory(function (dummy, item) if string.find(item:section(), "anm_") then release_item = item:section() end end, nil)
+			alife():release(alife():object(db.actor:object(release_item):id()))
+			--Вернуть бинокль в инвентарь
+			--[[if binoc_in_slot ~= nil and name_binoc ~= nil then
+				if db.actor:object(name_binoc) == nil then
+					alife():create(name_binoc,db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+				end
+			end]]
+			if db.actor:object("wpn_binoc") == nil then
+				alife():create("wpn_binoc",db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id(),db.actor:id())
+			end
+			--Сбросить флаги использования предметов и таймаута после использования предмета
+			db.actor:disable_info_portion("use_item_relax")
+			db.actor:disable_info_portion("actor_use_anm_item")
+		end
+	end
+end

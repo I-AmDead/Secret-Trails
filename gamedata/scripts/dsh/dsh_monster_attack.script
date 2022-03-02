@@ -1,0 +1,1004 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+-- расстояния, с которого начинаются дист. атаки
+local bloodsucker_attack_dist = 15
+local chimera_attack_dist     = 15
+local controller_attack_dist  = 60
+local dog_attack_dist         = 30 --15
+local poltergeist_attack_dist = 10
+local pseudodog_attack_dist   = 20
+local tushkano_attack_dist    = 15 --5
+local zombie_attack_dist      = 35
+
+-- дальность зрения ночью увеличивается в night_range_k раз
+local night_range_k = 1
+
+
+local insect_particle = particles_object( "ogsm\\ogsm_flies_00" )
+local insect_sound    = sound_object( "anomaly\\flies" )
+
+
+function attach( sm )
+  sm:subscribe({ signal = "on_monster_death",  fun = this.on_death         })
+  sm:subscribe({ signal = "on_monster_net_destroy", fun = this.on_destroy  })
+  sm:subscribe({ signal = "on_monster_hit",    fun = this.on_hit           })
+  sm:subscribe({ signal = "on_monster_spawn",  fun = this.on_monster_spawn })
+end
+
+
+function may_attack( obj )
+  if
+    has_alife_info( "volna_goodwill" ) or has_alife_info( "peshera_go" )
+  then
+    return false
+  end
+  return not battle.is_battle_spawned( obj )
+end
+
+
+function on_monster_spawn( obj, binder )
+  if obj:alive() then
+    local range   = get_float(
+      obj:section(), "eye_range." .. level.name(), obj:range()
+    )
+    local range_k = 1
+    if
+      ( not isIndoor( level.name() ) )
+      and ( level.get_time_hours() > 23 or level.get_time_hours() < 4 )
+      and obj:is_monster() and obj.health > 0.05
+      and obj:relation( db.actor ) == game_object.enemy
+      and not string.find( obj:section(), "rat_", 1, true )
+    then
+      obj:set_custom_panic_threshold( 0 )
+      range_k = night_range_k
+    end
+    obj:set_range( obj:range() * range_k )
+  end
+  if not may_attack( obj ) then return end
+
+  local subscribed = {}
+  if obj:alive() then
+    if
+      obj:clsid() == clsid.bloodsucker_s
+      and get_bool( obj:section(), "dsh_monster_attack.bloodsucker_s", true )
+    then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.set_custom_panic,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.bloodsucker_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+      if
+        obj:section() == "bloodsucker_strong"
+        or obj:section() == "bloodsucker_effector"
+      then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.bloodsucker_attack_phantom,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      end
+
+    elseif
+      obj:clsid() == clsid.boar_s
+      and get_bool( obj:section(), "dsh_monster_attack.boar_s", true )
+    then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.boar_body_attack,
+        [ "script_name" ] = script_name(),
+      })
+
+--[=[
+    elseif obj:clsid() == clsid.burer_s then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.burer_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+--]=]
+
+    elseif obj:clsid() == clsid.cat_s then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.set_custom_panic,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.cat_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+    elseif obj:clsid() == clsid.chimera_s then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.chimera_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+    elseif obj:clsid() == clsid.controller_s then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.controller_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+    elseif obj:clsid() == clsid.dog_s then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.dog_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+      if obj:section() == "dog_strong" or obj:section() == "dog_habaruch" then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.dog_attack_phantom,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      end
+
+    elseif
+      obj:clsid() == clsid.poltergeist_s
+      and get_string( obj:section(), "type" ) == "telekinetic"
+    then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.poltergeist_attack,
+        [ "__unsubscribe_on_death" ] = true,
+        [ "script_name" ] = script_name(),
+      })
+
+    elseif obj:clsid() == clsid.pseudodog_s then
+      if obj:section() ~= "volkodav" then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.pseudodog_attack,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      end
+    elseif obj:clsid() == clsid.tushkano_s then
+      if not string.find( obj:section(), "rat_", 1, true ) then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = string.find(
+            obj:section(), "electro_tushkano_", 1, true
+          ) and this.electro_tushkano_attack or this.tushkano_attack,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      end
+    elseif obj:clsid() == clsid.zombie_s then
+      if obj:section() == "zombie_plague" then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.zombie_plague_attack,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      elseif obj:section() == "zombie_plague_komar" then
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.zombie_plague_komar_attack,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      else
+
+        table.insert( subscribed, {
+          [ "signal" ] = "on_update",
+          [ "self"   ] = obj,
+          [ "fun"    ] = this.zombie_attack,
+          [ "__unsubscribe_on_death" ] = true,
+          [ "script_name" ] = script_name(),
+        })
+
+      end
+    end
+  else
+    if
+      obj:clsid() == clsid.boar_s
+      and get_bool( obj:section(), "dsh_monster_attack.boar_s", true )
+    then
+
+      table.insert( subscribed, {
+        [ "signal" ] = "on_update",
+        [ "self"   ] = obj,
+        [ "fun"    ] = this.boar_body_attack,
+        [ "script_name" ] = script_name(),
+      })
+
+    end
+  end
+
+  if table.getn( subscribed ) > 0 then
+    local sm = ogse_signals.get_mgr()
+    for _, s in ipairs( subscribed ) do
+      sm:subscribe( s )
+    end
+    binder[ "dsh_monster_attack.subscribed" ] = subscribed
+  end
+end
+
+
+function on_death( obj, who )
+  local binder     = obj:binded_object()
+  local subscribed = binder[ "dsh_monster_attack.subscribed" ]
+  if subscribed then
+    local left = {}
+    local sm   = ogse_signals.get_mgr()
+    for _, s in ipairs( subscribed ) do
+      if s[ "__unsubscribe_on_death" ] then
+        sm:unsubscribe( s )
+      else
+        table.insert( left, s )
+      end
+    end
+    if table.getn( left ) > 0 then
+      binder[ "dsh_monster_attack.subscribed" ] = left
+    else
+      binder[ "dsh_monster_attack.subscribed" ] = nil
+    end
+  end
+  stop_zombie_particles( obj )
+end
+
+
+function on_destroy( obj )
+  local binder     = obj:binded_object()
+  local subscribed = binder[ "dsh_monster_attack.subscribed" ]
+  if subscribed then
+    local sm = ogse_signals.get_mgr()
+    for _, s in ipairs( subscribed ) do
+      sm:unsubscribe( s )
+    end
+    binder[ "dsh_monster_attack.subscribed" ] = nil
+  end
+  stop_zombie_particles( obj )
+end
+
+
+function stop_zombie_particles( obj )
+  if obj:section() == "zombie_plague" then
+    level.remove_pp_effector( 1001 )
+    insect_particle:stop()
+  elseif obj:section() == "zombie_plague_komar" then
+    level.remove_pp_effector( 1002 )
+    insect_particle:stop()
+  end
+end
+
+
+function on_hit( obj, amount, local_direction, who, bone_index )
+  if obj:alive() then
+    local chk_dist = obj:position():distance_to( who:position() )
+    if chk_dist > obj:range() then
+      obj:set_range( chk_dist * 1.1 )
+    end
+    -- obj:make_object_visible_somewhen( who )
+  end
+end
+
+
+local bloodsucker_sound = sound_object(
+  "monsters\\bloodsucker\\bloodsucker_attack"
+)
+
+function bloodsucker_attack( obj )
+  local distance = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule( distance < obj:range() and 1513 or 2000 )
+  if distance > bloodsucker_attack_dist then return end
+  if obj.health < 0.05 then return end
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+    )
+  then
+    return
+  end
+  local binder = obj:binded_object()
+  if math.random() < 0.5 then
+    binder.bloodsucker_can_attack_phantom = true
+    if not bloodsucker_sound:playing() then
+      bloodsucker_sound:play_at_pos(
+        db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+      )
+      bloodsucker_sound.volume = 5
+    end
+    local h = hit()
+    h.type      = hit.explosion
+    h.direction = vector():set( 0, 0, 0 )
+    h.power     = 0.11
+    h.impulse   = 0
+    h.draftsman = obj
+    enemy:hit( h )
+    h.type      = hit.wound
+    enemy:hit( h )
+  elseif enemy:see( obj ) then
+    binder.bloodsucker_can_attack_phantom = true
+  end
+end
+
+
+function bloodsucker_attack_phantom( obj )
+  local attack_dist = bloodsucker_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < obj:range() and dist > attack_dist ) and 1000 or 2000
+  )
+  if dist < attack_dist then return end
+  if obj.health < 0.05  then return end
+  local enemy = obj:get_enemy()
+  if not ( enemy and enemy:is_actor() and obj:see( enemy ) ) then
+    return
+  end
+  local binder = obj:binded_object()
+  if not binder.bloodsucker_can_attack_phantom then
+    return
+  end
+  ogse_signals.get_mgr():reschedule( 5000 )
+  if
+    binder.phantom_spawned_id
+    and level.object_by_id( binder.phantom_spawned_id )
+  then
+    return
+  end
+  binder.phantom_spawned_id = nil
+  if math.random() < 0.4 then
+    local sobj = alife():create(
+      "phantom_krovosos_0",
+      obj:position(),
+      enemy:level_vertex_id(), enemy:game_vertex_id()
+    )
+    binder.phantom_spawned_id = sobj.id
+  end
+end
+
+
+function boar_body_attack( obj )
+  local attack_dist = obj:radius() + get_actor_obj().inventory.take_dist + 1
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist * 2 and 100 )
+    or ( dist < attack_dist * 10 and 1000 )
+    or 2000
+  )
+  local fdelta_id = script_name() .. ".boar_body_attack." .. obj:id()
+  if dist < attack_dist then
+    local belt_rs = inventory.on_belt_restore_speed(
+      "radiation_restore_speed"
+    )
+    local dt = dsh_fdelta_times.fdelta_time( fdelta_id, true ) or 0
+    if belt_rs < 0 and dt > 0 then
+      db.actor.radiation = 0 - belt_rs * dt
+    end
+    local h = hit()
+    h.type      = hit.radiation
+    h.power     = 0.0011 + 0.008 * dsh.get_this_level_difficulty()
+    h.impulse   = 0.0
+    h:bone( "BI_NONE" )
+    h.draftsman = obj
+    h.direction = vector_rotate_y( db.actor:direction(), 180 )
+    db.actor:hit( h )
+  elseif dsh_fdelta_times.fdelta_time( fdelta_id ) then
+    dsh_fdelta_times.stop_timer( fdelta_id )
+  end
+end
+
+
+function burer_attack( obj )
+  local attack_dist = 25
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist and 100 )
+    or ( dist < obj:range() and 1000 )
+    or 2000
+  )
+  if dist > attack_dist then return end
+  if obj.health < 0.05  then return end
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+    )
+  then
+    return
+  end
+  local v1 = obj:direction()
+  local v2 = db.actor:direction()
+  if ( v1.x * v2.x ) + ( v1.z * v2.z ) < -0.6 then
+    local diff = 3
+    if math.random() < diff / 10 then
+      db.actor.power = -1.0
+    end
+    try_drop_weapon( diff / 20 )
+    ogse_signals.get_mgr():reschedule( 6000 * ( math.random( 80, 120 ) / 100 ) )
+  end
+end
+
+
+function cat_attack( obj )
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule( dist < obj:range() and 1513 or 2000 )
+  if obj.health < 0.05 then return end
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+    )
+  then
+    return
+  end
+  if math.random() < 0.3 then
+    level.add_pp_effector( "black_cats.ppe", 2015, false )
+    dsh_sleep.zevota()
+    dsh_sleep.add_gg_need_sleep( 17 )
+  end
+end
+
+
+local chimera_sound = sound_object( "monsters\\chimera\\attack_2" )
+
+function chimera_attack( obj )
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule( dist < obj:range() and 1513 or 2000 )
+  if dist > chimera_attack_dist then return end
+  if obj.health < 0.5   then return end
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+    )
+  then
+    return
+  end
+  if math.random() < 0.5 then
+    if not chimera_sound:playing() then
+      chimera_sound:play_at_pos(
+        db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+      )
+    end
+    if db.actor.power > 0.05 then
+      db.actor.power = 0.05 - db.actor.power
+    end
+  end
+end
+
+
+function start_fire()
+  local wpn = db.actor:active_item()
+  if not ( wpn and wpn:is_weapon_magazined() ) then return end
+  local slots = {
+    [ 1 ] = true,
+    [ 2 ] = true,
+    [ 7 ] = true,
+  }
+  if not slots[ db.actor:active_slot() ] then return end
+  wpn:get_weapon():start_fire()
+  dsh.timeout(
+    math.random( 1000, 5000 ),
+    function( id, name )
+      local wpn = db.actor:active_item()
+      if wpn and wpn:id() == id and wpn:name() == name then
+        wpn:get_weapon():stop_fire()
+      end
+    end,
+    wpn:id(), wpn:name()
+  )
+end
+
+
+function controller_attack( obj )
+  local attack_dist = controller_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule( dist < obj:range() and 1513 or 2000 )
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:is_actor() and ( obj:see( enemy ) or dist < attack_dist )
+    )
+  then
+    return
+  end
+  if obj:controller_psy_hit_active() then return end
+  if math.random() < 0.5 then
+    local dir = device().cam_dir
+    local x   = dir.x - ( 1.5 - 3 * math.random() )
+    local y   = dir.y
+    local z   = dir.z - ( 1.5 - 3 * math.random() )
+    dir = vector():set( x, y, z )
+    local h   = -dir:getH()
+    local p   = -dir:getP()
+    local cam = actor_camera( 0 )
+    if cam then
+      cam.yaw   = h
+      cam.pitch = p
+    end
+  else
+    start_fire()
+  end
+end
+
+
+function dog_attack( obj )
+  local dist = obj:position():distance_to( db.actor:position() )
+  if dist > dog_attack_dist or obj.health < 0.05 then
+    ogse_signals.get_mgr():reschedule( 2000 )
+    return
+  else
+    ogse_signals.get_mgr():reschedule( 1513 )
+  end
+  local enemy = obj:get_enemy()
+  if not ( enemy and enemy:is_actor() and obj:see( enemy ) ) then
+    return
+  end
+  if math.random() > dsh.get_this_level_difficulty() then return end
+  level.add_pp_effector( "radiation.ppe", 2012, false )
+  local h = hit()
+  h.type      = hit.telepatic
+  h.power     = 0.01 + 0.02 * dsh.get_this_level_difficulty()
+  h.impulse   = 0.0
+  h:bone( "BI_NONE" )
+  h.draftsman = obj
+  h.direction = obj:direction()
+  db.actor:hit( h )
+  try_drop_weapon()
+end
+
+
+function try_drop_weapon( drop )
+  if not drop then drop = 0.14 end
+  local outfit = db.actor:get_current_outfit()
+  local helmet = true
+  if
+    outfit
+    and get_bool( outfit:section(), "dynamic_hud_enable", false )
+    and not ogse_dynamic_hud.get_current_helmet()
+  then
+    drop   = drop * 1.5
+    helmet = false
+  end
+  local active_slot = db.actor:active_slot()
+  if active_slot and drop > 0 then
+    if helmet and dsh.small_wpn_slots[ active_slot ] then
+      drop = drop * 0.1
+    elseif active_slot ~= 2 then
+      drop = 0
+    end
+    if drop > 0 and math.random() < drop then
+      db.actor:drop_item( db.actor:active_item() )
+      archievements.acv_count_event( "acv_drop", 10, "Маша-растеряша" )
+    end
+  end
+end
+
+
+function dog_attack_phantom( obj )
+  local attack_dist = dog_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < obj:range() and dist > attack_dist ) and 1000 or 2000
+  )
+  if dist < attack_dist then return end
+  if obj.health < 0.05  then return end
+  local enemy = obj:best_enemy()
+  if not ( enemy and enemy:is_actor() and obj:see( enemy ) ) then
+    return
+  end
+  local binder = obj:binded_object()
+  if enemy:see( obj ) then
+    binder.dog_can_attack_phantom = true
+  elseif not binder.dog_can_attack_phantom then
+    return
+  end
+  ogse_signals.get_mgr():reschedule( 5000 )
+  if not (
+    binder.phantom_spawned_id
+    and level.object_by_id( binder.phantom_spawned_id )
+  ) then
+    binder.phantom_spawned_id = nil
+    if math.random() < 0.3 then
+      local sobj = alife():create(
+        "phantom_dog_0",
+        obj:position(),
+        enemy:level_vertex_id(), enemy:game_vertex_id()
+      )
+      binder.phantom_spawned_id = sobj.id
+    end
+  end
+end
+
+
+function electro_tushkano_attack( obj )
+  local dist = obj:position():distance_to( db.actor:position() )
+  if dist > tushkano_attack_dist then
+    ogse_signals.get_mgr():reschedule( 2000 )
+    return
+  else
+    ogse_signals.get_mgr():reschedule( 1513 )
+  end
+  local enemy = obj:best_enemy()
+  if not (enemy and enemy:is_actor() and obj:see( enemy ) ) then
+    return
+  end
+  charge_tushkano( obj, enemy )
+end
+
+
+function poltergeist_attack( obj )
+  local attack_dist = poltergeist_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist * 2 and 250 )
+    or ( dist < obj:range() and 1000 )
+    or 2000
+  )
+  if dist > attack_dist then return end
+  local enemy = obj:best_enemy()
+  if not (
+    enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+  ) then
+    return
+  end
+  charge_tushkano( obj, enemy )
+  ogse_signals.get_mgr():reschedule( 100 )
+end
+
+
+local pseudodog_cam_t
+local pseudodog_sound = sound_object( "monsters\\pseudodog\\psy_affect_0" )
+
+function pseudodog_attack( obj )
+  local attack_dist = pseudodog_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist and 500 )
+    or ( dist < obj:range() and 1000 )
+    or 2000
+  )
+  if obj.health < 0.05 then return end
+  local enemy = obj:best_enemy()
+  if not (
+    enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+  ) then
+    return
+  end
+  local time_next_attack = 2500
+  local time_cam_effect  = 700
+  if enemy:see( obj ) then
+    local v1 = obj:direction()
+    local v2 = db.actor:direction()
+    if
+      ( v1.x * v2.x ) + ( v1.z * v2.z ) < -0.6 and dist < attack_dist
+    then
+      for _, n in ipairs({ 1, 2 }) do
+        level.add_cam_effector(
+          "build_1935_pseudodog_effect_" .. n .. ".anm", 990 + n, false,
+          ""
+        )
+      end
+      level.add_pp_effector ( "psy_antenna.ppe", 395, false )
+      local h = hit()
+      h.draftsman = obj
+      h.type      = hit.telepatic
+      h.direction = vector():set( 0, 0, 0 )
+      h:bone( "BI_NONE" )
+      h.power     = 0.05 + 0.02 * dsh.get_this_level_difficulty()
+      h.impulse   = 0.0
+      db.actor:hit( h )
+      if not pseudodog_sound:playing() then
+        pseudodog_sound:play_at_pos(
+          db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+        )
+      end
+      try_drop_weapon()
+      ogse_signals.get_mgr():reschedule(
+        time_next_attack * ( math.random( 80, 120 ) / 100 ) + time_cam_effect
+      )
+      if pseudodog_cam_t then pseudodog_cam_t:stop() end
+      pseudodog_cam_t = dsh.timeout( time_cam_effect, function()
+        level.remove_pp_effector( 395 )
+        for _, n in pairs({ 1, 2 }) do
+          level.remove_cam_effector( 990 + n )
+        end
+        pseudodog_cam_t = nil
+      end )
+    end
+  end
+end
+
+
+function set_custom_panic( obj )
+  local panic_dist = 10
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < panic_dist * 3 and 100 )
+    or ( dist < obj:range() and 200 )
+    or 2000
+  )
+  if obj.health < 0.05 then return end
+  local enemy = obj:get_enemy()
+  if not ( enemy and enemy:is_actor() ) then return end
+  if
+    dist < panic_dist
+    and obj:see( enemy )
+    and enemy:active_slot() == 0
+    and enemy:active_item() and dsh.is_knife( enemy:active_item():section() )
+    and enemy:see( obj )
+  then
+    obj:set_custom_panic_threshold( 1 )
+  else
+    obj:set_custom_panic_threshold( 0 )
+  end
+end
+
+
+function tushkano_attack( obj )
+  local dist = obj:position():distance_to( db.actor:position() )
+  if dist > tushkano_attack_dist then
+    ogse_signals.get_mgr():reschedule( 1000 )
+    return
+  else
+    ogse_signals.get_mgr():reschedule(  250 )
+  end
+  local enemy = obj:best_enemy()
+  if not ( enemy and enemy:is_actor() and obj:see( enemy ) ) then
+    return
+  end
+  local binder = obj:binded_object()
+  if enemy:see( obj ) or dist < 5 then
+    binder.tushkano_can_attack = true
+  elseif not binder.tushkano_can_attack then
+    return
+  end
+  if math.random() > 0.25 then return end
+  local h = hit()
+  h.type      = hit.chemical_burn
+  h.direction = vector():set( 0, 0, 0 )
+  h.power     = 0.11
+  h.impulse   = 0
+  h.draftsman = obj
+  h:bone( "BI_NONE" )
+  enemy:hit( h )
+end
+
+
+local zombie_sound = sound_object( "monsters\\zombie\\zombi_attack2" )
+
+function zombie_attack( obj )
+  local attack_dist = zombie_attack_dist
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule( dist < obj:range() and 1513 or 2000 )
+  if dist > attack_dist then return end
+  if obj.health < 0.05  then return end
+  local enemy = obj:get_enemy()
+  if
+    not (
+      enemy and enemy:id() == db.actor:id() and obj:see( enemy )
+    )
+  then
+    return
+  end
+  if math.random() < 0.5 then
+    if math.random() < 0.4 then
+      if not zombie_sound:playing() then
+        zombie_sound:play_at_pos(
+          db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+        )
+        run_snd_vol_timer( 0.1 )
+      end
+    end
+    if db.actor.satiety >= 0.1 then
+      db.actor.satiety = -0.1
+    end
+  end
+end
+
+
+-- Атака насекомых при приближении к чумному зомби
+function zombie_plague_attack( obj )
+  local attack_dist = 10
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist and 100 )
+    or ( dist < attack_dist * 2 and 1000 )
+    or 2000
+  )
+  local binder = obj:binded_object()
+  if binder.attack_t and binder.attack_t > time_global() then return end
+  binder.attack_t   = time_global() + (
+    dist < ( attack_dist * 2 ) and 250 or 1000
+  )
+  if dist < attack_dist then
+    level.add_pp_effector( "dead_zone.ppe", 1001, true )
+    level.set_pp_effector_factor( 1001, 0.1 )
+    local actor = db.actor:position()
+    if not insect_particle:playing() then
+      insect_particle:play_at_pos(
+        vector():set( actor.x, actor.y + 1.8, actor.z )
+      )
+    else
+      insect_particle:move_to(
+        vector():set( actor.x, actor.y + 1.8, actor.z ),
+        vector():set( actor.x, actor.y + 1.8, actor.z )
+      )
+    end
+    if not insect_sound:playing() then
+      insect_sound:play_at_pos(
+        db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+      )
+      local zh = hit()
+      zh.draftsman = obj
+      zh.type      = hit.chemical_burn
+      zh.direction = obj:position():sub( actor )
+      zh.power     = 0.6
+      zh.impulse   = 0
+      zh:bone( "BI_NONE" )
+      db.actor:hit( zh )
+    else
+      insect_sound:set_position( actor )
+    end
+  else
+    level.remove_pp_effector( 1001 )
+    insect_particle:stop()
+  end
+end
+
+
+-- Атака насекомых при приближении к комариному зомби
+local komar_sound = sound_object( "anomaly\\komar" )
+
+function zombie_plague_komar_attack( obj )
+  local attack_dist = 12
+  local dist = obj:position():distance_to( db.actor:position() )
+  ogse_signals.get_mgr():reschedule(
+    ( dist < attack_dist and 250 )
+    or ( dist < attack_dist * 2 and 1000 )
+    or 2000
+  )
+  if dist < attack_dist then
+    level.add_pp_effector( "total_recall.ppe", 1002, true )
+    level.set_pp_effector_factor( 1002, 0.1 )
+    local actor = db.actor:position()
+    if not insect_particle:playing() then
+      insect_particle:play_at_pos(
+        vector():set( actor.x, actor.y + 1.8, actor.z )
+      )
+    else
+      insect_particle:move_to(
+        vector():set( actor.x, actor.y + 1.8, actor.z ),
+        vector():set( actor.x, actor.y + 1.8, actor.z )
+      )
+    end
+    if not komar_sound:playing() then
+      komar_sound:play_at_pos(
+        db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+      )
+      local zh = hit()
+      zh.draftsman = obj
+      zh.type      = hit.chemical_burn
+      zh.direction = obj:position():sub( actor )
+      zh.power     = 1.1
+      zh.impulse   = 0
+      zh:bone( "BI_NONE" )
+      db.actor:hit( zh )
+    else
+      komar_sound:set_position( actor )
+    end
+  else
+    level.remove_pp_effector( 1002 )
+    insect_particle:stop()
+  end
+end
+
+
+local tushkano_particle = particles_object( "anomaly2\\electra_entrance_big" )
+local tushkano_sound    = sound_object( "monsters\\tushkano\\tushkano_spark" )
+
+function charge_tushkano( obj, enemy )
+  if not tushkano_particle:playing() then
+    tushkano_particle:play_at_pos( obj:position() )
+  end
+  if not tushkano_sound:playing() then
+    tushkano_sound:play_at_pos(
+      db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
+    )
+    local zh = hit()
+    zh.draftsman = obj
+    zh.type      = hit.shock
+    zh.direction = obj:position():sub( enemy:position() )
+    zh.power     = 0.2
+    zh.impulse   = 0.05
+    enemy:hit(zh)
+  end
+end
+
+
+local snd_vol_t
+function run_snd_vol_timer( vol )
+  level.set_snd_volume( vol )
+  if not snd_vol_t then
+    snd_vol_t = check_snd_vol_timer():start()
+  end
+end
+
+class "check_snd_vol_timer" ( ogse_qt.quick_timer )
+function check_snd_vol_timer:__init() super()
+  self.first_update = true
+end
+
+function check_snd_vol_timer:condition()
+  return level.get_snd_volume() >= 1
+end
+
+function check_snd_vol_timer:action()
+  snd_vol_t = nil
+end
+
+function check_snd_vol_timer:update()
+  self:reschedule( 8538 )
+  if self.first_update then
+    self.first_update = false
+  else
+    local s_nd = level.get_snd_volume()
+    if s_nd < 1 then
+      level.set_snd_volume( s_nd + 0.1 )
+    end
+  end
+end

@@ -1,0 +1,214 @@
+; -*- mode: conf-windows; coding: windows-1251-dos -*-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ѕистолет "‘орт-12" украинского производства ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;---------------------------------------------------------------------------------------------------------------------------------
+[wpn_fort]:class_pistol,hud_wpn_fx.pm
+GroupControlSection			= spawn_group
+discovery_dependency 		= 
+$spawn                   	= "weapons\fort"					; option for Level Editor
+$npc			 			= on				; option for Level Editor
+$prefetch 					= 8
+scheduled            		= off              ; option for ALife Simulator
+cform                    	= skeleton
+class                    	= WP_PM
+description					= enc_weapons1_wpn-fort
+
+;-----------------------------------------------------------------------------------
+holder_range_modifier	= 1.0               ; во сколько раз увеличиваетс€ eye_range 
+holder_fov_modifier		= 1.0            ; во сколько раз увеличиваетс€ eye_fov
+;-----------------------------------------------------------------------------------
+
+cost					 	= 350
+
+ammo_limit		 			= 120
+ammo_current		 		= 90
+ammo_elapsed		 		= 12
+
+f_mode				      = 1
+
+ammo_mag_size		 		= 12
+ammo_class		 			= ammo_9x18_fmj, ammo_9x18_pmm
+
+
+hand_dependence		 		= 1
+single_handed				= 1
+
+animation_slot		 		= 1		; type of the animation that will be used
+
+
+inv_name					= wpn-fort
+inv_name_short				= wpn-fort
+inv_weight					= 0.83
+
+icon_name = icon_fort12
+inv_grid_width				= 2
+inv_grid_height				= 1
+inv_grid_x					= 80
+inv_grid_y					= 74
+
+kill_msg_x			= 104
+kill_msg_y			= 178
+kill_msg_width		= 28
+kill_msg_height		= 21
+
+;-----------------------------------------------------------------------------------
+;базова€ дисперси€
+disp_rate = 1.85
+
+;отдача
+cam_dispersion          	= 0.35	;увеличени€ угла (в градусах) с каждым выстрелом
+cam_dispersion_inc		= 0.0	      ;увеличениe cam_dispersion с каждым выстрелом
+cam_dispertion_frac		= 1.0	      ;ствол будет подыматьс€ на cam_dispersion*cam_dispertion_frac +- cam_dispersion*(1-cam_dispertion_frac)
+cam_max_angle			= 6.0	      ;максимальный угол отдачи
+cam_max_angle_horz		= 8.0	      ;(degree) maximum shot horizontal degree 
+cam_step_angle_horz		= 0.37	;(degree) size of step camera moved in horizontal position while shooting
+;-----------------------------------------------------------------------------------
+
+direction					= 0, 0, 1
+fire_point					= 0.0, 0.130, 0.16
+
+flame_particles					= amik\weapons\flame_particles\pistol\p_flame_particles_3
+smoke_particles					= amik\weapons\smoke_particles\p_smoke_particles_02
+rpm_empty_click 	 		= 200
+
+shell_point		 			= 0.05, 0.148, 0.053
+shell_dir		 			= 0.0, 0.0, 0.4
+;shell_particles	 				= amik\weapons\9x18_shells_r
+
+;;;;;;  ƒл€ Ќародной сол€нки 2010
+hit_rate	        = 1.86
+bullet_speed					= 315	
+
+silencer_hit_power       	= 0.49
+silencer_hit_impulse	 	= 32
+silencer_fire_distance   	= 45
+silencer_bullet_speed	 	= 320
+
+hud                      	= wpn_fort_hud
+normal                   	= 0, 1, 0
+position                 	= -0.021,-0.084,-0.015
+orientation              	= 0, 0, 0
+
+;--STRAP PARAMETERS-----------------------------------------------------------------
+;strap_position         		= -0.1,-0.45,0.2			; position (offset) and orientation of the weapon when it is strapped
+;strap_orientation      		= 1.57,0,0						; (3rd person view)
+;strap_bone0					= bip01_spine2
+;strap_bone1					= bip01_spine1
+
+startup_ammo             	= 90
+visual                   			= weapons\fort\wpn_fort.ogf
+
+light_color		 			= 0.6,0.5,0.3
+light_var_color		 			= 0.05
+light_time 		 			= 0.2
+
+ph_mass			 			= 1
+;cost			 			= 350
+
+;addons
+scope_status				= 0
+silencer_status				= 0
+grenade_launcher_status		      = 0
+
+zoom_enabled				= true
+
+snd_draw					= weapons\pistol_draw
+snd_holster					= weapons\pistol_holster
+snd_shoot					= weapons\fort\fort_shoot
+snd_empty					= weapons\fort\empty, 0.6
+snd_reload					= weapons\fort\fort_reload
+snd_close					= weapons\pistol_holster
+snd_silncer_shot			= weapons\pm\pm_shot_sil
+snd_razgruzka				= weapons\razgruzka\ammo_2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; silencer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+silencer_name  				= wpn_addon_sil_9_p		; section name for the attachable silencer
+silencer_x 					= 66						; offset in inventory icon
+silencer_y 					= -18					
+
+;params when silencer is attached 
+;similar to corresponding params without prefix silencer_
+
+;silencer_flame_particles 			= weapons\generic_weapon01
+silencer_smoke_particles 			= amik\weapons\smoke_particles\p_smoke_particles_02
+
+silencer_light_color				= 0.6,0.5,0.3
+silencer_light_range				= 0.01
+silencer_light_var_color			= 0.05
+silencer_light_var_range			= 0.5
+silencer_light_time 				= 0.2
+
+
+[wpn_fort_hud]:hud_pistol
+shell_point					= 0.02 0.060, -1.09
+shell_dir		 				= 0.0, 1.0, 0.0
+fire_point					= -0.000000,-0.005000,-0.35000
+	
+fire_bone					= wpn_body
+
+position					= 0.005000,0.005000,-0.075000
+orientation					= 0.000000,0.000000,0.000000
+
+visual                   			= weapons\fort\wpn_fort_hud.ogf
+
+anim_holster				= holster
+anim_idle					= idle
+anim_empty					= idle_empty
+anim_reload					= reload
+anim_reload_empty			= reload_empty
+anim_draw					= draw
+anim_draw_empty				= draw_empty
+anim_shoot					= shoot
+anim_shot_last				= shoot_last
+anim_close					= holster_empty
+anim_idle_aim				= idle_aim
+anim_idle_sprint			= idle_sprint
+
+zoom_offset					= -0.119400,0.049550,0.106000
+zoom_rotate_x				= 0.004400
+zoom_rotate_y				= 0.000775
+
+
+[wpn_fort_m1]:wpn_fort
+$spawn              			= "weapons\uniq\wpn_fort_m1"
+inv_name						= wpn-fort_m
+inv_name_short					= wpn-fort_m
+inv_weight					= 0.70
+description						= enc_weapons1_wpn-fort_m1
+
+icon_name = icon_fort17
+;inv_grid_x						= 10
+;inv_grid_y						= 21
+
+visual						= weapons\fort\wpn_fort17.ogf
+cost 						= 800
+hud							= wpn_fort_m1_hud
+ammo_mag_size				= 13
+
+
+[wpn_fort_m1_hud]:wpn_fort_hud
+fire_point					= -0.000000,-0.005000,-0.35000
+
+position					= 0.005000,0.005000,-0.075000
+orientation					= 0.000000,0.000000,0.000000
+
+visual						= weapons\fort\wpn_fort17_hud.ogf
+
+anim_holster				= holster
+anim_idle					= idle
+anim_empty					= idle_empty
+anim_reload					= reload
+anim_reload_empty			= reload_empty
+anim_draw					= draw
+anim_draw_empty				= draw_empty
+anim_shoot					= shoot
+anim_shot_last				= shoot_last
+anim_close					= holster_empty
+anim_idle_aim				= idle_aim
+anim_idle_sprint			= idle_sprint
+
+zoom_offset					= -0.119800,0.047850,0.106000
+zoom_rotate_x				= 0.000400
+zoom_rotate_y				= 0.000675

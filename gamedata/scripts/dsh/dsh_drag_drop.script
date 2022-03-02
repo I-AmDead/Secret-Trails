@@ -1,0 +1,65 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_inventory_open", fun = this.on_show_inventory })
+end
+
+
+local drop_on_id = false
+local subscribed = false
+
+function on_show_inventory()
+  if not subscribed then
+    subscribed = {
+      { signal = "on_cell_item_focus", fun = this.on_cell_item_focus },
+      { signal = "on_cell_item_focus_lost", fun = this.on_cell_item_focus_lost },
+      { signal = "on_cell_item_mouse", fun = this.on_cell_item_mouse },
+      { signal = "on_drop_before_all", fun = this.on_drop            },
+      { signal = "on_inventory_hide",  fun = this.on_hide_inventory  },
+    }
+    local sm = ogse_signals.get_mgr()
+    for _, s in ipairs( subscribed ) do
+      sm:subscribe( s )
+    end
+  end
+  drop_on_id = false
+end
+
+
+function on_hide_inventory()
+  if subscribed then
+    local sm = ogse_signals.get_mgr()
+    for _, s in ipairs( subscribed ) do
+      sm:unsubscribe( s )
+    end
+    subscribed = false
+  end
+  drop_on_id = false
+end
+
+
+function on_cell_item_focus( obj )
+  drop_on_id = obj:id()
+end
+
+function on_cell_item_focus_lost( obj )
+  if obj:id() == drop_on_id then
+    drop_on_id = false
+  end
+end
+
+function on_drop( obj )
+  on_cell_item_focus_lost( obj )
+end
+
+
+function on_cell_item_mouse( obj, x, y, action )
+  if action ~= ui_events.DRAG_DROP_ITEM_DROP then return end
+  if drop_on_id then
+    local drop_on_obj = level.object_by_id( drop_on_id )
+    if drop_on_obj then
+      ogse_signals.get_mgr():call( "inv_drag_drop", obj, drop_on_obj )
+    end
+    drop_on_id = false
+  end
+end

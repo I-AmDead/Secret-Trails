@@ -1,0 +1,415 @@
+---- AI Additions ----
+---- Rulix aka Bak ----
+---- 21.7.2009,08.01.2016,11.10.2016
+
+local animst = {
+bandage = { {a = "norm_torso_12_draw_0",t = 400},{a = "norm_torso_12_attack_0",t = 3600},{a = "norm_torso_12_holster_0",t = 250} }, --,{a = "norm_torso_12_reload_0",t = 600}
+medkit = { {a = "dmg_norm_torso_11_draw_0",t = 600},{a = "dmg_norm_torso_11_attack_0",t = 4300},{a = "dmg_norm_torso_11_holster_0",t = 250} }, --,{a = "dmg_norm_torso_11_holster_reload_0",t = 600}
+pills = { {a = "cr_raciya_0_draw_0",t = 750},{a = "cr_raciya_0_draw_1",t = 900},{a = "cr_raciya_0_hide_0",t = 600} },
+drink = { {a = "idle_0_to_sit_2",t = 2350},{a = "vodka_3",t = 3650},{a = "sit_2_to_idle_0",t = 550},crouch = {{a = "vodka_3",t = 3800}}} ,
+}
+
+function printf(s, ...)
+	rx_utils.printf("bandage:"..s,...)
+end
+
+local bg_ini = ini_file([[misc\ai_additions\bandage.ltx]])
+ASSERTX(bg_ini:section_exist("default"),"no bg_ini")
+bandage_sets = {}
+bandage_sets.spawn_mt = rx_utils.read_from_ini(bg_ini,"main","spawn_medkits_time",120)*1000
+bandage_sets.spawn_bt = rx_utils.read_from_ini(bg_ini,"main","spawn_bandages_time",60)*1000
+bandage_sets.max_h = rx_utils.read_from_ini(bg_ini,"main","medkit_health",50)/100
+bandage_sets.min_b = rx_utils.read_from_ini(bg_ini,"main","bandage_bleeding",0.2)
+bandage_sets.medkits = rx_utils.collect_sections(bg_ini,{"medkits"},nil,true,true)
+bandage_sets.bandages = rx_utils.collect_sections(bg_ini,{"bandages"},nil,true,true)
+bandage_sets.anims = rx_utils.collect_sections(bg_ini,{"animation"},function(n) return animst[n] end)
+bandage_sets.forbidden_factions = rx_utils.parse_list(bg_ini,"main","forbidden_factions",true)
+bandage_sets.forbidden_npcs = rx_utils.collect_sections(bg_ini,{"forbidden_npcs"},nil,true)
+local profiles = {}
+local function read_profile(section)
+	if not bg_ini:section_exist(section) or bg_ini:line_count(section) == 0 then
+		return profiles.default
+	end
+	if not profiles[section] then
+		profiles[section] = {
+		spawn_m = rx_utils.parse_list(bg_ini,section,"spawn_medkits"),
+		spawn_b = rx_utils.parse_list(bg_ini,section,"spawn_bandages"),
+		infinite = bg_ini:r_bool(section,"infinite") or nil,
+		disabled = not bg_ini:r_bool(section,"enabled") or nil,
+		}
+	end
+	return profiles[section]
+end
+read_profile('default')
+
+class "evaluator_bandage" (property_evaluator)
+function evaluator_bandage:__init(npc,name,storage) super (nil,name)
+	self.st = storage
+	self.hitt = time_global()+math.random(6000,8000)
+	rx_ai.subscribe_for_events(npc,self)
+end
+function evaluator_bandage:evaluate()
+	local npc = self.object
+	if self.hitt > time_global() then
+		return false
+	end
+	if self.st.action then		-- пока работает экшн, нас ничего не интересует, кроме укрытия
+		if rx_utils.npc_in_cover(npc) then
+			return true
+		end
+		self.hitt = time_global()+1000
+		return false
+	elseif self.st.fin then		-- после завершения экшена отключаемся на время
+		self.hitt = time_global()+5000
+		self.st.fin = nil
+		return false
+	end
+	local wound,bleed = npc.health < bandage_sets.max_h,npc:get_bleeding() > bandage_sets.min_b
+	if not (wound or bleed) then			-- если лечиться не нужно
+		self.hitt = time_global()+5000
+		return false
+	end
+--	ASSERTX(self.st.pr,"evaluator_bandage[%s:%s]: no pr, profile %s",npc:name(),npc:character_name(),self.st.current_profile)
+	if self.st.pr.disabled then				-- текущий профиль запрещает лечиться
+		self.hitt = time_global()+7000
+		return false
+	end
+	local npc_id = npc:id()
+	if npc:best_enemy() then
+		local wpn = npc:active_item()
+		if wpn and wpn:get_ammo_in_magazine() == 0 then
+			return false
+		end
+	elseif db.storage[npc_id].active_scheme == "remark" then
+		self.hitt = time_global()+5000
+		return false
+	end
+	if string.find(state_mgr.get_state(npc),"wounded") or xr_wounded.is_heavy_wounded_by_id(npc_id) then
+		if not db.storage[npc_id].wounded.wound_manager.cover or db.storage[npc_id].wounded_already_selected then
+			self.hitt = time_global()+10000
+			return false
+		elseif npc:movement_type() ~= move.stand then
+			return false	-- ждем, когда доберется до укрытия
+		end
+	end
+	local medkit = self.st.medkit and npc:object(self.st.medkit)
+	if not medkit then
+		if wound then					-- в первую очередь смотрим аптечки
+			for k,v in ipairs(bandage_sets.medkits) do
+				medkit = npc:object(v)
+				if medkit then
+					self.st.medkit = v
+					break
+				end
+			end
+			if not (medkit or spawn_medkit(npc,self.st)) then
+				self.hitt = time_global()+6000
+			end
+		end
+		if not medkit and bleed then	-- если нет аптечки, но нужна перевязка - ищем бинты
+			for k,v in ipairs(bandage_sets.bandages) do
+				medkit = npc:object(v)
+				if medkit then
+					self.st.medkit = v
+					break
+				end
+			end
+			if not (medkit or spawn_bandage(npc,self.st)) then
+				self.hitt = time_global()+4000
+			end
+		end
+		if not medkit then				-- если аптечка не найдена
+			self.st.medkit = nil
+			return false
+		end
+	end
+	if rx_gl and npc:motivation_action_manager():current_action_id() == rx_gl.actid_gl_reload then
+		self.hitt = time_global()+1500
+		return false
+	end
+	if not rx_utils.npc_in_cover(npc,true) then	-- ждём когда окажемся в укрытии
+		return false
+	end
+	return true
+end
+function evaluator_bandage:hit_callback()
+	self.hitt = time_global()+5000
+end
+
+
+class "action_bandage" (action_base)
+function action_bandage:__init (npc,action_name,storage) super (nil,action_name)
+	self.st = storage
+end
+function action_bandage:initialize()
+	action_base.initialize(self)
+	local npc = self.object
+	npc:set_desired_position()
+	npc:set_desired_direction()
+	npc:set_movement_type(move.stand)
+	self.crouch_anim_fix = npc:body_state() == move.crouch or nil
+	state_mgr.lock(npc,true,true)
+	rx_ai.subscribe_for_events(npc,self)
+end
+function action_bandage:execute()
+	action_base.execute(self)
+	local npc = self.object
+	if db.storage[npc:id()].danger_flag then
+		local danger = npc:best_danger()
+		danger = danger and danger:object()
+		if danger then
+			npc:set_sight(danger,true,false)
+		end
+	elseif npc:best_enemy() then
+		npc:set_sight(npc:best_enemy(),true,false)
+	else
+		npc:set_sight(look.direction,npc:direction())
+	end
+	if not self.st.action then		-- цикл прошёл, но запущен снова без переключения
+		if not (self.st.medkit and npc:object(self.st.medkit)) then
+			printf("act[%s]:restart: not medkit",npc:character_name())
+			return
+		end
+		self.st.action = true
+		self.timer = 0
+		self.animst = 0
+		self.attached = false
+		-------------------------------------
+		return
+	elseif npc:active_item() and not npc:weapon_strapped() then
+		if self.can_strap == nil then
+			self.can_strap = can_strap(npc)
+		end
+		if self.can_strap then
+			npc:set_item(object.strap,npc:active_item())
+		else
+			npc:set_item(object.idle,nil)
+		end
+		return
+	end
+	-- аттач предметов
+	-- из-за движковой кривизны действительно прикрепить можно только один предмет
+	if not self.attached then
+		local torch = npc:object("device_torch")
+		if torch then
+			torch:enable_attachable_item(false)	-- фонарь не нужен
+		end
+		local medkit = self.st.medkit and npc:object(self.st.medkit)
+		if medkit then
+			medkit:enable_attachable_item(true)
+		end
+		self.attached = true
+	end
+	if self.crouch_anim_fix then
+		rx_utils.add_anim(npc,"cr_torso_0_aim_1")
+		self.crouch_anim_fix = nil
+		return
+	end
+	local anims = bandage_sets.anims[self.st.medkit]
+	if npc:body_state() == move.crouch and anims.crouch then
+		anims = anims.crouch
+	end
+	if self.timer < time_global() then
+		self.animst = self.animst+1
+	else
+		return
+	end
+	if anims[self.animst] then
+		npc:play_cycle(anims[self.animst].a,true)
+		if self.animst == 2 and anims[self.animst].t > 2500 and npc:best_enemy() and not npc:best_enemy():wounded() then
+			self.timer = time_global()+anims[self.animst].t-math.max(npc:character_rank()*rx_utils.rank_unit*1350,300)+300
+		else
+			self.timer = time_global()+anims[self.animst].t
+		end
+	else
+		local medkit = self.st.medkit and npc:object(self.st.medkit)
+		if medkit then
+			medkit:enable_attachable_item(false)
+			rx_utils.eat_medkit(npc,medkit)
+			if self.st.pr.infinite then
+				alife():create(self.st.medkit,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+			end
+		else
+			npc.health = 0.5
+		end
+		self.st.medkit = nil
+		self.st.action = nil
+		if xr_wounded.is_wounded(npc) then
+			db.storage[npc:id()].wounded.wound_manager:hit_callback()
+		end
+	end
+end
+function action_bandage:finalize()
+    action_base.finalize(self)
+	local npc = self.object
+	if not npc:alive() then
+		return
+	end
+	local torch = npc:object("device_torch")
+	if torch then
+		torch:enable_attachable_item(false)
+	end
+	local medkit = self.st.medkit and npc:object(self.st.medkit)
+	if medkit then
+		medkit:enable_attachable_item(false)
+		-- если действие прервано, съедим аптеку
+		if self.animst > 2 then
+			rx_utils.eat_medkit(npc,medkit)
+		elseif self.animst > 1 and not xr_wounded.is_wounded(npc) then
+			npc.health = 0.1
+		end
+	end
+	rx_ai.unsubscribe_from_events(npc:id(),self)
+	npc:clear_animations()
+	npc:play_cycle("norm_torso_0_idle_1",true)	-- фикс залипания анимации
+	npc:set_movement_type(move.walk)	-- фикс для горбатого экшена набегания на врага
+	state_mgr.lock(npc,false)
+	rx_sound.block_alarm_sound(npc)
+	self.can_strap = nil
+	self.attached = nil
+	self.st.action = nil
+	self.st.fin = true
+end
+function action_bandage:hit_callback(amount)	-- если бинт в руке, можно его выронить
+	if self.animst > 1 and self.st.medkit and math.random() < amount*3 and self.object:alive() then
+		local npc = self.object
+		local ban = npc:object(self.st.medkit)
+		if ban then
+--			ban:enable_attachable_item(false)
+			npc:drop_item_and_teleport(ban,npc:bone_position("bip01_r_hand"))
+			if self.st.pr.infinite then
+				alife():create(self.st.medkit,npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+			end
+			self.st.medkit = nil
+		end
+	end
+end
+function action_bandage:death_callback()
+	if self.animst > 1 and self.st.medkit then
+		local npc = self.object
+		local obj = alife():create(self.st.medkit,npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
+		local data = xrs_utils.get_item_data(obj)
+		data.oflags = bit_and(data.oflags,bit_not(128))	-- flUsedAI_Locations
+		xrs_utils.set_item_data(data,obj)
+		local ban = npc:object(self.st.medkit)
+		if ban then
+			table.insert(rx_ai.ids_to_remove,ban:id())
+		end
+	end
+end
+
+evid_bandage = rx_ai.base_id+20
+actid_bandage = evid_bandage
+
+rx_ai.death_disable_evas[evid_bandage] = false
+
+function add_to_binder(npc,ini,scheme,section,storage)
+	local manager = npc:motivation_action_manager()
+	if not (not bandage_sets.forbidden_factions[npc:character_community()] and not bandage_sets.forbidden_npcs[npc:name()] and not bandage_sets.forbidden_npcs[npc:profile_name()] and npc:alive()) then
+		manager:add_evaluator(evid_bandage,property_evaluator_const(false))
+		return
+	end
+	manager:add_evaluator(evid_bandage,evaluator_bandage(npc,"eva_bandage",storage))
+	local action = action_bandage(npc,"act_bandage",storage)
+	action:add_precondition(world_property(stalker_ids.property_alive,true))
+--	action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base,false))
+	action:add_precondition(world_property(xr_evaluators_id.state_mgr+3,true))	--!!
+--	if rx_gl then
+--		action:add_precondition(world_property(rx_gl.evid_gl_fire,false))
+--	end
+	if rx_facer then
+		action:add_precondition(world_property(rx_facer.evid_facer,false))
+	end
+	if xrs_grenade then
+--		action:add_precondition(world_property(xrs_grenade.evid_crazy_grenadier,false))
+		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
+		action:add_precondition(world_property(xrs_grenade.evid_psyh,false))
+	end
+--	if blowout_scheme and blowout_scheme.evid_outside then
+--		action:add_precondition(world_property(blowout_scheme.evid_outside,false))
+--	end
+	action:add_precondition(world_property(evid_bandage,true))
+	action:add_effect(world_property(evid_bandage,false))
+	manager:add_action(actid_bandage,action)
+	-- включение в планировщик
+	for i,id in ipairs({xr_actions_id.alife,stalker_ids.action_combat_planner,stalker_ids.action_danger_planner,xr_actions_id.stohe_meet_base+1}) do
+		action = manager:action(id)
+		if action then
+			action:add_precondition(world_property(evid_bandage,false))
+		end
+	end
+	-- необходимо добавить предусловие схеме собирательства и прочим низкоприоритетным общим схемам
+--[[	for i,id in ipairs({}) do
+		action = manager:action(id)
+		if action then
+			action:add_precondition(world_property(evid_bandage,false))
+		end
+	end]]
+end
+
+function spawn_medkit(npc,st)
+	if st.spawn_time_m and time_global() > st.spawn_time_m then
+		st.spawn_time_m = time_global()+bandage_sets.spawn_mt
+		if xr_wounded.is_wounded(npc) then
+			return
+		end
+		local pos = math.random(#st.pr.spawn_m)
+		alife():create(st.pr.spawn_m[pos],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+		return true
+	end
+end
+
+function spawn_bandage(npc,st)
+	if st.spawn_time_b and time_global() > st.spawn_time_b then
+		st.spawn_time_b = time_global()+bandage_sets.spawn_bt
+		if xr_wounded.is_wounded(npc) then
+			return
+		end
+		local pos = math.random(#st.pr.spawn_b)
+		alife():create(st.pr.spawn_b[pos],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
+		return true
+	end
+end
+
+function can_strap(npc)
+	if npc:best_enemy() then
+		return false
+	end
+	local wpn = npc:active_item()
+	if not state_mgr_weapon.strappable_weapon(wpn) then
+		return false
+	end
+--	return true
+--	страп оружия при перезарядке может привести к зависанию оружия?
+	return rx_utils.get_weapon_state(wpn) ~= rx_utils.EWeaponStates.eReload
+end
+
+function set_scheme(npc,ini,scheme,section)
+	local st = xr_logic.assign_storage_and_bind(npc,ini,scheme,section)
+	st.spawn_time_b = bandage_sets.spawn_bt ~= 0 and time_global()+bandage_sets.spawn_bt+math.random(8000) or nil
+	st.spawn_time_m = bandage_sets.spawn_mt ~= 0 and time_global()+bandage_sets.spawn_mt+math.random(8000) or nil
+end
+
+function reset_scheme(npc,scheme,st,section)
+	local profile
+	if st.ini:line_exist(section,"bandage") then
+		profile = st.ini:r_string(section,"bandage")
+	elseif st.ini:line_exist(st.section_logic,"bandage") then
+		profile = st.ini:r_string(st.section_logic,"bandage")
+	else
+		profile = npc:character_community()
+	end
+	local bst = st.bandage
+	if bst.current_profile ~= profile then
+		bst.current_profile = profile
+		bst.pr = read_profile(profile)
+	end
+end
+
+--[[
+function disable_scheme(npc)
+	local st = db.storage[npc:id()].bandage
+	if st then
+		st.disabled = true
+	end
+end]]

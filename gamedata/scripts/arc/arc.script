@@ -1,0 +1,259 @@
+-----------------
+-- ARC Mod 1.5 --
+--- Main File ---
+-----------------
+-- v0.90527-01 --
+-----------------
+--- by ANViL ----
+---- (2009) -----
+-----------------
+
+local ignore_get_list  = {}
+local ignore_lose_list = {}
+local eat_on_get_list  = {}
+local lost_items_list  = {}
+
+---------------------------------
+-- Callback actor:on_item_take --
+---------------------------------
+function on_actor_get_item(obj)
+  local obj_id = obj:id()
+  local obj_sect = obj:section()
+  local obj_clsid = obj:clsid()
+  
+  for i,v in pairs(ignore_get_list) do
+    if (v == obj_sect) or (v == obj_id) then
+      table.remove(ignore_get_list, i)
+      return
+    end
+  end
+  
+  for i,v in pairs(eat_on_get_list) do
+    if (v == obj_sect) or (v == obj_id) then
+      table.remove(eat_on_get_list, i)
+      db.actor:eat(obj)
+      return
+    end
+  end
+  
+  
+  if isWeapon(obj) then
+    if obj_sect == "arc_progress" then
+    elseif obj_sect == "arc_radiation" then
+      arc_radiation.on_get_rad_item(obj)
+    else--if sbw(obj_sect, "wpn_") then
+    end
+    
+  elseif obj_clsid == clsid.wpn_ammo then -- 38
+    if obj_sect == "arc_ballast" then
+    
+
+    elseif sbw(obj_sect, "clip_") then
+    
+    elseif sbw(obj_sect, "sa_") then
+      
+    elseif sbw(obj_sect, "ammo_") then
+    end
+    
+  elseif obj_clsid == clsid.artefact then -- 39
+    
+  elseif obj_clsid == clsid.obj_antirad then -- 65
+    if sbw(obj_sect, "arc_art_box_") then
+
+    elseif sbw(obj_sect, "clip_") then
+    end
+  
+  elseif obj_clsid == clsid.obj_attachable then -- 66
+    if sbw(obj_sect, "arc_diary") then
+
+    end
+  end
+  
+
+end
+
+---------------------------------
+-- Callback actor:on_item_drop --
+---------------------------------
+function on_actor_lose_item(obj)
+  local obj_id = obj:id()
+  local obj_sect = obj:section()
+  local obj_clsid = obj:clsid()
+  
+  for i,v in pairs(ignore_lose_list) do
+    if (v == obj_sect) or (v == obj_id) then
+      table.remove(ignore_lose_list, i)
+      return
+    end
+  end
+  
+  
+  table.insert(lost_items_list, {id=obj_id, section=obj_sect, clsid=obj_clsid})
+  
+  if isWeapon(obj) then
+    if obj_sect == "arc_radiation" then
+      arc_radiation.on_lose_rad_item(obj)
+    else
+    end
+  elseif obj_clsid == clsid.wpn_ammo then -- 38
+    if obj_sect == "arc_ballast" then
+      
+
+    elseif sbw(obj_sect, "clip_") then
+      
+    elseif sbw(obj_sect, "sa_") then
+      
+    elseif sbw(obj_sect, "ammo_") then
+    end
+    
+  elseif obj_clsid == clsid.artefact then -- 39
+    
+  elseif obj_clsid == clsid.obj_antirad then -- 65
+    if sbw(obj_sect, "arc_art_box_") then
+
+    elseif sbw(obj_sect, "clip_") then
+
+    end
+  end
+  
+end
+
+---------------------------
+-- Callback actor:update --
+---------------------------
+--local first_update = true
+
+local p_time = 0
+local p_updates = 0
+
+function on_actor_update(delta)
+
+  arc_inventory.on_actor_update(delta)
+  arc_radiation.on_actor_update(delta)
+  arc_health.on_actor_update(delta)
+  arc_ui_hud.on_actor_update(delta)
+    
+  p_updates = p_updates + 1
+  p_time = p_time + delta
+end
+
+-----------------------------------
+-- Callback actor:inventory_info --
+-----------------------------------
+function on_actor_inv_info(npc, info_id)
+
+end
+
+---------------------------------
+-- Callback actor:article_info --
+---------------------------------
+function on_actor_art_info(npc, group, name)
+
+end
+
+function on_npc_update()
+  
+end
+
+----------------------------
+----- CUSTOM CALLBACKS: ----
+----------------------------
+function on_actor_use_item(obj)
+  local obj_id = obj.id
+  local obj_sect = obj.section
+  local obj_clsid = obj.clsid
+  
+  info("Item Used: "..obj_sect.."("..obj_clsid..") id="..obj_id, 2)
+  
+
+  
+end
+
+----------------------------
+--- INVENTORY FUNCTIONS: ---
+----------------------------
+
+-- put item to actor`s inv
+function give_item(item_section, ignore)
+  if ignore then table.insert(ignore_get_list,item_section) end
+  local a = db.actor
+  return alife():create(item_section, a:position(), a:level_vertex_id(), a:game_vertex_id(), a:id())
+end
+
+-- spawn & eat item
+function apply_item(item_section)
+  local sobj = give_item(item_section)
+  if sobj then
+    table.insert(eat_on_get_list, sobj.id)
+    return true
+  end
+  return false
+end
+
+-- ammo_count <= box_size !!!
+function give_ammo(ammo_section, ammo_count, ignore)
+  if ignore then table.insert(ignore_get_list,ammo_section) end
+  local a = db.actor
+  return alife():create_ammo(ammo_section, a:position(), a:level_vertex_id(), a:game_vertex_id(), a:id(), ammo_count)
+end
+
+-- remove item from actor`s inv
+function remove_item(item_section, ignore)
+  local obj = db.actor:object(item_section)
+  remove_obj(obj:id(), ignore)
+end
+
+function remove_obj(obj_id, ignore)
+  if ignore then table.insert(ignore_lose_list,obj_id) end
+  alife():release(alife():object(obj_id), true)
+end
+
+
+------------------------
+--- OTHER FUNCTIONS: ---
+------------------------
+
+function info(str, timeout)
+  if not debug then return end
+  if p_updates > 0 then
+
+    p_updates = 0
+    p_time = 0
+  end
+  
+
+end
+
+function warning(msg)
+  info("!!! warning !!! "..msg)
+end
+
+function fault(msg)
+  info("!!! fault !!! "..msg)
+end
+
+function round(x)
+  if x>=0 then
+    return math.floor(x+0.5)
+  end
+  return -math.floor(0.5-x)
+end
+
+function to_interval(x, a, b)
+  local s = b-a+1
+  while x<a do
+    x=x+s
+  end
+  
+  while x>b do
+    x=x-s
+  end
+  
+  return x
+end
+
+-- String Begins With
+function sbw(s,p)
+  return string.find(s,p) == 1
+end
+

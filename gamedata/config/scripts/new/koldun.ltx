@@ -1,0 +1,42 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = walker@koldun
+danger = danger_condition@koldun
+on_hit = hit@koldun
+
+[walker@koldun]
+path_walk = koldun_walk
+path_look = koldun_look
+danger = danger_condition@koldun
+meet = meet@koldun
+combat_ignore_cond = always
+on_actor_dist_le_nvis = 5 | remark@koldun
+
+[remark@koldun]
+target = actor
+snd = demon
+meet = no_meet
+combat_ignore_cond = always
+danger = danger_condition@koldun
+on_signal = sound_end | walker@koldun1
+
+[walker@koldun1]
+path_walk = koldun_walk
+path_look = koldun_look
+danger = danger_condition@koldun
+combat_ignore_cond = always
+meet = meet@koldun
+
+[danger_condition@koldun]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[meet@koldun]
+use = true
+use_wpn = false
+meet_talk_enabled = true
+
+[hit@koldun]
+on_info = %+koldun_hit%

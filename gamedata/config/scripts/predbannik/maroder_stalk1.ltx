@@ -1,0 +1,38 @@
+[smart_terrains]
+none = true
+
+[logic]
+active = walker@maroder1
+danger = danger_condition@maroder1
+on_hit = hit@maroder1
+on_death = death
+
+[walker@maroder1]
+path_walk = maroder1_walk
+path_look = maroder1_look
+meet = no_meet
+danger = danger_condition@maroder1
+on_actor_dist_le_nvis = 3 | remark@maroder1
+
+[remark@maroder1]
+target = actor
+snd = maroder
+meet = no_meet
+danger = danger_condition@maroder1
+on_signal = sound_end | walker@maroder11
+
+[walker@maroder11]
+path_walk = maroder1_walk
+path_look = maroder1_look
+meet = no_meet
+danger = danger_condition@maroder1
+
+[danger_condition@maroder1]
+ignore_distance = 0
+ignore_distance_corpse = 0
+
+[hit@maroder1]
+on_info = {=hit_by_actor} %+maroder_enemy%
+
+[death]
+on_info = {=killed_by_actor} %+maroder_enemy%

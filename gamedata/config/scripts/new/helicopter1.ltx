@@ -1,0 +1,69 @@
+[logic]
+active = heli_move@idle
+
+[heli_move@idle]
+path_move = heli_blockpost_idle_move
+engine_sound = false
+combat_safe_altitude = -45
+on_info = {+krest_work_spawn} heli_move@fly1
+
+[heli_move@fly1]
+path_move = heli_blockpost_fly
+engine_sound = true
+combat_enemy = actor
+combat_use_rocket = true
+combat_use_mgun = true
+rocket_delay = 6000
+combat_safe_altitude = -50
+invulnerable = true
+on_timer = 120000 | heli_move@fly2
+
+[heli_move@fly2]
+path_move = heli_predesant_move
+engine_sound = true
+default_velocity = 120
+combat_enemy = nil
+combat_use_rocket = false
+combat_use_mgun = false
+invulnerable = true
+combat_safe_altitude = -45
+on_timer = 20000 | heli_move@fly3
+
+[heli_move@fly3]
+path_move = heli_desant_move
+engine_sound = true
+default_velocity = 120
+combat_enemy = nil
+combat_use_rocket = false
+combat_use_mgun = false
+rocket_delay = 6000
+combat_safe_altitude = -50
+velocity = 0
+invulnerable = true
+on_timer = 20000 | heli_move@fly4 %=braad_test.spawn_desant=play_snd(characters_voice\scenario\aes\aes_desant_proceed2)%
+
+[heli_move@fly4]
+path_move = heli_blockpost_fly
+engine_sound = true
+combat_enemy = actor
+combat_use_rocket = true
+combat_use_mgun = true
+rocket_delay = 6000
+combat_safe_altitude = -50
+invulnerable = false
+on_timer = 180000 | heli_move@retreat 
+
+[heli_move@retreat]
+path_move = heli_blockpost_idle_move
+engine_sound = true
+combat_ignore = true
+combat_enemy = nil
+combat_use_rocket = false
+combat_use_mgun = false
+combat_safe_altitude = -65
+invulnerable = false
+on_timer = 50000 | heli_move@stop %+krest_work_vertolet =play_snd(characters_voice\scenario\aes\aes_desant_proceed2)%
+
+[heli_move@stop]
+path_move = heli_blockpost_idle_move
+engine_sound = false

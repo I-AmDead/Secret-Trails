@@ -1,0 +1,867 @@
+--[[ ---
+File : totalizator.script
+Description : Тотализатор v. 1.1
+Copyright : 2010 © Erlik(aka Garry_Galler)
+Author : Erlik (aka Garry_Galler)
+Last edit : 25.09.2010
+
+Благодарю за помощь в разработке singapur'a22,
+--]] -----------------------------------------------------------------------------------------------
+
+
+--**
+--ПЕРЕМЕННЫЕ
+--**
+local constanta = 60*1000 --// константа равная одной минуте реального времени
+local last_time_info = 0
+local last_time_send = 0
+local last_time_dolg = 0
+local last_time_deposit = 0
+local last_time_news = 0
+local dolg = 0
+local bank = 0
+local deposit = 0
+local pause = 2 --// пауза доступности диалога после розыгрыша - плюсуется к time_send_prize
+local time_send_prize = 720 --// время прихода сообщения о выигрыше\проигрыше - в сек
+local time_send_dolg = constanta*6 --// посылаем напоминания о долге каждый игровой час (значение в мск) = 6 реальным минутам
+local time_index_dolg = constanta*6*12 --//индексируем долг каждые 12 игровых часов (значение в мск)
+local time_index_deposit = constanta*6*24 --//индексируем депозит каждые 24 игровых часов (значение в мск)
+local Timer_Info
+local Timer_News
+local gameTime_0
+local gameTime_1
+local gameTime_2
+local text_news =""
+
+--**
+--АПДЕЙТ
+--**
+function Update()
+timer_infoportion()
+timer_deposit()
+timer_dolg()
+timer_send()
+timer_news()
+end
+
+
+
+
+--**
+-- ТАБЛИЦЫ
+--**
+
+local ts = {
+sums_1 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, --\ 14 сумм по 500
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000,
+300000, 300000,
+400000,
+500000
+},
+
+sums_2 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, --\ 14 сумм по 500
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000,
+400000,
+500000
+},
+
+sums_3 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, --\ 14 сумм по 500
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000,
+400000,
+500000
+},
+
+sums_4 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, --\ 14 сумм по 500
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+sums_5 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, --\ 14 сумм по 500
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+sums_6 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+sums_7 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+sums_8 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+
+sums_9 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+},
+
+--\ для максимальной ставки уменьшаем число безвыигрышных вариантов и разных мелких выигрышей
+sums_10 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000,
+10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000,
+20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000, 20000,
+25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000,
+75000, 75000, 75000, 75000, 75000, 75000, 75000,
+100000, 100000, 100000, 100000, 100000,
+200000, 200000, 200000, 200000,
+300000, 300000, 300000,
+400000, 400000,
+500000
+}
+}
+
+
+local stavka = {1000, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 50000}
+
+local prize = {0, 500, 1000, 5000, 10000, 15000, 20000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000} --\ таблица всех выигрышных сумм
+
+local portion = {"frase_1","frase_2","frase_3","frase_4", --\ инфопоршни обсуславливающие ставки
+"frase_5","frase_6","frase_7","frase_8","frase_9",
+"frase_10"}
+
+local type_frase =
+{"Получено ",
+"Отдано на хранение ",
+"Потеряно ",
+"Записано в долг ",
+"Всего на счету ",
+"Общий долг "
+}
+
+
+--**
+-- ДЕНЕЖНЫЕ ОПЕРАЦИИ
+--**
+
+--==
+
+--\ делаем ставку
+function transfer_stavka(npc, actor)
+local money = actor:money()
+for n, s in ipairs(stavka) do
+if actor:has_info("frase_"..n) then
+if money > 0 and money < s then --\ уменьшаем ставку до налички эктора - забираем ее - остальное пишем в долг
+actor:transfer_money(money, npc)--\ забрать наличку эктора
+talk_message(3,money)
+dolg = dolg +(s-money) --\ долг будет равен ставка минус то шо забрали у эктора -- также надо приплюсовать прежний долг если он есть, если нет - плюсуется ноль - все норм
+talk_message(4,s-money)
+talk_message(6,dolg)
+elseif money == 0 then --\ если мани нет - даем эктору сыграть в долг
+dolg = dolg + s --\ если долг уже есть то плюсуем, если нет, то плюсуется ноль - все норм
+talk_message(4,s)
+talk_message(6,dolg)
+elseif money == s then --\ если нал равен ставке
+actor:transfer_money(s, npc) --\ забираем ставку... а долг какой записан такой и остается
+talk_message(3,s)
+talk_message(6,dolg)
+elseif money > s then --\ если наличка эктора больше ставки
+actor:transfer_money(s, npc) --\забираем сумму ставки...долг остается какой был... если был вообще...вычитать будем после розыгрыша
+talk_message(3,s)
+talk_message(6,dolg)
+--if dolg >= money then --\ делаем перерасчет долга (если он есть): если долг больше либо равен остатку нала
+--dolg = money - dolg --\ вычитаем долг - эктор остается без долгов
+--dolg = 0
+end
+end
+end
+this.totalizator(actor, npc)
+end
+
+
+--==
+--\ считаем выигрыш\проигрыш
+function totalizator(actor, npc)
+local sums --\ создаем локальную переменную sums без определенного значения
+local summa = 0 --\ создаем локальную переменную summa с первоначальным значением 0
+for s, v in ipairs(portion) do --\ итерируем таблицу поршней и если был выдан один из них (один из 10)
+if actor:has_info(v) then --\ то его ключ используем для присваивания к имени таблицы выигрышей (одной из 10)
+sums = ts["sums_"..s] --\ присваиваем ключ в качестве числа к имени таблицы выигрышей
+summa = sums[math.random(#sums)] --\ локальной переменной summa рандомно присваиваем значение суммы по индексу выбранного из диапазона кол-ва индексов таблицы sums_x ( номер присваивается ранее)
+end
+end
+for _, v in ipairs(prize) do
+if summa == v then --\ ищем в таблице prize число совпдающие с выпавшей суммой - и если совпадение есть - определяем индекс
+bank = summa --\ начисляем сумму в банк
+break
+end
+end
+disable_portion() --\ отключаем выданные поршни
+--==
+--\ если выигрыша не было и долгов пока нет то
+if dolg == 0 and bank == 0 then
+	    text_news = "Сталкер, ставка не сыграла.\\nПриходи в другой раз."
+start_timer_infoportion(time_send_prize+pause)
+--==
+--\ но если выигрыш был и долгов тоже нет то
+elseif dolg == 0 and bank > 0 then
+        text_news = "Сталкер, твоя ставка сыграла.\\nТы выиграл "..tostring(bank).." р.\\nМожешь приходить забирать."
+start_timer_infoportion(time_send_prize+pause)
+--==
+--\ если должок есть и с выигрышем пролет то
+elseif dolg > 0 and bank == 0 then
+            text_news = "Сталкер, ставка не сыграла.\\nА сумма твоего долга возросла до "..tostring(dolg).." р.\\nВеревку и мыло подарю за медузу."		
+start_timer_infoportion(time_send_prize+pause)
+--==
+--\ если у эктора есть должок и был выигрыш
+elseif dolg > 0 and bank > 0 then
+-- \и если долг меньше банка то
+if dolg < bank then
+		    text_news = "Сталкер, на этот раз тебе повезло.\\nТы выиграл "..tostring(bank).." р.\\nНо за тобой должок в "..tostring(dolg).." р., который я сразу вычту.\\nТак что твой выигрыш всего "..tostring(bank - dolg).." р. Можешь приходить забирать."
+bank = bank - dolg -- \ итого банк равен сумме минус долг - именно это и отдадим эктору когда он придет за выигрышем -- то есть в этом случае не будем копить долги, а сразу их высчитаем
+dolg = 0 --\ долгов нема
+start_timer_infoportion(time_send_prize+pause)
+--==
+--\ то же самое, но для случая если долг равен банку. Заберем выигрыш, а эктору кукиш.
+elseif dolg == bank then
+			    text_news = "Сталкер, хоть ты и выиграл "..tostring(bank).." р.,\\nно за тобой точно такой же должок, который я сразу заберу.\\nТак что получать тебе нечего."
+dolg = 0 --\ долгов нема
+bank = 0 --\ банк пустой
+start_timer_infoportion(time_send_prize+pause)
+--==
+--\ если долг есть и был выигрыш, но долг поболе выигрыша
+elseif dolg > bank then
+dolg = dolg - bank --\ вычтем выигрыш из долга
+			text_news = "Сталкер, ты выиграл "..tostring(bank).." р.\\nНо не спеши радоваться, всю сумму я забираю,\\nа ты - все еще должен "..tostring(dolg).." р.\\nТак что иди... в общем ты понял куда."   --\ выдадим эктору собщение, что он остался в долгу и ему ниче не полагается
+start_timer_infoportion(time_send_prize+pause)
+bank = 0 --\ надо ли?
+--==
+end
+end
+end
+
+
+--==
+--\ здесь выдаем выигранное бабло
+
+function give_prize(actor, npc)
+actor:give_money(bank) --\выдать эктору ту сумму, которая записалась в переменную bank
+talk_message(1,bank)
+bank = 0 --\ сразу обнуляем банк
+end
+
+--==
+--\ здесь отдаем долг - полностью, а не частями
+function give_dolg(first_speaker, second_speaker)
+db.actor:transfer_money(dolg, second_speaker)
+talk_message(3,dolg)
+dolg = 0 --\ обнуляем долг
+end
+
+--==
+--\ здесь отдаем деньги на хранение
+
+function transfer_bank()
+if deposit == 0 then --\ если депозит пока пуст и в банке че есть то
+deposit = bank --\ сделаем трансфер в другую переменную
+       news_manager.send_tip(db.actor, "Сталкер, на твой счёт поступила сумма в "..tostring(deposit).." р.", 5, "default", 10000)
+talk_message(2,deposit)
+talk_message(5,deposit)
+bank = 0
+elseif deposit > 0 then
+deposit = deposit + bank
+       news_manager.send_tip(db.actor, "Сталкер, на твой счёт поступила сумма в "..tostring(bank).." р.\\nОбщая сумма депозита "..tostring(deposit).." р.", 5, "default", 10000)
+talk_message(2,bank)
+talk_message(5,deposit)
+bank = 0
+end
+end
+
+--==
+--\здесь забираем все накопленное непосильным трудом... "три портсигара, две куртки замшевых..."
+
+function transfer_deposit(npc, actor)
+local summa = 0
+local t = {"dep_1","dep_2","dep_3"}
+if actor:has_info("dep_1") then
+summa = math.ceil(deposit/10)
+actor:give_money(summa)
+        news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(summa).." р.\\nОстаток на счёте  "..tostring(deposit - summa).." р.", 5, "default", 10000)
+deposit = deposit - summa
+talk_message(1,summa)
+talk_message(5,deposit)
+summa = 0
+elseif actor:has_info("dep_2") then
+summa = math.ceil(deposit/2)
+actor:give_money(summa)
+        news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(summa).." р.\\nОстаток на счёте  "..tostring(deposit - summa).." р.", 5, "default", 10000)
+deposit = deposit - summa
+talk_message(1,summa)
+talk_message(5,deposit)
+summa = 0
+elseif actor:has_info("dep_3") then
+actor:give_money(deposit)
+	    news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(deposit).." р.\\nОстаток на счёте ноль р.\\nСмотри как бы тебя не грабанули по дороге...", 5, "default", 10000)
+talk_message(1,deposit)
+deposit = 0
+talk_message(5,deposit)
+end
+for _,v in ipairs(t) do
+if db.actor:has_info(v) then
+db.actor:disable_info_portion(v)
+end
+end
+end
+
+
+
+--**
+--ТАЙМЕРА
+--**
+
+function timer_news()
+--==
+--\начинаем работать только если новость
+if text_news and text_news~="" then
+--==
+if Timer_News==nil then
+--==
+--\ если не успел доработать - перевзводим на остаток времени
+if last_time_news ~= 0 then
+Timer_News = time_global()+last_time_news --/ взводим таймер на остаток времени
+--\ иначе -взводим на дефолтное время
+else
+Timer_News= time_global()+1000*time_send_prize
+end
+end
+--==
+-- присваиваем переменной остаток времени до конца работы таймера
+last_time_news = Timer_News-time_global()
+--==
+--\ проверяем не пора ли делать дело
+if Timer_News < time_global() then --/ проверка текущего значения
+Timer_News = nil --/ выключаем таймер
+last_time_news = 0
+--==
+--\ выдаем сообщение
+set_message()
+end
+end
+end
+
+
+
+--==
+--\ таймер для выключения инфпоршня недоступности диалога со ставками
+
+function start_timer_infoportion(seconds) --/ (пере)запуск таймера (из диалога)
+Timer_Info = time_global() + seconds*1000 --/ взводим таймер на мин
+end
+
+--==
+--\ таймер для выключения инфпоршня недоступности диалога со ставками
+
+function timer_infoportion()
+if Timer_Info==nil then
+--==
+--\ если не успел доработать - перевзводим на остаток времени
+if last_time_info ~= 0 then
+Timer_Info = time_global()+last_time_info --/ взводим таймер на остаток времени
+end
+--==
+else
+-- присваиваем переменной остаток времени до конца работы таймера
+last_time_info = Timer_Info-time_global()
+--get_console():execute("Таймер="..string.gsub(tostring(last_time_info/1000), " ", "_")) -- выводим в консоль время в обратном отсчете
+--==
+--\ проверяем не пора ли делать дело
+if Timer_Info < time_global() then --/ проверка текущего значения
+enable_dialog()
+Timer_Info = nil --/ выключаем таймер
+last_time_info = 0
+end
+end
+end
+
+
+--==
+--\ таймер для выдачи гневных сообщений о долге
+function timer_send()
+if dolg~= 0 then
+--\ перевзводим
+--==
+if gameTime_0==nil then
+if last_time_send ~= 0 then
+gameTime_0 = time_global()+last_time_send
+else
+gameTime_0 = time_global()+time_send_dolg
+end
+end
+--==
+--\ считаем остаток времени
+last_time_send= gameTime_0-time_global()
+--==
+--\ проверяем не пора ли делать дело
+if gameTime_0 < time_global() then
+send()
+--==
+--\\ обниливаем
+gameTime_0 = nil
+last_time_send = 0
+end
+--==
+--\\ если долга уже нет - обниливаем
+else
+gameTime_0 = nil
+last_time_send = 0
+end
+end
+
+--==
+--\ таймер для индексации суммы долга
+function timer_dolg()
+if dolg~= 0 then
+--\ перевзводим
+--==
+if gameTime_1==nil then
+if last_time_dolg~= 0 then
+gameTime_1 = time_global()+last_time_dolg
+else
+gameTime_1 = time_global()+time_index_dolg
+end
+end
+--==
+--\ считаем остаток времени
+last_time_dolg = gameTime_1-time_global()
+--get_console():execute("Таймер="..string.gsub(tostring(last_time_dolg/1000), " ", "_")) -- выводим в консоль время в обратном отсчете
+--==
+--\ проверяем не пора ли делать дело
+if gameTime_1 < time_global() then
+percent_dolg()
+--==
+--\\ обниливаем
+gameTime_1 = nil
+last_time_dolg = 0
+end
+--==
+--\\ если долга уже нет - обниливаем
+else
+gameTime_1 = nil
+last_time_dolg = 0
+end
+end
+
+--==
+--\ таймер для индексации суммы депозита
+function timer_deposit()
+if deposit~= 0 then
+--\ перевзводим
+--==
+if gameTime_2==nil then
+if last_time_deposit~= 0 then
+gameTime_2 = time_global()+last_time_deposit
+else
+gameTime_2 = time_global()+time_index_deposit
+end
+end
+--==
+--\ считаем остаток времени
+last_time_deposit = gameTime_2-time_global()
+--==
+--\ проверяем не пора ли делать дело
+if gameTime_2 < time_global() then
+percent_deposit()
+--==
+--\\ обниливаем
+gameTime_2 = nil
+last_time_deposit = 0
+end
+--==
+--\\ если депозит ликивдирован - обниливаем
+else
+gameTime_2 = nil
+last_time_deposit = 0
+end
+end
+
+--**
+--ИНДЕКСАЦИЯ СУММ И ОТСЫЛКА СООБЩЕНИЙ
+--**
+
+--==
+--\ функция начисления процентов - активируется таймером через каждый игровой день
+function percent_deposit()
+if deposit == 0 then
+return
+elseif deposit > 0 and deposit < 50000 then
+deposit = math.ceil(deposit + deposit/100*math.random(5,8))
+news_manager.send_tip(db.actor, "Сталкер, сумма депозита выросла до "..tostring(deposit).." р.", 5, "default", 10000) 
+elseif deposit > 50000 and deposit < 100000 then
+deposit = math.ceil(deposit + deposit/100*math.random(9,12))
+news_manager.send_tip(db.actor, "Сталкер, сумма депозита выросла до "..tostring(deposit).." р.", 5, "default", 10000) 
+elseif deposit > 100000 and deposit < 300000 then
+deposit = math.ceil(deposit + deposit/100*math.random(13,15))
+news_manager.send_tip(db.actor, "Сталкер, сумма депозита выросла до "..tostring(deposit).." р.", 5, "default", 10000) 
+elseif deposit > 300000 then
+deposit = math.ceil(deposit + deposit/100*math.random(16,20))
+news_manager.send_tip(db.actor, "Сталкер, сумма депозита выросла до "..tostring(deposit).." р.", 5, "default", 10000) 
+end
+end
+
+
+--==
+--\ функция индексации долга - активируется таймером через 12 игровых часов
+function percent_dolg()
+if dolg == 0 then
+return
+elseif dolg > 0 and dolg < 50000 then
+dolg = math.ceil(dolg + dolg/100*10) 
+news_manager.send_tip(db.actor, "Сталкер, твой долг вырос до "..tostring(dolg).." р.", 5, "default", 10000) 
+elseif dolg > 50000 and dolg < 100000 then
+dolg = math.ceil(dolg + dolg/100*30)
+news_manager.send_tip(db.actor, "Сталкер, твой долг вырос до "..tostring(dolg).." р.", 5, "default", 10000) 
+elseif dolg > 100000 and dolg < 300000 then
+dolg = math.ceil(dolg + dolg/100*50)
+news_manager.send_tip(db.actor, "Сталкер, твой долг вырос до "..tostring(dolg).." р.", 5, "default", 10000) 
+elseif dolg > 300000 then
+dolg = math.ceil(dolg + dolg/100*70)
+news_manager.send_tip(db.actor, "Сталкер, твой долг вырос до "..tostring(dolg).." р.", 5, "default", 10000) 
+end
+end
+
+--==
+--\ здесь начинаем угрожать эктору посылая ему сообщения о долге
+
+function send()
+if dolg == 0 then
+return
+elseif dolg > 5000 and dolg < 30000 then
+news_manager.send_tip(db.actor, "dolg_1", 0, "killer", 5000)
+elseif dolg > 30000 and dolg < 50000 then
+news_manager.send_tip(db.actor, "dolg_2", 0, "killer", 5000)
+elseif dolg > 50000 and dolg < 80000 then
+news_manager.send_tip(db.actor, "dolg_3", 0, "killer", 5000)
+elseif dolg > 80000 and dolg < 110000 then
+news_manager.send_tip(db.actor, "dolg_4", 0, "killer", 5000)
+elseif dolg > 110000 and dolg < 150000 then
+news_manager.send_tip(db.actor, "dolg_5", 0, "killer", 5000)
+elseif dolg > 150000 and dolg < 200000 then
+news_manager.send_tip(db.actor, "dolg_6", 0, "killer", 5000)
+elseif dolg > 200000 and dolg < 300000 then
+news_manager.send_tip(db.actor, "dolg_7", 0, "killer", 5000)
+elseif dolg > 300000 and dolg < 400000 then
+news_manager.send_tip(db.actor, "dolg_8", 0, "killer", 5000)
+elseif dolg > 400000 and dolg < 500000 then
+news_manager.send_tip(db.actor, "dolg_9", 0, "killer", 5000)
+elseif dolg > 500000 then
+news_manager.send_tip(db.actor, "dolg_10", 0, "killer", 5000)
+end
+end
+
+
+--**
+--ПРЕКОНДИШЕНЫ И ПРОЧИЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+--**
+-- прекондишен для диалога получения выигрыша
+function precond()
+return bank > 0
+end
+
+-- прекондишен для диалога со ставками
+
+function precond_2()
+return bank == 0
+end
+
+
+--\ для диалога отдачи долга
+function precond_3()
+local money = db.actor:money()
+return dolg > 0 and money >= dolg and bank == 0
+end
+
+
+--\ для диалога снятия депозита
+function precond_4()
+return deposit > 0
+end
+
+
+--\ для фразы отказа
+function precond_5()
+return dolg > 100000
+end
+
+--\ для фразы
+function precond_6()
+return dolg < 100000
+end
+
+--\ функция рандомного выбора фраз ГГ - фразы со ставками
+function random_dialog()
+    local i = math.random(10)
+    db.actor:give_info_portion("frase_"..tostring(i))
+	--SendMessage("Выдаем поршень ".."frase_"..tostring(i))
+end
+
+
+--\сообщение с иконкой в окно диалога
+function talk_message(id,num)
+local task_texture, task_rect
+if id == 3 or id == 4 or id==6 then
+task_texture, task_rect = get_texture_info("ui_iconsTotal_lost_money")
+else
+task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
+end
+db.actor:give_talk_message(type_frase[id]..tostring(num).." rur.", task_texture, task_rect, "iconed_answer_item")
+end
+
+--\ делаем диалог со ставками доступным
+function enable_dialog()
+if has_alife_info("totalizator") then
+db.actor:disable_info_portion("totalizator")
+end
+end
+
+--\ выключаем все выданные инфопоршни
+function disable_portion()
+    for k, v in pairs(portion) do
+        if db.actor:has_info(v) then
+           db.actor:disable_info_portion(v)
+		   --SendMessage("Отключаем поршень "..v)
+        end
+    end
+end
+
+
+function set_message()
+if text_news and text_news~="" then
+news_manager.send_tip(db.actor, text_news, 0 , "default", 15000)
+text_news= ""
+end
+end
+
+--**
+--ОТЛАДОЧНЫЕ ФУНКЦИИ
+--**
+function Console(info)
+get_console():execute("load ~ "..info)
+end
+
+function SendMessage(text)
+news_manager.send_tip(db.actor, text, 0, "default", 10000)
+end
+
+--**
+-- ФУНКЦИИ ЗАГРУЗКИ И СОХРАНЕНИЯ ДАННЫХ
+--**
+
+--[[
+function save_dolg(p)
+p:w_u32(dolg)
+p:w_u32(bank)
+p:w_u32(deposit)
+p:w_u32(last_time_dolg)
+p:w_u32(last_time_deposit)
+p:w_u32(last_time_send)
+p:w_u32(last_time_info)
+p:w_u32(last_time_news)
+p:w_stringZ(text_news)
+end
+
+function load_dolg(r)
+dolg = r:r_u32()
+bank = r:r_u32()
+deposit = r:r_u32()
+last_time_dolg = r:r_u32()
+last_time_deposit = r:r_u32()
+last_time_send = r:r_u32()
+last_time_info = r:r_u32()
+last_time_news = r:r_u32()
+text_news = r:r_stringZ()
+end
+
+--]]
+--//**
+
+--[[---
+File : binder_torch.script
+Description : Биндер фонарика - используется для замены вызова функций из bind_stalker.script
+Copyright : 2010 © Erlik
+Author : Erlik (aka Garry_Galler)
+Last edit : 4.10.2010
+-]]--
+
+
+function init(obj)
+local torch = torch_binder(obj)
+obj:bind_object(torch)
+end
+
+class "torch_binder" (object_binder)
+function torch_binder:__init(obj) super(obj)
+end
+
+
+function torch_binder:reload(section)
+object_binder.reload(self, section)
+end
+
+function torch_binder:reinit()
+object_binder.reinit(self)
+end
+
+function torch_binder:update(delta)
+object_binder.update(self, delta)
+xr_effects.GetTimeMidnight()
+m_art.CheckTimeUpdate()
+time_back.kvest_failed_update()
+Update()
+end
+
+function torch_binder:net_spawn(data)
+return object_binder.net_spawn(self, data)
+end
+
+function torch_binder:net_destroy()
+object_binder.net_destroy(self)
+end
+
+function torch_binder:net_save_relevant()
+return true
+end
+
+
+--// сохранение и загрузка табличных и прочих данных - так как фонарик всегда в онлайне - очень удобно использовать
+function torch_binder:save(p)
+object_binder.save(self, p)
+p:w_u32(dolg)
+p:w_u32(bank)
+p:w_u32(deposit)
+p:w_u32(last_time_dolg)
+p:w_u32(last_time_deposit)
+p:w_u32(last_time_send)
+p:w_u32(last_time_info)
+p:w_u32(last_time_news)
+p:w_stringZ(text_news)
+p:w_u32(time_back.SaveBackTimer())
+end
+
+function torch_binder:load(r)
+object_binder.load(self, r)
+dolg = r:r_u32()
+bank = r:r_u32()
+deposit = r:r_u32()
+last_time_dolg = r:r_u32()
+last_time_deposit = r:r_u32()
+last_time_send = r:r_u32()
+last_time_info = r:r_u32()
+last_time_news = r:r_u32()
+text_news = r:r_stringZ()
+time_back.LoadBackTimer(r:r_u32())
+end
+

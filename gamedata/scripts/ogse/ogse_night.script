@@ -1,0 +1,172 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+-- ухудшение зрени€ неписей ночью -- учитывает опыт непис€ - подразумева€ наличие ѕЌ¬
+--------------------------- Copyright 2009 KamikaZze дл€ OGSE -----------------------
+
+-- на этих локаци€х дальность зрени€ устанавливаетс€ в указанное значение
+local big_levels_range = {
+  [ "jupiter" ] = 250,
+  [ "pripyat" ] = 250,
+  [ "zaton"   ] = 250,
+}
+
+local fov_normal   = get_float( "stalker", "eye_fov"   )
+local range_normal = get_float( "stalker", "eye_range" )
+
+
+function attach(sm)
+  sm:subscribe({ signal = "on_npc_death", fun = this.on_death     })
+  sm:subscribe({ signal = "on_npc_hit",   fun = this.on_hit       })
+  sm:subscribe({ signal = "on_npc_spawn", fun = this.on_npc_spawn })
+end
+
+
+function on_npc_spawn( obj, binder )
+  if obj:character_community() == "zombied" or not obj:alive() then return end
+  local s = {
+    [ "signal" ] = "on_npc_update." .. obj:id(),
+    [ "fun"    ] = this.on_update,
+  }
+  binder[ "ogse_night.subscribed" ] = s
+  ogse_signals.get_mgr():subscribe( s )
+end
+
+
+function on_death( obj )
+  local binder = obj:binded_object()
+  local s      = binder[ "ogse_night.subscribed" ]
+  if s then
+    ogse_signals.get_mgr():unsubscribe( s )
+    binder[ "ogse_night.subscribed" ] = nil
+  end
+end
+
+
+local being_hit = {}
+function on_hit( obj, amount, local_direction, who, bone_index )
+  if obj:character_community() == "zombied" or not obj:alive() then return end
+  being_hit[ obj:id() ] = time_global() + 10000
+  check_night( obj )
+end
+
+
+function on_update( obj )
+  ogse_signals.get_mgr():reschedule( 10000 + math.random( 2000 ) )
+  check_night( obj )
+end
+
+
+function check_night( obj )
+  local nid = obj:id()
+  local npc = obj
+
+  local gulag_range, gulag_max = get_gulag_range( npc )
+--[=[
+  if gulag_range then
+    if gulag_range > 0 then
+      local range = npc:range()
+      if range and range > gulag_range then
+        npc:set_range( gulag_range )
+      end
+    end
+    return
+  end
+--]=]
+  local this_range_normal = gulag_max
+    or big_levels_range[ level.name() ] or range_normal
+
+  if
+    npc:best_enemy()
+    or xrs_battle_ai.in_combat[ nid ]
+    or ( being_hit[ nid ] and being_hit[ nid ] > time_global() )
+  then
+    if npc:fov() < 180 then npc:set_fov( 180 ) end
+    if npc:range() < this_range_normal then
+      npc:set_range( this_range_normal )
+    end
+
+  elseif npc:best_danger() then
+    -- если мы напуганы увеличим угол обзора имитиру€ опасливое
+    -- осматривание по сторонам и повышенную внимательность
+    if npc:fov() < 180 then
+      npc:set_fov( 180 )
+    end
+
+  else
+    -- пока мы спокойны
+    npc:set_fov( fov_normal )
+    npc:set_range( this_range_normal )
+--[=[
+    local npc_rank = ranks.get_obj_rank_name( npc )
+    if is_night() then
+      -- ночь
+      if npc_rank == "novice" then
+        npc:set_fov(  90 )
+        npc:set_range( 40 )
+      elseif npc_rank == "experienced" then
+        npc:set_fov(  95 )
+        npc:set_range( 45 )
+      elseif npc_rank == "veteran" then
+        npc:set_fov( 100 )
+        npc:set_range( 50 )
+      else
+        npc:set_fov( 110 )
+        npc:set_range( 55 )
+      end
+
+    elseif is_twilight() then
+      -- сумерки
+      npc:set_fov( fov_normal )
+      if npc_rank == "novice" then
+        npc:set_range( 60 )
+      elseif npc_rank == "experienced" then
+        npc:set_range( 65 )
+      elseif npc_rank == "veteran" then
+        npc:set_range( 70 )
+      else
+        npc:set_range( 75 )
+      end
+
+    else
+      -- день
+      npc:set_fov( fov_normal )
+      npc:set_range( this_range_normal )
+    end
+--]=]
+  end
+end
+
+
+function get_gulag_range( npc )
+  local normal, max
+  local gulag = xr_gulag.get_npc_gulag( npc )
+  if gulag then
+    normal = get_float( "dsh.gulag.range",     gulag.name )
+    max    = get_float( "dsh.gulag.range.max", gulag.name )
+  end
+  return normal, max
+end
+
+
+function is_night()
+  local htime = level.get_time_hours()
+  return (
+    ( htime <= 4 or htime >= 23 )
+    and not dsh_torch.is_torch_enabled()
+  )
+end
+
+
+function is_twilight()
+  local htime   = level.get_time_hours()
+  local weather = dsh_cop_weather.monitoring_weather_sect
+  return (
+    (
+      ( ( htime > 4 and htime < 6 ) or ( htime > 21 and htime < 23 ) )
+      or (
+        ( not is_night() )
+        and weather and ( weather == "storm" or weather == "veryfoggy" )
+      )
+    )
+    and not dsh_torch.is_torch_enabled()
+  )
+end
