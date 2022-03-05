@@ -1,3 +1,4 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
 function init( obj )
   xr_motivator.AddToMotivator( obj )
 end
@@ -25,7 +26,6 @@ class "actor_binder" ( object_binder )
 function actor_binder:__init( obj ) super( obj )
   sim = alife()
   self.bCheckStart = false
-  self.weather_manager = level_weathers.WeatherManager()
   self.actor_detector  = xr_detector.actor_detector()
   self.is_saved    = false
   self.am          = ogse_signals.get_mgr()
@@ -35,8 +35,8 @@ end
 
 function actor_binder:__finalize()
   self.am:call( "on_finalize" )
-	xr_s.init()
 end
+
 
 function actor_binder:net_spawn( data )
   sound_theme.init()      --  оптимизация загрузки звуков. Автор: Zander_driver
@@ -55,9 +55,8 @@ function actor_binder:net_spawn( data )
   if self.st.disable_input_time == nil then
     level.enable_input()
   end
-  if actor_stats.add_to_ranking ~= nil then
-    actor_stats.add_to_ranking( self.object:id() )
-  end
+
+ actor_stats.add_to_ranking( self.object:id() )
 
   cmd("r2_ls_bloom_threshold 1.") --Избавляемся от пересветов
   cmd("r2_gloss_factor 1.") --Избавляемся от пересветов
@@ -71,10 +70,8 @@ end
   amk.on_game_load(obj)
   -- end of addition
   
--- sak_off_corpses.off_corpses()
   braad_test.mad_npc()
   braad_test.false_info()
-  xr_s.on_event("net_spawn")
   self.am:call( "on_spawn", data )
   return true
 end
@@ -82,17 +79,13 @@ end
 
 function actor_binder:net_destroy()
   amk.on_game_save()
-  xr_s.on_event("net_destroy")
 
-  if actor_stats.remove_from_ranking ~= nil then
-    actor_stats.remove_from_ranking( self.object:id() )
-  end
+  actor_stats.remove_from_ranking( self.object:id() )
   db.del_actor( self.object )
 
   self.object:set_callback( callback.inventory_info, nil )
   self.object:set_callback( callback.article_info, nil )
   self.object:set_callback( callback.on_item_take, nil )
-  self.object:set_callback( callback.on_pickup_item_showing, nil )
   self.object:set_callback( callback.on_item_drop, nil )
   self.object:set_callback( callback.trade_sell_buy_item, nil )
   -- self.object:set_callback( callback.actor_sleep, nil )
@@ -156,7 +149,6 @@ function actor_binder:reinit()
   self.object:set_callback( callback.inventory_info, self.info_callback, self )
   self.object:set_callback( callback.article_info, self.article_callback, self )
   self.object:set_callback( callback.on_item_take, self.on_item_take, self )
-  self.object:set_callback( callback.on_pickup_item_showing, self.on_pickup, self )
   self.object:set_callback( callback.on_item_drop, self.on_item_drop, self )
   self.object:set_callback( callback.trade_sell_buy_item, self.on_trade, self )
   self.object:set_callback( callback.task_state, self.task_callback, self )
@@ -313,8 +305,6 @@ function actor_binder:info_callback( npc, info_id )
 
   arc.on_actor_inv_info(npc, info_id) -- ARC
 
-  xr_s.on_event("info", info_id)
-
 end
 
 
@@ -348,38 +338,24 @@ end
 
 function actor_binder:on_item_take( obj )
 
-          local item = obj 
    if xrs_ai then xrs_ai.actor_item_take(obj) 
   end 
 
-  amk.on_item_take( obj )
-
-braad_test.checking_use_item(obj)
+    amk.on_item_take( obj )
+    braad_test.checking_use_item( obj )
 
    arc.on_actor_get_item(obj) -- ARC
 
   local sobj = alife():object( obj:id() )
-
-  self.am:call( "on_take", obj, sobj )
-
-  xr_s.on_event("item_take", obj)
-
+  if sobj then -- такое бывает, если до этого объект был удалён в on_ruck
+    self.am:call( "on_take", obj, sobj )
+  end
 end
 
-function actor_binder:on_pickup( obj )
-
-          local item = obj 
-
-  local sobj = alife():object( obj:id() )
-
-  self.am:call( "on_pickup", obj, sobj )
-
-end
 
 function actor_binder:on_item_drop( obj )
 
   amk_utils.actor_item_drop( obj )
-
 
    arc.on_actor_lose_item(obj) -- ARC
       if obj:section() == "zamok" then
@@ -392,11 +368,9 @@ end
 
   self.am:call( "on_drop_before_all", obj )
   local sobj = sim:object( obj:id() )
-
-  self.am:call( "on_drop", obj, sobj )
-
-  xr_s.on_event("item_drop", obj)
-
+  if sobj then
+    self.am:call( "on_drop", obj, sobj )
+  end
 end
 
 
@@ -440,15 +414,7 @@ end
 local update_was_never_called = true
 scopeUsed = false
 
-local corspoff = true
-
-function actor_binder:update(delta)
-
-  if corspoff then
-    sak_off_corpses.off_corpses()
-    corspoff = false
-  end
-
+function actor_binder:update( delta )
 	if update_was_never_called then
 		self.am:call( "on_before_first_update" )
 	end
@@ -457,7 +423,6 @@ function actor_binder:update(delta)
 		self.am:call( "on_before_first_update" )
 		first_update = true
 	end
-  xr_s.on_update( delta )
 
   local time       = time_global()
   object_binder.update( self, delta )
@@ -561,12 +526,13 @@ function actor_binder:update(delta)
     self.am:delay_time_limit( 10000 )
   end
 
-   if xrs_ai then xrs_ai.actor_update(delta) 
-end  
+  self.am:call( "on_actor_update", delta )
+  self.am:call( "on_update", delta )
+
+  if xrs_ai then xrs_ai.actor_update(delta) end  
 
   arc.on_actor_update(delta) -- ARC
   antreg.distance_check()
-  self.am:call( "on_update", delta )
 end
 
 
@@ -610,18 +576,12 @@ local keyboard_events = {
   [ "on_key_up"   ] = "on_key_up",
 }
 
-local kShifts = { [DIK_keys.DIK_RSHIFT] = true, [DIK_keys.DIK_LSHIFT] = true }
-
 function actor_binder:on_key(key, bind)
   self.am:call("on_key_down", key, bind)
-
-	xr_s.on_event( "key_press", key, bind )
 end
 
 function actor_binder:on_key_free(key, bind)
   self.am:call("on_key_up", key, bind)
-
-	xr_s.on_event("key_release", key, bind)
 end
 
 function actor_binder:on_key_hold(key, bind)
@@ -630,7 +590,6 @@ end
 
 
 function actor_binder:on_wheel_rotation( vol )
-  xr_s.on_event("mouse_wheel", vol)
   self.am:call( "on_wheel", vol )
 end
 
@@ -668,9 +627,6 @@ end
 
 
 function actor_binder:on_select_item( obj )
-
-  xr_s.on_event("cell_item_select", obj, sobj)
-
   local sobj = sim:object( obj:id() )
   if sobj then
     self.am:call( "on_select_item", obj, sobj )
@@ -712,10 +668,9 @@ function actor_binder:save_old( packet )
   packet:w_bool( false )
 
   xr_logic.pstor_save_all( self.object, packet )
-  self.weather_manager:save( packet )
   sr_psy_antenna.save( packet )
   self.actor_detector:save( packet )
-	bomba_test.save_variable(packet)
+  bomba_test.save_variable(packet)
 end
 
 
@@ -743,9 +698,7 @@ function actor_binder:load( reader )
 	end
 
   xr_logic.pstor_load_all( self.object, reader )
-  self.weather_manager:load( reader )
   sr_psy_antenna.load( reader )
-
   if load_treasure_manager == true then
     treasure_manager.load( reader )
 	end                                  
@@ -775,16 +728,6 @@ function actor_binder:on_use_object( obj )
       self.am:call( "on_use", obj, sobj )
     end
   end
-
-end
-
--- Weapon functions
-function hide_weapon()
-  weapon_hide = true
-end
-
-function restore_weapon()
-   weapon_hide = false
 end
 
 
@@ -851,18 +794,15 @@ function actor_binder:level_changer_action( obj, wnd )
 end
 
 function actor_binder:cell_item_create(item)
-	xr_s.on_event("cell_item_create", item)
   self.am:call( "on_cell_item_create", item )
 end
 
 function actor_binder:on_cell_item_focus( obj )
-	xr_s.on_event("cell_item_focus", obj)
   self.am:call( "on_cell_item_focus", obj )
 end
 
 
 function actor_binder:on_cell_item_focus_lost( obj )
-	xr_s.on_event("cell_item_focus_lost", obj)
   self.am:call( "on_cell_item_focus_lost", obj )
 end
 
@@ -872,6 +812,14 @@ function actor_binder:on_cell_item_mouse( obj, x, y, action )
 end
 
 
+-- Weapon functions
+function hide_weapon()
+  weapon_hide = true
+end
+
+function restore_weapon()
+   weapon_hide = false
+end
 function has_traded()
   if is_on_trade then
     if db.actor:is_talking() then

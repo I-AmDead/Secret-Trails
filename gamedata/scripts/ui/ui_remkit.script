@@ -48,11 +48,6 @@ function remkit:InitControls()
 	self.btn_3 = xml:Init3tButton("btn_3", self)
 	self:Register(self.btn_3, "btn_3")
 	self.btn_3:Enable(false)	
---[[
-	self.btn_4 = xml:Init3tButton("btn_4", self)
-	self:Register(self.btn_4, "btn_4")
-	self.btn_4:Enable(false)	
-]]
 	
 	-- кнопка выхода
 	self:Register(xml:Init3tButton("btn_quit", self),"btn_quit")
@@ -70,16 +65,6 @@ function remkit:InitControls()
 			self.btn_3:Enable(true)
 		end
 	end
---[[
-	if trunk_inv.get_car_nearby() and not ogse_car_control.current_car then
-		local car = trunk_inv.get_car_nearby()
-		local script_car = car:get_car()
-		local car_state = script_car:GetfHealth()
-		if car_state < 0.85 then
-			self.btn_4:Enable(true)
-		end
-	end
-]]
 
 	self.message_box = CUIMessageBoxEx()
 	self:Register(self.message_box,"message_box")
@@ -92,7 +77,6 @@ function remkit:InitCallBacks()
 	self:dshAddCallback("btn_1", ui_events.BUTTON_CLICKED, self.rep_s1, self)
 	self:dshAddCallback("btn_2", ui_events.BUTTON_CLICKED, self.rep_s2, self)
 	self:dshAddCallback("btn_3", ui_events.BUTTON_CLICKED, self.rep_s6, self)
---	self:dshAddCallback("btn_4", ui_events.BUTTON_CLICKED, self.rep_trans, self)
 	
 	self:dshAddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.on_quit, self)
 
@@ -177,26 +161,6 @@ end
 function remkit:rep_s6()
 	db.repaired_slot = 6
 	self:cheat_main()
-end
-
-function remkit:rep_trans()
-	local car = trunk_inv.get_car_nearby()
-	if car and not ogse_car_control.current_car then
-		local s_car = car:get_car()
-		local car_state = s_car:GetfHealth()
-		local new_state = tonumber(car_state) + 0.5
-		if new_state > 1 then
-			s_car:SetfHealth(1)
-			s_car:SetExplodeTime(120000)
-		else
-			s_car:SetfHealth(new_state)
-			s_car:SetExplodeTime(120000)
-		end
-		remkit_main.play_repair_sound()
-		remkit_main.transp = 1
-	end
-	self:GetHolder():start_stop_menu (self,true)
-	self:dsh_unregister_self()
 end
 
 function remkit:check_game()

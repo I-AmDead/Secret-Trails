@@ -43,19 +43,13 @@ end
 
 
 local active_ui_rukzak = false
+local inv_open_snd = sound_object( "interface\\inv_open" )
 
 function on_rukzak_use( obj )
-    local snd = sound_object( "interface\\inv_open" )
-    snd:play( db.actor, 0, sound_object.s2d )
+  db.actor:hide_weapon()
+  inv_open_snd:play( db.actor, 0, sound_object.s2d )
   active_ui_rukzak = ui_rukzak( obj:id() )
   level.start_stop_menu( active_ui_rukzak, true )
-end
-
-
-function possible_inv_change()
-  if active_ui_rukzak then
-    active_ui_rukzak:full_reload()
-  end
 end
 
 
@@ -355,7 +349,6 @@ function spawn_weapon_in_inv( sect, info_str, who )
   return s_new_weapon
 end
 
-
 function get_actor_items( check_f )
   local items_our = {}
   local by_key    = {}
@@ -599,7 +592,7 @@ function make_rukzak_item( sect, game_type, cnt )
     [ "key"       ] = key,
   }
   if game_type == "ammo" then
-    t.count = cnt * get_ammo_box_size( sect )
+    t.count = cnt * get_u32( sect, "box_size" )
   else
     t.count = cnt
   end
@@ -1104,9 +1097,7 @@ end
 local inv_close_snd = sound_object( "interface\\inv_close" )
 
 function ui_rukzak:on_quit()
-  if self.changed then
-    save_rukzak( self.owner_id, self.items_other )
-  end
+  self:save_changed()
   if self.weight_timer then self.weight_timer:stop() end
   self:GetHolder():start_stop_menu( self, true )
   self:clean_spawn_manager()
@@ -1115,7 +1106,16 @@ function ui_rukzak:on_quit()
   self.ui_list_our   = nil
   self:dsh_unregister_self()
   active_ui_rukzak = false
+  db.actor:restore_weapon()
   inv_close_snd:play( db.actor, 0, sound_object.s2d )
+end
+
+
+function ui_rukzak:save_changed()
+  if self.changed then
+    save_rukzak( self.owner_id, self.items_other )
+    self.changed = false
+  end
 end
 
 
@@ -1141,6 +1141,14 @@ function ui_rukzak:FillOtherList()
 end
 
 
+function make_item_name( sect )
+  local name = get_string(
+    sect, "inv_name", get_string( sect, "inv_name_short" )
+  )
+  return dsh.strip_quotes( game.translate_string( name ) )
+end
+
+
 function ui_rukzak:FillList( items, ui_list, index )
   for _, item in ipairs( items ) do
     if
@@ -1148,11 +1156,7 @@ function ui_rukzak:FillList( items, ui_list, index )
       or ( item.game_objs and table.getn( item.game_objs ) > 0 )
     then
       if not item.name then
-        local sect = item.section
-        local name = get_string(
-          sect, "inv_name", get_string( sect, "inv_name_short" )
-        )
-        item.name = dsh.strip_quotes( game.translate_string( name ) )
+        item.name = make_item_name( item.section )
       end
       if not index[ item.key ] then
         local ui_item = rukzak_item(
@@ -1189,7 +1193,7 @@ end
 function ui_rukzak:show_cur_weight_delay()
   if not self.weight_timer then
     self.weight_timer = dsh.timeout(
-      500, function()
+      250, function()
         self:show_cur_weight()
         self.weight_timer = nil
       end
@@ -1480,3 +1484,6 @@ function ui_rukzak:clean_spawn_manager()
   end
 end
 	
+function get_ammo_size(obj) --¬озвращает колличество патрон в пачке
+	return obj:get_current_ammo()
+end

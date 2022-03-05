@@ -1,223 +1,66 @@
 --[[----------------------------------------------------------------------
 -|ogse_dynamic_hud.script
--|Dynamic HUD from ABC Inferno and AMK by Rulix
--|Исправлено и доработано для OGSE by OGSE Team 2009-2013
--|Рефакторинг и оптимизация: KRodin © 2019
-
--|TODO: Поменять текстуры некоторых масок на менее громоздкие, а то половину экрана загромождают.
+-|Updated I AM DEAD
+-|Last Update Krodin
 ------------------------------------------------------------------------]]
 
--------------------------чтобы отключить эффект, поставьте вместо единицы ноль:--------------------------
-local suithud      = 1
-local blurs_enable = 1
----------------------------------------------------------------------------------------------------------
-
 function attach(sm)
---Худ противогаза
-		sm:subscribe({ signal = "on_update",          fun = this.check_my_suit_hud, queued = true }) 
---Эффект дыхания
-		sm:subscribe({ signal = "on_update",      fun = this.init_blurs }) 
+	sm:subscribe({ signal = "on_spawn",           fun = this.off_shader_effects })
+	sm:subscribe({ signal = "on_death",           fun = this.off_shader_effects })
+	sm:subscribe({ signal = "on_first_update",    fun = this.update_suit_hud })
+	sm:subscribe({ signal = "on_item_to_slot",    fun = this.update_suit_hud })
+	sm:subscribe({ signal = "on_item_to_ruck",    fun = this.update_suit_hud })
+	sm:subscribe({ signal = "on_drop",            fun = this.update_suit_hud })
 end
 
 
---**************************************[Динамический худ противогаза]*****************************************
-
-
-local mycurrent_suithud
-local suit_condition = ""
-local wotsuittype = ""
-
-function check_my_suit_hud()
-
-	local csuithud = db.actor:get_current_outfit()
-	local suithudtype, suithudname
-	if csuithud and game_options.AmkHud == true then
-		suithudname = csuithud:section()
-
-		if csuithud:condition() <= 0.25 then suit_condition = "red3" end
-		if csuithud:condition() > 0.25 then suit_condition = "red2" end
-		if csuithud:condition() > 0.60 then suit_condition = "yellow" end
-		if csuithud:condition() > 0.87 then suit_condition = "blue" end
-
-		if string.find(suithudname, "dolg_scientific_outfit") 
-		or string.find(suithudname, "ecolog_outfit") 
-		or string.find(suithudname, "protection_outfit") 
-		or string.find(suithudname, "scientific_outfit") 
-		or string.find(suithudname, "freedom_scientific_outfit") 
-		or string.find(suithudname, "merc_scientific_outfit") 
-		or string.find(suithudname, "monolit_scientific_outfit") 
-		or string.find(suithudname, "nano_outfit") 
-		or string.find(suithudname, "nano_outfit_addw") 
-		or string.find(suithudname, "nano_outfit_addh") 
-then
-			suithudtype = "hud_sci_" .. suit_condition
-			wotsuittype = "hud_sci"
-		end
-
-		if string.find(suithudname, "military_outfit") 
-		or string.find(suithudname, "militaryspec_outfit") 
-then
-			suithudtype = "hud_mil_" .. suit_condition
-			wotsuittype = "hud_mil"
-		end
-				
-		if string.find(suithudname, "svoboda_gaz_outfit_m1") 
-		or string.find(suithudname, "dolg_gaz_outfit_m1") 
-		or string.find(suithudname, "neytral_gaz_outfit_m1") 
-		or string.find(suithudname, "neytral_novice_gaz_outfit_m1") 
-		or string.find(suithudname, "svoboda_heavy_gaz_outfit_m1") 
-		or string.find(suithudname, "bandit_gaz_outfit_m1") 
-		or string.find(suithudname, "neytral_gaz_outfit_m2") 
-		or string.find(suithudname, "monolit_gaz_outfit_m1") 
-		or string.find(suithudname, "neytral_gaz_outfit_v1") 
-		or string.find(suithudname, "neytral_gaz_outfit_v2") 
-		or string.find(suithudname, "neytral_gaz_outfit_v3") 
-		or string.find(suithudname, "neytral_gaz_outfit_m1") 
-		or string.find(suithudname, "neytral_gaz_outfit_m2") 
-then
-			suithudtype = "hud_gas_" .. suit_condition
-			wotsuittype = "hud_gas"
-		end
-		
-		if string.find(suithudname, "neytral_exo_gaz_outfit_m1") 
-		or string.find(suithudname, "svoboda_yellow_exo_outfit_m1") 
-		or string.find(suithudname, "exo_outfit") 
-		or string.find(suithudname, "killer_blue_exoskeleton") 
-		or string.find(suithudname, "dolg_black_exoskeleton") 
-		or string.find(suithudname, "svoboda_exoskeleton") 
-		or string.find(suithudname, "monolit_exoskeleton") 
-		or string.find(suithudname, "broken_exoskeleton") 
-		or string.find(suithudname, "neytral_exo_antigas_outfit") 
-		or string.find(suithudname, "exo_bandit_outfit") 
-then
-			suithudtype = "hud_exo_" .. suit_condition
-			wotsuittype = "hud_exo"
-		end
-
-		if string.find(suithudname, "killer_gaz_outfit_m1") 
-
-then
-			suithudtype = "hud_kill_" .. suit_condition
-			wotsuittype = "hud_kill"
-		end			
-	else
-		if blurs_enable then
-			set_blurs(false)
-		end
-		suithudtype = nil
-	end
-	set_my_suit_hud(suithudtype)
-end
-
-local suitfirstrun = true
-function set_my_suit_hud(hudtype)
-	if not hudtype then
-		local wchud = get_hud():GetCustomStatic(mycurrent_suithud)
-		if wchud then get_hud():RemoveCustomStatic(mycurrent_suithud) end
-		suitfirstrun = true
-		mycurrent_suithud = nil
-		return
-	elseif hudtype ~= mycurrent_suithud then
-		if mycurrent_suithud then
-			get_hud():RemoveCustomStatic(mycurrent_suithud)
-		end
-		get_hud():AddCustomStatic(hudtype)
-----------------------------------------
-		mycurrent_suithud = hudtype
-----------------------------------------
-		if string.find(hudtype, wotsuittype) then
-			if not suitfirstrun and suit_condition ~= "blue" then
-				local snd_obj = sound_object("material\\glass\\glass_fall03hl")
-				if snd_obj then
-					snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 9.0)
-				end
-			end
-			if suitfirstrun then suitfirstrun = false end
-		end
-	end
-end
---*************************************************************************************************************
-
---************************************************[Эффект дыхания]*********************************************
-function init_blurs()
-	if mycurrent_suithud and not string.find(mycurrent_suithud,"red3") and not string.find(mycurrent_suithud,"hud_sci") then --Если надет совсем убитый костюм или научный костюм - работать не будет.
-		local zoom=67.5/device().fov
-		zoom=(zoom-1)*1.5+1
-		if zoom<1.001 then zoom=1.001 end
-		local stretchy=0.75/(math.floor(device().aspect_ratio*1000)/1000)
-		if stretchy<1 then stretchy=1 end
-		local rect={x=-768*zoom+768,y=(-512*zoom+512)*stretchy-(stretchy-1)*300,w=1024*zoom,h=768*zoom*stretchy}
-		set_blurs(true,rect)
-	else
-		set_blurs(false)
+local last_shader_mode = "off"
+local function switch_shader_effects(mode)
+	if mode ~= last_shader_mode then
+		cmd("r2_rain_drops_control "..mode)
+		last_shader_mode = mode
 	end
 end
 
-local blurs=nil
-local blurval=0 -- уровень запотевания от 0 до 1
-local blurlt=0 -- время последнего обновления
-local blurcyctime=0 -- время начала последнего цикла дыхания (выдох)
-local blurlastphase=0
-function set_blurs(enabled,rect)
-	if (not blurs) or (not get_hud():GetCustomStatic("hud_blur1")) then
-		blurs={}
-		for i=1,4 do
-			get_hud():AddCustomStatic("hud_blur"..i)
-			blurs[i]=get_hud():GetCustomStatic("hud_blur"..i):wnd()
-			blurs[i]:SetWidth(0)
-		end
-	end
-	if not enabled then
-		for i=1,4 do
-			blurs[i]:SetWidth(0)
-		end
+local suithud_enable = false --когда садимся/выходим из БТР, этот параметр убирает/возвращает худ
+local function check_my_suit_hud()
+	if not suithud_enable then
+		cmd("r2_visor_refl_intensity 0")	
+		cmd("r2_visor_refl_control 0")
+		switch_shader_effects("off")
 		return
 	end
--- Циклы в зависимости от силы дыхания: 0->1->0 0->1->2->4->5->0 0->1->2->3->4->5->0 5->4->3->4->5 4->3->4
-	local power=db.actor.power
-	local period=1.0+power*power*1.0 -- текущая частота дыхания от 30 до 120 циклов в минуту
-	local expirt=0.3
-	local breathpower=3
-	local delta=(time_global()-blurlt)/1000 -- дельта в секундах
-	local phase=(time_global()-blurcyctime)/1000 -- фаза дыхательного цикла в сек.
-	blurlt=time_global()
-	if phase>period then
-		phase=phase%period
-		blurcyctime=blurlt-phase*1000
-	end
-	if blurlastphase>phase then
-		blurlastphase=0
-	end
-	local blurdelta=delta*-0.7 -- работа вентилляции
-	if blurlastphase<expirt and phase<expirt then
-		blurdelta=blurdelta+(phase-blurlastphase)*breathpower
-	elseif blurlastphase<expirt then
-		blurdelta=blurdelta+(expirt-blurlastphase)*breathpower
-	end
-	blurlastphase=phase
-	blurval=blurval+blurdelta
-	if blurval>0.999 then
-		blurval=0.999
-	elseif blurval<0 then
-		blurval=0
-	end
-	local tm=math.floor(blurval*3)
-	local tmn=(tm+1)
-	local v=blurval*3-math.floor(blurval*3)
-	v=1-v
-	local v1=1-v
-	if tm~=0 then
-		blurs[tm]:SetColor(GetARGB(v*255,255,255,255))
-	end
-	if tmn~=0 then
-		blurs[tmn]:SetColor(GetARGB(v1*255,255,255,255))
-	end
-	for i=1,4 do
-		if i==tm or i==tmn then
-			blurs[i]:SetWndRect(Frect():set(rect.x,rect.y,rect.w,rect.h))
-		else
-			blurs[i]:SetWndRect(Frect():set(rect.x,rect.y,0,0))
-		end
+
+	local helmet = db.actor:item_in_slot(10)
+	local outfit = db.actor:item_in_slot(6)
+	if helmet and ( helmet:section() == "af_maska_1" or helmet:section() == "af_maska_2" ) then
+		cmd("r2_visor_refl_control 1")
+		cmd("r2_visor_refl_control 0.2")
+		switch_shader_effects("on")
+	elseif outfit then
+		local outfitname = outfit:section()
+		local control = get_string(outfitname, "control" )
+		local intensity = get_string(outfitname, "intensity" )		
+		cmd("r2_visor_refl_control "..control)
+		cmd("r2_visor_refl_intensity "..intensity)
+		switch_shader_effects(tonumber(control) > 0 and "on" or "off")
+	else
+		cmd("r2_visor_refl_intensity 0")
+		cmd("r2_visor_refl_control 0")
+		switch_shader_effects("off")
 	end
 end
---*************************************************************************************************************
+
+
+
+function update_suit_hud()
+	suithud_enable = true
+	check_my_suit_hud()
+end
+
+
+function off_shader_effects()
+	switch_shader_effects("off")
+	cmd("r2_visor_refl_intensity 0")
+	cmd("r2_visor_refl_control 0")
+end

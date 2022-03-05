@@ -185,13 +185,7 @@ table.values = function( t )
   end
   return arr
 end
---==============================================================================================
-function get_ammo_size(obj) --¬озвращает колличество патрон в пачке
-	return obj:get_current_ammo()
-end
-function set_ammo_size(obj, size) --«адать кол-во патронов в пачке
-	obj:set_ammo_box_curr(size)
-end
+--=============================================================================
 
 INVALID_STORY_ID = 4294967295
 NO_ACTIVE_SLOT   = 255
@@ -1199,8 +1193,9 @@ end
 
 
 function random_choice( ... )
-  local arg = { ... }
-  return arg[ math.random( table.getn( arg ) ) ]
+  local n = select( "#", ... )
+  local r = select( math.random( n ), ... )
+  return r
 end
 
 
@@ -2125,11 +2120,6 @@ function isWeapon( object, class_id )
   return id and weapon_classes[ id ]
 end
 
-function isEatable(object, class_id)
-	local id = class_id or get_clsid(object)
-	return id and eat_classes[id]
-end
-
 function isOutfit( object, class_id )
   local id = class_id or get_clsid( object )
   return id and outfit_classes[ id ]
@@ -2466,27 +2456,20 @@ function start_game_callback()
 		[clsid.actor] 					= true,
 		[clsid.script_stalker] 			= true
 		}	
-	eat_classes = {
-		[clsid.obj_antirad]	= true,
-		[clsid.obj_bandage]	= true,
-		[clsid.obj_bottle]	= true,
-		[clsid.obj_food]	= true,
-		[clsid.obj_medkit]	= true
-	}	
 	weapon_classes = {
 		[clsid.wpn_ak74] 				= true,
 		[clsid.wpn_ak74_s] 				= true,
-		[clsid.wpn_binocular] 			= false,
-		[clsid.wpn_binocular_s] 		= false,
+		[clsid.wpn_binocular] 			= true,
+		[clsid.wpn_binocular_s] 		= true,
 		[clsid.wpn_bm16] 				= true,
 		[clsid.wpn_bm16_s] 				= true,
 		[clsid.wpn_fn2000] 				= true,
 		[clsid.wpn_fort]				= true,
-		[clsid.wpn_grenade_f1] 			= false,
-		[clsid.wpn_grenade_fake] 		= false,
-		[clsid.wpn_grenade_launcher] 	= false,
-		[clsid.wpn_grenade_rgd5] 		= false,
-		[clsid.wpn_grenade_rpg7]		= false,
+		[clsid.wpn_grenade_f1] 			= true,
+		[clsid.wpn_grenade_fake] 		= true,
+		[clsid.wpn_grenade_launcher] 	= true,
+		[clsid.wpn_grenade_rgd5] 		= true,
+		[clsid.wpn_grenade_rpg7]		= true,
 		[clsid.wpn_groza] 				= true,
 		[clsid.wpn_groza_s] 			= true,
 		[clsid.wpn_hpsa] 				= true,
@@ -2536,9 +2519,6 @@ function start_game_callback()
 
   m_netpk.attach() -- инициализаци€ модул€ m_netpk
 
-  -- xStream -- sandbox init --
-  xs_sandbox.init()
-  event( "game_start" ):trigger()
 end
 
 
@@ -3297,11 +3277,6 @@ function set_item_default_highlighting( item )
 end
 
 
-function need_show_condition(item)
-	local b = sys_ini:r_bool(item:section(), "show_condition", nil)
-	return ( ( item:is_weapon() or item:is_outfit() ) and b ~= false ) or b == true
-end
-
 function set_item_always_ungroupable( obj, flag )
   obj:get_inventory_item().always_ungroupable = flag
 end
@@ -3478,118 +3453,6 @@ end
 function bit_lshift( a, disp )
   if disp < 0 then return rshift( a, -disp ) end
   return ( a * 2^disp ) % 2^32
-end
-
---=================================[CUIScriptWnd Extension]=====================================
--- ¬ызов обычный, как и в AddCallback, но после последнего аргумента можно передавать множество дополнительных.
-function CUIScriptWnd:Connect(name, event, func, ...)
-	local args = {...}
-	return self:AddCallback( name, event, function() func(unpack(args)) end )
-end
---==============================================================================================
-
-_G.GetIconParams = function (section)
-    if section~=nil and section~=""
-        and sys_ini:section_exist(section)
-        and sys_ini:line_exist(section, "inv_grid_x")
-    then
-        return {x = sys_ini:r_u32(section, "inv_grid_x") *50,
-                y = sys_ini:r_u32(section, "inv_grid_y") *50,
-                w = sys_ini:r_u32(section, "inv_grid_width") *50,
-                h = sys_ini:r_u32(section, "inv_grid_height") *50,
-                g = sys_ini:r_u32(section, "icon_group", 0) }
-    end
-    return {x=0, y=0, w=1, h=1, g=0}
-end
-
-local IsBlocked = false
-_G.BlockUIDescr = function( b )
-	if b == nil then
-		return IsBlocked
-	else
-		IsBlocked = b
-	end
-end
-
-local ShiftHold = false
-_G.ShiftPressed = function( b )
-	if b == nil then
-		return ShiftHold
-	else
-		ShiftHold = b
-	end
-end
-
-_G.sys_ini = system_ini()
-_G.kScreen = math.min( (1024/768) / (device().width/device().height), 1 )
-_G.isWideScreen = _G.kScreen <= 0.85
-
-
--- class 'CUIScriptWnd'
-local wnd_id        = 1
-local registered_windows = {}
-CUIScriptWnd.AddCallbackEx = function ( self, ui_name, ui_event, func, ... )
-	local id = self.__CUIScriptWnd_id
-	if id == nil then
-		id = wnd_id
-		wnd_id = wnd_id + 1
-		self.__CUIScriptWnd_id = id
-		registered_windows[ id ] = {}
-		registered_windows[ id ]["__window"] = self
-	end
-	if registered_windows[ id ][ ui_name ] == nil then
-		registered_windows[ id ][ ui_name ] = {}
-	end
-	registered_windows[ id ][ ui_name ][ ui_event ] = { ... }
-
-	self:AddCallback( ui_name, ui_event,
-		function ( i )
-			local t = registered_windows[ i ]
-			if t then
-				local wnd = t["__window"]
-				local p = t[ ui_name ][ ui_event ]
-				func( wnd, unpack( p ) )
-			else
-				log( "[CUIScriptWnd]: ignore callback for unregistered window %s: ui_name = %s, ui_event = %s",
-					i, ui_name, ui_event )
-			end
-		end,
-	id )
-end
-CUIScriptWnd.ClearCallbacks = function ( self )
-	local id = self.__CUIScriptWnd_id
-	if id == nil then
-	--	log("~ CUIScriptWnd.ClearCallbacks : __CUIScriptWnd_id not found" )
-	else
-		if self.__reg_childs then
-			for i, v in ipairs( self.__reg_childs ) do
-				registered_windows[ v ]["__window"] = nil
-				registered_windows[ v ] = nil
-			end
-			self.__reg_childs = nil
-		end
-		registered_windows[ id ]["__window"] = nil
-		registered_windows[ id ] = nil
-	end
---	log("CUIScriptWnd.ClearCallbacks [%s]: registered windows count [%d]", tostring(id), table.size(registered_windows) )
-end
-CUIScriptWnd.RegisterChild = function( self, child )
-	if child.__CUIScriptWnd_id == nil then return end
-
-	local id = self.__CUIScriptWnd_id
-	if id == nil then
-		id = wnd_id
-		wnd_id = wnd_id + 1
-		self.__CUIScriptWnd_id = id
-		registered_windows[ id ] = {}
-		registered_windows[ id ]["__window"] = self
-	--	log("CUIScriptWnd.RegisterChild: parent window has no __CUIScriptWnd_id" )
-	end
-
-	if self.__reg_childs == nil then
-		self.__reg_childs = {}
-	end
-	table.insert( self.__reg_childs, child.__CUIScriptWnd_id )
 end
 
 game_options.load_game_options()

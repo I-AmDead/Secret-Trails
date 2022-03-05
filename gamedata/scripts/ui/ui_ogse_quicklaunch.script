@@ -10,82 +10,60 @@
 function attach(sm)
 	sm:subscribe({ signal = "on_key_down",	fun = this.chek_keys })
 	sm:subscribe({ signal = "on_key_up",	fun = this.on_key_up })
-	sm:subscribe({ signal = "on_update",    fun = this.on_update })
+	sm:subscribe({ signal = "on_update", fun = this.on_update})
 end
 
-
-local strings = {}
-local strings_all = {
-	[1] = {text = game.translate_string("quicklaunch_string1")},
-	[2] = {text = "----------------------------"},
-	[3] = {text = game.translate_string("quicklaunch_string2"), keybind = key_bindings.kUSE_BANDAGE},
-	[4] = {text = game.translate_string("quicklaunch_string3"), keybind = key_bindings.kUSE_MEDKIT},
-	[5] = {text = game.translate_string("quicklaunch_string4"), keybind = key_bindings.kUSE_ANTIRAD},
-	[6] = {text = game.translate_string("quicklaunch_string5"), keybind = key_bindings.kUSE_ENERGY_DRINK},
-	[7] = {text = game.translate_string("quicklaunch_string6"), keybind = key_bindings.kUSE_B190},
-	[8] = {text = game.translate_string("quicklaunch_string7"), keybind = key_bindings.kUSE_BIPSIZON}
-}
-
 local binds_table = {
-	[key_bindings.kUSE_ANTIRAD] = function()
+	[key_bindings.kQUICK_SLOT_1] = function()
 	local section = ogse_quick_slots.GetItemInFastSlot1()
-	if section then
+	if section and db.actor:alive() then
 		local item = db.actor:object(section)
 		if item then
 			db.actor:eat(item)
 			ogse_screen_msg.show_message_use_item(item:section())
-
-	end
-end
-
+			end
+		end				
 		return true
 	end,
-	[key_bindings.kUSE_ENERGY_DRINK] = function()
+	[key_bindings.kQUICK_SLOT_2] = function()
 	local section = ogse_quick_slots.GetItemInFastSlot2()
-	if section then
+	if section and db.actor:alive() then
 		local item = db.actor:object(section)
 		if item then 
 			db.actor:eat(item)
 			ogse_screen_msg.show_message_use_item(item:section())
-
-
-	end
-end
+			end
+		end				
 		return true
 	end,
-	[key_bindings.kUSE_B190] = function()
+	[key_bindings.kQUICK_SLOT_3] = function()
 	local section = ogse_quick_slots.GetItemInFastSlot3()
-	if section then
+	if section and db.actor:alive() then
 		local item = db.actor:object(section)
 		if item then
  			db.actor:eat(item)
 			ogse_screen_msg.show_message_use_item(item:section())
-
-
-	end
-end
+			end
+		end				
 		return true
 	end,
-
-
-	[key_bindings.kUSE_BIPSIZON] = function()
+	[key_bindings.kQUICK_SLOT_4] = function()
 	local section = ogse_quick_slots.GetItemInFastSlot4()
-	if section then
+	if section and db.actor:alive() then
 		local item = db.actor:object(section)
 		if item then
  			db.actor:eat(item)
 			ogse_screen_msg.show_message_use_item(item:section())
-	end
-end
+			end
+		end				
 		return true
 	end,
-
 }
 
 local show_wnd = false
 
 function chek_keys(key, bind)
-	if level.main_input_receiver() then return end
+	if level.main_input_receiver() and not db.actor:alive() then return end
 
 	local fun = binds_table[bind]
 	if fun then return fun() end
@@ -100,7 +78,7 @@ function on_key_up(key, bind)
 end
 
 function on_update()
-	if show_wnd == true then
+	if show_wnd then
 		ogse_quick_slots.AddFastUseSlotsHud()
 	else
 		ogse_quick_slots.RemoveFastUseSlotsHud()
