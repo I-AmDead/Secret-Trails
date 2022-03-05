@@ -47,21 +47,20 @@ function del_lampa()
     end
 end
 
-
 function spawn_sverhprovodnik()
 
-if (not db.actor:has_info( "sverhprovodnik_dialog_start" )) and db.actor:has_info( "sverhprovodnik_dialog_start_pre" ) and (level.get_time_hours() > 1 and level.get_time_hours() < 2) then
+	if db.actor:has_info( "sverhprovodnik_dialog_start" ) and db.actor:dont_has_info( "sverhprovodnik_dialog_start_pre" ) then return end
 
-       local obj=alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-elseif level.get_time_hours() < 1 and level.get_time_hours() > 2 then
-					
-			local se_obj = alife():object("sverhprovodnik")
+	if level.get_time_hours() > 1 and level.get_time_hours() < 2 then
+		local obj = alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
+		local sobj = alife():object( obj.id )
+                alife():use_ai_locations(sobj, false)
+		local sverhprodnik_delete = true 
+	end
 
-if se_obj then
-alife():release(se_obj, true)
-end		
-
-end
+	if sobj and sverhprodnik_delete and level.get_time_hours() > 2 and level.get_time_hours() < 1 then
+	local obj = alife():object("sverhprovodnik")
+	alife():release(sobj , true)
+	sverhprodnik_delete = false
+	end
 end

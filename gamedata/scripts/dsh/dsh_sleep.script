@@ -53,26 +53,11 @@ end
 
 function reduce_need_sleep( minutes )
   local gg_need_sleep = get_gg_need_sleep()
-  gg_need_sleep = gg_need_sleep - math.floor( minutes / 3 * restore_coef() )
+  gg_need_sleep = gg_need_sleep - math.floor( minutes / 3 )
   if gg_need_sleep < 0 then gg_need_sleep = 0 end
   set_gg_need_sleep( gg_need_sleep )
   test_sleep_pp()
 end
-
-
-function restore_coef()
-  local coef = 1
-  -- вещи в слотах мешают выспаться быстрее
-  for n, _ in pairs( dsh.small_wpn_slots ) do
-    if db.actor:item_in_slot( n )  then coef = coef * 0.90 end
-  end
-  if db.actor:item_in_slot( 2 )    then coef = coef * 0.90 end
-  if db.actor:get_current_outfit() then coef = coef * 0.85 end
-  if ogse_actor_conditions_mgr.has_overweight then coef = coef * 0.85 end
---  if get_shadow_inv():update_storage() then coef = coef * 0.85 end
-  return coef
-end
-
 
 function get_gg_need_sleep()
   return ogse.load_var( "dsh_sleep.gg_need_sleep", 0 )

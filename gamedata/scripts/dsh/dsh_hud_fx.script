@@ -1,17 +1,10 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
-local opt_helmet_effector = false
-
 local wpn_fx  = dsh_hud_fx_data.wpn_fx
-local hud_fxs = dsh_hud_fx_data.hud_fxs
-local active_hud_fx_queue, active_hud_fx_sect, active_fx_snd
 
-
-function attach( sm )
-  sm:subscribe({
-    signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire
-  })
-  sm:subscribe({ signal = "on_update", fun = this.on_update_heart   })
+function attach(sm)
+  sm:subscribe({ signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire })
+  sm:subscribe({ signal = "on_update", fun = this.on_update_heart })
 end
 
 
@@ -173,71 +166,4 @@ function nlc7_actor_heart()
       delt = time_curr
     end
 end
-end
-
-
-local active_fx_t
-function run_fx( sect, fx, tail, args )
-  ASSERT( hud_fxs[ fx ], "unknown fx for %s", sect )
-  if active_fx_t then
-    active_fx_t:stop()
-    active_fx_t = nil
-  end
-  if active_fx_snd then
-    if active_fx_snd:playing() then
-      active_fx_snd:stop()
-    end
-    active_fx_snd = nil
-  end
-  active_hud_fx_queue = {}
-  for _, item in ipairs( hud_fxs[ fx ] ) do
-    table.insert( active_hud_fx_queue, item )
-  end
-  if tail then
-    for _, item in ipairs( tail ) do
-      table.insert( active_hud_fx_queue, item )
-    end
-  end
-  active_hud_fx_sect = sect
-  process_fx_next( nil, ( args or {} ) )
-end
-
-
-function is_active_hud_fx_queue()
-  return active_hud_fx_queue and table.getn( active_hud_fx_queue ) > 0
-end
-
-
-function process_fx_next( timeout, t )
-  if is_active_hud_fx_queue() then
-    local item = table.remove( active_hud_fx_queue, 1 )
-    local func = item.func
-      or ( item.use_sound and this.fx_use_sound )
-    ASSERT( func, "can't find func for %s", active_hud_fx_sect )
-    if item.timeout then timeout = item.timeout end
-    if timeout and timeout > 0 then
-      active_fx_t = dsh.timeout( timeout, function()
-        local timeout = func( item, t )
-        if item.next ~= false then
-          process_fx_next( timeout, t )
-        end
-      end )
-    else
-      active_fx_t = nil
-      local timeout = func( item, t )
-      if item.next ~= false then
-        process_fx_next( timeout, t )
-      end
-    end
-  else
-    active_fx_t         = nil
-    active_hud_fx_queue = nil
-    active_hud_fx_sect  = nil
-  end
-end
-
-function close_inventory()
-  if db.actor:has_info( "ui_inventory" ) then
-    level.start_stop_menu( level.main_input_receiver(), true )
-  end
 end

@@ -2111,32 +2111,6 @@ function on_tutor_gameover_stop()
   c:execute("main_menu on")
 end
 
--- added by Ab@dDon $DreamMod --
-function actor_stop_sleeping()
-  sleep_manager.stopper()
-end
-
------------------------------------time_speed-------------------------------
-
-local iRealFactor = system_ini():r_u32("alife", "time_factor")
-
---вызов поставить на апдейт
-function GetTimeMidnight()
-local iFactor = level.get_time_factor()
-if iFactor~=iRealFactor and not sleep_manager.is_sleep_active() then 
-local iHours = level.get_time_hours()
-local iMinutes = level.get_time_minutes()
---// чтобы не умер
-if db.actor.health<1 then
-db.actor.health=1
-end
-local bMidnight=iHours==0 and iMinutes>=0
-if bMidnight then
-level.set_time_factor(iRealFactor)
-end
-end 
-end  
-
 --// ускоряет время  - вызов из рестриктора
 function SetSpeedTime()
 level.set_time_factor(2000)
