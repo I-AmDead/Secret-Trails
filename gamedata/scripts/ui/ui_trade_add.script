@@ -1,4 +1,10 @@
 -- -*- mode: lua; encoding: windows-1251 -*-
+
+function attach( sm )
+	sm:subscribe({signal = "on_trade_open", fun = this.trade_open  })
+	sm:subscribe({signal = "on_trade_hide", fun = this.trade_close })
+end
+
 local wnd = nil
 
 
@@ -16,13 +22,15 @@ function trade_close()
 end
 
 class "TradeWnd" (CUIScriptWnd)
-
 function TradeWnd:__init(owner) super()
 	self.owner = owner
 	self:Init(0, 0, 1024, 768)
+	self:InitControls()
+end
 
+function TradeWnd:__finalize() end
 
-
+function TradeWnd:InitControls()
 	self.stat = CUIStatic()
 	self.stat:Init(0, 0, 1024, 768)
 	self.owner:AttachChild(self.stat)
@@ -30,28 +38,13 @@ function TradeWnd:__init(owner) super()
 
         self.stat:SetAutoDelete(true) 
 
-
-
-
 	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
 end
 
 
-function TradeWnd:__finalize() end
-
 function TradeWnd:DetachWnd() 
-
-self.DescrWnd:Remove() 
-
-self.DescrWnd = nil 
-
-self.owner:DetachChild(self.stat) 
-
+	self.DescrWnd:Remove() 
+	self.DescrWnd = nil 
+	self:ClearCallbacks()
+	self.owner:DetachChild(self.stat) 
 end 
-
-function attach( sm )
-
-	sm:subscribe({signal = "on_trade_open", fun = this.trade_open  })
-	sm:subscribe({signal = "on_trade_hide", fun = this.trade_close })
-
-end

@@ -23,6 +23,13 @@ local forbidden_wpns = {
 	['wpn_gravigun']                = true,	-- гравицапа
 }
 
+local forbidden_ammo = {
+	['ammo_vog-25']		= true,
+	['ammo_vog-25p']	= true,
+	['ammo_m209']		= true,
+	['ammo_og-7b']	    = true,
+}
+
 -- Параметры актёра, по которым считаются некоторые параметры артефактов или костюмов
 local conditions = {
 	bleeding_restore_speed	= get_float('actor_condition', 'bleeding_v'),
@@ -33,34 +40,34 @@ local conditions = {
 }
 -- параметры костюмов и артов
 local conditions_params = {
-	{ prop = "health_restore_speed",	text = "Здоровье:",		tex = "health"		},
-	{ prop = "bleeding_restore_speed",	text = "Кровотечение:",	tex = "bleeding"	},
-	{ prop = "satiety_restore_speed",	text = "Сытость:",		tex = "satiety"		},
-	{ prop = "power_restore_speed",		text = "Выносливость:",	tex = "power"		},
-	{ prop = "radiation_restore_speed",	text = "Радиация:",		tex = "radiation_2", unit = "Ки"	},
+	{ prop = "health_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_health")),		tex = "health"		},
+	{ prop = "bleeding_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_bleeding")),	    tex = "bleeding"	},
+	{ prop = "satiety_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_satiety")),		tex = "satiety"		},
+	{ prop = "power_restore_speed",		text = string.format("%s:", game.translate_string("ui_inv_power")),	    	tex = "power"		},
+	{ prop = "radiation_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_radiation")),		tex = "radiation_2", unit = "Ки"	},
 }
 -- Типы хитов и соответствующие им текстуры и названия
 local hit_types = {
-	{ prop = "burn",			text = "Ожог:"			},
-	{ prop = "shock",			text = "Электрошок:"	},
-	{ prop = "strike",			text = "Удар:"			},
-	{ prop = "wound",			text = "Разрыв:"		},
-	{ prop = "radiation",		text = "Радиация:"		},
-	{ prop = "telepatic",		text = "Телепатия:"		},
-	{ prop = "chemical_burn",	text = "Хим. ожог:"		},
-	{ prop = "explosion",		text = "Взрыв:"			},
-	{ prop = "fire_wound",		text = "Пулестойкость:"	}
+	{ prop = "burn",			text = string.format("%s:", game.translate_string("ui_inv_outfit_burn_protection")),			},
+	{ prop = "shock",			text = string.format("%s:", game.translate_string("ui_inv_outfit_shock_protection")),	        },
+	{ prop = "strike",			text = string.format("%s:", game.translate_string("ui_inv_outfit_strike_protection")),	        },
+	{ prop = "wound",			text = string.format("%s:", game.translate_string("ui_inv_outfit_wound_protection")),	        },
+	{ prop = "radiation",		text = string.format("%s:", game.translate_string("ui_inv_outfit_radiation_protection")),	    },
+	{ prop = "telepatic",		text = string.format("%s:", game.translate_string("ui_inv_outfit_telepatic_protection")),	    },
+	{ prop = "chemical_burn",	text = string.format("%s:", game.translate_string("ui_inv_outfit_chemical_burn_protection")),	},
+	{ prop = "explosion",		text = string.format("%s:", game.translate_string("ui_inv_outfit_explosion_protection")),	    },
+	{ prop = "fire_wound",		text = string.format("%s:", game.translate_string("ui_inv_outfit_fire_wound_protection")),	    },
 }
 -- Параметры еды
 local eatable_params = {
-	{ prop = "eat_health",				text = "Здоровье:",		tex = "health"		},
-	{ prop = "wounds_heal_perc",		text = "Кровотечение:",	tex = "bleeding"	},
-	{ prop = "eat_psy_health",			text = "Пси-здоровье:",	tex = "telepatic"	},
-	{ prop = "eat_satiety",				text = "Сытость:",		tex = "satiety"		},
-	{ prop = "eat_power",				text = "Выносливость:",	tex = "power"		},
-	{ prop = "eat_alcohol",				text = "Опьянение:",	tex = "alcohol"		},
-	{ prop = "eat_radiation",			text = "Радиация:",		tex = "radiation_2"	},
-	{ prop = "eat_radiation_arc",		text = "Радиация:",		tex = "radiation_2", unit = "Р"	}
+	{ prop = "eat_health",				text = string.format("%s:", game.translate_string("ui_inv_health")),		tex = "health"		},
+	{ prop = "wounds_heal_perc",		text = string.format("%s:", game.translate_string("ui_inv_bleeding")),		tex = "bleeding"	},
+	{ prop = "eat_psy_health",			text = string.format("%s:", game.translate_string("ui_inv_psy_health")),	tex = "telepatic"	},
+	{ prop = "eat_satiety",				text = string.format("%s:", game.translate_string("ui_inv_satiety")),		tex = "satiety"		},
+	{ prop = "eat_power",				text = string.format("%s:", game.translate_string("ui_inv_power")),	    tex = "power"		},
+	{ prop = "eat_alcohol",				text = string.format("%s:", game.translate_string("ui_inv_alcohol")),		tex = "alcohol"		},
+	{ prop = "eat_radiation",			text = string.format("%s:", game.translate_string("ui_inv_radiation")),	tex = "radiation_2"	},
+	{ prop = "eat_radiation_arc",			text = string.format("%s:", game.translate_string("ui_inv_radiation")),	tex = "radiation_2"	},
 }
 --------------------------------------------------------------------------------------------------------
 class "CUIDescriptionWnd" (CUIScriptWnd)
@@ -189,12 +196,6 @@ function CUIDescriptionWnd:ShowDescription(item)
 
 	local description = game.translate_string(sys_ini:r_string(self.section, "description"))
 
-
-	-- artefacts
-	if item:is_artefact() then
-			self:ShowAfParams()
-	end
-
 	self.inv_name:SetTextST(inv_name)
 
 	self.descr:SetText(description)
@@ -213,37 +214,36 @@ function CUIDescriptionWnd:ShowDescription(item)
 		if not forbidden_wpns[self.section] then
 			self:ShowWeaponParams()
 		end
+		-- artefacts
+	elseif item:is_artefact() then
+		self:ShowAfParams()
 	-- outfits
 	elseif item:is_outfit() then
 		self:ShowOutfitParams()
 	-- knife
 	elseif item:is_knife() then
 		local d = get_float(self.section, 'fire_distance')
-		self:ShowProps( { {"fire_distance_knife", "Дистанция удара: "..string.format("%.2f м.", d)} } )
-	-- scope
-	elseif item:is_scope() then
-		local zf = get_float(self.section, 'scope_zoom_factor')
-		local zoom = device().fov/(zf*0.75)
-		self:ShowProps( { {"scope", "x"..string.format("%.1f", zoom)} } )
+		self:ShowProps( { {"fire_distance_knife", string.format("%s: %.2f %s", game.translate_string("descr_knife_distance"), d, game.translate_string("descr_meters"))} } )
 	-- grenade
 	elseif item:is_grenade() then
 		local fr = get_float(self.section, 'frags_r')
 		local br =  get_float(self.section, 'blast_r')
-		self:ShowProps( { {"explosion", string.format("Опасный радиус: %.1f м.", (fr+br)/2)} } )
+		self:ShowProps( { {"explosion", string.format("%s: %.1f %s", game.translate_string("descr_radius"), (fr+br)/2, game.translate_string("descr_meters"))} } )
 	-- ammo
 	elseif item:is_ammo() and not item:is_grenade() then
-		local kh = get_float(self.section, 'k_hit')
-		local bs = get_float(self.section, 'buck_shot')
-		self:ShowProps( { {"explosion", string.format("Убойность патронов: %.2f ", (kh*bs))} } )
+		if not forbidden_ammo[self.section] then
+			local kh = get_float(self.section, 'k_hit')
+			local bs = get_float(self.section, 'buck_shot')
+			self:ShowProps( { {"explosion", string.format("%s: %.2f", game.translate_string("descr_damage_ammo"), (kh*bs))} } )
+		end
 	end
 
-	self.weight_static:SetText(string.format("Вес: %.2f кг.", item:get_weight()) )
+	self.weight_static:SetText(string.format("%s: %.2f %s", game.translate_string("descr_weight"), item:get_weight(), game.translate_string("descr_kg")) )
+	self.cost:SetText(string.format("%s: %d %s", game.translate_string("descr_cost"), item:cost(), game.translate_string("descr_rub")) )
 
 	if need_show_condition(item) then
 		self.cond_frame:Show(true)
-		self.cond_frame:SetText(
-			string.format("%s: %.1f%%", game.translate_string("st_condition"), self.condition*100)
-		)
+		self.cond_frame:SetText(string.format("%s: %.1f%%", game.translate_string("descr_condition"), self.condition*100))
 		self.cond_scale:SetProgressPos(self.condition * 100)
 	else
 		self.cond_frame:Show(false)
@@ -290,7 +290,7 @@ function CUIDescriptionWnd:ShowEatableParams()
 
 		local tm = get_float(self.section, 'effect_time')
 		if tm then
-			self:ShowProps( { {"time", string.format("Время действия: %d сек", tm)} } )
+			self:ShowProps( { {"time", string.format("%s: %d %s", game.translate_string("descr_time"), tm, game.translate_string("descr_seconds"))} } )
 		end
 
 	if #params>0 then
@@ -305,7 +305,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	self.addH = self.addH + stH
 
 	st = self.xml:InitStatic("props", self.scroll_v)
-	st:SetText("Боеприпасы:")
+	st:SetText(string.format("%s", game.translate_string("descr_ammo_weapon")))
 	st:SetTextColor(255, 0, 255, 110)
 	self.addH = self.addH + stH
 	-- Боеприпасы
@@ -325,24 +325,24 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	st:SetHeight(25)
 
-	local tex_name, tex_rect = get_texture_info( "ui_inventory_progress_bar_16" )	
+	local tex_name, tex_rect = get_texture_info( "ui_mg_progress_full" )	
 
 	st.icon_hit = self.xml:InitStatic("props:prop_texture", st)
 	st.icon_hit:InitTexture("ui_inv_icon_hit_power")
 
 	st.scale_hit_b = CUIStatic()
 	st:AttachChild(st.scale_hit_b)
-	st.scale_hit_b:Init( "ui_inventory_progress_bar_16", 20, 15, 118, 6 )
+	st.scale_hit_b:Init( "ui_mg_progress_full", 20, 15, 118, 6 )
 	st.scale_hit_b:SetStretchTexture(true)
 	st.scale_hit_b:SetColor( GetARGB(255, 0, 0, 0) )
 
 	st.scale_hit = CUIStatic()
 	st:AttachChild(st.scale_hit)
-	st.scale_hit:Init( tex_name, 20, 15, 108*hit, 6 )
+	st.scale_hit:Init( tex_name, 20, 15, 118*hit, 6 )
 	st.scale_hit:SetStretchTexture(true)
 	st.scale_hit:SetOriginalRect( tex_rect.x1, tex_rect.y1, tex_rect.x2*hit, tex_rect.y2 )
 	st.scale_hit:SetColor( GetARGB(255, 100, 34, 40) )
-	st.scale_hit:SetText( "Убойность оружия: "..string.format("%.2f", hit) )
+	st.scale_hit:SetText(string.format("%s: %.2f", game.translate_string("descr_damage"), hit))
 	st.scale_hit:SetTextY(-17)
 
 
@@ -359,7 +359,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	st.scale_distance_b = CUIStatic()
 	st:AttachChild(st.scale_distance_b)
-	st.scale_distance_b:Init( "ui_inventory_progress_bar_16", 20, 15, 118, 6 )
+	st.scale_distance_b:Init( "ui_mg_progress_full", 20, 15, 118, 6 )
 	st.scale_distance_b:SetStretchTexture(true)
 	st.scale_distance_b:SetColor( GetARGB(255, 0, 0, 0) )
 
@@ -369,7 +369,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	st.scale_distance:SetStretchTexture(true)
 	st.scale_distance:SetOriginalRect( tex_rect.x1, tex_rect.y1, tex_rect.x2*(distance/1000), tex_rect.y2 )
 	st.scale_distance:SetColor( GetARGB(255, 100, 34, 40) )
-	st.scale_distance:SetText( "Эффективная дальность: "..string.format("%d", distance) .." метров" )
+	st.scale_distance:SetText(string.format("%s: %d %s", game.translate_string("descr_distance"), distance, game.translate_string("descr_meters")))
 	st.scale_distance:SetTextY(-17)
 
 
@@ -386,7 +386,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	st.scale_rpm_b = CUIStatic()
 	st:AttachChild(st.scale_rpm_b)
-	st.scale_rpm_b:Init( "ui_inventory_progress_bar_16", 20, 15, 118, 6 )
+	st.scale_rpm_b:Init( "ui_mg_progress_full", 20, 15, 118, 6 )
 	st.scale_rpm_b:SetStretchTexture(true)
 	st.scale_rpm_b:SetColor( GetARGB(255, 0, 0, 0) )
 
@@ -397,7 +397,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	st.scale_rpm:SetStretchTexture(true)
 	st.scale_rpm:SetOriginalRect( tex_rect.x1, tex_rect.y1, tex_rect.x2*(rpm/1000), tex_rect.y2 )
 	st.scale_rpm:SetColor( GetARGB(255, 100, 34, 40) )
-	st.scale_rpm:SetText( "Скорострельность: "..string.format("%d", rpm) .." в/мин" )
+	st.scale_rpm:SetText(string.format("%s: %d %s", game.translate_string("descr_rate"), rpm, game.translate_string("descr_speed")))
 	st.scale_rpm:SetTextY(-17)
 
 	local st = self.xml:InitStatic("props", self.scroll_v)
@@ -410,7 +410,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	st.icon_mag_size = self.xml:InitStatic("props:prop_texture", st)
 	st.icon_mag_size:InitTexture("ui_inv_icon_ammo_mag_size")
-	st.icon_mag_size:SetText( "Ёмкость магазина: "..string.format("%d", mag_size) )
+	st.icon_mag_size:SetText(string.format("%s: %d %s", game.translate_string("descr_mag_size"), mag_size, game.translate_string("descr_ammo")))
 	st.icon_mag_size:SetTextX(19)
 	st.icon_mag_size:SetTextY(2)
 
@@ -452,7 +452,7 @@ function CUIDescriptionWnd:ShowAfParams()
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
 		val = get_float(self.section, "additional_inventory_weight2")
 		if val~=0 then
-			txt = "Переносимый вес: "..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f",val).." кг"
+			txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
 			table.insert( params, {"additional_weight", txt} )
 		end
 	end
@@ -478,8 +478,8 @@ function CUIDescriptionWnd:ShowOutfitParams()
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
 		val = get_float(self.section, "additional_inventory_weight2")
-		if val>0 then
-			txt = "Грузоподъёмность: %c[green]+"..string.format("%.1f",val).." кг"
+		if val~=0 then
+			txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
 			table.insert( params, {"additional_weight", txt} )
 		end
 	end

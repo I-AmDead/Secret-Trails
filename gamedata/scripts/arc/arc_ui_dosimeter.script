@@ -2,16 +2,25 @@
 local DEFAULT_FADE_DELAY = 5000
 local DEFAULT_FADE_TIME = 3000
 
-local _MAX_ARROW_POS = 1.08
-local _MIN_ARROW_POS = -0.1
+local MAX_ARROW_POS = 1.08
+local MIN_ARROW_POS = -0.1
 
 local alpha = 0
 
 local is_fading = false
 local fade_delay, fade_total_time, fade_time_left
 
---local enabled = true
-enabled = false
+local enabled
+
+function on_detector_to_belt(obj)
+	if not string.find( obj:section(), "^detector_" ) then return end
+	enabled = true
+end
+
+function on_detector_to_ruck(obj)
+	if not string.find( obj:section(), "^detector_" ) then return end
+	enabled = false
+end
 
 function show()
 	is_fading = false
@@ -23,13 +32,13 @@ function hide()
 	alpha = 0
 end
 
-function fade(_force_fade, _fade_delay, _fade_time)
-	if (not is_fading) or _force_fade then
+function fade(update_fade, update_delay, update_time)
+	if not is_fading or update_fade then
 		alpha = 255
 		is_fading = true
 	
-		fade_delay = _fade_delay or DEFAULT_FADE_DELAY
-		fade_total_time = _fade_time or DEFAULT_FADE_TIME
+		fade_delay = update_delay or DEFAULT_FADE_DELAY
+		fade_total_time = update_time or DEFAULT_FADE_TIME
 		fade_time_left = fade_total_time
 	end
 end
@@ -59,7 +68,6 @@ local arrow_velocity, arrow_position = 0, 0
 function show_dosimeter(delta) -- FIXME
 	if not dosimeter then
 		if not init_dosimeter() then
-			fault("can`t init_dosimeter")
 			return
 		end
 	end
@@ -80,11 +88,11 @@ function show_dosimeter(delta) -- FIXME
 	arrow_position = arrow_position + arrow_velocity
 	
 	-- Off-scale:
-	if arrow_position > _MAX_ARROW_POS then
-		arrow_position = _MAX_ARROW_POS
+	if arrow_position > MAX_ARROW_POS then
+		arrow_position = MAX_ARROW_POS
 		arrow_velocity = -0.015
-	elseif arrow_position < _MIN_ARROW_POS then
-		arrow_position = _MIN_ARROW_POS
+	elseif arrow_position < MIN_ARROW_POS then
+		arrow_position = MIN_ARROW_POS
 		arrow_velocity = 0.015
 	end
 	
@@ -96,7 +104,6 @@ function init_dosimeter()
 	local arc_hud = arc_ui_hud.get_arc_hud()
 	
 	if not arc_hud then
-		fault("arc_hud == nil")
 		return false
 	end
 	
@@ -106,7 +113,7 @@ function init_dosimeter()
 	m:SetAutoDelete(true)
 	m:SetStretchTexture(true)
 	m:InitTexture("arc\\serafim_monitor")
-	m:Init(935,720,256,64)
+	m:Init(945,730,256,64)
 	m:SetTextX(16)
 	m:SetTextY(10)
 	m:SetTextColor(128,150,250,200)
@@ -117,17 +124,7 @@ function init_dosimeter()
 	return true
 end
 
--- DebugInfo:
-function info(msg)
-  arc.info(msg)
-end
-
-function warning(msg)
-  info("arc_ui_dosimeter_1: !!!warning!!! "..msg)
-  return false
-end
-
-function fault(msg)
-  info("arc_ui_dosimeter_1: !!!fault!!! "..msg)
-  return false
+function attach(sm)
+  sm:subscribe({ signal = "on_item_to_belt", fun = this.on_detector_to_belt })
+  sm:subscribe({ signal = "on_item_to_ruck", fun = this.on_detector_to_ruck })
 end

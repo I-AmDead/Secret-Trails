@@ -703,7 +703,7 @@ function CRandomTask:action_task_show(npc, actor)
   for k,v in pairs(self.task_id_by_parent[parent]) do   
     if self:task_avail(actor, npc, nil, nil, self.task_info[v].init_phrase_id, false) then
       local task_texture, task_rect = get_texture_info("ui_icons_task_"..self.task_info[v].type, "ui_iconsTotal_locations")
-      db.actor:give_talk_message(game.translate_string(self.task_info[v].name), task_texture, task_rect,"iconed_trade_info")
+      db.actor:give_talk_message(game.translate_string(self.task_info[v].name), task_texture, task_rect,"other_iconed_answer_item")
     end
   end
 end
@@ -1414,15 +1414,15 @@ function show_reward(actor,npc,p1,p2)
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_find_item")
 	if reward_text ~= nil and reward_text ~= "" then
 		db.actor:give_talk_message("Я тебе за это дам вот что:", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
-		db.actor:give_talk_message(reward_text, task_texture, task_rect,"iconed_trade_info")
+		db.actor:give_talk_message(reward_text, task_texture, task_rect,"other_iconed_answer_item")
 	end
 	
 	if reward_money ~= nil then 
 		task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
 		if task_details.need_return and reward_text == "" then
-			db.actor:give_talk_message(reward_money .. " RU (" .. game.translate_string("return_for_reward") .. ")", task_texture, task_rect, "iconed_trade_info")
+			db.actor:give_talk_message(reward_money .. " RU (" .. game.translate_string("return_for_reward") .. ")", task_texture, task_rect, "other_iconed_answer_item")
 		else
-			db.actor:give_talk_message(reward_money .. " RU", task_texture, task_rect,"iconed_trade_info")
+			db.actor:give_talk_message(reward_money .. " RU", task_texture, task_rect,"other_iconed_answer_item")
 		end
 	end
 	

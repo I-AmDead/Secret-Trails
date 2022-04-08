@@ -380,7 +380,7 @@ local obj=alife():create("gold_art",vector():set(-234.88185119629,8.370841979980
 local obj=alife():create("wpn_sig_m2",vector():set(-260.10464477539,0.27300158143044,92.179977416992),8348,1378)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
-local obj=alife():create("wpn_abakan_m2",vector():set(-116.20272827148,-1.9442112445831,122.73686218262),43368,1315)
+local obj=alife():create("wpn_abakan_n_m2",vector():set(-116.20272827148,-1.9442112445831,122.73686218262),43368,1315)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
 local obj=alife():create("gold_art",vector():set(86.18724822998,0.054149866104126,49.022884368896),84502,1520)
@@ -395,7 +395,7 @@ local obj=alife():create("af_fuzz_kolobok",vector():set(67.825614929199,-0.37150
 local obj=alife():create("af_dummy_glassbeads",vector():set(32.647331237793,5.5799655,-12.673707962036),4722,1538)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
-local obj=alife():create("wpn_abakan_m1",vector():set(-117.45324707031,20.803544998169,-36.93675994873),189,1529)
+local obj=alife():create("wpn_abakan_n_m1",vector():set(-117.45324707031,20.803544998169,-36.93675994873),189,1529)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
 local obj=alife():create("af_rusty_sea-urchin",vector():set(-154.36480712891,-0.286359,9.8843507766724),165820,1628)
@@ -404,7 +404,7 @@ local obj=alife():create("af_rusty_sea-urchin",vector():set(-154.36480712891,-0.
 local obj=alife():create("wpn_svu",vector():set(595.62921142578,-54.139465332031,-96.708854675293),212521,1893)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
-local obj=alife():create("wpn_svd",vector():set(653.56958007813,-43.883968353271,179.26545715332),226824,1912)
+local obj=alife():create("wpn_svds",vector():set(653.56958007813,-43.883968353271,179.26545715332),226824,1912)
 	                local sobj = alife():object( obj.id )
                         alife():use_ai_locations(sobj, false)
 local obj=alife():create("af_rusty_sea-urchin",vector():set(660.3306274414,-43.8872718,176.84335327148),227074,1914)
@@ -1965,360 +1965,297 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------СПАВН АРТОВ-------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------
 function check_caterpillar_new()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("kruglov_art_spawn") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar_new",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-		db.actor:give_info_portion("kruglov_art_spawn")
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar_new", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("kruglov_art_spawn")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
        end	
-    end
 end
 
 function check_caterpillar1()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info1") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info1")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info1")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar2()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info2") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info2")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info2")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar3()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info3") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info3")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info3")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar4()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info4") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info4")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info4")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar5()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info5") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info5")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info5")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar6()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info6") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info6")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info6")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar7()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info7") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info7")
-   news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info7")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar8()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info8") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info8")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info8")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar9()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info9") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info9")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info9")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar10()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info10") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info10")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info10")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar11()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info11") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info11")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info11")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar12()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info12") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info12")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info12")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar13()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info13") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info13")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info13")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar14()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info14") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info14")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info14")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar15()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info15") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info15")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info15")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar16()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info16") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info16")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info16")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar17()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info17") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info17")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info17")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar18()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info18") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info18")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
-       end	
-    end
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info18")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+       end
 end
 
 function check_caterpillar19()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info19") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info19")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info19")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
        end	
-    end
 end
 
 function check_caterpillar20()
-   if db.actor:item_in_slot(8):section()=="detector_kruglov" then 
       if db.actor and not db.actor:has_info("spawn_caterpillar_info20") then
-local position = db.actor:position(x,y,z)
-position.x = position.x + 10
-position.y = position.y + 4
-position.z = position.z
-local obj = alife():create("af_caterpillar",
-			position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
-	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
-		db.actor:give_info_portion("spawn_caterpillar_info20")
-    news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            local position = db.actor:position(x,y,z)
+            position.x = position.x + 10
+            position.y = position.y + 4
+            position.z = position.z
+            local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+            local sobj = alife():object( obj.id )
+            alife():use_ai_locations(sobj, false)
+            db.actor:give_info_portion("spawn_caterpillar_info20")
+            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
        end	
-    end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------СПАВН АРТОВ-------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------
@@ -2600,7 +2537,7 @@ local npc,obj
              obj = alife():object(npc:id())  
 		 clear_npc_inventory(npc)
              alife():create("part6",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-             alife():create("wpn_benelli_m3",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
+             alife():create("wpn_ks23",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
              alife():create("money_ggg",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
 	    end
      end

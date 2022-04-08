@@ -16,7 +16,7 @@ local custom_msgs =
 
 local cs_states = {}
 
-local _ARC_CS_STRING = "arc_hud"
+local arc_cs_string = "arc_hud"
 
 local arc_hud
 
@@ -24,14 +24,13 @@ function on_actor_update(delta)
 	if not arc_hud then
 		local hud = get_hud()
 		
-		arc_hud = hud:GetCustomStatic(_ARC_CS_STRING)
+		arc_hud = hud:GetCustomStatic(arc_cs_string)
 		
 		if not arc_hud then
-			hud:AddCustomStatic(_ARC_CS_STRING, true)
-			arc_hud = hud:GetCustomStatic(_ARC_CS_STRING)
-			
-			if not arc_hud then fault("arc_hud == nil after GetCustomStatic") return end
-		else
+			hud:AddCustomStatic(arc_cs_string, true)
+			arc_hud = hud:GetCustomStatic(arc_cs_string)
+
+			if not arc_hud then return end
 
 		end
 		
@@ -79,19 +78,4 @@ end
 
 function get_arc_hud()
 	return arc_hud
-end
-
--- DebugInfo:
-function info(msg)
-  arc.info(msg)
-end
-
-function warning(msg)
-  info("!!!warning!!! "..msg)
-  return false
-end
-
-function fault(msg)
-  info("!!!fault!!! "..msg)
-  return false
 end

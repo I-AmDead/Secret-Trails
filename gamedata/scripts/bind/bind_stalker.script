@@ -109,14 +109,8 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.death, nil )
   self.object:set_callback( callback.entity_alive_before_hit, nil )
   self.object:set_callback( callback.on_before_use_item, nil )
-  self.object:set_callback( callback.on_actor_weapon_zoom_in,  nil )
-  self.object:set_callback( callback.on_actor_weapon_zoom_out, nil )
   self.object:set_callback( callback.on_throw_grenade, nil )
-  self.object:set_callback( callback.on_actor_weapon_reload, nil )
-  self.object:set_callback( callback.on_actor_weapon_fire, nil )
-  self.object:set_callback( callback.on_actor_weapon_start_firing, nil )
   self.object:set_callback( callback.place_item_to_box, nil )
-  self.object:set_callback( callback.on_actor_weapon_switch_gl, nil )
   self.object:set_callback( callback.update_artefacts_on_belt, nil )
   self.object:set_callback( callback.level_changer_action, nil )
   self.object:set_callback( callback.on_cell_item_focus, nil )
@@ -181,30 +175,10 @@ function actor_binder:reinit()
   self.object:set_callback( callback.entity_alive_before_hit, self.before_hit_callback, self )
   self.object:set_callback( callback.on_before_use_item, self.before_use, self )
   self.object:set_callback(
-    callback.on_actor_weapon_zoom_in,  self.on_actor_weapon_zoom_in, self
-  )
-  self.object:set_callback(
-    callback.on_actor_weapon_zoom_out, self.on_actor_weapon_zoom_out, self
-  )
-  self.object:set_callback(
     callback.on_throw_grenade, self.on_throw_grenade, self
   )
   self.object:set_callback(
-    callback.on_actor_weapon_reload, self.on_actor_weapon_reload, self
-  )
-  self.object:set_callback(
-    callback.on_actor_weapon_fire, self.on_actor_weapon_fire, self
-  )
-  self.object:set_callback(
-    callback.on_actor_weapon_start_firing, self.on_actor_weapon_start_firing,
-    self
-  )
-  self.object:set_callback(
     callback.place_item_to_box, self.on_inv_box_put_item, self
-  )
-  self.object:set_callback(
-    callback.on_actor_weapon_switch_gl, self.on_actor_weapon_switch_gl,
-    self
   )
   self.object:set_callback(
     callback.update_artefacts_on_belt, self.update_artefacts_on_belt, self
@@ -302,19 +276,17 @@ function actor_binder:info_callback( npc, info_id )
   if sc then
     self.am:call( sc, npc )
   end
-
-  arc.on_actor_inv_info(npc, info_id) -- ARC
-
+  
 end
 
 
 local is_on_trade = false
 
 function actor_binder:on_trade( item, sell_bye, money )
-    if sell_bye == true then
+  if sell_bye then
     game_stats.money_trade_update( money )
-    else       
-    if isMagazinedWeapon( item ) then
+  else       
+    if item:is_weapon_magazined() then
       item:unload_magazine()
     end
     game_stats.money_trade_update( -money )
@@ -330,52 +302,66 @@ function actor_binder:article_callback( npc, group, name, article_type )
   
   dmx_mod.encyclopedy_news(group,name) -- DMX MOD
 
-  arc.on_actor_art_info(npc, group, name) -- ARC
-
   self.am:call( "on_article", npc, group, name, article_type )
 end
 
 
 function actor_binder:on_item_take( obj )
+   if not obj then return end
+   local sobj = alife():object(obj:id())
+   if not sobj then
+	if obj:section() ~= "bolt" then
+		self.object:drop_item(obj)
+	end
+	return
+   end
 
-   if xrs_ai then xrs_ai.actor_item_take(obj) 
-  end 
+   if xrs_ai then xrs_ai.actor_item_take(obj) end 
 
     amk.on_item_take( obj )
     braad_test.checking_use_item( obj )
 
    arc.on_actor_get_item(obj) -- ARC
 
-  local sobj = alife():object( obj:id() )
-  if sobj then -- такое бывает, если до этого объект был удалён в on_ruck
-    self.am:call( "on_take", obj, sobj )
-  end
+   self.am:call("on_take", obj, sobj)
 end
 
 
 function actor_binder:on_item_drop( obj )
 
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
   amk_utils.actor_item_drop( obj )
 
-   arc.on_actor_lose_item(obj) -- ARC
-      if obj:section() == "zamok" then
-  local box = obj:parent()
-  if box ~= nil then
-  table.insert(amk_offline_alife.protected, box:id())
+  arc.on_actor_lose_item(obj) -- ARC
+  if obj:section() == "zamok" then
+    local box = obj:parent()
+      if box ~= nil then
+        table.insert(amk_offline_alife.protected, box:id())
+      end
   end
 
-end
-
-  self.am:call( "on_drop_before_all", obj )
-  local sobj = sim:object( obj:id() )
-  if sobj then
-    self.am:call( "on_drop", obj, sobj )
-  end
+  self.am:call("on_drop", obj, sobj)
 end
 
 
 function actor_binder:before_use( item )
-  self.am:call( "on_actor_before_use", item, sim:object( item:id() ) )
+  if not item then return end
+  local sobj = alife():object(item:id())
+  if not sobj then return end
+
+  self.am:call( "on_actor_before_use", item, sobj )
+end
+
+
+function actor_binder:on_use_object( obj )
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
+  self.am:call( "on_use", obj, sobj )
 end
 
 
@@ -412,17 +398,7 @@ end
 
 
 local update_was_never_called = true
-scopeUsed = false
-
 function actor_binder:update( delta )
-	if update_was_never_called then
-		self.am:call( "on_before_first_update" )
-	end
-	self.am:call( "on_before_update", delta )
-	if not first_update then
-		self.am:call( "on_before_first_update" )
-		first_update = true
-	end
 
   local time       = time_global()
   object_binder.update( self, delta )
@@ -435,8 +411,7 @@ function actor_binder:update( delta )
   -- апдейт звуковой схемы актера
   xr_sound.update_actor()
 
-	amk_mod.interactive_music()
-  -- апдейт наших функций использования пульта и ремнабора 
+  amk_mod.interactive_music()
    
   -- Обновление отключения ввода с клавиатуры.
   if self.st.disable_input_time ~= nil and
@@ -487,16 +462,6 @@ function actor_binder:update( delta )
   if self.bCheckStart then
     db.money = self.object:money()
 
-    if
-      ( not has_alife_info( "storyline_actor_start" ) )
-
-    then
-      self.am:call( "on_storyline_start" )
-      self.object:give_info_portion( "storyline_actor_start" )
-      _G.g_start_avi = true
-    end
-
-
     if not has_alife_info( "global_dialogs" ) then
       self.object:give_info_portion( "global_dialogs" )
     end
@@ -521,17 +486,20 @@ function actor_binder:update( delta )
   antreg.start_antreg()
 
   if update_was_never_called then
+-------------------------------------------------------------------
+    if not has_alife_info( "storyline_actor_start" ) then
+      self.am:call( "on_storyline_start" )
+      self.object:give_info_portion( "storyline_actor_start" )
+    end
+-------------------------------------------------------------------
     self.am:call( "on_first_update" )
     update_was_never_called = false
-    self.am:delay_time_limit( 10000 )
   end
 
-  self.am:call( "on_actor_update", delta )
   self.am:call( "on_update", delta )
 
   if xrs_ai then xrs_ai.actor_update(delta) end  
 
-  arc.on_actor_update(delta) -- ARC
   antreg.distance_check()
 end
 
@@ -570,12 +538,6 @@ function actor_binder:show_hud_save_warning( crit, timeout, low, argb )
   end )
 end
 
-local keyboard_events = {
-  [ "on_key_down" ] = "on_key_down",
-  [ "on_key_hold" ] = "on_key_hold",
-  [ "on_key_up"   ] = "on_key_up",
-}
-
 function actor_binder:on_key(key, bind)
   self.am:call("on_key_down", key, bind)
 end
@@ -600,37 +562,39 @@ end
 
 
 function actor_binder:item_to_belt( obj )
-  local sobj = sim:object( obj:id() )
-  if sobj then
-    self.am:call( "on_item_to_belt", obj, sobj )
-  end
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
+  self.am:call("on_item_to_belt", obj, sobj)
 end
 
 
 function actor_binder:item_to_backpack( obj )
   amk_utils.actor_item_take( obj )
-  local sobj = sim:object( obj:id() )
-  if sobj then
-  -- такое бывает, когда спавним в инвентарь предмет, а потом его тут же
-  -- удаляем ещё выхода в онлайн
-    self.am:call( "on_item_to_ruck", obj, sobj )
-  end
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
+  self.am:call( "on_item_to_ruck", obj, sobj )
 end
 
 
 function actor_binder:item_to_slot( obj )
-  local sobj = sim:object( obj:id() )
-  if sobj then
-    self.am:call( "on_item_to_slot", obj, sobj )
-  end
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
+  self.am:call("on_item_to_slot", obj, sobj)
 end
 
 
 function actor_binder:on_select_item( obj )
-  local sobj = sim:object( obj:id() )
-  if sobj then
-    self.am:call( "on_select_item", obj, sobj )
-  end
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+
+  self.am:call("on_select_item", obj, sobj)
 end
 
 
@@ -711,22 +675,6 @@ function actor_binder:load( reader )
     -- нельзя использовать amk.load_varible(), так как db.actor ещё не
     -- определён
     self:show_hud_save_warning( 2, 60000 )
-  end
-end
-
-
-function actor_binder:on_use_object( obj )
-  local s = get_string( obj:section(), "bind_stalker.on_use_call" )
-  if s then
-    local f, err = loadstring( "return " .. s .. "( ... )" )
-    ASSERT( f, err )
-    f( obj )
-  end
-  if obj then
-    local sobj = sim:object( obj:id() )
-    if sobj then
-      self.am:call( "on_use", obj, sobj )
-    end
   end
 end
 
@@ -820,22 +768,12 @@ end
 function restore_weapon()
    weapon_hide = false
 end
+
 function has_traded()
   if is_on_trade then
     if db.actor:is_talking() then
       db.actor:stop_talk()
     end
     is_on_trade = false
-  end
-end
-
-
-function redirect_keys_to( script )
-  for k, v in pairs( keyboard_events ) do
-    if script then
-      keyboard_events[ k ] = script .. "." .. k
-    else
-      keyboard_events[ k ] = k
-    end
   end
 end

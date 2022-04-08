@@ -12,22 +12,16 @@ local fade_delay, fade_total_time, fade_time_left
 --local enabled = true
 
 function show()
---	info("show")
-	
 	alpha = 255
 	is_fading = false
 end
 
 function hide()
---	info("hide")
-	
 	alpha = 0
 	is_fading = false
 end
 
 function fade(_force_fade, _fade_delay, _fade_time)
---	info("fade")
-	
 	if not is_fading or _force_fade then
 		alpha = 255
 		is_fading = true
@@ -63,17 +57,14 @@ local arrow_velocity, arrow_position = 0, 0
 function show_dosimeter(delta) -- FIXME
 	if not dosimeter then
 		if not init_dosimeter() then
-			fault("can`t init_dosimeter")
 			return
 		end
-		info("dosimeter initialized")
 	end
 	
 	local r = arc_radiation.get_rad_level()
 	
 --	arrow_position = arrow_position + arrow_velocity / 2
 	arrow_velocity = arrow_velocity*math.pow(0.995, delta) + (r - arrow_position)*delta/2000
---	info("r="..r..", p="..arrow_position..", v="..arrow_velocity)
 	arrow_position = arrow_position + arrow_velocity -- / 2
 	
 	-- Off-scale:
@@ -107,7 +98,6 @@ function init_dosimeter()
 	local arc_hud = arc_ui_hud.get_arc_hud()
 	
 	if not arc_hud then
-		fault("arc_hud == nil")
 		return false
 	end
 	
@@ -142,19 +132,4 @@ function init_dosimeter()
 	dosimeter.arrow = a
 	
 	return true
-end
-
--- DebugInfo:
-function info(msg)
-  arc.info(msg)
-end
-
-function warning(msg)
-  info("arc_ui_dosimeter_1: !!!warning!!! "..msg)
-  return false
-end
-
-function fault(msg)
-  info("arc_ui_dosimeter_1: !!!fault!!! "..msg)
-  return false
 end

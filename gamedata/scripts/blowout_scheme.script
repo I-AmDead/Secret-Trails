@@ -17,6 +17,11 @@ actid_monopray=evid_blowout+3
 actid_anomaly=evid_blowout+4
 
 
+function get_blowout_step()
+  local blowout = amk.load_variable( "blowout", 0 )
+  return blowout
+end
+
 class "evaluator_anomaly" (property_evaluator)
 
 function evaluator_anomaly:__init(st) super(nil,"evaluator_anomaly")
@@ -32,12 +37,12 @@ function evaluator_anomaly:evaluate()
   if not self.prev_pos then
     self.prev_pos=vector():set(0,-100,0)
   end
-  if self.prev_pos:distance_to(npc:position())>15 then
-    self.st.avg_dir=npc:position():sub(self.prev_pos):normalize()
-    self.prev_pos=npc:position()
-    local list=amk_anoms.get_anomaly_list(npc,20)
+  if self.prev_pos:distance_to(npc:position()) > 15 then
+    self.st.avg_dir = npc:position():sub(self.prev_pos):normalize()
+    self.prev_pos = npc:position()
+    local list = amk_anoms.get_anomaly_list(npc,20)
     for i,o in ipairs(list) do
-			amk_anoms_old.add_restriction(npc,o.id,o.name)
+	amk_anoms_old.add_restriction(npc,o.id,o.name)
     end
   end
   return amk_anoms_old.have_pending_sync(npc)
@@ -46,8 +51,8 @@ end
 
 class "evaluator_blowout" (property_evaluator)
 function evaluator_blowout:__init(st) super(nil,"evaluator_blowout")  
-  self.st=st
-  self.prevblow=0
+  self.st = st
+  self.prevblow = 0
 end
 
 
@@ -56,24 +61,23 @@ function evaluator_blowout:evaluate()
   if amk_mod.blowout_type() > 0 or xr_wounded.is_wounded( npc ) then
     return false
   end
-  local blowout=amk.load_variable("blowout",0)
-  if self.prevblow==3 and blowout~=3 then
-    self.prevblow=blowout
-    npc.health=1
+  local blowout = get_blowout_step()
+  if self.prevblow == 3 and blowout ~= 3 then
+    self.prevblow = blowout
+    npc.health = 1
   end
-  if blowout==0 and self.st.out_rest then
-    npc:add_restrictions(self.st.out_rest,"") --self.st.in_rest)
-    self.st.out_rest=nil
-    self.st.in_rest=nil
-  end
-  if blowout==0 then
-    self.st.need_run=false
-  end
-  if blowout==3 then
-    if self.hittime==nil or self.hittime<time_global() then
-      self.hittime=time_global()+1000
+  if blowout == 0 then
+    if self.st.out_rest then
+      npc:add_restrictions( self.st.out_rest, "" )
+      self.st.out_rest = nil
+      self.st.in_rest  = nil
+    end
+    self.st.need_run = false
+  elseif blowout == 3 then
+    if ( not self.hittime ) or self.hittime < time_global() then
+      self.hittime = time_global() + 1000
       if amk_mod.on_blowout_hit(npc,self.st.hide) then
-        self.st.need_run=true
+        self.st.need_run = true
         if npc:alive() then
           xr_wounded.hit_callback( npc:id() )
         end
@@ -94,21 +98,21 @@ end
 
 function evaluator_monolith_blowout:evaluate()
   if amk_mod.blowout_type()>0 then return false end
-  local blowout=amk.load_variable("blowout",0)
+  local blowout = get_blowout_step()
   return blowout==3
 end
 
 
-class "evaluator_preblowout" (property_evaluator)
-function evaluator_preblowout:__init(st) super(nil,"evaluator_preblowout")  
-  self.st=st
+class "evaluator_preblowout" ( property_evaluator )
+function evaluator_preblowout:__init( st ) super(nil,"evaluator_preblowout")  
+  self.st = st
 end
 
 function evaluator_preblowout:evaluate()
   if amk_mod.blowout_type()>0 then return false end
   local npc=self.object
-  local blowout=amk.load_variable("blowout",0)
-  return blowout==1
+  local blowout = get_blowout_step()
+  return blowout == 1
 end
 
 
@@ -128,7 +132,7 @@ function evaluator_outside:evaluate()
   end
   self.st.washitat=nil
   if amk_mod.blowout_type()>0 then return false end
-  local blowout=amk.load_variable("blowout",0)
+  local blowout = get_blowout_step()
   if blowout>=2 then
     if self.st.nohide then
       -- Если укрытие невозможно найти, то игнорируем выброс

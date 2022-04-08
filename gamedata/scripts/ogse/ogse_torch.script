@@ -1,8 +1,13 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
+-- величина разряда
+local step = 0.007
+-- как часто выполняется разряд фонарика ( в милисекундах реального времени )
+local freq = 31 * 1000
+
+
 function attach( sm )
   sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
-  sm:subscribe({ signal = "on_update", fun = this.set_torch_mode })
   sm:subscribe({ signal = "on_key_down",     fun = this.on_key_down    })
 end
 
@@ -31,28 +36,16 @@ end
 
 
 function on_key_down(key, bind ) --Действие при нажатии клавиши фонаря
-	if ( bind ~= key_bindings.kTORCH ) 
-        or level.main_input_receiver() 
-        or db.actor:item_in_slot(9) == nil then return end
-
-			db.actor:give_info_portion("torch_use")
-	db.actor:give_info_portion("near_mode")
-	db.actor:give_info_portion("far_mode")
-
-  if db.actor:alive() and (not db.actor:has_info( "ui_talk" )) and (not db.actor:has_info( "anim_action" )) then
-
-  local sobj = alife():create( "torch_use", vector():set( 0, 0, 0 ), 0, 0, 0 )
-
-  level.client_spawn_manager():add(
-    sobj.id, -1, function( id, obj )
-      dsh.exec_on_update( function() db.actor:eat( obj ) end )
-    end
-  )
-  dsh.level_timeout( 400, function() db.actor:disable_info_portion("torch_use") end )
-
+	if ( bind ~= key_bindings.kTORCH )
+	or level.main_input_receiver()
+then 
+return 
+end
+  if db.actor:alive() then
     local torch = db.actor:item_in_slot( 9 )
     if torch and torch:is_torch() then
-
+      local snd = sound_object( "device\\bad_box" )
+      snd:play( db.actor, 0, sound_object.s2d )
       torch = get_torch_obj( torch )
       if torch.on then
         if torch_mode == "near" then
@@ -75,38 +68,21 @@ end
 
 function set_near_mode( torch, r )
 
-if db.actor:has_info("near_mode") and (not db.actor:has_info("torch_use")) and db.actor:has_info("far_mode") then
   torch_mode = "near"
   torch:set_range( 20 )
   torch:set_angle( math.rad( 110 ) )
-  db.actor:disable_info_portion("far_mode")
-elseif db.actor:has_info("near_mode") and db.actor:has_info("torch_use") and db.actor:has_info("far_mode") then
-  torch_mode = "near"
-  torch:set_range( 0 )
-  torch:set_angle( 0 )
-end
+
 end
 
 
 function set_far_mode( torch, r )
-
-if db.actor:has_info("far_mode") and (not db.actor:has_info("torch_use")) and db.actor:has_info("near_mode") then
-  torch_mode = "far"
+ 
+ torch_mode = "far"
   torch:set_range( 60 )
   torch:set_angle( math.rad( 60 ) )
-  db.actor:disable_info_portion("near_mode")
-elseif db.actor:has_info("far_mode") and db.actor:has_info("torch_use") and db.actor:has_info("near_mode") then
-  torch_mode = "far"
-  torch:set_range( 20 )
-  torch:set_angle( math.rad( 110 ) )
-end
-end
-
-function set_off_mode( torch )
-
-  torch_mode = "off"
 
 end
+
 
 function is_torch_enabled()
   if db.actor:alive() then

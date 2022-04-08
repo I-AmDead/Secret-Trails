@@ -13,7 +13,7 @@ local snds = {
 	tips_agr_krot_sos2				= [[characters_voice\scenario\agroprom\krot_help_pda_2]],
     tips_agr_stalker_help_2			= [[characters_voice\scenario\agroprom\stalker_help_2]],
     tips_agr_stalker_help_1			= [[characters_voice\scenario\agroprom\stalker_help_1]],
-	-- ghost_tips						= [[characters_voice\scenario\agroprom\strelok_pda]],
+
     tips_agr_trader_documents		= [[characters_voice\scenario\agroprom\trader_pda_1]],
     pass_to_1st_door                = [[characters_voice\scenario\val\door1_password]],
 	pass_to_2nd_door                = [[characters_voice\scenario\val\door2_password]],
@@ -86,33 +86,22 @@ local snds = {
 
 -- dublicate pda sounds for remark scheme
     val_rob_leader_jeer_1           = [[characters_voice\scenario\val\rob_leader_jeer_1_p]],
---    val_rob_leader_call             = [[characters_voice\scenario\val\rob_call_1_p]],
 
     pri_followers_leader_phrase1_1  = [[characters_voice\scenario\pri\followers_leader_phrase1_1_p]],
     pri_followers_leader_phrase1_2  = [[characters_voice\scenario\pri\followers_leader_phrase1_2_p]],
     pri_followers_leader_phrase1_3  = [[characters_voice\scenario\pri\followers_leader_phrase1_3_p]],
 }
 
-local news = {}
-local function get_snd(t, k)
-	-- log3("getting sound: %s", tostring(k))
-	if snds[k] ~= nil then
+local function get_snd(k)
+	--log3("--[%s] getting sound: [%s]", script_name(), k)
+	if snds[k] then
 		return xr_sound.get_safe_sound_object(snds[k])
-	else
-		return nil
 	end
 end
-local function set_snd(t, k, v)
-	--log1("error! we don't do this!")
-end
-local mt = {}
-mt.__index = get_snd
-mt.__newindex = set_snd
-setmetatable(news, mt)
 
-pda_news = xr_sound.get_safe_sound_object([[device\pda\pda_news]])
+local pda_news = xr_sound.get_safe_sound_object([[device\pda\pda_news]])
 pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
-pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
+local pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 
 -- При добавлении новых квестовиков добавлять для них иконки в ui_iconstotal и прописывать сюда полное имя, как оно идет в смс. Или прописывать sender в вызов send_tip. Сортировать по алфавиту.
 local tips_icons = {
@@ -158,46 +147,23 @@ function get_sender_icon(text, sender)
 end
 
 
-ozvuchka_end = 0
-
 function send_tip(actor, news_id, timeout, sender, showtime, sender_id)
 	if news_id == nil then return false end
-
-	if sender_id ~= nil then
-		printf("try to send tips for [%s]", tostring(sender_id))
-		local sim = alife()
-		if sim ~= nil then
-			local npc = sim:story_object(sender_id)
-			if npc ~= nil then
-				if npc.online then
-					--в онлайне проверяем на раненность
-					if xr_wounded.is_heavy_wounded_by_id(npc.id) then
-						printf("[PDA]Cannot send tips [%s], sender is heavy wounded", tostring(news_id))
-						return false
-					end
-				end
-				-- в других случаях только на смерть
-				if npc:alive() == 1 then
-					printf("[PDA]Cannot send tips [%s], sender is dead", tostring(news_id))
-					return false
-				end
-			end
-		end
-	end
 
 	if timeout == nil then timeout = 0 end
 	if showtime == nil then showtime = 5000 end
 
-		--' Играем дефолтный звук
-		pda_tips:play_no_feedback(db.actor, sound_object.s2d, timeout, vector():set( 0, 0, 0 ), 1.0)
-	--	pda_tips:play(db.actor, timeout, sound_object.s2d)
-		local news_snd = news[news_id]
-		if news_snd ~= nil then
-			--' Играем звук забитый
-			news_snd:play(db.actor, timeout+1, sound_object.s2d)
+	--' Играем дефолтный звук
+	if pda_tips then
+		pda_tips:play(db.actor, timeout, sound_object.s2d)
+	end
+	local news_snd = get_snd(news_id)
+	if news_snd then
+		--' Играем звук забитый
+		news_snd:play(db.actor, timeout+1, sound_object.s2d)
 
-			--' Необходимо поставить время показа по длине сцены
-			local length = news_snd:length()
+		--' Необходимо поставить время показа по длине сцены
+		local length = news_snd:length()
 		if length > showtime then
 			showtime = length
 		end
@@ -206,23 +172,25 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id)
 	if sender == nil then
 		sender = "default"
 	end
-	-- local news_text = "%c[255,160,160,160]"..game.translate_string("st_tip").."\\n".."%c[default]"..game.translate_string(news_id)
-	local news_text = game.translate_string(news_id)
-	local x,y = get_sender_icon(news_text, sender)	
+	local x = tips_icons[sender][1]
+	local y = tips_icons[sender][2]
+	
+	local news_text = "%c[255,160,160,160]"..game.translate_string("st_tip").."\\n".."%c[default]"..game.translate_string(news_id)
 	actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(x,y,83,47), timeout*1000, showtime)
 	return true
 end
 
 function send_tip_nosound(actor, news_id, timeout, sender)
-	if news_id == nil then return end
+	if not news_id then return end
 
 	timeout = 0
 
 	--' Играем дефолтный звук
-	pda_tips:play(db.actor, timeout, sound_object.s2d)
-	local news_sound = news[news_id]
+	if pda_tips then
+		pda_tips:play(db.actor, timeout, sound_object.s2d)
+	end
 
-	return news_sound
+	return get_snd(news_id)
 end
 
 local action_descr_by_type = {
@@ -232,13 +200,14 @@ local action_descr_by_type = {
 	fail = "general_fail_task"
 }
 
+--------------------------------------------------------------------------
 local cycle_task = {
-	"eliminate_lager",
-	"defend_lager",
-	"kill_stalker",
-	"artefact",
-	"monster_part",
-	"find_item"
+	["eliminate_lager"] = true,
+	["defend_lager"] = true,
+	["kill_stalker"] = true,
+	["artefact"] = true,
+	["monster_part"] = true,
+	["find_item"] = true
 }
 
 
@@ -246,111 +215,62 @@ local autosave_t
 skip_send_task = false
 
 function send_task(actor, type, task, objective)
-	-- u3_utils.printf("send_task function started with type: "..type..".")
-	if db.actor == nil then return false end
-	if skip_send_task then return end
-	
-	local task_title = task:get_title()
-	local task_time = string.find(task_title, "\\n", 1, true)
-	if task_time then
-		task_title = string.sub(task_title, 1, task_time-1)
-	end
-	local skip_autosave = false -- пропуск циклических заданий
-	local news_text, task_texture, task_rect
-	local objective_index = objective:get_idx() + 1
+    if not db.actor then return false end
+     
+	--' Берем координаты из текстуры таска
+    local task_texture, task_rect = get_texture_info("ui_iconsTotal_"..task:get_id(), "ui_iconsTotal_locations")
         
 	--' Играем дефолтный звук
-	pda_task:play(db.actor, 0, sound_object.s2d)
+	if pda_task then
+		pda_task:play(db.actor, 0, sound_object.s2d)
+	end
 
 	-- цвет сообщения
-	local text_color = "%c[255,160,160,160]"
+	local text_color
 	if type == "fail" then
 		text_color = "%c[255,255,0,0]"
-	end
-	
-	-- циклическое ли задание?
-	local cycle_task_type = nil
-	for i,task_type in ipairs(cycle_task) do
-		if task_title == game.translate_string(task_type) then
-			cycle_task_type = i
-			break
-		end
-	end
-	
-	if cycle_task_type then
-		skip_autosave = true
-		
-		--' Циклическое задание - берем координаты из текстуры таска
-		task_texture, task_rect = get_texture_info("ui_iconsTotal_"..cycle_task[cycle_task_type], "ui_iconsTotal_locations")
-		
-		news_text = text_color..game.translate_string(action_descr_by_type[type]).."\\n"..
-		"%c[255,0,255,255]"..game.translate_string(task_title)..": %c[255,127,255,255]"..game.translate_string(task:get_objective(1):get_description())
+	elseif type == "complete" then
+		text_color = "%c[255,0,255,38]"
+	elseif type == "update" then
+		text_color = "%c[255,0,38,255]"
+	elseif type == "new" then
+		text_color = "%c[255,0,255,38]"
 	else
-		--' Берем координаты единой текстуры
-		task_texture, task_rect = get_texture_info("ui_iconsTotal_locations", "ui_iconsTotal_locations")
-		
-		news_text = text_color..game.translate_string(action_descr_by_type[type]).."\\n"..
-		"%c[255,0,255,255]"..game.translate_string(task_title)
-		
-		if type ~= "complete" and type ~= "fail" then
-			-- workaround for incomplete objective list
-			if task:get_objectives_cnt() == objective_index then
-				objective_index = objective_index - 1
-			end
-			
-			if type == "new" then
-				local obj_desc = task:get_objective(objective_index):get_description()
-				if obj_desc ~= nil then
-					news_text = news_text..": %c[255,127,255,255]"..game.translate_string(obj_desc)
-				end
-			elseif type == "update" then
-				local obj_desc1 = task:get_objective(objective_index-1):get_description()
-				local obj_desc2 = task:get_objective(objective_index):get_description()
-				if obj_desc1 ~= nil then
-					news_text = news_text.."\\n".."%c[255,127,255,255]Завершено: "..game.translate_string(obj_desc1)
-				end
-				if obj_desc2 ~= nil then
-					news_text = news_text.."\\n".."%c[255,127,255,255]Следующее: "..game.translate_string(obj_desc2)
-				end
-			end
-		end
-		
+		text_color = "%c[default]"
 	end
 
+	local news_text = text_color..game.translate_string(action_descr_by_type[type]).."\\n".."%c[default]"..game.translate_string(task:get_title())
 	if db.actor:is_talking() then	
-		db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
-	end	
-	--выдаем в любом случае чтобы попало в дневник
-	db.actor:give_game_news(news_text, task_texture, task_rect, 0, 5000)
-	
-	if type == "new" or
-		type == "update"
-	then
-		--' Выдать новое подзадание
-		if task:get_objectives_cnt() == objective_index then
+		db.actor:give_talk_message(news_text, task_texture, task_rect, "other_iconed_answer_item")
+	else
+		db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
+	end
+
+	if type == "new" or type == "update" then --Выдать новое подзадание
+		if task:get_objectives_cnt() == objective:get_idx()+1 then
 			return
 		end
-		news_text = game.translate_string(task:get_objective(objective_index):get_description())
-	else
-		news_text = text_color..game.translate_string(action_descr_by_type[type])..
-		"\\n".."%c[255,0,255,255]"..game.translate_string(task_title)
+		news_text = text_color..game.translate_string(action_descr_by_type[type]).."\\n".."%c[default]"..game.translate_string(task:get_title())
 	end
-
-	-- автосохранение только при получении и сдаче задания. циклические
-	-- задания игнорируются.
-	if not skip_autosave then
+--------------------------------------------------------------------------
+	local task_title = task:get_title()
+	--log3("~~[%s] task_title is [%s]", script_name(), task_title)
+	local task_time = task_title:find("\\n", 1, true)
+	if task_time then
+		task_title = task_title:sub(1, task_time - 1)
+	end
+	-- автосохранение только при получении и сдаче задания. циклические задания игнорируются.
+	if not cycle_task[task_title] then
 	  local news_text_save = game.translate_string( task_title )
 	  if type == "complete" then
-	    news_text_save = news_text_save.." - завершено"
+	    news_text_save = news_text_save.." - "..game.translate_string(action_descr_by_type[type])
 	  end
 	  -- удаляем предыдущий таймер на сохранение при сдаче/получении
 	  -- нескольких квестов в одном диалоге 
 	  -- сохраняем только самый последний автосейв по завершении диалога
 	  if type == "new" or type == "complete" then
 	    if autosave_t then autosave_t:stop() end
-	    autosave_t = dsh.timeout( 3000, function()
-	      autosave( news_text_save )
-	    end )
+	    autosave_t = dsh.timeout( 3000, function() autosave( news_text_save ) end )
 	  end
 	end
 
@@ -359,7 +279,6 @@ function send_task(actor, type, task, objective)
 	hud:GetCustomStatic("main_task"):wnd():SetTextST(news_text)
 	hud:GetCustomStatic("main_task").m_endTime = time_global()/1000 + 10
 end
-
 
 function autosave( text )
   if u3_utils.can_save() then
@@ -372,20 +291,21 @@ function autosave( text )
   end
 end
 
-
 function send_encyclopedy(type, title)
 	if type == "Diary" then
-		pda_news:play(db.actor, 0, sound_object.s2d)
-
+		if pda_news then
+			pda_news:play(db.actor, 0, sound_object.s2d)
+		end
 
 		--' Берем координаты из текстуры таска
 		local task_texture, task_rect = get_texture_info("ui_iconsTotal_locations", "ui_iconsTotal_locations")
-		local news_text = "%c[255,160,160,160]"..game.translate_string("st_found_new_pda").."\\n".."%c[default]"..game.translate_string(title)
+		local news_text = "%c[255,0,38,255]"..game.translate_string("st_found_new_pda").."\\n".."%c[default]"..game.translate_string(title)
+		
 		if db.actor:is_talking() then	
-			db.actor:give_talk_message(news_text, task_texture, task_rect,"iconed_answer_item")
+			db.actor:give_talk_message(news_text, task_texture, task_rect,"other_iconed_answer_item")
 		else
-			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 2000)
-		end	
+			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
+		end
 	end
 end
 
@@ -417,138 +337,54 @@ function send_treasure(name)
 end
 
 
-function get_inv_name( section )
-  return get_string( section, "inv_name" )
+function get_inv_name(section)
+	return sys_ini:r_string(section,"inv_name")
 end
 
+function relocate_item(actor, type, item)
+	if not db.actor then return false end
 
-function __relocate_item( actor, type, item, num )
-  if db.actor == nil then return false end
-  local item_name = game.translate_string( get_inv_name( item ) )
-  if ( num or 1 ) > 1 then
-    item_name = num .. "x " .. item_name
-  end
-  -- Играем дефолтный звук
-  if type == "in" then
-    local task_texture, task_rect = get_texture_info(
-      "ui_iconsTotal_found_thing"
-    )
-    local news_text = "%c[255,105,239,146]"
-      .. game.translate_string( "general_in_item" ) .. "\\n"
-      .. "%c[default]" .. item_name
-    if db.actor:is_talking() then
-      db.actor:give_talk_message(
-        news_text, task_texture, task_rect, "iconed_answer_item"
-      )
-    else
-      db.actor:give_game_news( news_text, task_texture, task_rect, 0, 2000 )
-    end		
-  elseif type == "out" then
-      local task_texture, task_rect = get_texture_info(
-        "ui_iconsTotal_lost_thing"
-      )
-    local news_text = "%c[255,255,085,085]"
-      .. game.translate_string( "general_out_item" ) .. "\\n"
-      .. "%c[default]" .. item_name
-    if db.actor:is_talking() then
-      db.actor:give_talk_message(
-        news_text, task_texture, task_rect, "iconed_answer_item"
-      )
-    else
-      db.actor:give_game_news( news_text, task_texture, task_rect, 0, 2000 )
-    end		
-  end
+	--' Играем дефолтный звук
+	if type == "in" then
+		local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
+		local news_text = "%c[255,0,255,38]"..game.translate_string("general_in_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))		
+		if db.actor:is_talking() then
+			db.actor:give_talk_message(news_text, task_texture, task_rect, "other_iconed_answer_item")
+		else
+			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
+		end		
+	elseif type == "out" then
+		local task_texture, task_rect = get_texture_info("ui_iconsTotal_lost_thing")
+		local news_text = "%c[255,255,0,0]"..game.translate_string("general_out_item").."\\n".."%c[default]"..game.translate_string(get_inv_name(item))		
+		if db.actor:is_talking() then
+			db.actor:give_talk_message(news_text, task_texture, task_rect, "actor_iconed_answer_item")
+		else
+			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
+		end		
+	end
 end
-
-
-function relocate_item( actor, type, item, num )
-  --return __relocate_item( actor, type, item, num )
-  return relocate_item_ex( type, item, num )
-end
-
-
-function get_talk_item_icon( sect )
-  local icon = CIconParams( sect )
-  local texture, rect
-  if icon.icon_name then
-    texture, rect = get_texture_info( icon.icon_name )
-  else
-    texture = dsh.get_ui_icon_equipment_name( sect )
-    rect    = icon:original_rect()
-    rect.x2 = rect.x2 - rect.x1
-    rect.y2 = rect.y2 - rect.y1
-  end
-  return {
-    texture, rect,
-    ( "ico_item_" .. icon.grid_width .. "_" .. icon.grid_height )
-  }
-end
-
-
-function relocate_item_ex( type, item, num, news_text )
-  local item_name = game.translate_string( get_inv_name( item ) )
-  if ( num or 1 ) > 1 then
-    item_name = num .. "x " .. item_name
-  end
-  -- Играем дефолтный звук
-  if type == "in" then
-    if not news_text then
-      news_text = "%c[255,105,239,146]"
-        .. game.translate_string( "general_in_item" )
-        .. "%c[default] " .. item_name
-    end
-    if db.actor:is_talking() then
-      db.actor:give_talk_message(
-        news_text, unpack( get_talk_item_icon( item ) )
-      )
-    else
-      local task_texture, task_rect = get_texture_info(
-        "ui_iconsTotal_found_thing"
-      )
-      db.actor:give_game_news( news_text, task_texture, task_rect, 0, 2000 )
-    end		
-  elseif type == "out" then
-    if not news_text then
-      news_text = "%c[255,255,085,085]"
-        .. game.translate_string( "general_out_item" )
-        .. "%c[default] " .. item_name
-    end
-    if db.actor:is_talking() then
-      db.actor:give_talk_message(
-        news_text, unpack( get_talk_item_icon( item ) )
-      )
-    else
-      local task_texture, task_rect = get_texture_info(
-        "ui_iconsTotal_lost_thing"
-      )
-      db.actor:give_game_news( news_text, task_texture, task_rect, 0, 2000 )
-    end		
-  end
-end
-
 
 function relocate_money(actor, type, amount)
-	if db.actor == nil then return false end
-
+	if not db.actor then return false end
 
 	--' Играем дефолтный звук
 	if type == "in" then
 		local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
-		local news_text = "%c[255,105,239,146]"..game.translate_string("general_in_money").."\\n".."%c[default]"..game.translate_string(tostring(amount))
+		local news_text = "%c[255,0,255,38]"..game.translate_string("general_in_money").."\\n".."%c[default]"..game.translate_string(tostring(amount))
 		
 		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+			db.actor:give_talk_message(news_text, task_texture, task_rect, "other_iconed_answer_item")
 		else
-			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 2000)
+			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
 		end		
 	elseif type == "out" then
 		local task_texture, task_rect = get_texture_info("ui_iconsTotal_lost_money")
-		local news_text = "%c[255,255,085,085]"..game.translate_string("general_out_money").."\\n".."%c[default]"..game.translate_string(tostring(amount))
+		local news_text = "%c[255,255,0,0]"..game.translate_string("general_out_money").."\\n".."%c[default]"..game.translate_string(tostring(amount))
 		
 		if db.actor:is_talking() then
-			db.actor:give_talk_message(news_text, task_texture, task_rect, "iconed_answer_item")
+			db.actor:give_talk_message(news_text, task_texture, task_rect, "actor_iconed_answer_item")
 		else
-			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 2000)
+			db.actor:give_game_news(news_text, task_texture, task_rect, 0, 3000)
 		end		
 	end
 end

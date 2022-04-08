@@ -13,13 +13,12 @@ end
 class "generic_object_binder" ( object_binder )
 function generic_object_binder:__init( obj ) super( obj )
 	self.loaded = false
-	self.used = false
-	self.chtime = 0
 	self.last_update = 0
 	self.particles = {}
-  self.am = ogse_signals.get_mgr()
-  self.am:call( "on_monster_init", obj, self )
+	self.am = ogse_signals.get_mgr()
+	self.am:call( "on_monster_init", obj, self )
 end
+
 
 function generic_object_binder:reload( section )
   object_binder.reload( self, section )
@@ -38,10 +37,9 @@ function generic_object_binder:reinit()
 
   db.storage[ self.object:id() ] = {}
   self.st = db.storage[self.object:id() ]
-	self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
-	self.object:set_callback(callback.hit,					self.hit_callback,		self)
-	self.object:set_callback(callback.death,				self.death_callback,	self)
-    self.object:set_callback(callback.use_object,			self.use_callback,		self)
+  self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
+  self.object:set_callback(callback.hit,					self.hit_callback,		self)
+  self.object:set_callback(callback.death,				self.death_callback,	self)
 end
 
 prevent_gulag_registration_for_id=0
@@ -57,88 +55,17 @@ function generic_object_binder:update(delta)
 
 
 	if self.object:alive() then
-		if self.object:is_talk_enabled() then
-			self.object:set_tip_text("character_use")
-		else
-			self.object:set_tip_text("")
-		end
+	if self.object:is_talk_enabled() then
+		self.object:set_tip_text("character_use")
 	else
-		if self.used or self.object:position():distance_to( db.actor:position() ) > 1.5 then
-			self.object:set_tip_text("")
-		else
-			local character_use = read_if_exist("s",nil,self.object:section(),"character_use","dead_monster_use")
-			self.object:set_tip_text(character_use)
-		end
+		self.object:set_tip_text("")
+	end
 	end
 
     self:anomaly_evade()
 	
 	local act_scheme = db.storage[self.object:id()].active_section or ""
 	local is_fake = string.find(act_scheme, "mob_fake_death") or false
-	
-	if self.chtime<time_global() then
-	
-		self.chtime=time_global()+2000
-		if self.object:clsid()==clsid.controller_s and self.object:alive() then
-			local npc=self.object:get_enemy()
-			if npc then
-				if npc:id()~=db.actor:id() and npc:clsid()==clsid.script_stalker and self.object:see(npc) and 
-				   npc:character_community()~="zombied" and self.object:position():distance_to(npc:position())<30 then
-        
-					local sobj=alife():object( npc:id() )
-					if sobj and sobj.online then
-						local zomb=amk.load_table("zombies")
-						zomb[sobj.id]={master=self.object:id(),comm=npc:character_community(),gw=npc:goodwill(db.actor)}
-						amk.save_table("zombies",zomb)															
-						npc:set_character_community("zombied",0,0)
-						local orgtbl=amk.read_stalker_params(sobj)
-						if (not string.find(orgtbl.profile,"_zombi")) then
-							orgtbl.profile=orgtbl.profile.."_zombi"
-						end
-						amk.mylog("zombied "..npc:name().." profile "..orgtbl.profile)
-						amk.write_stalker_params(orgtbl,sobj)
-					end
-				end
-			end
-		end
-		
-		if self.object:clsid()==clsid.dog_s and self.object:alive() and self.object.health>0.05 then
-			local npc=self.object:get_enemy()
-			if npc then
-				if npc:id()==db.actor:id() and db.actor:see(self.object) and self.object:see(db.actor) and math.random()<0.2 then
-					level.add_pp_effector("radiation.ppe", 2012, false)
-					
-					local h = hit()
-					h.type = hit.telepatic
-					h.power = 0.02
-					h.impulse = 0.0
-					h:bone("bip01_spine") -- чтобы учитывалась броня
-					h.draftsman = self.object
-					h.direction = self.object:direction()
-					db.actor:hit(h)
-
-					if math.random()<0.02 then
-					local active_item = db.actor:active_item()
-						if active_item and active_item:section()~= "bolt" and active_item:section()~= "wpn_knife" then
-							db.actor:drop_item(active_item)
-						end
-					end
-				end
-			end
-		end	
-	end
-	
-    if IsMonster(self.object) and time_global() - self.last_update > 1000 and not is_fake then
-		if self.object:alive() and self.object.health>0.03 then
-			if self.object:see(db.actor) and db.actor:position():distance_to(self.object:position())<40 then
-				amk.enemy_see_actor(self.object,"monster") 
-			end
-			if db.actor:see(self.object) and db.actor:position():distance_to(self.object:position())<80 then 
-				amk.actor_see_enemy(self.object,"monster") 
-			end
-		end
-		self.last_update = time_global()
-	end
   
 	local blowout=amk.load_variable("blowout",0)
 	if blowout==3 and (not self.control_override) then
@@ -184,17 +111,14 @@ function generic_object_binder:anomaly_evade()
 end
 
 function generic_object_binder:extrapolate_callback()
-	if not self.object:get_script() then return false end
+    if not self.object:get_script() then return false end
 	--
-
-
 	local cur_pt = self.object:get_current_point_index() 
 	local patr = self.object:patrol()
 	if patr == "" then
-		--log3("!![%s] Invalid patrol path name [%s] for object [%s]", script_name(), patr, self.object:name())
+		--Такая ситуация - это норма, просто ванильный движок не вылетал при вызове patrol(""), а новый вылетает, проверено.
+		log3("!![%s] Invalid patrol path name [%s] for object [%s]", script_name(), patr, self.object:name())
 	elseif patrol(patr):flags(cur_pt):get() == 0 then
-
-
 		return true
 	end
 	return false
@@ -207,52 +131,46 @@ function generic_object_binder:waypoint_callback(obj, action_type, index)
 end
 
 function generic_object_binder:death_callback(victim, who)
-	if (self.object == nil) then
-		return
-	end
-	if who:id() == db.actor:id() then
-		xr_statistic.addKillCount(self.object)
-	end
-	if self.st.mob_death then
-		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", victim, who)
-	end
-	if self.st.active_section then
-		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", victim, who)
-	end
-	smart_terrain.on_death( self.object:id() )
-	
-	local h = hit()
-	h.draftsman = self.object
-	h.type = hit.fire_wound
-	h.direction = db.actor:position():sub(self.object:position())
-	h:bone("pelvis")
-	h.power = 1
-	h.impulse = 10
-	self.object:hit(h)
 
-	local mob=self.object
-	if mob:clsid()==clsid.controller_s then
-		local zomb=amk.load_table("zombies")
-		for k,v in pairs(zomb) do
-			if v.master==mob:id() then
-				if amk_mod.dezombify(k,v) then
-				zomb[k]=nil
-				end
-			end
-		end
-    amk.save_table("zombies",zomb)
-	end  
-	
-	if table.getn(self.particles)>0 then
-		for kk,vv in pairs(self.particles) do
-				vv:on_death()
+  if not self.object then self.object = victim end
+
+  self.object:set_tip_text_default()
+
+	if db.actor then -- добавлено KamikaZze  с целью отладки 25/02/2009
+		if who:is_actor() then -- добавление опыта за убийство
+			xr_statistic.addKillCount(who, self.object)
 		end
 	end
+
+	if self.st and self.st.mob_death then
+		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", self.object, who)
+	end
+
+	if self.st and self.st.active_section then
+		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
+	end
+
+  smart_terrain.on_death( self.object:id() )
 	
+  -- Наносим небольшой импульс вперед.
+  local h = hit()
+  h.draftsman = self.object
+  h.type      = hit.fire_wound
+  h.direction = db.actor:position():sub( self.object:position() )
+  h:bone( "pelvis" )
+  h.power     =  1
+  h.impulse   = 10
+  self.object:hit( h )
 	
-	--AMK UTILS--
-	amk.on_death(victim, who)
-	--AMK UTILS--
+  if table.getn(self.particles)>0 then
+    for kk,vv in pairs(self.particles) do
+      vv:on_death()
+    end
+  end
+
+  --AMK UTILS--
+  amk.on_death( victim, who )
+  --AMK UTILS--
 
   self.am:call( "on_monster_death", self.object, who )
 end
@@ -334,8 +252,7 @@ function generic_object_binder:net_destroy()
 	end
 	self.object:set_callback(callback.death,				nil)
 	self.object:set_callback(callback.patrol_path_in_point, nil)
-	self.object:set_callback(callback.hit,					nil)
-        self.object:set_callback(callback.use_object,			nil)
+  self.object:set_callback(callback.hit,					nil)
 
   local st = db.storage[ self.object:id() ]
   if st and st.active_scheme then
@@ -367,35 +284,39 @@ function generic_object_binder:net_save_relevant()
 	return true
 end
 
-
 function generic_object_binder:save( packet )
-  ASSERT(
-    not db.saving_obj,
-    "found saving_obj = %s",
-    tostring( db.saving_obj and db.saving_obj:name() or nil )
-  )
-  db.saving_obj = self.object
-  object_binder.save( self, packet )
-  xr_logic.save_obj( self.object, packet )
-  if self.object:clsid() == clsid.script_trader then
-    trade_manager.save( self.object, packet )
-  end
-  db.saving_obj = false
-	packet:w_bool(self.used)
+	if string.find(self.object:name(), "crow_") then return false end
+
+	ASSERT( not db.saving_obj, "found saving_obj = %s", tostring( db.saving_obj and db.saving_obj:name() or nil ) )
+	db.saving_obj = self.object
+
+	object_binder.save(self, packet)
+
+	xr_logic.save_obj(self.object, packet)
+
+
+	if self.object:clsid() == clsid.script_trader then
+		trade_manager.save( self.object, packet )
+	end
+  	db.saving_obj = false
 end
 
 
 function generic_object_binder:load( reader )
-  self.loaded = true
-  object_binder.load( self, reader )
-  if reader:r_eof() then
+	if string.find(self.object:name(), "crow_") then return false end
+
+	self.loaded = true
+
+	object_binder.load(self, reader)
+
+	if reader:r_eof() then
 		abort("[bind_monster.script]SAVE FILE IS CORRUPT "..self.object:name())
 	end
-  xr_logic.load_obj( self.object, reader )
-  if self.object:clsid() == clsid.script_trader then
-    trade_manager.load( self.object, reader )
-  end
-	self.used = reader:r_bool()
+	xr_logic.load_obj(self.object, reader)
+
+	if self.object:clsid() == clsid.script_trader then
+    		trade_manager.load( self.object, reader )
+	end
 end
 
 function play_particle(obj,params)
@@ -422,53 +343,5 @@ function read_if_exist(what,ini,section,name,def)
 
 	end
 	return def
-
-end
-
--- Срезание трофеев с монстров / Идея: мод "Мясник" (CoP) от Singapur22
-function generic_object_binder:use_callback(obj, who)
-	if self.use_flag == nil and self.object:section()~="m_trader" then
-		self.object:set_nonscript_usable(false)
-		self.use_flag = true
-	end
-
-if self.object:alive() or self.used or self.object:position():distance_to( db.actor:position() ) > 1.5 or GetShift() then return end
-	
-	local knife = who:item_in_slot(0)
-	if who:id() ~= db.actor:id() or (knife~=nil and who:item_in_slot(0)) then
-		self.used = true
-	else
-		if knife then
-			news_manager.send_tip(db.actor,"Чтобы cрезать трофей, нужно достать нож.")
-		end
-		return
-	end
-	
-    self.item = read_if_exist("s",nil,self.object:section(),"Spawn_Inventory_Item_Section",nil)
-	if self.item then
-		self.item_count = read_if_exist("f",nil,self.object:section(),"Spawn_Inventory_Item_Amount",1)
-	else
-		return
-	end
-	
-    for i=1, self.item_count do
-	    alife():create(self.item, who:position(), who:level_vertex_id(), who:game_vertex_id(), who:id())
-	end
-
-	self.object:set_tip_text("")
-	
-
-	if game_options.AmkEat == true then
-
-    level.add_cam_effector( "itemuse_anm_effects\\harvest_lean_down_main.anm", 8559, false, "" )
-
-  local sobj = alife():create( "harvest", vector():set( 0, 0, 0 ), 0, 0, 0 )
-  level.client_spawn_manager():add(
-    sobj.id, -1, function( id, obj )
-      dsh.exec_on_update( function() db.actor:eat( obj ) end )
-    end
-  )
-
-end
 
 end

@@ -9,9 +9,9 @@ function trader_repair_precond(trader, actor)
 	local item_in_slot_1 = db.actor:item_in_slot(1)
 	local item_in_slot_2 = db.actor:item_in_slot(2)
 	local item_in_slot_6 = db.actor:item_in_slot(6)
-	if item_in_slot_1 ~= nil and 1 > item_in_slot_1:condition() + 0.01 then return true
-	elseif item_in_slot_2 ~= nil and 1 > item_in_slot_2:condition() + 0.01 then return true
-	elseif item_in_slot_6 ~= nil and 1 > item_in_slot_6:condition() + 0.01 then return true
+	if ( item_in_slot_1 ~= nil and 1 > item_in_slot_1:condition() + 0.01 )
+	or ( item_in_slot_2 ~= nil and 1 > item_in_slot_2:condition() + 0.01 )
+	or ( item_in_slot_6 ~= nil and 1 > item_in_slot_6:condition() + 0.01 ) then return true
 	else return false
 	end	 
 end
@@ -90,21 +90,21 @@ function repair_costs(first_speaker, second_speaker)
 			item_repair_cost = math.floor( (1-item_in_slot_1:condition()) * item_in_slot_1:cost() * weapon_profit_margin )
 			if item_repair_cost > 0 then
 				item_name_and_price = game.translate_string("list_trader_repair_0").." %c[255,238,155,23]"..item_repair_cost.." рублей%c[default]"
-				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_trade_info")
+				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "other_iconed_answer_item")
 			end
 		end
 		if item_in_slot_2 ~= nil then
 			item_repair_cost = math.floor( (1-item_in_slot_2:condition()) * item_in_slot_2:cost() * weapon_profit_margin )
 			if item_repair_cost > 0 then
 				item_name_and_price = game.translate_string("list_trader_repair_1").." %c[255,238,155,23]"..item_repair_cost.." рублей%c[default]"
-				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_trade_info")
+				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "other_iconed_answer_item")
 			end
 		end
 		if item_in_slot_6 ~= nil then
 			item_repair_cost = math.floor( (1-item_in_slot_6:condition()) * item_in_slot_6:cost() * armor_profit_margin )
 			if item_repair_cost > 0 then
 				item_name_and_price = game.translate_string("list_trader_repair_2").." %c[255,238,155,23]"..item_repair_cost.." рублей%c[default]"
-				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "iconed_trade_info")
+				db.actor:give_talk_message(item_name_and_price, task_texture, task_rect, "other_iconed_answer_item")
 			end
 		end
 	end
@@ -250,7 +250,7 @@ function send_artefact (npc, actor)
 end
 
 function send_desert_eagle (actor, npc)
-    dialogs.relocate_item_section(npc, "wpn_walther", "in") 
+    dialogs.relocate_item_section(npc, "wpn_walther_p99", "in") 
 end
 
 function set_snipers_spots (npc, actor)
@@ -269,7 +269,7 @@ function set_actor_enemy_for (sid)
 end
 
 function transfer_scope (npc, actor)
-    dialogs.relocate_item_section(npc, "wpn_addon_scope", "in") 
+    dialogs.relocate_item_section(npc, "pso", "in") 
     dialogs.relocate_item_section(npc, "vodka", "out")
 end
 

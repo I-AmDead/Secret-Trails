@@ -213,56 +213,6 @@ function create_free_npc( ... )
   return create_free_mob( ... )
 end
 
-
-function actor_has_cnt_items( looking_sect, check_cnt_func )
-  local cnt = 0
-  for i = 0, db.actor:object_count() - 1 do
-    local obj  = db.actor:object( i )
-    local sect = obj:section()
-    if looking_sect == sect then
-      local ttl = dsh_item_ttl.get_ttl_info( sect )
-      if ( not ttl.ttl ) or obj:condition() > 0 then
-        cnt = cnt + 1
-        if check_cnt_func( cnt ) then return true end
-      end
-    end
-  end
-  return false
-end
-
-function actor_change_items( give_sect, give_num, take_sect, take_num )
-  local give_objs = {}
-  for i = 0, db.actor:object_count() - 1 do
-    local obj  = db.actor:object( i )
-    local sect = obj:section()
-    if sect == give_sect then
-      local ttl = dsh_item_ttl.get_ttl_info( sect )
-      if ( not ttl.ttl ) or obj:condition() > 0 then
-        table.insert( give_objs, obj )
-      end
-    end
-  end
-  local base_cnt = math.floor( table.getn( give_objs ) / give_num )
-  local add_cnt  = base_cnt * take_num
-  local del_cnt  = base_cnt * give_num
-  if del_cnt > 0 then
-    local cnt = 0
-    for _, obj in ipairs( give_objs ) do
-      ogse.remove_item_from_inventory( obj )
-      cnt     = cnt + 1
-      del_cnt = del_cnt - 1
-      if del_cnt == 0 then break end
-    end
-    news_manager.relocate_item( db.actor, "out", give_sect, cnt )
-  end
-  if add_cnt > 0 then
-    for i = 1, add_cnt do
-      ogse.spawn_item_in_inv( take_sect )
-    end
-    news_manager.relocate_item( db.actor, "in",  take_sect, add_cnt )
-  end
-end
-
 -- Проверить расстояние от гулага до ГГ, если меньше.
 function gulag_distance_to_actor_lt( gulag_name, check_dist )
   if db.zone_by_name[ gulag_name ] then
@@ -467,35 +417,6 @@ function get_ammo_sections( wpn )
   end
   return ammo_sections_cache[ sect ]
 end
-
-
-function get_cur_wpn_ammo( wpn )
-  local ammo_sect
-  local has_gl = false
-  if wpn:is_weapon_gl() then
-    has_gl = (
-      ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 1
-      or (
-        ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 2
-        and ogse_wpn_utils.get_grenade_launcher_flag( wpn )
-      )
-    )
-  end
-  if wpn:is_weapon() then
-    local wpn_info_s, wpn_info_t = dsh_rukzak.get_wpn_info( wpn )
-    local ammo1_t, ammo1_n, ammo2_t, ammo2_n = unpack( wpn_info_t )
-    local ammo = get_ammo_sections( wpn )
-    if has_gl and ogse_wpn_utils.get_gl_mode( wpn ) then
-      if ammo2_n > 0 then
-        ammo_sect = ammo.grenade_class[ ammo2_t + 1 ]
-      end
-    else
-      ammo_sect = ammo.ammo_class[ ammo1_t + 1 ]
-    end
-  end
-  return ammo_sect
-end
-
 
 function iterate_respawners( f )
   for name, respawn in pairs( active ) do

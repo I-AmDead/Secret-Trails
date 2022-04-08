@@ -1,5 +1,5 @@
-local X_SIZE = 218
-local Y_SIZE = 96
+local X_SIZE = 180
+local Y_SIZE = 90
 local TX_SIZE = 290
 local TY_SIZE = 128
 
@@ -35,13 +35,13 @@ function hide()
 	is_fading = false
 end
 
-function fade(_force_fade, _fade_delay, _fade_time)	
-	if not is_fading or _force_fade then
+function fade(update_fade, update_delay, update_time)	
+	if not is_fading or update_fade then
 		alpha = 255
 		is_fading = true
 		
-		fade_delay = _fade_delay or DEFAULT_FADE_DELAY
-		fade_total_time = _fade_time or DEFAULT_FADE_TIME
+		fade_delay = update_delay or DEFAULT_FADE_DELAY
+		fade_total_time = update_time or DEFAULT_FADE_TIME
 		fade_time_left = fade_total_time
 	end
 end
@@ -94,7 +94,6 @@ end
 function show_cardiogramm()
 	if not cardiogramm then
 		if not init_cardiogramm() then
-			fault("can`t init_cardiogramm")
 			return
 		end
 	end
@@ -209,7 +208,6 @@ function init_cardiogramm()
 	local arc_hud = arc_ui_hud.get_arc_hud()
 	
 	if not arc_hud then
-		fault("arc_hud == nil")
 		return false
 	end
 	
@@ -220,7 +218,7 @@ function init_cardiogramm()
 	b:SetStretchTexture(true)
 	b:InitTexture("arc\\cardio_bkg")
 	b:SetOriginalRect(0,0,TX_SIZE,TY_SIZE)
-	b:Init(10,670,X_SIZE,Y_SIZE)
+	b:Init(0,680,X_SIZE,Y_SIZE)
 	w:AttachChild(b)
 	cardiogramm.bkg = b
 	
@@ -248,7 +246,7 @@ function init_cardiogramm()
 	d:SetAutoDelete(true)
 	d:SetStretchTexture(true)
 	d:InitTexture("arc\\health_monitor")
-	d:Init(-10,-15,275,120)
+	d:Init(0,0,X_SIZE,Y_SIZE)
 	b:AttachChild(d)
 	cardiogramm.device = d
 	
@@ -277,19 +275,4 @@ function round(x)
     return math.floor(x+0.5)
   end
   return -math.floor(0.5-x)
-end
-
--- DebugInfo:
-function info(msg)
-  arc.info(msg)
-end
-
-function warning(msg)
-  info("!!!warning!!! "..msg)
-  return false
-end
-
-function fault(msg)
-  info("!!!fault!!! "..msg)
-  return false
 end

@@ -1,0 +1,28 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach(sm)
+  sm:subscribe({ signal = "on_key_down", fun = this.quicksave })
+  sm:subscribe({ signal = "on_key_down", fun = this.quickload })
+end
+
+function quicksave(key, bind)
+if level.main_input_receiver() and not db.actor:alive() then return end
+  if key == bind_to_dik(key_bindings.kQUICK_SAVE) then
+  local cnt = ogse.load_var( "next_quicksave", 0 )
+  if cnt == 9 then
+    cnt = 1
+  else
+    cnt = cnt + 1
+  end
+  ogse.save_var( "next_quicksave", cnt, "u8" )
+  local next_save = string.format( "%s_quicksave_%u", user_name(), cnt )
+  cmd( "save", next_save )
+end
+end
+
+function quickload(key, bind)
+  if level.main_input_receiver() then return end
+    if key == bind_to_dik(key_bindings.kQUICK_LOAD) then
+        cmd("load_last_save")
+    end
+end
