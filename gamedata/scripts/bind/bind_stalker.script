@@ -109,7 +109,10 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.death, nil )
   self.object:set_callback( callback.entity_alive_before_hit, nil )
   self.object:set_callback( callback.on_before_use_item, nil )
+  self.object:set_callback( callback.on_actor_weapon_zoom_in,  nil )
+  self.object:set_callback( callback.on_actor_weapon_zoom_out, nil )
   self.object:set_callback( callback.on_throw_grenade, nil )
+  self.object:set_callback( callback.on_actor_weapon_fire, nil )
   self.object:set_callback( callback.place_item_to_box, nil )
   self.object:set_callback( callback.update_artefacts_on_belt, nil )
   self.object:set_callback( callback.level_changer_action, nil )
@@ -174,27 +177,16 @@ function actor_binder:reinit()
   self.object:set_callback( callback.on_goodwill_change, self.on_goodwill_change, self )
   self.object:set_callback( callback.entity_alive_before_hit, self.before_hit_callback, self )
   self.object:set_callback( callback.on_before_use_item, self.before_use, self )
-  self.object:set_callback(
-    callback.on_throw_grenade, self.on_throw_grenade, self
-  )
-  self.object:set_callback(
-    callback.place_item_to_box, self.on_inv_box_put_item, self
-  )
-  self.object:set_callback(
-    callback.update_artefacts_on_belt, self.update_artefacts_on_belt, self
-  )
-  self.object:set_callback(
-    callback.level_changer_action, self.level_changer_action, self
-  )
-  self.object:set_callback(
-    callback.on_cell_item_focus, self.on_cell_item_focus, self
-  )
-  self.object:set_callback(
-    callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self
-  )
-  self.object:set_callback(
-    callback.on_cell_item_mouse, self.on_cell_item_mouse, self
-  )
+  self.object:set_callback( callback.on_actor_weapon_zoom_in,  self.on_actor_weapon_zoom_in, self )
+  self.object:set_callback( callback.on_actor_weapon_zoom_out, self.on_actor_weapon_zoom_out, self )
+  self.object:set_callback( callback.on_throw_grenade, self.on_throw_grenade, self )
+  self.object:set_callback( callback.on_actor_weapon_fire, self.on_actor_weapon_fire, self )
+  self.object:set_callback( callback.place_item_to_box, self.on_inv_box_put_item, self )
+  self.object:set_callback( callback.update_artefacts_on_belt, self.update_artefacts_on_belt, self )
+  self.object:set_callback( callback.level_changer_action, self.level_changer_action, self )
+  self.object:set_callback( callback.on_cell_item_focus, self.on_cell_item_focus, self )
+  self.object:set_callback( callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self )
+  self.object:set_callback( callback.on_cell_item_mouse, self.on_cell_item_mouse, self )
 
   self.am:call( "on_reinit" )
 end

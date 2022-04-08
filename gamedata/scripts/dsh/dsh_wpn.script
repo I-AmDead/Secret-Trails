@@ -1,41 +1,16 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
 function attach( sm )
-  sm:subscribe({
-    signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire
-  })
-  sm:subscribe({
-    signal = "on_actor_weapon_reload", fun = this.on_actor_weapon_reload
-  })
-  sm:subscribe({
-    signal = "on_actor_weapon_start_firing",
-    fun    = this.on_actor_weapon_start_firing,
-  })
-  sm:subscribe({
-    signal = "on_actor_weapon_switch_gl",
-    fun    = this.on_actor_weapon_switch_gl,
-  })
-  sm:subscribe({
-    signal = "on_actor_weapon_zoom_in",
-    fun    = this.on_actor_weapon_zoom_in,
-  })
-  sm:subscribe({
-    signal = "on_actor_weapon_zoom_out",
-    fun    = this.on_actor_weapon_zoom_out,
-  })
-  sm:subscribe({ signal = "on_inventory_hide", fun = this.on_inventory_hide })
-  sm:subscribe({ signal = "on_key_down",   fun = this.on_key_down })
-  sm:subscribe({ signal = "on_throw_grenade", fun = this.on_throw_grenade })
+  sm:subscribe({ signal = "on_actor_weapon_fire",         fun = this.on_actor_weapon_fire         })
+  sm:subscribe({ signal = "on_actor_weapon_start_firing", fun = this.on_actor_weapon_start_firing })
+  sm:subscribe({ signal = "on_actor_weapon_zoom_in",      fun = this.on_actor_weapon_zoom_in      })
+  sm:subscribe({ signal = "on_actor_weapon_zoom_out",     fun = this.on_actor_weapon_zoom_out     })
+  sm:subscribe({ signal = "on_key_down",                  fun = this.on_key_down                  })
+  sm:subscribe({ signal = "on_throw_grenade",             fun = this.on_throw_grenade             })
 end
-
-
-function on_spawn()
-end
-
 
 local stand_power = get_float( "actor_condition", "stand_power" )
 local time_factor = get_float( "alife", "time_factor" )
-
 
 local cur_wpn = {}
 function get_wpn_info( wpn )
@@ -44,9 +19,6 @@ function get_wpn_info( wpn )
     t.const_dev_t      = 0
     t.dispersion_start = get_u32( wpn:section(), "dispersion_start" )
     t.fire_power_loss  = get_fire_power_loss( wpn )
-    t.gl_mode          = nil
-    t.gl_name          = nil
-    t.has_gl           = nil
     t.hit_power        = get_float( wpn:section(), "hit_power"   )
     t.hit_power_2      = get_float( wpn:section(), "hit_power_2" )
     t.id               = wpn:id()
@@ -57,37 +29,14 @@ function get_wpn_info( wpn )
     t.zoom_enabled     = get_bool( wpn:section(), "zoom_enabled", true )
   end
   t.wpn = wpn
-  if t.has_gl == nil then
-    t.has_gl = has_wpn_gl( wpn )
-    if t.has_gl then
-      t.gl_mode = ogse_wpn_utils.get_gl_mode( wpn )
-      t.gl_name = get_string( wpn:section(), "grenade_launcher_name" )
-    end
-  end
   return cur_wpn
 end
-
 
 function get_fire_power_loss( wpn )
   local sect = wpn:section()
   local fire_power_loss_k = get_float( sect, "dsh_wpn.fire_power_loss_k", 1 )
   return stand_power * time_factor * fire_power_loss_k
 end
-
-
-function has_wpn_gl( wpn )
-  return (
-    wpn:is_weapon_gl()
-    and (
-      ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 1
-      or (
-        ogse_wpn_utils.get_grenade_launcher_status( wpn ) == 2
-        and ogse_wpn_utils.get_grenade_launcher_flag( wpn )
-      )
-    )
-  )
-end
-
 
 function get_zoom_body_state()
   local aobj = get_actor_obj()
@@ -103,11 +52,9 @@ function get_zoom_body_state()
     or "no_zoom"
 end
 
-
 function on_actor_weapon_start_firing( wpn )
   local cur_wpn = get_wpn_info( wpn )
 end
-
 
 local knife_anim_length = {}
 local knife_fire_t
@@ -165,7 +112,6 @@ function on_actor_weapon_fire( wpn )
   end
 end
 
-
 local grenade_throwing_t
 
 function on_key_down( key, bind )
@@ -180,7 +126,6 @@ function on_key_down( key, bind )
     grenade_throwing_t = time_global()
   end
 end
-
 
 function on_throw_grenade( obj )
   local fire_power_loss = get_fire_power_loss( obj )
@@ -198,30 +143,6 @@ function on_throw_grenade( obj )
   end
   db.actor.power = fire_power_loss + max_power_loss
 end
-
-
-function on_inventory_hide()
-  cur_wpn.has_gl = nil
-end
-
-
-function on_actor_weapon_reload( wpn )
-  local active_slot = db.actor:active_slot()
-  local drop        = 0.6
-  if math.random() < drop then
-    local wpn_id = wpn:id()
-    dsh.timeout(
-      math.random( 500, 1500 ),
-      function()
-        local aobj = get_actor_obj()
-        if not ( aobj:is_actor_sprinting() or aobj:is_actor_climbing() ) then
-          return
-        end
-      end
-    )
-  end
-end
-
 
 function calc_const_dev()
   local  max = 0.15
@@ -326,10 +247,4 @@ function on_actor_weapon_zoom_out( obj )
     ezi_t:stop()
     ezi_t = false
   end
-end
-
-
-function on_actor_weapon_switch_gl( obj, gl_mode )
-  local t = get_wpn_info( obj )
-  t.gl_mode = gl_mode
 end

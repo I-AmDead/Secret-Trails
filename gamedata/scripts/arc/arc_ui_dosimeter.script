@@ -12,16 +12,6 @@ local fade_delay, fade_total_time, fade_time_left
 
 local enabled
 
-function on_detector_to_belt(obj)
-	if not string.find( obj:section(), "^detector_" ) then return end
-	enabled = true
-end
-
-function on_detector_to_ruck(obj)
-	if not string.find( obj:section(), "^detector_" ) then return end
-	enabled = false
-end
-
 function show()
 	is_fading = false
 	alpha = 255
@@ -66,6 +56,20 @@ local dosimeter
 local arrow_velocity, arrow_position = 0, 0
 
 function show_dosimeter(delta) -- FIXME
+
+	enabled = false
+
+	for _, k in ipairs({
+	      "detector_simple",
+	      "detector_advances",
+	      "detector_elite",
+	      "detector_elite_sak"
+	}) do
+	   if inventory.on_belt( k ) then
+	      enabled = true
+	   end
+	end
+
 	if not dosimeter then
 		if not init_dosimeter() then
 			return
@@ -122,9 +126,4 @@ function init_dosimeter()
 	dosimeter.monitor = m
 	
 	return true
-end
-
-function attach(sm)
-  sm:subscribe({ signal = "on_item_to_belt", fun = this.on_detector_to_belt })
-  sm:subscribe({ signal = "on_item_to_ruck", fun = this.on_detector_to_ruck })
 end
