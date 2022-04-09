@@ -180,12 +180,14 @@ function main_menu:OnButton_new_master_game()
 	console:execute("g_game_difficulty gd_master")	
 	self:StartGame()
 end
+
 function main_menu:OnButton_start_new_game()
 	self.mbox_mode			= 2	
 	self.message_box:Init	("message_box_start_game")
 	self:GetHolder():start_stop_menu(self.message_box, true)
 
 end
+
 function main_menu:StartGame()
 	if alife() then
 		cmd("disconnect")	
@@ -243,22 +245,6 @@ function main_menu:OnButton_load_clicked()
 
 end
 
-
-function main_menu:Update()
-	CUIScriptWnd.Update(self) 
-	if self.tmr then
-		self.tmr:stop() -- останавливаем таймер
-		if not self.last_time then self.last_time = self.tmr:time() end -- инициализируем время последнего апдейта
-		if self.tmr:time() - self.last_time > 7000 then -- если прошло больше 7 мс ( чем больше значение, тем медленнее моргание надписи )
-			self.last_time = self.tmr:time() -- запоминаем время текущего апдейта
-			self.start_btn:SetTextColor(self.alpha,159,142,126)
-			if self.alpha > 250 then self.step = -3 elseif self.alpha < 60 then self.step = 3 end
-			self.alpha = self.alpha + self.step
-		end
-		self.tmr:start() -- таймер продолжает работу
-	end
-end
-
 function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
 	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
 	local bind = dik_to_bind(dik)
@@ -274,10 +260,6 @@ function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
 			if level.present() and db.actor and db.actor:alive() then
 				self:close_and_delete_menu()
 			end
-		elseif dik == DIK_keys.DIK_S then
-			self:OnButton_load_spawn()
-		elseif dik == DIK_keys.DIK_N then --personal_test
-			--xpcall(function() dofile(getFS():update_path("$game_scripts$", "personal_test.lua")) end, log1)
 		end
 
 		if dik == DIK_keys.DIK_Q then
