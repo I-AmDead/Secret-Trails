@@ -119,6 +119,7 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.on_cell_item_focus, nil )
   self.object:set_callback( callback.on_cell_item_focus_lost, nil )
   self.object:set_callback( callback.on_cell_item_mouse, nil )
+  self.object:set_callback( callback.on_foot_step, nil )
 
   if sr_psy_antenna.psy_antenna then
     sr_psy_antenna.psy_antenna:destroy()
@@ -187,6 +188,7 @@ function actor_binder:reinit()
   self.object:set_callback( callback.on_cell_item_focus, self.on_cell_item_focus, self )
   self.object:set_callback( callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self )
   self.object:set_callback( callback.on_cell_item_mouse, self.on_cell_item_mouse, self )
+  self.object:set_callback( callback.on_foot_step, self.on_foot_step, self )
 
   self.am:call( "on_reinit" )
 end
@@ -749,6 +751,11 @@ end
 
 function actor_binder:on_cell_item_mouse( obj, x, y, action )
   self.am:call( "on_cell_item_mouse", obj, x, y, action )
+end
+
+
+function actor_binder:on_foot_step( obj, power )
+  self.am:call( "on_foot_step", obj, power )
 end
 
 

@@ -1,0 +1,14 @@
+local function on_foot_step( obj, power )
+	local outfit = db.actor:item_in_slot(6)
+	local exo = get_string( outfit:section(), "exo" )
+	if exo then
+		local snd_fname = "exo\\exo_step".. math.random( 4 )
+		local snd = sound_object( snd_fname )
+		snd.volume = 1 * math.clamp(power, 0.5, 1.3)
+		snd:play( db.actor, 0, sound_object.s2d )
+	end
+end
+
+function attach(sm)
+	sm:subscribe({ signal = "on_foot_step", fun = on_foot_step }) 
+end
