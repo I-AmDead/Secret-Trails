@@ -2,6 +2,7 @@
 #include "mblur.h"
 #include "dof.h"
 #include "visor.h"
+#include "pnv.h"
 /*
 struct 	v2p
 {
@@ -14,6 +15,9 @@ struct 	v2p
   float4 tc6:		TEXCOORD6;	// Top  / Bottom 
 };
 */
+
+uniform float4 pnv_color;
+uniform float4 pnv_params;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #define EPSDEPTH 0.001
@@ -88,6 +92,9 @@ c2_out main( v2p_aa_AA I )
    	//float3 	img 	= tex2D		(s_image, center);
 
 	float3	img	= dof(center);
+	if ( pnv_color.w > 1.f ) {
+		img = calc_night_vision_effect( I.Tex0, float4( img, 0 ), pnv_color, pnv_params );
+	}
 //	float4 	bloom	= tex2D		(s_bloom, center);
 	float4 	bloom	= s_bloom.Sample( smp_rtlinear, center);
 	
