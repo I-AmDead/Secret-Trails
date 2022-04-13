@@ -785,12 +785,10 @@ function on_enemies_found(victim, vdata)
 		for kk, vv in pairs(team_A) do
 			if (vv.health <=0) then
 				amk.mylog("Участник команды А погиб. "..vv.player:name())			
-				set_npc_health(vv.player, 0)
 				table.remove(team_A, kk)
 				died_A = died_A + 1
 			elseif (vv.health <= health_wound and vv.health > 0) then
 				amk.mylog("Участник команды А ранен. "..vv.player:name())
-				set_npc_health(vv.player, health_wound_set)
 				news_main.on_offline_wound(vv.player)
 				table.remove(team_A, kk)
 			end
@@ -798,12 +796,10 @@ function on_enemies_found(victim, vdata)
 		for kk, vv in pairs(team_B) do
 			if (vv.health <=0) then
 				amk.mylog("Участник команды B погиб. "..vv.player:name())
-				set_npc_health(vv.player, 0)
 				table.remove(team_B, kk)
 				died_B = died_B + 1
 			elseif (vv.health <= health_wound and vv.health > 0) then
 				amk.mylog("Участник команды B ранен. "..vv.player:name())
-				set_npc_health(vv.player, health_wound_set)
 				news_main.on_offline_wound(vv.player)
 				table.remove(team_B, kk)
 			end
@@ -1016,12 +1012,10 @@ function on_monsters_found(victim, vdata)
 		for kk, vv in pairs(team_A) do
 			if (vv.health <=0) then
 				amk.mylog("Участник команды А погиб. "..vv.player:name())			
-				set_npc_health(vv.player, 0)
 				table.remove(team_A, kk)
 				died_A = died_A + 1
 			elseif (vv.health <= health_wound and vv.health > 0) then
 				amk.mylog("Участник команды А ранен. "..vv.player:name())
-				set_npc_health(vv.player, health_wound_set)
 				news_main.on_offline_wound(vv.player)
 				table.remove(team_A, kk)
 			end
@@ -1029,12 +1023,10 @@ function on_monsters_found(victim, vdata)
 		for kk, vv in pairs(team_B) do
 			if (vv.health <=0) then
 				amk.mylog("Участник команды B погиб. "..vv.player:name())
-				set_npc_health(vv.player, 0)
 				table.remove(team_B, kk)
 				died_B = died_B + 1
 			elseif (vv.health <= health_wound and vv.health > 0) then
 				amk.mylog("Участник команды B ранен. "..vv.player:name())
-				set_npc_health(vv.player, health_wound_set)
 				news_main.on_offline_wound(vv.player)
 				table.remove(team_B, kk)
 			end
@@ -1330,25 +1322,6 @@ function get_item_cost(item)
 		result = utils.cfg_get_number(system_ini(), item:section_name(), "cost", item, false, 0)
 	end
 	return result
-end
-
-function set_npc_health(obj, health)
-	if (obj and health >=0 and health <=2) then
-		if (_g.IsMonster(obj)) then
-			local tbl = amk.read_monster_params(obj)
-			tbl.health = health
-			tbl.updhealth = health
-			amk.write_monster_params(tbl, obj)
-		elseif (_g.IsStalker(obj)) then
-			local tbl = amk.read_stalker_params(obj)
-			tbl.health = health
-			tbl.updhealth = health
-			amk.write_stalker_params(tbl, obj)																			
-		end
-		if health == 0 then
-			on_death(obj.id)
-		end
-	end
 end
 
 function list_npc_items(obj)
@@ -1654,15 +1627,6 @@ function process_trade(npc)
 					end
 					alife():release(alife():object(vv.id), true)
 				end				
-			end
-			if (money > 0) then
-				local tbl = amk.read_stalker_params(npc)
-				local old_money = tbl.money
-				if (old_money == nil) then old_money = 0 end
-				tbl.money = old_money + money
-				amk.write_stalker_params(tbl, npc)
-				--amk.mylog("Offline: "..npc:name().." было денег - "..old_money..", стало - "..old_money + money)
-				--news_main.trace("Offline: "..npc:name().." было денег - "..old_money..", стало - "..old_money + money)
 			end
 		end
 		--news_main.flushlog()

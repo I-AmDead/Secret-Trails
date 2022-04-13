@@ -1,4 +1,4 @@
-
+-- -*- mode: lua; coding: windows-1251-dos -*-
 -- Каждая функция в этом файле используется как условие xr_logic: {=функция !функция}
 -- Если в функцию необходимо передавать параметры, то:  {=функция(парам1:парам2:...) !функция(парам1:парам2:...)}
 -- Формат: function f(actor, npc). В случае передачи параметров: function f(actor, npc, p).
@@ -257,23 +257,6 @@ function best_pistol(actor, npc)
 	else
 		return false
 	end
---[[
-	local wpn = npc:best_weapon()
-	if wpn == nil then
-		return false
-	end
-	wpn = get_clsid(wpn)
-	if wpn == nil then
-		return false
-	end
-	if wpn == clsid.wpn_hpsa then return true
-    elseif wpn == clsid.wpn_hpsa then return true
-    elseif wpn == clsid.wpn_pm then return true
-    elseif wpn == clsid.wpn_fort then return true
-    elseif wpn == clsid.wpn_walther then return true
-    elseif wpn == clsid.wpn_usp45 then return true
-    else return false end
-]]
 end
 
 -- Проверка того что персонаж был убит кем-то из npc указанных в списке.
@@ -321,13 +304,27 @@ function is_alive_one(actor, npc, p)
 	return false
 end
 
+
 -- проверка (по story_id) того, что проверяемыq npc жив
 -- TODO: исправить ситуацию, когда выдается неправильный результат для обьектов, которые
---       не успели проспавниться.
-function is_alive(actor, npc, p)
-	local npc1
-	npc1 = level_object_by_sid(p[1])
-	return npc1 and npc1:alive()
+-- не успели проспавниться.
+function is_alive( actor, npc, p )
+  local se_obj = alife():story_object( p[ 1 ] )
+  if se_obj and se_obj:alive() then
+    return true
+  end
+  return false
+end
+
+
+function is_box_empty(actor,npc,p)
+	local InvBox = level_object_by_sid(p[1])
+    if InvBox then
+		if InvBox:is_inv_box_empty() then
+			return true
+		end
+	end
+  return false
 end
 
 -- проверка (по story_id) все ли проверяемые сталкеры мертвы
@@ -504,6 +501,11 @@ function actor_has_item(actor, npc, p)
 	return p[1] ~= nil and actor:object( p[1] ) ~= nil
 end
 
+-- true если у актора одет шлем указанной секции
+function actor_wear_helmet(actor, npc, p)
+	return p[1] ~= nil and actor:object( p[1] ) ~= nil and actor:item_in_slot(10) ~= nil and actor:item_in_slot(10):section() == p[1]
+end
+
 -- возвращает true, если в текущей схеме персонажа взведён указанный сигнал.
 function signal(actor, npc, p)
 	if p[1] then
@@ -526,6 +528,7 @@ function counter_greater(actor, npc, p)
 	end
 end
 
+-- определяет нечётность интервала игрового времени. интервал нужно передать в p[1]
 -- определяет нечётность интервала игрового времени. интервал нужно передать в p[1]
 function odd_time_interval(actor, npc, p)
 	return odd( game.time() / p[1] )
@@ -669,6 +672,15 @@ function heavy_wounded(actor, npc)
 	return xr_wounded.is_heavy_wounded_by_id( npc:id() )
 end
 
+function actor_in_outfit(actor,npc,p)
+	if p[1] then
+		local item = db.actor:item_in_slot(6)
+		if item then
+			return item:section()==p[1]
+		end
+	end
+end
+
 --[[
 Проверка на заданный период времени
 Время задается в минутах
@@ -687,9 +699,14 @@ function time_period(actor, npc, p)
     return false
 end    
 
-function is_day (actor, npc)
-    return level.get_time_hours() >= 6 and level.get_time_hours() < 21
-end    
+
+function is_day( actor, npc )
+  return (
+    db.actor_proxy.online
+    and level.get_time_hours() >= 6 and level.get_time_hours() < 21
+  )
+end
+
 
 function is_arsenal_guard_rest_time (actor, npc)
     return level.get_time_hours() > 3 and level.get_time_hours() < 5
@@ -698,6 +715,10 @@ end
 function bar_no_sniper_time (actor, npc)
     return level.get_time_hours() >= 5
 end 
+
+function time_to_fire_siren (actor, npc)
+	return level.get_time_hours() == 20 and level.get_time_minutes() >= 40
+end   
 
 function mob_has_enemy(actor, npc)
     -- return false
@@ -1401,4 +1422,14 @@ end
 function actor_has_item_on_belt(actor, npc, p)
     local obj = actor:object(p[1])
     return obj and actor:is_on_belt(obj)
+end
+
+function is_weather_storm()
+  local weather = dsh_cop_weather.monitoring_weather_sect
+  return weather and ( weather == "storm" or weather == "veryfoggy" )
+end
+
+
+function is_weather_rain()
+  return level.rain_factor() > 0
 end

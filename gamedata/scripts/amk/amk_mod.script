@@ -6,8 +6,8 @@
 -- добавлена  fenechka by TAG
 
 function attach( sm )
-  sm:subscribe({ signal = "on_drop",         fun = this.on_drop })
-  sm:subscribe({ signal = "on_use",         fun = this.check_sleep_item })
+  sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
+  sm:subscribe({ signal = "on_use",          fun = this.check_sleep_item  })
   sm:subscribe({ signal = "on_spawn",        fun = this.on_actor_spawn    })
 end
 
@@ -26,9 +26,6 @@ function on_actor_spawn()
   end
 end
 
-function on_drop(obj)
-check_for_af_drop(obj)
-end
 
 local afs = {}
 -- аномалия "узнаётся" по части названия!
@@ -56,7 +53,6 @@ local string_sub = string.sub
 local nrg,med,cnt,gv,lv,w
 in_hide=false
 local sound_obj_right,sound_obj_left,snd_volume,snd_obj_eq
-local sync_done=false
 local dynlasthour
 zombied={}
 
@@ -88,24 +84,32 @@ local weather_types={
 function on_game_start()
 	math.randomseed (device ():time_global ())
 end
-local tmp_intro=false
+
+
 function first_run() 
   -- На момент вызова этой функции актор уже доступен - переделано на поршень.
   if has_alife_info( "x_first_run" ) then return end
   
-		amk.spawn_item_in_inv("matras")
-		amk.spawn_item("x18_zapiska_ruk",vector():set(21.6,-3.94,-18.28),1140,5991)
-		amk.spawn_item("x16_zapiska_ruk",vector():set(-126.92,23.27,-36.98),1543,7083)
-		local obj = alife():story_object(830)
-		if obj then
-			alife():release(obj)
-			alife():create(6132)
-		end		
-		tmp_intro=true
-		amk_anoms.pre_blow_off()
-		amk_anoms.after_blow_on()
-		spawn_military_btr()	
-		spawn_fuel()
+  amk.spawn_item_in_inv("matras")
+
+  amk.spawn_item("x18_zapiska_ruk",vector():set( 21.6, -3.94, -18.28 ), 1140, 5991 )
+  amk.spawn_item("x16_zapiska_ruk",vector():set( -126.96, -28.41, -379.12), 27, 125181 )
+
+  local obj = alife():story_object(830)
+  if obj then
+  	alife():release(obj)
+  	alife():create(6132)
+  end
+
+  amk_anoms.pre_blow_off()
+  amk_anoms.after_blow_on()
+  spawn_military_btr()	
+  spawn_fuel()
+
+  local objt = alife():story_object( 6002 )
+  if objt then
+    alife():release( objt )
+  end
   dsh_alife.invalidate_items()
 
   db.actor:give_info_portion( "x_first_run" )
@@ -120,73 +124,68 @@ local weather_on_load
 
 function check_spawn()
   amk_anoms.init()
-	spawn_unspawned_respawners() 
-
   news_main.init()
   amk_offline_alife.update_trade()
   amk_offline_alife.update_npc_tables()
 
-	if (amk_offline_alife) then
-		amk_offline_alife.init()
-	end
-	if (amk_corpses) then
-		amk_corpses.init()
-	end
-	if (amk_objects) then
-		amk_objects.init()
-	end
-	local obj = alife():story_object(6000)
-	if not obj then
-		alife():create(6520)
-		obj = alife():story_object(6000)
-	end
+  -- level_changers section
+  local lname = level.name()
+  local sname = amk.load_variable( "level_on_save", "" )
+  if lname == "l01_escape" and sname == "l04_darkvalley" then
+    local obj = alife():story_object( 6002 )
+    if not obj then
+      obj = alife():create( alife():spawn_id( 6002 ) )
+      level.map_add_object_spot_ser( obj.id, "level_changer2", "to_darkvalley" )
+    end
+  end
+  if sname == "l01_escape" and lname == "l04_darkvalley" then
+    db.actor:set_actor_position( vector():set( -44.38, 0.43, -541.47 ) )
+  end
 
-	if amk.load_variable("freeplay",0)==1 then
-		amk.save_variable("freeplay",2)
-	elseif amk.load_variable("freeplay",0)==2 and (not has_alife_info("cit_fail_first_task")) then
-		db.actor:give_info_portion("cit_fail_first_task")
-	end
-  
-	if not db.actor:has_info("val_chase_start") then
-		local objt = alife():story_object(6002)
-		if objt then
-			alife():release(objt)
-		end
-	end
-	braad_test.delete_new_lc(833,"info_way_pripyat")
-	braad_test.delete_new_lc(1007,"info_way_radar")
-    --level_changers section
-	local lname = level.name()
-	local sname = amk.load_variable("level_on_save","")
-	if (amk_corpses) then
-		amk_corpses.update_all_corpses()
-	end
-	if lname ~= sname and amk_objects then 
-		amk_objects.update() 
-	end
+  obj = alife():story_object(6001)
+  if obj then
+  	level.map_add_object_spot(obj.id, "level_changer", "to_pripyat")
+  end
 
-	if lname=="l01_escape" and sname=="l04_darkvalley" then
-		local obj = alife():story_object(6002)
-		if not obj then
-			alife():create(111)
-		end
-	end
+  obj = alife():story_object(6002)
+  if obj then
+  	level.map_add_object_spot(obj.id, "level_changer", "to_darkvalley")
+  end
   
-	if sname=="l01_escape" and lname=="l04_darkvalley" then
-		db.actor:set_actor_position(vector():set(-44.38, 0.43, -541.47))
-	end
-  
-	--spots section
-	obj = alife():story_object(6001)
-	if obj then
-		level.map_add_object_spot(obj.id, "level_changer", "to_pripyat")
-	end
-	obj = alife():story_object(6002)
-	if obj then
-		level.map_add_object_spot(obj.id, "level_changer", "to_darkvalley")
-	end
+  if (amk_offline_alife) then
+  	amk_offline_alife.init()
+  end
 
-	game.start_tutorial("restore_sun")
+  if (amk_corpses) then
+  	amk_corpses.init()
+  end
+
+  if (amk_objects) then
+  	amk_objects.init()
+  end
+
+  local obj = alife():story_object(6000)
+  if not obj then
+  	alife():create(6520)
+  	obj = alife():story_object(6000)
+  end
+
+  if (amk_corpses) then
+  	amk_corpses.update_all_corpses()
+  end
+  if lname ~= sname and amk_objects then 
+  	amk_objects.update() 
+  end
+
+  if amk.load_variable("freeplay",0)==1 then
+  	amk.save_variable("freeplay",2)
+  elseif amk.load_variable("freeplay",0)==2 and (not has_alife_info("cit_fail_first_task")) then
+  	db.actor:give_info_portion("cit_fail_first_task")
+  end
+ 
+  braad_test.delete_new_lc(833,"info_way_pripyat")
+  braad_test.delete_new_lc(1007,"info_way_radar")
+
   restore_sun()
 end
 
@@ -196,11 +195,6 @@ function restore_sun()
   local lname = level.name()
   local sname = amk.load_variable( "level_on_save", "" )
   amk.save_variable( "level_on_save", lname )
-	if tmp_intro then
-		amk.send_tip(game.translate_string("amk_welcome_msg"),game.translate_string("amk_welcome_title"),nil,35,"default")
-		tmp_intro=false
-	end
-	sync_done=true	
 end
 
 --'*******************************************************************************
@@ -900,20 +894,21 @@ end
 -- запускаем трансофрмациі 
 -- результатv могут бvть многочисленнv (несколько целей, полное отторжение компонентов, несколько вvрождений)
 function as_start_universal_transform_timer(komp, result, pos, vremya, gv, lv, info_portion, remove_anomaly, remove_anomaly_id)
-	local t={} -- сохраняемvе даннvе
-	t.result = result -- можно сохранять сразу таблицv
-	t.pos = {}
-		t.pos.x = pos.x
-		t.pos.y = pos.y
-		t.pos.z = pos.z
-	t.gv=gv
-	t.lv=lv
-	t.info_portion = info_portion
-	t.komp = komp -- можно сохранять сразу таблицv
-	t.remove_anomaly = remove_anomaly
-	t.remove_anomaly_id = remove_anomaly_id
-	amk.g_start_timer("af_transform_universal", vremya[1], vremya[2], vremya[3], t)
+  local t = { } -- сохраняемvе даннvе
+  t.result = result -- можно сохранять сразу таблицv
+  t.pos    = {}
+  t.pos.x  = pos.x
+  t.pos.y  = pos.y
+  t.pos.z  = pos.z
+  t.gv     = gv
+  t.lv     = lv
+  t.info_portion = info_portion
+  t.komp   = komp -- можно сохранять сразу таблицv
+  t.remove_anomaly    = remove_anomaly
+  t.remove_anomaly_id = remove_anomaly_id
+  amk.g_start_timer("af_transform_universal", vremya[1], vremya[2], vremya[3], t)
 end
+
 
 -- старая фунция
 function af_start_transform(v1,v2,af_from,af_target)
@@ -942,6 +937,7 @@ function af_start_transform_timer(af,pos,delay_d,delay_h,delay_m,af_sect)
 	t.from_sect=af_sect
 	amk.g_start_timer("af_transform",delay_d,delay_h,delay_m,t)
 end
+
 
 -- завершаем варку/мутациі
 -- может бvть много результатов
@@ -1008,7 +1004,7 @@ function af_transform_end(params)
 	local obj
         obj=amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
 	local sobj = alife():object( obj.id )
-    alife():use_ai_locations(sobj, false)
+	alife():use_ai_locations(sobj, false)
 	amk.add_spot_on_map(obj.id,"red_location",game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 	amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 end
@@ -1349,6 +1345,31 @@ function blowout_psy_sound(action)
 		if sound_obj_right then sound_obj_right:stop() end
 		if snd_volume then level.set_snd_volume(snd_volume) end
 	end	
+end
+
+function Run_Blowout_pp()
+end
+
+function Run_Blowout_pp_old()
+if game_options.run_blowout_pp == 1 then
+                local bt=blowout_type()
+                if bt==2 then start_blow_timer() return end
+                sleep_manager.stopper()
+                amk.save_variable("blowout",1)
+                if bt<1 then
+                        level.add_pp_effector("monolith_off.ppe", 2003, false)
+                        level.add_cam_effector("camera_effects\\shell_shock.anm", 2004, false, "")
+                        local snd_obj = xr_sound.get_safe_sound_object([[ambient\organic_moan1]])
+                        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
+                end
+                amk.start_timer("blowout_ss",math_random(5,15),0)
+                amk.start_timer("blowout",11,0)
+                dsh.blowout_modif_arts()
+        end
+        start_blow_timer()
+end
+
+function start_blow_timer()
 end
 
 function Blowout_pp(phase)
@@ -1853,105 +1874,6 @@ function spawn_military_tech_pack(obj, spawn_item)
 	obj:STATE_Read(packet, packet:w_tell())
 end
 
---'*******************************************************************************
---'   **   **   **   **   **    **   **   **       AMK_RESPAWNS     **   **   **   **   **    **   **   **   
---'*******************************************************************************
-function switch_monster_online(obj)
-	se_monster.need_be_online[obj.id]=true
-end
-
-function switch_monster_offline(obj)
-	se_monster.need_be_online[obj.id]=false
-end
-
-function respawned(obj,respawner)
-	if IsMonster(obj) then
-		local sini = respawner:spawn_ini()
-		if sini:line_exist ("respawn", "creature_binded_logic") == true then
-			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
-			local t = amk.read_monster_params(obj)
-			t.custom = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
-			amk.write_monster_params(t, obj)
-		end
-	elseif IsStalker(obj) then
-		local sini = respawner:spawn_ini()
-		if sini:line_exist ("respawn", "creature_binded_logic") == true then
-			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
-			local t = amk.read_stalker_params(obj)
-			t.custom = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
-			amk.write_stalker_params(t, obj)
-		end
-	end	
-end
-
-local respawners={}
-
-function spawn_unspawned_respawners()
-
-	for a=1,65534 do
-		local obj = alife():object(a)
-		if obj then
-			local oini = obj:spawn_ini()
-			if oini:line_exist ("respawn", "amk_name") == true then
-				local amk_name = utils.cfg_get_string(oini, "respawn", "amk_name", false, false, false, false)
-				if amk_name then respawners[amk_name]=true end
-			end
-		end
-	end
-
-	local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
-	
-	local dv={}
-	if sini:section_exist("default_values") then
-		local result, id, value = nil, nil, nil
-		for a=0,sini:line_count("default_values")-1 do
-			result, id, value = sini:r_line("default_values",a,"","")
-			if id~=nil and amk.trim(id)~="" and amk.trim(id)~=nil then
-				dv[amk.trim(id)]=amk.trim(value)
-			end
-		end
-	end
-
-	if sini:section_exist("amk_respawns") then
-		local tmp={}
-		local result, id, value = nil, nil, nil
-		for a=0,sini:line_count("amk_respawns")-1 do
-			result, id, value = sini:r_line("amk_respawns",a,"","")
-			if id~=nil and amk.trim(id)~="" and amk.trim(id)~=nil then
-				table.insert(tmp, amk.trim(id))
-			end
-		end
-		
-		for k,v in pairs(tmp) do
-			local flag = utils.cfg_get_bool(sini, "amk_respawns", v, true, false, false)
-			if not respawners[v] and flag==true then
-				local t = amk.parse_ini_section_to_array(sini, v)
-				local xyzlg = amk.str_explode(",",t.xyzlg,true)
-				local pos = vector():set(tonumber(xyzlg[1]),tonumber(xyzlg[2]),tonumber(xyzlg[3]))
-				local respawner = amk.spawn_item("respawn",pos,tonumber(xyzlg[5]),tonumber(xyzlg[4]))
-				local tbl = amk.get_spawner_data(respawner)
-				t.xyzlg = nil
-				t.amk_name = v
-
-				for kkk,vvv in pairs(dv) do
-					if t[kkk]==nil then
-						t[kkk]=vvv
-					end
-				end
-
-				tbl.custom = amk.gen_custom_data({respawn=t})
-				amk.set_spawner_data(tbl, respawner)
-				se_respawn.reinit_spawner_params(respawner:name())
-			end
-			if flag==false then
-				local o = se_respawn.get_respawner_by_name(v)
-				if o then
-					alife():release(o)
-				end
-			end
-		end
-	end
-end
 
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **   **          OTHER        **   **   **   **   **    **   **   **   **   
@@ -1969,25 +1891,6 @@ function repair_armor(val)
 	end
 end
 
-function dezombify(id,v)
-	local npc=level.object_by_id(id)
-	if npc then
-		if npc:alive()==false then
-			return true
-		end
-		local sobj=alife():object(id)
-		if sobj then
-			npc:set_character_community(v.comm,0,0)
-			npc:set_goodwill(v.gw,db.actor)
-			local orgtbl=amk.read_stalker_params(sobj)
-			orgtbl.profile=string.gsub(orgtbl.profile,"(.*)_zombi","%1")
-			-- amk.mylog("dezombified "..npc:name().." profile "..orgtbl.profile)
-			amk.write_stalker_params(orgtbl,sobj)
-			return true
-		end    
-	end
-	return false
-end
 btrs_friends={}
 
 function build_btrs_table(obj)
@@ -2105,60 +2008,4 @@ function after_repair_weapon (st)
         if lobj then
                 lobj:set_condition(repbox_health)
         end
-end
-
-function get_state(se_obj)
-	local packet = net_packet()
-	se_obj:STATE_Write(packet)
-	local st = {}
-	st.game_vertex_id	= packet:r_u16()
-	st.distance		= packet:r_float()
-	st.direct_control	= packet:r_s32()
-	st.level_vertex_id	= packet:r_s32()
-	st.object_flags		= packet:r_s32()
-	st.custom_data		= packet:r_stringZ()
-	st.story_id		= packet:r_s32()
-	st.spawn_story_id	= packet:r_s32()
-	st.visual_name		= packet:r_stringZ()
-	st.visual_flags		= packet:r_u8()
-	st.condition		= packet:r_float()
-	st.ammo_current		= packet:r_u16()
-	st.ammo_elapsed		= packet:r_u16()
-	st.weapon_state		= packet:r_u8()
-	st.addon_flags		= packet:r_u8()
-	st.ammo_type		= packet:r_u8()
-	return st
-end
-
-function get_update(se_obj)
-	local packet = net_packet()
-	se_obj:UPDATE_Write(packet)
-	local st = {}
-	st.grenade_mode		= packet:r_u8()
-	st.num_items		= packet:r_u8()		-- !!! warning !!!
-	st.condition		= packet:r_u8()
-	st.weapon_flags		= packet:r_u8()
-	st.ammo_elapsed		= packet:r_u16()
-	st.addon_flags		= packet:r_u8()
-	st.ammo_type		= packet:r_u8()
-	st.weapon_state		= packet:r_u8()
-	st.weapon_zoom		= packet:r_u8()
-	st.current_fire_mode	= packet:r_u8()
-	return st
-end
-
-function read_if_exist_num(ltx, section, value, default)
-	if ltx:line_exist(section,value) then
-		return ltx:r_u32(section,value)
-	else
-		return default
-	end
-end
-
-function read_if_exist_str(ltx, section, value, default)
-	if ltx:line_exist(section,value) then
-		return ltx:r_string(section,value)
-	else
-		return default
-	end
 end

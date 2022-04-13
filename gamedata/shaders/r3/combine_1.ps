@@ -173,7 +173,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
         float4         light       = float4         (L.rgb + hdiffuse, L.w)        ;
         float4         C           = D*light       ;                             // rgb.gloss * light(diffuse.specular)
 //        float3         spec        = (C.rgb*.5h + .5h)*C.w + hspecular + hspecular + hspecular;			// replicated specular
-	float3 spec = C.www * L.rgb + hspecular; // replicated specular
+	float3         spec        = C.www         + hspecular;      // replicated specular
 
 #ifdef         USE_SUPER_SPECULAR
                       spec      = (C.rgb*.5h + .5h)*C.w + hspecular        ;
@@ -210,6 +210,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 //. only lighting and specular
 					color 		= spec;
 #endif
+	
 ////////////////////////////////////////////////////////////////////////////////
 
         // here should be distance fog
@@ -227,25 +228,17 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 #ifdef        USE_SUPER_SPECULAR
         color        	= spec          - hspecular	;
 #endif
-//		color 		= N; //show normals
-//		color                        	= D.xyz;
-//		color 
 
-//float3 color = (0.5 * (sign( gbd.N - gbd.N_org ) + 1.0 ) );
-//color = float3( abs( gbd.hemi - gbd.hemi_org), 0, abs( gbd.mtl - gbd.mtl_org) );
-//color = abs( gbd.N - gbd.N_org );
-//		color = occ; // holger test
-		//color = gbd.N;
-        _out        	o;
-        tonemap        	(o.low, o.high, color, tm_scale )	;
-                        o.low.a         = skyblend	;
-						o.high.a		= skyblend	;
-//		o.low	= skyblend;
-//		o.hight	= 0;
+        _out o;
 
-	//o.low = float4(gbd.P,1);
+		float3 rgb = color * tm_scale;
+		o.low = TonemapFunction(rgb).xyzz;
+		o.high = rgb.xyzz / def_hdr; // 8x dynamic range
 
-	//o.low = float4( 1.0f, 0.0f, 0.0f, 1.0f );
+        //tonemap(o.low, o.high, color, tm_scale);
 
-		return        	o;
+		o.low.a = skyblend	;
+		o.high.a = skyblend	;
+		
+		return o;
 }
