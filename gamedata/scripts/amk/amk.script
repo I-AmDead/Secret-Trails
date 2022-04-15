@@ -1575,6 +1575,21 @@ function point_in_poly (pts, x,y)
 end
 
 
+function on_REspawn(obj,respawner)
+	if obj and respawner then
+		mod_call("respawned",obj,respawner)
+		if IsMonster(obj) then
+			if respawner.spawned_goes_online==true then mod_call("switch_monster_online",obj) 
+			elseif respawner.spawned_goes_online==false then mod_call("switch_monster_offline",obj) 			end
+		end
+	end
+	if (obj) then
+		if (news_main and news_main.on_spawn) then
+			news_main.on_spawn(obj)
+		end
+	end
+end
+
 function get_breakable_data( sobj )
   ASSERT( false, "[%s]: OBSOLETED! sobj = %s", script_name(), sobj:name() )
 end

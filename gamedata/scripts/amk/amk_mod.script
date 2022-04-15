@@ -124,6 +124,7 @@ local weather_on_load
 
 function check_spawn()
   amk_anoms.init()
+  spawn_unspawned_respawners() 
   news_main.init()
   amk_offline_alife.update_trade()
   amk_offline_alife.update_npc_tables()
@@ -1874,6 +1875,101 @@ function spawn_military_tech_pack(obj, spawn_item)
 	obj:STATE_Read(packet, packet:w_tell())
 end
 
+--'*******************************************************************************
+--'   **   **   **   **   **    **   **   **       AMK_RESPAWNS     **   **   **   **   **    **   **   **   
+--'*******************************************************************************
+function switch_monster_online(obj)
+	se_monster.need_be_online[obj.id]=true
+end
+
+function switch_monster_offline(obj)
+	se_monster.need_be_online[obj.id]=false
+end
+
+function respawned(obj,respawner)
+	if IsMonster(obj) then
+		local sini = respawner:spawn_ini()
+		if sini:line_exist ("respawn", "creature_binded_logic") == true then
+			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
+			obj.custom_data = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
+		end
+	elseif IsStalker(obj) then
+		local sini = respawner:spawn_ini()
+		if sini:line_exist ("respawn", "creature_binded_logic") == true then
+			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
+			obj.custom_data = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
+		end
+	end	
+end
+
+local respawners={}
+
+function spawn_unspawned_respawners()
+
+	for a=1,65534 do
+		local obj = alife():object(a)
+		if obj then
+			local oini = obj:spawn_ini()
+			if oini:line_exist ("respawn", "amk_name") == true then
+				local amk_name = utils.cfg_get_string(oini, "respawn", "amk_name", false, false, false, false)
+				if amk_name then respawners[amk_name]=true end
+			end
+		end
+	end
+
+	local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
+	
+	local dv={}
+	if sini:section_exist("default_values") then
+		local result, id, value = nil, nil, nil
+		for a=0,sini:line_count("default_values")-1 do
+			result, id, value = sini:r_line("default_values",a,"","")
+			if id~=nil and xrs_utils.trim(id)~="" and xrs_utils.trim(id)~=nil then
+				dv[xrs_utils.trim(id)]=xrs_utils.trim(value)
+			end
+		end
+	end
+
+	if sini:section_exist("amk_respawns") then
+		local tmp={}
+		local result, id, value = nil, nil, nil
+		for a=0,sini:line_count("amk_respawns")-1 do
+			result, id, value = sini:r_line("amk_respawns",a,"","")
+			if id~=nil and xrs_utils.trim(id)~="" and xrs_utils.trim(id)~=nil then
+				table.insert(tmp, xrs_utils.trim(id))
+			end
+		end
+		
+		for k,v in pairs(tmp) do
+			local flag = utils.cfg_get_bool(sini, "amk_respawns", v, true, false, false)
+			if not respawners[v] and flag==true then
+				local t = xrs_utils.parse_ini_section_to_array(sini, v)
+				local xyzlg = xrs_utils.str_explode(",",t.xyzlg,true)
+				local pos = vector():set(tonumber(xyzlg[1]),tonumber(xyzlg[2]),tonumber(xyzlg[3]))
+				local respawner = amk.spawn_item("respawn",pos,tonumber(xyzlg[5]),tonumber(xyzlg[4]))
+				local tbl = xrs_utils.get_spawner_data(respawner)
+				t.xyzlg = nil
+				t.amk_name = v
+
+				for kkk,vvv in pairs(dv) do
+					if t[kkk]==nil then
+						t[kkk]=vvv
+					end
+				end
+
+				tbl.custom = xrs_utils.gen_custom_data({respawn=t})
+				xrs_utils.set_spawner_data(tbl, respawner)
+				se_respawn.reinit_spawner_params(respawner:name())
+			end
+			if flag==false then
+				local o = se_respawn.get_respawner_by_name(v)
+				if o then
+					alife():release(o)
+				end
+			end
+		end
+	end
+end
 
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **   **          OTHER        **   **   **   **   **    **   **   **   **   

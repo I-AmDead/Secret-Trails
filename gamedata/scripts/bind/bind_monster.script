@@ -242,38 +242,42 @@ function generic_object_binder:net_spawn(sobject)
 end
 
 function generic_object_binder:net_destroy()
-	if table.getn(self.particles)>0 then
-		for kk,vv in pairs(self.particles) do
-			if not vv:is_finished() then
-				vv:stop()
-				self.particles[kk]=nil
-			end
-		end
-	end
-	self.object:set_callback(callback.death,				nil)
-	self.object:set_callback(callback.patrol_path_in_point, nil)
-  self.object:set_callback(callback.hit,					nil)
+
+  if table.getn(self.particles)>0 then
+  	for kk,vv in pairs(self.particles) do
+  		if not vv:is_finished() then
+  			vv:stop()
+  			self.particles[kk]=nil
+  		end
+  	end
+  end
+
+  self:clear_callbacks()
 
   local st = db.storage[ self.object:id() ]
   if st and st.active_scheme then
     xr_logic.issue_event( self.object, st[ st.active_scheme ], "net_destroy" )
   end
+
   db.del_obj( self.object )
   db.storage[ self.object:id() ] = nil
 
-	-- АМК. Очистка рестрикторов
-	local id=self.object:id()
-	object_binder.net_destroy(self)
-	local sobj=alife():object(id)
-	if sobj and IsMonster(sobj) then
-		local tbl=amk.read_monster_params(sobj)
-		tbl.crvu32u16u2={}
-		amk.write_monster_params(tbl,sobj)
-	else
-		-- Выход из игры.
-  end
-end
+  object_binder.net_destroy(self)
 
+  local id   = self.object:id()
+  local sobj = alife():object( id )
+  if sobj then
+    alife():remove_in_restrictions( sobj )
+  end
+--log3("--[%s] End destroy [%s]", script_name(), self.object and self.object:name() or "nil")
+end 
+
+function generic_object_binder:clear_callbacks()
+  self.object:set_callback( callback.death, nil )
+  self.object:set_callback( callback.patrol_path_in_point, nil )
+  self.object:set_callback( callback.hit, nil )
+  self.object:set_enemy_callback()
+end
 
 function generic_object_binder:reload(section)
   object_binder.reload( self, section )
@@ -324,24 +328,4 @@ function play_particle(obj,params)
 		particles[obj:id()]={}
 	end
 	table.insert(particles[obj:id()],params)
-end
-
-
----------------------------------------------------------------------------
--- Читаем параметры из секции
-function read_if_exist(what,ini,section,name,def)
-	if not ini then ini = system_ini() end
-	if ini:section_exist(section) and ini:line_exist(section,name) then
-		if what == "f" then
-			return ini:r_float(section,name)
-		elseif what == "s" then
-			return ini:r_string(section,name)
-		elseif what == "b" then
-			return ini:r_bool(section,name)
-		end
-
-
-	end
-	return def
-
 end
