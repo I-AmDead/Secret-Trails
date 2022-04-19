@@ -2226,34 +2226,6 @@ function create_treasurebox()
 end
 
 
-function on_miniquest_reward( trader )
-  if trader and db.actor then
-    local money, items = dsh_monster_microquest.get_next_reward()
-    dialogs.relocate_money( trader, money, "in" )
-    local t = {}
-    for _, sect in ipairs( items ) do
-      if dsh.is_artefact( sect ) then
-        local prop = amk_utils.get_item_props( sect )
-        if prop.has_af_dyn then
-          sect = amk_anoms.make_dyn_art_sect( sect, 4 )
-          prop = amk_utils.get_item_props( sect )
-        end
-        if prop.af_bio_sect then
-          local rnd = dsh.get_next_random(
-            "news_main.on_miniquest_reward.af_bio_sect"
-          )
-          if rnd < 0.9 then sect = prop.af_bio_sect end
-        end
-      end
-      table.insert( t, sect )
-    end
-    for _, k in ipairs( t ) do
-      local items = dialogs.relocate_item_section( trader, k, "in" )
-    end
-  end
-end
-
-
 function point_is_far(point, lv, gv, distance)
 	local sim = alife()
 	local actor = db.actor

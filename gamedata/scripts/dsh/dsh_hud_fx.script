@@ -1,19 +1,41 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
+local cur_wpn = {}
+
 local wpn_fx  = dsh_hud_fx_data.wpn_fx
+local stand_power = get_float( "actor_condition", "stand_power" )
+local time_factor = get_float( "alife", "time_factor" )
 
 function attach(sm)
   sm:subscribe({ signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire })
   sm:subscribe({ signal = "on_update", fun = this.on_update_heart })
 end
 
-
-function on_update_heart()
-  ogse_signals.get_mgr():reschedule( 113 )
-  if not db.actor:alive() then return end
-  nlc7_actor_heart()
+local cur_wpn = {}
+function get_wpn_info( wpn )
+  local t = cur_wpn
+  if ( not t.name ) or t.name ~= wpn:name() then
+    t.const_dev_t      = 0
+    t.dispersion_start = get_u32( wpn:section(), "dispersion_start" )
+    t.fire_power_loss  = get_fire_power_loss( wpn )
+    t.hit_power        = get_float( wpn:section(), "hit_power"   )
+    t.hit_power_2      = get_float( wpn:section(), "hit_power_2" )
+    t.id               = wpn:id()
+    t.inv_weight       = get_float( wpn:section(), "inv_weight", 0 )
+    t.is_knife         = wpn:is_knife()
+    t.name             = wpn:name()
+    t.zoom_body_state  = "unknown"
+    t.zoom_enabled     = get_bool( wpn:section(), "zoom_enabled", true )
+  end
+  t.wpn = wpn
+  return cur_wpn
 end
 
+function get_fire_power_loss( wpn )
+  local sect = wpn:section()
+  local fire_power_loss_k = get_float( sect, "dsh_wpn.fire_power_loss_k", 1 )
+  return stand_power * time_factor * fire_power_loss_k
+end
 
 local cached_wpn = {}
 function get_wpn_params( sect )
@@ -31,7 +53,7 @@ function on_actor_weapon_fire( wpn )
 
 if game_options.AmkWpn == true then
 
-  local cur_wpn = dsh_wpn.get_wpn_info( wpn )
+  local cur_wpn = get_wpn_info( wpn )
   local shot_n  = wpn:is_weapon_magazined()
     and wpn:get_weapon_m().shot_num or 1
   if cur_wpn.dispersion_start then
@@ -166,4 +188,10 @@ function nlc7_actor_heart()
       delt = time_curr
     end
 end
+end
+
+function on_update_heart()
+  ogse_signals.get_mgr():reschedule( 113 )
+  if not db.actor:alive() then return end
+  nlc7_actor_heart()
 end

@@ -161,7 +161,7 @@ function motivator_binder:net_destroy()
     xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy", self.object)
   end
 
-  if self.object == nil then return end
+  if not self.object then return end
   db.del_obj( self.object )
   db.storage[ self.object:id() ] = nil
   self:clear_callbacks()
@@ -321,11 +321,12 @@ function motivator_binder:update(delta)
                         end
                 end
 
-    if self.first_update == false then
-        if self.object:alive() == false then
-      death_manager.drop_manager(self.object):create_release_item()
+    if not self.first_update then
+        if not self.object:alive() then
+		death_manager.drop_manager(self.object):create_release_item()
         end
-        self.first_update = true
+	self.first_update = true
+	self.am:call( "on_npc_first_update", self.object, delta )
     end
 
     if time_global() - self.last_update > 1000 then
@@ -396,6 +397,7 @@ function motivator_binder:update(delta)
 
   if xrs_ai then xrs_ai.npc_update(self) end
 
+  self.am:call( "on_npc_update." .. self.object:id(), self.object, delta )
 end
 
 function motivator_binder:reload(section)

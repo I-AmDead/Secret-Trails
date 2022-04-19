@@ -1,3 +1,7 @@
+function attach( sm )
+  sm:subscribe({ signal = "on_update", fun = this.spider_kostolom_dead })
+end
+
 function start_antreg()
   if level.name()=="dead_city" and has_alife_info("eda_dialog_start") and not has_alife_info("skit_spawn") then db.actor:give_info_portion("skit_spawn")
 
@@ -693,6 +697,23 @@ end
 
 function spider_kostolom_spawn()
   local sobj = alife():create("spider_kostolom",vector():set(-118.073,5.575,-66.173),888830,3000)
+end
+
+function spider_kostolom_dead()
+	if db.actor:dont_has_info("doctor_kostolom_dead") then return end
+	if db.actor:has_info("doctor_kostolom_done") then return end
+	for id, sobj in alife():objects() do
+		local spider = level.object_by_id(id)
+		if spider and spider:section() == "spider_kostolom" and spider:alive() then
+			local hit = hit()
+			hit.direction = spider:direction()
+			hit.impulse = 1000
+			hit.draftsman = spider
+			hit.power = 1000
+			hit.type = hit.wound
+			spider:hit(hit)
+		end
+	end
 end
 
 function spawn_sar_pauki()

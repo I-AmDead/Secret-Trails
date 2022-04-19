@@ -72,7 +72,7 @@ local always_offs_items = {
 "energy_drink"
 }
 
-local suit_prob = sys_ini:r_s32("options","suit_probability")
+local suit_prob = 100
 
 --' Предметы, относящиеся к патронам. Их надо спаунить другим методом.
 local ammo_sections = {}
@@ -90,7 +90,7 @@ function init_drop_settings()
 		    local n = death_ini:line_count(v)
 		    local id, value = "", ""
 		    for i=0,n-1 do
-			    result, id, value	= death_ini:r_line(v,i,"","")
+			    result, id, value	= death_ini:r_line(v,i)
                 --item_by_community[v][id] = 1000 * tonumber(value)
 				if tonumber(value) >= 0.4 then value = 0.2 end
 				item_by_community[v][id] = 1000 * tonumber(value)
@@ -102,7 +102,7 @@ function init_drop_settings()
 	local n = death_ini:line_count("item_dependence")
 	local id, value = "", ""
 	for i=0,n-1 do
-		result, id, value	= death_ini:r_line("item_dependence",i,"","")
+		result, id, value	= death_ini:r_line("item_dependence",i)
 		item_dependence[id] = {}
 		local vvv = parse_names(value)
 		for k,v in pairs(vvv) do
@@ -120,28 +120,23 @@ function init_drop_settings()
     local n = death_ini:line_count(level_name)
 	local id, value = "", ""
 	for i=0,n-1 do
-		result, id, value	= death_ini:r_line(level_name,i,"","")
+		result, id, value	= death_ini:r_line(level_name,i)
         mul_by_level[id] = tonumber(value)
 	end        
 
     local item_count_section = "item_count_" .. level.get_game_difficulty()
     local n = death_ini:line_count(item_count_section)
 	for i=0,n-1 do
-		result, id, value	= death_ini:r_line(item_count_section,i,"","")
+		result, id, value	= death_ini:r_line(item_count_section,i)
         --' Нужно распарсить value в два значения
         local t = parse_nums(value)
 		if t[1] == nil then
             abort("Error on [death_ini] declaration. Section [%s], line [%s]", item_count_section, tostring(id))
         end
         local min = t[1]
-        local max = t[2]
-        if max == nil then
-            max = min
-        end
+        local max = t[2] or min
         
-        if mul_by_level[id] == nil then
-            mul_by_level[id] = 0
-        end
+        mul_by_level[id] = mul_by_level[id] or 0
 
         min = tonumber(min) * mul_by_level[id]
         max = tonumber(max) * mul_by_level[id]
@@ -152,18 +147,18 @@ function init_drop_settings()
  	--' Предметы, которые нельзя удалять (квестовые например)
     local n = death_ini:line_count("keep_items")
 	for i=0,n-1 do
-		result, id, value	= death_ini:r_line("keep_items",i,"","")
+		result, id, value	= death_ini:r_line("keep_items",i)
         if value == "true" then
             always_keep_item[id] = true
         end
     end
-
+      
 	--' Предметы, относящиеся к патронам. Их надо спаунить другим методом.
     ammo_sections = {}
     local n = death_ini:line_count("ammo_sections")
 	local id, value = "", ""
 	for i=0,n-1 do
-		result, id, value	= death_ini:r_line("ammo_sections",i,"","")
+		result, id, value	= death_ini:r_line("ammo_sections",i)
         ammo_sections[id] = true
 	end        
 end
@@ -175,54 +170,47 @@ function drop_manager:__init(npc)
 	self.npc = npc
 end
 function drop_manager:create_release_item(npc)
-	if self.npc == nil then return end
+	if not self.npc then return end
 	--' Спрашиваем у серверного объекта генерились ли предметы
 	local se_obj = alife():object(self.npc:id())
-	if (se_obj == nil) then return end
-	if se_obj.death_droped == true then
-		return
-	end
-	se_obj.death_droped = true
+	if not se_obj or se_obj.death_dropped then return end
+	se_obj.death_dropped = true
 
     --' Запускаем итератор на удаление предметов
     self.npc:iterate_inventory(keep_item, self.npc)
 
     --' Проверка на отсутствие спауна лута
     local ini = self.npc:spawn_ini()
-
     if ini and ini:section_exist("dont_spawn_loot") then
         return
     end
 
     --' Доспавниваем необходимое количество итемов:
     --' Необходимо составить список объектов которые могут быть заспавнены для персонажа
-    local spawn_items = item_by_community[self.npc:character_community()]    
+	local spawn_items = item_by_community[self.npc:character_community()]    
     if spawn_items then
-      for k,v in pairs(spawn_items) do
+	for k,v in pairs(spawn_items) do
           --' По каждому объекту необходимо получить зависимости		
           if check_item_dependence(self.npc, k) == true then
-              --' По каждому объекту необходимо получить количество
-              local number = math.ceil(math.random(count_by_level[k].min, count_by_level[k].max))
-              --' Необходимо заспавнить нужное количество.
-				create_items(self.npc, k, number, v) 
-		  end
+		--' По каждому объекту необходимо получить количество
+		local number = math.ceil(math.random(count_by_level[k].min, count_by_level[k].max))
+		--' Необходимо заспавнить нужное количество.
+		create_items(self.npc, k, number, v)
+	end
+      end
+    end
 
 	local sect = ogse_real_armor.vis_to_armor(self.npc) --RealArmor by KamikaZze
 
-	if	sect
-		and not forbidden_npc_names[npc:name()]
-	then
+	if sect and not forbidden_npc_names[self.npc:name()] then
 		local rnd = suit_prob
-		local otf = create_items(npc, sect, 1, rnd)
+		local otf = create_items(self.npc, sect, 1, rnd)
 		if otf then
 			level.client_spawn_manager():add( otf.id, -1, function(id, obj)
 				obj:set_condition( (10+math.random(6,65))/100 )
 			end )
 		end
 	end
-      end
-    end
-	
 
 if self.npc:name() =="solomon" then
   db.actor:give_info_portion("haron_need_stalker_fail")
@@ -303,7 +291,8 @@ if string.find(self.npc:name(),"atp_barman") then
   db.actor:give_info_portion("band_kill_have")  
 end
 end
---' Функция вызывается для каждого предмета, если вернет false то предмет удалится.
+
+--' Функция вызывается для каждого предмета в инвентаре убитого НПС
 function keep_item(npc, item)
 	local npc_community = npc:character_community()
     if item==nil or alife():object(item:id())==nil then return end

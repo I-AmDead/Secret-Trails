@@ -156,6 +156,14 @@ function table.copy( tbl ) -- Возвращает копию таблицы.
   setmetatable( res, mt )
   return res
 end
+
+--=================================[CUIScriptWnd Extension]=====================================
+-- Вызов обычный, как и в AddCallback, но после последнего аргумента можно передавать множество дополнительных.
+function CUIScriptWnd:Connect(name, event, func, ...)
+	local args = {...}
+	return self:AddCallback( name, event, function() func(unpack(args)) end )
+end
+
 -------------------------------------------------------------------------------
 -- Возвращает кол-во элементов в таблице. Для массивов надо использовать
 -- оператор #.
@@ -185,7 +193,20 @@ table.values = function( t )
   end
   return arr
 end
---=============================================================================
+--==============================================================================================
+function get_ammo_size(obj) --Возвращает колличество патрон в пачке
+	return obj:get_current_ammo()
+end
+function set_ammo_size(obj, size) --Задать кол-во патронов в пачке
+	obj:set_ammo_box_curr(size)
+end
+function get_inv_item_slot( obj )
+	return obj:get_inventory_item().slot
+end
+function set_inv_item_slot( obj, slot )
+	obj:get_inventory_item().slot = slot
+end
+--==============================================================================================
 
 INVALID_STORY_ID = 4294967295
 NO_ACTIVE_SLOT   = 255

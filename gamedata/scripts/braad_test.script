@@ -909,12 +909,10 @@ end
 
 
 function doctor_speech()
-    if level.name()=="l12_stancia" and db.actor:has_info("haron_spy_have") then
-         new_dialog.create_items(db.actor,"kolbasa",1)
-         db.actor:give_info_portion("doctor_info")
-	  end
-	create_re_restr()  
-	news_manager.send_tip(db.actor, "Это Фельдшер, зайди ко мне, есть разговор срочный", nil, nil, 30000)  
+    if level.name()=="l12_stancia" and db.actor:has_info("haron_spy_have") then return end
+    db.actor:give_info_portion("doctor_info")
+    create_re_restr()  
+    news_manager.send_tip(db.actor, "Это Фельдшер, зайди ко мне, есть разговор срочный", nil, nil, 30000)  
 end
 
 function sms_new()
@@ -2970,13 +2968,11 @@ end
 
 function create_re_restr()
     for a=1,65534 do
-       local obj = alife():object(a) 
-       if obj then
-            if obj and obj:name() == "pri_prizrak_restr" then
-              local params=amk.get_restrictor_data(obj)
-			  params.custom = "[logic]\ncfg = scripts\\new\\restr\\pri_prizrak_restr_new.ltx"
-              amk.set_restrictor_data(params,obj)
-			end	
+       local sobj = alife():object(a) 
+       if sobj then
+            if sobj and sobj:name() == "pri_prizrak_restr" then
+                sobj.custom_data = "[logic]\ncfg = scripts\\new\\restr\\pri_prizrak_restr_new.ltx"
+            end	
         end 
     end 
 end
