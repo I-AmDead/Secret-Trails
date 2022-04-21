@@ -627,14 +627,11 @@ function hit_by_actor(actor, npc)
 end
 
 function hit_by_actor_kolt(actor, npc)
-	 local t = db.storage[npc:id()].hit
-     local hit_by_actor_kolt = (t ~= nil and t.who == actor:id())
+     local t = db.storage[npc:id()].hit
+     local hit_by_actor_kolt = (t and t.who == actor:id())
      if hit_by_actor_kolt then
-      local weapon1 = db.actor:item_in_slot(1)
-      local weapon1_active = db.actor:active_slot() == 1
-      local weapon2 = db.actor:item_in_slot(2)
-      local weapon2_active = db.actor:active_slot() == 2
-      if ( weapon1_active and weapon1:section() == "wpn_colt_ucen" ) or ( weapon2_active and weapon2:section()== "wpn_colt_ucen" ) then
+      local weapon = db.actor:active_item()
+      if weapon and weapon:section() == "wpn_colt_ucen" then
         return hit_by_actor_kolt
       end
     end
@@ -642,14 +639,11 @@ function hit_by_actor_kolt(actor, npc)
 end
 
 function hit_by_actor_mosin(actor, npc)
-	 local t = db.storage[npc:id()].hit
-     local hit_by_actor_mosin = (t ~= nil and t.who == actor:id())
+     local t = db.storage[npc:id()].hit
+     local hit_by_actor_mosin = (t and t.who == actor:id())
      if hit_by_actor_mosin then
-      local weapon1 = db.actor:item_in_slot(1)
-      local weapon1_active = db.actor:active_slot() == 1
-      local weapon2 = db.actor:item_in_slot(2)
-      local weapon2_active = db.actor:active_slot() == 2
-      if ( weapon1_active and weapon1:section() == "wpn_remington700_ucen" ) or ( weapon2_active and weapon2:section() == "wpn_remington700_ucen" )  then
+      local weapon = db.actor:active_item()
+      if weapon and weapon:section() == "wpn_remington700_ucen" then
         return hit_by_actor_mosin
       end
     end
