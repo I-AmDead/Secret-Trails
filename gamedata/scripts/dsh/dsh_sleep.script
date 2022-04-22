@@ -1,21 +1,15 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
-function attach( sm ) -- для менеджера сигналов
+function attach( sm ) -- РґР»СЏ РјРµРЅРµРґР¶РµСЂР° СЃРёРіРЅР°Р»РѕРІ
   sm:subscribe({ signal = "on_first_update",   fun = this.on_first_update   })
   sm:subscribe({ signal = "on_sleep_finished", fun = this.on_sleep_finished })
   sm:subscribe({ signal = "on_use",            fun = this.on_item_use       })
 end
 
 
-local monsters_can_find_me = false
-
 function on_sleep_finished( sleep_seconds )
   local sleep_minutes = math.floor( sleep_seconds / 60 )
   reduce_need_sleep( sleep_minutes )
-  if monsters_can_find_me then
-    monsters_can_find_me = false
-    monsters_found_me( sleep_seconds )
-  end
 end
 
 
@@ -46,7 +40,7 @@ function on_item_use( obj )
   local section = obj:section()
   if section == "matras" then
     test_for_need_sleep_matras()
-    return true -- матрас больше никому не надо использовать
+    return true -- РјР°С‚СЂР°СЃ Р±РѕР»СЊС€Рµ РЅРёРєРѕРјСѓ РЅРµ РЅР°РґРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ
   end
 end
 
@@ -82,8 +76,6 @@ function test_sleep_pp()
   local gg_need_sleep = get_gg_need_sleep()
   if gg_need_sleep > 250 then
     ogse_sleep_mgr.begin_sleep( 8 )
-    local cat = are_cats_near()
-    if cat then return db.actor:kill( cat ) end
   elseif gg_need_sleep > 244 then
     zevota()
     level.add_pp_effector( "black.ppe", 105, false )
@@ -142,17 +134,15 @@ function test_for_need_sleep_matras()
 
   else
 
-      -- звуковое сопровождение
+      -- Р·РІСѓРєРѕРІРѕРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёРµ
       local snd = xr_sound.get_safe_sound_object( "zwuk\\inv_sleeping" )
       snd:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 2.0 )
-      -- закрываем инвентарь
+      -- Р·Р°РєСЂС‹РІР°РµРј РёРЅРІРµРЅС‚Р°СЂСЊ
       local wnd = level.main_input_receiver()
       if wnd then
         wnd:GetHolder():start_stop_menu( wnd, true )
       end
-      -- запоминаем, делать ли подлянку
-      monsters_can_find_me = ( not friends )
-      -- открываем диалог сна
+      -- РѕС‚РєСЂС‹РІР°РµРј РґРёР°Р»РѕРі СЃРЅР°
       level.start_stop_menu( ui_sleep.sleep(), true )
 
 	end
@@ -170,48 +160,6 @@ function zevota()
     db.actor, vector():set( 0, 0, 0 ), 0, sound_object.s2d
   )
 end
-
-
-function are_cats_near()
-  local pos = db.actor:position()
-  for id, is_stalker in pairs( db.storage ) do
-    local obj = level.object_by_id( id )
-    if obj and obj:clsid() == clsid.cat_s and obj:alive() then
-      local dist = obj:position():distance_to( pos )
-      if dist < 15 then return obj end
-    end
-  end
-end
-
-
-function monsters_found_me( sleep_seconds )
-  local sleep_hours = math.floor( sleep_seconds / 3600 )
-  local need_cnt    = math.random( math.max( 4, sleep_hours ) )
-  local monsters    = {}
-  for id, is_npc in pairs( db.creatures ) do
-    if not is_npc then
-      local obj = level.object_by_id( id )
-      if
-        obj and obj:alive() and obj:relation( db.actor ) == game_object.enemy
-        and not string.find( obj:section(), "rat_", 1, true )
-      then
-        table.insert( monsters, obj )
-        if table.getn( monsters ) == need_cnt then break end
-      end
-    end
-  end
-  local actor_pos = db.actor:position()
-  table.sort(
-    monsters,
-    function( a, b )
-      return a:position():distance_to( actor_pos ) < b:position():distance_to( actor_pos )
-    end
-  )
-  for _, obj in ipairs( monsters ) do
-    dsh_mob_home.create_home( obj, nil, 10, 20, true, true )
-  end
-end
-
 
 function want_sleep_k()
   local n1, n2        = 185, 250
