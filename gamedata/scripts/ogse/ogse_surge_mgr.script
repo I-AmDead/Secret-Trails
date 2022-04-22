@@ -2,7 +2,7 @@
 
 ----------------------------------
 --- ogse_surge_mgr.script
---- Модуль выброса для OGSE
+--- РњРѕРґСѓР»СЊ РІС‹Р±СЂРѕСЃР° РґР»СЏ OGSE
 --- (c) OGS Evolution Team, 2014
 ----------------------------------
 
@@ -12,9 +12,9 @@ function attach( sm )
   sm:subscribe({ signal = "on_spawn",        fun = this.on_actor_spawn  })
 end
 
-actor_in_hideout = false --Находится ли актор в укрытии
-is_surge_started = false --Начался ли выброс
-is_surge_raskolbas = false --Находится ли выброс в смертельной стадии
+actor_in_hideout = false --РќР°С…РѕРґРёС‚СЃСЏ Р»Рё Р°РєС‚РѕСЂ РІ СѓРєСЂС‹С‚РёРё
+is_surge_started = false --РќР°С‡Р°Р»СЃСЏ Р»Рё РІС‹Р±СЂРѕСЃ
+is_surge_raskolbas = false --РќР°С…РѕРґРёС‚СЃСЏ Р»Рё РІС‹Р±СЂРѕСЃ РІ СЃРјРµСЂС‚РµР»СЊРЅРѕР№ СЃС‚Р°РґРёРё
 
 local debug_logging = false
 local fsurgelog
@@ -34,11 +34,11 @@ function surge_log(f,...)
 	fsurgelog:flush()
 end
 
-local first_surge_wait_time = 24 -- время от начала игры до первого выброса, час.
-local first_surge_time_disp = 12 -- разброс времени первого выброса, час.
-local base_surge_wait_time  = 72 -- среднее время между выбросами, час.
-local surge_wait_time_disp  = 12 -- разброс времени ожидания, час.
-local surge_postpone_time   = 10 -- [час.], время откладывания выброса в случае невозможности его начать по сюжетным ограничениям
+local first_surge_wait_time = 24 -- РІСЂРµРјСЏ РѕС‚ РЅР°С‡Р°Р»Р° РёРіСЂС‹ РґРѕ РїРµСЂРІРѕРіРѕ РІС‹Р±СЂРѕСЃР°, С‡Р°СЃ.
+local first_surge_time_disp = 12 -- СЂР°Р·Р±СЂРѕСЃ РІСЂРµРјРµРЅРё РїРµСЂРІРѕРіРѕ РІС‹Р±СЂРѕСЃР°, С‡Р°СЃ.
+local base_surge_wait_time  = 72 -- СЃСЂРµРґРЅРµРµ РІСЂРµРјСЏ РјРµР¶РґСѓ РІС‹Р±СЂРѕСЃР°РјРё, С‡Р°СЃ.
+local surge_wait_time_disp  = 12 -- СЂР°Р·Р±СЂРѕСЃ РІСЂРµРјРµРЅРё РѕР¶РёРґР°РЅРёСЏ, С‡Р°СЃ.
+local surge_postpone_time   = 10 -- [С‡Р°СЃ.], РІСЂРµРјСЏ РѕС‚РєР»Р°РґС‹РІР°РЅРёСЏ РІС‹Р±СЂРѕСЃР° РІ СЃР»СѓС‡Р°Рµ РЅРµРІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РµРіРѕ РЅР°С‡Р°С‚СЊ РїРѕ СЃСЋР¶РµС‚РЅС‹Рј РѕРіСЂР°РЅРёС‡РµРЅРёСЏРј
 
 local lname
 local is_indoor = false
@@ -71,40 +71,40 @@ function get_surge_postpone_time()
   return seconds2ctime( surge_postpone_time * 3600 )
 end
 
---[[ конфигурация стадий выброса
+--[[ РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ СЃС‚Р°РґРёР№ РІС‹Р±СЂРѕСЃР°
 local surge_db = {
-<имя инфопорции стадии> = {
-	on_info = { -- действия, выполняемые один раз в момент начала соответствующей стадии
-		стандартный набор действий включает в себя:
-		call# = <имя файла>.<имя функции>, -- # - целое число от 1 и выше
-		pp_eff# = {"<имя файла постпроцесса>.ppe", <id>, true/false},
-		cam_eff# = {"<имя файла анимации камеры>.anm", <id>, true/false},
-		snd# = <путь до файла звука без расширения>, -- звук будет проигран по схеме
-		cam_eff_rem# = <id>, -- выключить анимацию камеры
-		pp_eff_rem# = <id>, -- выключить эффект постпроцесса
-		if_surface = { -- выполнить при условии нахождения на поверхности
-			-- стандартный набор действий
+<РёРјСЏ РёРЅС„РѕРїРѕСЂС†РёРё СЃС‚Р°РґРёРё> = {
+	on_info = { -- РґРµР№СЃС‚РІРёСЏ, РІС‹РїРѕР»РЅСЏРµРјС‹Рµ РѕРґРёРЅ СЂР°Р· РІ РјРѕРјРµРЅС‚ РЅР°С‡Р°Р»Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ СЃС‚Р°РґРёРё
+		СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ:
+		call# = <РёРјСЏ С„Р°Р№Р»Р°>.<РёРјСЏ С„СѓРЅРєС†РёРё>, -- # - С†РµР»РѕРµ С‡РёСЃР»Рѕ РѕС‚ 1 Рё РІС‹С€Рµ
+		pp_eff# = {"<РёРјСЏ С„Р°Р№Р»Р° РїРѕСЃС‚РїСЂРѕС†РµСЃСЃР°>.ppe", <id>, true/false},
+		cam_eff# = {"<РёРјСЏ С„Р°Р№Р»Р° Р°РЅРёРјР°С†РёРё РєР°РјРµСЂС‹>.anm", <id>, true/false},
+		snd# = <РїСѓС‚СЊ РґРѕ С„Р°Р№Р»Р° Р·РІСѓРєР° Р±РµР· СЂР°СЃС€РёСЂРµРЅРёСЏ>, -- Р·РІСѓРє Р±СѓРґРµС‚ РїСЂРѕРёРіСЂР°РЅ РїРѕ СЃС…РµРјРµ
+		cam_eff_rem# = <id>, -- РІС‹РєР»СЋС‡РёС‚СЊ Р°РЅРёРјР°С†РёСЋ РєР°РјРµСЂС‹
+		pp_eff_rem# = <id>, -- РІС‹РєР»СЋС‡РёС‚СЊ СЌС„С„РµРєС‚ РїРѕСЃС‚РїСЂРѕС†РµСЃСЃР°
+		if_surface = { -- РІС‹РїРѕР»РЅРёС‚СЊ РїСЂРё СѓСЃР»РѕРІРёРё РЅР°С…РѕР¶РґРµРЅРёСЏ РЅР° РїРѕРІРµСЂС…РЅРѕСЃС‚Рё
+			-- СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№
 		},
-		if_underground = { -- если под землёй
-			-- стандартный набор действий
+		if_underground = { -- РµСЃР»Рё РїРѕРґ Р·РµРјР»С‘Р№
+			-- СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№
 		},
-		if_not_safe = { -- если на поверхности и не в укрытии
-			-- стандартный набор действий
+		if_not_safe = { -- РµСЃР»Рё РЅР° РїРѕРІРµСЂС…РЅРѕСЃС‚Рё Рё РЅРµ РІ СѓРєСЂС‹С‚РёРё
+			-- СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№
 		},
 	},
-	on_info_deferred = { -- действия, выполняемые в момент начала соответствующей стадии, но не сразу
-		-- а при первом апдейте после выдачи соответствуюшей инфопорции
-		-- сюда помещаем всякие звуки, постэффекты и т.п. Идея в том, что при пропуске серии стадий
-		-- из-за сохранения/загрузки надо выполнить все действия, вошедшие в пропущенные стадии, но 
-		-- при этом часть действия типа звуков и постэффектов для пропущенных стадий не выполнять,
-		-- поскольку их одновременный проигрыш будет выглядеть нелепо.
-		-- Поскольку до первого апдейта секция on_info_deferred не будет парсится, то в первый апдейт 
-		-- после загрузки будет проверена только последняя стадия, и действия выполнятся только для неё
+	on_info_deferred = { -- РґРµР№СЃС‚РІРёСЏ, РІС‹РїРѕР»РЅСЏРµРјС‹Рµ РІ РјРѕРјРµРЅС‚ РЅР°С‡Р°Р»Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ СЃС‚Р°РґРёРё, РЅРѕ РЅРµ СЃСЂР°Р·Сѓ
+		-- Р° РїСЂРё РїРµСЂРІРѕРј Р°РїРґРµР№С‚Рµ РїРѕСЃР»Рµ РІС‹РґР°С‡Рё СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС€РµР№ РёРЅС„РѕРїРѕСЂС†РёРё
+		-- СЃСЋРґР° РїРѕРјРµС‰Р°РµРј РІСЃСЏРєРёРµ Р·РІСѓРєРё, РїРѕСЃС‚СЌС„С„РµРєС‚С‹ Рё С‚.Рї. РРґРµСЏ РІ С‚РѕРј, С‡С‚Рѕ РїСЂРё РїСЂРѕРїСѓСЃРєРµ СЃРµСЂРёРё СЃС‚Р°РґРёР№
+		-- РёР·-Р·Р° СЃРѕС…СЂР°РЅРµРЅРёСЏ/Р·Р°РіСЂСѓР·РєРё РЅР°РґРѕ РІС‹РїРѕР»РЅРёС‚СЊ РІСЃРµ РґРµР№СЃС‚РІРёСЏ, РІРѕС€РµРґС€РёРµ РІ РїСЂРѕРїСѓС‰РµРЅРЅС‹Рµ СЃС‚Р°РґРёРё, РЅРѕ 
+		-- РїСЂРё СЌС‚РѕРј С‡Р°СЃС‚СЊ РґРµР№СЃС‚РІРёСЏ С‚РёРїР° Р·РІСѓРєРѕРІ Рё РїРѕСЃС‚СЌС„С„РµРєС‚РѕРІ РґР»СЏ РїСЂРѕРїСѓС‰РµРЅРЅС‹С… СЃС‚Р°РґРёР№ РЅРµ РІС‹РїРѕР»РЅСЏС‚СЊ,
+		-- РїРѕСЃРєРѕР»СЊРєСѓ РёС… РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹Р№ РїСЂРѕРёРіСЂС‹С€ Р±СѓРґРµС‚ РІС‹РіР»СЏРґРµС‚СЊ РЅРµР»РµРїРѕ.
+		-- РџРѕСЃРєРѕР»СЊРєСѓ РґРѕ РїРµСЂРІРѕРіРѕ Р°РїРґРµР№С‚Р° СЃРµРєС†РёСЏ on_info_deferred РЅРµ Р±СѓРґРµС‚ РїР°СЂСЃРёС‚СЃСЏ, С‚Рѕ РІ РїРµСЂРІС‹Р№ Р°РїРґРµР№С‚ 
+		-- РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё Р±СѓРґРµС‚ РїСЂРѕРІРµСЂРµРЅР° С‚РѕР»СЊРєРѕ РїРѕСЃР»РµРґРЅСЏСЏ СЃС‚Р°РґРёСЏ, Рё РґРµР№СЃС‚РІРёСЏ РІС‹РїРѕР»РЅСЏС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РЅРµС‘
 		
-	-- включает стандартный набор действий, включая ветвление if_surface/if_underground
+	-- РІРєР»СЋС‡Р°РµС‚ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№, РІРєР»СЋС‡Р°СЏ РІРµС‚РІР»РµРЅРёРµ if_surface/if_underground
 	},
-	on_reinit = { -- действия, выполняемые при загрузке игры если идёт стадия выброса (для восстановления чего-там надо восстанавливать)
-	-- стандартный набор действий, включая ветвление if_surface/if_underground
+	on_reinit = { -- РґРµР№СЃС‚РІРёСЏ, РІС‹РїРѕР»РЅСЏРµРјС‹Рµ РїСЂРё Р·Р°РіСЂСѓР·РєРµ РёРіСЂС‹ РµСЃР»Рё РёРґС‘С‚ СЃС‚Р°РґРёСЏ РІС‹Р±СЂРѕСЃР° (РґР»СЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ С‡РµРіРѕ-С‚Р°Рј РЅР°РґРѕ РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ)
+	-- СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ РЅР°Р±РѕСЂ РґРµР№СЃС‚РІРёР№, РІРєР»СЋС‡Р°СЏ РІРµС‚РІР»РµРЅРёРµ if_surface/if_underground
 	},
 },]]
 
@@ -151,13 +151,13 @@ function surge_db_init()
 			call1 = function()
 				amk.save_variable( "blowout", 1 )
 				start_pda_distortion( 1, 100 )
-				set_info_preblow() --Инфо предвыброса
-				news_main_new.vubros_msg() --Новость о выбросе
+				set_info_preblow() --РРЅС„Рѕ РїСЂРµРґРІС‹Р±СЂРѕСЃР°
+				news_main_new.vubros_msg() --РќРѕРІРѕСЃС‚СЊ Рѕ РІС‹Р±СЂРѕСЃРµ
 			end
 		},
 		on_info_deferred = {
 			if_surface = {
-				call1 = soundtrack.preblow -- глухой звук ветра
+				call1 = soundtrack.preblow -- РіР»СѓС…РѕР№ Р·РІСѓРє РІРµС‚СЂР°
 			}
 		},
 		on_reinit = {
@@ -204,7 +204,7 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				call1 = soundtrack.surge_begin -- глухой звук ветра (ещё раз?)
+				call1 = soundtrack.surge_begin -- РіР»СѓС…РѕР№ Р·РІСѓРє РІРµС‚СЂР° (РµС‰С‘ СЂР°Р·?)
 			}
 		},
 		on_reinit = {
@@ -216,7 +216,7 @@ function surge_db_init()
 			}
 		}
 	}
-	surge_db.surge_process_stage_04 = {-- первые визуальные признаки выброса
+	surge_db.surge_process_stage_04 = {-- РїРµСЂРІС‹Рµ РІРёР·СѓР°Р»СЊРЅС‹Рµ РїСЂРёР·РЅР°РєРё РІС‹Р±СЂРѕСЃР°
 		on_info = {
 			call1 = function()
 				start_pda_distortion( 200, 250 )
@@ -231,11 +231,11 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				pp_eff1 = {"vibros_p.ppe", 1974, false}, -- разовое двоение картинки
-				cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true}, -- постоянное раскачивание, как будто качается земля
+				pp_eff1 = {"vibros_p.ppe", 1974, false}, -- СЂР°Р·РѕРІРѕРµ РґРІРѕРµРЅРёРµ РєР°СЂС‚РёРЅРєРё
+				cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true}, -- РїРѕСЃС‚РѕСЏРЅРЅРѕРµ СЂР°СЃРєР°С‡РёРІР°РЅРёРµ, РєР°Рє Р±СѓРґС‚Рѕ РєР°С‡Р°РµС‚СЃСЏ Р·РµРјР»СЏ
 			},
 			if_underground = {
-				call1 = soundtrack.play_ambient, -- опять шум ветра
+				call1 = soundtrack.play_ambient, -- РѕРїСЏС‚СЊ С€СѓРј РІРµС‚СЂР°
 			},
 		},
 		on_reinit = {
@@ -251,11 +251,11 @@ function surge_db_init()
 			}
 		}
 	}
-	surge_db.surge_process_stage_05 = { --3. Проигрываем промежуточные эффекты
+	surge_db.surge_process_stage_05 = { --3. РџСЂРѕРёРіСЂС‹РІР°РµРј РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅС‹Рµ СЌС„С„РµРєС‚С‹
 		on_info = {
 			call1 = function()
 				set_pda_params(vector():set(0.5,0.2,0.0))
-				news_main_data.on_disconnect_vbs() --Выдаем сообщение о дисконнекте
+				news_main_data.on_disconnect_vbs() --Р’С‹РґР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РґРёСЃРєРѕРЅРЅРµРєС‚Рµ
 			end,
 			if_surface = {
 				call2 = function() is_surge_started = true end
@@ -266,10 +266,10 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				call1 = soundtrack.surge_wave_1, -- хитрое гудение
+				call1 = soundtrack.surge_wave_1, -- С…РёС‚СЂРѕРµ РіСѓРґРµРЅРёРµ
 			},
 			if_underground = {
-				call1 = soundtrack.play_ambient, -- опять шум ветра
+				call1 = soundtrack.play_ambient, -- РѕРїСЏС‚СЊ С€СѓРј РІРµС‚СЂР°
 			},
 		},
 		on_reinit = {
@@ -282,7 +282,7 @@ function surge_db_init()
 			}
 		}
 	}
-	surge_db.surge_process_stage_06 = {-- 4. Спустя период затишья начинаем выброс
+	surge_db.surge_process_stage_06 = {-- 4. РЎРїСѓСЃС‚СЏ РїРµСЂРёРѕРґ Р·Р°С‚РёС€СЊСЏ РЅР°С‡РёРЅР°РµРј РІС‹Р±СЂРѕСЃ
 		on_info = {
 			call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
 			if_surface = {
@@ -294,11 +294,11 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				call1 = soundtrack.surge_wave_2, -- хитрое гудение
-				snd1 = [[anomaly\blowout]], -- раскаты грома с сиренами
+				call1 = soundtrack.surge_wave_2, -- С…РёС‚СЂРѕРµ РіСѓРґРµРЅРёРµ
+				snd1 = [[anomaly\blowout]], -- СЂР°СЃРєР°С‚С‹ РіСЂРѕРјР° СЃ СЃРёСЂРµРЅР°РјРё
 			},
-			pp_eff1 = {"vibros.ppe", 1974, false},  -- разовое двоение картинки с покраснением, выбелением, выцветанием картинки в конце
-			cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true}, -- землетрясение
+			pp_eff1 = {"vibros.ppe", 1974, false},  -- СЂР°Р·РѕРІРѕРµ РґРІРѕРµРЅРёРµ РєР°СЂС‚РёРЅРєРё СЃ РїРѕРєСЂР°СЃРЅРµРЅРёРµРј, РІС‹Р±РµР»РµРЅРёРµРј, РІС‹С†РІРµС‚Р°РЅРёРµРј РєР°СЂС‚РёРЅРєРё РІ РєРѕРЅС†Рµ
+			cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true}, -- Р·РµРјР»РµС‚СЂСЏСЃРµРЅРёРµ
 		},
 		on_reinit = {
 			call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
@@ -310,7 +310,7 @@ function surge_db_init()
 			}
 		}
 	}
-	surge_db.surge_process_stage_07 = {-- 5. Начинаем расколбас
+	surge_db.surge_process_stage_07 = {-- 5. РќР°С‡РёРЅР°РµРј СЂР°СЃРєРѕР»Р±Р°СЃ
 		on_info = {
 			call1 = function()
 				set_pda_params(vector():set(0.5,0.2,0.0))
@@ -333,17 +333,17 @@ function surge_db_init()
 		on_info_deferred = {
 			cam_eff_rem1 = 1974,
 			if_not_safe = {
-				snd1 = [[actor\pain_3]], -- ой
-				cam_eff1 = {"camera_effects\\head_shot.anm", 1975, false}, -- как по голове дали
-				pp_eff1 = {"blink.ppe", 2020, false}, -- на пару секунд всё белеет
+				snd1 = [[actor\pain_3]], -- РѕР№
+				cam_eff1 = {"camera_effects\\head_shot.anm", 1975, false}, -- РєР°Рє РїРѕ РіРѕР»РѕРІРµ РґР°Р»Рё
+				pp_eff1 = {"blink.ppe", 2020, false}, -- РЅР° РїР°СЂСѓ СЃРµРєСѓРЅРґ РІСЃС‘ Р±РµР»РµРµС‚
 			},
 			if_surface = {
-				call1 = soundtrack.surge_wave_3, -- долгое, низкое гудение
-				pp_eff1 = {"yantar_underground_psi.ppe", 2010, false} -- кратковременное раздвоение в глазах
+				call1 = soundtrack.surge_wave_3, -- РґРѕР»РіРѕРµ, РЅРёР·РєРѕРµ РіСѓРґРµРЅРёРµ
+				pp_eff1 = {"yantar_underground_psi.ppe", 2010, false} -- РєСЂР°С‚РєРѕРІСЂРµРјРµРЅРЅРѕРµ СЂР°Р·РґРІРѕРµРЅРёРµ РІ РіР»Р°Р·Р°С…
 			},
 			if_underground = {
-				pp_eff1 = {"escape.ppe", 1974, false}, -- короткое покраснение картинки
-				call1 = soundtrack.play_ambient -- шум ветра
+				pp_eff1 = {"escape.ppe", 1974, false}, -- РєРѕСЂРѕС‚РєРѕРµ РїРѕРєСЂР°СЃРЅРµРЅРёРµ РєР°СЂС‚РёРЅРєРё
+				call1 = soundtrack.play_ambient -- С€СѓРј РІРµС‚СЂР°
 			}
 		},
 		on_reinit = {
@@ -381,25 +381,25 @@ function surge_db_init()
 		on_info_deferred = {
 			cam_eff_rem1 = 1974,
 			if_surface = {
-				call1 = soundtrack.surge_wave_4, -- опять гудение
+				call1 = soundtrack.surge_wave_4, -- РѕРїСЏС‚СЊ РіСѓРґРµРЅРёРµ
 			},
 			if_underground = {
 				rnd = {
 					{
-						call1 = soundtrack.rock_sound, -- камешки сыпятся
+						call1 = soundtrack.rock_sound, -- РєР°РјРµС€РєРё СЃС‹РїСЏС‚СЃСЏ
 						pp_eff1 = {"yantar_underground_psi.ppe", 1974, false},
 					},
 					{
-						call1 = soundtrack.earthquake_sound, -- отдалённый грохот камней или обвал
-						pp_eff1 = {"total_recall.ppe", 1974, false}, -- сильное кратковременное двоение
+						call1 = soundtrack.earthquake_sound, -- РѕС‚РґР°Р»С‘РЅРЅС‹Р№ РіСЂРѕС…РѕС‚ РєР°РјРЅРµР№ РёР»Рё РѕР±РІР°Р»
+						pp_eff1 = {"total_recall.ppe", 1974, false}, -- СЃРёР»СЊРЅРѕРµ РєСЂР°С‚РєРѕРІСЂРµРјРµРЅРЅРѕРµ РґРІРѕРµРЅРёРµ
 					},
 					{
-						call1 = soundtrack.earthquake_sound, -- отдалённый грохот камней или обвал
-						pp_eff1 = {"agr_u_fade.ppe", 1974, false}, -- полное плавное почернение, потом плавный возврат
+						call1 = soundtrack.earthquake_sound, -- РѕС‚РґР°Р»С‘РЅРЅС‹Р№ РіСЂРѕС…РѕС‚ РєР°РјРЅРµР№ РёР»Рё РѕР±РІР°Р»
+						pp_eff1 = {"agr_u_fade.ppe", 1974, false}, -- РїРѕР»РЅРѕРµ РїР»Р°РІРЅРѕРµ РїРѕС‡РµСЂРЅРµРЅРёРµ, РїРѕС‚РѕРј РїР»Р°РІРЅС‹Р№ РІРѕР·РІСЂР°С‚
 						pp_eff2 = {"total_recall.ppe", 1986, false},
 					},
 					{
-						-- тут тишина
+						-- С‚СѓС‚ С‚РёС€РёРЅР°
 					},
 				},
 			},
@@ -439,13 +439,13 @@ function surge_db_init()
 		on_info_deferred = {
 			cam_eff_rem1 = 1974,
 			if_surface = {
-				call1 = soundtrack.surge_rumble -- шум ветра с отдалёнными раскатами грома
+				call1 = soundtrack.surge_rumble -- С€СѓРј РІРµС‚СЂР° СЃ РѕС‚РґР°Р»С‘РЅРЅС‹РјРё СЂР°СЃРєР°С‚Р°РјРё РіСЂРѕРјР°
 			},
 			if_underground = {
 				rnd = {
 					{
-						call1 = soundtrack.rock_sound, -- камешки сыпятся
-						pp_eff1 = {"yantar_underground_psi.ppe", 1974, false} -- лёгкое короткое двоение с расплыванием
+						call1 = soundtrack.rock_sound, -- РєР°РјРµС€РєРё СЃС‹РїСЏС‚СЃСЏ
+						pp_eff1 = {"yantar_underground_psi.ppe", 1974, false} -- Р»С‘РіРєРѕРµ РєРѕСЂРѕС‚РєРѕРµ РґРІРѕРµРЅРёРµ СЃ СЂР°СЃРїР»С‹РІР°РЅРёРµРј
 					},
 					{
 						call1 = soundtrack.earthquake_sound,
@@ -457,7 +457,7 @@ function surge_db_init()
 						pp_eff2 = {"total_recall.ppe", 1986, false}
 					},
 					{
-						-- тут тишина
+						-- С‚СѓС‚ С‚РёС€РёРЅР°
 					}
 				}
 			}
@@ -481,7 +481,7 @@ function surge_db_init()
 	surge_db.surge_process_stage_10 = surge_db.surge_process_stage_09
 	surge_db.surge_process_stage_11 = surge_db.surge_process_stage_09
 	surge_db.surge_process_stage_12 = surge_db.surge_process_stage_09
-	surge_db.surge_process_stage_13 = {-- 6. Выброс близится к концу
+	surge_db.surge_process_stage_13 = {-- 6. Р’С‹Р±СЂРѕСЃ Р±Р»РёР·РёС‚СЃСЏ Рє РєРѕРЅС†Сѓ
 		on_info = {
 			call1 = function()
 			  set_pda_params(vector():set(0.5,0.2,0.0))
@@ -504,7 +504,7 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				call1 = soundtrack.surge_outro -- опять шум воздуха/ветра
+				call1 = soundtrack.surge_outro -- РѕРїСЏС‚СЊ С€СѓРј РІРѕР·РґСѓС…Р°/РІРµС‚СЂР°
 			},
 			if_underground = {
 				call1 = soundtrack.play_ambient
@@ -526,13 +526,13 @@ function surge_db_init()
 			}
 		}
 	}
-	surge_db.surge_process_stage_14 = {-- 7. Завершаем выброс, устанавливаем время следующего
+	surge_db.surge_process_stage_14 = {-- 7. Р—Р°РІРµСЂС€Р°РµРј РІС‹Р±СЂРѕСЃ, СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІСЂРµРјСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ
 		on_info = {
-			call1 = function() --!!!KRodin: НЕ ИЗМЕНЯТЬ ОЧЕРЁДНОСТЬ!!!
+			call1 = function() --!!!KRodin: РќР• РР—РњР•РќРЇРўР¬ РћР§Р•Р РЃР”РќРћРЎРўР¬!!!
 				set_first_blow()
-				on_surge_end() --Cюда скинул всё, что неудобно вызывать в простой форме
+				on_surge_end() --CСЋРґР° СЃРєРёРЅСѓР» РІСЃС‘, С‡С‚Рѕ РЅРµСѓРґРѕР±РЅРѕ РІС‹Р·С‹РІР°С‚СЊ РІ РїСЂРѕСЃС‚РѕР№ С„РѕСЂРјРµ
 				--
-				dsh.timeout( dsh_anomaly_detector.get_freq() * 5, function() --KRodin: сделано для того, чтобы схема ogsm_hideout отпускала сталкеров только после того, как dsh_anomaly_detector установит им рестрикшены заспавненых после выброса аномалий.
+				dsh.timeout( dsh_anomaly_detector.get_freq() * 5, function() --KRodin: СЃРґРµР»Р°РЅРѕ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ СЃС…РµРјР° ogsm_hideout РѕС‚РїСѓСЃРєР°Р»Р° СЃС‚Р°Р»РєРµСЂРѕРІ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє dsh_anomaly_detector СѓСЃС‚Р°РЅРѕРІРёС‚ РёРј СЂРµСЃС‚СЂРёРєС€РµРЅС‹ Р·Р°СЃРїР°РІРЅРµРЅС‹С… РїРѕСЃР»Рµ РІС‹Р±СЂРѕСЃР° Р°РЅРѕРјР°Р»РёР№.
 					--log3("--[%s] Surge end!", script_name())
 					is_surge_raskolbas = false
 					is_surge_started = false
@@ -541,20 +541,20 @@ function surge_db_init()
 		},
 		on_info_deferred = {
 			if_surface = {
-				pp_eff1 = {"teleport.ppe", 2009, false} -- всё полностью белеет, потом обратно
+				pp_eff1 = {"teleport.ppe", 2009, false} -- РІСЃС‘ РїРѕР»РЅРѕСЃС‚СЊСЋ Р±РµР»РµРµС‚, РїРѕС‚РѕРј РѕР±СЂР°С‚РЅРѕ
 			},
 			if_underground = {
 				pp_eff1 = {"escape.ppe", 2009, false}
 			},
 			if_not_safe = {
-				cam_eff1 = {"camera_effects\\shell_shock.anm", 1974, false}, -- короткая, затухающая встряска
-				call1 = soundtrack.actor_breath_sound -- дыхота
+				cam_eff1 = {"camera_effects\\shell_shock.anm", 1974, false}, -- РєРѕСЂРѕС‚РєР°СЏ, Р·Р°С‚СѓС…Р°СЋС‰Р°СЏ РІСЃС‚СЂСЏСЃРєР°
+				call1 = soundtrack.actor_breath_sound -- РґС‹С…РѕС‚Р°
 			},
 			pp_eff1 = {"yantar_underground_psi.ppe", 2010, false},
 			snd1 = [[ambient\earthquake]]
 		}
 	}
-	surge_db.surge_process_stage_15 = {-- 6. Выброс близится к концу
+	surge_db.surge_process_stage_15 = {-- 6. Р’С‹Р±СЂРѕСЃ Р±Р»РёР·РёС‚СЃСЏ Рє РєРѕРЅС†Сѓ
 		on_info = {
 			if_surface = {
 				call1 = ogse.spawn_crow
@@ -579,7 +579,7 @@ end
 
 function autosave_blowout()
   if u3_utils.can_save() then
-    u3_utils.savegame_date( "Выброс" )
+    u3_utils.savegame_date( "Р’С‹Р±СЂРѕСЃ" )
   else
     dsh.timeout( 3000, function()
       autosave_blowout()
@@ -611,29 +611,29 @@ function surge_final()
 	for _, k in ipairs( all_infos ) do
 	  db.actor:disable_info_portion( k )
 	end
-	dsh_cop_weather.get_weather_mgr():prepare_new_surge() -- тут вставляем перезапуск выброса в погодном менеджере
+	dsh_cop_weather.get_weather_mgr():prepare_new_surge() -- С‚СѓС‚ РІСЃС‚Р°РІР»СЏРµРј РїРµСЂРµР·Р°РїСѓСЃРє РІС‹Р±СЂРѕСЃР° РІ РїРѕРіРѕРґРЅРѕРј РјРµРЅРµРґР¶РµСЂРµ
 	dsh.timeout( 10000, function() autosave_blowout() end )
 	set_pda_params(vector():set(0,0,0))
 end
 
---------------------------------- Парсер единичного действия ---------------------------------------
+--------------------------------- РџР°СЂСЃРµСЂ РµРґРёРЅРёС‡РЅРѕРіРѕ РґРµР№СЃС‚РІРёСЏ ---------------------------------------
 function parse_and_process_action_item(key, item)
 	ASSERT(type(key) == "string", "[ogse_surge_mgr.parse_and_process_action_item] action key is not a string, '%s'", type(key))
 	if     key:sub(1, 4) == "call" then
 		ASSERT(type(item) == "function", "[ogse_surge_mgr.parse_and_process_action_item] cannot execute function for the key '%s'", key)
 		item()
 	elseif key:sub(1, 11) == "cam_eff_rem" then
-		-- TODO: проверить, что эффект работает
+		-- TODO: РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ СЌС„С„РµРєС‚ СЂР°Р±РѕС‚Р°РµС‚
 		level.remove_cam_effector(item)
 	elseif key:sub(1, 10) == "pp_eff_rem" then
-		-- TODO: проверить, что эффект работает		
+		-- TODO: РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ СЌС„С„РµРєС‚ СЂР°Р±РѕС‚Р°РµС‚		
 		level.remove_pp_effector(item)
 	elseif key:sub(1, 6) == "pp_eff" then
-		-- TODO: проверить, что эффект работает
+		-- TODO: РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ СЌС„С„РµРєС‚ СЂР°Р±РѕС‚Р°РµС‚
 		--{"<effect path>", 1974, false},
 		level.add_pp_effector(item[1],item[2],item[3])
 	elseif key:sub(1, 7) == "cam_eff" then
-		-- TODO: проверить, что эффект работает
+		-- TODO: РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ СЌС„С„РµРєС‚ СЂР°Р±РѕС‚Р°РµС‚
 		--{"<effect path>", 1975, false},
 		level.add_cam_effector(item[1],item[2],item[3],"")
 	elseif key:sub(1, 3) == "snd" then
@@ -643,7 +643,7 @@ function parse_and_process_action_item(key, item)
 		abort("[ogse_surge_mgr.parse_and_process_action_item] unknown action '%s'", key)
 	end
 end
---------------------------- Парсер описателя стадии выброса с действиями ---------------------------
+--------------------------- РџР°СЂСЃРµСЂ РѕРїРёСЃР°С‚РµР»СЏ СЃС‚Р°РґРёРё РІС‹Р±СЂРѕСЃР° СЃ РґРµР№СЃС‚РІРёСЏРјРё ---------------------------
 local function parse_and_process_surge_stage(stage_info)
 	for key, item in pairs(stage_info) do
 		if key == "if_underground" then
@@ -663,32 +663,32 @@ local function parse_and_process_surge_stage(stage_info)
 			stage = item[math.random(#item)]
 			parse_and_process_surge_stage(stage)
 		else
-			parse_and_process_action_item(key, item) -- TODO: проверить алгоритм, мог накосяяить
+			parse_and_process_action_item(key, item) -- TODO: РїСЂРѕРІРµСЂРёС‚СЊ Р°Р»РіРѕСЂРёС‚Рј, РјРѕРі РЅР°РєРѕСЃСЏСЏРёС‚СЊ
 		end
 	end
 end
 
 --==================================================================================================
---============================= обработчики системных событий ======================================
+--============================= РѕР±СЂР°Р±РѕС‚С‡РёРєРё СЃРёСЃС‚РµРјРЅС‹С… СЃРѕР±С‹С‚РёР№ ======================================
 --==================================================================================================
--- 5			"surge_process_stage_01"	ogse_surge_1	новость о выбросе, смена погоды
--- 55			"surge_process_stage_02"	ogse_surge_2	сирена выброса
--- 15			"surge_process_stage_03"	ogse_surge_3	реально начало, звуки выброса
--- 70			"surge_process_stage_04"	ogse_surge_4	первые визуальные признаки выброса, флаги смены аномалий, трясучка
--- 23			"surge_process_stage_05"	ogse_surge_6	выдаем сообщение о дисконнекте, звук волны 1
--- 11			"surge_process_stage_06"	ogse_surge_7	волна 2, трясучка, звуки угрожающие
--- 6			"surge_process_stage_07"	ogse_surge_8	удар по актору, волна 3, падение ворон, волна радиации
--- 14			"surge_process_stage_08"	ogse_surge_11	волна 4
--- 20			"surge_process_stage_09"	ogse_surge_12	грохот
--- 20			"surge_process_stage_10"	ogse_surge_13	аналогично 9
--- 20			"surge_process_stage_11"	ogse_surge_15	аналогично 9
--- 15			"surge_process_stage_12"	ogse_surge_17	аналогично 9
--- 30			"surge_process_stage_13"	ogse_surge_19	звуки завершения
--- 30			"surge_process_stage_14"	ogse_surge_20	завершение выброса
--- 10			"surge_process_stage_15"	ogse_surge_21	финализация, вороны
+-- 5			"surge_process_stage_01"	ogse_surge_1	РЅРѕРІРѕСЃС‚СЊ Рѕ РІС‹Р±СЂРѕСЃРµ, СЃРјРµРЅР° РїРѕРіРѕРґС‹
+-- 55			"surge_process_stage_02"	ogse_surge_2	СЃРёСЂРµРЅР° РІС‹Р±СЂРѕСЃР°
+-- 15			"surge_process_stage_03"	ogse_surge_3	СЂРµР°Р»СЊРЅРѕ РЅР°С‡Р°Р»Рѕ, Р·РІСѓРєРё РІС‹Р±СЂРѕСЃР°
+-- 70			"surge_process_stage_04"	ogse_surge_4	РїРµСЂРІС‹Рµ РІРёР·СѓР°Р»СЊРЅС‹Рµ РїСЂРёР·РЅР°РєРё РІС‹Р±СЂРѕСЃР°, С„Р»Р°РіРё СЃРјРµРЅС‹ Р°РЅРѕРјР°Р»РёР№, С‚СЂСЏСЃСѓС‡РєР°
+-- 23			"surge_process_stage_05"	ogse_surge_6	РІС‹РґР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РґРёСЃРєРѕРЅРЅРµРєС‚Рµ, Р·РІСѓРє РІРѕР»РЅС‹ 1
+-- 11			"surge_process_stage_06"	ogse_surge_7	РІРѕР»РЅР° 2, С‚СЂСЏСЃСѓС‡РєР°, Р·РІСѓРєРё СѓРіСЂРѕР¶Р°СЋС‰РёРµ
+-- 6			"surge_process_stage_07"	ogse_surge_8	СѓРґР°СЂ РїРѕ Р°РєС‚РѕСЂСѓ, РІРѕР»РЅР° 3, РїР°РґРµРЅРёРµ РІРѕСЂРѕРЅ, РІРѕР»РЅР° СЂР°РґРёР°С†РёРё
+-- 14			"surge_process_stage_08"	ogse_surge_11	РІРѕР»РЅР° 4
+-- 20			"surge_process_stage_09"	ogse_surge_12	РіСЂРѕС…РѕС‚
+-- 20			"surge_process_stage_10"	ogse_surge_13	Р°РЅР°Р»РѕРіРёС‡РЅРѕ 9
+-- 20			"surge_process_stage_11"	ogse_surge_15	Р°РЅР°Р»РѕРіРёС‡РЅРѕ 9
+-- 15			"surge_process_stage_12"	ogse_surge_17	Р°РЅР°Р»РѕРіРёС‡РЅРѕ 9
+-- 30			"surge_process_stage_13"	ogse_surge_19	Р·РІСѓРєРё Р·Р°РІРµСЂС€РµРЅРёСЏ
+-- 30			"surge_process_stage_14"	ogse_surge_20	Р·Р°РІРµСЂС€РµРЅРёРµ РІС‹Р±СЂРѕСЃР°
+-- 10			"surge_process_stage_15"	ogse_surge_21	С„РёРЅР°Р»РёР·Р°С†РёСЏ, РІРѕСЂРѕРЅС‹
 
-local deferred_actions -- запрос на выполнение отложенных действий
--- делаем что-то для обновления текущего состояния
+local deferred_actions -- Р·Р°РїСЂРѕСЃ РЅР° РІС‹РїРѕР»РЅРµРЅРёРµ РѕС‚Р»РѕР¶РµРЅРЅС‹С… РґРµР№СЃС‚РІРёР№
+-- РґРµР»Р°РµРј С‡С‚Рѕ-С‚Рѕ РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РµРєСѓС‰РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 local blowout_t
 function run_blowout_timer()
   if not blowout_t then
@@ -735,13 +735,13 @@ function on_actor_update()
 	end
 end
 
--- выполняем реинициализацию фазы выброса при перезагрузке
-function on_first_update() -- выполняем восстановление временных эффектов, флагов и т.п.
+-- РІС‹РїРѕР»РЅСЏРµРј СЂРµРёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ С„Р°Р·С‹ РІС‹Р±СЂРѕСЃР° РїСЂРё РїРµСЂРµР·Р°РіСЂСѓР·РєРµ
+function on_first_update() -- РІС‹РїРѕР»РЅСЏРµРј РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РІСЂРµРјРµРЅРЅС‹С… СЌС„С„РµРєС‚РѕРІ, С„Р»Р°РіРѕРІ Рё С‚.Рї.
 	set_pda_params(vector():set(0,0,0))
 	if db.actor:has_info("pre_blowout") then
-		-- ищем текущую стадию выброса
+		-- РёС‰РµРј С‚РµРєСѓС‰СѓСЋ СЃС‚Р°РґРёСЋ РІС‹Р±СЂРѕСЃР°
 		for stage_infoportion, stage_actions in pairs(surge_db) do
-			-- если сейчас активна стадия выброса
+			-- РµСЃР»Рё СЃРµР№С‡Р°СЃ Р°РєС‚РёРІРЅР° СЃС‚Р°РґРёСЏ РІС‹Р±СЂРѕСЃР°
 			if db.actor:has_info(stage_infoportion) then
 				local info_action = stage_actions.on_reinit
 				if info_action then
@@ -754,11 +754,11 @@ function on_first_update() -- выполняем восстановление временных эффектов, флаго
 		end
 	end
 end
--- выполняем действия, которые должны выполниться строго один раз в момент наступления фазы выброса
+-- РІС‹РїРѕР»РЅСЏРµРј РґРµР№СЃС‚РІРёСЏ, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ РІС‹РїРѕР»РЅРёС‚СЊСЃСЏ СЃС‚СЂРѕРіРѕ РѕРґРёРЅ СЂР°Р· РІ РјРѕРјРµРЅС‚ РЅР°СЃС‚СѓРїР»РµРЅРёСЏ С„Р°Р·С‹ РІС‹Р±СЂРѕСЃР°
 function on_get_info(npc, info_id)
 	local action_item = surge_db[info_id]
 	if action_item then
-		deferred_actions = action_item -- запрашиваем выполнение отложенных действий
+		deferred_actions = action_item -- Р·Р°РїСЂР°С€РёРІР°РµРј РІС‹РїРѕР»РЅРµРЅРёРµ РѕС‚Р»РѕР¶РµРЅРЅС‹С… РґРµР№СЃС‚РІРёР№
 		run_blowout_timer()
 		local info_action = action_item.on_info
 		if info_action then
@@ -783,7 +783,7 @@ local surge_hit_db = {
 	predbannik     = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
 	swamp          = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
 }
--- Нанесение хита актору в смертельной стадии выброса
+-- РќР°РЅРµСЃРµРЅРёРµ С…РёС‚Р° Р°РєС‚РѕСЂСѓ РІ СЃРјРµСЂС‚РµР»СЊРЅРѕР№ СЃС‚Р°РґРёРё РІС‹Р±СЂРѕСЃР°
 function hit_actor()
 	local hit_data = surge_hit_db[lname]
 	if hit_data then

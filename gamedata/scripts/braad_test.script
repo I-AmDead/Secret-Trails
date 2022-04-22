@@ -1,7 +1,7 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
 function attach( sm )
-  sm:subscribe({ signal = "on_npc_death", fun = this.on_dead_npc })
+
 end
 
 function false_info()
@@ -127,26 +127,6 @@ db.actor:give_info_portion("levsha_remont_detector")
 not db.actor:has_info("mil_klyak_help_start") then klyak_mil_spawn()
   end
 end
-
-local nepis={}
-local dead_npc_count=0
-
-function on_dead_npc( npc )
-  local sid = npc:story_id()
-  if not sid then return end
-  local data = nepis[ sid ]
-  if data then
-    local process = true
-    if process then
-      local obj  = alife():object( npc:id() )
-      ASSERT( obj, "alife():object() not found for %s", npc:name() )
-      local name = obj:name()
-      if data._umer then
-        db.actor:give_info_portion( name .. "_umer" )
-      end
-    end
-  end
-end 
 
 function dead_npc() 
    if level.name()=="l11_pripyat" and has_alife_info("prizrak_help_have") and not has_alife_info("haron_sms") then
@@ -341,223 +321,250 @@ db.actor:give_info_portion("volk_can_speak")
   elseif (has_alife_info("volk_novic1_have") and has_alife_info("volk_novic2_have") and has_alife_info("volk_novic4_have") and has_alife_info("volk_novic6_have")) then
 db.actor:give_info_portion("volk_can_speak")
 
-   elseif (has_alife_info("semeckii_treasure_part5") or has_alife_info("semeckii_treasure_part6") or has_alife_info("semeckii_treasure_part7") or has_alife_info("semeckii_treasure_part8")) then
+elseif (has_alife_info("semeckii_treasure_part5") or has_alife_info("semeckii_treasure_part6") or has_alife_info("semeckii_treasure_part7") or has_alife_info("semeckii_treasure_part8")) then
 db.actor:give_info_portion("informator_trade_semeckii")
    --elseif level.name()=="l10u_bunker" and has_alife_info("kruglov_case_done") and 
   --not has_alife_info("actor_v_bunker") then
 --db.actor:give_info_portion("actor_v_bunker")
-   elseif level.name()=="l03_agroprom" and has_alife_info("kruglov_art_have") then contr_art_spawn()
-   end  
-   if level.name()=="l12u_sarcofag" and not db.actor:has_info("esc_serious_talk") then
-local sobj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_specnaz",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
-local sobj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
-local sobj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+elseif level.name()=="l03_agroprom" and has_alife_info("kruglov_art_have") then contr_art_spawn()
+end
 
-local sobj = alife():create("sar_zapiska_ruk",vector():set(-18.628143310547,52.614501953125,10.197953224182),599,2417)
+if level.name()=="l12u_sarcofag" and not db.actor:has_info("esc_serious_talk") then
+    local obj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_ambush",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_specnaz",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
+    local obj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_specnaz",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
+    local obj = alife():create("dark_military_sniper",vector():set(-7.9555635452271,-7.31456,109.538),299642,1636)
 
-local sobj = alife():create("wpn_l85_m1",vector():set(23.551015853882,54.123477935791,-29.285837173462),5303,2417)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
+    local obj = alife():create("sar_zapiska_ruk",vector():set(-18.628143310547,52.614501953125,10.197953224182),599,2417)
 
-local sobj = alife():create("rad_zapiska_ruk",vector():set(-18.395393371582,-23.520460128784,-11.5154476),3777,2784)
+    local obj = alife():create("wpn_l85_m1",vector():set(23.551015853882,54.123477935791,-29.285837173462),5303,2417)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
 
-local sobj = alife():create("gold_art",vector():set(193.80435180664,0.094538778066635,71.867),45644,1188)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("gold_art",vector():set(75.451988220215,16.426797866821,34.290096),215114,294)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("gold_art",vector():set(270.66116333008,-8.7369184494019,-126.34954),377173,405)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("gold_art",vector():set(-234.88185119629,8.3708419799805,177.88945007324),16236,1337)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_sig_m2",vector():set(-260.10464477539,0.27300158143044,92.179977416992),8348,1378)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_abakan_n_m2",vector():set(-116.20272827148,-1.9442112445831,122.73686218262),43368,1315)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("gold_art",vector():set(86.18724822998,0.054149866104126,49.022884368896),84502,1520)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_sig_m1",vector():set(105.34355926514,0.0050590336322784,89.765724182129),95144,1520)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_fuzz_kolobok",vector():set(67.825614929199,-0.37150749,-74.097778320313),69225,1516)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_dummy_glassbeads",vector():set(32.647331237793,5.5799655,-12.673707962036),4722,1538)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_abakan_n_m1",vector():set(-117.45324707031,20.803544998169,-36.93675994873),189,1529)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_rusty_sea-urchin",vector():set(-154.36480712891,-0.286359,9.8843507766724),165820,1628)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_svu",vector():set(595.62921142578,-54.139465332031,-96.708854675293),212521,1893)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_svds",vector():set(653.56958007813,-43.883968353271,179.26545715332),226824,1912)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_rusty_sea-urchin",vector():set(660.3306274414,-43.8872718,176.84335327148),227074,1914)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("wpn_svu",vector():set(422.17352294922,-48.451919555664,5.1145219802856),135460,1921)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("medkit_army",vector():set(392.71881103516,-34.139106750488,153.86260986328),120316,1865)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("medkit_army",vector():set(392.71881103516,-34.139106750488,153.86260986328),120316,1865)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_electra_moonlight",vector():set(4.7991132736206,-6.9216456,-72.931411743164),6850,2661)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_electra_flash",vector():set(-83.463157653809,16.93710136,102.66344451904),165695,332)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_electra_flash",vector():set(-43.567665100098,22.385353,-104.83944702148),147517,297)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_dummy_battery",vector():set(119.39251708984,15.86196517,26.154205322266),274810,391)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_rusty_kristall",vector():set(280.64120483398,-6.46071863,1.0314919948578),379939,390)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_night_star",vector():set(33.511577606201,-4.7631421089172,-361.11657714844),215278,841)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_soul",vector():set(-45.467483520508,3.7723202705383,-12.004273414612),129993,1017)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_rusty_kristall",vector():set(59.396793365479,19.6898231506,156.72634887695),358866,97)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("gold_art",vector():set(-81.021110534668,-0.9252895116806,157.55644226074),186914,163)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-      db.actor:give_info_portion("esc_serious_talk")   
+    local obj = alife():create("rad_zapiska_ruk",vector():set(-18.395393371582,-23.520460128784,-11.5154476),3777,2784)
+
+    local obj = alife():create("gold_art",vector():set(193.80435180664,0.094538778066635,71.867),45644,1188)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+                        
+    local obj = alife():create("gold_art",vector():set(75.451988220215,16.426797866821,34.290096),215114,294)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("gold_art",vector():set(270.66116333008,-8.7369184494019,-126.34954),377173,405)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("gold_art",vector():set(-234.88185119629,8.3708419799805,177.88945007324),16236,1337)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_sig_m2",vector():set(-260.10464477539,0.27300158143044,92.179977416992),8348,1378)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_abakan_n_m2",vector():set(-116.20272827148,-1.9442112445831,122.73686218262),43368,1315)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("gold_art",vector():set(86.18724822998,0.054149866104126,49.022884368896),84502,1520)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_sig_m1",vector():set(105.34355926514,0.0050590336322784,89.765724182129),95144,1520)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_fuzz_kolobok",vector():set(67.825614929199,-0.37150749,-74.097778320313),69225,1516)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_dummy_glassbeads",vector():set(32.647331237793,5.5799655,-12.673707962036),4722,1538)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_abakan_n_m1",vector():set(-117.45324707031,20.803544998169,-36.93675994873),189,1529)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_rusty_sea-urchin",vector():set(-154.36480712891,-0.286359,9.8843507766724),165820,1628)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_svu",vector():set(595.62921142578,-54.139465332031,-96.708854675293),212521,1893)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_svds",vector():set(653.56958007813,-43.883968353271,179.26545715332),226824,1912)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_rusty_sea-urchin",vector():set(660.3306274414,-43.8872718,176.84335327148),227074,1914)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("wpn_svu",vector():set(422.17352294922,-48.451919555664,5.1145219802856),135460,1921)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("medkit_army",vector():set(392.71881103516,-34.139106750488,153.86260986328),120316,1865)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("medkit_army",vector():set(392.71881103516,-34.139106750488,153.86260986328),120316,1865)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_electra_moonlight",vector():set(4.7991132736206,-6.9216456,-72.931411743164),6850,2661)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_electra_flash",vector():set(-83.463157653809,16.93710136,102.66344451904),165695,332)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_electra_flash",vector():set(-43.567665100098,22.385353,-104.83944702148),147517,297)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_dummy_battery",vector():set(119.39251708984,15.86196517,26.154205322266),274810,391)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_rusty_kristall",vector():set(280.64120483398,-6.46071863,1.0314919948578),379939,390)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_night_star",vector():set(33.511577606201,-4.7631421089172,-361.11657714844),215278,841)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_soul",vector():set(-45.467483520508,3.7723202705383,-12.004273414612),129993,1017)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("af_rusty_kristall",vector():set(59.396793365479,19.6898231506,156.72634887695),358866,97)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+
+    local obj = alife():create("gold_art",vector():set(-81.021110534668,-0.9252895116806,157.55644226074),186914,163)
+    local sobj = alife():object( obj.id )
+    alife():use_ai_locations(sobj, false)
+    db.actor:give_info_portion("esc_serious_talk")   
    end 
 end
 
 function spawn_level_dark()
-     -- создается переход из ТЕМНОЙ ДОЛИНЫ НА РАДАР
+     -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ РёР· РўР•РњРќРћР™ Р”РћР›РРќР« РќРђ Р РђР”РђР 
 	if (not has_alife_info(	"saharov_dark_radar" )) then
-level_new.create_level_changer(31000, vector():set(157.544,-4.795,-88.7233),357929, 919,227097, 1914,
-        vector():set(660.463,-43.8839,173.0097 ),
-        vector():set(0,-0.281389117240906,0),"l10_radar",0)
-        db.actor:give_info_portion("saharov_dark_radar")
+      level_new.create_level_changer(31000, vector():set(157.544,-4.795,-88.7233),357929, 919,227097, 1914,
+      vector():set(660.463,-43.8839,173.0097 ),
+      vector():set(0,-0.281389117240906,0),"l10_radar",0)
+      db.actor:give_info_portion("saharov_dark_radar")
 	end
-    -- создается переход с РАДАРА в ТЕМНУЮ ДОЛИНУ
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ Р РђР”РђР Рђ РІ РўР•РњРќРЈР® Р”РћР›РРќРЈ
 	if (not has_alife_info(	"saharov_radar_dark" )) then
-level_new.create_level_changer(31050, vector():set(660.2858,-43.876,168.832),227063, 1915,359929, 919,
-        vector():set(160.9338989,-4.352917,-82.83966),
-        vector():set(0,0,0),"l04_darkvalley",0)
-        db.actor:give_info_portion("saharov_radar_dark")
+      level_new.create_level_changer(31050, vector():set(660.2858,-43.876,168.832),227063, 1915,359929, 919,
+      vector():set(160.9338989,-4.352917,-82.83966),
+      vector():set(0,0,0),"l04_darkvalley",0)
+      db.actor:give_info_portion("saharov_radar_dark")
 	end
 end
 
 function spawn_level_agro()
-     -- создается переход с АГРОПРОМА НА ЯНТАРЬ
+     -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РђР“Р РћРџР РћРњРђ РќРђ РЇРќРўРђР Р¬
 	if (not has_alife_info(	"levsha_agro_yan" )) then
-level_new.create_level_changer(31100, vector():set(-129.02766,14.4666,199.999),111251, 522,15229, 1487,
-        vector():set(-68.1646,1.669,-357.0758 ),
-        vector():set(0.219999998807907,-0.349999994039536,0.62),"l08_yantar",0)
-        db.actor:give_info_portion("levsha_agro_yan")
+      level_new.create_level_changer(31100, vector():set(-129.02766,14.4666,199.999),111251, 522,15229, 1487,
+      vector():set(-68.1646,1.669,-357.0758 ),
+      vector():set(0.219999998807907,-0.349999994039536,0.62),"l08_yantar",0)
+      db.actor:give_info_portion("levsha_agro_yan")
 	end
-    -- создается переход с ЯНТАРЯ НА АГРОПРОМ
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РЇРќРўРђР РЇ РќРђ РђР“Р РћРџР РћРњ
 	if (not has_alife_info(	"levsha_yan_agro" )) then
-level_new.create_level_changer(31150, vector():set(-69.8496,3.838,-362.1278),15229, 1487,117966, 520,
-        vector():set(-122.43,11.38,185.53999),
-        vector():set(0,-2.6800000667572,0),"l03_agroprom",0)
-        db.actor:give_info_portion("levsha_yan_agro")
+      level_new.create_level_changer(31150, vector():set(-69.8496,3.838,-362.1278),15229, 1487,117966, 520,
+      vector():set(-122.43,11.38,185.53999),
+      vector():set(0,-2.6800000667572,0),"l03_agroprom",0)
+      db.actor:give_info_portion("levsha_yan_agro")
 	end
 end
 
 function spawn_yan_sarc()
-      -- создается переход с ЯНТАРЯ В САРКОФАГ
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РЇРќРўРђР РЇ Р’ РЎРђР РљРћР¤РђР“
 	if (not has_alife_info(	"zombi_yan_sarc" )) then
-level_new.create_level_changer(31200, vector():set(-25.6117,-18.152,-85.55978 ),29509, 1492,643, 2417,
-        vector():set(-6.636368,51.11847,25.6256),
-        vector():set(0.14012610912323,0,-0.99013364315033),"l12u_sarcofag",0)
-        db.actor:give_info_portion("zombi_yan_sarc")
+      level_new.create_level_changer(31200, vector():set(-25.6117,-18.152,-85.55978 ),29509, 1492,643, 2417,
+      vector():set(-6.636368,51.11847,25.6256),
+      vector():set(0.14012610912323,0,-0.99013364315033),"l12u_sarcofag",0)
+      db.actor:give_info_portion("zombi_yan_sarc")
 	end
-    -- создается переход с САРКОФАГА НА ЯНТАРЬ
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РЎРђР РљРћР¤РђР“Рђ РќРђ РЇРќРўРђР Р¬
 	if (not has_alife_info(	"zombi_sarc_yan" )) then
-level_new.create_level_changer(31250, vector():set(-13.26, 47.71, 46.57 ),200, 2417,29509, 1492,
-        vector():set(-25.6117,-18.152,-85.55978),
-        vector():set(-0.12247440963984,0,-0.99247169494629),"l08_yantar",0)
-        db.actor:give_info_portion("zombi_sarc_yan")
+      level_new.create_level_changer(31250, vector():set(-13.26, 47.71, 46.57 ),200, 2417,29509, 1492,
+      vector():set(-25.6117,-18.152,-85.55978),
+      vector():set(-0.12247440963984,0,-0.99247169494629),"l08_yantar",0)
+      db.actor:give_info_portion("zombi_sarc_yan")
 	end
 end
 
 function spawn_sar_chaes2()
-      -- создается переход из САРКОФАГА НА ЧАЭС2
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ РёР· РЎРђР РљРћР¤РђР“Рђ РќРђ Р§РђР­РЎ2
 	if (not has_alife_info(	"digger_sar_chaes2" )) then
-level_new.create_level_changer(31300, vector():set(77.10116577,58.2671585,51.8668289 ),6406,2417,53648,  2537,
-        vector():set( 67.8906097,5.04050731,97.7711 ),
-        vector():set(  0.0,-0.5,0.0 ),"l12_stancia_2",0)
-        db.actor:give_info_portion("digger_sar_chaes2")
+      level_new.create_level_changer(31300, vector():set(77.10116577,58.2671585,51.8668289 ),6406,2417,53648,  2537,
+      vector():set( 67.8906097,5.04050731,97.7711 ),
+      vector():set(  0.0,-0.5,0.0 ),"l12_stancia_2",0)
+      db.actor:give_info_portion("digger_sar_chaes2")
 	end
-    -- создается переход с ЧАЭС2 в САРКОФАГ
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ Р§РђР­РЎ2 РІ РЎРђР РљРћР¤РђР“
 	if (not has_alife_info(	"digger_chaes2_sar" )) then
-level_new.create_level_changer(31320, vector():set( 663.8462524,0.355151146,140.6202697 ),192695,  2623,6321,2417,
-        vector():set(85.1118,60.11035,50.743),
-        vector():set(  0.0,-2.0,0.0 ),"l12u_sarcofag",0)
-        db.actor:give_info_portion("digger_chaes2_sar")
+      level_new.create_level_changer(31320, vector():set( 663.8462524,0.355151146,140.6202697 ),192695,  2623,6321,2417,
+      vector():set(85.1118,60.11035,50.743),
+      vector():set(  0.0,-2.0,0.0 ),"l12u_sarcofag",0)
+      db.actor:give_info_portion("digger_chaes2_sar")
 	end
 end
 
 
 function spawn_rad_yan()
-      -- создается переход с РАДАРА НА ЯНТАРЬ
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ Р РђР”РђР Рђ РќРђ РЇРќРўРђР Р¬
 	if (not has_alife_info(	"info_rad_yan" )) then
-level_new.create_level_changer(31340, vector():set(-33.8359031677246,4.1663,-92.70242 ),469,1959,132440, 1521,
-        vector():set(176.82000732,14.0399999,81.319999),
-        vector():set(0.0,2.0,0.0),"l08_yantar",0)
-        db.actor:give_info_portion("info_rad_yan")
+      level_new.create_level_changer(31340, vector():set(-33.8359031677246,4.1663,-92.70242 ),469,1959,132440, 1521,
+      vector():set(176.82000732,14.0399999,81.319999),
+      vector():set(0.0,2.0,0.0),"l08_yantar",0)
+      db.actor:give_info_portion("info_rad_yan")
 	end
-    -- создается переход с ЯНТАРЯ НА РАДАР
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РЇРќРўРђР РЇ РќРђ Р РђР”РђР 
 	if (not has_alife_info(	"info_yan_rad" )) then
-level_new.create_level_changer(31350, vector():set(181.97956848,19.407814,83.3477859),132440,1521,794,1959,
-        vector():set(-30.9628868103027,2.09963,-91.5933761 ),
-        vector():set(  0.0,-1.5,0.0 ),"l10_radar",0)
-        db.actor:give_info_portion("info_yan_rad")
+      level_new.create_level_changer(31350, vector():set(181.97956848,19.407814,83.3477859),132440,1521,794,1959,
+      vector():set(-30.9628868103027,2.09963,-91.5933761 ),
+      vector():set(  0.0,-1.5,0.0 ),"l10_radar",0)
+      db.actor:give_info_portion("info_yan_rad")
 	end
 end
 
 function spawn_sarc_chaes()
-      -- создается переход с ЧАЭС В САРКОФАГ
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ Р§РђР­РЎ Р’ РЎРђР РљРћР¤РђР“
 	if (not has_alife_info(	"info_chaes_sarc" )) then
-level_new.create_level_changer(31370, vector():set(388.24746,0.14821225,65.81998443),169331,2385,101, 2419,
-        vector():set(-27.261982,0.2294,40.4672),
-        vector():set(0.0,-1.5,0.0),"l12u_sarcofag",0)
-        db.actor:give_info_portion("info_chaes_sarc")
+      level_new.create_level_changer(31370, vector():set(388.24746,0.14821225,65.81998443),169331,2385,101, 2419,
+      vector():set(-27.261982,0.2294,40.4672),
+      vector():set(0.0,-1.5,0.0),"l12u_sarcofag",0)
+      db.actor:give_info_portion("info_chaes_sarc")
 	end
-    -- создается переход из САРКОФАГА НА ЧАЭС
+    -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ РёР· РЎРђР РљРћР¤РђР“Рђ РќРђ Р§РђР­РЎ
 	if (not has_alife_info(	"info_sarc_chaes" )) then
-level_new.create_level_changer(31390, vector():set(-30.6271,0.232626,45.8944),40, 2403,172158,2385,
-        vector():set(393.82781,-0.0035887,63.712),
-        vector():set(0.0,3.0,0.0),"l12_stancia",0)
-        db.actor:give_info_portion("info_sarc_chaes")
+      level_new.create_level_changer(31390, vector():set(-30.6271,0.232626,45.8944),40, 2403,172158,2385,
+      vector():set(393.82781,-0.0035887,63.712),
+      vector():set(0.0,3.0,0.0),"l12_stancia",0)
+      db.actor:give_info_portion("info_sarc_chaes")
 	end
 end
 
@@ -624,35 +631,35 @@ end
 --]]
 
 function add_new_pripyat()
-add_new_lc(833,6188,"На Радар","info_way_pripyat")
+add_new_lc(833,6188,"РќР° Р Р°РґР°СЂ","info_way_pripyat")
 end
 
 function add_new_radar()
-add_new_lc(1007,5240,"На Припять","info_way_radar")
+add_new_lc(1007,5240,"РќР° РџСЂРёРїСЏС‚СЊ","info_way_radar")
 end
 
 function add_new_lc(levch,levchn,levchm,info)
-  local objt = alife():story_object(levch)
-  if not objt then
-  alife():create(levchn)
-  end
   local obj = alife():story_object(levch)
+  if not obj then
+    alife():create(levchn)
+  end
+
   if obj then
-  level.map_add_object_spot(obj.id, "level_changer",levchm)
-  db.actor:give_info_portion(info)
-  info_received()
+    level.map_add_object_spot(obj.id, "level_changer",levchm)
+    db.actor:give_info_portion(info)
+    info_received()
   end
 end
 
 function info_received()
-amk.send_tip("","%c[255,0,255,0]Новый путь!",0,10,"gen_info")
+  amk.send_tip("","%c[255,0,255,0]РќРѕРІС‹Р№ РїСѓС‚СЊ!",0,10,"gen_info")
 end
 
 function delete_new_lc(levch,info)
   if not db.actor:has_info(info) then
-    local objt = alife():story_object(levch)
-    if objt then
-      alife():release(objt)
+    local obj = alife():story_object(levch)
+    if obj then
+      alife():release(obj)
     end
   end
 end
@@ -678,7 +685,7 @@ function set_community(actor, npc)
 	db.actor:set_character_community("monolith", 0, 0)
 end
 
--- Помощь раненому гг монолитовец
+-- РџРѕРјРѕС‰СЊ СЂР°РЅРµРЅРѕРјСѓ РіРі РјРѕРЅРѕР»РёС‚РѕРІРµС†
 
 function help_wounded_mono(npc)
 local snd
@@ -788,7 +795,7 @@ function get_npc_rank(obj)
 	return nil
 end
 
-function max_comp(i1,i2) -- возвращает true если i1 меньше i2
+function max_comp(i1,i2) -- РІРѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё i1 РјРµРЅСЊС€Рµ i2
 	if wound_id then
 		local sobj = alife():object(wound_id)
 		local sobj_pos = sobj.position
@@ -798,25 +805,24 @@ end
 
 
 function spawn_case()
-local obj = alife():create("aes_case1",vector():set(355.64077,0.005,447.625),123439,2608)
-local sobj = alife():object( obj.id )
-alife():use_ai_locations(sobj, false)
+  local obj = alife():create("aes_case1",vector():set(355.64077,0.005,447.625),123439,2608)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
 
-local obj = alife():create("aes_case2",vector():set(425.37,8.510,158.4013),143120,2599)
-local sobj = alife():object( obj.id )
-alife():use_ai_locations(sobj, false)
+  local obj = alife():create("aes_case2",vector():set(425.37,8.510,158.4013),143120,2599)
+  local sobj = alife():object( obj.id )
+  amk.add_spot_on_map(obj.id,"crlc_big","РљР•Р™РЎ в„–1")
+  alife():use_ai_locations(sobj, false)
 
-local obj = alife():create("aes_case3",vector():set(243.843,50.035,133.903),89174,2574)
-local sobj = alife():object( obj.id )
-alife():use_ai_locations(sobj, false)
+  local obj = alife():create("aes_case3",vector():set(243.843,50.035,133.903),89174,2574)
+  local sobj = alife():object( obj.id )
+  amk.add_spot_on_map(obj.id,"crlc_big","РљР•Р™РЎ в„–2")
+  alife():use_ai_locations(sobj, false)
 
-local obj = alife():create("aes_case33",vector():set(239.241,50.035,138.302),85390,2574)
-local sobj = alife():object( obj.id )
-alife():use_ai_locations(sobj, false)
-
-set_metka1()
-set_metka2()
-set_metka3()
+  local obj = alife():create("aes_case33",vector():set(239.241,50.035,138.302),85390,2574)
+  local sobj = alife():object( obj.id )
+  amk.add_spot_on_map(obj.id,"crlc_big","РљР•Р™РЎ в„–3")
+  alife():use_ai_locations(sobj, false)
 end
 
 function add_spot()
@@ -825,7 +831,7 @@ function add_spot()
    if sim then
        obj = sim:story_object(9704)
        if obj then
-	    level.map_add_object_spot(obj.id, "level_changer", "Управление монолитом")
+	    level.map_add_object_spot(obj.id, "level_changer", "РЈРїСЂР°РІР»РµРЅРёРµ РјРѕРЅРѕР»РёС‚РѕРј")
 	  end 
    end
 end		
@@ -835,46 +841,46 @@ local obj = alife():create("bloodsucker_strong",vector():set(36.4134292602539,-3
 end
 
 function naem_baza()
-local obj = alife():create("naem_haron1",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
-local obj = alife():create("naem_haron2",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
-local obj = alife():create("naem_haron3",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
-local obj = alife():create("naem_haron4",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
-local obj = alife():create("naem_haron5",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
-local obj = alife():create("naem_haron6",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
-local obj = alife():create("naem_haron7",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
-local obj = alife():create("naem_haron8",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
-local obj = alife():create("naem_haron9",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
-local obj = alife():create("naem_haron10",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
-local obj = alife():create("naem_haron11",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
-local obj = alife():create("naem_haron12",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
-local obj = alife():create("naem_haron13",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
-local obj = alife():create("naem_haron14",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
-local obj = alife():create("naem_haron15",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
-local obj = alife():create("naem_haron16",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
-local obj = alife():create("naem_haron17",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
-local obj = alife():create("naem_haron18",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
-local obj = alife():create("naem_haron19",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
-local obj = alife():create("naem_haron20",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
+  local obj = alife():create("naem_haron1",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
+  local obj = alife():create("naem_haron2",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
+  local obj = alife():create("naem_haron3",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
+  local obj = alife():create("naem_haron4",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
+  local obj = alife():create("naem_haron5",vector():set(-16.622678,-0.00429728627204895,155.8169),82500,2190)
+  local obj = alife():create("naem_haron6",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
+  local obj = alife():create("naem_haron7",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
+  local obj = alife():create("naem_haron8",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
+  local obj = alife():create("naem_haron9",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
+  local obj = alife():create("naem_haron10",vector():set(24.6308517456055,5.42022,163.33),132391,2199)
+  local obj = alife():create("naem_haron11",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
+  local obj = alife():create("naem_haron12",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
+  local obj = alife():create("naem_haron13",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
+  local obj = alife():create("naem_haron14",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
+  local obj = alife():create("naem_haron15",vector():set(-21.9093494415283,-0.00035557,210.188),77374,2198)
+  local obj = alife():create("naem_haron16",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
+  local obj = alife():create("naem_haron17",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
+  local obj = alife():create("naem_haron18",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
+  local obj = alife():create("naem_haron19",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
+  local obj = alife():create("naem_haron20",vector():set(31.2475471496582,5.08917,192.047),141806,2201)
 end
 
 function naem_len()
-local obj = alife():create("naem_mathon1",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
-local obj = alife():create("naem_mathon2",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
-local obj = alife():create("naem_mathon3",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
-local obj = alife():create("naem_mathon4",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
-local obj = alife():create("naem_mathon5",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
-local obj = alife():create("naem_mathon6",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
-local obj = alife():create("naem_mathon7",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
-local obj = alife():create("naem_mathon8",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
-local obj = alife():create("naem_mathon9",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
-local obj = alife():create("naem_mathon10",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
+  local obj = alife():create("naem_mathon1",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
+  local obj = alife():create("naem_mathon2",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
+  local obj = alife():create("naem_mathon3",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
+  local obj = alife():create("naem_mathon4",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
+  local obj = alife():create("naem_mathon5",vector():set(52.9615020751953,-1.7326,42.72),165393,2225)
+  local obj = alife():create("naem_mathon6",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
+  local obj = alife():create("naem_mathon7",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
+  local obj = alife():create("naem_mathon8",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
+  local obj = alife():create("naem_mathon9",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
+  local obj = alife():create("naem_mathon10",vector():set(31.3854713439941,-2.221,45.587),141632,2247)
 end
 
 function dyak_spawn()
-local obj = alife():create("dyak_monolit1",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
-local obj = alife():create("dyak_monolit1",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
-local obj = alife():create("dyak_monolit2",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
-local obj = alife():create("dyak_monolit2",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
+  local obj = alife():create("dyak_monolit1",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
+  local obj = alife():create("dyak_monolit1",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
+  local obj = alife():create("dyak_monolit2",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
+  local obj = alife():create("dyak_monolit2",vector():set(408.46102905273,-0.10446,-32.680702209473),178213,2306)
 end
 
 local kons={
@@ -906,61 +912,62 @@ local kons={
 }
 
 function food_spawn()
-    local a = kons[math.random(table.getn(kons))]
-    local obj = alife():create("box_food", vector():set(a.position.x,a.position.y,a.position.z), a.lv, a.gv)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local obj = alife():create("box_remont",vector():set(1040.902,1.530,-28.230),464796,2280)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
+  local a = kons[math.random(table.getn(kons))]
+  local obj = alife():create("box_food", vector():set(a.position.x,a.position.y,a.position.z), a.lv, a.gv)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
+
+  local obj = alife():create("box_remont",vector():set(1040.902,1.530,-28.230),464796,2280)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
 end
 
 
 function doctor_speech()
-    if level.name()=="l12_stancia" and db.actor:has_info("haron_spy_have") then return end
-    db.actor:give_info_portion("doctor_info")
-    create_re_restr()  
-    news_manager.send_tip(db.actor, "Это Фельдшер, зайди ко мне, есть разговор срочный", nil, nil, 30000)  
+  if level.name()=="l12_stancia" and db.actor:has_info("haron_spy_have") then return end
+  db.actor:give_info_portion("doctor_info")
+  create_re_restr()  
+  news_manager.send_tip(db.actor, "Р­С‚Рѕ Р¤РµР»СЊРґС€РµСЂ, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РµСЃС‚СЊ СЂР°Р·РіРѕРІРѕСЂ СЃСЂРѕС‡РЅС‹Р№", nil, nil, 30000)
 end
 
 function sms_new()
   db.actor:give_info_portion("haron_talk_need")
-    news_manager.send_tip(db.actor, "Это Харон, срочно возвращайся, есть дело", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "Р­С‚Рѕ РҐР°СЂРѕРЅ, СЃСЂРѕС‡РЅРѕ РІРѕР·РІСЂР°С‰Р°Р№СЃСЏ, РµСЃС‚СЊ РґРµР»Рѕ", nil, nil, 30000) 
 end
 
 function sms_doc()
   db.actor:give_info_portion("doc_talk_need")
-    news_manager.send_tip(db.actor, "Привет, это Фельдшер, зайди ко мне, есть дело, очень срочное", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РџСЂРёРІРµС‚, СЌС‚Рѕ Р¤РµР»СЊРґС€РµСЂ, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РµСЃС‚СЊ РґРµР»Рѕ, РѕС‡РµРЅСЊ СЃСЂРѕС‡РЅРѕРµ", nil, nil, 30000) 
 end
 
 function sms_keys()
   db.actor:give_info_portion("keys_talk")
-    news_manager.send_tip(db.actor, "Боец, это Соломон. Есть дело срочное. Жду тебя у перехода в Саркофог, поспеши.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "Р‘РѕРµС†, СЌС‚Рѕ РЎРѕР»РѕРјРѕРЅ. Р•СЃС‚СЊ РґРµР»Рѕ СЃСЂРѕС‡РЅРѕРµ. Р–РґСѓ С‚РµР±СЏ Сѓ РїРµСЂРµС…РѕРґР° РІ РЎР°СЂРєРѕС„РѕРі, РїРѕСЃРїРµС€Рё.", nil, nil, 30000) 
 end
 
 function sms_taynik()
   db.actor:give_info_portion("taynik_talk")
-    news_manager.send_tip(db.actor, "Стрелок, иди по дороге вперёд, к северному корпусу, ищи у дороги заваленный вход в катакомбы. Как подойдёшь, я тебе проход открою.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РЎС‚СЂРµР»РѕРє, РёРґРё РїРѕ РґРѕСЂРѕРіРµ РІРїРµСЂС‘Рґ, Рє СЃРµРІРµСЂРЅРѕРјСѓ РєРѕСЂРїСѓСЃСѓ, РёС‰Рё Сѓ РґРѕСЂРѕРіРё Р·Р°РІР°Р»РµРЅРЅС‹Р№ РІС…РѕРґ РІ РєР°С‚Р°РєРѕРјР±С‹. РљР°Рє РїРѕРґРѕР№РґС‘С€СЊ, СЏ С‚РµР±Рµ РїСЂРѕС…РѕРґ РѕС‚РєСЂРѕСЋ.", nil, nil, 30000) 
 end
 
 function sms_graf()
   db.actor:give_info_portion("graf_talk")
-    news_manager.send_tip(db.actor, "Стрелок, это Граф, зайди ко мне, дело есть.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РЎС‚СЂРµР»РѕРє, СЌС‚Рѕ Р“СЂР°С„, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РґРµР»Рѕ РµСЃС‚СЊ.", nil, nil, 30000) 
 end
 
 function sms_klyak()
   db.actor:give_info_portion("klyak_talk")
-    news_manager.send_tip(db.actor, "Стрелок, это Клык, зайди ко мне, есть новости для тебя.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РЎС‚СЂРµР»РѕРє, СЌС‚Рѕ РљР»С‹Рє, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РµСЃС‚СЊ РЅРѕРІРѕСЃС‚Рё РґР»СЏ С‚РµР±СЏ.", nil, nil, 30000) 
 end
 
 function sms_vozvrat()
   db.actor:give_info_portion("vozvrat_talk")
-    news_manager.send_tip(db.actor, "Стрелок, это Призрак, зайди ко мне, насчёт твоих вещей.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РЎС‚СЂРµР»РѕРє, СЌС‚Рѕ РџСЂРёР·СЂР°Рє, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РЅР°СЃС‡С‘С‚ С‚РІРѕРёС… РІРµС‰РµР№.", nil, nil, 30000) 
 end
 
 function sms_solomon()
   db.actor:give_info_portion("info_amk_recipt_shkura")
-news_manager.send_tip(db.actor, "Спасибо тебе Стрелок, я своё слово тоже держу. С уважением, Соломон.", nil, nil, 30000) 
+  news_manager.send_tip(db.actor, "РЎРїР°СЃРёР±Рѕ С‚РµР±Рµ РЎС‚СЂРµР»РѕРє, СЏ СЃРІРѕС‘ СЃР»РѕРІРѕ С‚РѕР¶Рµ РґРµСЂР¶Сѓ. РЎ СѓРІР°Р¶РµРЅРёРµРј, РЎРѕР»РѕРјРѕРЅ.", nil, nil, 30000) 
 end
 
 function mervin_vyrubaet()
@@ -992,48 +999,48 @@ function good_shlem()
 end
 
 function mono_prizrak_spawn()
-local obj = alife():create("mono_prizrak6",vector():set(80.449264526367,-2.22214,-20.570148468018),191808,2144)
-local obj = alife():create("mono_prizrak1",vector():set(83.398750305176,-2.39423,-7.9892024993896),194761,2144)
-local obj = alife():create("mono_prizrak2",vector():set(94.49609375,-2.39215,-6.1620998382568),205465,2144)
-local obj = alife():create("mono_prizrak3",vector():set(132.78782653809,-2.394,-65.896942138672),235486,2241)
-local obj = alife():create("mono_prizrak4",vector():set(125.62390136719,-2.39256,-64.209358215332),230995,2241)
-local obj = alife():create("mono_prizrak5",vector():set(119.00871276855,-2.4050,-68.360877990723),227330,2241)
+  local obj = alife():create("mono_prizrak6",vector():set(80.449264526367,-2.22214,-20.570148468018),191808,2144)
+  local obj = alife():create("mono_prizrak1",vector():set(83.398750305176,-2.39423,-7.9892024993896),194761,2144)
+  local obj = alife():create("mono_prizrak2",vector():set(94.49609375,-2.39215,-6.1620998382568),205465,2144)
+  local obj = alife():create("mono_prizrak3",vector():set(132.78782653809,-2.394,-65.896942138672),235486,2241)
+  local obj = alife():create("mono_prizrak4",vector():set(125.62390136719,-2.39256,-64.209358215332),230995,2241)
+  local obj = alife():create("mono_prizrak5",vector():set(119.00871276855,-2.4050,-68.360877990723),227330,2241)
 end
 
 function mono_patrol()
-local obj = alife():create("mono_patrol1",vector():set(-28.220415115356,-2.256,-136.57357788086),71287,2133)
-local obj = alife():create("mono_patrol2",vector():set(-31.98370552063,-2.395,-134.47309875488),66861,2133)
-local obj = alife():create("mono_patrol3",vector():set(-36.671649932861,-2.39,-130.03471374512),62154,2133)
-local obj = alife():create("mono_patrol4",vector():set(-17.674057006836,-2.302,-133.24459838867),81429,2133)
-local obj = alife():create("mono_patrol5",vector():set(-0.28423526883125,-2.3923,-108.29730224609),101987,2125)
-local obj = alife():create("mono_patrol6",vector():set(9.1660976409912,-1.8119,-79.970878601074),112798,2131)
-local obj = alife():create("mono_patrol7",vector():set(18.495990753174,-2.22009,-38.524749755859),124041,2131)
-local obj = alife():create("mono_patrol8",vector():set(50.08512878418,-2.2202,-38.656524658203),161629,2137)
+  local obj = alife():create("mono_patrol1",vector():set(-28.220415115356,-2.256,-136.57357788086),71287,2133)
+  local obj = alife():create("mono_patrol2",vector():set(-31.98370552063,-2.395,-134.47309875488),66861,2133)
+  local obj = alife():create("mono_patrol3",vector():set(-36.671649932861,-2.39,-130.03471374512),62154,2133)
+  local obj = alife():create("mono_patrol4",vector():set(-17.674057006836,-2.302,-133.24459838867),81429,2133)
+  local obj = alife():create("mono_patrol5",vector():set(-0.28423526883125,-2.3923,-108.29730224609),101987,2125)
+  local obj = alife():create("mono_patrol6",vector():set(9.1660976409912,-1.8119,-79.970878601074),112798,2131)
+  local obj = alife():create("mono_patrol7",vector():set(18.495990753174,-2.22009,-38.524749755859),124041,2131)
+  local obj = alife():create("mono_patrol8",vector():set(50.08512878418,-2.2202,-38.656524658203),161629,2137)
 end
 
 function sheme_bunker_spawn()
-local obj = alife():create("shceme_document",vector():set(-32.461,-34.430,-21.971),609,2479)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
+  local obj = alife():create("shceme_document",vector():set(-32.461,-34.430,-21.971),609,2479)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
 end
 
 function solomon_grabs()
-local sobj = alife():create("solomon_mono1",vector():set(-0.875,5.010,66.200),23984,2660)
-sobj.custom_data = "[logic]\ncfg = scripts\\new\\solomon_mono1.ltx"
-alife():assign_story_id( sobj.id, 30216 )
+  local sobj = alife():create("solomon_mono1",vector():set(-0.875,5.010,66.200),23984,2660)
+  sobj.custom_data = "[logic]\ncfg = scripts\\new\\solomon_mono1.ltx"
+  alife():assign_story_id( sobj.id, 30216 )
 end
 
 function solomon_mono_spawn()
-local obj = alife():create("solomon_mono2",vector():set(2.7715966701508,4.90849,88.047088623047),25216,2530)
-local obj = alife():create("solomon_mono3",vector():set(25.721918106079,5.06846,83.836639404297),36376,2530)
-local obj = alife():create("solomon_mono4",vector():set(33.805053710938,4.9988,103.37216186523),39952,2529)
-local obj = alife():create("solomon_mono5",vector():set(-3.7105083465576,4.10073,121.14627838135),22428,2519)
+  local obj = alife():create("solomon_mono2",vector():set(2.7715966701508,4.90849,88.047088623047),25216,2530)
+  local obj = alife():create("solomon_mono3",vector():set(25.721918106079,5.06846,83.836639404297),36376,2530)
+  local obj = alife():create("solomon_mono4",vector():set(33.805053710938,4.9988,103.37216186523),39952,2529)
+  local obj = alife():create("solomon_mono5",vector():set(-3.7105083465576,4.10073,121.14627838135),22428,2519)
 end
 
 function prip_atp_spawn()
-      -- создается переход с ПРИПЯТИ НА БОЛОТА
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ РџР РРџРЇРўР РќРђ Р‘РћР›РћРўРђ
 	if (not has_alife_info( "info_prip_atp" )) then
-level_new.create_level_changer(31980, vector():set( -33.3158,-2.4126,-184.56288 ),65184, 2134,
+    level_new.create_level_changer(31980, vector():set( -33.3158,-2.4126,-184.56288 ),65184, 2134,
         1778027,
         3011,
         vector():set( 290.082,6.804,67.704 ),
@@ -1041,43 +1048,6 @@ level_new.create_level_changer(31980, vector():set( -33.3158,-2.4126,-184.56288 
         db.actor:give_info_portion("info_prip_atp")
 	end
 end	
-
-
-function set_metka1()
- for a=1,65534 do
-  local obj = alife():object(a)
-  if obj then
-   if obj:section_name()=="aes_case1" then
-    amk.add_spot_on_map(obj.id,"crlc_big","КЕЙС №1")
-    return
-   end
-  end
- end
-end
-
-function set_metka2()
- for a=1,65534 do
-  local obj = alife():object(a)
-  if obj then
-   if obj:section_name()=="aes_case2" then
-    amk.add_spot_on_map(obj.id,"crlc_big","КЕЙС №2")
-    return
-   end
-  end
- end
-end
-
-function set_metka3()
- for a=1,65534 do
-  local obj = alife():object(a)
-  if obj then
-   if obj:section_name()=="aes_case33" then
-    amk.add_spot_on_map(obj.id,"crlc_big","КЕЙС №3")
-    return
-   end
-  end
- end
-end
 
 function remove_spot1()
  for a=1,65534 do
@@ -1310,7 +1280,7 @@ relation_registry.set_community_goodwill ("monolith", "actor", -5000)
 end
 
 ----------
--- чтение формы из нет-пакета
+-- С‡С‚РµРЅРёРµ С„РѕСЂРјС‹ РёР· РЅРµС‚-РїР°РєРµС‚Р°
 ----------
 function r_shape(packet)
 	local s
@@ -1335,7 +1305,7 @@ function r_shape(packet)
 end
 
 ----------
--- запись формы в нет-пакет
+-- Р·Р°РїРёСЃСЊ С„РѕСЂРјС‹ РІ РЅРµС‚-РїР°РєРµС‚
 ----------
 function w_shape(packet, st)
 	local s
@@ -1356,7 +1326,7 @@ function w_shape(packet, st)
 end
 
 ----------
--- перепаковка нет-пакета созданного скриптом рестрикта
+-- РїРµСЂРµРїР°РєРѕРІРєР° РЅРµС‚-РїР°РєРµС‚Р° СЃРѕР·РґР°РЅРЅРѕРіРѕ СЃРєСЂРёРїС‚РѕРј СЂРµСЃС‚СЂРёРєС‚Р°
 ----------
 function rewrite_restrictor(se_obj, custom, radius)
 	local packet = net_packet()
@@ -1451,24 +1421,25 @@ function give_money_100000(t1,t2)
 end
 
 function bratva_vrag(actor, npc)
-    xr_gulag.setGulagEnemy ("bar_bratok", actor)
+  xr_gulag.setGulagEnemy ("bar_bratok", actor)
 end
 
 function bratva_zlitsa(actor, npc)
-    if db.actor and db.actor:has_info("bratva_spokoina") then
-	   braad_test.friendbratva()
-	   db.actor:disable_info_portion("bratva_spokoina")
+  if db.actor and db.actor:has_info("bratva_spokoina") then
+	  braad_test.friendbratva()
+	  db.actor:disable_info_portion("bratva_spokoina")
 	end
-   news_manager.send_tip(db.actor, "Вы вышли за территорию бара", nil, nil, 30000)	
+  news_manager.send_tip(db.actor, "Р’С‹ РІС‹С€Р»Рё Р·Р° С‚РµСЂСЂРёС‚РѕСЂРёСЋ Р±Р°СЂР°", nil, nil, 30000)	
 end
 
 function winchester_knyaz()
-local sobj = alife():create("wpn_winchester_knyaz",vector():set(99.853,0.715,-12.309),297909,984)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-local sobj = alife():create("af_dummy_spring",vector():set(37.87,1.65,-219.83),221298,856)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
+  local obj = alife():create("wpn_winchester_knyaz",vector():set(99.853,0.715,-12.309),297909,984)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
+
+  local obj = alife():create("af_dummy_spring",vector():set(37.87,1.65,-219.83),221298,856)
+  local sobj = alife():object( obj.id )
+  alife():use_ai_locations(sobj, false)
 end
 
 local docs={
@@ -1530,12 +1501,12 @@ end
 
 function actor_na_mest()
   db.actor:give_info_portion("sveeblov_predatel_begin")
-news_manager.send_tip(db.actor, "Ты на месте, не стрелять, дам сигнал. И не попадайся ему на глаза", nil, nil, 30000) 
+news_manager.send_tip(db.actor, "РўС‹ РЅР° РјРµСЃС‚Рµ, РЅРµ СЃС‚СЂРµР»СЏС‚СЊ, РґР°Рј СЃРёРіРЅР°Р». Р РЅРµ РїРѕРїР°РґР°Р№СЃСЏ РµРјСѓ РЅР° РіР»Р°Р·Р°", nil, nil, 30000) 
 end
 
 function fedya_na_mest()
   db.actor:give_info_portion("fedya_razboinik_est")
-news_manager.send_tip(db.actor, "Попался, вали его!!!", nil, nil, 30000) 
+news_manager.send_tip(db.actor, "РџРѕРїР°Р»СЃСЏ, РІР°Р»Рё РµРіРѕ!!!", nil, nil, 30000) 
 end
 
 function voronin_help()
@@ -1559,7 +1530,7 @@ local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\bar\d
    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
    db.actor:give_info_portion("dolg_leader_help_start")   
    end
-news_manager.send_tip(db.actor, "Это Генерал Воронин. Сталкер, выручай, на нашу базу напали бандиты", nil, nil, 30000) 
+news_manager.send_tip(db.actor, "Р­С‚Рѕ Р“РµРЅРµСЂР°Р» Р’РѕСЂРѕРЅРёРЅ. РЎС‚Р°Р»РєРµСЂ, РІС‹СЂСѓС‡Р°Р№, РЅР° РЅР°С€Сѓ Р±Р°Р·Сѓ РЅР°РїР°Р»Рё Р±Р°РЅРґРёС‚С‹", nil, nil, 30000) 
 end
 
 function frienddolg(community1, community2)
@@ -1641,7 +1612,7 @@ function set_metka_ucen()
   local obj = alife():object(a)
   if obj then
    if obj:section_name()=="new_plan" then
-    amk.add_spot_on_map(obj.id,"red_location","МЕШОК ДЛЯ КНЯЗЯ")
+    amk.add_spot_on_map(obj.id,"red_location","РњР•РЁРћРљ Р”Р›РЇ РљРќРЇР—РЇ")
     return
    end
   end
@@ -1673,7 +1644,7 @@ function checks_item(item)
 end
 --------------------------------------------new_check-------------------------------------------
 
-function check_weapon() --функция проверки слотов на наличие оружия
+function check_weapon() --С„СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂРєРё СЃР»РѕС‚РѕРІ РЅР° РЅР°Р»РёС‡РёРµ РѕСЂСѓР¶РёСЏ
      if db.actor and db.actor:has_info("agro_varayg_one_start") 
        and not db.actor:has_info("agro_varayg_four_done") then 
           local slot = db.actor:active_slot()
@@ -1686,7 +1657,7 @@ end
 ------------------------------------------------------------------------------------------------
 
 function seredina_est()
-   news_manager.send_tip(db.actor, "Всё, возвращайся давай.", nil, nil, 20000) 
+   news_manager.send_tip(db.actor, "Р’СЃС‘, РІРѕР·РІСЂР°С‰Р°Р№СЃСЏ РґР°РІР°Р№.", nil, nil, 20000) 
 end
 
 function krugone_spawn()
@@ -1773,7 +1744,7 @@ for a=1,65534 do
   local obj = level.object_by_id(a)
     if obj then
        if obj:section()=="electro_chimera" then
-	   amk.add_spot_on_map(obj.id,"blue_location","Лысая химера") 
+	   amk.add_spot_on_map(obj.id,"blue_location","Р›С‹СЃР°СЏ С…РёРјРµСЂР°") 
 		  end
        end
    end
@@ -1784,7 +1755,7 @@ for a=1,65534 do
    local obj = alife():object(a) 
        if obj then
           if obj and obj:name() == "electro_chimera_ucen" then 
-            amk.add_spot_on_map(obj.id,"blue_location","Лысая химера") 
+            amk.add_spot_on_map(obj.id,"blue_location","Р›С‹СЃР°СЏ С…РёРјРµСЂР°") 
 		  end
        end
    end
@@ -1795,7 +1766,7 @@ for a=1,65534 do
    local obj = alife():object(a) 
        if obj then
           if obj and obj:name() == "gigant_strong_ucen" then 
-            amk.add_spot_on_map(obj.id,"blue_location","Псевдогигант") 
+            amk.add_spot_on_map(obj.id,"blue_location","РџСЃРµРІРґРѕРіРёРіР°РЅС‚") 
 		  end
        end
    end
@@ -1806,7 +1777,7 @@ for a=1,65534 do
    local obj = alife():object(a) 
        if obj then
           if obj and obj:name() == "bloodsucker_strong_ucen" then 
-            amk.add_spot_on_map(obj.id,"blue_location","Кровосос") 
+            amk.add_spot_on_map(obj.id,"blue_location","РљСЂРѕРІРѕСЃРѕСЃ") 
 		  end
        end
    end
@@ -1815,19 +1786,19 @@ end
 function chimera_est()
   db.actor:give_info_portion("ucen_need_metka_chimera_have")
     set_chimera_ucen()
-    news_manager.send_tip(db.actor, "Молодец, Стрелок, с химерой Вы справились успешно", nil, nil, 30000) 
+    news_manager.send_tip(db.actor, "РњРѕР»РѕРґРµС†, РЎС‚СЂРµР»РѕРє, СЃ С…РёРјРµСЂРѕР№ Р’С‹ СЃРїСЂР°РІРёР»РёСЃСЊ СѓСЃРїРµС€РЅРѕ", nil, nil, 30000) 
 end
 
 function gigant_est()
   db.actor:give_info_portion("ucen_need_metka_gigant_have")
     set_gigant_ucen()
-    news_manager.send_tip(db.actor, "Молодец, Стрелок, с псевдогигантом Вы справились успешно", nil, nil, 30000) 
+    news_manager.send_tip(db.actor, "РњРѕР»РѕРґРµС†, РЎС‚СЂРµР»РѕРє, СЃ РїСЃРµРІРґРѕРіРёРіР°РЅС‚РѕРј Р’С‹ СЃРїСЂР°РІРёР»РёСЃСЊ СѓСЃРїРµС€РЅРѕ", nil, nil, 30000) 
 end
 
 function bloodsucker_est()
   db.actor:give_info_portion("ucen_need_metka_bloodsucker_have")
     set_bloodsucker_ucen()
-    news_manager.send_tip(db.actor, "Молодец, Стрелок, с кровососом Вы справились успешно", nil, nil, 30000) 
+    news_manager.send_tip(db.actor, "РњРѕР»РѕРґРµС†, РЎС‚СЂРµР»РѕРє, СЃ РєСЂРѕРІРѕСЃРѕСЃРѕРј Р’С‹ СЃРїСЂР°РІРёР»РёСЃСЊ СѓСЃРїРµС€РЅРѕ", nil, nil, 30000) 
 end
 
 function controler_zasada()
@@ -1870,7 +1841,7 @@ function naem_sahar_spawn()
    end
 yan_wound_ucen()
 ecolog_new()
-   news_manager.send_tip(db.actor, "Это Дэн, они на холме: учёные чуть левее, а справа вояки. Лезь на крышу, оттуда лучше видно.", nil, nil, 30000) 
+   news_manager.send_tip(db.actor, "Р­С‚Рѕ Р”СЌРЅ, РѕРЅРё РЅР° С…РѕР»РјРµ: СѓС‡С‘РЅС‹Рµ С‡СѓС‚СЊ Р»РµРІРµРµ, Р° СЃРїСЂР°РІР° РІРѕСЏРєРё. Р›РµР·СЊ РЅР° РєСЂС‹С€Сѓ, РѕС‚С‚СѓРґР° Р»СѓС‡С€Рµ РІРёРґРЅРѕ.", nil, nil, 30000) 
 end
 
 function nychka_spawn()
@@ -1906,7 +1877,7 @@ function set_spot_ban()
   local obj = alife():object(a)
   if obj then
    if obj:section_name()=="flash_ban" then
-    amk.add_spot_on_map(obj.id,"blue_location","Нычка бандитов")
+    amk.add_spot_on_map(obj.id,"blue_location","РќС‹С‡РєР° Р±Р°РЅРґРёС‚РѕРІ")
     return
    end
   end
@@ -1937,7 +1908,7 @@ function set_community_jila(actor, npc)
 	db.actor:set_character_community("stalker", 0, 0)
 end
 
-------------------------------------------------------------------------------------------------------------------------------------------------------СПАВН АРТОВ-------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------РЎРџРђР’Рќ РђР РўРћР’-------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------
 function check_caterpillar_new()
       if db.actor and not db.actor:has_info("kruglov_art_spawn") then
@@ -1949,7 +1920,7 @@ function check_caterpillar_new()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("kruglov_art_spawn")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end	
 end
 
@@ -1963,7 +1934,7 @@ function check_caterpillar1()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info1")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -1977,7 +1948,7 @@ function check_caterpillar2()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info2")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -1991,7 +1962,7 @@ function check_caterpillar3()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info3")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2005,7 +1976,7 @@ function check_caterpillar4()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info4")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2019,7 +1990,7 @@ function check_caterpillar5()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info5")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2033,7 +2004,7 @@ function check_caterpillar6()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info6")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2047,7 +2018,7 @@ function check_caterpillar7()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info7")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2061,7 +2032,7 @@ function check_caterpillar8()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info8")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2075,7 +2046,7 @@ function check_caterpillar9()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info9")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2089,7 +2060,7 @@ function check_caterpillar10()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info10")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2103,7 +2074,7 @@ function check_caterpillar11()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info11")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2117,7 +2088,7 @@ function check_caterpillar12()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info12")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2131,7 +2102,7 @@ function check_caterpillar13()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info13")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2145,7 +2116,7 @@ function check_caterpillar14()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info14")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2159,7 +2130,7 @@ function check_caterpillar15()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info15")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2173,7 +2144,7 @@ function check_caterpillar16()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info16")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2187,7 +2158,7 @@ function check_caterpillar17()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info17")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2201,7 +2172,7 @@ function check_caterpillar18()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info18")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end
 end
 
@@ -2215,7 +2186,7 @@ function check_caterpillar19()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info19")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end	
 end
 
@@ -2229,10 +2200,10 @@ function check_caterpillar20()
             local sobj = alife():object( obj.id )
             alife():use_ai_locations(sobj, false)
             db.actor:give_info_portion("spawn_caterpillar_info20")
-            news_manager.send_tip(db.actor, "обнаружен артефакт", nil, nil, 30000)  
+            news_manager.send_tip(db.actor, "РѕР±РЅР°СЂСѓР¶РµРЅ Р°СЂС‚РµС„Р°РєС‚", nil, nil, 30000)  
        end	
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------СПАВН АРТОВ-------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------
 function contr_art_spawn()
    if level.name()=="l03_agroprom" and not db.actor:has_info("kruglov_art_contr") then
@@ -2268,7 +2239,7 @@ function set_volk_tainik()
   local obj = alife():object(a)
   if obj then
    if obj:section_name()=="volk_pda" then
-    amk.add_spot_on_map(obj.id,"blue_location","Нычка Волка")
+    amk.add_spot_on_map(obj.id,"blue_location","РќС‹С‡РєР° Р’РѕР»РєР°")
     return
    end
   end
@@ -2289,7 +2260,7 @@ end
 
 function knyaz_razborka()
   db.actor:give_info_portion("krest_razborka_speech")
-news_manager.send_tip(db.actor,"На месте? Жди, мало ли что, я этим Чеховским не верю. Креста береги.", nil, nil, 30000) 
+news_manager.send_tip(db.actor,"РќР° РјРµСЃС‚Рµ? Р–РґРё, РјР°Р»Рѕ Р»Рё С‡С‚Рѕ, СЏ СЌС‚РёРј Р§РµС…РѕРІСЃРєРёРј РЅРµ РІРµСЂСЋ. РљСЂРµСЃС‚Р° Р±РµСЂРµРіРё.", nil, nil, 30000) 
 end
 
 function knyaz_set1()
@@ -2349,7 +2320,7 @@ end
 
 function razborka_begin()
   db.actor:give_info_portion("krest_razborka_speech2")
-news_manager.send_tip(db.actor,"Ммать ты спишь что ли? Наших валят. Креста... Креста береги.", nil, nil, 30000) 
+news_manager.send_tip(db.actor,"РњРјР°С‚СЊ С‚С‹ СЃРїРёС€СЊ С‡С‚Рѕ Р»Рё? РќР°С€РёС… РІР°Р»СЏС‚. РљСЂРµСЃС‚Р°... РљСЂРµСЃС‚Р° Р±РµСЂРµРіРё.", nil, nil, 30000) 
 end
 
 function knyaz_set_nazad1()
@@ -2433,7 +2404,7 @@ end
 
 function sms_sidr()
   db.actor:give_info_portion("mayor_yarofeev_vrag")
-    news_manager.send_tip(db.actor, "Это Бармен, зайди ко мне, дело есть.", nil, nil, 30000) 
+    news_manager.send_tip(db.actor, "Р­С‚Рѕ Р‘Р°СЂРјРµРЅ, Р·Р°Р№РґРё РєРѕ РјРЅРµ, РґРµР»Рѕ РµСЃС‚СЊ.", nil, nil, 30000) 
 end
 
 function sidr_lab_spawn()
@@ -2484,9 +2455,9 @@ local obj = alife():create("mil_naem8",vector():set(-193.74069213867,-12.7184619
   end
 end
 
---НЕ ЗАБУДЬ!!!!
+--РќР• Р—РђР‘РЈР”Р¬!!!!
 function zahar_atp_pripyat()
-      -- создается переход с БОЛОТ В ПРИПЯТЬ
+      -- СЃРѕР·РґР°РµС‚СЃСЏ РїРµСЂРµС…РѕРґ СЃ Р‘РћР›РћРў Р’ РџР РРџРЇРўР¬
 	if (not has_alife_info( "zahar_atp_pripyat_pereh" )) then
 level_new.create_level_changer(32010, vector():set(290.643,6.939,66.954),1779505,3011,65184,2134,
         vector():set(-33.3158,-2.4126,-184.56288),
@@ -2494,7 +2465,7 @@ level_new.create_level_changer(32010, vector():set(290.643,6.939,66.954),1779505
         db.actor:give_info_portion("zahar_atp_pripyat_pereh")
 	end
 end	
---НЕ ЗАБУДЬ!!!!
+--РќР• Р—РђР‘РЈР”Р¬!!!!
 
 function spawn_ammo_shilo()
              local obj = alife():create("ammo_12x70_buck",vector():set(-254.211,1.375,10.877),8265,1424)
@@ -2593,7 +2564,7 @@ function mina_band(obj)
 	  end
    end
 end
-----------------------------------------------------------РАДИАЦИЯ ARC-----------------------------------------------
+----------------------------------------------------------Р РђР”РРђР¦РРЇ ARC-----------------------------------------------
 local inv_arts_radiation = 0
 
 local time_previous = time_global()
@@ -2610,9 +2581,9 @@ function apply_radiation()
   if time_delta >= time_step then
     local delta_radiation = inv_arts_radiation*math.min(5, time_delta/time_step)
     
-    --прибавляем чуть-чуть радиации от box_black
+    --РїСЂРёР±Р°РІР»СЏРµРј С‡СѓС‚СЊ-С‡СѓС‚СЊ СЂР°РґРёР°С†РёРё РѕС‚ box_black
     if db.actor:object("box_black") then
-      delta_radiation =  delta_radiation + 0.004 -- подобрать экспериментальным путем
+      delta_radiation =  delta_radiation + 0.004 -- РїРѕРґРѕР±СЂР°С‚СЊ СЌРєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РїСѓС‚РµРј
     end
 
     if delta_radiation>0 then
@@ -2651,7 +2622,7 @@ sobj.custom_data = "[logic]\ncfg = scripts\\new\\esc_mervin.ltx"
 alife():assign_story_id( sobj.id, 30135 )
 end
 
----------------------------------------------------------РАДИАЦИЯ ARC-----------------------------------------------
+---------------------------------------------------------Р РђР”РРђР¦РРЇ ARC-----------------------------------------------
 
 function kogot_rukzak_spawn()
 local obj = alife():create("prov_ruk",vector():set(142.93045043945,5.8323435783386,-245.087890625),341121,966)
@@ -2692,7 +2663,7 @@ function spawn_military_tech_new(obj, spawn_item)
 	local packet = net_packet()
 	obj:STATE_Write(packet)
 
-	-- свойства cse_alife_object
+	-- СЃРІРѕР№СЃС‚РІР° cse_alife_object
 	local game_vertex_id = packet:r_u16()
 	local cse_alife_object__unk1_f32 = packet:r_float()
 	local cse_alife_object__unk2_s32 = packet:r_s32()
@@ -2702,16 +2673,16 @@ function spawn_military_tech_new(obj, spawn_item)
 	local story_id = packet:r_s32()
 	local cse_alife_object__unk3_s32 = packet:r_s32()
 
-	-- свойства cse_visual
+	-- СЃРІРѕР№СЃС‚РІР° cse_visual
 	local model_visual = packet:r_stringZ()
 	local cse_visual__unk1_u8 = packet:r_u8()
 	local motion_name
 	if spawn_item == "helicopter" or "helicopter1" or "helicopter2"  then
-		-- свойства cse_motion
+		-- СЃРІРѕР№СЃС‚РІР° cse_motion
 		motion_name = packet:r_stringZ()
 	end
 
-	-- свойства cse_ph_skeleton
+	-- СЃРІРѕР№СЃС‚РІР° cse_ph_skeleton
 	local skeleton_name = packet:r_stringZ()
 	local cse_ph_skeleton__unk1_u8 = packet:r_u8()
 	local cse_ph_skeleton__unk2_u16 = packet:r_u16()
@@ -2720,15 +2691,15 @@ function spawn_military_tech_new(obj, spawn_item)
 	local engine_sound 
 		
 	if spawn_item =="helicopter" or  "helicopter1" or "helicopter2"  then
-		-- свойства cse_alife_helicopter
+		-- СЃРІРѕР№СЃС‚РІР° cse_alife_helicopter
 		cse_alife_helicopter__unk1_sz = packet:r_stringZ()
 		engine_sound = packet:r_stringZ()
 	elseif	spawn_item == "vehicle_btr" then
 		health = packet:r_float()
 	end
 	
-	-- теперь заполняем нужные параметры
-	-- свойства cse_alife_object
+	-- С‚РµРїРµСЂСЊ Р·Р°РїРѕР»РЅСЏРµРј РЅСѓР¶РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹
+	-- СЃРІРѕР№СЃС‚РІР° cse_alife_object
 	packet:w_begin(game_vertex_id)
 	packet:w_float(cse_alife_object__unk1_f32)
 	packet:w_s32(cse_alife_object__unk2_s32)
@@ -2747,7 +2718,7 @@ function spawn_military_tech_new(obj, spawn_item)
 	packet:w_s32(-1)
 	packet:w_s32(cse_alife_object__unk3_s32)
 
-	-- свойства cse_visual
+	-- СЃРІРѕР№СЃС‚РІР° cse_visual
 	packet:w_stringZ(model_visual)
 	packet:w_u8(cse_visual__unk1_u8)
 	
@@ -2755,14 +2726,14 @@ function spawn_military_tech_new(obj, spawn_item)
 		packet:w_stringZ(motion_name)		
 	end 
 	
-	-- свойства cse_ph_skeleton
+	-- СЃРІРѕР№СЃС‚РІР° cse_ph_skeleton
 	skeleton_name = "idle"
 	packet:w_stringZ(skeleton_name)
 	packet:w_u8(cse_ph_skeleton__unk1_u8)
 	packet:w_u16(cse_ph_skeleton__unk2_u16)
 
 	if spawn_item =="helicopter" or  "helicopter1" or "helicopter2"  then
-		-- свойства cse_alife_helicopter
+		-- СЃРІРѕР№СЃС‚РІР° cse_alife_helicopter
 		cse_alife_helicopter__unk1_sz = "idle"
 		engine_sound = "alexmx\\helicopter"
 		packet:w_stringZ(cse_alife_helicopter__unk1_sz)
@@ -2771,11 +2742,11 @@ function spawn_military_tech_new(obj, spawn_item)
 		health = 1
 		packet:w_float(health)
 	end	
-	-- считываем скорректированные параметры
+	-- СЃС‡РёС‚С‹РІР°РµРј СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°РЅРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹
 	packet:r_seek(0)
 	obj:STATE_Read(packet, packet:w_tell())
 	
-news_manager.send_tip(db.actor, "Пипец мужики, Вертолёт", nil, nil, 30000)
+news_manager.send_tip(db.actor, "РџРёРїРµС† РјСѓР¶РёРєРё, Р’РµСЂС‚РѕР»С‘С‚", nil, nil, 30000)
 end
 
 function create_car_restr()
@@ -2883,7 +2854,7 @@ function my_proverka()
   if se_obj then
     alife():release(se_obj, true)
   end
-news_manager.send_tip(db.actor, "Видел химеру возле завода", nil, nil, 30000)
+news_manager.send_tip(db.actor, "Р’РёРґРµР» С…РёРјРµСЂСѓ РІРѕР·Р»Рµ Р·Р°РІРѕРґР°", nil, nil, 30000)
 ucen_electro()
 end
 
@@ -2987,7 +2958,7 @@ end
 
 function sms_amulet()
   db.actor:give_info_portion("almaz_talk")
-    news_manager.send_tip(db.actor, "Произошёл процесс катализации шести порядковых Амулетов в Амулет-абсолют", nil, nil, 30000) 
+    news_manager.send_tip(db.actor, "РџСЂРѕРёР·РѕС€С‘Р» РїСЂРѕС†РµСЃСЃ РєР°С‚Р°Р»РёР·Р°С†РёРё С€РµСЃС‚Рё РїРѕСЂСЏРґРєРѕРІС‹С… РђРјСѓР»РµС‚РѕРІ РІ РђРјСѓР»РµС‚-Р°Р±СЃРѕР»СЋС‚", nil, nil, 30000) 
 end
 
 function amulet_effect()
@@ -3013,7 +2984,7 @@ function set_povodyr()
   local obj = alife():object(a)
   if obj then
    if obj:section_name()=="dog_povodyr" then
-    amk.add_spot_on_map(obj.id,"blue_location","Поводырь")
+    amk.add_spot_on_map(obj.id,"blue_location","РџРѕРІРѕРґС‹СЂСЊ")
     return
    end
   end

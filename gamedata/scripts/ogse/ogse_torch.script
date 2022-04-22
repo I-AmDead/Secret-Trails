@@ -1,17 +1,9 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
--- величина разряда
-local step = 0.007
--- как часто выполняется разряд фонарика ( в милисекундах реального времени )
-local freq = 31 * 1000
-
-
 function attach( sm )
   sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
   sm:subscribe({ signal = "on_key_down",     fun = this.on_key_down    })
 end
-
-
 
 local torch_mode = "off"
 function set_torch_mode( k )
@@ -34,8 +26,7 @@ function set_torch_mode( k )
   end
 end
 
-
-function on_key_down(key, bind ) --Действие при нажатии клавиши фонаря
+function on_key_down(key, bind ) --Р”РµР№СЃС‚РІРёРµ РїСЂРё РЅР°Р¶Р°С‚РёРё РєР»Р°РІРёС€Рё С„РѕРЅР°СЂСЏ
 	if ( bind ~= key_bindings.kTORCH )
 	or level.main_input_receiver()
 then 
@@ -65,24 +56,17 @@ end
   end
 end
 
-
 function set_near_mode( torch, r )
-
   torch_mode = "near"
   torch:set_range( 20 )
   torch:set_angle( math.rad( 110 ) )
-
 end
-
 
 function set_far_mode( torch, r )
- 
- torch_mode = "far"
+  torch_mode = "far"
   torch:set_range( 60 )
   torch:set_angle( math.rad( 60 ) )
-
 end
-
 
 function is_torch_enabled()
   if db.actor:alive() then
@@ -93,7 +77,6 @@ function is_torch_enabled()
     end
   end
 end
-
 
 function play_click()
   snd_obj = xr_sound.get_safe_sound_object( [[device\bad_box]] )

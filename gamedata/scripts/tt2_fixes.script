@@ -41,11 +41,11 @@ end
 
 
 function del_lampa()
-    local sim = alife()
-    local s_obj = sim:object("light_uglovaya_1_glass_0006")
-    if s_obj then
-        sim:release(s_obj, true)
-    end
+  local sim = alife()
+  local obj = sim:object("light_uglovaya_1_glass_0006")
+  if obj then
+    sim:release(obj, true)
+  end
 end
 
 function spawn_sverhprovodnik()
@@ -57,17 +57,33 @@ function spawn_sverhprovodnik()
 	local time = level.get_time_hours()
 
 	if time >= 1 and time < 2 and db.actor:dont_has_info( "sverhprovodnik_spawn" ) then
-		local sobj = alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
-		alife():assign_story_id(sobj.id, story_ids.sverhprovodnik)
-                alife():use_ai_locations(sobj, false)
+		local obj = alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
+		alife():assign_story_id(obj.id, story_ids.sverhprovodnik)
+    alife():use_ai_locations(sobj, false)
 		db.actor:give_info_portion( "sverhprovodnik_spawn" )
 	end
 
 	if db.actor:has_info( "sverhprovodnik_spawn" ) and time >= 2 then
-		local sobj = alife():story_object(story_ids.sverhprovodnik)
-		if sobj then
-			alife():release(sobj , true)
+		local obj = alife():story_object(story_ids.sverhprovodnik)
+		if obj then
+			alife():release(obj , true)
 			db.actor:disable_info_portion( "sverhprovodnik_spawn" )
 		end
 	end
+end
+
+function x18_dor_open_spawn()
+	amk_spawn.x_spawn("x18_1")
+	amk_spawn.x_spawn("x18_2")
+	amk_spawn.x_spawn("x18_3")
+end
+
+function start_quest()
+	ogse_st_mgr.start_visual_timer(nil, 17*60, "quest_fail")
+end
+
+function quest_fail()
+  if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
+    db.actor:give_info_portion("pobeg_net")
+  end
 end

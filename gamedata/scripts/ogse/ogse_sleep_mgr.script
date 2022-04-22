@@ -1,10 +1,10 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 -----------------------------------------------------------------------
 --- ogse_sleep_mgr.script
---- Менеджер сна и бодрствования ГГ
---- Исходная версия: xStream, Ab@dDon & DEXXX 2007-2008
---- Правки и адаптация: KamikaZze, Dusty79 (c) OGS Evolution Team
---- Версия 2: Malandrinus
+--- РњРµРЅРµРґР¶РµСЂ СЃРЅР° Рё Р±РѕРґСЂСЃС‚РІРѕРІР°РЅРёСЏ Р“Р“
+--- РСЃС…РѕРґРЅР°СЏ РІРµСЂСЃРёСЏ: xStream, Ab@dDon & DEXXX 2007-2008
+--- РџСЂР°РІРєРё Рё Р°РґР°РїС‚Р°С†РёСЏ: KamikaZze, Dusty79 (c) OGS Evolution Team
+--- Р’РµСЂСЃРёСЏ 2: Malandrinus
 --- version 2.1.1 (02/2013)
 -----------------------------------------------------------------------
 
@@ -18,15 +18,15 @@ function is_sleep_active()
 end
 
 
-local break_sleep_request = false -- флажок запроса на прерывание сна
-function break_sleep()            -- принудительное прерывание сна
+local break_sleep_request = false -- С„Р»Р°Р¶РѕРє Р·Р°РїСЂРѕСЃР° РЅР° РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР°
+function break_sleep()            -- РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕРµ РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР°
   break_sleep_request = true
 end
 
 
 function begin_sleep( desired_sleep_time )
-  -- если кто-то запрашивал прерывание сна во время бодрствования, то
-  -- сбрасываем это
+  -- РµСЃР»Рё РєС‚Рѕ-С‚Рѕ Р·Р°РїСЂР°С€РёРІР°Р» РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР° РІРѕ РІСЂРµРјСЏ Р±РѕРґСЂСЃС‚РІРѕРІР°РЅРёСЏ, С‚Рѕ
+  -- СЃР±СЂР°СЃС‹РІР°РµРј СЌС‚Рѕ
   break_sleep_request = false
   db.actor:stop_talk()
   level.disable_input()
@@ -42,7 +42,7 @@ function begin_sleep2( desired_sleep_time )
   sleeping_now = true
   local urgent_awakening = false
   local start_sleep_time = game.get_game_time()
-  -- каждый час сна делим на периоды по 15 минут (4 отсчёта на час)
+  -- РєР°Р¶РґС‹Р№ С‡Р°СЃ СЃРЅР° РґРµР»РёРј РЅР° РїРµСЂРёРѕРґС‹ РїРѕ 15 РјРёРЅСѓС‚ (4 РѕС‚СЃС‡С‘С‚Р° РЅР° С‡Р°СЃ)
   local sleep_counts     = math.ceil( desired_sleep_time * 4 )
   local dt_ms            = math.ceil(
     desired_sleep_time * 3600 * 1000 / sleep_counts
@@ -51,35 +51,35 @@ function begin_sleep2( desired_sleep_time )
   local aobj             = get_actor_obj()
 
   for i = 1, sleep_counts do
-    -- переводим стрелки
+    -- РїРµСЂРµРІРѕРґРёРј СЃС‚СЂРµР»РєРё
     level.advance_game_time( dt_ms )
-    -- обновляем движковые эффекты здоровья
+    -- РѕР±РЅРѕРІР»СЏРµРј РґРІРёР¶РєРѕРІС‹Рµ СЌС„С„РµРєС‚С‹ Р·РґРѕСЂРѕРІСЊСЏ
     db.actor:update_condition()
     aobj:UpdateArtefactsOnBelt()
     sm:call( "on_actor_update", 0 )
     sm:call( "on_update", 0 )
-    -- проверяем останов по разным событиям
-    if break_sleep_request then -- кто-то запросил останов сна
+    -- РїСЂРѕРІРµСЂСЏРµРј РѕСЃС‚Р°РЅРѕРІ РїРѕ СЂР°Р·РЅС‹Рј СЃРѕР±С‹С‚РёСЏРј
+    if break_sleep_request then -- РєС‚Рѕ-С‚Рѕ Р·Р°РїСЂРѕСЃРёР» РѕСЃС‚Р°РЅРѕРІ СЃРЅР°
       urgent_awakening = true
       break
     end
-    -- начался выброс
+    -- РЅР°С‡Р°Р»СЃСЏ РІС‹Р±СЂРѕСЃ
     if has_alife_info( "pre_blowout" ) then
       -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
       urgent_awakening = true
       break
     end
-    -- начинается выброс
+    -- РЅР°С‡РёРЅР°РµС‚СЃСЏ РІС‹Р±СЂРѕСЃ
     if dsh_cop_weather.get_weather_mgr():is_surge_in_process() then
       -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
       urgent_awakening = true
       break
     end
-    -- проверяем условие останова сна по состоянию здоровья
+    -- РїСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РѕСЃС‚Р°РЅРѕРІР° СЃРЅР° РїРѕ СЃРѕСЃС‚РѕСЏРЅРёСЋ Р·РґРѕСЂРѕРІСЊСЏ
     local cur_health = db.actor.health
     local dh         = cur_health - prev_health
     if cur_health < 0.1 and dh < 0 then
-      -- здоровье снизилось до критической величины и продолжает снижаться
+      -- Р·РґРѕСЂРѕРІСЊРµ СЃРЅРёР·РёР»РѕСЃСЊ РґРѕ РєСЂРёС‚РёС‡РµСЃРєРѕР№ РІРµР»РёС‡РёРЅС‹ Рё РїСЂРѕРґРѕР»Р¶Р°РµС‚ СЃРЅРёР¶Р°С‚СЊСЃСЏ
       -- ogse.autohiding_msg( "ogse_sleep_mgr_warn_4_text", 1500 )
       urgent_awakening = true
       break
@@ -92,15 +92,15 @@ function begin_sleep2( desired_sleep_time )
   level.set_ignore_game_state_update()
   sleeping_now = false
   break_sleep_request = false
-  -- сколько реально спали
+  -- СЃРєРѕР»СЊРєРѕ СЂРµР°Р»СЊРЅРѕ СЃРїР°Р»Рё
   local awakening_time  = game.get_game_time()
   local real_sleep_time = awakening_time:diffSec( start_sleep_time )
 
-  -- привет мир
+  -- РїСЂРёРІРµС‚ РјРёСЂ
   sm:stop_rescheduling( false )
   sm:call( "on_sleep_finished", real_sleep_time )
   dsh.exec_on_update(
-    u3_utils.savegame, "Пробуждение" .. " - " .. game.translate_string( level.name() )
+    u3_utils.savegame, "РџСЂРѕР±СѓР¶РґРµРЅРёРµ" .. " - " .. game.translate_string( level.name() )
   )
 
   level.add_cam_effector( "camera_effects\\prison_1.anm", 25, false, "" )

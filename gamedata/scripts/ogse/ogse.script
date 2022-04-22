@@ -1,7 +1,7 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 -----------------------------------------------------------------------
 --- ogse.script
---- Утилитарная база OGSE 0.6.9.3
+--- РЈС‚РёР»РёС‚Р°СЂРЅР°СЏ Р±Р°Р·Р° OGSE 0.6.9.3
 --- 2007-2008 (c) xStream, DEXXX
 --- 2009-2013 (c) OGS Evolution Team
 -----------------------------------------------------------------------
@@ -34,11 +34,11 @@ local watchdog_max = 28
 local drug_timer = time_global()
 local off_timer = time_global()
 local off_timer_1 = time_global()
-local timer_trigger_step = 500		-- шаг проверки таймеров (мс)
+local timer_trigger_step = 500		-- С€Р°Рі РїСЂРѕРІРµСЂРєРё С‚Р°Р№РјРµСЂРѕРІ (РјСЃ)
 local main_variable_tbl = nil
 local loaded_slot = nil
 
--- Переменные для типсов
+-- РџРµСЂРµРјРµРЅРЅС‹Рµ РґР»СЏ С‚РёРїСЃРѕРІ
 tips_variable = {
 	["pda_news"] = ([[device\pda\pda_news]]),
 	["pda_tips"] = ([[device\pda\pda_tip]]),
@@ -68,7 +68,7 @@ tips_icons = {
 	uniq	= { 498, 47}
 }
 
---- Перезапуск логики NPC
+--- РџРµСЂРµР·Р°РїСѓСЃРє Р»РѕРіРёРєРё NPC
 function reset_npc_logic(obj)
 	if obj then
 		local npc_id = obj:id()
@@ -79,20 +79,20 @@ function reset_npc_logic(obj)
 	end
 end
 
--- Получение заданного настройками fov
+-- РџРѕР»СѓС‡РµРЅРёРµ Р·Р°РґР°РЅРЅРѕРіРѕ РЅР°СЃС‚СЂРѕР№РєР°РјРё fov
 function get_default_fov()
 	return fov_vol
 end
--- Получение максимально допустимого настройками fov
+-- РџРѕР»СѓС‡РµРЅРёРµ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјРѕРіРѕ РЅР°СЃС‚СЂРѕР№РєР°РјРё fov
 function get_max_alarm_fov()
 	return max_alarm_fov_vol
 end
--- Получение минимально допустимого настройками fov
+-- РџРѕР»СѓС‡РµРЅРёРµ РјРёРЅРёРјР°Р»СЊРЅРѕ РґРѕРїСѓСЃС‚РёРјРѕРіРѕ РЅР°СЃС‚СЂРѕР№РєР°РјРё fov
 function get_min_alarm_fov()
 	return min_alarm_fov_vol
 end
 
--- Проверка нахождения актора в особой зоне
+-- РџСЂРѕРІРµСЂРєР° РЅР°С…РѕР¶РґРµРЅРёСЏ Р°РєС‚РѕСЂР° РІ РѕСЃРѕР±РѕР№ Р·РѕРЅРµ
 function actor_in_zone(pos_psy_x,pos_psy_y,size_psy_x,size_psy_y,z1,z2)
 local pos = db.actor:position()
 local x1 = pos_psy_x
@@ -105,7 +105,7 @@ end
 return 0
 end
 
--- Проверка нахождения НПС в особой зоне
+-- РџСЂРѕРІРµСЂРєР° РЅР°С…РѕР¶РґРµРЅРёСЏ РќРџРЎ РІ РѕСЃРѕР±РѕР№ Р·РѕРЅРµ
 function npc_in_zone(obj,lev,pos_psy_x,pos_psy_y,size_psy_x,size_psy_y,z1,z2)
 local level_name = level.name()
 if level_name ~= lev then
@@ -122,7 +122,7 @@ end
 return false
 end
 
--- Проверка, является ли объект монстром
+-- РџСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё РѕР±СЉРµРєС‚ РјРѕРЅСЃС‚СЂРѕРј
 function is_monster(object)
 local id = get_clsid (object)
 if id == clsid.boar_s or
@@ -146,7 +146,7 @@ end
 return 0
 end
 
---- Возвращает true если параметром передан квестовый непись
+--- Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё РїР°СЂР°РјРµС‚СЂРѕРј РїРµСЂРµРґР°РЅ РєРІРµСЃС‚РѕРІС‹Р№ РЅРµРїРёСЃСЊ
 function is_quest_npc(npc)
 	local story = INVALID_STORY_ID
 	if npc then
@@ -166,35 +166,35 @@ function is_quest_npc(npc)
 	if story ~= INVALID_STORY_ID then return true else return false end
 end
 
--- телепортация NPC в пределах уровня
--- сама функция только ставит флажок на выпихивание в оффлайн и запускает ждущий таймер
--- вся работа будет сделана в экшине таймера
+-- С‚РµР»РµРїРѕСЂС‚Р°С†РёСЏ NPC РІ РїСЂРµРґРµР»Р°С… СѓСЂРѕРІРЅСЏ
+-- СЃР°РјР° С„СѓРЅРєС†РёСЏ С‚РѕР»СЊРєРѕ СЃС‚Р°РІРёС‚ С„Р»Р°Р¶РѕРє РЅР° РІС‹РїРёС…РёРІР°РЅРёРµ РІ РѕС„С„Р»Р°Р№РЅ Рё Р·Р°РїСѓСЃРєР°РµС‚ Р¶РґСѓС‰РёР№ С‚Р°Р№РјРµСЂ
+-- РІСЃСЏ СЂР°Р±РѕС‚Р° Р±СѓРґРµС‚ СЃРґРµР»Р°РЅР° РІ СЌРєС€РёРЅРµ С‚Р°Р№РјРµСЂР°
 function teleport_npc(npc_id, pos)
    local s_npc = alife():object(npc_id)
    s_npc.force_offline = true
-   go_offline_watch_timer(npc_id, pos):start() -- таймер "выстрелил-забыл"
+   go_offline_watch_timer(npc_id, pos):start() -- С‚Р°Р№РјРµСЂ "РІС‹СЃС‚СЂРµР»РёР»-Р·Р°Р±С‹Р»"
 end
--- служебный таймер, ждущий ухода в оффлайн
+-- СЃР»СѓР¶РµР±РЅС‹Р№ С‚Р°Р№РјРµСЂ, Р¶РґСѓС‰РёР№ СѓС…РѕРґР° РІ РѕС„С„Р»Р°Р№РЅ
 class "go_offline_watch_timer" (ogse_qt.quick_timer)
 function go_offline_watch_timer:__init(npc_id, pos) super()
-   self.npc_id = npc_id -- запоминаем в таймере id непися
-   self.pos    = pos -- запоминаем позицию, куда будем перемещать
+   self.npc_id = npc_id -- Р·Р°РїРѕРјРёРЅР°РµРј РІ С‚Р°Р№РјРµСЂРµ id РЅРµРїРёСЃСЏ
+   self.pos    = pos -- Р·Р°РїРѕРјРёРЅР°РµРј РїРѕР·РёС†РёСЋ, РєСѓРґР° Р±СѓРґРµРј РїРµСЂРµРјРµС‰Р°С‚СЊ
 end
 function go_offline_watch_timer:condition()
-   return (not level.object_by_id(self.npc_id)) -- ждём исчезновения клиентского объекта
+   return (not level.object_by_id(self.npc_id)) -- Р¶РґС‘Рј РёСЃС‡РµР·РЅРѕРІРµРЅРёСЏ РєР»РёРµРЅС‚СЃРєРѕРіРѕ РѕР±СЉРµРєС‚Р°
 end
 function go_offline_watch_timer:action()
    local s_npc = alife():object(self.npc_id)
    if s_npc then
-      s_npc.position = self.pos -- кастуем злое колдунство
-      s_npc.force_offline = nil -- отправляем обратно в онлайн
+      s_npc.position = self.pos -- РєР°СЃС‚СѓРµРј Р·Р»РѕРµ РєРѕР»РґСѓРЅСЃС‚РІРѕ
+      s_npc.force_offline = nil -- РѕС‚РїСЂР°РІР»СЏРµРј РѕР±СЂР°С‚РЅРѕ РІ РѕРЅР»Р°Р№РЅ
    else
-      --log1("Something wrong!") -- такое возможно при удалении объекта
+      --log1("Something wrong!") -- С‚Р°РєРѕРµ РІРѕР·РјРѕР¶РЅРѕ РїСЂРё СѓРґР°Р»РµРЅРёРё РѕР±СЉРµРєС‚Р°
    end
 end
 
---- Возвращает класс защиты надетой на ГГ брони от выброса. В obj передавать db:actor
---- С неписями НЕ работает! Пользуйте armor_type(npc)
+--- Р’РѕР·РІСЂР°С‰Р°РµС‚ РєР»Р°СЃСЃ Р·Р°С‰РёС‚С‹ РЅР°РґРµС‚РѕР№ РЅР° Р“Р“ Р±СЂРѕРЅРё РѕС‚ РІС‹Р±СЂРѕСЃР°. Р’ obj РїРµСЂРµРґР°РІР°С‚СЊ db:actor
+--- РЎ РЅРµРїРёСЃСЏРјРё РќР• СЂР°Р±РѕС‚Р°РµС‚! РџРѕР»СЊР·СѓР№С‚Рµ armor_type(npc)
 function armor_class(obj)
 	if obj then
 		local armor = obj:get_current_outfit()
@@ -220,7 +220,7 @@ function armor_class(obj)
 end
 
 local armor_type_npc = {["novice"]=4, ["experienced"]=3, ["veteran"]=2, ["master"]=1}
---- Возвращает класс защиты непися
+--- Р’РѕР·РІСЂР°С‰Р°РµС‚ РєР»Р°СЃСЃ Р·Р°С‰РёС‚С‹ РЅРµРїРёСЃСЏ
 function armor_type(npc)
 	if npc then
 		local npc_rank = ranks.get_obj_rank_name(npc)
@@ -230,7 +230,7 @@ function armor_type(npc)
 	end
 end
 
--- Показ типса
+-- РџРѕРєР°Р· С‚РёРїСЃР°
 function send_tip(news_text, header, timeout, showtime, sender, sound)
 	if news_text==nil then return end
 	local header = (header or game.translate_string("st_tip"))
@@ -239,7 +239,7 @@ function send_tip(news_text, header, timeout, showtime, sender, sound)
 
 	local player = xr_sound.get_safe_sound_object((tips_variable[tostring(sound)] or  tips_variable["pda_tips"]))
 
-	--' Играем дефолтный звук
+	--' РРіСЂР°РµРј РґРµС„РѕР»С‚РЅС‹Р№ Р·РІСѓРє
 	player:play(db.actor, timeout, sound_object.s2d)
 
 	local sender = (sender or "default")
@@ -252,7 +252,7 @@ function send_tip(news_text, header, timeout, showtime, sender, sound)
 	return true
 end
 
--- Спавним объекты в инвентарь
+-- РЎРїР°РІРЅРёРј РѕР±СЉРµРєС‚С‹ РІ РёРЅРІРµРЅС‚Р°СЂСЊ
 function spawn_item_in_inv(section,npc)
 	local npc = (npc or db.actor)
 --	log1("~~spawn_item_in_inv sect ["..tostring(section).."] npc ["..npc:name().."]")	
@@ -269,7 +269,7 @@ function spawn_item_in_inv(section,npc)
 	end	
 end
 
--- Спавним патроны в инвентарь
+-- РЎРїР°РІРЅРёРј РїР°С‚СЂРѕРЅС‹ РІ РёРЅРІРµРЅС‚Р°СЂСЊ
 function spawn_ammo_in_inv(section,number,npc)
 	local npc = (npc or db.actor)
 	-- log1("~~spawn_ammo_in_inv sect ["..tostring(section).."] npc ["..npc:name().."]")	
@@ -288,7 +288,7 @@ function spawn_ammo_in_inv(section,number,npc)
 end
 
 
--- Удаляем объект из игры
+-- РЈРґР°Р»СЏРµРј РѕР±СЉРµРєС‚ РёР· РёРіСЂС‹
 function remove_item(item_to_remove)
 	--ASSERT(item_to_remove, "[ogse.remove_item] item is a nil reference!")
 	if item_to_remove then
@@ -303,7 +303,7 @@ function remove_item(item_to_remove)
 	return false
 end
 
--- Удаляем объект из игры по имени
+-- РЈРґР°Р»СЏРµРј РѕР±СЉРµРєС‚ РёР· РёРіСЂС‹ РїРѕ РёРјРµРЅРё
 function remove_item_by_name(item_to_remove)
 	--ASSERT(item_to_remove, "[ogse.remove_item] item is a nil reference!")
 	if item_to_remove then
@@ -318,7 +318,7 @@ function remove_item_by_name(item_to_remove)
 	return false
 end
 
--- Выбрасываем объект из инвентаря, применимо к ГГ
+-- Р’С‹Р±СЂР°СЃС‹РІР°РµРј РѕР±СЉРµРєС‚ РёР· РёРЅРІРµРЅС‚Р°СЂСЏ, РїСЂРёРјРµРЅРёРјРѕ Рє Р“Р“
 function drop_item(npc,item)
 	if item~=nil then
 	    npc:mark_item_dropped(item)
@@ -326,13 +326,13 @@ function drop_item(npc,item)
 end
 
 
--- Убиваем непися
+-- РЈР±РёРІР°РµРј РЅРµРїРёСЃСЏ
 function make_suicide(npc)
 	npc:kill(npc)
 end
 
 
--- Узнаем отношение одного непися к другому
+-- РЈР·РЅР°РµРј РѕС‚РЅРѕС€РµРЅРёРµ РѕРґРЅРѕРіРѕ РЅРµРїРёСЃСЏ Рє РґСЂСѓРіРѕРјСѓ
 function get_npc_relation(obj,target)
 	local rel = obj:relation(target)
 	if rel ~= nil then
@@ -341,7 +341,7 @@ function get_npc_relation(obj,target)
 end
 
 
--- Задаем отношение одного непися к другому
+-- Р—Р°РґР°РµРј РѕС‚РЅРѕС€РµРЅРёРµ РѕРґРЅРѕРіРѕ РЅРµРїРёСЃСЏ Рє РґСЂСѓРіРѕРјСѓ
 function set_npc_relation(obj,target,relation)
 	ASSERT(relation, "[ogse.set_npc_relation] variable relation == nil!")
 	if relation=="neutral" then
@@ -358,20 +358,20 @@ function set_npc_relation(obj,target,relation)
 end
 
 
--- Узнаем группировку непися, применимо к ГГ
+-- РЈР·РЅР°РµРј РіСЂСѓРїРїРёСЂРѕРІРєСѓ РЅРµРїРёСЃСЏ, РїСЂРёРјРµРЅРёРјРѕ Рє Р“Р“
 function get_npc_community(npc)
 	return npc:community()
 end
 
 
--- Выставляем группировку непися, можно ГГ
+-- Р’С‹СЃС‚Р°РІР»СЏРµРј РіСЂСѓРїРїРёСЂРѕРІРєСѓ РЅРµРїРёСЃСЏ, РјРѕР¶РЅРѕ Р“Р“
 function set_npc_community(npc,community_string)
-	--значения для community_string можно узнать в config\creatures\game_relations.ltx
+	--Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ community_string РјРѕР¶РЅРѕ СѓР·РЅР°С‚СЊ РІ config\creatures\game_relations.ltx
 	return npc:set_character_community(community_string, 0, 0)
 end
 
 
--- Удаляем предмет из инвентаря
+-- РЈРґР°Р»СЏРµРј РїСЂРµРґРјРµС‚ РёР· РёРЅРІРµРЅС‚Р°СЂСЏ
 function remove_item_from_inventory_by_name( remove_item_name, npc )
   return remove_item_from_inventory( npc:object( remove_item_name ), npc )
 end
@@ -392,13 +392,13 @@ function remove_item_from_inventory( remove_item, npc )
 end
 
 
--- Создаем "ожидатели" для неписей нужно для корректной работы с объектами, созданными внутри скрипта
+-- РЎРѕР·РґР°РµРј "РѕР¶РёРґР°С‚РµР»Рё" РґР»СЏ РЅРµРїРёСЃРµР№ РЅСѓР¶РЅРѕ РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕР№ СЂР°Р±РѕС‚С‹ СЃ РѕР±СЉРµРєС‚Р°РјРё, СЃРѕР·РґР°РЅРЅС‹РјРё РІРЅСѓС‚СЂРё СЃРєСЂРёРїС‚Р°
 function create_waiter_for_npc(npc,select_string)
 	npc_spawner[npc.id]=select_string
 end
 
 
--- Очищаем инвентарь непися, можно ГГ, использует следующую фунцию для удаления предмета
+-- РћС‡РёС‰Р°РµРј РёРЅРІРµРЅС‚Р°СЂСЊ РЅРµРїРёСЃСЏ, РјРѕР¶РЅРѕ Р“Р“, РёСЃРїРѕР»СЊР·СѓРµС‚ СЃР»РµРґСѓСЋС‰СѓСЋ С„СѓРЅС†РёСЋ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ РїСЂРµРґРјРµС‚Р°
 function clear_npc_inventory( npc )
   npc:iterate_inventory( __del_item, npc )
 end
@@ -416,7 +416,7 @@ function __del_item( npc, item )
 end
 
 
--- Проверка, запущена ли игра
+-- РџСЂРѕРІРµСЂРєР°, Р·Р°РїСѓС‰РµРЅР° Р»Рё РёРіСЂР°
 function check_game()
 	if level.present() and (db.actor ~= nil) and db.actor:alive() then
 		return true
@@ -424,7 +424,7 @@ function check_game()
 	return false
 end
 
--- Записываем переменную
+-- Р—Р°РїРёСЃС‹РІР°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ
 function save_variable(variable_name, value)
 	if main_variable_tbl == nil then
 		main_variable_tbl = {}
@@ -432,7 +432,7 @@ function save_variable(variable_name, value)
 	main_variable_tbl[variable_name] = value
 end
 
--- Загружаем переменную
+-- Р—Р°РіСЂСѓР¶Р°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ
 function load_variable(variable_name, value_if_not_found)
 	if main_variable_tbl ~= nil and main_variable_tbl[variable_name] ~= nil then
 		local val = main_variable_tbl[variable_name]
@@ -446,7 +446,7 @@ function load_variable(variable_name, value_if_not_found)
 	return nil
 end
 
--- Удаляем переменную
+-- РЈРґР°Р»СЏРµРј РїРµСЂРµРјРµРЅРЅСѓСЋ
 function del_variable(variable_name)
 	if main_variable_tbl[variable_name] then
 		main_variable_tbl[variable_name] = nil
@@ -454,16 +454,16 @@ function del_variable(variable_name)
 end
 
 local sidor_sobj
--- Готовим хранилище Сидорыча
+-- Р“РѕС‚РѕРІРёРј С…СЂР°РЅРёР»РёС‰Рµ РЎРёРґРѕСЂС‹С‡Р°
 function create_sidor_storage()
 	sidor_sobj = alife():story_object(story_ids.Escape_Trader)
 end
 
 deadmans_table = {}
--- Формат хранения:
+-- Р¤РѕСЂРјР°С‚ С…СЂР°РЅРµРЅРёСЏ:
 -- [id] = { time_died = time_when_killed, killer = who:id() }
 
--- Восстанавливаем оперативные переменные из хранилища Сидорыча
+-- Р’РѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕРїРµСЂР°С‚РёРІРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РёР· С…СЂР°РЅРёР»РёС‰Р° РЎРёРґРѕСЂС‹С‡Р°
 function load_main_variable_tbl()
 	main_variable_tbl = nil
 	if sidor_sobj and sidor_sobj.m_storage then
@@ -486,7 +486,7 @@ function load_main_variable_tbl()
 	end
 end
 
--- Сохраняем оперативные переменные в хранилище Сидорыча
+-- РЎРѕС…СЂР°РЅСЏРµРј РѕРїРµСЂР°С‚РёРІРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РІ С…СЂР°РЅРёР»РёС‰Рµ РЎРёРґРѕСЂС‹С‡Р°
 function save_main_variable_tbl()
 	if sidor_sobj then
 		local m_storage_unparsed = {}
@@ -501,7 +501,7 @@ function save_main_variable_tbl()
 end
 
 
--- Определяем находится ли ГГ в определенной зоне
+-- РћРїСЂРµРґРµР»СЏРµРј РЅР°С…РѕРґРёС‚СЃСЏ Р»Рё Р“Р“ РІ РѕРїСЂРµРґРµР»РµРЅРЅРѕР№ Р·РѕРЅРµ
 function check_npc_in_box(npc, p1,p2)
 	local pos=npc:position()
 	if is_point_inside_interval(pos.x,p1.x,p2.x) and
@@ -524,12 +524,12 @@ function is_point_inside_interval(x,p1,p2)
 	end
 end
 
--- Получаем инвентарное название объекта
+-- РџРѕР»СѓС‡Р°РµРј РёРЅРІРµРЅС‚Р°СЂРЅРѕРµ РЅР°Р·РІР°РЅРёРµ РѕР±СЉРµРєС‚Р°
 function get_inv_name(section)
 	return sys_ini:r_string(section,"inv_name")
 end
 
--- Парсинг ини-файла в массив
+-- РџР°СЂСЃРёРЅРі РёРЅРё-С„Р°Р№Р»Р° РІ РјР°СЃСЃРёРІ
 function parse_ini_section_to_array(ini,section)
 	local tmp={}
 	if ini:section_exist(section) then
@@ -545,10 +545,10 @@ function parse_ini_section_to_array(ini,section)
 end
 
 function add_spot_on_map(obj_id,type,text)
-  --возможные типы type смотри в ui\map_spots.xml
+  --РІРѕР·РјРѕР¶РЅС‹Рµ С‚РёРїС‹ type СЃРјРѕС‚СЂРё РІ ui\map_spots.xml
   if obj_id then
     if text==nil then text=" " end
-    -- Ставим метку на серверный объект чтобы её не пришлось обновлять
+    -- РЎС‚Р°РІРёРј РјРµС‚РєСѓ РЅР° СЃРµСЂРІРµСЂРЅС‹Р№ РѕР±СЉРµРєС‚ С‡С‚РѕР±С‹ РµС‘ РЅРµ РїСЂРёС€Р»РѕСЃСЊ РѕР±РЅРѕРІР»СЏС‚СЊ
     level.map_add_object_spot_ser(obj_id, type, text)
 --    save_variable("x_marker_type_"..obj_id, type)
 --    save_variable("x_marker_text_"..obj_id, text)
@@ -562,8 +562,8 @@ function remove_spot_from_map(obj_id,type)
 --    del_variable("x_marker_text_"..obj_id)
   end
 end
--- вспомогательная функция, создание одного или нескольких объектов в заданной точке
--- назначение: убрать повторный код из функций далее по тексту
+-- РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ, СЃРѕР·РґР°РЅРёРµ РѕРґРЅРѕРіРѕ РёР»Рё РЅРµСЃРєРѕР»СЊРєРёС… РѕР±СЉРµРєС‚РѕРІ РІ Р·Р°РґР°РЅРЅРѕР№ С‚РѕС‡РєРµ
+-- РЅР°Р·РЅР°С‡РµРЅРёРµ: СѓР±СЂР°С‚СЊ РїРѕРІС‚РѕСЂРЅС‹Р№ РєРѕРґ РёР· С„СѓРЅРєС†РёР№ РґР°Р»РµРµ РїРѕ С‚РµРєСЃС‚Сѓ
 local function spawn_single_object_internal(res, spawn_item)
 	ASSERT(spawn_item.sec, "[spawn_single_object_internal] section not defined")
 	ASSERT(spawn_item.pos, "[spawn_single_object_internal] position not defined, sec = '%s'", spawn_item.sec)
@@ -582,10 +582,10 @@ local function spawn_single_object_internal(res, spawn_item)
 	local sim = alife()
 	for i=1,count do
 		local sobj_abstract = sim:create(spawn_item.sec, vector():set(unpack(spawn_item.pos)), spawn_item.lvid, spawn_item.gvid)
-		-- получаем объект правильнго типа
+		-- РїРѕР»СѓС‡Р°РµРј РѕР±СЉРµРєС‚ РїСЂР°РІРёР»СЊРЅРіРѕ С‚РёРїР°
 		local sobj = sim:object(sobj_abstract.id)
-		-- на самом деле в этой проверке нет смысла. Ситуации, когда объект создать не удалось, а выполнение продолжилось,
-		-- просто не бывает. В этих случаях всегда идёт вылет. Но пусть будет
+		-- РЅР° СЃР°РјРѕРј РґРµР»Рµ РІ СЌС‚РѕР№ РїСЂРѕРІРµСЂРєРµ РЅРµС‚ СЃРјС‹СЃР»Р°. РЎРёС‚СѓР°С†РёРё, РєРѕРіРґР° РѕР±СЉРµРєС‚ СЃРѕР·РґР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ, Р° РІС‹РїРѕР»РЅРµРЅРёРµ РїСЂРѕРґРѕР»Р¶РёР»РѕСЃСЊ,
+		-- РїСЂРѕСЃС‚Рѕ РЅРµ Р±С‹РІР°РµС‚. Р’ СЌС‚РёС… СЃР»СѓС‡Р°СЏС… РІСЃРµРіРґР° РёРґС‘С‚ РІС‹Р»РµС‚. РќРѕ РїСѓСЃС‚СЊ Р±СѓРґРµС‚
 		ASSERT(sobj, "[spawn_single_object_internal] cannot create object, sec = '%s'", spawn_item.sec)
 		if spawn_item.use_ai_location == false or spawn_item.use_ai_location == "false" then
 			sobj:used_ai_locations(false)
@@ -601,14 +601,14 @@ local function spawn_single_object_internal(res, spawn_item)
 		table.insert(res, sobj)
 	end
 end
--- спавнит один или несколько одинаковых предметов в заданной точке
--- фактически просто обёртка над spawn_single_object_internal
+-- СЃРїР°РІРЅРёС‚ РѕРґРёРЅ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ РѕРґРёРЅР°РєРѕРІС‹С… РїСЂРµРґРјРµС‚РѕРІ РІ Р·Р°РґР°РЅРЅРѕР№ С‚РѕС‡РєРµ
+-- С„Р°РєС‚РёС‡РµСЃРєРё РїСЂРѕСЃС‚Рѕ РѕР±С‘СЂС‚РєР° РЅР°Рґ spawn_single_object_internal
 function spawn_object(spawn_item)
 	local res = {}
 	spawn_single_object_internal(res, spawn_item)
 	return unpack(res)
 end
--- спавнит несколько предметов, заданных таблицей
+-- СЃРїР°РІРЅРёС‚ РЅРµСЃРєРѕР»СЊРєРѕ РїСЂРµРґРјРµС‚РѕРІ, Р·Р°РґР°РЅРЅС‹С… С‚Р°Р±Р»РёС†РµР№
 function spawn_objects(spawn_items)
 	local res = {}
 	for idx,spawn_item in ipairs(spawn_items) do
@@ -616,7 +616,7 @@ function spawn_objects(spawn_items)
 	end
 	return res
 end
--- спавнит рандомно один из предметов, заданных таблицей
+-- СЃРїР°РІРЅРёС‚ СЂР°РЅРґРѕРјРЅРѕ РѕРґРёРЅ РёР· РїСЂРµРґРјРµС‚РѕРІ, Р·Р°РґР°РЅРЅС‹С… С‚Р°Р±Р»РёС†РµР№
 function spawn_object_rand(spawn_items)
 	local spawn_item = spawn_items[math.random(#spawn_items)]
 	local res = {}
@@ -652,7 +652,7 @@ function kill_crow()
 	end
 end
 
---TODO: не из-за этой ли функции вороны вылетают из одной точки на земле?
+--TODO: РЅРµ РёР·-Р·Р° СЌС‚РѕР№ Р»Рё С„СѓРЅРєС†РёРё РІРѕСЂРѕРЅС‹ РІС‹Р»РµС‚Р°СЋС‚ РёР· РѕРґРЅРѕР№ С‚РѕС‡РєРё РЅР° Р·РµРјР»Рµ?
 function spawn_crow()
 	local lv = db.actor:level_vertex_id()
 	local gv = db.actor:game_vertex_id()
@@ -688,16 +688,16 @@ function has_info(info)
 	return db.actor:has_info(info)
 end
 
--- функция создания окна сообщения, которое закроется само через определённое время
+-- С„СѓРЅРєС†РёСЏ СЃРѕР·РґР°РЅРёСЏ РѕРєРЅР° СЃРѕРѕР±С‰РµРЅРёСЏ, РєРѕС‚РѕСЂРѕРµ Р·Р°РєСЂРѕРµС‚СЃСЏ СЃР°РјРѕ С‡РµСЂРµР· РѕРїСЂРµРґРµР»С‘РЅРЅРѕРµ РІСЂРµРјСЏ
 function autohiding_msg(txt, delay)
 	local dlg = MonologueMsg(txt)
 	level.start_stop_menu(dlg, true)
 	autohide_dlg_timer(delay, dlg):start()
 end
 
--- окно "монологового" типа. Просто сообщение в рамке.
--- Закрыть можно по ESC. Также можно использовать в комбинации с
--- таймером автозакрытия (см. MonologueMsg и ф-ю autohiding_msg)
+-- РѕРєРЅРѕ "РјРѕРЅРѕР»РѕРіРѕРІРѕРіРѕ" С‚РёРїР°. РџСЂРѕСЃС‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ РІ СЂР°РјРєРµ.
+-- Р—Р°РєСЂС‹С‚СЊ РјРѕР¶РЅРѕ РїРѕ ESC. РўР°РєР¶Рµ РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РІ РєРѕРјР±РёРЅР°С†РёРё СЃ
+-- С‚Р°Р№РјРµСЂРѕРј Р°РІС‚РѕР·Р°РєСЂС‹С‚РёСЏ (СЃРј. MonologueMsg Рё С„-СЋ autohiding_msg)
 class "MonologueMsg" (CUIScriptWnd)
 
 function MonologueMsg:__init(txt) super()
@@ -712,19 +712,19 @@ function MonologueMsg:__init(txt) super()
 	xml:InitWindow("main", 0, self)
 	self.msg = xml:InitStatic("main:msg", self)
 	self.msg:SetTextST(txt)
-	self.dlg = self -- трюк для предотвращения вылета.
-	-- Чтобы не было утечки памяти после закрытия окна надо обнулить эту ссылку
-	-- (см. метод OnKeyboard и также метод срабатывания спец. таймера)
+	self.dlg = self -- С‚СЂСЋРє РґР»СЏ РїСЂРµРґРѕС‚РІСЂР°С‰РµРЅРёСЏ РІС‹Р»РµС‚Р°.
+	-- Р§С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ СѓС‚РµС‡РєРё РїР°РјСЏС‚Рё РїРѕСЃР»Рµ Р·Р°РєСЂС‹С‚РёСЏ РѕРєРЅР° РЅР°РґРѕ РѕР±РЅСѓР»РёС‚СЊ СЌС‚Сѓ СЃСЃС‹Р»РєСѓ
+	-- (СЃРј. РјРµС‚РѕРґ OnKeyboard Рё С‚Р°РєР¶Рµ РјРµС‚РѕРґ СЃСЂР°Р±Р°С‚С‹РІР°РЅРёСЏ СЃРїРµС†. С‚Р°Р№РјРµСЂР°)
 end
 function MonologueMsg:OnKeyboard(dik, key_act) CUIScriptWnd.OnKeyboard(self,dik,key_act)
 	if key_act == ui_events.WINDOW_KEY_PRESSED and dik == DIK_keys.DIK_ESCAPE then
 		self:GetHolder():start_stop_menu(self,true)
 		self:ClearCallbacks()
-		self.dlg = nil -- отпускаем объект для сборщика мусора
+		self.dlg = nil -- РѕС‚РїСѓСЃРєР°РµРј РѕР±СЉРµРєС‚ РґР»СЏ СЃР±РѕСЂС‰РёРєР° РјСѓСЃРѕСЂР°
 	end
 	return true
 end
--- служебный таймер для автоматического закрытия диалога через заданное время
+-- СЃР»СѓР¶РµР±РЅС‹Р№ С‚Р°Р№РјРµСЂ РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРіРѕ Р·Р°РєСЂС‹С‚РёСЏ РґРёР°Р»РѕРіР° С‡РµСЂРµР· Р·Р°РґР°РЅРЅРѕРµ РІСЂРµРјСЏ
 class "autohide_dlg_timer" (ogse_qt.quick_timer)
 function autohide_dlg_timer:__init(delay, dlg) super(delay)
 	self.dlg = dlg
@@ -733,11 +733,11 @@ function autohide_dlg_timer:taction()
 	if self.dlg and self.dlg:IsShown() then
 		level.start_stop_menu(self.dlg,true)
 		self.dlg:ClearCallbacks()
-		self.dlg.dlg = nil -- отпускаем объект для сборщика мусора
+		self.dlg.dlg = nil -- РѕС‚РїСѓСЃРєР°РµРј РѕР±СЉРµРєС‚ РґР»СЏ СЃР±РѕСЂС‰РёРєР° РјСѓСЃРѕСЂР°
 	end
 end
 
---/* Уменьшения репутации на .. едениц главному герою..
+--/* РЈРјРµРЅСЊС€РµРЅРёСЏ СЂРµРїСѓС‚Р°С†РёРё РЅР° .. РµРґРµРЅРёС† РіР»Р°РІРЅРѕРјСѓ РіРµСЂРѕСЋ..
 function reputation_down_20(stalker, player)
 	db.actor:change_character_reputation(-20)
 end
@@ -761,7 +761,7 @@ var_exists = ogse_unist.value_exist
 delete_var = ogse_unist.remove_value
 save_or_delete_var = ogse_unist.set_or_remove_value
 
------------------- таймер со счётчиком на экране --------------------------------
+------------------ С‚Р°Р№РјРµСЂ СЃРѕ СЃС‡С‘С‚С‡РёРєРѕРј РЅР° СЌРєСЂР°РЅРµ --------------------------------
 class "visual_timer" (ogse_st_mgr.delayed_fun_start)
 function visual_timer:__init(name) super(name)
 	self._class = script_name()..".visual_timer"
@@ -817,7 +817,7 @@ function visual_timer:condition()
 	return false
 end
 
------------------- таймер со счётчиком на экране и дополниельным условием останова -----------------
+------------------ С‚Р°Р№РјРµСЂ СЃРѕ СЃС‡С‘С‚С‡РёРєРѕРј РЅР° СЌРєСЂР°РЅРµ Рё РґРѕРїРѕР»РЅРёРµР»СЊРЅС‹Рј СѓСЃР»РѕРІРёРµРј РѕСЃС‚Р°РЅРѕРІР° -----------------
 class "conditional_visual_timer" (visual_timer)
 function conditional_visual_timer:__init(name) super(name)
 	self._class = script_name()..".conditional_visual_timer"
@@ -831,7 +831,7 @@ function conditional_visual_timer:init(cond_name, action_name, ...)
 end
 
 function conditional_visual_timer:condition()
-	visual_timer.condition(self) -- всегда возвращает false
+	visual_timer.condition(self) -- РІСЃРµРіРґР° РІРѕР·РІСЂР°С‰Р°РµС‚ false
 	return self.user_condition(unpack(self.fun_params))
 end
 
@@ -847,8 +847,8 @@ function conditional_visual_timer:save(packet)
 	ogse_st_mgr.delayed_fun_start.save(self, packet)
 end
 
------ обёртки для классов таймеров с визуальным счётчиком --------------------------------
--- только по времени
+----- РѕР±С‘СЂС‚РєРё РґР»СЏ РєР»Р°СЃСЃРѕРІ С‚Р°Р№РјРµСЂРѕРІ СЃ РІРёР·СѓР°Р»СЊРЅС‹Рј СЃС‡С‘С‚С‡РёРєРѕРј --------------------------------
+-- С‚РѕР»СЊРєРѕ РїРѕ РІСЂРµРјРµРЅРё
 function start_visual_timer(name, delay, fname, ...)
 	return visual_timer(name):set_delay(delay):init(fname, ...):start(true)
 end
@@ -857,7 +857,7 @@ function start_visual_gtimer(name, delay, fname, ...)
 	return visual_timer(name):set_gdelay(delay):init(fname, ...):start(true)
 end
 
--- с дополнительным условием останова
+-- СЃ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рј СѓСЃР»РѕРІРёРµРј РѕСЃС‚Р°РЅРѕРІР°
 function start_conditional_visual_timer(name, delay, cond_name, act_name, ...)
 	return conditional_visual_timer(name):set_delay(delay):init(cond_name, act_name, ...):start(true)
 end
@@ -866,29 +866,29 @@ function start_conditional_visual_gtimer(name, delay, cond_name, act_name, ...)
 	return conditional_visual_timer(name):set_gdelay(delay):init(cond_name, act_name, ...):start(true)
 end
 
--- псевдонимы для удобства вызова
+-- РїСЃРµРІРґРѕРЅРёРјС‹ РґР»СЏ СѓРґРѕР±СЃС‚РІР° РІС‹Р·РѕРІР°
 start_tmr = ogse_st_mgr.start_timer
 start_gtmr = ogse_st_mgr.start_gtimer
 get_tmr = ogse_st_mgr.get_timer
 tmr_exists = ogse_st_mgr.timer_exists
 
--- специальный таймер для прокрутки игрового времени. Является основой для более
--- специализированного таймера сна sleep_timer (см. ogse_sleep_mgr.script)
--- использование:
+-- СЃРїРµС†РёР°Р»СЊРЅС‹Р№ С‚Р°Р№РјРµСЂ РґР»СЏ РїСЂРѕРєСЂСѓС‚РєРё РёРіСЂРѕРІРѕРіРѕ РІСЂРµРјРµРЅРё. РЇРІР»СЏРµС‚СЃСЏ РѕСЃРЅРѕРІРѕР№ РґР»СЏ Р±РѕР»РµРµ
+-- СЃРїРµС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚Р°Р№РјРµСЂР° СЃРЅР° sleep_timer (СЃРј. ogse_sleep_mgr.script)
+-- РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ:
 -- ogse.time_rewind_timer(12, 5, 4):start()
--- прокрутить 12 игровых часов за 5 секунд ревльного времени, используя 4 такта
--- ogse.time_rewind_timer(5):start() -- прокрутить 5 часов
+-- РїСЂРѕРєСЂСѓС‚РёС‚СЊ 12 РёРіСЂРѕРІС‹С… С‡Р°СЃРѕРІ Р·Р° 5 СЃРµРєСѓРЅРґ СЂРµРІР»СЊРЅРѕРіРѕ РІСЂРµРјРµРЅРё, РёСЃРїРѕР»СЊР·СѓСЏ 4 С‚Р°РєС‚Р°
+-- ogse.time_rewind_timer(5):start() -- РїСЂРѕРєСЂСѓС‚РёС‚СЊ 5 С‡Р°СЃРѕРІ
 class "time_rewind_timer" (ogse_qt.quick_timer)
 function time_rewind_timer:__init(game_time_to_rewind, real_time, phases_number) super()
 	ASSERT(game_time_to_rewind > 0, "time_rewind_timer:__init: game_time_to_rewind is negative")
 	self.normal_time_factor = level.get_time_factor()
 	self.start_sleep_time = game.get_game_time()
 	self.end_sleep_time = self.start_sleep_time + seconds2ctime(game_time_to_rewind * 3600.0)
-	self.real_time = real_time or 3 -- время, за которое прокрутим, по умолчанию 3 секунды
-	local ph_num = phases_number or 3 -- количество периодов
-	-- на каждом периоде скорость течения времени уменьшается в 10 раз по отношению к предыдущему
-	-- таким образом повышается точность выставления времени
-	self.real_phase_time = self.real_time / ph_num -- длительность одной фазы
+	self.real_time = real_time or 3 -- РІСЂРµРјСЏ, Р·Р° РєРѕС‚РѕСЂРѕРµ РїСЂРѕРєСЂСѓС‚РёРј, РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 3 СЃРµРєСѓРЅРґС‹
+	local ph_num = phases_number or 3 -- РєРѕР»РёС‡РµСЃС‚РІРѕ РїРµСЂРёРѕРґРѕРІ
+	-- РЅР° РєР°Р¶РґРѕРј РїРµСЂРёРѕРґРµ СЃРєРѕСЂРѕСЃС‚СЊ С‚РµС‡РµРЅРёСЏ РІСЂРµРјРµРЅРё СѓРјРµРЅСЊС€Р°РµС‚СЃСЏ РІ 10 СЂР°Р· РїРѕ РѕС‚РЅРѕС€РµРЅРёСЋ Рє РїСЂРµРґС‹РґСѓС‰РµРјСѓ
+	-- С‚Р°РєРёРј РѕР±СЂР°Р·РѕРј РїРѕРІС‹С€Р°РµС‚СЃСЏ С‚РѕС‡РЅРѕСЃС‚СЊ РІС‹СЃС‚Р°РІР»РµРЅРёСЏ РІСЂРµРјРµРЅРё
+	self.real_phase_time = self.real_time / ph_num -- РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РѕРґРЅРѕР№ С„Р°Р·С‹
 	self:set_phase(ph_num)
 end
 
@@ -896,10 +896,10 @@ function time_rewind_timer:set_phase(phase_num)
 	self.phase = phase_num
 	local current_game_time = game.get_game_time()
 	self.phase_begin = current_game_time
-	local time_left = self.end_sleep_time:diffSec(current_game_time) -- оставшееся время сна в секундах
-	if self.phase == 1 then -- последняя фаза, отдаём под неё всё оставшееся время
+	local time_left = self.end_sleep_time:diffSec(current_game_time) -- РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ СЃРЅР° РІ СЃРµРєСѓРЅРґР°С…
+	if self.phase == 1 then -- РїРѕСЃР»РµРґРЅСЏСЏ С„Р°Р·Р°, РѕС‚РґР°С‘Рј РїРѕРґ РЅРµС‘ РІСЃС‘ РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ
 		self.phase_end_time = self.end_sleep_time
-	else -- обычная фаза, отдаём под неё время 0.9 * <оставшееся время ожидания>
+	else -- РѕР±С‹С‡РЅР°СЏ С„Р°Р·Р°, РѕС‚РґР°С‘Рј РїРѕРґ РЅРµС‘ РІСЂРµРјСЏ 0.9 * <РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ>
 		self.phase_end_time = self.phase_begin + seconds2ctime(time_left*0.9)
 	end
 	local tf = self.phase_end_time:diffSec(self.phase_begin) / self.real_phase_time

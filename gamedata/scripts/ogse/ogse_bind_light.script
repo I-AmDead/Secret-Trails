@@ -1,9 +1,9 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 -------------------------------------------------------------------------------
 --| ogse_bind_light.script                                                  |--
---| Биндер источников света: лампы и прожектора                             |--
---| Нужен для поддержки работы по расписанию,                               |--
---| также поддерживает встроенную игровую логику                            |--
+--| Р‘РёРЅРґРµСЂ РёСЃС‚РѕС‡РЅРёРєРѕРІ СЃРІРµС‚Р°: Р»Р°РјРїС‹ Рё РїСЂРѕР¶РµРєС‚РѕСЂР°                             |--
+--| РќСѓР¶РµРЅ РґР»СЏ РїРѕРґРґРµСЂР¶РєРё СЂР°Р±РѕС‚С‹ РїРѕ СЂР°СЃРїРёСЃР°РЅРёСЋ,                               |--
+--| С‚Р°РєР¶Рµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ РІСЃС‚СЂРѕРµРЅРЅСѓСЋ РёРіСЂРѕРІСѓСЋ Р»РѕРіРёРєСѓ                            |--
 --| Malandrinus, OGS Evolution Team, 2012                                   |--
 -------------------------------------------------------------------------------
 function init(obj)
@@ -43,9 +43,9 @@ function light_binder:update(delta)
 	if not self.initialized and db.actor then
 		self.initialized = true
 		xr_logic.initialize_obj(self.object, self.st, self.loaded, db.actor, modules.stype_item)
-		-- выполняем инициализацию лампы при условии наличия конфига лампы 
+		-- РІС‹РїРѕР»РЅСЏРµРј РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ Р»Р°РјРїС‹ РїСЂРё СѓСЃР»РѕРІРёРё РЅР°Р»РёС‡РёСЏ РєРѕРЅС„РёРіР° Р»Р°РјРїС‹ 
 		if self.has_light_config then
-			-- читаем сохранённое состояние
+			-- С‡РёС‚Р°РµРј СЃРѕС…СЂР°РЅС‘РЅРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 			self.is_on = xr_logic.pstor_retrieve(self.object, "is_on", true)
 			self.is_broken = xr_logic.pstor_retrieve(self.object, "is_broken", false)
 			local str_rt = xr_logic.pstor_retrieve(self.object, "repair_time", "0,0,0,0,0,0,0") -- "y,m,d,h,min,s,ms"
@@ -53,31 +53,31 @@ function light_binder:update(delta)
 			if game.get_game_time() > self.repair_time then
 				self.is_broken = false
 			end
-			-- инициализируем остальное
+			-- РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РѕСЃС‚Р°Р»СЊРЅРѕРµ
 			local light_config_fname = get_string("light_config", "cfg", nil, self.object:spawn_ini())
 			ASSERT(light_config_fname, "[light_binder:update] parameter 'cfg' in 'light_config' section in object '%s' is not defined", self.object:name())
 			self.light_config = dsh.cached_ini_file(light_config_fname)
 			self.st.light_config = {}
 			ASSERT(self.light_config, "[light_binder:update] can not create config file '%s'", light_config_fname)
-			if self.light_config:line_exist("light_config", "schedule") then -- если присутствует собственное расписание
-				-- если есть расписание, то нужен уникальный сигнал. В этом случае параметр "signal_name" будет проигнорирован.
+			if self.light_config:line_exist("light_config", "schedule") then -- РµСЃР»Рё РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚ СЃРѕР±СЃС‚РІРµРЅРЅРѕРµ СЂР°СЃРїРёСЃР°РЅРёРµ
+				-- РµСЃР»Рё РµСЃС‚СЊ СЂР°СЃРїРёСЃР°РЅРёРµ, С‚Рѕ РЅСѓР¶РµРЅ СѓРЅРёРєР°Р»СЊРЅС‹Р№ СЃРёРіРЅР°Р». Р’ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ РїР°СЂР°РјРµС‚СЂ "signal_name" Р±СѓРґРµС‚ РїСЂРѕРёРіРЅРѕСЂРёСЂРѕРІР°РЅ.
 				self.signal_name = self.object:name()
 				self.has_own_schedule = true
-				-- то добавляем его в менеджер освещения
+				-- С‚Рѕ РґРѕР±Р°РІР»СЏРµРј РµРіРѕ РІ РјРµРЅРµРґР¶РµСЂ РѕСЃРІРµС‰РµРЅРёСЏ
 				local switch_times = get_numbers("light_config", "schedule", self.light_config)
 				ogse_lights_mgr.add_light_schedule(self.signal_name, switch_times)
 			else
-				-- если своего расписания нет, то возможно есть внешнее расписание
+				-- РµСЃР»Рё СЃРІРѕРµРіРѕ СЂР°СЃРїРёСЃР°РЅРёСЏ РЅРµС‚, С‚Рѕ РІРѕР·РјРѕР¶РЅРѕ РµСЃС‚СЊ РІРЅРµС€РЅРµРµ СЂР°СЃРїРёСЃР°РЅРёРµ
 				self.signal_name = get_string("light_config", "signal_name", nil, self.light_config)
-				if self.signal_name == "auto" then -- запрос на генерацию уникального имени сигнала
+				if self.signal_name == "auto" then -- Р·Р°РїСЂРѕСЃ РЅР° РіРµРЅРµСЂР°С†РёСЋ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРјРµРЅРё СЃРёРіРЅР°Р»Р°
 					self.signal_name = self.object:name()
 				end
 			end
 			self.st.light_config.signal_name = self.signal_name
-			if self.signal_name then -- если есть сигнал (свой или внешний, неважно)
-				-- то подписываемся на него
+			if self.signal_name then -- РµСЃР»Рё РµСЃС‚СЊ СЃРёРіРЅР°Р» (СЃРІРѕР№ РёР»Рё РІРЅРµС€РЅРёР№, РЅРµРІР°Р¶РЅРѕ)
+				-- С‚Рѕ РїРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° РЅРµРіРѕ
 				self.switch_signal_desc = {signal = self.signal_name, self = self, fun = self.on_switch}
-				ogse_signals.get_mgr():subscribe(self.switch_signal_desc) -- регистрируем себя в менеджере сигналов
+				ogse_signals.get_mgr():subscribe(self.switch_signal_desc) -- СЂРµРіРёСЃС‚СЂРёСЂСѓРµРј СЃРµР±СЏ РІ РјРµРЅРµРґР¶РµСЂРµ СЃРёРіРЅР°Р»РѕРІ
 			end
 			--
 			self.particle_name = get_string("light_config", "particle", nil, self.light_config)
@@ -86,8 +86,8 @@ function light_binder:update(delta)
 				self.particle_bone = get_string("light_config", "particle_bone", nil, self.light_config)
 			end
 
-			if self.signal_name and ogse_lights_mgr.schedule_for_signal_exist(self.signal_name) then -- если есть сигнал от расписания
-				ogse_lights_mgr.request_last_signal(self.signal_name) -- запрашиваем сигнал инициализации
+			if self.signal_name and ogse_lights_mgr.schedule_for_signal_exist(self.signal_name) then -- РµСЃР»Рё РµСЃС‚СЊ СЃРёРіРЅР°Р» РѕС‚ СЂР°СЃРїРёСЃР°РЅРёСЏ
+				ogse_lights_mgr.request_last_signal(self.signal_name) -- Р·Р°РїСЂР°С€РёРІР°РµРј СЃРёРіРЅР°Р» РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 			else
 				self:on_switch(self.is_on)
 			end
@@ -146,7 +146,7 @@ function light_binder:update(delta)
 				xr_logic.pstor_retrieve(self.object, "target_pitch",  0.0)
 				)
 		end
-		-- направляем прожектор
+		-- РЅР°РїСЂР°РІР»СЏРµРј РїСЂРѕР¶РµРєС‚РѕСЂ
 		if self.angles then
 			self:set_projector_angles(self.angles[1],self.angles[2],self.angles[1],self.angles[2])
 		elseif self.aimpoint then
@@ -165,32 +165,32 @@ function light_binder:update(delta)
 		local new_aim_point = nil
 		local dir = self.object:get_current_direction()
 		--print_vector("dir", dir)
-		if not self.last_dir then -- ещё не задавали направление
+		if not self.last_dir then -- РµС‰С‘ РЅРµ Р·Р°РґР°РІР°Р»Рё РЅР°РїСЂР°РІР»РµРЅРёРµ
 			--log1("pr first_setup")
 			self.current_point = 1
 			new_aim_point = self.aim_path[self.current_point].p
 		else
-			if self.pause_start_time then -- режим паузы
+			if self.pause_start_time then -- СЂРµР¶РёРј РїР°СѓР·С‹
 				--log1(tostring(self.aim_path[self.current_point].t))
 				local tdif = (time_global() - self.pause_start_time) / 1.0e3
 				--log3("pr pause: %5.2f / %5.2f", tdif, self.aim_path[self.current_point].t)
-				if tdif > self.aim_path[self.current_point].t then -- пауза закончилась
+				if tdif > self.aim_path[self.current_point].t then -- РїР°СѓР·Р° Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ
 					--log1("pr set new point")
-					self.pause_start_time = nil -- снимаем паузу
-					-- назначаем следующую целевую точку
+					self.pause_start_time = nil -- СЃРЅРёРјР°РµРј РїР°СѓР·Сѓ
+					-- РЅР°Р·РЅР°С‡Р°РµРј СЃР»РµРґСѓСЋС‰СѓСЋ С†РµР»РµРІСѓСЋ С‚РѕС‡РєСѓ
 					self.current_point = self.current_point + 1
 					if self.current_point > #self.aim_path then
 						self.current_point = 1
 					end
 					new_aim_point = self.aim_path[self.current_point].p
 				end
-			else -- режим вращения
+			else -- СЂРµР¶РёРј РІСЂР°С‰РµРЅРёСЏ
 				--log1("pr move")
 				local dif = vector():sub(dir, self.last_dir):magnitude()
 				--log3("dif = %f", dif)
-				if dif < 0.001 then -- направление устаканилось
+				if dif < 0.001 then -- РЅР°РїСЂР°РІР»РµРЅРёРµ СѓСЃС‚Р°РєР°РЅРёР»РѕСЃСЊ
 					--log1("pr stop moving")
-					self.pause_start_time = time_global() -- начинаем паузу
+					self.pause_start_time = time_global() -- РЅР°С‡РёРЅР°РµРј РїР°СѓР·Сѓ
 				end
 			end
 		end
@@ -206,9 +206,9 @@ function light_binder:update(delta)
 			--log1("done")
 		end
 	end
-	-- обновляем положение партикла
+	-- РѕР±РЅРѕРІР»СЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїР°СЂС‚РёРєР»Р°
 	if self.is_on and self.particle then
-	--' Запускаем ассоциированный с объектом партикл.
+	--' Р—Р°РїСѓСЃРєР°РµРј Р°СЃСЃРѕС†РёРёСЂРѕРІР°РЅРЅС‹Р№ СЃ РѕР±СЉРµРєС‚РѕРј РїР°СЂС‚РёРєР».
 		local pos = self:particle_position()
 		self.particle:move_to(pos, pos)
 	end
@@ -258,7 +258,7 @@ function light_binder:on_switch(turn_on)
 			self.object:set_bone_visible("bone_cone", 1)
 		else
 			self.object:projector_switch(false)
-			--KRodin: в старом движке тут кости не скрывались, и проблем не было. Сейчас же, если здесь кости не скрывать, они будут видимы постоянно.
+			--KRodin: РІ СЃС‚Р°СЂРѕРј РґРІРёР¶РєРµ С‚СѓС‚ РєРѕСЃС‚Рё РЅРµ СЃРєСЂС‹РІР°Р»РёСЃСЊ, Рё РїСЂРѕР±Р»РµРј РЅРµ Р±С‹Р»Рѕ. РЎРµР№С‡Р°СЃ Р¶Рµ, РµСЃР»Рё Р·РґРµСЃСЊ РєРѕСЃС‚Рё РЅРµ СЃРєСЂС‹РІР°С‚СЊ, РѕРЅРё Р±СѓРґСѓС‚ РІРёРґРёРјС‹ РїРѕСЃС‚РѕСЏРЅРЅРѕ.
 			self.object:set_bone_visible("bone_light", 0)
 			self.object:set_bone_visible("bone_cone", 0)
 		end
@@ -267,7 +267,7 @@ function light_binder:on_switch(turn_on)
 	if self.particle_name then
 		if self.is_on then
 			if self.particle and self.particle:playing() then return end
-		--' Запускаем ассоциированный с объектом партикл.
+		--' Р—Р°РїСѓСЃРєР°РµРј Р°СЃСЃРѕС†РёРёСЂРѕРІР°РЅРЅС‹Р№ СЃ РѕР±СЉРµРєС‚РѕРј РїР°СЂС‚РёРєР».
 			self.particle = particles_object(self.particle_name)
 			self.particle:play_at_pos(self:particle_position())
 		else
@@ -288,12 +288,12 @@ function light_binder:net_destroy()
 	if self.particle ~= nil then
         self.particle:stop()
     end
-	if self.switch_signal_desc then -- если были подписаны на сигнал
-		ogse_signals.get_mgr():unsubscribe(self.switch_signal_desc) -- отписаться от сигнала
+	if self.switch_signal_desc then -- РµСЃР»Рё Р±С‹Р»Рё РїРѕРґРїРёСЃР°РЅС‹ РЅР° СЃРёРіРЅР°Р»
+		ogse_signals.get_mgr():unsubscribe(self.switch_signal_desc) -- РѕС‚РїРёСЃР°С‚СЊСЃСЏ РѕС‚ СЃРёРіРЅР°Р»Р°
 		self.switch_signal_desc = nil
 	end
-	if self.has_own_schedule then -- если работал по собственному расписанию
-		-- то удалить это расписание из менеджера освещения
+	if self.has_own_schedule then -- РµСЃР»Рё СЂР°Р±РѕС‚Р°Р» РїРѕ СЃРѕР±СЃС‚РІРµРЅРЅРѕРјСѓ СЂР°СЃРїРёСЃР°РЅРёСЋ
+		-- С‚Рѕ СѓРґР°Р»РёС‚СЊ СЌС‚Рѕ СЂР°СЃРїРёСЃР°РЅРёРµ РёР· РјРµРЅРµРґР¶РµСЂР° РѕСЃРІРµС‰РµРЅРёСЏ
 		ogse_lights_mgr.remove_light_schedule(self.signal_name)
 	end
 end
@@ -303,7 +303,7 @@ function light_binder:net_save_relevant()
 end
 -- MARKER: save
 function light_binder:save(packet)
-	-- сохраняем состояние, если есть что сохранять
+	-- СЃРѕС…СЂР°РЅСЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ, РµСЃР»Рё РµСЃС‚СЊ С‡С‚Рѕ СЃРѕС…СЂР°РЅСЏС‚СЊ
 	if self.has_light_config and self.initialized then
 		xr_logic.pstor_store(self.object, "is_on", self.is_on)
 		xr_logic.pstor_store(self.object, "is_broken", self.is_broken)
