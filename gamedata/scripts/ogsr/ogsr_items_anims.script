@@ -82,6 +82,14 @@ local function on_actor_before_use( obj, sobj )
 
 			CURRENT_ANM_SECT = "anm_" .. obj:section()
 
+			local outfit = db.actor:item_in_slot(6)
+			if outfit then
+				local exo = get_string( outfit:section(), "exo" )
+				if exo and ( string.find(sect, "^medkit") or sect == "antirad" ) then
+					CURRENT_ANM_SECT = "anm_exo_" .. obj:section()
+				end
+			end
+
 			CURRENT_ITEM_SECT = sect
 			ITEM_RELEASED = false
 
