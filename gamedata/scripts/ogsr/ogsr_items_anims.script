@@ -30,8 +30,8 @@ local function apply_item( sect )
 		  end
 		)
 		return	
-	elseif sect == "antirad" or sect == "medkit_scientic" then
-		arc_radiation.on_rad_use()	
+	elseif sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
+		arc_radiation.on_rad_use()
 	end
 	for k, v in ipairs( cfg ) do
 		local val = get_float( sect, v )
@@ -87,8 +87,10 @@ local function on_actor_before_use( obj, sobj )
 
 			ANIM_USED_TM = get_u32( CURRENT_ANM_SECT, "item_used_timing" )
 			ANIM_COMPLETED_TM = get_u32( CURRENT_ANM_SECT, "anim_timing" )
-			
-			SLOT_RESTORE = db.actor:active_slot()
+
+			if not SLOT_RESTORE then
+				SLOT_RESTORE = db.actor:active_slot()
+			end
 
 			alife():create( CURRENT_ANM_SECT, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )
 			if db.actor:has_info( "ui_inventory" ) then
@@ -128,7 +130,7 @@ local function on_item_to_ruck( obj, sobj )
 		if sect == "anm_harvest" then
 			db.actor:activate_slot(8)
 		elseif sect == "anm_meat" then
-			db.actor:activate_slot(0)
+			db.actor:activate_slot(SLOT_RESTORE)
 		else
 			db.actor:activate_slot(SLOT_RESTORE)
 			SLOT_RESTORE = false

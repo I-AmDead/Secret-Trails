@@ -26,8 +26,6 @@ local night_vision_fx_not_inventory = true
 local night_vision_fx_not_sniper = true
 -- флаг защиты от ошибочного включения (при работе с багажником транспорта)
 local night_vision_fx_not_trunk = true
--- флаг защиты от ошибочного включения (в БТР)
-local night_vision_fx_not_btr = true
 -- флаг работающего ПНВ
 local night_vision_fx_on = false
 -- флаг автовключения ночного режима в оптическом прицеле (true)
@@ -36,8 +34,6 @@ local nv_scope_fx_autoenable = false
 local night_vision_scope_fx_on = false
 -- флаг работающего ночного режима в бинокле
 local night_vision_binocular_fx_on = false
--- флаг работающего ПНВ БТР
-local night_vision_btr_fx_on = false
 
 -- флаг наложения эффекта визуального шума
 local night_vision_noise_fx_on = false
@@ -45,19 +41,17 @@ local night_vision_noise_fx_on = false
 local night_vision_noise_fx_intensity = 200
 
 -- звук включения ПНВ
-local snd_nv_start = xr_sound.get_safe_sound_object( "interface\\pnv_start" )
+local snd_nv_start = xr_sound.get_safe_sound_object( "interface\\nv_start" )
 -- звук работающего ПНВ
-local snd_nv_work -- = xr_sound.get_safe_sound_object( "weapons\\nv_loop_old" )
+local snd_nv_work -- = xr_sound.get_safe_sound_object( "interface\\nv_loop" )
 -- звук выключения ПНВ
-local snd_nv_stop = xr_sound.get_safe_sound_object( "interface\\pnv_off" )
+local snd_nv_stop = xr_sound.get_safe_sound_object( "interface\\nv_off" )
 -- уровень громкости звуков
 local snd_nv_fx_volume       = 0.5 -- общий уровень громкости звуков
 local snd_nv_start_subvolume = 1   -- громкость звука включения ПНВ
 local snd_nv_work_subvolume  = 0.3 -- громкость звука работающего ПНВ
 local snd_nv_stop_subvolume  = 1   -- громкость звука выключения ПНВ
 
--- секция постпроцесса ПНВ БТР
-local btr_nightvision_section = "effector_nightvision_elite"
 -- уровень интенсивности постэффектов
 -- уровень интенсивности постэффекта ПНВ
 local nv_ppe_factor = 1.0 --0.8
@@ -65,75 +59,43 @@ local nv_ppe_factor = 1.0 --0.8
 local nv_scope_ppe_factor = 1.0 --0.7
 -- уровень интенсивности постэффекта ночного режима бинокля
 local nv_binocular_ppe_factor = 0.8
--- уровень интенсивности постэффекта ПНВ БТР
-local nv_btr_ppe_factor = 1.0
 
+local debug = false
 
 function on_spawn()
-
+  if debug then
+    for _, k in ipairs({
+      "r__pnv_color",
+      "r__pnv_mode",
+      "r__pnv_noise",
+      "r__pnv_scanlines",
+    }) do
+      get_console():disable_command( k )
+    end
+  end
+  cmd( "r__pnv_mode 0" )
   dsh.exec_on_update( this.on_first_update )
-
   nv_scope_fx_autoenable = ogse.load_var_safe(
     "ogse_night_vision.nv_scope_fx_autoenable", false
   )
 end
 
-function nv_screen_mask_hud_on()
-
-    local hud = get_hud()
-if hud:GetCustomStatic("nv_screen_mask") == nil then
-		hud:AddCustomStatic("nv_screen_mask", true)
-    end
-end
-
-function nv_screen_mask_hud_off()
-
-    local hud = get_hud()
-if hud:GetCustomStatic("nv_screen_mask") ~= nil then
-		hud:RemoveCustomStatic("nv_screen_mask")
-    end
-end
-
 -- Вызов вкл/выкл ПНВ из коллбэка нажатия клавиши
 function call_pnv( key, bind )
-  local wnd = level.main_input_receiver()
-  -- проверка на активное окно GPS-метки
-	if bind ~= key_bindings.kNIGHT_VISION
-        or db.actor:item_in_slot(11) == nil
-	or level.main_input_receiver()
-	or not db.actor:alive() then return end
-
-    if db.actor:alive() and (not db.actor:has_info( "ui_talk" )) and (not db.actor:has_info( "anim_action" )) then
-      quicklaunch_nv_call()
-      quicklaunch_nv_scope_call()
-      quicklaunch_nv_binocular_call()
-      quicklaunch_nv_btr_call()
-
+  if level.main_input_receiver()
+  or not db.actor:alive() then return end
+  if bind == key_bindings.kNIGHT_VISION then
+    quicklaunch_nv_call()
+    quicklaunch_nv_scope_call()
+    quicklaunch_nv_binocular_call()
   end
 end
 
-
 -- Включение/выключение ПНВ из меню быстрого доступа
 function quicklaunch_nv_call()
-
-  local sobj = alife():create( "nv_use", vector():set( 0, 0, 0 ), 0, 0, 0 )
-  level.client_spawn_manager():add(
-    sobj.id, -1, function( id, obj )
-      dsh.exec_on_update( function() db.actor:eat( obj ) end )
-    end
-  )
-  dsh.level_timeout( 400, function() quicklaunch_nv_timer() end )
-end
-
-
--- Включение/выключение ПНВ из меню быстрого доступа
-function quicklaunch_nv_timer()
-
   if not night_vision_fx_on then
-  level.add_pp_effector( "black_fast.ppe", 105, false )
     nv_fx( true  )
   else
-  level.add_pp_effector( "black_fast_off.ppe", 105, false )
     nv_fx( false )
   end
 end
@@ -145,7 +107,6 @@ function try_to_restart_nv_fx()
   if nv_fx_restore then
     if db.actor:alive() and not night_vision_fx_on then
       nv_fx( true )
-      nv_screen_mask_hud_on()
     end
   end
 end
@@ -200,7 +161,6 @@ function is_nv_working()
     night_vision_fx_on
     or night_vision_scope_fx_on
     or night_vision_binocular_fx_on
-    or night_vision_btr_fx_on
   then
     return true
   else
@@ -225,9 +185,7 @@ function chek_drop_pnv(obj)
   if not outfit_slot_nv and not pnv_slot_nv then
     if night_vision_fx_on then
       turn_off_nv_fx( obj_sec )
-      ogse.delete_var( "pnv" )
-      active_nv_device = nil
-      nv_screen_mask_hud_off()
+      set_active_nv()
     end
   end
 end
@@ -249,9 +207,7 @@ function chek_outfit_double_pnv( obj )
     end
     if night_vision_fx_on then
       turn_off_nv_fx( nv_slot:section() )
-      ogse.delete_var( "pnv" )
-      active_nv_device = nil
-      nv_screen_mask_hud_off()
+      set_active_nv()
     end
   elseif is_nv_obj then
     if outfit_slot_nv then
@@ -283,7 +239,6 @@ function standby_nv_fx( mode )
     and night_vision_fx_not_inventory
     and night_vision_fx_not_sniper
     and night_vision_fx_not_trunk
-    and night_vision_fx_not_btr
   then
     if night_vision_fx_store == true then
       night_vision_fx_store = false
@@ -303,12 +258,11 @@ function nv_fx( mode )
     and night_vision_fx_not_inventory
     and night_vision_fx_not_sniper
     and night_vision_fx_not_trunk
-    and night_vision_fx_not_btr
   then
     local nightvision_section, nv_item
     local nv_in_outfit = db.actor:item_in_slot( 6 )
     if nv_in_outfit and not nightvision_section then
-      local  nv_sect = nv_in_outfit:section()
+      local nv_sect = nv_in_outfit:section()
       if sys_ini:line_exist( nv_sect, "nightvision_sect" ) then
         nightvision_section = sys_ini:r_string( nv_sect, "nightvision_sect" )
         nv_item = nv_in_outfit
@@ -328,17 +282,13 @@ function nv_fx( mode )
       nightvision_section
     then
       turn_on_nv_fx( nightvision_section, nv_item )
-      ogse.save_var( "pnv", true )
-      active_nv_device = nv_item
-      nv_screen_mask_hud_on()
+      set_active_nv( nv_item )
     end
   elseif
     mode == false and night_vision_fx_on and night_vision_fx_not_sniper
   then
     turn_off_nv_fx()
-    ogse.delete_var( "pnv" )
-    active_nv_device = nil
-    nv_screen_mask_hud_off()
+    set_active_nv()
   end
 end
 
@@ -347,12 +297,16 @@ end
 function turn_on_nv_fx( nightvision_section, nv_item )
   if not is_nv_working() then
     local nv_sect = nv_item:section()
-    if sys_ini:line_exist( nightvision_section, "pp_eff_name" ) then
-      local nightvision_fx = sys_ini:r_string(
-        nightvision_section, "pp_eff_name"
+    local r__pnv_mode = get_float( nv_sect, "r__pnv_mode", 0 )
+    if r__pnv_mode > 1 then
+      local color = get_vector( nv_sect, "r__pnv_color" )
+      cmd(
+        "r__pnv_color",
+        string.format( "%f,%f,%f", color.x, color.y, color.z )
       )
-      level.add_pp_effector( nightvision_fx, 110, true )
-      level.set_pp_effector_factor( 110, nv_ppe_factor )
+      cmd( "r__pnv_noise", get_float( nv_sect, "r__pnv_noise" ) )
+      cmd( "r__pnv_scanlines", get_float( nv_sect, "r__pnv_scanlines" ) )
+      cmd( "r__pnv_mode", r__pnv_mode )
     end
     night_vision_fx_on = true
     snd_fx_start()
@@ -363,8 +317,9 @@ end
 -- Остановка ПНВ (не использовать напрямую)
 function turn_off_nv_fx( section )
   if is_nv_working() then
-
-    level.remove_pp_effector( 110 )
+    -- local nv = db.actor:item_in_slot( 11 )
+    cmd( "r__pnv_mode", 0 )
+    level.remove_pp_effector( 2997 )
     night_vision_fx_on = false
     snd_fx_stop()
   end
@@ -375,9 +330,7 @@ end
 function nv_to_ruck( section )
   if night_vision_fx_on == true then
     turn_off_nv_fx( section )
-    ogse.delete_var( "pnv" )
-    active_nv_device = nil
-    nv_screen_mask_hud_off()
+    set_active_nv()
   end
 end
 
@@ -547,48 +500,6 @@ function turn_off_nv_binocular_fx()
 end
 
 
--- Включение/выключение ПНВ БТР
-function quicklaunch_nv_btr_call()
-  if not night_vision_btr_fx_on then
-    nv_btr_fx( true  )
-  else
-    nv_btr_fx( false )
-  end
-end
-
-
--- Старт/остановка работы ПНВ БТР
-function nv_btr_fx( mode )
-  if mode == true and not night_vision_fx_not_btr then
-    turn_on_nv_btr_fx( btr_nightvision_section )
-  elseif mode == false and night_vision_btr_fx_on then
-    turn_off_nv_btr_fx()
-  end
-end
-
-
--- Старт ПНВ БТР (не использовать напрямую)
-function turn_on_nv_btr_fx( nightvision_section )
-  local nightvision_fx = get_string(
-    nightvision_section, "pp_eff_name"
-  )
-  if nightvision_fx then
-    level.add_pp_effector( nightvision_fx, 2996, true )
-    level.set_pp_effector_factor( 2996, nv_btr_ppe_factor )
-    night_vision_btr_fx_on = true
-  end
-end
-
-
--- Остановка ПНВ БТР (не использовать напрямую)
-function turn_off_nv_btr_fx()
-  level.remove_pp_effector( 2996 )
-  night_vision_btr_fx_on = false
-end
-
-
-
-
 function get_active_nv_device()
   if night_vision_scope_fx_on then
     return active_nv_scope_device
@@ -614,6 +525,7 @@ end
 
 
 function on_destroy()
+  cmd( "r__pnv_mode 0" )
   turn_off_scope_sights_lighting()
   get_grids():reset()
 end
@@ -821,4 +733,13 @@ function on_first_update()
   sm:subscribe({ signal = "on_item_to_ruck", fun = this.chek_drop_pnv })
   sm:subscribe({ signal = "on_item_to_slot", fun = this.chek_outfit_double_pnv })
   try_to_restart_nv_fx()
+end
+
+function set_active_nv( obj )
+  if obj then
+    ogse.save_var( "pnv", true )
+  else
+    ogse.delete_var( "pnv" )
+  end
+  active_nv_device = obj
 end
