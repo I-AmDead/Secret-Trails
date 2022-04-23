@@ -1,9 +1,9 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 --
 -- File:  amk_mod .script
--- copyright © AMK TEAM 2007-2008
+-- copyright В© AMK TEAM 2007-2008
 --
--- добавлена  fenechka by TAG
+-- РґРѕР±Р°РІР»РµРЅР°В  fenechka by TAG
 
 function attach( sm )
   sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
@@ -28,16 +28,16 @@ end
 
 
 local afs = {}
--- аномалия "узнаётся" по части названия!
--- komp - компонентv
--- удача v_udachi + вvрождение в булvжник v_virogd <= 100 !!!
--- отторжение v_ottorg = 100 - (v_udachi + v_virogd) посему и не нужно прописvвать в таблицу
--- cel - цель (может бvть одновременно несколько целей)
--- info - инфопорция, которая будет вvдана после L-L+=+Ј варки
--- virogd - во что вvрождается (может бvть одновременно несколько вvрождений)
--- vremya = {дни, часы, минуты} - время варки/мутации
--- remove_anomaly - удалить ли аномалию (можно комбинировать вместе с варкой/мутацией)
--- not_for_mutator - рецепт никогда не попадёт в трансмутатор
+-- Р°РЅРѕРјР°Р»РёСЏ "СѓР·РЅР°С‘С‚СЃСЏ" РїРѕ С‡Р°СЃС‚Рё РЅР°Р·РІР°РЅРёСЏ!
+-- komp - РєРѕРјРїРѕРЅРµРЅС‚v
+-- СѓРґР°С‡Р° v_udachi + РІvСЂРѕР¶РґРµРЅРёРµ РІ Р±СѓР»vР¶РЅРёРє v_virogd <= 100 !!!
+-- РѕС‚С‚РѕСЂР¶РµРЅРёРµ v_ottorg = 100 - (v_udachi + v_virogd) РїРѕСЃРµРјСѓ Рё РЅРµ РЅСѓР¶РЅРѕ РїСЂРѕРїРёСЃvРІР°С‚СЊ РІ С‚Р°Р±Р»РёС†Сѓ
+-- cel - С†РµР»СЊ (РјРѕР¶РµС‚ Р±vС‚СЊ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ С†РµР»РµР№)
+-- info - РёРЅС„РѕРїРѕСЂС†РёСЏ, РєРѕС‚РѕСЂР°СЏ Р±СѓРґРµС‚ РІvРґР°РЅР° РїРѕСЃР»Рµ L-L+=+Р€ РІР°СЂРєРё
+-- virogd - РІРѕ С‡С‚Рѕ РІvСЂРѕР¶РґР°РµС‚СЃСЏ (РјРѕР¶РµС‚ Р±vС‚СЊ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ РІvСЂРѕР¶РґРµРЅРёР№)
+-- vremya = {РґРЅРё, С‡Р°СЃС‹, РјРёРЅСѓС‚С‹} - РІСЂРµРјСЏ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
+-- remove_anomaly - СѓРґР°Р»РёС‚СЊ Р»Рё Р°РЅРѕРјР°Р»РёСЋ (РјРѕР¶РЅРѕ РєРѕРјР±РёРЅРёСЂРѕРІР°С‚СЊ РІРјРµСЃС‚Рµ СЃ РІР°СЂРєРѕР№/РјСѓС‚Р°С†РёРµР№)
+-- not_for_mutator - СЂРµС†РµРїС‚ РЅРёРєРѕРіРґР° РЅРµ РїРѕРїР°РґС‘С‚ РІ С‚СЂР°РЅСЃРјСѓС‚Р°С‚РѕСЂ
 anom_recept_komp = {}
 
 
@@ -80,14 +80,14 @@ local weather_types={
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **        FIRST_RUN          **   **   **   **   **    **   **   **   ** 
 --'*******************************************************************************
--- Эта функция вызывается первой. Онлайновые объекты недоступны! db.actor недоступен!
+-- Р­С‚Р° С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµС‚СЃСЏ РїРµСЂРІРѕР№. РћРЅР»Р°Р№РЅРѕРІС‹Рµ РѕР±СЉРµРєС‚С‹ РЅРµРґРѕСЃС‚СѓРїРЅС‹! db.actor РЅРµРґРѕСЃС‚СѓРїРµРЅ!
 function on_game_start()
 	math.randomseed (device ():time_global ())
 end
 
 
 function first_run() 
-  -- На момент вызова этой функции актор уже доступен - переделано на поршень.
+  -- РќР° РјРѕРјРµРЅС‚ РІС‹Р·РѕРІР° СЌС‚РѕР№ С„СѓРЅРєС†РёРё Р°РєС‚РѕСЂ СѓР¶Рµ РґРѕСЃС‚СѓРїРµРЅ - РїРµСЂРµРґРµР»Р°РЅРѕ РЅР° РїРѕСЂС€РµРЅСЊ.
   if has_alife_info( "x_first_run" ) then return end
   
   amk.spawn_item_in_inv("matras")
@@ -135,8 +135,7 @@ function check_spawn()
   if lname == "l01_escape" and sname == "l04_darkvalley" then
     local obj = alife():story_object( 6002 )
     if not obj then
-      obj = alife():create( alife():spawn_id( 6002 ) )
-      level.map_add_object_spot_ser( obj.id, "level_changer2", "to_darkvalley" )
+      obj = alife():create( 111 )
     end
   end
   if sname == "l01_escape" and lname == "l04_darkvalley" then
@@ -279,8 +278,8 @@ end
 local cur_level=nil
 local havegoodart=false
 
--- список компонентов
--- желательно добавлять в алфавитном порядке
+-- СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
+-- Р¶РµР»Р°С‚РµР»СЊРЅРѕ РґРѕР±Р°РІР»СЏС‚СЊ РІ Р°Р»С„Р°РІРёС‚РЅРѕРј РїРѕСЂСЏРґРєРµ
 local afs={
 ["af_ameba_mica"] = true,
 ["af_ameba_slime"] = true,
@@ -338,11 +337,11 @@ local afs={
 ["af_spirit_3"] = true
 }
 
--- проверка на упавший предмет/артефакт
+-- РїСЂРѕРІРµСЂРєР° РЅР° СѓРїР°РІС€РёР№ РїСЂРµРґРјРµС‚/Р°СЂС‚РµС„Р°РєС‚
 function check_for_af_drop(obj)
 	local obj_sect = obj:section()
 	
-	-- проверка не один ли это из компонентов
+	-- РїСЂРѕРІРµСЂРєР° РЅРµ РѕРґРёРЅ Р»Рё СЌС‚Рѕ РёР· РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 	if afs[obj_sect] == true then
 		local anom_id,anom_pos,anom_radius,dist = amk_anoms.get_nearest_anomaly(obj)
 		
@@ -353,10 +352,10 @@ function check_for_af_drop(obj)
 			local gv = level.object_by_id(anom_id):game_vertex_id()
 			if gv == 65535 then gv = obj:game_vertex_id() end
 			if gv == 65535 then gv = db.actor:game_vertex_id() end
-			if gv == 65535 then return end -- похоже, что рядом нету вертекса
+			if gv == 65535 then return end -- РїРѕС…РѕР¶Рµ, С‡С‚Рѕ СЂСЏРґРѕРј РЅРµС‚Сѓ РІРµСЂС‚РµРєСЃР°
 			
-			-- предмет подходит - отправляем его на экспертизу
-			-- узнаем не съели ли его или вvложили в нvчку
+			-- РїСЂРµРґРјРµС‚ РїРѕРґС…РѕРґРёС‚ - РѕС‚РїСЂР°РІР»СЏРµРј РµРіРѕ РЅР° СЌРєСЃРїРµСЂС‚РёР·Сѓ
+			-- СѓР·РЅР°РµРј РЅРµ СЃСЉРµР»Рё Р»Рё РµРіРѕ РёР»Рё РІvР»РѕР¶РёР»Рё РІ РЅvС‡РєСѓ
 			local tbl		= {}
 			tbl.obj_id		= obj:id()
 			tbl.anom_id		= anom_id
@@ -365,31 +364,31 @@ function check_for_af_drop(obj)
 			tbl.gv			= gv
 			amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
 
-			-- перенесено в amk.script
+			-- РїРµСЂРµРЅРµСЃРµРЅРѕ РІ amk.script
 			--check_af_transform(obj, obj_sect, obj_pos, anom_id, anom_sect, anom_pos, anom_radius, lv, gv)
 		end
 	end
 end
 
--- проверка: является ли компонентом для варки
--- параметр - название секции
+-- РїСЂРѕРІРµСЂРєР°: СЏРІР»СЏРµС‚СЃСЏ Р»Рё РєРѕРјРїРѕРЅРµРЅС‚РѕРј РґР»СЏ РІР°СЂРєРё
+-- РїР°СЂР°РјРµС‚СЂ - РЅР°Р·РІР°РЅРёРµ СЃРµРєС†РёРё
 function is_komponent(sec)
      return (afs[sec] ~= nil)
 end
 
--- аномали "узнаітся" по части названия!
--- komp - компонентv
--- удача v_udachi + вvрождение в булvжник v_virogd <= 100 !!!
--- отторжение v_ottorg = 100 - (v_udachi + v_virogd) посему и не нужно прописvвать в таблицу
--- cel - цель (может бvть одновременно несколько целей)
--- info - инфопорция, которая будет вvдана после L-L+=+Ј варки
--- virogd - во что вvрождается (может бvть одновременно несколько вvрождений)
--- vremya = {дни, часv, минутv} - время варки/мутации
--- remove_anomaly - удалить ли аномалиі (можно комбинировать вместе с варкой/мутацией)
--- not_for_mutator - рецепт никогда не попадїт в трансмутатор
--- ne_ugadat -  рецепт не угадvвается в трансмутаторе, но будет в нїм показан при наличии поршня
+-- Р°РЅРѕРјР°Р»Рё "СѓР·РЅР°С–С‚СЃСЏ" РїРѕ С‡Р°СЃС‚Рё РЅР°Р·РІР°РЅРёСЏ!
+-- komp - РєРѕРјРїРѕРЅРµРЅС‚v
+-- СѓРґР°С‡Р° v_udachi + РІvСЂРѕР¶РґРµРЅРёРµ РІ Р±СѓР»vР¶РЅРёРє v_virogd <= 100 !!!
+-- РѕС‚С‚РѕСЂР¶РµРЅРёРµ v_ottorg = 100 - (v_udachi + v_virogd) РїРѕСЃРµРјСѓ Рё РЅРµ РЅСѓР¶РЅРѕ РїСЂРѕРїРёСЃvРІР°С‚СЊ РІ С‚Р°Р±Р»РёС†Сѓ
+-- cel - С†РµР»СЊ (РјРѕР¶РµС‚ Р±vС‚СЊ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ С†РµР»РµР№)
+-- info - РёРЅС„РѕРїРѕСЂС†РёСЏ, РєРѕС‚РѕСЂР°СЏ Р±СѓРґРµС‚ РІvРґР°РЅР° РїРѕСЃР»Рµ L-L+=+Р€ РІР°СЂРєРё
+-- virogd - РІРѕ С‡С‚Рѕ РІvСЂРѕР¶РґР°РµС‚СЃСЏ (РјРѕР¶РµС‚ Р±vС‚СЊ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РЅРµСЃРєРѕР»СЊРєРѕ РІvСЂРѕР¶РґРµРЅРёР№)
+-- vremya = {РґРЅРё, С‡Р°СЃv, РјРёРЅСѓС‚v} - РІСЂРµРјСЏ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
+-- remove_anomaly - СѓРґР°Р»РёС‚СЊ Р»Рё Р°РЅРѕРјР°Р»РёС– (РјРѕР¶РЅРѕ РєРѕРјР±РёРЅРёСЂРѕРІР°С‚СЊ РІРјРµСЃС‚Рµ СЃ РІР°СЂРєРѕР№/РјСѓС‚Р°С†РёРµР№)
+-- not_for_mutator - СЂРµС†РµРїС‚ РЅРёРєРѕРіРґР° РЅРµ РїРѕРїР°РґС—С‚ РІ С‚СЂР°РЅСЃРјСѓС‚Р°С‚РѕСЂ
+-- ne_ugadat -  СЂРµС†РµРїС‚ РЅРµ СѓРіР°РґvРІР°РµС‚СЃСЏ РІ С‚СЂР°РЅСЃРјСѓС‚Р°С‚РѕСЂРµ, РЅРѕ Р±СѓРґРµС‚ РІ РЅС—Рј РїРѕРєР°Р·Р°РЅ РїСЂРё РЅР°Р»РёС‡РёРё РїРѕСЂС€РЅСЏ
 local anom_recept_komp = {
-	-- умолчание, если нет даннvх ближе к рецепту
+	-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
 	default = {
 		cel = {},
 		v_udachi = 80,
@@ -401,9 +400,9 @@ local anom_recept_komp = {
 	
 	anomalii = {
 		["_zharka"] = {
-			-- умолчание, если нет даннvх ближе к рецепту,
-			-- которое может переопределятья в рецепте
-			name = "\"Жарка\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ,
+			-- РєРѕС‚РѕСЂРѕРµ РјРѕР¶РµС‚ РїРµСЂРµРѕРїСЂРµРґРµР»СЏС‚СЊСЏ РІ СЂРµС†РµРїС‚Рµ
+			name = "\"Р–Р°СЂРєР°\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -459,8 +458,8 @@ local anom_recept_komp = {
 		},
 		
 		["_galant"] = {
-			-- умолчание, если нет данных ближе к рецепту
-			name = "\"Электра\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅС‹С… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"Р­Р»РµРєС‚СЂР°\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -468,7 +467,7 @@ local anom_recept_komp = {
 			},
 			
 			recepti = {
-				["info_red_battery"] = { -- артефакт удалит аномалииі без результатов варки/мутации
+				["info_red_battery"] = { -- Р°СЂС‚РµС„Р°РєС‚ СѓРґР°Р»РёС‚ Р°РЅРѕРјР°Р»РёРёС– Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
 					komp = {["af_dummy_battery_red"]=true},
 					remove_anomaly = true,
 					vremya = {0,0,1},
@@ -521,8 +520,8 @@ local anom_recept_komp = {
 		},
 		
 		["_buzz"] = {
-			-- умолчание, если нет даннvх ближе к рецепту
-			name = "\"Холодец\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"РҐРѕР»РѕРґРµС†\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -575,8 +574,8 @@ local anom_recept_komp = {
 		
 		
 		["_mincer"] = {
-			-- умолчание, если нет даннvх ближе к рецепту
-			name = "\"Карусель\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"РљР°СЂСѓСЃРµР»СЊ\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -584,7 +583,7 @@ local anom_recept_komp = {
 			},
 			
 			recepti = {
-				["info_red_spring"] = { -- артефакт удалит аномалиі без результатов варки/мутации
+				["info_red_spring"] = { -- Р°СЂС‚РµС„Р°РєС‚ СѓРґР°Р»РёС‚ Р°РЅРѕРјР°Р»РёС– Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
 					komp = {["af_dummy_spring_red"]=true},
 					remove_anomaly = true,
 					vremya = {0,0,1},
@@ -611,8 +610,8 @@ local anom_recept_komp = {
 		},
 		
 		["_mosquito_bald"] = {
-			-- умолчание, если нет даннvх ближе к рецепту
-			name = "\"Tрамплин\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"TСЂР°РјРїР»РёРЅ\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -620,7 +619,7 @@ local anom_recept_komp = {
 			},
 			
 			recepti = {
-				["info_red_pellicle"] = { -- артефакт удалит аномалиі без результатов варки/мутации
+				["info_red_pellicle"] = { -- Р°СЂС‚РµС„Р°РєС‚ СѓРґР°Р»РёС‚ Р°РЅРѕРјР°Р»РёС– Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
 					komp = {["af_dummy_pellicle_red"]=true},
 					remove_anomaly = true,
 					vremya = {0,0,1},
@@ -649,8 +648,8 @@ local anom_recept_komp = {
 		},
 		
 		["_gravi_zone"] = {
-			-- умолчание, если нет даннvх ближе к рецепту
-			name = "\"Воронка\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"Р’РѕСЂРѕРЅРєР°\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -658,7 +657,7 @@ local anom_recept_komp = {
 			},
 			
 			recepti = {
-				["info_red_battery"] = { -- артефакт удалит аномалиі без результатов варки/мутации
+				["info_red_battery"] = { -- Р°СЂС‚РµС„Р°РєС‚ СѓРґР°Р»РёС‚ Р°РЅРѕРјР°Р»РёС– Р±РµР· СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІР°СЂРєРё/РјСѓС‚Р°С†РёРё
 					komp = {["af_dummy_battery_red"]=true},
 					remove_anomaly = true,
 					vremya = {0,0,1},
@@ -670,8 +669,8 @@ local anom_recept_komp = {
 		},
 		
 		["_ice"] = {
-			-- умолчание, если нет даннvх ближе к рецепту
-			name = "\"Морозилка\"",
+			-- СѓРјРѕР»С‡Р°РЅРёРµ, РµСЃР»Рё РЅРµС‚ РґР°РЅРЅvС… Р±Р»РёР¶Рµ Рє СЂРµС†РµРїС‚Сѓ
+			name = "\"РњРѕСЂРѕР·РёР»РєР°\"",
 			default = {
 				v_udachi = 80,
 				v_virogd = 20,
@@ -696,11 +695,11 @@ local anom_recept_komp = {
 	}
 }
 
--- возвра ает значение, возможно из умолчаний
+-- РІРѕР·РІСЂР° Р°РµС‚ Р·РЅР°С‡РµРЅРёРµ, РІРѕР·РјРѕР¶РЅРѕ РёР· СѓРјРѕР»С‡Р°РЅРёР№
 local res2key = {
-	[0] = "komp",	-- РѕС‚С‚РѕСЂР¶РµРЅРёРµ
-	[1] = "virogd",	-- РІС‹СЂРѕР¶РґРµРЅРёРµ
-	[2] = "cel"		-- СѓРґР°С‡Р°
+	[0] = "komp",	-- Р С•РЎвЂљРЎвЂљР С•РЎР‚Р В¶Р ВµР Р…Р С‘Р Вµ
+	[1] = "virogd",	-- Р Р†РЎвЂ№РЎР‚Р С•Р В¶Р Т‘Р ВµР Р…Р С‘Р Вµ
+	[2] = "cel"		-- РЎС“Р Т‘Р В°РЎвЂЎР В°
 }
 function get_af_transform_param(name, recept, recepti)
 	local result
@@ -711,19 +710,19 @@ function get_af_transform_param(name, recept, recepti)
 	elseif anom_recept_komp["default"] ~= nil and anom_recept_komp["default"][name] ~= nil then
 		result = anom_recept_komp["default"][name]
 	else
-		-- нет информации!!!
-		amk.send_tip("нет информации для "..name.."!","варка артефактов",0,15,"gen_info")
+		-- РЅРµС‚ РёРЅС„РѕСЂРјР°С†РёРё!!!
+		amk.send_tip("РЅРµС‚ РёРЅС„РѕСЂРјР°С†РёРё РґР»СЏ "..name.."!","РІР°СЂРєР° Р°СЂС‚РµС„Р°РєС‚РѕРІ",0,15,"gen_info")
 		result = nil
 	end
 	return result
 end
 
--- іолучаем полнvй набор рецептов для аномалии anom_sect
+-- С–РѕР»СѓС‡Р°РµРј РїРѕР»РЅvР№ РЅР°Р±РѕСЂ СЂРµС†РµРїС‚РѕРІ РґР»СЏ Р°РЅРѕРјР°Р»РёРё anom_sect
 function fill_recepti_est(anom_sect)
-	local recepti_est = {} -- рецептv для заданной аномалии
+	local recepti_est = {} -- СЂРµС†РµРїС‚v РґР»СЏ Р·Р°РґР°РЅРЅРѕР№ Р°РЅРѕРјР°Р»РёРё
 	local anom_name = nil
 	for anom, recepti in pairs(anom_recept_komp["anomalii"]) do
-		if string_find(anom_sect, anom) ~= nil then --нашли в списке аномалиі.
+		if string_find(anom_sect, anom) ~= nil then --РЅР°С€Р»Рё РІ СЃРїРёСЃРєРµ Р°РЅРѕРјР°Р»РёС–.
 			anom_name = anom_recept_komp["anomalii"][anom]["name"]
 			if anom_recept_komp["anomalii"][anom]["recepti"] then
 				for info, recept in pairs(recepti["recepti"]) do
@@ -748,23 +747,23 @@ function fill_recepti_est(anom_sect)
 	return recepti_est,anom_name
 end
 
--- проверяет рецептv и компонетv
--- если всї в порядке - запускает варку/мутациі
+-- РїСЂРѕРІРµСЂСЏРµС‚ СЂРµС†РµРїС‚v Рё РєРѕРјРїРѕРЅРµС‚v
+-- РµСЃР»Рё РІСЃС— РІ РїРѕСЂСЏРґРєРµ - Р·Р°РїСѓСЃРєР°РµС‚ РІР°СЂРєСѓ/РјСѓС‚Р°С†РёС–
 function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, anom_radius, lv, gv)
 	local actor = db.actor
 	
-	--поиск по аномалиям
-	local finish = false -- флаг для вvхода из циклов
+	--РїРѕРёСЃРє РїРѕ Р°РЅРѕРјР°Р»РёСЏРј
+	local finish = false -- С„Р»Р°Рі РґР»СЏ РІvС…РѕРґР° РёР· С†РёРєР»РѕРІ
 	for anom, recepti in pairs(anom_recept_komp["anomalii"]) do
-		if string_find(anom_sect, anom) ~= nil then --нашли в списке аномалиі, возле которой стоим
-			local recepti_est = {} -- рецептv в наличии у ++, в которvх участвует даннvй компонент
+		if string_find(anom_sect, anom) ~= nil then --РЅР°С€Р»Рё РІ СЃРїРёСЃРєРµ Р°РЅРѕРјР°Р»РёС–, РІРѕР·Р»Рµ РєРѕС‚РѕСЂРѕР№ СЃС‚РѕРёРј
+			local recepti_est = {} -- СЂРµС†РµРїС‚v РІ РЅР°Р»РёС‡РёРё Сѓ ++, РІ РєРѕС‚РѕСЂvС… СѓС‡Р°СЃС‚РІСѓРµС‚ РґР°РЅРЅvР№ РєРѕРјРїРѕРЅРµРЅС‚
 			local recept_podhodit = false
 			
-			-- собираем рецептv, в которvх участвует даннvй компонент
+			-- СЃРѕР±РёСЂР°РµРј СЂРµС†РµРїС‚v, РІ РєРѕС‚РѕСЂvС… СѓС‡Р°СЃС‚РІСѓРµС‚ РґР°РЅРЅvР№ РєРѕРјРїРѕРЅРµРЅС‚
 			for info, recept in pairs(recepti["recepti"]) do
-				if actor:has_info(info) and recept["komp"][af_sect] == true then --есть рецепт и этот компонент в нїм участвует
+				if actor:has_info(info) and recept["komp"][af_sect] == true then --РµСЃС‚СЊ СЂРµС†РµРїС‚ Рё СЌС‚РѕС‚ РєРѕРјРїРѕРЅРµРЅС‚ РІ РЅС—Рј СѓС‡Р°СЃС‚РІСѓРµС‚
 					recept_podhodit = true
-					-- копируем рецепт
+					-- РєРѕРїРёСЂСѓРµРј СЂРµС†РµРїС‚
 					recepti_est[info] = {}
 					for k, v in pairs(recept) do
 						if type(v) == "table" then
@@ -776,22 +775,22 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 							recepti_est[info][k] = v
 						end
 					end
-					-- так как table.getn() как и оператор # не работаіт с таблицами, у которvх не целочисельнvе индексv,
-					-- то считаем количество в ручнуі
+					-- С‚Р°Рє РєР°Рє table.getn() РєР°Рє Рё РѕРїРµСЂР°С‚РѕСЂ # РЅРµ СЂР°Р±РѕС‚Р°С–С‚ СЃ С‚Р°Р±Р»РёС†Р°РјРё, Сѓ РєРѕС‚РѕСЂvС… РЅРµ С†РµР»РѕС‡РёСЃРµР»СЊРЅvРµ РёРЅРґРµРєСЃv,
+					-- С‚Рѕ СЃС‡РёС‚Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РІ СЂСѓС‡РЅСѓС–
 					local count = 0
 					for k,v in pairs(recepti_est[info]["komp"]) do
 						count = count + 1
 					end
 					recepti_est[info]["count"] = count
-					--get_console():execute("load ~#I#:"..string.format("0 "..af_sect.." принят. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"]))
+					--get_console():execute("load ~#I#:"..string.format("0 "..af_sect.." РїСЂРёРЅСЏС‚. LРЅРѕРј: "..anom.." СЂРµС†. "..info.." "..recepti_est[info]["count"]))
 				end
 			end
 			
-			if recept_podhodit then -- если нашли хоть один имеіийся подходяий рецепт
-				--amk.send_tip("іецепт подошел. anom_radius "..anom_radius," варка",0,15,"gen_info")
-				--ием рядом другие компонентv
-				--если находим их в вvбраннvх рецептах, то удаляем их из рецептов
-				--как только какой-то рецепт остаїтся без компонентов - рецепт сработал
+			if recept_podhodit then -- РµСЃР»Рё РЅР°С€Р»Рё С…РѕС‚СЊ РѕРґРёРЅ РёРјРµС–РёР№СЃСЏ РїРѕРґС…РѕРґСЏРёР№ СЂРµС†РµРїС‚
+				--amk.send_tip("С–РµС†РµРїС‚ РїРѕРґРѕС€РµР». anom_radius "..anom_radius," РІР°СЂРєР°",0,15,"gen_info")
+				--РёРµРј СЂСЏРґРѕРј РґСЂСѓРіРёРµ РєРѕРјРїРѕРЅРµРЅС‚v
+				--РµСЃР»Рё РЅР°С…РѕРґРёРј РёС… РІ РІvР±СЂР°РЅРЅvС… СЂРµС†РµРїС‚Р°С…, С‚Рѕ СѓРґР°Р»СЏРµРј РёС… РёР· СЂРµС†РµРїС‚РѕРІ
+				--РєР°Рє С‚РѕР»СЊРєРѕ РєР°РєРѕР№-С‚Рѕ СЂРµС†РµРїС‚ РѕСЃС‚Р°С—С‚СЃСЏ Р±РµР· РєРѕРјРїРѕРЅРµРЅС‚РѕРІ - СЂРµС†РµРїС‚ СЃСЂР°Р±РѕС‚Р°Р»
 				local obj
 				for i=1,65534 do
 					obj = level.object_by_id(i)
@@ -800,22 +799,22 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 						if obj:parent() == nil and ((anom_radius - obj:position():distance_to(anom_pos)) > -2) then
 							local obj_sect = obj:section()
 							--get_console():execute("load ~#I#:"..string.format(" obj_sect: "..obj_sect.." dist: "..dist))
-							--проверяем отобраннvе рецептv
+							--РїСЂРѕРІРµСЂСЏРµРј РѕС‚РѕР±СЂР°РЅРЅvРµ СЂРµС†РµРїС‚v
 							for info, recept in pairs(recepti_est) do
-								-- если компонент есть в рецепте
+								-- РµСЃР»Рё РєРѕРјРїРѕРЅРµРЅС‚ РµСЃС‚СЊ РІ СЂРµС†РµРїС‚Рµ
 								if recepti_est[info]["komp"][obj_sect] == true then
-									-- добавляем L- компонента для буду его удаления из игрv
+									-- РґРѕР±Р°РІР»СЏРµРј L- РєРѕРјРїРѕРЅРµРЅС‚Р° РґР»СЏ Р±СѓРґСѓ РµРіРѕ СѓРґР°Р»РµРЅРёСЏ РёР· РёРіСЂv
 									recepti_est[info]["komp"][obj_sect] = obj:id()
-									-- уменьшаем количество компонентов в рецепте
+									-- СѓРјРµРЅСЊС€Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ РІ СЂРµС†РµРїС‚Рµ
 									recepti_est[info]["count"] = recepti_est[info]["count"] - 1
-									--amk.send_tip(obj_sect.." найден. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"],"варка",0,15,"gen_info")
-									--get_console():execute("load ~#I#:"..string.format(obj_sect.." найден. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"]))
+									--amk.send_tip(obj_sect.." РЅР°Р№РґРµРЅ. LРЅРѕРј: "..anom.." СЂРµС†. "..info.." "..recepti_est[info]["count"],"РІР°СЂРєР°",0,15,"gen_info")
+									--get_console():execute("load ~#I#:"..string.format(obj_sect.." РЅР°Р№РґРµРЅ. LРЅРѕРј: "..anom.." СЂРµС†. "..info.." "..recepti_est[info]["count"]))
 									
-									-- если рецепт пуст, то он сработал
+									-- РµСЃР»Рё СЂРµС†РµРїС‚ РїСѓСЃС‚, С‚Рѕ РѕРЅ СЃСЂР°Р±РѕС‚Р°Р»
 									if recepti_est[info]["count"] == 0 then
-										--get_console():execute("load ~#I#:"..string.format(info.." сработал. Lном: "..anom))
+										--get_console():execute("load ~#I#:"..string.format(info.." СЃСЂР°Р±РѕС‚Р°Р». LРЅРѕРј: "..anom))
 										
-										-- устанавливаем все параметрv для рецепта, возможно из умолчаний
+										-- СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІСЃРµ РїР°СЂР°РјРµС‚СЂv РґР»СЏ СЂРµС†РµРїС‚Р°, РІРѕР·РјРѕР¶РЅРѕ РёР· СѓРјРѕР»С‡Р°РЅРёР№
 										local cel		= get_af_transform_param("cel", recepti_est[info], recepti)
 										local v_udachi		= get_af_transform_param("v_udachi", recepti_est[info], recepti)
 										local v_virogd		= get_af_transform_param("v_virogd", recepti_est[info], recepti)
@@ -832,12 +831,12 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 											or cel == nil and remove_anomaly == false
 											or v_udachi + v_virogd > 100 then
 											
-											-- кривой рецепт  - вvходим
+											-- РєСЂРёРІРѕР№ СЂРµС†РµРїС‚  - РІvС…РѕРґРёРј
 											finish = true
 											break
 										end
 										
-										-- неудача
+										-- РЅРµСѓРґР°С‡Р°
 										if udacha == false then
 											remove_anomaly = false
 											info_portion = nil
@@ -845,15 +844,15 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 
 										level.add_pp_effector("teleport.ppe", 1524, false)
 										
-										-- запускаем варку/мутациі
+										-- Р·Р°РїСѓСЃРєР°РµРј РІР°СЂРєСѓ/РјСѓС‚Р°С†РёС–
 										as_start_universal_transform_timer(komp, result, obj_pos, vremya, gv, lv, info_portion, remove_anomaly, remove_anomaly_id)
 										
-										-- удаляем из игрv компонентv рецепта
+										-- СѓРґР°Р»СЏРµРј РёР· РёРіСЂv РєРѕРјРїРѕРЅРµРЅС‚v СЂРµС†РµРїС‚Р°
 										for k,v in pairs(komp) do
 											alife():release(alife():object(v))
 										end
 										
-										-- вvходим
+										-- РІvС…РѕРґРёРј
 										finish = true
 										break
 									end
@@ -866,7 +865,7 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 				end
 			end
 			
-			-- аномалия с рецептами найдена, все дела сделанv - вvходим
+			-- Р°РЅРѕРјР°Р»РёСЏ СЃ СЂРµС†РµРїС‚Р°РјРё РЅР°Р№РґРµРЅР°, РІСЃРµ РґРµР»Р° СЃРґРµР»Р°РЅv - РІvС…РѕРґРёРј
 			break
 		end
 	end
@@ -878,25 +877,25 @@ function af_flash(af)
 	amk.remove_item(af)
 end
 
--- случайно вvбирает результат, возвра ает таблицу с секциями результатов
+-- СЃР»СѓС‡Р°Р№РЅРѕ РІvР±РёСЂР°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚, РІРѕР·РІСЂР° Р°РµС‚ С‚Р°Р±Р»РёС†Сѓ СЃ СЃРµРєС†РёСЏРјРё СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 function af_select_result(v_udachi, v_virogd, virogd, cel, komp)
 	local rnd=math_random(0,100)
-	if rnd > v_udachi then --неудача
-		if rnd > v_virogd + v_udachi then -- отторжение
+	if rnd > v_udachi then --РЅРµСѓРґР°С‡Р°
+		if rnd > v_virogd + v_udachi then -- РѕС‚С‚РѕСЂР¶РµРЅРёРµ
 			return komp, false
-		else -- вvрождение
+		else -- РІvСЂРѕР¶РґРµРЅРёРµ
 			return virogd, false
 		end
-	else -- удача
+	else -- СѓРґР°С‡Р°
 		return cel, true
 	end
 end
 
--- запускаем трансофрмациі 
--- результатv могут бvть многочисленнv (несколько целей, полное отторжение компонентов, несколько вvрождений)
+-- Р·Р°РїСѓСЃРєР°РµРј С‚СЂР°РЅСЃРѕС„СЂРјР°С†РёС– 
+-- СЂРµР·СѓР»СЊС‚Р°С‚v РјРѕРіСѓС‚ Р±vС‚СЊ РјРЅРѕРіРѕС‡РёСЃР»РµРЅРЅv (РЅРµСЃРєРѕР»СЊРєРѕ С†РµР»РµР№, РїРѕР»РЅРѕРµ РѕС‚С‚РѕСЂР¶РµРЅРёРµ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ, РЅРµСЃРєРѕР»СЊРєРѕ РІvСЂРѕР¶РґРµРЅРёР№)
 function as_start_universal_transform_timer(komp, result, pos, vremya, gv, lv, info_portion, remove_anomaly, remove_anomaly_id)
-  local t = { } -- сохраняемvе даннvе
-  t.result = result -- можно сохранять сразу таблицv
+  local t = { } -- СЃРѕС…СЂР°РЅСЏРµРјvРµ РґР°РЅРЅvРµ
+  t.result = result -- РјРѕР¶РЅРѕ СЃРѕС…СЂР°РЅСЏС‚СЊ СЃСЂР°Р·Сѓ С‚Р°Р±Р»РёС†v
   t.pos    = {}
   t.pos.x  = pos.x
   t.pos.y  = pos.y
@@ -904,14 +903,14 @@ function as_start_universal_transform_timer(komp, result, pos, vremya, gv, lv, i
   t.gv     = gv
   t.lv     = lv
   t.info_portion = info_portion
-  t.komp   = komp -- можно сохранять сразу таблицv
+  t.komp   = komp -- РјРѕР¶РЅРѕ СЃРѕС…СЂР°РЅСЏС‚СЊ СЃСЂР°Р·Сѓ С‚Р°Р±Р»РёС†v
   t.remove_anomaly    = remove_anomaly
   t.remove_anomaly_id = remove_anomaly_id
   amk.g_start_timer("af_transform_universal", vremya[1], vremya[2], vremya[3], t)
 end
 
 
--- старая фунция
+-- СЃС‚Р°СЂР°СЏ С„СѓРЅС†РёСЏ
 function af_start_transform(v1,v2,af_from,af_target)
 	local rnd=math_random(0,100)
 	if rnd>v1 then
@@ -925,7 +924,7 @@ function af_start_transform(v1,v2,af_from,af_target)
 	end
 end
 
--- старая фунция
+-- СЃС‚Р°СЂР°СЏ С„СѓРЅС†РёСЏ
 function af_start_transform_timer(af,pos,delay_d,delay_h,delay_m,af_sect)
 	local t={}
 	t.section=af
@@ -940,11 +939,11 @@ function af_start_transform_timer(af,pos,delay_d,delay_h,delay_m,af_sect)
 end
 
 
--- завершаем варку/мутациі
--- может бvть много результатов
+-- Р·Р°РІРµСЂС€Р°РµРј РІР°СЂРєСѓ/РјСѓС‚Р°С†РёС–
+-- РјРѕР¶РµС‚ Р±vС‚СЊ РјРЅРѕРіРѕ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 function af_transform_universal_end(params)
 	--get_console():execute("load ~#I#:"..string.format(" af_transform_universal_end "))
-	-- если есть результатv
+	-- РµСЃР»Рё РµСЃС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚v
 	local count = 0
 	for k, v in pairs(params.result) do
 		count = count + 1
@@ -954,17 +953,17 @@ function af_transform_universal_end(params)
 		if db.actor:position():distance_to(anom_pos) < 15 then
 			level.add_pp_effector("teleport.ppe", 1524, false)
 		end
-		-- формируем строку с названиями компонентов
+		-- С„РѕСЂРјРёСЂСѓРµРј СЃС‚СЂРѕРєСѓ СЃ РЅР°Р·РІР°РЅРёСЏРјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 		local from_komp = ""
 		for k,v in pairs(params.komp) do
 			if k then
 				from_komp = from_komp..game.translate_string(amk.get_inv_name(k))..", "
 			end
 		end
-		-- отсекаем ", " в хвосте
+		-- РѕС‚СЃРµРєР°РµРј ", " РІ С…РІРѕСЃС‚Рµ
 		from_komp = string_sub(from_komp, 1, -2)
 		
-		-- спавним результат(v)
+		-- СЃРїР°РІРЅРёРј СЂРµР·СѓР»СЊС‚Р°С‚(v)
 		for k,v in pairs(params.result) do
 			local obj
 			obj = amk.spawn_item(k, vector():set(params.pos.x,params.pos.y+10,params.pos.z), params.gv, params.lv)
@@ -976,13 +975,13 @@ function af_transform_universal_end(params)
 		amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
 	
-	-- даїм инфопорциі, если есть
+	-- РґР°С—Рј РёРЅС„РѕРїРѕСЂС†РёС–, РµСЃР»Рё РµСЃС‚СЊ
 	if params.info_portion and db.actor:dont_has_info(params.info_portion) then
 		db.actor:give_info_portion(params.info_portion)
 	end
 	
-	-- удаляем аномалии, если нужно и она не в исклічениях
-	-- код взят из amk_anoms.turn_off_all()
+	-- СѓРґР°Р»СЏРµРј Р°РЅРѕРјР°Р»РёРё, РµСЃР»Рё РЅСѓР¶РЅРѕ Рё РѕРЅР° РЅРµ РІ РёСЃРєР»С–С‡РµРЅРёСЏС…
+	-- РєРѕРґ РІР·СЏС‚ РёР· amk_anoms.turn_off_all()
 	if params.remove_anomaly then
 		local sobj = alife():object(params.remove_anomaly_id)
 		if sobj and game_graph():valid_vertex_id(sobj.m_game_vertex_id) then
@@ -999,7 +998,7 @@ local obj_name=sobj:name()
 	end
 end
 
--- старая функция
+-- СЃС‚Р°СЂР°СЏ С„СѓРЅРєС†РёСЏ
 function af_transform_end(params)
 	local from_sect="\""..params.from_sect.."\""
 	local obj
@@ -1379,12 +1378,12 @@ function Blowout_pp(phase)
 --' GameMin = 12 RealSec
 --' TimeBlowout = 184 RealSec
 
---' начало (Timer = 36 sec)
---' первая фаза (Timer = 36 sec)
---' вторая фаза (Timer = 36 sec)
---' Tретья фаза (Timer = 36 sec)
---' четвертая фаза (Timer = 60 sec)
---' конечная фаза (Timer = 0 sec)
+--' РЅР°С‡Р°Р»Рѕ (Timer = 36 sec)
+--' РїРµСЂРІР°СЏ С„Р°Р·Р° (Timer = 36 sec)
+--' РІС‚РѕСЂР°СЏ С„Р°Р·Р° (Timer = 36 sec)
+--' TСЂРµС‚СЊСЏ С„Р°Р·Р° (Timer = 36 sec)
+--' С‡РµС‚РІРµСЂС‚Р°СЏ С„Р°Р·Р° (Timer = 60 sec)
+--' РєРѕРЅРµС‡РЅР°СЏ С„Р°Р·Р° (Timer = 0 sec)
 ---------------------------------------------------
 
 	amk.mylog("blowout "..phase)
@@ -1535,11 +1534,11 @@ function on_blowout_hit( npc, hide )
                 if not need_hit then
                         db.actor.blowout_outside = nil
                 end
-                if outfit_hideout() then -- защита от выброса броником
+                if outfit_hideout() then -- Р·Р°С‰РёС‚Р° РѕС‚ РІС‹Р±СЂРѕСЃР° Р±СЂРѕРЅРёРєРѕРј
                         need_hit = false
                         khit = 0
                 else
-                        khit = khit+khit*level.get_game_difficulty()/6  -- усиление хита для актора, чтобы вне укрытия не пережил
+                        khit = khit+khit*level.get_game_difficulty()/6  -- СѓСЃРёР»РµРЅРёРµ С…РёС‚Р° РґР»СЏ Р°РєС‚РѕСЂР°, С‡С‚РѕР±С‹ РІРЅРµ СѓРєСЂС‹С‚РёСЏ РЅРµ РїРµСЂРµР¶РёР»
                 end
                 in_hide = not need_hit
         end
@@ -1549,7 +1548,7 @@ function on_blowout_hit( npc, hide )
     	h.impulse = 0
 		h.draftsman = npc
 		h.direction = vector():set(0,0,0)
-                h:bone("bip01_spine") -- чтобv учитvвалась броня
+                h:bone("bip01_spine") -- С‡С‚РѕР±v СѓС‡РёС‚vРІР°Р»Р°СЃСЊ Р±СЂРѕРЅСЏ
         h.type = hit.strike
                 npc:hit(h)
         h.type = hit.telepatic
@@ -1632,7 +1631,7 @@ function update_anoms()
     end
 end
 
--- anom_state[sid]==true для активнvх аномалий
+-- anom_state[sid]==true РґР»СЏ Р°РєС‚РёРІРЅvС… Р°РЅРѕРјР°Р»РёР№
 function pack_anoms(anom_state)
 	local str=""
 	for i=0,amk_hideouts.anom_count-1,7 do
@@ -1719,13 +1718,13 @@ function generate_recipe(obj)
 	end
 	if not info then return end
 	local recipes=amk.load_table("amk_body_recipe")
-	-- Проверим не генерился ли уже этот рецепт
+	-- РџСЂРѕРІРµСЂРёРј РЅРµ РіРµРЅРµСЂРёР»СЃСЏ Р»Рё СѓР¶Рµ СЌС‚РѕС‚ СЂРµС†РµРїС‚
 	for k,v in pairs(recipes) do
 		if v==info then
 			return
 		end
 	end
-	-- Сгенерим рецепт
+	-- РЎРіРµРЅРµСЂРёРј СЂРµС†РµРїС‚
 	if math.random(100)<=prob then
 		recipes[obj:id()]=info
 		amk.save_table("amk_body_recipe",recipes)
@@ -1784,7 +1783,7 @@ function spawn_fuel()
         end
 end
 
--- БТР на блокпосту
+-- Р‘РўР  РЅР° Р±Р»РѕРєРїРѕСЃС‚Сѓ
 function spawn_military_btr()
 	spawn_military_tech_pack( alife():create("vehicle_btr",vector():set(-168.11, -29.71, -303.21),81808,38 ) ,"vehicle_btr")
 	spawn_military_tech_pack( alife():create("vehicle_btr",vector():set(-237.85, -26.23, -378.81),17147,14 ) ,"vehicle_btr")
@@ -1795,7 +1794,7 @@ function spawn_military_tech_pack(obj, spawn_item)
 	local packet = net_packet()
 	obj:STATE_Write(packet)
 
-	-- свойства cse_alife_object
+	-- СЃРІРѕР№СЃС‚РІР° cse_alife_object
 	local game_vertex_id = packet:r_u16()
 	local cse_alife_object__unk1_f32 = packet:r_float()
 	local cse_alife_object__unk2_s32 = packet:r_s32()
@@ -1805,16 +1804,16 @@ function spawn_military_tech_pack(obj, spawn_item)
 	local story_id = packet:r_s32()
 	local cse_alife_object__unk3_s32 = packet:r_s32()
 
-	-- свойства cse_visual
+	-- СЃРІРѕР№СЃС‚РІР° cse_visual
 	local model_visual = packet:r_stringZ()
 	local cse_visual__unk1_u8 = packet:r_u8()
 	local motion_name
 	if spawn_item == "helicopter" then
-		-- свойства cse_motion
+		-- СЃРІРѕР№СЃС‚РІР° cse_motion
 		motion_name = packet:r_stringZ()
 	end
 
-	-- свойства cse_ph_skeleton
+	-- СЃРІРѕР№СЃС‚РІР° cse_ph_skeleton
 	local skeleton_name = packet:r_stringZ()
 	local cse_ph_skeleton__unk1_u8 = packet:r_u8()
 	local cse_ph_skeleton__unk2_u16 = packet:r_u16()
@@ -1823,15 +1822,15 @@ function spawn_military_tech_pack(obj, spawn_item)
 	local engine_sound 
 		
 	if spawn_item == "helicopter" then
-		-- свойства cse_alife_helicopter
+		-- СЃРІРѕР№СЃС‚РІР° cse_alife_helicopter
 		cse_alife_helicopter__unk1_sz = packet:r_stringZ()
 		engine_sound = packet:r_stringZ()
 	elseif	spawn_item == "vehicle_btr" then
 		health = packet:r_float()
 	end
 	
-	-- теперь заполняем нужные параметры
-	-- свойства cse_alife_object
+	-- С‚РµРїРµСЂСЊ Р·Р°РїРѕР»РЅСЏРµРј РЅСѓР¶РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹
+	-- СЃРІРѕР№СЃС‚РІР° cse_alife_object
 	packet:w_begin(game_vertex_id)
 	packet:w_float(cse_alife_object__unk1_f32)
 	packet:w_s32(cse_alife_object__unk2_s32)
@@ -1846,7 +1845,7 @@ function spawn_military_tech_pack(obj, spawn_item)
 	packet:w_s32(-1)
 	packet:w_s32(cse_alife_object__unk3_s32)
 
-	-- свойства cse_visual
+	-- СЃРІРѕР№СЃС‚РІР° cse_visual
 	packet:w_stringZ(model_visual)
 	packet:w_u8(cse_visual__unk1_u8)
 	
@@ -1854,14 +1853,14 @@ function spawn_military_tech_pack(obj, spawn_item)
 		packet:w_stringZ(motion_name)		
 	end 
 	
-	-- свойства cse_ph_skeleton
+	-- СЃРІРѕР№СЃС‚РІР° cse_ph_skeleton
 	skeleton_name = "idle"
 	packet:w_stringZ(skeleton_name)
 	packet:w_u8(cse_ph_skeleton__unk1_u8)
 	packet:w_u16(cse_ph_skeleton__unk2_u16)
 
 	if spawn_item == "helicopter" then
-		-- свойства cse_alife_helicopter
+		-- СЃРІРѕР№СЃС‚РІР° cse_alife_helicopter
 		cse_alife_helicopter__unk1_sz = "idle"
 		engine_sound = "alexmx\\helicopter"
 		packet:w_stringZ(cse_alife_helicopter__unk1_sz)
@@ -1870,7 +1869,7 @@ function spawn_military_tech_pack(obj, spawn_item)
 		health = 1
 		packet:w_float(health)
 	end	
-	-- считываем скорректированные параметры
+	-- СЃС‡РёС‚С‹РІР°РµРј СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°РЅРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹
 	packet:r_seek(0)
 	obj:STATE_Read(packet, packet:w_tell())
 end
@@ -2008,7 +2007,7 @@ function zomby_blow(obj)
 			h.impulse = 0
 			h.draftsman = db.actor
 			h.direction = vector():set(0,0,0)
-                        h:bone("bip01_spine") -- чтобv учитvвалась броня
+                        h:bone("bip01_spine") -- С‡С‚РѕР±v СѓС‡РёС‚vРІР°Р»Р°СЃСЊ Р±СЂРѕРЅСЏ
 			h.power = 1/dist
 			h.type = hit.strike --chemical_burn
 			db.actor:hit(h)

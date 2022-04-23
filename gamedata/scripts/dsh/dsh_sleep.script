@@ -14,6 +14,7 @@ end
 
 
 function on_first_update()
+  cant_sleep_timer( 30000 )
   dsh.timeout(
     math.random( 3 ) * 1000,
     function()
@@ -127,11 +128,15 @@ function test_for_need_sleep_matras()
     end
   end
   if
-    amk.load_variable( "blowout", -1 ) > -1
-    and amk.load_variable( "blowout", -1 ) < 5
+    db.actor:has_info( "pre_blowout" )
+    or dsh_cop_weather.get_weather_mgr():is_surge_in_process()
+    or (
+      amk.load_variable( "blowout", -1 ) > -1
+      and amk.load_variable( "blowout", -1 ) < 5
+    )
+    or surge_soon()
   then
     ogse.autohiding_msg( game.translate_string( "blowout_not_sleep" ), 1500 )
-
   else
 
       -- звуковое сопровождение
@@ -171,4 +176,32 @@ function want_sleep_k()
   else
     return ( gg_need_sleep - n1 ) / ( n2 - n1 )
   end
+end
+
+
+local cant_sleep_t = false
+function cant_sleep_timer( t )
+  if cant_sleep_t then
+    local elapsed = cant_sleep_t:elapsed()
+    if elapsed > t then return end
+  end
+  can_sleep_t = dsh.timeout( t, function() cant_sleep_t = false end )
+end
+function is_cant_sleep()
+  return
+    db.actor:has_info( "pre_blowout" )
+    or dsh_cop_weather.get_weather_mgr():is_surge_in_process()
+    or (
+      amk.load_variable( "blowout", -1 ) > -1
+      and amk.load_variable( "blowout", -1 ) < 5
+    )
+    or surge_soon()
+    or ogse_surge_mgr.is_autosave_active()
+    or cant_sleep_t
+end
+
+
+function surge_soon()
+  local surge_hours = dsh_cop_weather.get_surge_time()
+  return surge_hours < 0.25     -- до выброса меньше 15-ти минут
 end
