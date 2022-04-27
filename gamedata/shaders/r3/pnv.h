@@ -17,7 +17,6 @@
 #define FLICKERING_FREQ 60.0
 #define NOISE_INTENSITY 0.15      // NV_PARAMS.x
 #define SCANLINES_INTENSITY 0.175 // NV_PARAMS.y
-#define VIGNETTE_RADIUS 1.0
 
 float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float4 NV_PARAMS)
 {
@@ -43,11 +42,6 @@ float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float
     color += FLICKERING_INTENSITY * sin(timers.x*FLICKERING_FREQ);   
     #endif
     //////////////////////////////////////////////////////////////////////////////////////////
-    // vignette
-    #ifdef NV_VIGNETTE
-	color *= VIGNETTE_RADIUS-(distance(tc0.xy,float2( 0.5f, 0.5f)));
-    color *= smoothstep( 0.55f, 0.4f, distance( tc0.xy, float2( 0.5f, 0.5f ) ) );
-   	#endif
 	
-   	return color; 
+   return color; 
 }

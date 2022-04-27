@@ -1,18 +1,18 @@
 --[[----------------------------------------------------------------------
 -|ogse_dynamic_hud.script
--|Updated I AM DEAD
--|Last Update Krodin
+-|Updated I AM DEAD, xrKrodin
+-|Last Update I AM DEAD
 ------------------------------------------------------------------------]]
 
 function attach(sm)
 	sm:subscribe({ signal = "on_spawn",           fun = this.off_shader_effects })
 	sm:subscribe({ signal = "on_death",           fun = this.off_shader_effects })
 	sm:subscribe({ signal = "on_first_update",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_item_to_slot",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_item_to_ruck",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_drop",            fun = this.update_suit_hud })
+	sm:subscribe({ signal = "on_update",          fun = this.update_suit_hud })
 end
 
+local last_cond = 0
+local suithud_enable = false
 
 local last_shader_mode = "off"
 local function switch_shader_effects(mode)
@@ -22,45 +22,66 @@ local function switch_shader_effects(mode)
 	end
 end
 
-local suithud_enable = false --когда садимся/выходим из БТР, этот параметр убирает/возвращает худ
-local function check_my_suit_hud()
-	if not suithud_enable then
-		cmd("r2_visor_refl_intensity 0")	
-		cmd("r2_visor_refl_control 0")
-		switch_shader_effects("off")
-		return
-	end
-
-	local helmet = db.actor:item_in_slot(10)
-	local outfit = db.actor:item_in_slot(6)
-	if helmet and ( helmet:section() == "af_maska_1" or helmet:section() == "af_maska_2" ) then
-		cmd("r2_visor_refl_control 1")
-		cmd("r2_visor_refl_control 0.2")
-		switch_shader_effects("on")
-	elseif outfit then
-		local outfitname = outfit:section()
-		local control = get_string(outfitname, "control" )
-		local intensity = get_string(outfitname, "intensity" )		
-		cmd("r2_visor_refl_control "..control)
-		cmd("r2_visor_refl_intensity "..intensity)
-		switch_shader_effects(tonumber(control) > 0 and "on" or "off")
+local function get_cond(obj)
+	if obj > 0.9 then
+		return "1,1,1,1"
+	elseif obj > 0.8 then
+		return "2,1,1,1"
+	elseif obj > 0.7 then
+		return "3,1,1,1"
+	elseif obj > 0.6 then
+		return "4,1,1,1"
+	elseif obj > 0.5 then
+		return "5,1,1,1"
+	elseif obj > 0.4 then
+		return "6,1,1,1"
+	elseif obj > 0.3 then
+		return "7,1,1,1"
+	elseif obj > 0.2 then
+		return "8,1,1,1"
+	elseif obj > 0.1 then
+		return "9,1,1,1"
 	else
-		cmd("r2_visor_refl_intensity 0")
-		cmd("r2_visor_refl_control 0")
-		switch_shader_effects("off")
+		return "10,1,1,1"
+	end
+end
+
+local function check_my_suit_hud()
+
+	local outfit = db.actor:item_in_slot(6)
+	if outfit then
+		local outfitname = outfit:section()
+		local outfit_condition = outfit:condition()
+		local control = get_string(outfitname, "control" )
+		local intensity = get_string(outfitname, "intensity" )
+		if tonumber(control) > 0 and last_cond ~= get_cond(outfit_condition) then
+			last_cond = get_cond(outfit_condition)
+			cmd("r2_mask_control "..last_cond)
+			cmd("r2_visor_refl_control "..control)
+			cmd("r2_visor_refl_intensity "..intensity)
+			switch_shader_effects(tonumber(control) > 0 and "on" or "off")
+			suithud_enable = false
+		end
+	else
+		if not suithud_enable then
+			off_shader_effects()
+			last_cond = 0
+			suithud_enable = true
+			return
+		end
 	end
 end
 
 
 
 function update_suit_hud()
-	suithud_enable = true
 	check_my_suit_hud()
 end
 
 
 function off_shader_effects()
-	switch_shader_effects("off")
 	cmd("r2_visor_refl_intensity 0")
 	cmd("r2_visor_refl_control 0")
+	cmd("r2_mask_control 0,0,0,0")
+	switch_shader_effects("off")
 end
