@@ -88,7 +88,6 @@ function save_load_item:__init() super()
 	self.fage:SetFont(GetFontLetterica16Russian())
 	self.fage:SetTextColor(255, 255, 255, 255)
 	
-	mm = _G.main_menu.get_main_menu()
 end
 function save_load_item:__finalize()
 	--log1("--save_load_item:__finalize() called!")
@@ -105,6 +104,7 @@ function save_load_dialog:__init( is_save_dlg ) super()
 	end
 	self:InitCallBacks()
 	self.msgbox_id = 0
+	self.mm = _G.main_menu.get_main_menu()
 end
 
 function save_load_dialog:__finalize()
@@ -273,6 +273,7 @@ function save_load_dialog:OnMsgYes()
 	end
 
 	self.msgbox_id = 0
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:delete_selected_file()
@@ -289,6 +290,7 @@ function save_load_dialog:delete_selected_file()
 	delete_save_game(filename)
 	list:RemoveItem(index)
 	self:OnListItemClicked()
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 
@@ -312,6 +314,7 @@ function save_load_dialog:load_game_internal()
 	end
 
 	self:OnButton_back_clicked()
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:SaveFile(fileName)
@@ -325,6 +328,7 @@ function save_load_dialog:OnButton_ok_clicked()
 	else
 		self:OnButton_load_clicked()
 	end
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:OnButton_save_clicked()
@@ -351,6 +355,7 @@ function save_load_dialog:OnButton_save_clicked()
 	self:SaveFile(self.new_save)
 
 	self:OnButton_back_clicked()
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:OnButton_load_clicked()
@@ -385,12 +390,14 @@ function save_load_dialog:OnButton_load_clicked()
 		self.message_box:Init("message_box_invalid_saved_game")
 		self:GetHolder():start_stop_menu(self.message_box, true)
 	end
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 
 function save_load_dialog:OnButton_back_clicked()
 	self:GetHolder():start_stop_menu(self, true)
 	self.owner:Show(true)
+	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function save_load_dialog:OnButton_del_clicked()
@@ -405,6 +412,7 @@ function save_load_dialog:OnButton_del_clicked()
 	self.msgbox_id = self.is_save_dlg and 2 or 1
 	self.message_box:Init("message_box_delete_file_name")
 	self:GetHolder():start_stop_menu(self.message_box, true)
+	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function save_load_dialog:OnKeyboard( dik, keyboard_action )

@@ -233,12 +233,12 @@ local portion = {
 }
 
 local type_frase = {
-    "Получено ",
-    "Отдано на хранение ",
-    "Потеряно ",
-    "Записано в долг ",
-    "Всего на счету ",
-    "Общий долг "
+    game.translate_string( "type_frase1" ),
+    game.translate_string( "type_frase2" ),
+    game.translate_string( "type_frase3" ),
+    game.translate_string( "type_frase4" ),
+    game.translate_string( "type_frase5" ),
+    game.translate_string( "type_frase6" )
 }
 
 --\ делаем ставку
@@ -288,28 +288,28 @@ function totalizator(actor, npc)
     end
     disable_portion() --\ отключаем выданные поршни
     if dolg == 0 and bank == 0 then --\ если выигрыша не было и долгов пока нет то
-        text_news = "Сталкер, ставка не сыграла.\\nПриходи в другой раз."
+        text_news = game.translate_string( "type_frase_result1" )
         start_timer_infoportion(time_send_prize+pause)
     elseif dolg == 0 and bank > 0 then --\ но если выигрыш был и долгов тоже нет то
-        text_news = "Сталкер, твоя ставка сыграла.\\nТы выиграл "..tostring(bank).." р.\\nМожешь приходить забирать."
+        text_news = game.translate_string( "type_frase_result2" )..tostring(bank)..game.translate_string( "type_frase_result3" )
         start_timer_infoportion(time_send_prize+pause)
     elseif dolg > 0 and bank == 0 then --\ если должок есть и с выигрышем пролет то
-        text_news = "Сталкер, ставка не сыграла.\\nА сумма твоего долга возросла до "..tostring(dolg).." р.\\nВеревку и мыло подарю за медузу."		
+        text_news = game.translate_string( "type_frase_result4" )..tostring(dolg)..game.translate_string( "type_frase_result5" )
         start_timer_infoportion(time_send_prize+pause)
     elseif dolg > 0 and bank > 0 then --\ если у эктора есть должок и был выигрыш
         if dolg < bank then -- \и если долг меньше банка то
-            text_news = "Сталкер, на этот раз тебе повезло.\\nТы выиграл "..tostring(bank).." р.\\nНо за тобой должок в "..tostring(dolg).." р., который я сразу вычту.\\nТак что твой выигрыш всего "..tostring(bank - dolg).." р. Можешь приходить забирать."
+            text_news = game.translate_string( "type_frase_result6" )..tostring(bank)..game.translate_string( "type_frase_result7" )..tostring(dolg)..game.translate_string( "type_frase_result8" )..tostring(bank - dolg)..game.translate_string( "type_frase_result3" )
             bank = bank - dolg -- \ итого банк равен сумме минус долг - именно это и отдадим эктору когда он придет за выигрышем -- то есть в этом случае не будем копить долги, а сразу их высчитаем
             dolg = 0 --\ долгов нема
             start_timer_infoportion(time_send_prize+pause)
         elseif dolg == bank then --\ то же самое, но для случая если долг равен банку. Заберем выигрыш, а эктору кукиш.
-            text_news = "Сталкер, хоть ты и выиграл "..tostring(bank).." р.,\\nно за тобой точно такой же должок, который я сразу заберу.\\nТак что получать тебе нечего."
+            text_news = game.translate_string( "type_frase_result9" )..tostring(bank)..game.translate_string( "type_frase_result10" )
             dolg = 0 --\ долгов нема
             bank = 0 --\ банк пустой
             start_timer_infoportion(time_send_prize+pause)
         elseif dolg > bank then --\ если долг есть и был выигрыш, но долг поболе выигрыша
             dolg = dolg - bank --\ вычтем выигрыш из долга
-            text_news = "Сталкер, ты выиграл "..tostring(bank).." р.\\nНо не спеши радоваться, всю сумму я забираю,\\nа ты - все еще должен "..tostring(dolg).." р.\\nТак что иди... в общем ты понял куда."   --\ выдадим эктору собщение, что он остался в долгу и ему ниче не полагается
+            text_news = game.translate_string( "type_frase_result11" )..tostring(bank)..game.translate_string( "type_frase_result12" )..tostring(dolg)..game.translate_string( "type_frase_result13" )   --\ выдадим эктору собщение, что он остался в долгу и ему ниче не полагается
             start_timer_infoportion(time_send_prize+pause)
             bank = 0 --\ надо ли?
         end
@@ -334,13 +334,13 @@ end
 function transfer_bank()
     if deposit == 0 then --\ если депозит пока пуст и в банке че есть то
         deposit = bank --\ сделаем трансфер в другую переменную
-        news_manager.send_tip(db.actor, "Сталкер, на твой счёт поступила сумма в "..tostring(deposit).." р.", 5, "default", 10000)
+        news_manager.send_tip(db.actor, game.translate_string( "transfer_bank1" )..tostring(deposit), 5, "default", 10000)
         talk_message(2,deposit)
         talk_message(5,deposit)
         bank = 0
     elseif deposit > 0 then
         deposit = deposit + bank
-        news_manager.send_tip(db.actor, "Сталкер, на твой счёт поступила сумма в "..tostring(bank).." р.\\nОбщая сумма депозита "..tostring(deposit).." р.", 5, "default", 10000)
+        news_manager.send_tip(db.actor, game.translate_string( "transfer_bank1" )..tostring(bank)..game.translate_string( "transfer_bank2" )..tostring(deposit), 5, "default", 10000)
         talk_message(2,bank)
         talk_message(5,deposit)
         bank = 0
@@ -354,7 +354,7 @@ function transfer_deposit(npc, actor)
     if actor:has_info("dep_1") then
         summa = math.ceil(deposit/10)
         actor:give_money(summa)
-        news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(summa).." р.\\nОстаток на счёте  "..tostring(deposit - summa).." р.", 5, "default", 10000)
+        news_manager.send_tip(db.actor, game.translate_string( "transfer_deposit1" )..tostring(summa)..game.translate_string( "transfer_deposit2" )..tostring(deposit - summa), 5, "default", 10000)
         deposit = deposit - summa
         talk_message(1,summa)
         talk_message(5,deposit)
@@ -362,14 +362,14 @@ function transfer_deposit(npc, actor)
     elseif actor:has_info("dep_2") then
         summa = math.ceil(deposit/2)
         actor:give_money(summa)
-        news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(summa).." р.\\nОстаток на счёте  "..tostring(deposit - summa).." р.", 5, "default", 10000)
+        news_manager.send_tip(db.actor, game.translate_string( "transfer_deposit1" )..tostring(summa)..game.translate_string( "transfer_deposit2" )..tostring(deposit - summa), 5, "default", 10000)
         deposit = deposit - summa
         talk_message(1,summa)
         talk_message(5,deposit)
         summa = 0
     elseif actor:has_info("dep_3") then
         actor:give_money(deposit)
-	    news_manager.send_tip(db.actor, "Сталкер, с твоего депозита снята сумма в "..tostring(deposit).." р.\\nОстаток на счёте ноль р.\\nСмотри как бы тебя не грабанули по дороге...", 5, "default", 10000)
+	    news_manager.send_tip(db.actor, game.translate_string( "transfer_deposit1" )..tostring(deposit)..game.translate_string( "transfer_deposit3" ), 5, "default", 10000)
         talk_message(1,deposit)
         deposit = 0
         talk_message(5,deposit)
@@ -603,7 +603,7 @@ function talk_message(id,num)
     else
         task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
     end
-    db.actor:give_talk_message(type_frase[id]..tostring(num).." rur.", task_texture, task_rect, "iconed_answer_item")
+    db.actor:give_talk_message(type_frase[id].." "..tostring(num).." rur.", task_texture, task_rect, "actor_iconed_answer_item")
 end
 
 --\ делаем диалог со ставками доступным

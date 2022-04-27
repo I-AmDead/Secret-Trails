@@ -15,7 +15,7 @@ function options_dialog:__init() super()
 	self:InitCallBacks()
 	self:UpdateOptValues()
 	
-	mm = _G.main_menu.get_main_menu()
+	self.mm = _G.main_menu.get_main_menu()
 end
 
 function options_dialog:__finalize()
@@ -118,7 +118,6 @@ function options_dialog:InitCallBacks()
 end
 
 function options_dialog:amk_options()
-
 	self.dlg_amk_opt:Show(true)
 end
 
@@ -143,8 +142,6 @@ function options_dialog:OnPresetChanged()
 	local opt = COptionsManager()
 	opt:SetCurrentValues("mm_opt_video")
 	opt:SetCurrentValues("mm_opt_video_adv")
-
-	self:show_need_restart_wnd()
 end
 
 function options_dialog:OnBtnAccept()
@@ -168,6 +165,7 @@ function options_dialog:OnBtnAccept()
 	game_options.save_game_options()
 
 	cmd("cfg_save") -- сохраняем файл настроек на диск
+	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function options_dialog:OnBtnCancel()
@@ -177,6 +175,7 @@ function options_dialog:OnBtnCancel()
 	self.owner:Show(true)
 
 	self:HintRefresh()
+	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function options_dialog:OnTabChange()
@@ -202,6 +201,7 @@ function options_dialog:OnTabChange()
 	elseif i == 4 then
 		self.dlg_controls:Show(true)
 	end
+	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnBtnAdvGraphic()
@@ -210,6 +210,7 @@ function options_dialog:OnBtnAdvGraphic()
 
 	self.current_view = 2
 	self:HintRefresh()
+	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnSimplyGraphic()
@@ -218,6 +219,7 @@ function options_dialog:OnSimplyGraphic()
 
 	self.current_view = 1
 	self:HintRefresh()
+	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnKeyboard(dik, keyboard_action)
@@ -235,13 +237,10 @@ function options_dialog:OnKeyboard(dik, keyboard_action)
 				self.owner:Show(true)
 			end
 			self:HintRefresh()
+			self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 		end
 		return true
 	end
 
 	return false
-end
-
-function options_dialog:show_need_restart_wnd()
-	self:GetHolder():start_stop_menu(self.message_box, true)
 end
