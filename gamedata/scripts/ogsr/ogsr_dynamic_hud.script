@@ -1,5 +1,5 @@
 --[[----------------------------------------------------------------------
--|ogse_dynamic_hud.script
+-|ogsr_dynamic_hud.script
 -|Updated I AM DEAD, xrKrodin
 -|Last Update I AM DEAD
 ------------------------------------------------------------------------]]
@@ -13,8 +13,8 @@ end
 
 local last_cond = 0
 local suithud_enable = false
-
 local last_shader_mode = "off"
+
 local function switch_shader_effects(mode)
 	if mode ~= last_shader_mode then
 		cmd("r2_rain_drops_control "..mode)
@@ -47,7 +47,6 @@ local function get_cond(obj)
 end
 
 local function check_my_suit_hud()
-
 	local outfit = db.actor:item_in_slot(6)
 	if outfit then
 		local outfitname = outfit:section()
@@ -60,26 +59,25 @@ local function check_my_suit_hud()
 			cmd("r2_visor_refl_control "..control)
 			cmd("r2_visor_refl_intensity "..intensity)
 			switch_shader_effects(tonumber(control) > 0 and "on" or "off")
-			suithud_enable = false
+			suithud_enable = true
+		elseif tonumber(control) == 0 and suithud_enable then
+			off_shader_effects()
 		end
 	else
-		if not suithud_enable then
+		if suithud_enable then
 			off_shader_effects()
-			last_cond = 0
-			suithud_enable = true
 			return
 		end
 	end
 end
 
-
-
 function update_suit_hud()
 	check_my_suit_hud()
 end
 
-
 function off_shader_effects()
+	last_cond = 0
+	suithud_enable = false
 	cmd("r2_visor_refl_intensity 0")
 	cmd("r2_visor_refl_control 0")
 	cmd("r2_mask_control 0,0,0,0")
