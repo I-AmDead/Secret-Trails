@@ -63,11 +63,6 @@ function options_dialog:InitControls()
 	self.dlg_video_adv:Show(false)
 	self.dialog:AttachChild(self.dlg_video_adv)
 
-	self.dlg_amk_opt = ui_amk_options.opt_amk()
-	self.dlg_amk_opt:InitControls(55, 74, xml, self)
-	self.dlg_amk_opt:Show(false)
-	self.dialog:AttachChild(self.dlg_amk_opt)
-
 	local btn = xml:Init3tButton("main_dialog:btn_accept", self.dialog)
 	self:Register(btn, "btn_accept")
 
@@ -114,11 +109,6 @@ function options_dialog:InitCallBacks()
 	self:AddCallback("btn_default_graphic",  ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
 	self:AddCallback("btn_default_sound",    ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
 	self:AddCallback("btn_simply_graphic",   ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-	self:AddCallback("btn_amk",		         ui_events.BUTTON_CLICKED,		  self.amk_options,	self)
-end
-
-function options_dialog:amk_options()
-	self.dlg_amk_opt:Show(true)
 end
 
 function options_dialog:HintRefresh()
@@ -142,6 +132,7 @@ function options_dialog:OnPresetChanged()
 	local opt = COptionsManager()
 	opt:SetCurrentValues("mm_opt_video")
 	opt:SetCurrentValues("mm_opt_video_adv")
+	self:show_need_restart_wnd()
 end
 
 function options_dialog:OnBtnAccept()
@@ -151,18 +142,6 @@ function options_dialog:OnBtnAccept()
 	self.owner:Show(true)
 
 	self:HintRefresh()
-
-	local radio_mus = self:GetCheckButton("check_amk_mus")
-	local radio_treasure = self:GetTabControl("radio_amk_treasure")
-	local radio_wpn = self:GetCheckButton("check_amk_wpn")
-	local radio_eat = self:GetCheckButton("check_amk_eat")
-
-	game_options.AmkMus = radio_mus:GetCheck()
-	game_options.AmkTrs = radio_treasure:GetActiveIndex()
-	game_options.AmkWpn = radio_wpn:GetCheck()
-	game_options.AmkEat = radio_eat:GetCheck()
-
-	game_options.save_game_options()
 
 	cmd("cfg_save") -- сохраняем файл настроек на диск
 	self.mm:PlaySound("mod\\mainmenu_button_sound")
@@ -184,7 +163,6 @@ function options_dialog:OnTabChange()
 	self.dlg_gameplay:Show(false)
 	self.dlg_controls:Show(false)
 	self.dlg_video_adv:Show(false)
-	self.dlg_amk_opt:Show(false)
 	self.current_view = 1
 
 	self:HintRefresh()
@@ -197,8 +175,6 @@ function options_dialog:OnTabChange()
 	elseif i == 2 then
 		self.dlg_gameplay:Show(true)
 	elseif i == 3 then
-		self.dlg_amk_opt:Show(true)
-	elseif i == 4 then
 		self.dlg_controls:Show(true)
 	end
 	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
@@ -243,4 +219,8 @@ function options_dialog:OnKeyboard(dik, keyboard_action)
 	end
 
 	return false
+end
+
+function options_dialog:show_need_restart_wnd()
+	self:GetHolder():start_stop_menu(self.message_box, true)
 end

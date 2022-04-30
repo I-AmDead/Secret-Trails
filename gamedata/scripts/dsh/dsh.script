@@ -145,13 +145,13 @@ end
 
 
 function remove_quotes( s )
-  local  s2 = string.gsub( s, "[«»\"\']", "" )
+  local  s2 = string.gsub( s, "[В«В»\"\']", "" )
   return s2
 end
 
 
 function strip_quotes( s )
-  return string.gsub( s, "^%s*[«»\"\']+%s*(.+)%s*[«»\"\']+%s*$", "%1" )
+  return string.gsub( s, "^%s*[В«В»\"\']+%s*(.+)%s*[В«В»\"\']+%s*$", "%1" )
 end
 
 
@@ -199,7 +199,7 @@ function set_none_smart_terrain( sobj )
   sobj:save_spawn_ini()
 end
 
--- Создать свободного моба, которого не затянет в какой-нибудь гулаг.
+-- РЎРѕР·РґР°С‚СЊ СЃРІРѕР±РѕРґРЅРѕРіРѕ РјРѕР±Р°, РєРѕС‚РѕСЂРѕРіРѕ РЅРµ Р·Р°С‚СЏРЅРµС‚ РІ РєР°РєРѕР№-РЅРёР±СѓРґСЊ РіСѓР»Р°Рі.
 function create_free_mob( ... )
   is_creating_free_mob = true
   local sobj = alife():create( ... )
@@ -218,7 +218,7 @@ function create_free_npc( ... )
   return create_free_mob( ... )
 end
 
--- Проверить расстояние от гулага до ГГ, если меньше.
+-- РџСЂРѕРІРµСЂРёС‚СЊ СЂР°СЃСЃС‚РѕСЏРЅРёРµ РѕС‚ РіСѓР»Р°РіР° РґРѕ Р“Р“, РµСЃР»Рё РјРµРЅСЊС€Рµ.
 function gulag_distance_to_actor_lt( gulag_name, check_dist )
   if db.zone_by_name[ gulag_name ] then
     local sobj = alife():object( gulag_name )
@@ -350,9 +350,9 @@ end
 function change_next_random_delayed( vname ) end
 
 
--- сделать врагами группу Черепа, что бы долговцы в Баре не краснели
--- после их убийства. Если они все в онлайне, то можно поменять им
--- группировку, для надежности.
+-- СЃРґРµР»Р°С‚СЊ РІСЂР°РіР°РјРё РіСЂСѓРїРїСѓ Р§РµСЂРµРїР°, С‡С‚Рѕ Р±С‹ РґРѕР»РіРѕРІС†С‹ РІ Р‘Р°СЂРµ РЅРµ РєСЂР°СЃРЅРµР»Рё
+-- РїРѕСЃР»Рµ РёС… СѓР±РёР№СЃС‚РІР°. Р•СЃР»Рё РѕРЅРё РІСЃРµ РІ РѕРЅР»Р°Р№РЅРµ, С‚Рѕ РјРѕР¶РЅРѕ РїРѕРјРµРЅСЏС‚СЊ РёРј
+-- РіСЂСѓРїРїРёСЂРѕРІРєСѓ, РґР»СЏ РЅР°РґРµР¶РЅРѕСЃС‚Рё.
 function mil_dolg_enemy()
   local strn = alife():object( "mil_dolg" )
   if not strn then return end
@@ -616,9 +616,9 @@ function release_alive_npc( actor, npc )
 end
 
 
--- создать костер для лагеря сталкеров
+-- СЃРѕР·РґР°С‚СЊ РєРѕСЃС‚РµСЂ РґР»СЏ Р»Р°РіРµСЂСЏ СЃС‚Р°Р»РєРµСЂРѕРІ
 function create_campfire( pos, lvid, gvid, vis, lamp_height )
-  -- кострище
+  -- РєРѕСЃС‚СЂРёС‰Рµ
   local vis_sobj
   if vis then
     local sobj = alife():create( "physic_object", pos, lvid, gvid )
@@ -642,7 +642,7 @@ function create_campfire( pos, lvid, gvid, vis, lamp_height )
     vis_sobj = sobj
   end
 
-  -- аномалия
+  -- Р°РЅРѕРјР°Р»РёСЏ
   local sobj = amk_anoms.spawn_anomaly(
     "zone_flame_small",
      pos, lvid, gvid, { shtype = 0, radius = 1, center = { 0, 0, 0 } }
@@ -661,7 +661,7 @@ end
 
 
 function create_candle( pos, lvid, gvid, vis )
-  -- газовая горелка
+  -- РіР°Р·РѕРІР°СЏ РіРѕСЂРµР»РєР°
   if vis then
     local sobj = alife():create( "physic_object", pos, lvid, gvid )
     local pk   = get_netpk( sobj, 1 )
@@ -683,7 +683,7 @@ function create_candle( pos, lvid, gvid, vis )
     sobj:save_spawn_ini()
   end
 
-  -- аномалия
+  -- Р°РЅРѕРјР°Р»РёСЏ
   local sobj = amk_anoms.spawn_anomaly(
     "zone_flame_candle",
      vector():set( pos.x, pos.y + 0.15, pos.z ), lvid, gvid,
@@ -703,22 +703,22 @@ end
 
 function get_random_pos_in_radius( radius, min_radius, around_pos, dir )
   if not around_pos then around_pos = db.actor:position() end
-  local ai_step     = 0.7 -- шаг AI сетки
+  local ai_step     = 0.7 -- С€Р°Рі AI СЃРµС‚РєРё
   local math_pi_180 = 180 / math.pi
   local pi2         = math.pi * 2
-  -- выравниваем вектора по горизонтали
+  -- РІС‹СЂР°РІРЅРёРІР°РµРј РІРµРєС‚РѕСЂР° РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё
   if not dir then dir = device().cam_dir end
   dir = vector():set( dir.x, 0, dir.z ):normalize()
   dir = vector_rotate_y( dir, math.random( 360 ) )
   local dist = min_radius and math.random( min_radius, radius ) or radius
   if not min_radius then min_radius = ai_step end
   while dist >= min_radius do
-    -- итератор вращения направления
+    -- РёС‚РµСЂР°С‚РѕСЂ РІСЂР°С‰РµРЅРёСЏ РЅР°РїСЂР°РІР»РµРЅРёСЏ
     local rotate_angle = math.asin( ai_step / dist )
     local cur_angle, cur_dir = 0, dir
     while math.abs( cur_angle ) < pi2 do
-      -- подходящий угол, ищем вертекс
-      -- нужная нам позиция
+      -- РїРѕРґС…РѕРґСЏС‰РёР№ СѓРіРѕР», РёС‰РµРј РІРµСЂС‚РµРєСЃ
+      -- РЅСѓР¶РЅР°СЏ РЅР°Рј РїРѕР·РёС†РёСЏ
       local pos     = vector():mad( around_pos, cur_dir, dist )
       local vert_ok = level.vertex_id_by_pos( pos )
       if level.valid_vertex_id( vert_ok ) then
@@ -727,7 +727,7 @@ function get_random_pos_in_radius( radius, min_radius, around_pos, dir )
           return vert_pos, vert_ok
         end
       end
-      -- поворачиваем направление поиска
+      -- РїРѕРІРѕСЂР°С‡РёРІР°РµРј РЅР°РїСЂР°РІР»РµРЅРёРµ РїРѕРёСЃРєР°
       cur_angle = cur_angle + rotate_angle
       cur_dir   = vector_rotate_y( cur_dir, rotate_angle * math_pi_180 )
     end
@@ -787,7 +787,7 @@ function exec_periodic( freq, f, ... )
 end
 
 
--- Взято отсюда http://www.amk-team.ru/forum/topic/7450-spravochnik-po-funkciyam-i-klassam/?do=findComment&comment=272244
+-- Р’Р·СЏС‚Рѕ РѕС‚СЃСЋРґР° http://www.amk-team.ru/forum/topic/7450-spravochnik-po-funkciyam-i-klassam/?do=findComment&comment=272244
 function pos_to_screen_xy( pos )
   local dev   = device()
   local scr_w = dev.width

@@ -21,17 +21,17 @@ end
 
 function main_menu:InitControls()
 	self:Init(0,0,1024,768)			  
-    local xml = CScriptXmlInit()
-    xml:ParseFile("ui_mm_main.xml")
-    xml:InitStatic("background", self)
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_mm_main.xml")
+	xml:InitStatic("background", self)
 	xml:InitStatic("secret_trails_shadow_img", self)
 	xml:InitStatic("secret_trails_logo_img", self)
-    xml:InitStatic("fire_movie", self)   
-    self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
+	xml:InitStatic("fire_movie", self)   
+	self.shniaga = xml:InitMMShniaga("shniaga_wnd",self)
 	
 	self:Register(xml:Init3tButton("new_game", self),"new_game")
 	self:Register(xml:Init3tButton("load_game", self),"load_game")
-	if level.present() and (db.actor ~= nil) and db.actor:alive() then
+	if level.present() and db.actor and db.actor:alive() then
 	self:Register(xml:Init3tButton("save_game", self),"save_game")
 	end
 	self:Register(xml:Init3tButton("options_game", self),"options_game")
@@ -42,17 +42,14 @@ function main_menu:InitControls()
 	self:Register(self.message_box, "msg_box")	
 	
 	local ver = xml:InitStatic		("static_version",self)
-	local mm						= _G.main_menu.get_main_menu()
-
 	local TT2_version    	= "Secret Trails on OGSR Engine Patch 08.04.2021"
 
 	ver:SetText(TT2_version)
 	ver:SetTextColor(255, 255, 0, 0)
-  cmd("time_factor 1")
+	cmd("time_factor 1")
 end
 
 function main_menu:Show(...)
-	self.shniaga:SetVisibleMagnifier(...)
 end
 
 
@@ -80,12 +77,12 @@ end
 
 function main_menu:OnMsgOk()
 	self.mbox_mode = 0
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnMsgCancel()
 	self.mbox_mode = 0
-
+	mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function main_menu:LoadLastSave()
@@ -102,14 +99,13 @@ function main_menu:OnMsgYes()
 		self:OnButton_new_veteran_game()
 	end	
 	
-
 	self.mbox_mode = 0
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnMsgNo()
 	self.mbox_mode = 0
-
+	mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function main_menu:OnButton_last_save()
@@ -121,7 +117,7 @@ function main_menu:OnButton_last_save()
 	self.mbox_mode = 1
 	self.message_box:Init("message_box_confirm_load_save")
 	self:GetHolder():start_stop_menu(self.message_box, true)
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnButton_credits_clicked()
@@ -131,7 +127,7 @@ end
 function main_menu:OnButton_quit_clicked()
 	self.message_box:Init("message_box_quit_windows")
 	self:GetHolder():start_stop_menu(self.message_box, true)
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnButton_disconnect_clicked()
@@ -185,7 +181,7 @@ function main_menu:OnButton_start_new_game()
 	self.mbox_mode			= 2	
 	self.message_box:Init	("message_box_start_game")
 	self:GetHolder():start_stop_menu(self.message_box, true)
-
+	mm:PlaySound("mod\\mainmenu_newgame_sound")
 end
 
 function main_menu:StartGame()
@@ -201,7 +197,9 @@ function main_menu:OnButton_load_spawn()
 		self.spawn_dlg = ui_si.spawn_item_dialog()
 		self.spawn_dlg.owner = self
 	end
+
 	self:GetHolder():start_stop_menu(self.spawn_dlg, true)
+	self:GetHolder():start_stop_menu(self, true) --new
 	self:Show(false)
 end
 
@@ -219,8 +217,9 @@ function main_menu:OnButton_save_clicked()
 	--
 	self:GetHolder():start_stop_menu(self.save_dlg, true)
 	self:Show(false)
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
+
 function main_menu:OnButton_options_clicked()
 	if not self.opt_dlg then
 		self.opt_dlg = ui_mm_opt_main.options_dialog()
@@ -229,7 +228,7 @@ function main_menu:OnButton_options_clicked()
 
 	self:GetHolder():start_stop_menu(self.opt_dlg, true)
 	self:Show(false)
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnButton_load_clicked()
@@ -242,7 +241,7 @@ function main_menu:OnButton_load_clicked()
 	--
 	self:GetHolder():start_stop_menu(self.load_dlg, true)
 	self:Show(false)
-
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
@@ -265,56 +264,24 @@ function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
 		if dik == DIK_keys.DIK_Q then
 			self:OnMessageQuitWin()
 		end
-	
 	end
    
 	return true
 end
 
-
---Для закрытия меню использовать только этот специальный метод!
+--Р”Р»СЏ Р·Р°РєСЂС‹С‚РёСЏ РјРµРЅСЋ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ СЌС‚РѕС‚ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ РјРµС‚РѕРґ!
 function main_menu:close_and_delete_menu()
-	-- Удаляем в движке каллбеки, в которых хранятся ссылки на объекты оконных классов (которые добавляются в AddCallback(..., self),
-	-- иначе части меню не удалятся и будут висеть в памяти до перезапуска LUA (до загрузки сейва, например)
-	-- Так же, надо обнулить висячие ссылки (self.*_dlg), иначе сборщик мусора эти объекты не удалит. Да, это странно, но это так.
+	-- РЈРґР°Р»СЏРµРј РІ РґРІРёР¶РєРµ РєР°Р»Р»Р±РµРєРё, РІ РєРѕС‚РѕСЂС‹С… С…СЂР°РЅСЏС‚СЃСЏ СЃСЃС‹Р»РєРё РЅР° РѕР±СЉРµРєС‚С‹ РѕРєРѕРЅРЅС‹С… РєР»Р°СЃСЃРѕРІ (РєРѕС‚РѕСЂС‹Рµ РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РІ AddCallback(..., self),
+	-- РёРЅР°С‡Рµ С‡Р°СЃС‚Рё РјРµРЅСЋ РЅРµ СѓРґР°Р»СЏС‚СЃСЏ Рё Р±СѓРґСѓС‚ РІРёСЃРµС‚СЊ РІ РїР°РјСЏС‚Рё РґРѕ РїРµСЂРµР·Р°РїСѓСЃРєР° LUA (РґРѕ Р·Р°РіСЂСѓР·РєРё СЃРµР№РІР°, РЅР°РїСЂРёРјРµСЂ)
+	-- РўР°Рє Р¶Рµ, РЅР°РґРѕ РѕР±РЅСѓР»РёС‚СЊ РІРёСЃСЏС‡РёРµ СЃСЃС‹Р»РєРё (self.*_dlg), РёРЅР°С‡Рµ СЃР±РѕСЂС‰РёРє РјСѓСЃРѕСЂР° СЌС‚Рё РѕР±СЉРµРєС‚С‹ РЅРµ СѓРґР°Р»РёС‚. Р”Р°, СЌС‚Рѕ СЃС‚СЂР°РЅРЅРѕ, РЅРѕ СЌС‚Рѕ С‚Р°Рє.
 	if self.save_dlg then self.save_dlg:ClearCallbacks() self.save_dlg = nil end
 	if self.load_dlg then self.load_dlg:ClearCallbacks() self.load_dlg = nil end
 	if self.opt_dlg then
 		if self.opt_dlg.dlg_video_adv then self.opt_dlg.dlg_video_adv = nil end
 		self.opt_dlg:ClearCallbacks() self.opt_dlg = nil
 	end
-	if self.spawn_dlg then self.spawn_dlg:ClearCallbacks() self.spawn_dlg = nil end
 	self:ClearCallbacks() --main_menu СѓРґР°Р»СЏРµС‚СЃСЏ РґРІРёР¶РєРѕРј, РЅРѕ РґР»СЏ РЅР°РґС‘Р¶РЅРѕСЃС‚Рё Рё РµРјСѓ РєР°Р»Р»Р±РµРєРё СѓРґР°Р»РёРј.
 	--
 	cmd("main_menu off")
-
-end
-
-local timer = 0
-function f1() return timer<time_global() end
-
-function f2()
-	set_inactivate_input_time(5)
-	get_console():execute("main_menu 1")
-	timer = time_global() + 200
-	level.add_call(f1,f3)
-end
-
-function f3()
-	local console = get_console()
-	console:hide()
-	press_any_key_on_start = true
-	level.show_indicators()
-	console:execute("snd_volume_eff " .. sound_volume_eff) 
-	console:execute("snd_volume_music " .. sound_volume_music)
-	sound_volume_eff,sound_volume_music = nil,nil
-end
-
-function start()
-	if has_alife_info("storyline_actor_start") then
-		timer = time_global() + 500
-		level.add_call(f1,f2)
-	else
-		press_any_key_on_start = true
-	end
+	mm:PlaySound("mod\\mainmenu_button_sound")
 end
