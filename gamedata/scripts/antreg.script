@@ -707,25 +707,20 @@ function spawn_sar_pauki()
 end
 
 function set_metka_kostolom()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="metka_kostolom" then
-        amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќ ќќќќќќќќ ќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "metka_kostolom" then 
+      amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќ ќќќќќќќќ ќќќќќ") 
+      break
     end
   end
 end
 
 function remove_metka_kostolom()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="metka_kostolom" then
-        level.map_remove_object_spot(obj.id,"crlc_big")
-        break
-      end
+  for a, obj in alife():objects() do
+    if obj:section_name() == "metka_kostolom" then 
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
     end
   end
 end
@@ -1069,25 +1064,21 @@ function spawn_fab_trup()
 end
 
 function set_metka_fab()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="metka_fab" then
-        amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќ, ќќќ ќќќќќќќ ќќќќќќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "metka_fab" then
+      amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќ, ќќќ ќќќќќќќ ќќќќќќќќќќ")
+      break
     end
   end
 end
 
 function remove_metka_fab()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="metka_fab" then
-        level.map_remove_object_spot(obj.id,"crlc_big")
-        break
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "metka_fab" then 
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
     end
   end
 end
@@ -1121,24 +1112,23 @@ end
 
 function babki_spawn()
   local obj = alife():create("babka_brown",vector():set(147.857,-2.925,-309.395),1126422,2989)
+  alife():assign_story_id(obj.id, story_ids.babka_brown)
+
   local obj = alife():create("babka_blue",vector():set(139.192,-3.992,-309.771),1111935,2989)
+  alife():assign_story_id(obj.id, story_ids.babka_blue)
 end
 
 function delete_babka_brown()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"babka_brown") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.babka_brown)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function delete_babka_blue()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"babka_blue") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.babka_blue)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -1296,6 +1286,7 @@ end
 
 function spawn_dog_povodyr()
   local obj = alife():create("dog_povodyr",vector():set(199.167,2.951,-24.184),1582523,3007)
+  alife():assign_story_id(obj.id, story_ids.dog_povodyr)
 end
 
 function spawn_cats_povodyr()
@@ -1312,23 +1303,16 @@ function spawn_cats_povodyr()
 end
 
 function del_povodyr()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"dog_povodyr") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.dog_povodyr)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function remove_metka_povodyr()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="dog_povodyr" then
-        level.map_remove_object_spot(obj.id,"blue_location")
-        break
-      end
-    end
+  local obj = alife():story_object(story_ids.dog_povodyr)
+  if obj then
+    level.map_remove_object_spot(obj.id,"blue_location")
   end
 end
 
@@ -1509,11 +1493,9 @@ function del_nevidimka()
 end
 
 function del_brat_monolit()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"brat_monolit") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.brat_monolit)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -1545,6 +1527,7 @@ end
 
 function spawn_kapitan()
   local obj = alife():create("kapitan_brat",vector():set(-26.660,0.005,692.612),178968,2618)
+  alife():assign_story_id(obj.id, story_ids.kapitan_brat)
 end
 
 function doc_tele_otdal(first_speaker, second_speaker)
@@ -1552,11 +1535,9 @@ function doc_tele_otdal(first_speaker, second_speaker)
 end
 
 function del_kapitan()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"kapitan_brat") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.kapitan_brat)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -1640,39 +1621,31 @@ function spawn_rad_soldaty()
 end
 
 function del_yaschichek1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"pri_surprise_box_0002") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "pri_surprise_box_0002" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function del_yaschichek2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"pri_surprise_box_0003") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "pri_surprise_box_0003" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function del_gluk()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"camp_fire_0011") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "camp_fire_0011" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function del_gluk2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"pri_surprise_box_0008") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "pri_surprise_box_0008" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function del_klyk() 
@@ -1723,12 +1696,10 @@ function spawn_vano()
 end
 
 function del_gigant_x18()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"dar_gigant_normal") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "dar_gigant_normal" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function enemy_koldun()
@@ -1810,8 +1781,13 @@ function spawn_doc_voda()
   alife():use_ai_locations(sobj, false)
 
   local obj = alife():create("doc_vodyanoy1",vector():set(46.103,2.171,-246.994),1246413,3008)
+  alife():assign_story_id(obj.id, story_ids.doc_vodyanoy1)
+
   local obj = alife():create("doc_vodyanoy2",vector():set(35.996,2.102,-213.176),1223223,3008)
+  alife():assign_story_id(obj.id, story_ids.doc_vodyanoy2)
+
   local obj = alife():create("doc_vodyanoy3",vector():set(60.484,1.795,-224.354),1277549,3008)
+  alife():assign_story_id(obj.id, story_ids.doc_vodyanoy3)
 end
 
 function doctor_peredatchik_have(first_speaker, second_speaker)
@@ -1823,78 +1799,64 @@ function doctor_peredatchik_done(first_speaker, second_speaker)
 end
 
 function set_metka_reciver()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="doc_peredatchik" then
-        amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќќќќќ ќќќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "doc_peredatchik" then
+      amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќќќќќ ќќќќќќќ")
+      break
     end
   end
 end
 
 function remove_metka_reciver()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="doc_peredatchik" then
-        level.map_remove_object_spot(obj.id,"crlc_big")
-        break
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "doc_peredatchik" then
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
     end
   end
 end
 
 function del_doc_voda1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"doc_vodyanoy1") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.doc_vodyanoy1)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_doc_voda2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"doc_vodyanoy2") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.doc_vodyanoy2)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_doc_voda3()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"doc_vodyanoy3") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.doc_vodyanoy3)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 ------------------------------zahar_vodyanoy--------------------------------
 
 function set_metka_zahar()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="zahar_box" then
-        amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќќќќ ќќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "zahar_box" then
+      amk.add_spot_on_map(obj.id,"crlc_big","ќќќќќќќќќ ќќќќќќ")
+      break
     end
   end
 end
 
 function del_metka_zahar()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="zahar_box" then
-        level.map_remove_object_spot(obj.id,"crlc_big")
-        break
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "zahar_box" then
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
     end
   end
 end
@@ -1905,7 +1867,10 @@ function spawn_les_vodyanoy()
   alife():use_ai_locations(sobj, false)
 
   local obj = alife():create("les_vodyanoy1",vector():set(68.737,-43.014,261.094),988791,2988)
+  alife():assign_story_id(obj.id, story_ids.les_vodyanoy1)
+
   local obj = alife():create("les_vodyanoy2",vector():set(75.459,-43.711,239.874),1001427,2988)
+  alife():assign_story_id(obj.id, story_ids.les_vodyanoy2)
 end
 
 function zahar_vodyanoy_have(first_speaker, second_speaker)
@@ -1927,33 +1892,28 @@ function spawn_les_wolk()
 end
 
 function del_les_voda1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"les_vodyanoy1") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.les_vodyanoy1)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_les_voda2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"les_vodyanoy2") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.les_vodyanoy2)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function spawn_vodyanoy_agro()
   local obj = alife():create("agro_vodyanoy",vector():set(-196.257,2.457,94.459),40286,678)
+  alife():assign_story_id(obj.id, story_ids.agro_vodyanoy)
 end
 
 function del_agro_voda()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"agro_vodyanoy") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.agro_vodyanoy)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -1982,6 +1942,7 @@ end
 
 function spawn_vodyanoy_mk()
   local obj = alife():create("mk_vodyanoy",vector():set(-271.019,1.875,136.469),522147,2884)
+  alife():assign_story_id(obj.id, story_ids.mk_vodyanoy)
   local obj = alife():create("box_vano",vector():set(-274.156,-1.085,116.411),516799,2884)
   local sobj = alife():object( obj.id )
   alife():use_ai_locations(sobj, false)
@@ -1992,25 +1953,21 @@ function vano_box_have(first_speaker, second_speaker)
 end
 
 function set_metka_vano()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="box_vano" then
-        amk.add_spot_on_map(obj.id,"crlc_big","ќќќќ ќ ќќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "box_vano" then
+      amk.add_spot_on_map(obj.id,"crlc_big","ќќќќ ќ ќќќќќќ")
+      break
     end
   end
 end
 
 function del_metka_vano()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="box_vano" then
-        level.map_remove_object_spot(obj.id,"crlc_big")
-        break
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "box_vano" then
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
     end
   end
 end
@@ -2022,11 +1979,9 @@ function vano_otdal(first_speaker, second_speaker)
 end
 
 function del_mk_voda()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"mk_vodyanoy") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.mk_vodyanoy)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -2099,25 +2054,21 @@ function spawn_nato_outfit()
 end
 
 function set_metka_nato()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="brown_mafon" then
-        amk.add_spot_on_map(obj.id,"crlc_small","ќќќќќќќќќќќ")
-        return
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "brown_mafon" then
+      amk.add_spot_on_map(obj.id,"crlc_small","ќќќќќќќќќќќ")
+      break
     end
   end
 end
 
 function del_metka_nato()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="brown_mafon" then
-        level.map_remove_object_spot(obj.id,"crlc_small")
-        break
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "brown_mafon" then
+      level.map_remove_object_spot(obj.id,"crlc_small")
+      break
     end
   end
 end
@@ -2166,14 +2117,13 @@ end
 
 function spawn_david()
   local obj = alife():create("david",vector():set(48.659,12.236,-11.969),8488,2456)
+  alife():assign_story_id(obj.id, story_ids.david)
 end
 
 function del_david()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"david") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.david)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -2185,10 +2135,19 @@ end
 
 function spawn_maloy()
   local obj = alife():create("maroder_yang",vector():set(83.291,3.776,133.175),436219,3079)
+  alife():assign_story_id(obj.id, story_ids.maroder_yang)
+
   local obj = alife():create("maroder_mg1",vector():set(82.901,3.888,136.069),435685,3079)
+  alife():assign_story_id(obj.id, story_ids.maroder_mg1)
+
   local obj = alife():create("maroder_mg2",vector():set(87.740,4.136,133.793),439457,3079)
+  alife():assign_story_id(obj.id, story_ids.maroder_mg2)
+
   local obj = alife():create("maroder_mg3",vector():set(85.695,3.910,132.266),437827,3079)
+  alife():assign_story_id(obj.id, story_ids.maroder_mg3)
+
   local obj = alife():create("maroder_mg4",vector():set(86.823,4.172,137.286),438914,3079)
+  alife():assign_story_id(obj.id, story_ids.maroder_mg4)
 end
 
 function spawn_maloy_mafon()
@@ -2204,71 +2163,51 @@ function maloy_otdal_money(first_speaker, second_speaker)
 end
 
 function set_metka_maloy()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="maroder_yang" then
-        amk.add_spot_on_map(obj.id,"crlc_small","ќќќќќќќ")
-        return
-      end
-    end
+  local obj = alife():story_object(story_ids.maroder_yang)
+  if obj then
+      amk.add_spot_on_map(obj.id,"crlc_small","ќќќќќќќ")
   end
 end
 
 function del_metka_maloy()
-  for a=1,65534 do
-    local obj = alife():object(a)
-    if obj then
-      if obj:section_name()=="maroder_yang" then
-        level.map_remove_object_spot(obj.id,"crlc_small")
-        break
-      end
-    end
+  local obj = alife():story_object(story_ids.maroder_yang)
+  if obj then
+    level.map_remove_object_spot(obj.id,"crlc_small")
   end
 end
 
 function del_maloy()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"maroder_yang") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.maroder_yang)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_maroder_mg1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"maroder_mg1") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.maroder_mg1)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_maroder_mg2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"maroder_mg2") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.maroder_mg2)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_maroder_mg3()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"maroder_mg3") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.maroder_mg3)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
 function del_maroder_mg4()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"maroder_mg4") then
-      alife():release(obj,true)
-    end
+  local obj = alife():story_object(story_ids.maroder_mg4)
+  if obj then
+    alife():release(obj , true)
   end
 end
 
@@ -2437,57 +2376,49 @@ end
 ----------------------------ставим метку на корень---------------------------------
 
 function set_metka_m() --ставим метку
-  for a=1,65534 do
-      local obj = alife():object(a)
-      if obj then
-          if obj:section_name()=="mandra" then
-              amk.add_spot_on_map(obj.id,"crlc_big","Корень Мандрагоры")
-              return
-          end
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "mandra" then
+      amk.add_spot_on_map(obj.id,"crlc_big","Корень Мандрагоры")
+      break
+    end
   end
 end
 
 function remove_spot_m() --удаляем метку
-  for a=1,65534 do
-      local obj = alife():object(a)
-      if obj then
-          if obj:section_name()=="mandra" then
-              level.map_remove_object_spot(obj.id,"crlc_big")
-              break
-          end
-      end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name()=="mandra" then
+      level.map_remove_object_spot(obj.id,"crlc_big")
+      break
+    end
   end
 end
 
 function del_saha()
-  local sim = alife()
-  local se_obj = sim:story_object(9625)
-  if se_obj then
-      sim:release(se_obj, true)
+  local obj = alife():story_object(9625)
+  if obj then
+      alife():release(se_obj, true)
   end
 end
 
 function del_kot()
-  for a=10,65635,1 do
-      local obj = alife():object(a)
-      if obj and string.find(obj:name(),"stalker_xutor") then
-          alife():release(obj,true)
-      end
-  end
+  local obj = alife():object( "stalker_xutor" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function del_vovan()
-  for a=10,65635,1 do
-      local obj = alife():object(a)
-      if obj and string.find(obj:name(),"esc_new_wound") then
-          alife():release(obj,true)
-      end
-  end
+  local obj = alife():object( "esc_new_wound" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function spawn_brat_monolit()
   local obj = alife():create("brat_monolit", vector():set(-25.913,0.005,693.582),178968,2618)
+  alife():assign_story_id(obj.id, story_ids.brat_monolit)
   xr_logic.pstor_store(db.actor, "iMonolitId", obj.id)
   level.client_spawn_manager():add(obj.id, 0, this.fix_object, 0)
 end
@@ -2502,7 +2433,7 @@ end
 function fix_object(arg, id, obj)
   if obj then 
     local pshell = obj:get_physics_shell()
-    if  pshell then 
+    if pshell then 
       local element = pshell:get_element_by_order(0)
       if element and not element:is_fixed() then 
         element:fix()

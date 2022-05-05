@@ -217,27 +217,23 @@ local obj = alife():create("mir_krovosos2",vector():set(53.869,2.598,57.299),102
 end
 
 function set_metka_pekar()
- for a=1,65534 do
-  local obj = alife():object(a)
-  if obj then
-   if obj:section_name()=="metka_pekar" then
-    amk.add_spot_on_map(obj.id,"crlc_small","������")
-    return
-   end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name() == "metka_pekar" then
+      amk.add_spot_on_map(obj.id,"crlc_small","������")
+      break
+    end
   end
- end
 end
 
 function remove_metka_pekar()
- for a=1,65534 do
-  local obj = alife():object(a)
-  if obj then
-   if obj:section_name()=="metka_pekar" then
-    level.map_remove_object_spot(obj.id,"crlc_small")
-    break
-   end
+  local sim = alife()
+  for a, obj in alife():objects() do
+    if obj:section_name()=="metka_pekar" then
+      level.map_remove_object_spot(obj.id,"crlc_small")
+      break
+    end
   end
- end
 end
 
 function spawn_esc_semecky()
@@ -2101,52 +2097,43 @@ function spawn_amulet_4()
 end
 
 function delete_gromov()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"esc_gromov") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "esc_gromov" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function spawn_gromov1()
   local obj = alife():create("esc_gromov1",vector():set(9.355,-34.317,13.147),2414,2513)
+  alife():assign_story_id(obj.id, story_ids.esc_gromov1)
 end
 
 function delete_osoz1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"esc_osoz1") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "esc_osoz1" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function delete_osoz2()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"esc_osoz2") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "esc_osoz2" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function delete_osoz3()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"esc_osoz3") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "esc_osoz3" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function delete_osoz4()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
-    if obj and string.find(obj:name(),"esc_osoz4") then
-      alife():release(obj,true)
-    end
-  end
+  local obj = alife():object( "esc_osoz4" )
+	if obj then
+		alife():release(obj , true)
+	end
 end
 
 function spawn_osoznanny1()
@@ -2164,8 +2151,8 @@ function spawn_osoznanny2()
 end
 
 function delete_osoznanny1()
-  for a=10,65635,1 do
-    local obj = alife():object(a)
+  local sim = alife()
+  for a, obj in alife():objects() do
     if obj and string.find(obj:name(),"esc_osoznanny1") then
       alife():release(obj,true)
     end

@@ -18,7 +18,7 @@ local cfg = {
 
 local function apply_item( sect )
 
-	if sect == "swipe_use" then
+	if sect == "lhand_swipe_use" then
 		ogsr_swipe_mask.rain_drops_restart()
 		return	
 	elseif sect == "harvest" then
@@ -136,7 +136,7 @@ local function on_item_to_ruck( obj, sobj )
 
 	if SLOT_RESTORE then
 		if sect == "anm_harvest" then
-			db.actor:activate_slot(8)
+			db.actor:activate_slot(13)
 		else
 			db.actor:activate_slot(SLOT_RESTORE)
 			SLOT_RESTORE = false
@@ -162,14 +162,14 @@ end
 local function on_item_to_slot( obj )
 	if CURRENT_ITEM_SECT and string.find( obj:section(), "^anm_" ) then
 		db.actor:restore_weapon()
-		db.actor:activate_slot(8)
+		db.actor:activate_slot(13)
 		ANIM_IN_ACTION = true
 	end
 end
 
 
 local function on_first_update()
-	local obj = db.actor:item_in_slot(8)
+	local obj = db.actor:item_in_slot(13)
 	if obj and string.find( obj:section(), "^anm_" ) then
 		db.actor:move_to_ruck(obj) 
 	end
@@ -179,7 +179,7 @@ local function on_update()
 	if ANIM_IN_ACTION then
 		local tg = time_global()
 		if not anim_exist_tm then
-			if db.actor:active_slot() == 8 then
+			if db.actor:active_slot() == 13 then
 				db.actor:hide_weapon()
 				anim_exist_tm = tg + ANIM_COMPLETED_TM
 				anim_exist_used_tm = tg + ANIM_USED_TM
@@ -193,9 +193,9 @@ local function on_update()
 		end
 		if anim_exist_tm then
 			if anim_exist_tm <= tg then
-				local slot8 = db.actor:item_in_slot(8)
-				if slot8 then
-					db.actor:move_to_ruck(slot8)
+				local slot13 = db.actor:item_in_slot(13)
+				if slot13 then
+					db.actor:move_to_ruck(slot13)
 				end
 			end
 		end

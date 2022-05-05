@@ -7,27 +7,30 @@
 ---------------------------------------------------------------------------------------------------------------------
 --Evaluators
 ----------------------------------------------------------------------------------------------------------------------
-class "evaluator_wound" (property_evaluator) 
-function evaluator_wound:__init(name, storage) super(nil, name)
-    self.a = storage
+class "evaluator_wound" ( property_evaluator )
+function evaluator_wound:__init( name, storage ) super( nil, name )
+  self.a = storage
 end
 
-function evaluator_wound:evaluate ()
-  local npc=self.object
-  if self.a.wounded_set ~= true then return false end
+
+function evaluator_wound:evaluate()
+  local npc = self.object
+  if not self.a.wounded_set then return false end
   if not self.a.regen then
-    self.a.regen=npc:character_community()=="zombied" or npc:character_community()=="monolith"
+    self.a.regen = npc:character_community() == "zombied" or npc:character_community() == "monolith"
   end
-  
-  -- if self.a.regen and npc.health~=1 then
-  local sobj = alife():object(npc:id())
-    -- amk.mylog(npc:name().." "..math.floor(npc.health*100).." wounded "..tostring(sobj.wounded))
-  -- end
-  if npc.health>0.95 and self.a.regen and tostring(xr_logic.pstor_retrieve(self.object, "wounded_state")) ~= "nil" then
-    sobj.wounded=false
+
+  local sobj = alife():object( npc:id() )
+  if
+    npc.health > 0.95 and self.a.regen
+    and tostring( xr_logic.pstor_retrieve( npc, "wounded_state" ) ) ~= "nil"
+  then
+    if sobj then sobj.wounded = false end
     self.a.wound_manager:hit_callback()
-  elseif tostring(xr_logic.pstor_retrieve(self.object, "wounded_state")) == "nil" and sobj.wounded then
-  -- amk.mylog("hitcall for "..self.object:name())
+  elseif
+    tostring( xr_logic.pstor_retrieve( npc, "wounded_state" ) ) == "nil"
+    and sobj and sobj.wounded
+  then
     self.a.wound_manager:hit_callback()
   end
   if self.mgr == nil then
