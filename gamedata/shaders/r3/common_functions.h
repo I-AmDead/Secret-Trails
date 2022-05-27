@@ -1,6 +1,11 @@
 #ifndef	common_functions_h_included
 #define	common_functions_h_included
 
+float rand(float n)
+{
+    return frac(cos(n)*343.42);
+}
+
 //	contrast function
 float Contrast(float Input, float ContrastPower)
 {
@@ -12,26 +17,16 @@ float Contrast(float Input, float ContrastPower)
      return Output;
 }
 
+float3 TonemapFunction(float3 x)
+{
+	return log(x + 1.0f);
+}
+
 void tonemap( out float4 low, out float4 high, float3 rgb, float scale)
 {
-	rgb		=	rgb*scale;
-
-#ifdef USE_COP_WEATHER_CONFIGS
-
-	const float fWhiteIntensity = 1.7;
-
-	const float fWhiteIntensitySQR = fWhiteIntensity*fWhiteIntensity;
-
-	low		=	( (rgb*(1+rgb/fWhiteIntensitySQR)) / (rgb+1) ).xyzz;
-
-	high	=	rgb.xyzz/def_hdr;	// 8x dynamic range
-
-#else
-
-	low		=	rgb.xyzz;
-	high	=	low/def_hdr;	// 8x dynamic range
-
-#endif
+	rgb = rgb * scale;
+	low = TonemapFunction(rgb).xyzz;
+	high = rgb.xyzz/def_hdr; // 8x dynamic range
 }
 
 float4 combine_bloom( float3  low, float4 high)	

@@ -25,8 +25,6 @@ By LVutner for X-Ray Oxygen project (2020)
 #define SSR_SAMPLES int(20) // Extreme
 #define SSR_DISTANCE float(400.0)
 
-uniform float4 screen_res; // Screen resolution (x-Width,y-Height, zw - 1/resolution)
-
 /*Helper functions*/
 float RayAttenBorder(float2 pos, float value)
 {

@@ -24,25 +24,25 @@ end
 
 local function get_cond(obj)
 	if obj > 0.9 then
-		return "1,1,1,1"
+		return 1
 	elseif obj > 0.8 then
-		return "2,1,1,1"
+		return 2
 	elseif obj > 0.7 then
-		return "3,1,1,1"
+		return 3
 	elseif obj > 0.6 then
-		return "4,1,1,1"
+		return 4
 	elseif obj > 0.5 then
-		return "5,1,1,1"
+		return 5
 	elseif obj > 0.4 then
-		return "6,1,1,1"
+		return 6
 	elseif obj > 0.3 then
-		return "7,1,1,1"
+		return 7
 	elseif obj > 0.2 then
-		return "8,1,1,1"
+		return 8
 	elseif obj > 0.1 then
-		return "9,1,1,1"
+		return 9
 	else
-		return "10,1,1,1"
+		return 10
 	end
 end
 
@@ -55,7 +55,8 @@ local function check_my_suit_hud()
 		local intensity = get_string(outfitname, "intensity" )
 		if tonumber(control) > 0 and last_cond ~= get_cond(outfit_condition) then
 			last_cond = get_cond(outfit_condition)
-			cmd("r2_mask_control "..last_cond)
+			cmd("r2_mask_control "..control)
+			cmd("r2_mask_numbers "..last_cond)
 			cmd("r2_visor_refl_control "..control)
 			cmd("r2_visor_refl_intensity "..intensity)
 			switch_shader_effects(tonumber(control) > 0 and "on" or "off")
@@ -80,6 +81,6 @@ function off_shader_effects()
 	suithud_enable = false
 	cmd("r2_visor_refl_intensity 0")
 	cmd("r2_visor_refl_control 0")
-	cmd("r2_mask_control 0,0,0,0")
+	cmd("r2_mask_control 0")
 	switch_shader_effects("off")
 end

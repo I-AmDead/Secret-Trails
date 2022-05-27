@@ -24,11 +24,6 @@ float Luminance(float3 color)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-float3 TonemapFunction(float3 x)
-{
-	return log(x + 1.0f);
-}
-
 float3 InverseTonemapFunction(float3 x)
 {
 	return exp(x) - 1.0f;

@@ -160,10 +160,10 @@ float2 Drops(float2 uv, float t, float l0, float l1, float l2)
 
 float4 main(p_screen I) : SV_Target
 {
-    float rainAmount = drops_control.x;
+    float rainAmount = drops_params.x;
 	float2 uv = I.tc0;
 
-    float T = drops_control.z*(timers.x + rainAmount * 2.0);    
+    float T = drops_params.z*(timers.x + rainAmount * 2.0);    
 
     float t = T*0.2;
 
@@ -173,7 +173,7 @@ float4 main(p_screen I) : SV_Target
 
     float2 c = Drops(uv, t, staticDrops, layer1, layer2);
 
-    float2 e = float2(0.00005, 0.0); //fycking uv
+    float2 e = float2(drops_params.y, 0.0); //fycking uv
     float cx = Drops(uv+e, t, staticDrops, layer1, layer2).x;
     float cy = Drops(uv+e.yx, t, staticDrops, layer1, layer2).x;
     float2 n = float2(cx-c.x, cy-c.x);

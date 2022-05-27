@@ -33,7 +33,6 @@ Texture2D s_mask_droplets;
 
 //Constants from engine
 float4 mask_control; 
-float3 drops_control;
 
 //Gasmask settings
 #define GM_DIST_INT 0.05 //Refraction intensity

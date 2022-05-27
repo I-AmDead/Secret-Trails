@@ -137,43 +137,34 @@ function main_menu:OnButton_disconnect_clicked()
 end
 
 function main_menu:OnMessageQuitGame()
-	local console = get_console()
-	console:execute("disconnect")
+	cmd("disconnect")
 end
 
 function main_menu:OnMessageQuitWin()
-	local console = get_console()
-	console:execute("quit")
+	cmd("quit")
 end
 
 function main_menu:OnButton_return_game()
-	local console = get_console()
-	console:execute("main_menu off")
+	cmd("main_menu off")
 end
 
 function main_menu:OnButton_new_novice_game()
-	local console = get_console()
-	console:execute("g_game_difficulty gd_novice")
+	cmd("g_game_difficulty gd_novice")
 	self:StartGame()	
 end
 
 function main_menu:OnButton_new_stalker_game()
-	local console = get_console()
-	console:execute("g_game_difficulty gd_stalker")
+	cmd("g_game_difficulty gd_stalker")
 	self:StartGame()
 end
 
 function main_menu:OnButton_new_veteran_game()
-	local console = get_console()
-	console:execute("g_game_difficulty gd_veteran")
-	console:execute("g_music_tracks 1")
-	console:execute("g_ammunition_on_belt 0")
+	cmd("g_game_difficulty gd_veteran")
 	self:StartGame()
 end
 
 function main_menu:OnButton_new_master_game()
-	local console = get_console()
-	console:execute("g_game_difficulty gd_master")	
+	cmd("g_game_difficulty gd_master")	
 	self:StartGame()
 end
 
@@ -201,10 +192,6 @@ function main_menu:OnButton_load_spawn()
 	self:GetHolder():start_stop_menu(self.spawn_dlg, true)
 	self:GetHolder():start_stop_menu(self, true) --new
 	self:Show(false)
-end
-
-function check_game()
-	return level.present() and db.actor and db.actor:alive()
 end
 
 function main_menu:OnButton_save_clicked()
@@ -245,19 +232,16 @@ function main_menu:OnButton_load_clicked()
 end
 
 function main_menu:OnKeyboard(dik, keyboard_action)  --virtual function
-	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
-	local bind = dik_to_bind(dik)
-	local console = get_console()
-
-	if self.start_btn and dik ~= DIK_keys.DIK_GRAVE then
-		self.OnButton_return_game()
-		return true
-	end
+	CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
 
 	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 		if dik_to_bind(dik) == key_bindings.kQUIT then
 			if level.present() and db.actor and db.actor:alive() then
 				self:close_and_delete_menu()
+			end
+		elseif dik == DIK_keys.DIK_F1 then
+			if ui_cheat_main then
+				ui_cheat_main.start_menu(self)
 			end
 		end
 
