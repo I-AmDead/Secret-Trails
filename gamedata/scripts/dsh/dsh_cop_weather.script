@@ -38,424 +38,248 @@
 -- tr_w  - таблица со списком возможных циклов (для перехода с данного)
 -- и их весов
 
-local weather_transitions_bad = {
+local weather_transitions_common = {
+----------------------------------------------------
   clear = {
-    end_w = 6,
+    end_w = math.random(3, 6),
     tr_w  = {
-      partly    = 45,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+	  
+      rain      = math.random(20, 45),
+      rain_thun = math.random(20, 45),
+	  
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
   clear2 = {
-    end_w = 6,
+    end_w = math.random(3, 6),
     tr_w  = {
-      partly    = 45,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+	  
+      rain      = math.random(20, 45),
+      rain_thun = math.random(20, 45),
+	  
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
   clear3 = {
-    end_w = 6,
+    end_w = math.random(3, 6),
     tr_w  = {
-      partly    = 45,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+	  
+      rain      = math.random(20, 45),
+      rain_thun = math.random(20, 45),
+	  
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
-  partly = {
-    end_w = 6,
+  swtc = {
+    end_w = math.random(3, 6),
     tr_w  = {
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 10,
-      rain      = 10,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+	  
+      rain      = math.random(20, 45),
+      rain_thun = math.random(20, 45),
+	  
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
+----------------------------------------------------
   cloudy = {
-    end_w = 8,
+    end_w = math.random(3, 6),
     tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 16,
-      rain      = 38,
-      veryfoggy = 0,
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
+
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
   cloudy2 = {
-    end_w = 8,
+    end_w = math.random(3, 6),
     tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 16,
-      rain      = 38,
-      veryfoggy = 0,
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
+
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
+    },
+  },
+  cloudy2rm = {
+    end_w = math.random(3, 6),
+    tr_w  = {
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
+
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
   cloudy3 = {
-    end_w = 8,
+    end_w = math.random(3, 6),
     tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 16,
-      rain      = 38,
-      veryfoggy = 0,
-    },
-  },
-  cloudy4 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 16,
-      rain      = 38,
-      veryfoggy = 0,
-    },
-  },
-  cloudy5 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 16,
-      rain      = 38,
-      veryfoggy = 0,
-    },
-  },
-  rain = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 6,
-	  cloudy2   = 6,
-	  cloudy3   = 6,
-	  cloudy4   = 6,
-	  cloudy5   = 6,
-      foggy     = 8,
-	  foggy2    = 8,
-      rain      = 30,
-      storm     = 24,
-      veryfoggy = 0,
-    },
-  },
-  storm = {
-    end_w = 8,
-    tr_w  = {
-      storm     = 20,
-      rain      = 80,
-    },
-  },
-  foggy = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 20,
-    },
-  },
-  foggy2 = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 20,
-    },
-  },
-  veryfoggy = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 10,
-	  veryfoggy = 10,
-    },
-  },
-}
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
 
-local weather_transitions_default = {
-  clear = {
-    end_w = 8,
-    tr_w  = {
-      partly    = 70,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-    },
-  },
-  clear2 = {
-    end_w = 8,
-    tr_w  = {
-      partly    = 70,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-    },
-  },
-  clear3 = {
-    end_w = 8,
-    tr_w  = {
-      partly    = 70,
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-    },
-  },
-  partly = {
-    end_w = 8,
-    tr_w  = {
-      clear     = 10,
-	  clear2    = 10,
-	  clear3    = 10,
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 20,
-    },
-  },
-  cloudy = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 41,
-      rain      = 20,
-      veryfoggy = 0,
-    },
-  },
-  cloudy2 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 41,
-      rain      = 20,
-      veryfoggy = 0,
-    },
-  },
-  cloudy3 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 41,
-      rain      = 20,
-      veryfoggy = 0,
-    },
-  },
-  cloudy4 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 41,
-      rain      = 20,
-      veryfoggy = 0,
-    },
-  },
-  cloudy5 = {
-    end_w = 8,
-    tr_w  = {
-      cloudy    = 5,
-	  cloudy2   = 5,
-	  cloudy3   = 5,
-	  cloudy4   = 5,
-	  cloudy5   = 5,
-      foggy     = 8,
-	  foggy2    = 8,
-      partly    = 41,
-      rain      = 20,
-      veryfoggy = 0,
-    },
-  },
-  rain = {
-    end_w = 6,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      foggy     = 10,
-	  foggy2    = 10,
-      rain      = 15,
-      storm     = 15,
-      veryfoggy = 0,
-    },
-  },
-  storm = {
-    end_w = 6,
-    tr_w  = {
-      storm     = 20,
-      rain      = 80,
-    },
-  },
-  foggy = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 20,
-    },
-  },
-  foggy2 = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 20,
-    },
-  },
-  veryfoggy = {
-    end_w = 1,
-    tr_w  = {
-      cloudy    = 10,
-	  cloudy2   = 10,
-	  cloudy3   = 10,
-	  cloudy4   = 10,
-	  cloudy5   = 10,
-      partly    = 30,
-      rain      = 20,
-    },
-  },
-}
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
 
-local weather_transitions_marsh = {
-  foggy = {
-    end_w = 8,
-    tr_w  = {
-      foggy     = 40,
-	  foggy2    = 40,
-      rain      = 20,
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
-  foggy2 = {
-    end_w = 8,
+  swtc_dark = {
+    end_w = math.random(3, 6),
     tr_w  = {
-      foggy     = 40,
-	  foggy2    = 40,
-      rain      = 20,
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
+
+      foggy     = math.random(10, 25),
+      foggy_ns  = math.random(10, 25),
     },
   },
+----------------------------------------------------
   rain = {
-    end_w = 6,
+    end_w = math.random(3, 6),
     tr_w  = {
-      foggy     = 30,
-	  foggy2    = 30,
-      rain      = 20,
-      storm     = 20,
-      veryfoggy = 0,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+
+      clear     = math.random(20, 45),
+      clear2    = math.random(20, 45),
+      clear3    = math.random(20, 45),
+      swtc      = math.random(20, 45),
+
+      foggy     = math.random(20, 35),
+      foggy_ns  = math.random(20, 35),
     },
   },
-  storm = {
-    end_w = 4,
+  rain_thun = {
+    end_w = math.random(3, 6),
     tr_w  = {
-      rain      = 80,
-      storm     = 20,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+
+      clear     = math.random(20, 45),
+      clear2    = math.random(20, 45),
+      clear3    = math.random(20, 45),
+      swtc      = math.random(20, 45),
+
+      foggy     = math.random(20, 35),
+      foggy_ns  = math.random(20, 35),
+    },
+  },
+----------------------------------------------------
+  foggy = {
+    end_w = math.random(1, 4),
+    tr_w  = {
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
+    },
+  },
+  foggy_ns = {
+    end_w = math.random(1, 4),
+    tr_w  = {
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
     },
   },
   veryfoggy = {
-    end_w = 1,
+    end_w = math.random(1, 4),
     tr_w  = {
-      rain      = 100,
+      cloudy    = math.random(40, 75),
+      cloudy2   = math.random(40, 75),
+      cloudy2rm = math.random(40, 75),
+      cloudy3   = math.random(40, 75),
+      swtc_dark = math.random(40, 75),
+
+      clear     = math.random(40, 75),
+      clear2    = math.random(40, 75),
+      clear3    = math.random(40, 75),
+      swtc      = math.random(40, 75),
+
+      rain      = math.random(40, 75),
+      rain_thun = math.random(40, 75),
     },
   },
+----------------------------------------------------
 }
 
 local weather_transitions = {
-  [ "bad"     ] = weather_transitions_bad,
-  [ "default" ] = weather_transitions_default,
-  [ "marsh"   ] = weather_transitions_marsh,
+  [ "default" ] = weather_transitions_common,
 }
+
+
 
 function attach( sm ) -- для менеджера сигналов
   sm:subscribe({ signal = "on_init",        fun = this.on_actor_init   })
@@ -1141,7 +965,7 @@ end
 
 
 function StaticForecast:pre_blowout_weather()
-  return "foggy"
+  return "veryfoggy"
 end
 
 
