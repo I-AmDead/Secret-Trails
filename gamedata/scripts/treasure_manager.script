@@ -198,11 +198,11 @@ experienced_section = {
 }
 
 treasure_type = 2
-local treasure_manager = nil
 function attach( sm )
   sm:subscribe({ signal = "on_ph_obj_use", fun = this.on_treasure_use })
   sm:subscribe({ signal = "on_save",       fun = this.save            })
-  sm:subscribe({ signal = "on_npc_use", fun = this.on_npc_use })
+  sm:subscribe({ signal = "on_npc_use",    fun = this.on_npc_use      })
+  sm:subscribe({ signal = "on_spawn",      fun = this.on_spawn        })
 end
 
 
@@ -258,250 +258,274 @@ function on_treasure_use( obj, who )
   end
 end
 
-local n_rank 
 
-function parse_spawns(line)
-	if line == nil then
-		return {}
-	end
+local given_onetime = {}
+function on_spawn()
+  local given = ogse.load_var_safe( "treasure_manager.given_onetime" )
+  if given then
+    for _, sect in ipairs( given ) do
+      given_onetime[ sect ] = true
+    end
+  end
+end
 
-	--' если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
-	local t = se_respawn.parse_names(line)
-	local n = table.getn(t)
-		
-	local ret_table = {}
-	local k = 1
 
-	while k <= n do
-		local spawn = {}
-		spawn.section = t[k]
-		-- Проверяем что это не последняя запись
-		if t[k+1] ~= nil then
-			local p = tonumber(t[k+1])
-			-- проверяем что вторым числом задана вероятность, а не другая секция спавну
-			if p then
-				-- забиваем число
-				spawn.prob = p
-				k = k + 2
-			else
-				-- забиваем дефолт 1
-				spawn.prob = 1
-				k = k + 1
-			end
-		else
-			spawn.prob = 1
-			k = k + 1
-		end
-		table.insert(ret_table, spawn)
-	end
-	return ret_table
+function remember_given_onetime( sect )
+  given_onetime[ sect ] = true
+  local given = {}
+  for k, _ in pairs( given_onetime ) do
+    table.insert( given, k )
+  end
+  ogse.save_var(
+    "treasure_manager.given_onetime", given, "array_template", { "string" }
+  )
+end
+
+
+local treasure_manager
+local n_rank
+
+
+function parse_spawns( line )
+  if line == nil then
+    return {}
+  end
+
+  -- если default-ов больше, чем значений в ini, то забить недостающие
+  -- последним значением из ini
+  local t = se_respawn.parse_names( line )
+  local n = table.getn( t )
+  local ret_table = {}
+  local k = 1
+
+  while k <= n do
+    local spawn   = {}
+    spawn.section = t[ k ]
+    -- Проверяем что это не последняя запись
+    if t[ k + 1 ] ~= nil then
+      local p = tonumber( t[ k + 1 ] )
+      -- проверяем что вторым числом задана вероятность, а не другая
+      -- секция спавну
+      if p then
+        -- забиваем число
+        spawn.prob = p
+        k = k + 2
+      else
+        -- забиваем дефолт 1
+        spawn.prob = 1
+        k = k + 1
+      end
+    else
+      spawn.prob = 1
+      k = k + 1
+    end
+    table.insert( ret_table, spawn )
+  end
+
+  return ret_table
 end
 
 
 class "CTreasure"
 function CTreasure:__init()
-	--' На конструкторе вычитываем LTX и создаем заготовки квестов.
-	self.ini = ini_file("misc\\treasure_manager.ltx")
+  --' Итерируемся по всем настройкам фраз
+  ASSERT(
+    sys_ini:section_exist( "treasure_manager.list" ),
+    "There is no section [list] in treasure_manager.ltx"
+  )
 
-	--' Итерируемся по всем настройкам фраз
-	if not self.ini:section_exist("list") then
-		abort("There is no section [list] in treasure_manager.ltx")
-	end
-	local n = self.ini:line_count("list")
-	local id, value = "",""
+  local n = sys_ini:line_count( "treasure_manager.list" )
+  local result, id, value = 0, "", ""
 
-	--' начальная установка
-	self.treasure_info = {}
+  --' начальная установка
+  self.treasure_info = {}
+  for i = 0, n - 1 do
+    result, id, value = sys_ini:r_line( "treasure_manager.list", i, "", "" )
+    local info  = {}
+    local id_sect = "treasure_manager." .. id
+    info.target = get_u32( id_sect, "target" )
+    info.named  = get_bool( id_sect, "named", false )
+    info.name   = get_string( id_sect, "name" )
+    info.cond   = xr_logic.parse_condlist(
+      db.actor_proxy, "treasure_manager", "condlist",
+      get_string( id_sect, "condlist", "" )
+    )
+    --' Отметим тайник как новый
+    info.active = false
+    info.done   = false
+    self.treasure_info[ id ] = info
+  end
 
-	for i=0,n-1 do
-		result, id, value	= self.ini:r_line("list",i,"","")
-		
-		self.treasure_info[id] = {}
-
-		self.treasure_info[id].target		= utils.cfg_get_number(self.ini, id, "target", nil, true)
-		self.treasure_info[id].name			= utils.cfg_get_string(self.ini, id, "name", nil, true, "")
-		self.treasure_info[id].description	= utils.cfg_get_string(self.ini, id, "description", nil, true, "")
-		self.treasure_info[id].items		= parse_spawns(utils.cfg_get_string(self.ini, id, "items", nil, true, ""))
-
-		local community	= parse_names(utils.cfg_get_string(self.ini, id, "community", nil, false, "", "stalker, bandit, dolg, freedom"))
-		self.treasure_info[id].community = {}
-		for k,v in pairs(community) do
-			self.treasure_info[id].community[v] = true
-		end
-
-
-		if self.treasure_info[id].items == nil then
-			abort("cant find 'items' in %s", id)
-		end
-
-		self.treasure_info[id].condlist		= xr_logic.parse_condlist(db.actor, "treasure_manager", "condlist", utils.cfg_get_string(self.ini, id, "condlist", nil, false, "", ""))
-		
-		--' Отметим тайник как новый
-		self.treasure_info[id].active = false
-		self.treasure_info[id].done = false
-
-		--print_table(self.treasure_info)
-	end
-
-	--' Вспомогательные таблицы для облегчения поиска
-	self.treasure_by_target = {}
-	for k,v in pairs(self.treasure_info) do
-		self.treasure_by_target[v.target] = k	
-	end
+  --' Вспомогательные таблицы для облегчения поиска
+  self.treasure_by_target = {}
+  local cnt = 0
+  for k, v in pairs( self.treasure_info ) do
+    self.treasure_by_target[ v.target ] = k
+    cnt = cnt + 1
+  end
+  ASSERT( n == cnt, "wrong num of loaded items: %s ~= %s", n, cnt )
 end
---' Юзание инициатора (возможность выдать тайник)
-function CTreasure:use(npc)
-	local rarets 
-	
-	if npc ~= nil then
-	  n_rank = npc:character_rank()
-	 else 
-      n_rank = 0
-	end
 
+
+-- Юзание инициатора (возможность выдать тайник)
+function CTreasure:use( npc )
   if npc:character_community() == "zombied" then return end
 	
-	-- если выбран редкий тип тайников, то снизим овероятность его выпадения
-	if treasure_type == 2 then 
-	  rarets = 85
-	else 
-      rarets = 80
+  if npc then
+    n_rank = npc:character_rank()
+  else
+    n_rank = 0
   end
-  if amk.is_debug then
-    rarets=0
+
+  local rarets 
+
+  -- если выбран редкий тип тайников, то снизим овероятность его выпадения
+  if treasure_type == 2 then 
+    rarets = 90
+  else 
+    rarets = 80
   end
 	
-	if math.random(100) < rarets then 
-	  return
-	end
+  if dsh.get_next_random( "treasure_manager.rnd.use", 100 ) < rarets then return end
 	
-	--' Нужно рандомно выбрать один из тайников.
-	local avail = {}
-	local tr_sum = 0
+  --' Нужно рандомно выбрать один из тайников.
+  local avail  = {}
+  local tr_sum = 0
+  for k, v in pairs( self.treasure_info ) do
+    if ( not v.done ) and ( not v.active ) then
+      local treasure_prob = xr_logic.pick_section_from_condlist(
+        db.actor, npc, v.cond
+      )
+      if treasure_prob == "" or treasure_prob == nil then
+        treasure_prob = 0
+      end
+      treasure_prob = tonumber( treasure_prob )
+      if treasure_prob > 0 and not v.active then
+        if treasure_prob == 100 then
+          self:give_treasure( k )
+        else
+          table.insert( avail, { k = k, prob = treasure_prob } )
+          tr_sum = tr_sum + treasure_prob
+        end
+      end
+    end
+  end
+  if tr_sum == 0 then return end
 
-	for k,v in pairs(self.treasure_info) do
-		if v.done == false and v.active == false and v.community[npc:character_community()] == true then
-			local treasure_prob = xr_logic.pick_section_from_condlist(db.actor, npc, v.condlist)
-
-			if treasure_prob == "" or treasure_prob == nil then
-				treasure_prob = 0
-			end
-
-			if tonumber(treasure_prob) >= 0 and
-			v.community[npc:character_community()] == true and
-			v.active == false
-			then
-				if tonumber(treasure_prob) == 100 then
-					self:give_treasure(k)
-				else
-					table.insert(avail, {k = k, prob = treasure_prob})
-					tr_sum = tr_sum + treasure_prob
-				end
-			end
-		end
-	end
-
-	if tr_sum == 0 or
-		math.random(100) < 65
-	then
-		return
-	end
-
-	local tr_w = math.random(tr_sum)
-	for k,v in pairs(avail) do
-		tr_w = tr_w - v.prob
-		if tr_w <= 0 then
-			--' Выдать тайник
-			self:give_treasure(v.k)
-			break
-		end
-	end
- 
+  local tr_w = dsh.get_next_random( "treasure_manager.rnd.use", tr_sum )
+  for k, v in pairs( avail ) do
+    tr_w = tr_w - v.prob
+    if tr_w <= 0 then
+      --' Выдать тайник
+      self:give_treasure( v.k )
+      break
+    end
+  end
 end
+
+
 --' Сохранение
 function CTreasure:check()
-	--' Проверка тайников
-	for k,v in pairs(self.treasure_info) do
-		--' Выдать тайник
-		self:give_treasure(k)
-	end
+  --' Проверка тайников
+  for k, v in pairs( self.treasure_info ) do
+    --' Выдать тайник
+    self:give_treasure( k )
+  end
 end
+
 --' Выдача тайника
-function CTreasure:give_treasure(k)
-	local v = self.treasure_info[k]
-	local obj = alife():story_object(v.target)
-	if obj ~= nil then
-		news_manager.send_treasure(v.name)
+function CTreasure:give_treasure( k, silent, skip_onetime_items )
+  local v    = self.treasure_info[ k ]
+  local obj = alife():story_object( v.target )
+  if obj then
+    ASSERT(
+      obj:clsid() == clsid.inventory_box,
+      "Story object [%s] is not an inventory box", v.target
+    )
 
-		--' Пометить на карте		
-		local text = "%c[255,238,155,23]"..game.translate_string(v.name).."\\n".."%c[default]"..game.translate_string(v.description)
---    if not level.map_has_object_spot(obj.id,"treasure") then
+    if not silent then
+      news_manager.send_treasure( v.name )
+      --' Пометить на карте
+      local text = "%c[255,238,155,23]"
+        .. game.translate_string( v.name ) .. "\\n"
+        .. "%c[default]" .. game.translate_string(
+          get_string( "treasure_manager." .. k, "description", "" )
+      )
       level.map_add_object_spot_ser(obj.id, "treasure", text)
---    else
---      amk.mylog("Blocking mapspot for "..obj:name())
---    end
-
-        -- проверка, какой тип тайника выбран
-		-- если тайник не классический и не именной, то заменим содержимое
-		if treasure_type ~= 0 and self:named_treasure(v) == false then
-		   v.items = self:give_item_list()
-		end  
-		
-		--' Сгенерить вещи
-		for kk,vv in pairs(v.items) do
-			if ammo_section[vv.section] == true then
-				se_respawn.create_ammo(vv.section,	
-						obj.position,
-						obj.m_level_vertex_id,	
-						obj.m_game_vertex_id,
-						obj.id,
-						vv.prob)
-			else
-				for i=1,vv.prob do
-					alife():create(vv.section,
-							obj.position,
-							obj.m_level_vertex_id,	
-							obj.m_game_vertex_id,
-							obj.id)
-				end
-			end
-		end
-		
-		--' Пометим тайник как выданный
-		self.treasure_info[k].active = true
-		self.treasure_info[k].done = true
-    -- Отправим тайник в оффлайн
-    local sim = alife ()
-    if sim ~= nil and obj.online then
-       sim:set_switch_online  (obj.id, false)
-       sim:set_switch_offline (obj.id, true)
---       sim:set_switch_online  (obj.id, true)
---       sim:set_switch_offline (obj.id, false)
-       amk.convert_npc[obj.id]=1 -- ставим в очередь на вывод в онлайн
     end
-	else
-		printf("TREASURE %s, target doesnt exist", k)
-	end
+
+    -- проверка, какой тип тайника выбран
+    -- если тайник не именной, то заменим содержимое
+    if v.named then
+      v.items = parse_spawns(
+        get_string( "treasure_manager." .. k, "items", "" )
+      )
+    else
+      v.items = self:give_item_list( skip_onetime_items )
+    end
+
+    --' Сгенерить вещи
+    for kk, vv in pairs( v.items ) do
+      local prop = amk_utils.get_item_props( vv.section )
+      vv.id = {}
+      for i = 1, vv.prob do
+        local sect = vv.section
+        local sobj = alife():create(
+          sect,
+          obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id,
+          obj.id
+        )
+        table.insert( vv.id, sobj.id )
+      end
+    end
+		
+    --' Пометим тайник как выданный
+    self.treasure_info[ k ].active = true
+    self.treasure_info[ k ].done   = true
+    -- Отправим тайник в оффлайн
+--[=[
+    if level.object_by_id( obj.id ) then
+      alife():set_switch_online(  obj.id, false )
+      alife():set_switch_offline( obj.id, true  )
+      -- ставим в очередь на вывод в онлайн
+      amk.convert_npc_timer( obj.id, 1 ):start()
+    end
+--]=]
+    return v.items
+  else
+    log2( "TREASURE %s, target doesnt exist", k )
+  end
 end
+
+
 --' Снимаем отметку с тайника
-function CTreasure:treasure_empty(box, box_story_id)
-
-	local k = self.treasure_by_target[box_story_id]
-
-	if k == nil or self.treasure_info[k] == nil then 
-		return
-	end
-
-	self.treasure_info[k].active = false
-	
-	-- если тайник не именной, то переведен его в онлайн для следующей выдачи
-	if self:named_treasure(self.treasure_info[k]) == false then
-	  self.treasure_info[k].done = false
-	end
-	
-  level.map_remove_object_spot(box:id(), "treasure")
+function CTreasure:treasure_empty( box, box_story_id )
+  local k = self.treasure_by_target[ box_story_id ]
+  if ( not k ) or ( not self.treasure_info[ k ] ) then
+    return
+  end
+  self.treasure_info[ k ].active = false
+  -- если тайник не именной, то переведен его в онлайн для следующей выдачи
+  if not self.treasure_info[ k ].named then
+    self.treasure_info[ k ].done = false
+  end
+  if box then
+    level.map_remove_object_spot(box:id(), "treasure")
+  end
+  ogse_signals.get_mgr():call( "on_treasure_empty", box, box_story_id )
 end
---' Сохранение
+
+
+function CTreasure:is_active( sobj )
+  local k = self.treasure_by_target[ sobj.m_story_id ]
+  if k and self.treasure_info[ k ] then
+    return self.treasure_info[ k ].active
+  end
+  return false
+end
+
+
+-- Сохранение
 function CTreasure:save( p )
   local treasures = {}
   local active_cnt, done_cnt = 0, 0
@@ -545,112 +569,94 @@ function CTreasure:load( p )
 end
 
 
-function CTreasure:give_item_list()
+function CTreasure:give_item_list( skip_onetime_items )
+  local rank  = 1
+  local tabla = {}
 
- local rank = 1
- local tabla = {}
- -- сколько наименований предметов будет в тайнике
- local i = math.random(1, 2)
+  -- считаем настройку пользователя 
+  local opt = treasure_type
 
+  -- определим ранг непися
+  if n_rank == nil then 
+    n_rank = dsh.get_next_random( "treasure_manager.rnd.rank", 1, 12 ) * 100
+  end
+  if n_rank <= 300 then
+    rank = 1
+  elseif n_rank <=600 then
+    rank = 2
+  elseif n_rank <= 900 then
+    rank = 3
+  else
+    rank = 4
+  end 
 
--- считаем настройку пользователя 
- local opt = treasure_type
- 
-  --~ -- определим ранг непися
- --~ if nepis~= nil then
---   rank = n_rank --nepis.character_rank ()
-   if n_rank == nil then n_rank = math.random(1, 9)*100 end
-   if n_rank <= 300 then
-     rank = 1
-	elseif n_rank <=600 then
-     rank = 2
-    elseif n_rank <= 900 then
-     rank = 3
-    else 
-     rank = 4
-    end	 
- --~ else
-   --~ rank = 1
- --~ end
+  -- определим, из какой секции брать предметы, и какие именно
+  local sect
+  if  opt == 1 then
+    if rank == 1 then
+      sect = rare_list.novice_section
+    elseif rank == 2 then
+      sect = rare_list.experienced_section
+    elseif rank == 3 then
+      sect = rare_list.veteran_section
+    else
+      sect = rare_list.master_section
+    end
+  else
+    if rank == 1 then
+      sect = rare_list.novice_section
+    elseif rank == 2 then
+      sect = rare_list.experienced_section
+    elseif rank == 3 then
+      sect = rare_list.veteran_section
+    else
+      sect = rare_list.master_section
+    end
+  end
 
-
- for j = 1, i, 1 do
-   local cnt = 0
-   local spawn = {}
-  -- определим, из какой секции брать предметы, и какие именно  
-   if  opt == 1 then
-		if rank == 1 then
-			spawn.section = solid_list.novice_section[math.random(table.getn(solid_list.novice_section))]
-		elseif rank == 2 then
-			spawn.section = solid_list.experienced_section[math.random(table.getn(solid_list.experienced_section))]
-		elseif rank == 3 then
-			spawn.section = solid_list.veteran_section[math.random(table.getn(solid_list.veteran_section))]
-		else
-			spawn.section = solid_list.master_section[math.random(table.getn(solid_list.master_section))]
-		end
-   else
-		if rank == 1 then
-			spawn.section = rare_list.novice_section[math.random(table.getn(rare_list.novice_section))]
-		elseif rank == 2 then
-			spawn.section = rare_list.experienced_section[math.random(table.getn(rare_list.experienced_section))]
-		elseif rank == 3 then
-			spawn.section = rare_list.veteran_section[math.random(table.getn(rare_list.veteran_section))]
-		else
-			spawn.section = rare_list.master_section[math.random(table.getn(rare_list.master_section))]
-		end
-   end	 
+  local items = {}
+  for _, item in ipairs( sect ) do
+    if type( item ) == "table" then
+      item = item[ math.random( table.getn( item ) ) ]
+    end
+    if
+      ( not skip_onetime_items )
+      or get_string( item, "treasure_manager.item_is", "" ) ~= "onetime"
+    then
+      if not given_onetime[ item ] then
+        table.insert( items, item )
+      end
+    end
+  end	 
   
+  -- сколько наименований предметов будет в тайнике
+  local rnd_k = "treasure_manager.rnd.item_list." .. rank
+  local i = dsh.get_next_random( rnd_k, 1, 4 )
+
+  for j = 1, i do
+    local cnt     = 0
+    local spawn   = {}
+    spawn.section = items[ dsh.get_next_random( rnd_k, table.getn( items ) ) ]
   -- установка кол-ва предметов в зависимости от секции  
-   if ammo_section[spawn.section] == true then
-      local ini = system_ini()
-      local num_in_box = ini:r_u32(spawn.section, "box_size")
-      local h = math.random(1, 5)
-	  -- патроны выдаем не штуками, а пачками
-	  cnt = math.random(1, h) * num_in_box
-   else
-      local s = tostring(spawn.section)
-	  if string.find(s, "outfit") ~= nil or string.find(s, "wpn") ~= nil then
-	     cnt = 1
-	  elseif string.find(s, "addon") ~= nil or string.find(s, "af") ~= nil or string.find(s, "mutant") ~= nil then
-         cnt = math.random(1,2)
-      else 
-	     cnt = math.random(1,5)
-	  end   
-   end
-  
-  -- сохраняем инфу о текущем предмете
-  spawn.prob = cnt
-  table.insert(tabla, spawn)
- end
- return tabla
+    local s   = tostring( spawn.section )
+    local cls = get_string( s, "class" )
+   if ammo_section( s ) then -- патроны
+      cnt = dsh.get_next_random( rnd_k, 1, 3 )
+    elseif string.find(s, "outfit") ~= nil or string.find(s, "wpn") ~= nil then
+      cnt = 1
+    elseif string.find(s, "addon") ~= nil or string.find(s, "af") ~= nil or string.find(s, "mutant") ~= nil then
+      cnt = dsh.get_next_random( rnd_k, 1, 2 )
+    else 
+      cnt = dsh.get_next_random( rnd_k, 1, 5 )
+    end
+    -- сохраняем инфу о текущем предмете
+    spawn.prob = cnt
+    table.insert( tabla, spawn )
+  end
+
+  return tabla
 end
 
-function CTreasure:named_treasure(v)
- -- проверка, является ли тайник именным. Если да, то его наполнение не меняется
- if   v.name == "agr_secret_0000_name" --Тайник Серого
-   or v.name == "bar_secret_0011_name" --Тайник Арни
-   or v.name == "esc_secret_0013_name" --Тайник Ворпала
-   or v.name == "gar_secret_0002_name" --Вещи Гризли
-   or v.name == "gar_secret_0011_name" --Склад группы Стрелка
-   or v.name == "gar_secret_0021_name" --Рюкзак Дохляка
-   or v.name == "pri_secret_0003_name" --Хабар Клыка
-   or v.name == "pri_secret_0004_name" --Запасы лидера Свободы
-   or v.name == "rad_secret_0000_name" --Клад Угрюмого
-   or v.name == "rad_secret_0004_name" --Запас группы отчаянных
-   or v.name == "ros_secret_0015_name" --Тайник Счастливчика
-   or v.name == "ros_secret_0018_name" --Ящик с медикаментами
-   or v.name == "val_secret_0028_name" --Тайник Борова
-   or v.name == "x18_secret_0000_name" --Тайник Копченого
-   or v.name == "yan_secret_0011_name" --Тайник учёного
-   or v.name == "rad_semeckii_treasure_box_name"
---   or v.name == "agr_krysyk_secret_name"
---   or v.name == "mil_borov_secret_name"
- then
-   return true
- else
-   return false
- end    
-end
 
 function get_treasure_manager()
   if not treasure_manager then
@@ -658,6 +664,7 @@ function get_treasure_manager()
   end
   return treasure_manager
 end
+
 
 function take_item_from_box( box, box_story_id )
   -- log2( "!!! take item from box %s", tostring( box:is_inv_box_empty() ) )
@@ -676,3 +683,8 @@ end
 function clear_treasure_manager()
   treasure_manager = nil
 end
+
+function is_active( sobj )
+  return get_treasure_manager():is_active( sobj )
+end
+

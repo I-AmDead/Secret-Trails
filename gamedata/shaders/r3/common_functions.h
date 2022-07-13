@@ -482,6 +482,36 @@ inline bool IsSVPFrame()
 {
 	return (m_blender_mode.y == 1.f);
 }
+
+float3 compute_colored_ao(float ao, float3 albedo)
+{ //https://www.activision.com/cdn/research/s2016_pbs_activision_occlusion.pptx
+    float3 a = 2.0404 * albedo - 0.3324;
+    float3 b = -4.7951 * albedo + 0.6417;
+    float3 c = 2.7552 * albedo + 0.6903;
+
+    return max(ao, ((ao * a + b) * ao + c) * ao);
+}
+
+#ifndef SKY_WITH_DEPTH
+float is_sky(float depth)
+{
+	return step(depth, SKY_EPS);
+}
+float is_not_sky(float depth)
+{
+	return step(SKY_EPS, depth);
+}
+#else
+float is_sky(float depth)
+{
+	return step(abs(depth - SKY_DEPTH), SKY_EPS);
+}
+float is_not_sky(float depth)
+{
+	return step(SKY_EPS, abs(depth - SKY_DEPTH));
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 #endif	//	common_functions_h_included

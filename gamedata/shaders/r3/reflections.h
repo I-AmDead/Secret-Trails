@@ -41,10 +41,7 @@ float4 proj_to_screen(float4 proj)
 	return screen;
 }
 
-half is_sky(float depth)
-{
-	return step(abs(depth - 10000.f), 0.001);
-}
+
 
 #ifdef SSR_JITTER
 float3 hash(float3 a)

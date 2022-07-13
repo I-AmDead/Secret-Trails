@@ -69,11 +69,15 @@ local function on_actor_before_use( obj, sobj )
 	local sect = obj:section()
 
 	if ANIMS_ENABLED then
-
 		local snd = get_string( sect, "use_sound_anm" )
+		if not snd then return end
 
-		if not db.actor.inventory:is_active_slot_blocked() and snd and not ANIM_IN_ACTION then
-		
+		if ANIM_IN_ACTION then
+			respawn_item(obj)
+			return
+		end
+
+		if not db.actor.inventory:is_active_slot_blocked() then
 			if sect == "harvest" then
 				level.disable_input()
 				level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8560, false, "")
@@ -108,9 +112,7 @@ local function on_actor_before_use( obj, sobj )
 			if db.actor:dont_has_info( "ui_inventory" ) then
 				db.actor:hide_weapon()
 			end
-		elseif snd and db.actor:has_info("ui_talk") and not ANIM_IN_ACTION then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
-			play_use_sound(sect, snd)
-		elseif not ANIM_IN_ACTION then
+		elseif db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
 			play_use_sound(sect)
 		else
 			respawn_item(obj)
