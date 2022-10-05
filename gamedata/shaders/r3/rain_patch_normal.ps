@@ -2,10 +2,60 @@
 #include "lmodel.h"
 #include "shadow.h"
 
+#define RIPPLES_MAX_RADIUS int(2)
+#define RIPPLES_HASHSCALE1 float(.035031)
+#define RIPPLES_HASHSCALE3 float3(.1031, .1030, .0973)
+
+
 Texture3D s_water;
 Texture2D s_waterFall;
 uniform float4 RainDensity;	// float
+float4		rain_timers;
 
+float hash12(float2 p)
+{
+	float3	p3  			= frac(float3(p.xyx) * RIPPLES_HASHSCALE1);
+			p3 				+= dot(p3, p3.yzx + 19.19);
+    return	frac((p3.x + p3.y) * p3.z);
+}
+
+float3	GenRainRipplesNMap( float2 fragCoord )
+{
+	float2	uv 				= fragCoord.xy * 10;
+	
+    float2	p0 				= floor(uv);
+    float2	circles 		= float2(0.0, 0.0);
+	
+    for (int j = -RIPPLES_MAX_RADIUS; j <= RIPPLES_MAX_RADIUS; ++j)
+    {
+        for (int i = -RIPPLES_MAX_RADIUS; i <= RIPPLES_MAX_RADIUS; ++i)
+        {
+	float2	pi 				= p0 + float2(i, j);
+
+	float2	hsh 			= pi;
+
+	float2	p 				= pi + hash12(hsh);
+
+	float	t	 			= frac(0.3*timers.x + hash12(hsh));
+	float2	v 				= p - uv;
+	float	d 				= length(v) - (float(RIPPLES_MAX_RADIUS) + 1.)*t;
+
+	float	h 				= 1e-3;
+	float	d1 				= d - h;
+	float	d2 				= d + h;
+	float	p1 				= sin(31.*d1) * smoothstep(-0.6, -0.3, d1) * smoothstep(0., -0.3, d1);
+	float	p2 				= sin(31.*d2) * smoothstep(-0.6, -0.3, d2) * smoothstep(0., -0.3, d2);
+            circles 		+= 0.5 * normalize(v) * ((p2 - p1) / (2. * h) * (1. - t) * (1. - t));
+        }
+    }
+			circles 		/= float((RIPPLES_MAX_RADIUS*2+1)*(RIPPLES_MAX_RADIUS*2+1));
+
+    float	intensity 		= 1.1;
+    float3	n 				= float3(circles, sqrt(1. - dot(circles, circles)));
+	float3	color 			= float3(0.49,0.50,1.0) + intensity*n.xyy;
+			color.xyz 		= (color.xzy - 0.5) * 4;
+    return	color;
+}
 
 float3	GetNVNMap( Texture3D s_texture, float2 tc, float time)
 {
@@ -28,6 +78,8 @@ float3	GetWaterNMap( Texture2D s_texture, float2 tc)
 	//	Unpack normal map
 	float4 water = s_texture.Sample( smp_base, tc);
 	water.xyz = (water.xzy-0.5)*2;
+
+	water.xyz *= 0.3;
 
 	water.y = 0;
 
@@ -80,7 +132,7 @@ float4 main ( float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1 ) : SV_Target
 
 	// Read rain projection with some jetter. Also adding pixel normal 
 	// factor to jitter to make rain strips more realistic.
-	float s		= shadow_rain(PS, WorldP.xz - WorldN.xz);
+	float s		= shadow_hw(PS) * saturate(gbd.hemi * 10.0f);	
 
 	//	Apply distance falloff
 	// Using fixed fallof factors according to float16 depth coordinate precision.
@@ -94,32 +146,30 @@ float4 main ( float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1 ) : SV_Target
 	s *= saturate(fIsUp*10+(10*0.5)+0.5);
 	fIsUp = max(0, fIsUp);
 
-	float3 waterSplash = GetNVNMap( s_water, WorldP.xz, timers.x*3.0 );
-
-	float fAngleFactor = 1 - fIsUp;
-
-	fAngleFactor = 0.1*ceil(10*fAngleFactor);
-
-	//	Just slow down effect.
-	fAngleFactor *= 0.3;//0.5;
+//	float3 waterSplash = GetNVNMap( s_water, WorldP.xz, rain_timers.x*3.0 );
+	float3	waterSplash = GenRainRipplesNMap( WorldP.xz );// * fAtten * fIsUp * s;
 
 	float WeaponAttenuation = smoothstep( 0.8, 0.9, length( _P.xyz ));
 	float ApplyNormalCoeff = s * WeaponAttenuation;
 
 	float3 water = waterSplash*(fIsUp*ApplyNormalCoeff);
 
-	if (RainDensity.y > 0) {
-		float fIsX = WorldN.x;
-		float fIsZ = WorldN.z;
+	float fAngleFactor = 1 - fIsUp;
 
-		float3 tc1 = WorldP / 2;
+	fAngleFactor = 0.1*ceil(10*fAngleFactor);
 
-		float3 waterFallX = GetWaterNMap( s_waterFall, float2(tc1.z, tc1.y+timers.x*fAngleFactor) );
-		float3 waterFallZ = GetWaterNMap( s_waterFall, float2(tc1.x, tc1.y+timers.x*fAngleFactor) );
+	// Just slow down effect.
+	fAngleFactor *= 0.5;//0.5;
 
-		water += waterFallX.yxz*(abs(fIsX)*ApplyNormalCoeff);
-		water += waterFallZ.zxy*(abs(fIsZ)*ApplyNormalCoeff);
-	}
+	float fIsX = WorldN.x;
+	float fIsZ = WorldN.z;
+	float3 tc1 = WorldP / 2;
+
+	float3 	waterFallX 		= GetWaterNMap( s_waterFall, float2(tc1.z, tc1.y+rain_timers.x*fAngleFactor) );
+	float3 	waterFallZ 		= GetWaterNMap( s_waterFall, float2(tc1.x, tc1.y+rain_timers.x*fAngleFactor) );
+
+	water += waterFallX.yxz*(abs(fIsX)*ApplyNormalCoeff);
+	water += waterFallZ.zxy*(abs(fIsZ)*ApplyNormalCoeff);
 
 	//	Translate NM to view space
 	water.xyz = mul( m_V, water.xyz );

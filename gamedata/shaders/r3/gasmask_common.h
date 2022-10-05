@@ -5,7 +5,6 @@
 	Gasmask overlay shader
 	
 	Credits: ZHC (visor reflection)
-
 	/////////////////
 	Anomaly Team 2020
 	/////////////////
@@ -33,11 +32,13 @@ Texture2D s_mask_droplets;
 
 //Constants from engine
 float4 mask_control; 
+float3 drops_control;
 
 //Gasmask settings
-#define GM_DIST_INT 0.05 //Refraction intensity
-#define GM_DIFF_INT 0.25 //Diffuse cracks intensity
-#define GM_VIG_INT 0.5 //Vignette intensity
+#define GM_DIST_INT 0.01f //Refraction intensity
+#define GM_DIFF_INT 0.25f //Diffuse cracks intensity
+
+#define GM_VIG_INT 0.5f //Vignette intensity
 
 //Raindrops settings
 #define GM_DROPS_TURBSIZE 15.0 //Turbulence power

@@ -6,6 +6,8 @@
 #include "common.h"
 #include "hmodel.h"
 
+#include "check_screenspace.h"
+
 uniform float4 sky_color;
 
 static const float4 SSFX_ripples_timemul = float4(1.0f, 0.85f, 0.93f, 1.13f); 
@@ -159,7 +161,7 @@ float3 SSFX_get_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
 
 	#ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed
 		
-		if (abs(rgbd.mtl - 6.0) <= 0.05) 
+		if (abs(rgbd.mtl - MAT_FLORA) <= 0.05) 
 		{
 			float	fAtten = 1 - smoothstep(0, 50, rgbd.P.z);
 			rD.a	*= (fAtten * fAtten);
