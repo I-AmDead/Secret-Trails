@@ -1,0 +1,29 @@
+
+function on_mcm_load()
+    op = { id= "swm_legs",sh=true ,gr={
+            {id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_swm_legs_title",size= {512,50},spacing= 20 },
+			{id = "hide_legs_low_crouch", type = "check", val = 1, def=true},
+            {id = "legs_offset", type = "track", val = 2, min=-1.5,max=-0.4,step=0.05, def = -0.65},
+            {id = "legs_offset_side", type = "track", val = 2, min=-0.2,max=0.2,step=0.01, def = 0},
+			{id = "toggle_turn_step_sound", type = "check", val = 1, def=true},
+			{id = "turn_step_sound_volume", type = "track", val = 2, min=0.1,max=1,step=0.1, def = 0.5},	
+			{id = "use_hd_models", type = "check", val = 1, def=false},
+			{id = "disabled", type = "check", val = 1, def=false}
+		}
+    }
+    return op
+end 
+
+local defaults = {
+["hide_legs_low_crouch"] = true,
+["legs_offset"] = -0.65,
+["legs_offset_side"] = 0,
+["toggle_turn_step_sound"] = true,
+["turn_step_sound_volume"] = 0.5,
+["use_hd_models"] = false,
+["disabled"] = false
+}
+
+function get_config(key)
+    if ui_mcm then return ui_mcm.get("swm_legs/"..key) else return defaults[key] end
+end

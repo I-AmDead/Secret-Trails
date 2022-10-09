@@ -771,13 +771,14 @@ function visual_timer:start(...)
 	--
 	self.on_hud_show_desc = {signal = "on_hud_show", self = self, fun = self.on_hud_show}
 	ogse_signals.get_mgr():subscribe(self.on_hud_show_desc)
+	local hud = get_hud()
+	hud:AddCustomStatic("hud_timer", true)
 	return ogse_st_mgr.delayed_fun_start.start(self, ...)
 end
 
 function visual_timer:stop()
 	local hud = get_hud()
-	hud:RemoveCustomStatic("hud_timer_2")
-	hud:RemoveCustomStatic("hud_timer_text_2")
+	hud:RemoveCustomStatic("hud_timer")
 	--
 	ogse_signals.get_mgr():unsubscribe(self.on_hud_show_desc)
 	ogse_st_mgr.delayed_fun_start.stop(self)
@@ -785,14 +786,10 @@ end
 
 function visual_timer:on_hud_show()
 	local hud = get_hud()
-	if hud:GetCustomStatic("hud_timer_2") then
-		hud:RemoveCustomStatic("hud_timer_2")
+	if hud:GetCustomStatic("hud_timer") then
+		hud:RemoveCustomStatic("hud_timer")
 	end
-	hud:AddCustomStatic("hud_timer_2", true)
-	if hud:GetCustomStatic("hud_timer_text_2") then
-		hud:RemoveCustomStatic("hud_timer_text_2")
-	end
-	hud:AddCustomStatic("hud_timer_text_2", true)
+	hud:AddCustomStatic("hud_timer", true)
 end
 
 function visual_timer:condition()
@@ -808,12 +805,7 @@ function visual_timer:condition()
 	local m = math.floor(dt/60 - h*60)
 	local s = math.floor(dt - h*3600 - m*60)
 	local txt = string.format("%02d:%02d:%02d", h, m, s)
-	local hud = get_hud()
-	hud:AddCustomStatic("hud_timer_2", true)
-	local st_text = hud:AddCustomStatic("hud_timer_text_2", true)
-	if st_text then
-		st_text:wnd():SetText(txt)
-	end
+	get_hud():GetCustomStatic("hud_timer"):wnd():SetText(txt)
 	return false
 end
 
