@@ -2,7 +2,6 @@
 
 function attach( sm )
   sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
-  sm:subscribe({ signal = "on_key_down",     fun = this.on_key_down    })
 end
 
 local torch_mode = "off"
@@ -26,61 +25,59 @@ function set_torch_mode( k )
   end
 end
 
-function on_key_down(key, bind ) --Действие при нажатии клавиши фонаря
-	if ( bind ~= key_bindings.kTORCH )
-	or level.main_input_receiver()
-then 
-return 
-end
+function on_switch() --Действие при нажатии клавиши фонаря
   if db.actor:alive() then
     local torch = db.actor:item_in_slot( 9 )
     if torch and torch:is_torch() then
-      local snd = sound_object( "device\\bad_box" )
-      snd:play( db.actor, 0, sound_object.s2d )
       torch = get_torch_obj( torch )
       if torch.on then
         if torch_mode == "near" then
           set_far_mode( torch )
-        torch:switch( true )
         else
-          torch_mode = "off"
+          set_off_mode( torch )
         end
-        torch:switch( true )
       else
-        set_near_mode( torch )
-        torch:switch( true )
+        set_near_mode( torch, nil, true )
       end
-        torch:switch( true )
       ogse.save_var( "ogse_torch.torch_mode", torch_mode )
     end
   end
 end
 
-function set_near_mode( torch, r )
+function set_near_mode( torch, r, switch_on )
   torch_mode = "near"
-  torch:set_range( 20 )
-  torch:set_angle( math.rad( 110 ) )
-end
-
-function set_far_mode( torch, r )
-  torch_mode = "far"
-  torch:set_range( 60 )
-  torch:set_angle( math.rad( 60 ) )
-end
-
-function is_torch_enabled()
-  if db.actor:alive() then
-    local torch = db.actor:item_in_slot( 9 )
-    if torch and torch:is_torch() then
-      torch = get_torch_obj( torch )
-      return torch.on
-    end
+  torch:set_range( 30 )
+  torch:set_angle( math.rad( 90 ) )
+  if switch_on and not torch.on then
+    torch:switch( true )
   end
 end
 
-function play_click()
-  snd_obj = xr_sound.get_safe_sound_object( [[device\bad_box]] )
-  if snd_obj then
-    snd_obj:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0 )
+function set_far_mode( torch, r, switch_on )
+  torch_mode = "far"
+  torch:set_range( 70 )
+  torch:set_angle( math.rad( 55 ) )
+  if switch_on and not torch.on then
+    torch:switch( true )
+  end
+end
+
+function set_off_mode( torch )
+  torch_mode = "off"
+  torch:switch( false )
+end
+
+function is_torch_enabled( torch )
+  if db.actor:alive() then
+    if not torch then
+      torch = db.actor:item_in_slot( 9 )
+    end
+    if torch and torch:is_torch() then
+      torch = get_torch_obj( torch )
+      if torch.on then
+        return torch_mode
+      end
+      return false
+    end
   end
 end

@@ -1,0 +1,466 @@
+--[[ ----------------------------------------------------------------------------------------------
+ Платформы: CS 1.5.10, CoP 1.6.02
+ Описание : Различные утилиты для работы с данными
+ Поддержка: 2013 © Shoker Weapon Mod
+ Авторы   : Shoker, <...> 
+ 
+ Shoker Weapon Mod 2.1 port, modified by Wang_Laoshi (Ethereal) to work with Anomaly mod. Thanks a lot to the original creators of this mod - Shoker, РикошеТ and SWM Team in general.
+--]] ----------------------------------------------------------------------------------------------
+
+--[[
+	TODO:
+		* При чтении через ltx() из ini-файла может совпасть имя секции и строка для чтения с похожей
+		  секцией из system_ini() или любого другого ini, из за чего она буферизируется и перебьёт значения из них
+--]]
+
+--************************************************************--
+--***********************[Ядро скрипта]***********************--
+--************************************************************--
+local _SN = script_name()
+
+--**************************************************************--
+--********************[Функциональная часть]********************--
+--**************************************************************--
+
+--\\ Из вектора "вперёд" возвращает вектор "вправо" и вектор "вверх" (Roll не учитывается)
+--\\ Спасибо malandrinus за формулы														
+function get_all_direction(dir)
+	--* "Вправо"
+	local dir_right = vector()
+	dir_right:crossproduct(dir, vector():set(0,1,0))
+	dir_right = dir_right:normalize()
+	
+	--* "Вверх"
+	local dir_up = vector()
+	dir_up:crossproduct(dir_right, dir)
+	dir_up = dir_up:normalize()	
+	
+	return dir_right:invert(), dir_up
+end
+
+--\\ Принимает координаты на земле и превращает их в координаты для экрана
+--\\ Можно использовать в целеуказателях (malandrinus)
+function point_to_hud(point)
+    local dev = device()
+    local scr_w = dev.width
+    local scr_h = dev.height
+
+    local fov2 = (dev.fov/2) * (math.pi/180)
+    local scr_dist = 0.5 * scr_h / math.tan(fov2)
+
+    local ppp = vector():sub(point, dev.cam_pos)
+    local dp = dev.cam_dir:dotproduct(ppp)
+
+    local x = 512 + dev.cam_right:dotproduct(ppp) * scr_dist / dp * (1024/scr_w)
+    local y = 384 - dev.cam_top:dotproduct(ppp)   * scr_dist / dp * (768/scr_h)
+    return x, y
+end
+
+--\\ Вектор X,Y в углах переводит в дирекцию
+function angle_to_direction(oangle)
+	local yaw = oangle.y
+	local pitch = oangle.x
+	return vector():setHP(yaw,pitch):normalize()
+end
+
+--\\ Рэндом двух float-чисел с поддержкой одного разряда
+function frandom(n1, n2)
+	n1 = n1 * 10
+	n2 = n2 * 10
+	return (math.random(n1, n2) / 10)
+end
+
+local ltxBuffer = {}	--> Хранит уже загруженные данные из конфигов
+
+--\\ Возвращает значение из секции в конфигах
+--	sec			- секция
+--	line 		- строка
+-- 	*mode		- режим чтения, по умолчанию читает число с точкой ("str", "tbl1", "bol", "num", "numf")	
+--	*ini_file	- ini-конфиг откуда надо читать, по умолчанию читает из system.ltx и подкл. к нему файлах
+-- Внимание: в случае отсутствия секции\строки в конфиге - вылета не будет, так что все такие места
+-- проверять соотв. функциями самим. Сделано для упрощения кода.
+function ltx(sec, line, mode, ini_file)
+	if sec == nil then
+		_abort(_SN, "ltx", "sec (%s)(%s)", tostring(line), tostring(mode))
+	end
+ 
+	if not ltxBuffer[sec] then
+		ltxBuffer[sec] = {}
+	end
+	
+	local result = ltxBuffer[sec][line]
+	if result ~= nil then
+		--* Вектора возвращаются как ссылки! Поэтому их нужно копировать
+		if type(result) == "userdata" then
+			return utils.vector_copy_by_val(result)
+		end
+		
+		return result
+	end --> Нет смысла каждый раз читать из конфигов, когда достаточно 1 раз записать в таблицу
+ 
+	local ini = ini_file or system_ini()
+ 
+	if ltxExist(sec, line, ini) then
+		if mode==nil or mode=="numf" then   --> число с запятой
+			ltxBuffer[sec][line] = ini:r_float(sec, line)
+			return ltxBuffer[sec][line]
+		end
+		
+		if mode=="bol" then	--> true\false
+			ltxBuffer[sec][line] = ini:r_bool(sec, line)
+			return ltxBuffer[sec][line]
+		end
+		
+		if mode=="num" then   --> целое число
+			ltxBuffer[sec][line] = ini:r_u32(sec, line)
+			return ltxBuffer[sec][line] 	 
+		end
+
+		if mode=="str" then	--> строка
+			ltxBuffer[sec][line] = ini:r_string(sec, line)
+			return ltxBuffer[sec][line] 	 
+		end
+		
+		if mode=="vec" then	--> вектор
+			local vec = ini:r_vector(sec, line)
+			ltxBuffer[sec][line] = vec
+			--return ltxBuffer[sec][line] 	 --> ТАК НЕ ДЕЛАТЬ
+			return utils.vector_copy_by_val(ltxBuffer[sec][line])
+		end
+		
+		if mode=="tbl1" then --> таблица из строки с запятыми (1 = ..., 2 = ....)
+			local temp = ini:r_string(sec, line)
+			ltxBuffer[sec][line] = string_expl(temp, ",")
+			return ltxBuffer[sec][line] 	 
+		end		
+	end
+	
+	-- mDbg(_SN, "ltx - no section: "..sec.." || "..line)
+	return nil
+end
+
+
+--\\ Позволяет выставить значение какого либо из загруженных параметров конфига
+function ltxBufferW(sec, line, value)
+	if not ltxBuffer[sec] then
+		   ltxBuffer[sec] = {}
+	end
+
+	ltxBuffer[sec][line] = value
+end
+
+--\\ Возвращает имя и описание предмета 
+--	sec - секция предмета в конфигах
+function ltxItem(sec)
+	local name  = ltx(sec, "inv_name", "str") or ""
+	local descr = ltx(sec, "description", "str") or ""
+
+	return xml(name), xml(descr)
+end
+
+--\\ Проверяет, что такая комбинация секции-*строки существует в конфиге
+--	sec			- секция
+--	*line 		- строка
+--	*ini_file	- ini-конфиг откуда надо читать, по умолчанию читает из system.ltx и подкл. к нему файлах
+function ltxExist(sec, line, ini_file)
+	local ini = ini_file or system_ini()
+	if sec == nil then _abort(_SN, "ltxExist", "sec") end
+	if not ini:section_exist(sec) then return false end
+	if line and not ini:line_exist(sec, line) then return false end
+	printf("SWMtrue")
+	return true
+end
+
+--\\ Возвращает <text> из текстового xml-файла
+--	xml_id	- идентификатор текста
+function xml(xml_id)
+	return game.translate_string(xml_id) 
+end
+
+--\\ Преобразует таблицу в отформатированную строку для записи в custom data
+--[[
+	local value = 123
+	local cd = {}
+	cd["test"] = {}
+	cd["test"]["string"] = ""	
+	cd["test"]["line"] = value
+	cd["test"]["simple_table"] = {2,4,6,8}
+	cd["test"]["extended_table"] = {val1 = 1, val2 = 2, val3 = 3}	
+	
+	[test]
+	string
+	line = 123
+	simple_table = 2468
+	extended_table = val1, 1, val2, 2, val3, 3	
+]]
+
+function tocdata(tTbl)
+	local result = ""
+	for sec, tData in pairs(tTbl) do
+		result = result.."\n["..sec.."]\n"
+		if type(tData) ~= "table" then
+			_abort(_SN, "tocdata", "tData is not table! result = %s, tData = %s", result, tostring(tData))
+		else
+			for line, t_Param in pairs(tData) do
+				if t_Param == "" then 
+					result = result..tostring(line).."\n"
+				else
+					result = result..tostring(line).." = "	
+					if type(t_Param) == "table" then
+						if table_size(t_Param) > 0 and #t_Param > 0 then
+						--* Скорее всего это нумерованная таблица, пакуем её без ключа
+							for _,p1 in pairs(t_Param) do
+								local first = true						
+								if first then
+									result = result..tostring(p1)
+									first = false
+								else
+									result = result..", "..tostring(p1)
+								end				   
+							end	
+						else
+						--* Хэш-таблица, её пишем вместе с ключами
+							local first = true
+							for p1,p2 in pairs(t_Param) do
+								if first then
+									result = result..tostring(p1)..", "..tostring(p2)
+									first = false
+								else
+									result = result..", "..tostring(p1)..", "..tostring(p2)
+								end				   
+							end					
+						end				
+						result = result.."\n"
+					else
+						result = result..tostring(t_Param).."\n"
+					end
+				end
+			end			
+		end
+	end
+	
+	return result
+end
+
+--\\ Считывает все строки из секции в таблицу вида строка = значение
+function collect_sections(ini, sec)
+	local r = {}
+	if ini:section_exist(sec) then
+		local n = ini:line_count(sec)
+		if n > 0 then
+			for i = 0,n-1 do
+				local res,id,val = ini:r_line(sec,i,"","")
+				if r[id] == nil then
+					r[id] = val
+				end
+			end
+		end
+	end
+	return r
+end
+
+--\\ Крэшнуть игру с выводом в лог
+function _abort(script_name, function_name, error_string, ...)
+	if script_name == nil then
+	   script_name = "<nil>"
+	end
+	
+	if function_name == nil then
+	   function_name = "<nil>"
+	end
+	
+	abort("%s.%s - "..error_string, script_name, function_name, ...)
+end
+
+--\\ Вывод в лог
+function log(text)
+	if _console == nil or (_console.GetVal("dbg.log") == true) then
+		get_console():execute("load ~~ " .. tostring(text))
+	end
+end
+
+--\\ Подсчёт кол-ва элементов в таблице (под-таблицы считает за 1 элемент)
+function table_size(tTbl)
+	local count = 0
+	for _,_ in pairs(tTbl) do
+		count = count + 1
+	end
+	
+	return count
+end
+
+--! Внимание: стандартный шаблон плохо работает с "особыми" символами (например #) и разбивает строку криво
+function string_expl(sStr, sDiv, Mode, bNoClear)
+  sStr = tostring(sStr)
+  if not (sStr ~= "nil" and sStr ~= '') then return {} end --> нечего разделять
+  local tRet = {}
+  local sPattern = '[%w%_]+' --> дефолтный патерн (разделение по 'словам')
+  if type(sDiv) == "string" then --> если задан сепаратор: разделяем по нему
+    if bNoClear then --> если НЕ указано 'чистить пробелы'
+      sPattern = '([^'..sDiv..']+)'
+    else --> иначе с чисткой пробелов
+      sPattern = '%s*([^'..sDiv..']+)%s*'
+    end
+  end
+  --* разделяем строку по патерну
+  if Mode == nil then --> обычный массив
+    for sValue in sStr:gmatch(sPattern) do
+      table.insert(tRet, sValue)
+    end
+  else
+    local sTypeMode = type(Mode)
+    if sTypeMode == "boolean" then --> таблица '[значение] = true или false'
+      for sValue in sStr:gmatch(sPattern) do
+        tRet[sValue] = Mode
+      end
+    elseif sTypeMode == "number" then --> таблица '[idx] = число или стринг'
+      for sValue in sStr:gmatch(sPattern) do
+        tRet[#tRet+1] = tonumber(sValue) or sValue
+      end
+    end
+  end
+  return tRet --> возвращаем таблицу
+end
+
+--* Расчёт разницы между двумя cam_dir:getH()
+--  Да, у меня плохо с векторной алгеброй о_О
+function calc_Y(new, old)
+	local wL = 0
+	local wR = 0
+				
+	if new < old then
+		wR = old - new
+		if new < 0 then
+			wL = math.abs(-1.6 - new) + (4.8 - old)
+		else
+			wL = new + 1.6  + (4.8 - old)
+		end
+	else
+		wL = new - old
+		if old < 0 then
+			wR = (4.8 - new) + math.abs(-1.6 - old)
+		else
+			wR = (4.8 - new) + math.abs(-1.6) + old
+		end				
+	end
+				
+	if wL < wR then
+		return wL
+	end
+	if wL > wR then
+		return -wR
+	end
+			
+	return 0
+end
+
+-- Выделение из матрицы углов поворота в последовательности x,z,y (P,B,H)
+-- подразумевается, что матрица является правильной матрицей поворота
+-- функция содрана из библиотеки Wild Magic 5
+function extract_euler_xzy(m)
+	if m.i.y < 1 then
+		if m.i.y > -1 then
+			local az = math.asin(-m.i.y)
+			local ax = math.atan2(m.k.y, m.j.y)
+			local ay = math.atan2(m.i.z, m.i.x)
+			return ax, az, ay
+		else
+			local az = math.pi / 2
+			local ax = -math.atan2(-m.k.x, m.k.z)
+			local ay = 0
+			return ax, az, ay
+		end
+	else
+		local az = -math.pi / 2
+		local ax = math.atan2(-m.k.x, m.k.z)
+		local ay = 0
+		return ax, az, ay
+	end
+end
+
+function extract_direction(ph_element)
+	local m		= ph_element:global_transform()
+	local p,b,h = extract_euler_xzy(m)
+	return vector():setHP(h, p)
+end
+
+--\\ Узнаём карту, на которой находится объект по ID\Server OBJ
+function getMapName(id_or_sobj)
+	local sobj
+
+	if type(id_or_sobj) == "number" then
+		sobj = alife():object(id_or_sobj)
+	else
+		sobj = id_or_sobj
+	end
+
+	if sobj then
+		local lvert = game_graph():vertex(sobj.m_game_vertex_id)
+		local lid	= lvert:level_id()
+		
+		if lid ~= nil then
+			return alife():level_name(lid)
+		end
+	end
+end
+
+--\\ Узнаём ранг непися (возвращяет номер ранга, ранк (число) и название ранга) 
+local rang_num_to_name = {
+			[0]		=	"st_rang_zero",
+			[1]		=	"st_rang_novice",
+			[2]		=	"st_rang_experienced",
+			[3]		=	"st_rang_experienced",
+			[4]		=	"st_rang_veteran",
+			[5]		=	"st_rang_master",			
+		}
+						
+function rang(obj)
+	local rank = 0
+	local obj_rank = obj:rank()
+		
+	if obj_rank >=0 and obj_rank <=25 then	--> novice
+		rank = 1
+	end
+
+	if obj_rank >=26 and obj_rank <=30 then --> ext 1
+		rank = 2
+	end
+
+
+	if obj_rank >=31 and obj_rank <=40 then --> ext 2
+		rank = 3
+	end
+
+
+	if obj_rank >=41 and obj_rank <=50 then --> veteran
+		rank = 4
+	end
+
+	if obj_rank >=51 then					--> master
+		rank = 5
+	end
+			
+	--[[ CS 1.5.10
+	if obj_rank >= 0 and obj_rank <= 300 then
+		rank = 1	-- Novice
+	end
+
+	if obj_rank >  300 and obj_rank <=  450 then
+		rank = 2	-- Extnd. 1
+	end
+
+	if obj_rank >  450 and obj_rank <= 600 then
+		rank = 3	-- Extnd. 2
+	end
+			
+	if obj_rank >  600 and obj_rank <  900 then
+		rank = 4	-- Veteran
+	end
+
+	if obj_rank >= 900 then
+		rank = 5	-- Master
+	end		
+	]]
+		
+	return rank, obj_rank, rang_num_to_name[rank]
+end

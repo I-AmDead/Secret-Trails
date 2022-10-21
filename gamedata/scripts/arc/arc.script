@@ -1,77 +1,80 @@
-local ignore_get_list  = {}
-local ignore_lose_list = {}
-local eat_on_get_list  = {}
-local lost_items_list  = {}
-
 function attach(sm)
   sm:subscribe({ signal = "on_update",       fun = this.on_actor_update     })
-end
-
-function on_actor_get_item(obj)
-  local obj_id = obj:id()
-  local obj_sect = obj:section()
-  local obj_clsid = obj:clsid()
-  
-  for i,v in pairs(ignore_get_list) do
-    if (v == obj_sect) or (v == obj_id) then
-      table.remove(ignore_get_list, i)
-      return
-    end
-  end
-  
-  for i,v in pairs(eat_on_get_list) do
-    if (v == obj_sect) or (v == obj_id) then
-      table.remove(eat_on_get_list, i)
-      db.actor:eat(obj)
-      return
-    end
-  end
-   
-  if obj:is_weapon_magazined() then
-    if obj_sect == "arc_radiation" then
-      arc_radiation.on_get_rad_item(obj)
-    end
-  end
-end
-
-function on_actor_lose_item(obj)
-  local obj_id = obj:id()
-  local obj_sect = obj:section()
-  local obj_clsid = obj:clsid()
-  
-  for i,v in pairs(ignore_lose_list) do
-    if (v == obj_sect) or (v == obj_id) then
-      table.remove(ignore_lose_list, i)
-      return
-    end
-  end
-  
-  table.insert(lost_items_list, {id=obj_id, section=obj_sect, clsid=obj_clsid})
-  
-  if isWeapon(obj) then
-    if obj_sect == "arc_radiation" then
-      arc_radiation.on_lose_rad_item(obj)
-    end
-  end 
 end
 
 function on_actor_update(delta)
   arc_radiation.on_actor_update(delta)
   arc_health.on_actor_update(delta)
-  arc_ui_hud.on_actor_update(delta)
+  on_hud_update(delta)
 end
 
-function give_item(item_section, ignore)
-  if ignore then table.insert(ignore_get_list,item_section) end
-  local a = db.actor
-  return alife():create(item_section, a:position(), a:level_vertex_id(), a:game_vertex_id(), a:id())
+local custom_msgs =
+{
+"monster_claws",
+"main_task",
+"cs_psy_danger",
+"cs_radiation_danger",
+"game_saved",
+"autosave",
+"item_used",
+"gun_jammed",
+"cant_walk",
+"cant_walk_weight",
+"not_enough_money_mine",
+"not_enough_money_other"
+}
+
+local cs_states = {}
+
+local arc_cs_string = "arc_hud"
+
+local arc_hud
+
+function on_hud_update(delta)
+	if not arc_hud then
+		local hud = get_hud()
+		
+		arc_hud = hud:GetCustomStatic(arc_cs_string)
+		
+		if not arc_hud then
+			hud:AddCustomStatic(arc_cs_string, true)
+			arc_hud = hud:GetCustomStatic(arc_cs_string)
+
+			if not arc_hud then return end
+
+		end
+		
+		local wnd = arc_hud:wnd()
+		
+		wnd:SetWndRect(0, 0, 1024, 768)
+	end
+	
+	for i = 1, table.getn(custom_msgs) do
+		local s = custom_msgs[i]
+		local cs = get_hud():GetCustomStatic(s)
+		
+		if cs then
+			if not cs_states[s] then
+				cs_states[s] = true
+				on_custom_static_show(s)
+			end
+		elseif cs_states[s] then
+			cs_states[s] = nil
+			on_custom_static_hide(s)
+		end
+	end
+	
+	arc_ui_dosimeter.update(delta)
 end
 
-function remove_obj(obj_id, ignore)
-  if ignore then table.insert(ignore_lose_list,obj_id) end
-  alife():release(alife():object(obj_id), true)
+function on_custom_static_show(cs_name)	
+	if cs_name == "main_task" then
+		arc_ui_dosimeter.show()
+	end
 end
 
-function sbw(s,p)
-  return string.find(s,p) == 1
+function on_custom_static_hide(cs_name)
+	if cs_name == "main_task" then
+		arc_ui_dosimeter.fade() --.hide
+	end
 end

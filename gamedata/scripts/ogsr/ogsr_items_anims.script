@@ -18,20 +18,8 @@ local cfg = {
 
 local function apply_item( sect )
 
-	if sect == "lhand_swipe_use" then
-		ogsr_swipe_mask.rain_drops_restart()
-		return	
-	elseif sect == "harvest" then
-		level.enable_input()
-		local sobj = alife():create( "meat", vector():set( 0, 0, 0 ), 0, 0, 0 )
-		level.client_spawn_manager():add(
-		  sobj.id, -1, function( id, obj )
-		    dsh.exec_on_update( function() db.actor:eat( obj ) end )
-		  end
-		)
-		return	
-	elseif sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
-		arc_radiation.on_rad_use()
+	if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
+		arc_radiation.use_antirad()
 	end
 	for k, v in ipairs( cfg ) do
 		local val = get_float( sect, v )
@@ -78,11 +66,6 @@ local function on_actor_before_use( obj, sobj )
 		end
 
 		if not db.actor.inventory:is_active_slot_blocked() then
-			if sect == "harvest" then
-				level.disable_input()
-				level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8560, false, "")
-				level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm",8010,false,"")
-			end
 
 			CURRENT_ANM_SECT = "anm_" .. obj:section()
 
@@ -137,12 +120,8 @@ local function on_item_to_ruck( obj, sobj )
 	db.actor:restore_weapon()
 
 	if SLOT_RESTORE then
-		if sect == "anm_harvest" then
-			db.actor:activate_slot(13)
-		else
-			db.actor:activate_slot(SLOT_RESTORE)
-			SLOT_RESTORE = false
-		end
+		db.actor:activate_slot(SLOT_RESTORE)
+		SLOT_RESTORE = false
 	end
 
 	ANIM_USED_TM = false

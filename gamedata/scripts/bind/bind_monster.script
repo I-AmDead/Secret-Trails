@@ -38,29 +38,41 @@ function generic_object_binder:reinit()
   db.storage[ self.object:id() ] = {}
   self.st = db.storage[self.object:id() ]
   self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
-  self.object:set_callback(callback.hit,					self.hit_callback,		self)
-  self.object:set_callback(callback.death,				self.death_callback,	self)
+  self.object:set_callback(callback.hit, self.hit_callback, self)
+  self.object:set_callback(callback.death, self.death_callback,	self)
+  if self.object:clsid() == clsid.script_trader and self.object:alive() then
+    self.object:set_callback(callback.use_object, self.use_callback_trader, self)
+  else
+    self.object:set_callback(callback.use_object, self.use_callback, self)
+  end
+
 end
 
 prevent_gulag_registration_for_id=0
 
 function generic_object_binder:update(delta)
-	object_binder.update(self, delta)
-
-	-- Апдейт торговли
-	if self.object:clsid() == clsid.script_trader then
-		trade_manager.update(self.object)
-	end
+    local obj = self.object
+    object_binder.update(self, delta)
 
 
-
-	if self.object:alive() then
-	if self.object:is_talk_enabled() then
-		self.object:set_tip_text("character_use")
-	else
-		self.object:set_tip_text("")
-	end
-	end
+    if obj:alive() then
+        if obj:is_talk_enabled() then
+            obj:set_tip_text("character_use")
+        else
+            obj:set_tip_text("")
+        end
+    else
+        if obj:object_count() < 1 then
+            obj:set_tip_text("dead_monster_used")
+        else
+            local knife = db.actor:item_in_slot(0)
+            if knife then
+                obj:set_tip_text("dead_monster_use")
+            else
+                obj:set_tip_text("dead_monster_need_knife")
+            end
+        end
+    end
 
     self:anomaly_evade()
 	
@@ -183,7 +195,7 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 		xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
 	end
 	if bone_index==14 and string.find(obj:section(),"bloodsucker") then
-    local h=hit()
+		local h=hit()
 		h.type = hit.fire_wound
 		h.power = 100*local_direction.x*local_direction.x*local_direction.x*local_direction.x
 		h.impulse = h.power
@@ -215,6 +227,62 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
     "on_monster_hit", obj, amount, local_direction, who, bone_index
   )	
 	
+end
+
+function generic_object_binder:use_callback_trader(obj, who)
+    if self.object == nil then
+        return
+    end
+    if self.object:alive() then
+        if self.st.active_section then
+            xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
+            -- инициализация торговли
+            if who:id() == db.actor:id() then
+                bind_stalker.trader = nil
+                trade_manager.update(obj)
+            end
+        end
+    end
+end
+
+function generic_object_binder:use_callback(obj, who)
+    if self.object and not self.object:alive() then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
+    end
+
+    local mobj = self.object
+
+    if not mobj or mobj:alive() then
+        return
+    end
+
+    if GetShift() then
+        mobj:set_nonscript_usable(true)
+        return
+    else
+        mobj:set_nonscript_usable(false)
+    end
+
+
+    if mobj:object_count() < 1 then
+        return
+    end
+
+    local knife = who:item_in_slot(0)
+    if who:is_actor() and knife then
+
+        local function move_all()
+            local moved = false
+
+             for i = 0, mobj:object_count() - 1 do
+                local obj = mobj:object(i)
+                mobj:transfer_item(obj, who)
+            end
+
+        end
+
+        ogsr_actor_animation.harvest(move_all)
+    end
 end
 
 function generic_object_binder:net_spawn(sobject)
@@ -275,6 +343,7 @@ function generic_object_binder:clear_callbacks()
   self.object:set_callback( callback.death, nil )
   self.object:set_callback( callback.patrol_path_in_point, nil )
   self.object:set_callback( callback.hit, nil )
+  self.object:set_callback( callback.use_object, nil )
   self.object:set_enemy_callback()
 end
 
