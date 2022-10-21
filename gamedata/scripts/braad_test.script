@@ -121,11 +121,11 @@ end
 
 function dead_npc() 
   if level.name()=="l11_pripyat" and has_alife_info("prizrak_help_have") and not has_alife_info("haron_sms") then
-    amk.start_timer("sms_new",math.random(100,120))
+    ogse_st_mgr.start_timer("sms_new",math.random(100,120), "braad_test.sms_new")
     db.actor:give_info_portion("haron_sms")	 
   elseif level.name()=="l12_stancia" and has_alife_info("prizrak_kill_start") and 
   not has_alife_info("doctor_sms") then
-    amk.start_timer("sms_doc",math.random(10,20))
+    ogse_st_mgr.start_timer("sms_doc",math.random(100,120), "braad_test.sms_doc")
     db.actor:give_info_portion("doctor_sms")
 
   elseif level.name()=="l12_stancia_2" and has_alife_info("control_monolit_have") and not has_alife_info("keys_sms") then         db.actor:give_info_portion("keys_sms")
@@ -149,33 +149,35 @@ function dead_npc()
 
   elseif level.name()=="l11_pripyat" and has_alife_info("prizrak_kill_speak") and 
   not has_alife_info("mono_prizrak_spawn") then
-    amk.start_timer("mono_prizrak_spawn",math.random(120,140))
+    ogse_st_mgr.start_timer("mono_prizrak_spawn",math.random(120,140), "braad_test.mono_prizrak_spawn")
     db.actor:give_info_portion("mono_prizrak_spawn")
+	
   elseif level.name()=="l02_garbage" and has_alife_info("bes_patron_start") and 
   not has_alife_info("bes_patron_spawn") then
-    amk.start_timer("bes_zasada",math.random(50,60))
+    ogse_st_mgr.start_timer("bes_zasada",math.random(50,60), "braad_test.bes_zasada")
     db.actor:give_info_portion("bes_patron_spawn")
+	
   elseif level.name()=="l01_escape" and has_alife_info("aes_solmon_have") and 
   not has_alife_info("aes_solmon_sms") then
-    amk.start_timer("sms_solomon",math.random(20,30))
+    ogse_st_mgr.start_timer("sms_solomon",math.random(20,30), "braad_test.sms_solomon")
     db.actor:give_info_portion("aes_solmon_sms")
-  elseif (has_alife_info("mil_lucash_dead") or has_alife_info("mil_blockpost_leader_dead")) and has_alife_info("mil_lucash_help_start") and not has_alife_info("mil_lucash_help_done") then
-    db.actor:give_info_portion("mil_lucash_help_fail")
-  elseif level.name()=="l07_military"  and not has_alife_info("actor_na_scladah") then
-    db.actor:give_info_portion("actor_na_scladah") 
-  elseif level.name()=="l03_agroprom"  and not has_alife_info("actor_na_agro") then
-    db.actor:give_info_portion("actor_na_agro")
-  elseif level.name()=="l10_radar"  and not has_alife_info("actor_na_radare") then
-    db.actor:give_info_portion("actor_na_radare")
-  elseif has_alife_info("fedya_razboinik_see") and not has_alife_info("sveeblov_predatel_vpered") then
-    db.actor:give_info_portion("sveeblov_predatel_fail")
-  elseif (has_alife_info("levsha_dead") or has_alife_info("bes_dead")) and has_alife_info("bes_help_levsha_start") and not has_alife_info("bes_help_levsha_done") then
-    db.actor:give_info_portion("bes_help_levsha_fail")
+	
+  elseif (has_alife_info("mil_lucash_dead") or has_alife_info("mil_blockpost_leader_dead")) and has_alife_info("mil_lucash_help_start") and not has_alife_info("mil_lucash_help_done") then db.actor:give_info_portion("mil_lucash_help_fail")
+  
+  elseif level.name()=="l07_military"  and not has_alife_info("actor_na_scladah") then db.actor:give_info_portion("actor_na_scladah")
+	
+  elseif level.name()=="l03_agroprom"  and not has_alife_info("actor_na_agro") then db.actor:give_info_portion("actor_na_agro")
+  
+  elseif level.name()=="l10_radar"  and not has_alife_info("actor_na_radare") then db.actor:give_info_portion("actor_na_radare")
+  
+  elseif has_alife_info("fedya_razboinik_see") and not has_alife_info("sveeblov_predatel_vpered") then db.actor:give_info_portion("sveeblov_predatel_fail")
+  
+  elseif (has_alife_info("levsha_dead") or has_alife_info("bes_dead")) and has_alife_info("bes_help_levsha_start") and not has_alife_info("bes_help_levsha_done") then db.actor:give_info_portion("bes_help_levsha_fail")
+	
   elseif level.name()=="l02_garbage" and has_alife_info("bes_help_levsha_start")  and 
-  not has_alife_info("bes_smart_done") then
-    db.actor:give_info_portion("bes_smart_done")
-  elseif level.name()=="l04_darkvalley"  and not has_alife_info("actor_na_darkvalley") then
-    db.actor:give_info_portion("actor_na_darkvalley")
+  not has_alife_info("bes_smart_done") then db.actor:give_info_portion("bes_smart_done")
+  
+  elseif level.name()=="l04_darkvalley"  and not has_alife_info("actor_na_darkvalley") then db.actor:give_info_portion("actor_na_darkvalley")
 
   elseif level.name()=="l12u_sarcofag" and has_alife_info("first_urok_dialog_have") and not has_alife_info("mervin22_spawn") then db.actor:give_info_portion("mervin22_spawn")
 
@@ -671,7 +673,7 @@ function help_wounded_mono(npc)
 		db.actor:give_info_portion("tutorial_wounded_heal")
 		db.actor:give_info_portion("tutorial_wounded_help")
 	end
-  amk.start_timer("healing_enemies_mono",math.random(20,30),amk.pack_array_to_string( {npc:id(), npc:character_community()} ))
+    amk.start_timer("healing_enemies_mono",math.random(20,30),amk.pack_array_to_string( {npc:id(), npc:character_community()} ))
 	npc:set_character_community("monolith", 0, 0)
 	npc:set_relation(game_object.friend, db.actor)
 end
@@ -2380,10 +2382,10 @@ function apply_radiation()
 db.actor:give_info_portion("mayor_yarofeev_spawn")
    elseif level.name()=="l01_escape" and has_alife_info("mayor_yarofeev_done") and 
 not has_alife_info("sidr_sms_info") then
-    amk.start_timer("sms_sidr",math.random(10,20))
-db.actor:give_info_portion("sidr_sms_info")
+    ogse_st_mgr.start_timer("sms_sidr",math.random(10,20), "braad_test.sms_sidr")
+    db.actor:give_info_portion("sidr_sms_info")
    elseif has_alife_info("krest_work_begin") and not has_alife_info("krest_work_sms") then
-    amk.start_timer("spawn_military_tech",math.random(60,70))
+    ogse_st_mgr.start_timer("spawn_military_tech",math.random(60,70), "braad_test.spawn_military_tech")
 db.actor:give_info_portion("krest_work_sms")
    elseif has_alife_info("valet_dead") and has_alife_info("krest_work_start") and not has_alife_info("krest_work_have") then
 db.actor:give_info_portion("krest_work_fail")
@@ -2565,7 +2567,7 @@ function quest_info()
     db.actor:give_info_portion("barman_speech_start")
   elseif level.name()=="l07_military" and has_alife_info("black_box_done") and 
   not has_alife_info("prizrak_about_pda_sms") then
-    amk.start_timer("prizrak_pda",math.random(20,30))
+    ogse_st_mgr.start_timer("prizrak_pda",math.random(20,30), "braad_test.prizrak_pda")
     db.actor:give_info_portion("prizrak_about_pda_sms")
   end
 
