@@ -2,106 +2,146 @@
 #include "sload.h"
 
 #ifdef SSLR_ENABLED
+#include "screenspace_common.h"
 Texture2D s_puddles;
+Texture2D s_puddles_mask;
+Texture2D s_puddles_normal;
 #endif
 
-#define	USE_4_DETAIL
+#define USE_4_DETAIL
 
 #if defined(USE_TDETAIL) && defined(USE_4_DETAIL)
-#	define	USE_4_BUMP
+#define USE_4_BUMP
 #endif
 
 #ifdef USE_4_BUMP
-f_deffer 	main	( p_bumped I 	)
+f_deffer main(p_bumped I)
 #else
-f_deffer 	main	( p_flat I 		)
+f_deffer main(p_flat I)
 #endif
 {
-	f_deffer	O;
+    f_deffer O;
 
- 	// diffuse
-	float4 D		= tbase		(I.tcdh);			// IN:  rgb.a
-//	float4 L 	= tex2D		(s_lmap, I.tcdh);
-	float4 L 	= s_lmap.Sample( smp_base, I.tcdh);
+    // diffuse
+    float4 D = tbase(I.tcdh); // IN:  rgb.a
+    //	float4 L 	= tex2D		(s_lmap, I.tcdh);
+    float4 L = s_lmap.Sample(smp_base, I.tcdh);
 
-	float	G	= def_gloss	;
+    float G = def_gloss;
 
+    float4 mask = s_mask.Sample(smp_base, I.tcdh);
+    float mag = dot(mask, 1);
+    mask = mask / mag;
+	
+    float puddles = 0.0f;
 
-	float4 mask = s_mask.Sample(smp_base, I.tcdh);
-	float mag = dot(mask, 1);
-	mask = mask / mag;
+#ifdef USE_TDETAIL
+#ifdef USE_4_DETAIL
 
+    //	float3	d_R	= tex2D		(s_dt_r, I.tcdbump)*mask.r;
+    //	float3	d_G	= tex2D		(s_dt_g, I.tcdbump)*mask.g;
+    //	float3	d_B	= tex2D		(s_dt_b, I.tcdbump)*mask.b;
+    //	float3	d_A	= tex2D		(s_dt_a, I.tcdbump)*mask.a;
+    float3 d_R = s_dt_r.Sample(smp_base, I.tcdbump) * mask.r;
+    float3 d_G = s_dt_g.Sample(smp_base, I.tcdbump) * mask.g;
+    float3 d_B = s_dt_b.Sample(smp_base, I.tcdbump) * mask.b;
+    float3 d_A = s_dt_a.Sample(smp_base, I.tcdbump) * mask.a;
+    float3 dt = d_R + d_G + d_B + d_A;
+    D.rgb = 2 * D.rgb * dt;
+
+#ifdef USE_4_BUMP
+
+    // 	 float4	n_Rt = tex2D	(s_dn_r, I.tcdbump).wzyx;
+    //	 float4	n_Gt = tex2D	(s_dn_g, I.tcdbump).wzyx;
+    //	 float4	n_Bt = tex2D	(s_dn_b, I.tcdbump).wzyx;
+    //	 float4	n_At = tex2D	(s_dn_a, I.tcdbump).wzyx;
+    float4 n_Rt = s_dn_r.Sample(smp_base, I.tcdbump).wzyx;
+    float4 n_Gt = s_dn_g.Sample(smp_base, I.tcdbump).wzyx;
+    float4 n_Bt = s_dn_b.Sample(smp_base, I.tcdbump).wzyx;
+    float4 n_At = s_dn_a.Sample(smp_base, I.tcdbump).wzyx;
+
+    float3 n_R = (n_Rt - 0.5) * mask.r;
+    float g_R = n_Rt.w * mask.r;
+    float3 n_G = (n_Gt - 0.5) * mask.g;
+    float g_G = n_Gt.w * mask.g;
+    float3 n_B = (n_Bt - 0.5) * mask.b;
+    float g_B = n_Bt.w * mask.b;
+    float3 n_A = (n_At - 0.5) * mask.a;
+    float g_A = n_At.w * mask.a;
+
+    float3 mix = n_R + n_G + n_B + n_A;
+    mix.z *= 0.5; //. make bump twice as contrast (fake, remove me if possible)
+
+    float3 N = mul(float3x3(I.M1, I.M2, I.M3), mix.xyz);
+	
 #ifdef SSLR_ENABLED
-	//Если убрать умножение на mask.g - лужи будут в т.ч. и на земле.
-	float puddles = s_puddles.Sample(smp_linear, I.tcdh * dt_params).r * mask.g;
+	puddles = saturate(s_puddles.Sample(smp_linear, I.tcdh * dt_params * G_PUDDLES_SCALE).r)/* * mask.g*/;
+	puddles = pow(saturate(puddles * 2 * saturate(rain_params.x)), 4);
+	
+	float3 normal_flat = mul(float3x3(I.M1, I.M2, I.M3), float3(0, 0, 1));
+	normal_flat = mul(normalize(normal_flat), m_V);
+	
+	//const float splashes_scale = 110.0;
+	//float3 splashes = calc_rain_splashes(I.tcdh * splashes_scale);
+	//splashes = normalize(mul(m_V, float3(splashes.x, 1 + splashes.y, 0)));
+
+	const float threshold = 0.01f;
+	puddles *= smoothstep(1.0 - threshold * G_PUDDLES_SLOPE_THRESHOLD, 1.0, saturate(normal_flat.y));
+	
+	puddles *= smoothstep(0.025f, 0.0, dot(L.rgb, 0.33));
+	//puddles *= smoothstep(0.0, 0.1, L.w);
+	
+	float puddles_mask = 1.0 - s_puddles_mask.Sample(smp_base, I.tcdh).r;
+	puddles *= puddles_mask;
+	
+	// Apply tint
+	D.rgb = lerp(D.rgb, D.rgb * G_PUDDLES_TINT, smoothstep(0.5, 1.0, puddles));
+
+#ifdef G_PUDDLES_RIPPLES
+	float rain_int = saturate(rain_params.x * 1.5f);
+
+	// Ripples movement speed
+	float ripples_anim =  timers.x * 0.01f;/*(0.01f + (rain_int * 0.008f)) * G_PUDDLES_RIPPLES_SPEED*/;
+	
+	// Ripples scale
+	float ripples_scale = 140 / G_PUDDLES_RIPPLES_SCALE;
+
+	float3 WN0 = s_puddles_normal.Sample(smp_base, I.tcdh * ripples_scale + float2(0, ripples_anim));
+	float3 WN1 = s_puddles_normal.Sample(smp_base, I.tcdh * ripples_scale - float2(0.33f, ripples_anim));
+	float3 ripplesNormal = ((WN0 * 2 - 1) + (WN1 * 2 - 1)) * 0.5;
+	ripplesNormal *= (0.05f + rain_int * G_PUDDLES_RIPPLES_RAINING_INT) * G_PUDDLES_RIPPLES_INTENSITY;
+
+	// Normal Up and ripples for puddles
+	float3 MirrorUp	= mul(m_V, float3(ripplesNormal.x, 1.0f, ripplesNormal.y));
+	//MirrorUp = lerp(normal_flat, MirrorUp, G_PUDDLES_RIPPLES_INTENSITY);
+	N = lerp(N, MirrorUp, puddles);
+#endif
+#endif
+	G = g_R + g_G + g_B + g_A;
+	
 #else
-	float puddles = 0.0f;
+    float3 N = I.N.xyz;
 #endif
 
+#else
+    //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
+    D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
+#endif
+#else
+    float3 N = I.N.xyz;
+#endif
 
-# ifdef	USE_TDETAIL
- # ifdef USE_4_DETAIL
+    // hemi, sun, material
+    float ms = xmaterial;
+#ifdef USE_R2_STATIC_SUN
+    ms = L.w;
+#endif
 
-//	float3	d_R	= tex2D		(s_dt_r, I.tcdbump)*mask.r;
-//	float3	d_G	= tex2D		(s_dt_g, I.tcdbump)*mask.g;
-//	float3	d_B	= tex2D		(s_dt_b, I.tcdbump)*mask.b;
-//	float3	d_A	= tex2D		(s_dt_a, I.tcdbump)*mask.a;
-	float3	d_R	= s_dt_r.Sample ( smp_base, I.tcdbump)*mask.r;
-	float3	d_G	= s_dt_g.Sample ( smp_base, I.tcdbump)*mask.g;
-	float3	d_B	= s_dt_b.Sample ( smp_base, I.tcdbump)*mask.b;
-	float3	d_A	= s_dt_a.Sample ( smp_base, I.tcdbump)*mask.a;
-	float3	dt	= d_R+d_G+d_B+d_A;
-		D.rgb	= 2*D.rgb*dt	 ;
+    // 2. Standart output
+    float4 Ne = float4(normalize(N), D.w);
+    O = pack_gbuffer(Ne, // hemi
+                     float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), //
+                     float4(D.x, D.y, D.z, G), float4(puddles, 0.f, 0.f, 0.f));
 
-  # ifdef USE_4_BUMP
-
-// 	 float4	n_Rt = tex2D	(s_dn_r, I.tcdbump).wzyx;
-//	 float4	n_Gt = tex2D	(s_dn_g, I.tcdbump).wzyx;
-//	 float4	n_Bt = tex2D	(s_dn_b, I.tcdbump).wzyx;
-//	 float4	n_At = tex2D	(s_dn_a, I.tcdbump).wzyx;
- 	 float4	n_Rt = s_dn_r.Sample ( smp_base, I.tcdbump).wzyx;
-	 float4	n_Gt = s_dn_g.Sample ( smp_base, I.tcdbump).wzyx;
-	 float4	n_Bt = s_dn_b.Sample ( smp_base, I.tcdbump).wzyx;
-	 float4	n_At = s_dn_a.Sample ( smp_base, I.tcdbump).wzyx;
-	 
- 	 float3	n_R = (n_Rt-0.5)*mask.r; float g_R=n_Rt.w*mask.r;
-	 float3	n_G = (n_Gt-0.5)*mask.g; float g_G=n_Gt.w*mask.g;
-	 float3	n_B = (n_Bt-0.5)*mask.b; float g_B=n_Bt.w*mask.b;
-	 float3	n_A = (n_At-0.5)*mask.a; float g_A=n_At.w*mask.a;
-
-	 float3	mix		= 	n_R+n_G+n_B+n_A;
-			mix.z	*=	0.5;		//. make bump twice as contrast (fake, remove me if possible)
-	 float3	N		= 	mul     	(float3x3(I.M1, I.M2, I.M3), mix.xyz);
-
-	 	 	G 		= 	g_R+g_G+g_B+g_A;
-//			G 	= 0			;
-//			G 	= mix.w		;		// gloss
-  # else
-	float3	N 	= I.N.xyz	;
-  # endif
-
- # else
-//	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
-	D.rgb	= 2*D.rgb*s_detail.Sample( smp_base, I.tcdbump).rgb;
- # endif
-# else
-	float3	N 	= I.N.xyz	;
-# endif
-
-	// hemi, sun, material
-	float 	ms	= xmaterial	;
-# ifdef USE_R2_STATIC_SUN
-		 	ms 	= L.w		;
-# endif
-
-  // 2. Standart output
-  float4     Ne = float4	(normalize(N), 									D.w			);
-  O				= pack_gbuffer( 
-								Ne,	// hemi
-								float4 	(I.position.xyz + Ne.xyz*def_virtualh/2.h, 	ms			),	//
-								float4	(D.x,	D.y,	D.z,						G			),
-						float4(puddles, 0.f, 0.f, 0.f)
-						 );
-
-  return O;
+    return O;
 }

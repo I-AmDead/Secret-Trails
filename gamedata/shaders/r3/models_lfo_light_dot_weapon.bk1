@@ -4,9 +4,6 @@
 
 uniform	float4 m_hud_params; // zoom_rotate_factor, secondVP_zoom_factor, NULL, NULL
 
-// KRodin: TODO: Вынести в common?
-uniform	float4 screen_res;
-
 Texture2D s_vp2;
 
 struct 	v2p
@@ -25,7 +22,7 @@ float resize(float input, float factor, float offset)
 
 float4 main( v2p I ) : SV_Target
 {
-	float4 t_base = s_base.Sample(smp_base, I.tc0); // Текстура сетки	
+	float4 t_base = s_base.Sample(smp_base, I.tc0); // Текстура сетки
 
 	// Растягиваем картинку в линзе так, чтобы на любом разрешении экрана были правильные пропорции
 	I.tc0.x = resize(I.tc0.x, screen_res.x / screen_res.y, 0);

@@ -1,17 +1,126 @@
-// Screen Space Shaders - MAIN File
-// Update 7 [ 2022/06/27 ]
+/**
+ * @ Version: SCREEN SPACE SHADERS - UPDATE 11
+ * @ Description: Main file
+ * @ Modified time: 2022-09-25 07:58
+ * @ Author: https://www.moddb.com/members/ascii1457
+ * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
+ */
 
-#define SSFX_READY
 
 #include "common.h"
 #include "hmodel.h"
 
-#include "check_screenspace.h"
+#include "settings_screenspaceshaders.h"
 
-uniform float4 sky_color;
+#define SKY_EPS float(0.001)
 
 static const float4 SSFX_ripples_timemul = float4(1.0f, 0.85f, 0.93f, 1.13f); 
 static const float4 SSFX_ripples_timeadd = float4(0.0f, 0.2f, 0.45f, 0.7f);
+
+uniform float4x4 m_inv_v;
+
+uniform float4 rain_params; //x = raindensity
+
+#if defined(USE_MSAA)
+TEXTURE2DMS(float4, MSAA_SAMPLES) s_last_frame;
+#else
+Texture2D s_last_frame;
+#endif
+
+float3 calc_envmap(float3 vreflect)
+{
+	float3 vreflectabs = abs(vreflect);
+	float  vreflectmax = max(vreflectabs.x, max(vreflectabs.y, vreflectabs.z));
+	vreflect /= vreflectmax;
+	if (vreflect.y < 0.999)
+			vreflect.y= vreflect.y * 2 - 1; // fake remapping
+
+	float3 env0 = env_s0.SampleLevel(smp_base, vreflect.xyz, 0).xyz;
+	float3 env1 = env_s1.SampleLevel(smp_base, vreflect.xyz, 0).xyz;
+	return lerp(env0, env1, L_ambient.w);
+}
+
+float SSFX_noise(float2 tc)
+{
+	float2 noise = frac(tc.xy * 0.5f);
+	return noise.x + noise.y * 0.5f;
+}
+
+float2 SSFX_noise2(float2 p)
+{
+	p = p % 289;
+	float x = (34 * p.x + 1) * p.x % 289 + p.y;
+	x = (34 * x + 1) * x % 289;
+	x = frac(x / 41) * 2 - 1;
+	return normalize(float2(x - floor(x + 0.5), abs(x) - 0.5));
+}
+
+float SSFX_gradientNoise(float2 p)
+{
+	float2 ip = floor(p);
+	float2 fp = frac(p);
+	float d00 = dot(SSFX_noise2(ip), fp);
+	float d01 = dot(SSFX_noise2(ip + float2(0, 1)), fp - float2(0, 1));
+	float d10 = dot(SSFX_noise2(ip + float2(1, 0)), fp - float2(1, 0));
+	float d11 = dot(SSFX_noise2(ip + float2(1, 1)), fp - float2(1, 1));
+	fp = fp * fp * fp * (fp * (fp * 6 - 15) + 10);
+	return lerp(lerp(d00, d01, fp.y), lerp(d10, d11, fp.y), fp.x);
+}
+
+#define WATER_SPLASHES_MAX_RADIUS 1.5 // Maximum number of cells a ripple can cross.
+//#define WATER_SPLASHES_DOUBLE_HASH	  // дополнительный шум
+
+float hash12(float2 p)
+{
+	float3 p3 = frac(float3(p.xyx) * .1031);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return frac((p3.x + p3.y) * p3.z);
+}
+
+float2 hash22(float2 p)
+{
+	float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
+	p3 += dot(p3, p3.yzx + 19.19);
+	return frac((p3.xx + p3.yz) * p3.zy);
+}
+
+float3 calc_rain_splashes(float2 tc)
+{
+	float2 p0 = floor(tc * 35);
+
+	float circles = 0;
+
+	for (int j = -WATER_SPLASHES_MAX_RADIUS; j <= WATER_SPLASHES_MAX_RADIUS; ++j)
+	{
+		for (int i = -WATER_SPLASHES_MAX_RADIUS; i <= WATER_SPLASHES_MAX_RADIUS; ++i)
+		{
+			float2 pi = p0 + float2(i, j);
+		#ifdef WATER_SPLASHES_DOUBLE_HASH
+			float2 hsh = hash22(pi);
+		#else
+			float2 hsh = pi;
+		#endif
+			float2 p = pi + hash22(hsh);
+
+			float t = frac(1.45f * timers.x + hash12(hsh));
+			float2 v = p - tc * 35;
+
+			float d = (length(v) * 2.0f) - (float(WATER_SPLASHES_MAX_RADIUS) + 1.0) * t;
+
+			const float h = 1e-3;
+			float d1 = d - h;
+			float d2 = d + h;
+			float p1 = sin(31. * d1) * smoothstep(-0.6, -0.3, d1) * smoothstep(0., -0.3, d1);
+			float p2 = sin(31. * d2) * smoothstep(-0.6, -0.3, d2) * smoothstep(0., -0.3, d2);
+			circles += 0.5 * normalize(v) * ((p2 - p1) / (2. * h) * (1. - t) * (1. - t));
+		}
+	}
+
+	float c = float(WATER_SPLASHES_MAX_RADIUS * 2 + 1);
+	circles /= c * c;
+
+	return float3(circles.xx, sqrt(1.0f - dot(circles, circles)));
+}
 
 struct RayTrace
 {
@@ -25,7 +134,7 @@ struct RayTrace
 
 bool SSFX_is_saturated(float2 value) { return (value.x == saturate(value.x) && value.y == saturate(value.y)); }
 
-bool SSFX_is_valid_uv(float2 value) { return (value.x >= 0.0f && value.x <= 1.0f) || (value.y >= 0.0f && value.y <= 1.0f); }
+bool SSFX_is_valid_uv(float2 value) { return (value.x >= 0.0f && value.x <= 1.0f) && (value.y >= 0.0f && value.y <= 1.0f); }
 
 float2 SSFX_view_to_uv(float3 Pos)
 {
@@ -33,6 +142,17 @@ float2 SSFX_view_to_uv(float3 Pos)
 	return (tc.xy / tc.w) * float2(0.5f, -0.5f) + 0.5f;
 }
 
+float SSFX_calc_SSR_fade(float2 tc, float start, float end)
+{
+	// Vectical fade
+	float ray_fade = saturate(tc.y * 5.0f);
+	
+	// Horizontal fade
+	float2 calc_edges = smoothstep(start, end, float2(tc.x, 1.0f - tc.x));
+	ray_fade *= calc_edges.x * calc_edges.y;
+
+	return ray_fade;
+}
 
 float3 SSFX_yaw_vector(float3 Vec, float Rot)
 {
@@ -49,7 +169,6 @@ float3 SSFX_yaw_vector(float3 Vec, float Rot)
 	return mul(rot_mat, Vec);
 }
 
-
 float SSFX_get_depth(float2 tc, uint iSample : SV_SAMPLEINDEX)
 {
 	#ifndef USE_MSAA
@@ -58,7 +177,6 @@ float SSFX_get_depth(float2 tc, uint iSample : SV_SAMPLEINDEX)
 		return s_position.Load(int3(tc * screen_res.xy, 0), iSample).z;
 	#endif
 }
-
 
 float3 SSFX_get_position(float2 tc, uint iSample : SV_SAMPLEINDEX)
 {
@@ -69,7 +187,6 @@ float3 SSFX_get_position(float2 tc, uint iSample : SV_SAMPLEINDEX)
 	#endif
 }
 
-
 RayTrace SSFX_ray_init(float3 ray_start_vs, float3 ray_dir_vs, float ray_max_dist, int ray_steps, float noise)
 {
 	RayTrace rt;
@@ -77,23 +194,22 @@ RayTrace SSFX_ray_init(float3 ray_start_vs, float3 ray_dir_vs, float ray_max_dis
 	float3 ray_end_vs = ray_start_vs + ray_dir_vs * ray_max_dist;
 	
 	// Ray depth ( from start and end point )
-	rt.z_start 		= ray_start_vs.z;
-	rt.z_end   		= ray_end_vs.z;
-    
-    // Compute ray start and end (in UV space)
-    rt.r_start 		= SSFX_view_to_uv(ray_start_vs);
-    float2 ray_end  = SSFX_view_to_uv(ray_end_vs);
+	rt.z_start		= ray_start_vs.z;
+	rt.z_end		= ray_end_vs.z;
 
-    // Compute ray step
-    float2 ray_diff	= ray_end - rt.r_start;
-    rt.r_step     	= ray_diff / (float)ray_steps; 
-	rt.r_length   	= length(ray_diff);
+	// Compute ray start and end (in UV space)
+	rt.r_start		= SSFX_view_to_uv(ray_start_vs);
+	float2 ray_end	= SSFX_view_to_uv(ray_end_vs);
+
+	// Compute ray step
+	float2 ray_diff	= ray_end - rt.r_start;
+	rt.r_step		= ray_diff / (float)ray_steps; 
+	rt.r_length		= length(ray_diff);
 	
-	rt.r_pos 		= rt.r_start + rt.r_step * noise;
+	rt.r_pos		= rt.r_start + rt.r_step * noise;
 	
 	return rt;
 }
-
 
 float3 SSFX_ray_intersect(RayTrace Ray, uint iSample)
 {
@@ -102,9 +218,8 @@ float3 SSFX_ray_intersect(RayTrace Ray, uint iSample)
 	float depth_ray = (Ray.z_start * Ray.z_end) / lerp(Ray.z_end, Ray.z_start, alpha);
 	float depth_scene = SSFX_get_depth(Ray.r_pos, iSample);
 	
-	return float3(depth_ray - depth_scene, depth_scene, len);
+	return float3(depth_ray.x - depth_scene, depth_scene, len);
 }
-
 
 // Half-way scene lighting
 float4 SSFX_get_fast_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
@@ -134,149 +249,65 @@ float4 SSFX_get_fast_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
 	#endif
 }
 
-
-float3 SSFX_get_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
-{ 
-	// Same way of building color and lighting in "combine_1.ps" but we can sample a especific uv
-	gbuffer_data rgbd = gbuffer_load_data(GLD_P(tc, tc * screen_res.xy, iSample));
-	
-	// Sky from albedo
-	if (rgbd.mtl <= 0.05)
-	{
-		// No idea why, but with MSAA the rgbd.C return a bugged value for the sky
-		#ifndef USE_MSAA
-			return rgbd.C.rgb;
-		#else
-			return fog_color.rgb; // Ugly solution, but at least simulates the right color for day and night cycle. TODO: Find a real solution
-		#endif
-	}
-	float4 rD = float4(rgbd.C.rgb, rgbd.gloss);
-	
-	// Lighting
+// Full scene lighting
+float3 SSFX_get_scene(float2 tc, uint iSample : SV_SAMPLEINDEX)
+{
 	#ifndef USE_MSAA
+		float4 rP = s_position.Sample( smp_nofilter, tc );
+	#else
+		float4 rP = s_position.Load(int3(tc * screen_res.xy, 0), iSample);
+	#endif
+
+	if (rP.z <= 0.05f)
+		return 0;
+
+	#ifndef USE_MSAA
+		float4 rD = s_diffuse.Sample( smp_nofilter, tc );
 		float4 rL = s_accumulator.Sample(smp_nofilter, tc);
 	#else
+		float4 rD = s_diffuse.Load(int3(tc * screen_res.xy, 0), iSample);
 		float4 rL = s_accumulator.Load(int3(tc * screen_res.xy, 0), iSample);
 	#endif
-
-	#ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed
-		
-		if (abs(rgbd.mtl - MAT_FLORA) <= 0.05) 
-		{
-			float	fAtten = 1 - smoothstep(0, 50, rgbd.P.z);
-			rD.a	*= (fAtten * fAtten);
-		}
-		rL.rgb += rL.a * SRGBToLinear(rD.rgb);
-
-		// hemisphere
-		float3 hdiffuse, hspecular;
-		hmodel(hdiffuse, hspecular, rgbd.mtl, rgbd.hemi, rD, rgbd.P, rgbd.N);
-
-		// Final color 
-		float3 rcolor = rL.rgb + hdiffuse.rgb;
-		return LinearTosRGB(rcolor);
-		
-	#else // !SSFX_ENHANCED_SHADERS
 	
-		// hemisphere
-		float3 hdiffuse, hspecular;
-		hmodel(hdiffuse, hspecular, rgbd.mtl, rgbd.hemi, rgbd.gloss, rgbd.P, rgbd.N);
+	// Remove emissive materials for now...
+	if (length(rL) > 10.0f)
+		rL = 0;
 
-		// Final color
-		float4 light = float4(rL.rgb + hdiffuse, rL.w);
-		float4 C = rD * light;
-		float3 spec = C.www * rL.rgb + hspecular * C.rgba;
-		
-		return C.rgb + spec;
-		
-	#endif
+	float3 rN = gbuf_unpack_normal( rP.xy );
+	float rMtl = gbuf_unpack_mtl( rP.w );
+	float rHemi = gbuf_unpack_hemi( rP.w );
+
+	float3 nw = mul( m_inv_v, rN );
+
+	// hemisphere
+	float3 hdiffuse, hspecular;
+	hmodel(hdiffuse, hspecular, rMtl, rHemi, rD.w, rP, rN);
+
+	// Final color
+	float4 light = float4(rL.rgb + hdiffuse, rL.w);
+	float4 C = rD * light;
+	float3 spec = C.www * rL.rgb;
+	float3 color = C.rgb + spec;
+	
+    float fog = saturate(length(rP.xyz) * fog_params.w + fog_params.x);
+    color = lerp(color, fog_color * TONEMAP_SCALE_FACTOR, fog);
+	
+	return color;
 }
 
+TextureCube sky_s0;
+TextureCube sky_s1;
 
-#ifndef REFLECTIONS_H
-	TextureCube s_env0;
-	TextureCube s_env1;
-#endif
-
-float3 SSFX_calc_sky(float3 dir)
+float3 SSFX_calc_sky(float3 vreflect)
 {
-	dir = SSFX_yaw_vector(dir, -sky_color.w); // Sky rotation
+	float3 a = abs(vreflect);
+	vreflect.xyz /= max(a.x, max(a.y, a.z));
+
+	if (vreflect.y < 0.999)
+		vreflect.y = vreflect.y * 2 - 1;
 	
-	dir.y = (dir.y - max(cos(dir.x) * 0.65f, cos(dir.z) * 0.65f)) * 2.1f; // Fix perspective
-	dir.y -= -0.35; // Altitude
+	float3 env0 = sky_s0.SampleLevel(smp_base, vreflect, 0).xyz;
+	float3 env1 = sky_s1.SampleLevel(smp_base, vreflect, 0).xyz;
 	
-	float3 sky0 = s_env0.SampleLevel(smp_base, dir, 0).xyz;
-	float3 sky1 = s_env1.SampleLevel(smp_base, dir, 0).xyz;
-	
-	// Use hemi color or real sky color if the modded executable is installed.
-#ifndef SSFX_MODEXE
-	return saturate(L_hemi_color.rgb * 3.0f) * lerp(sky0, sky1, L_ambient.w);
-#else
-	return saturate(sky_color.bgr * 3.0f) * lerp(sky0, sky1, L_ambient.w);
-#endif
-}
-
-
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
-// 1.3f water ~ 1.5f glass ~ 1.8f diamond
-float SSFX_calc_fresnel(float3 V, float3 N, float ior)
-{
-	float cosi = clamp(-1, 1, dot(V, N));
-	float etai = 1, etat = ior;
-	if (cosi > 0)
-	{
-		etai = ior;
-		etat = 1;
-	}
-	// Compute sini using Snell's law
-	float sint = etai / etat * sqrt(max(0.f, 1 - cosi * cosi));
-	// Total internal reflection
-	if (sint >= 1)
-		return 1.0f;
-
-	float cost = sqrt(max(0.f, 1 - sint * sint));
-	cosi = abs(cosi); 
-	float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
-	float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
-
-	return (Rs * Rs + Rp * Rp) / 2;
-}
-
-
-// https://seblagarde.wordpress.com/2013/01/03/water-drop-2b-dynamic-rain-and-its-effects/
-float3 SSFX_computeripple(float4 Ripple, float CurrentTime, float Weight)
-{
-    Ripple.yz = Ripple.yz * 2 - 1; // Decompress perturbation
-
-    float DropFrac = frac(Ripple.w + CurrentTime); // Apply time shift
-    float TimeFrac = DropFrac - 1.0f + Ripple.x;
-    float DropFactor = saturate(0.2f + Weight * 0.8f - DropFrac);
-    float FinalFactor = DropFactor * Ripple.x * 
-                        sin( clamp(TimeFrac * 9.0f, 0.0f, 3.0f) * 3.14159265359);
-
-    return float3(Ripple.yz * FinalFactor * 0.65f, 1.0f);
-}
-
-
-float3 SSFX_ripples( Texture2D ripple_tex, float2 tc ) 
-{
-	float4 Times = (timers.x * SSFX_ripples_timemul + SSFX_ripples_timeadd) * 1.5f;
-	Times = frac(Times);
-
-	float4 Weights = float4( 0, 1.0, 0.65, 0.25);
-
-	float3 Ripple1 = SSFX_computeripple(ripple_tex.Sample( smp_base, tc + float2( 0.25f,0.0f)), Times.x, Weights.x);
-	float3 Ripple2 = SSFX_computeripple(ripple_tex.Sample( smp_base, tc + float2(-0.55f,0.3f)), Times.y, Weights.y);
-	float3 Ripple3 = SSFX_computeripple(ripple_tex.Sample( smp_base, tc + float2(0.6f, 0.85f)), Times.z, Weights.z);
-	float3 Ripple4 = SSFX_computeripple(ripple_tex.Sample( smp_base, tc + float2(0.5f,-0.75f)), Times.w, Weights.w);
-	
-	Weights = saturate(Weights * 4);
-	float4 Z = lerp(1, float4(Ripple1.z, Ripple2.z, Ripple3.z, Ripple4.z), Weights);
-	float3 Normal = float3( Weights.x * Ripple1.xy +
-							Weights.y * Ripple2.xy + 
-							Weights.z * Ripple3.xy +
-							Weights.w * Ripple4.xy, 
-							Z.x * Z.y * Z.z * Z.w);
-	
-	return normalize(Normal) * 0.5 + 0.5;
+	return lerp( env0, env1, env_color.w );
 }
