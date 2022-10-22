@@ -223,8 +223,6 @@ function dead_npc()
 
   elseif level.name()=="l06_rostok" and has_alife_info("lektor_dialog_start") and not has_alife_info("lektor_spawn") then db.actor:give_info_portion("lektor_spawn")
 
-  elseif level.name()=="l07_military" and not has_alife_info("vybros_spawn") then db.actor:give_info_portion("vybros_spawn")
-
   elseif level.name()=="l02_garbage" and has_alife_info("potapov_first_dialog_start") and not has_alife_info("vypolzen_boloto_spawn") then db.actor:give_info_portion("vypolzen_boloto_spawn")
 
   elseif level.name()=="l02_garbage" and has_alife_info("potapov_first_dialog_start") and not has_alife_info("izlom_mini_spawn") then db.actor:give_info_portion("izlom_mini_spawn")
@@ -362,7 +360,7 @@ function dead_npc()
     local sobj = alife():object( obj.id )
     alife():use_ai_locations(sobj, false)
 
-    local obj = alife():create("wpn_sig_m2",vector():set(-260.10464477539,0.27300158143044,92.179977416992),8348,1378)
+    local obj = alife():create("wpn_sig552_isg_siber",vector():set(-260.10464477539,0.27300158143044,92.179977416992),8348,1378)
     local sobj = alife():object( obj.id )
     alife():use_ai_locations(sobj, false)
 
@@ -2379,28 +2377,35 @@ function apply_radiation()
     time_previous = time_current
   end
    if level.name()=="l01_escape" and has_alife_info("mayor_yarofeev_start") and not has_alife_info("mayor_yarofeev_spawn") then
-db.actor:give_info_portion("mayor_yarofeev_spawn")
+    db.actor:give_info_portion("mayor_yarofeev_spawn")
+
    elseif level.name()=="l01_escape" and has_alife_info("mayor_yarofeev_done") and 
 not has_alife_info("sidr_sms_info") then
     ogse_st_mgr.start_timer("sms_sidr",math.random(10,20), "braad_test.sms_sidr")
     db.actor:give_info_portion("sidr_sms_info")
+	
    elseif has_alife_info("krest_work_begin") and not has_alife_info("krest_work_sms") then
     ogse_st_mgr.start_timer("spawn_military_tech",math.random(60,70), "braad_test.spawn_military_tech")
-db.actor:give_info_portion("krest_work_sms")
+    db.actor:give_info_portion("krest_work_sms")
+
    elseif has_alife_info("valet_dead") and has_alife_info("krest_work_start") and not has_alife_info("krest_work_have") then
-db.actor:give_info_portion("krest_work_fail")
+    db.actor:give_info_portion("krest_work_fail")
+	
    elseif level.name()=="l02_garbage" and has_alife_info("krest_razborka_start")  and 
   not has_alife_info("krest_razborka_spawn") then
-db.actor:give_info_portion("krest_razborka_spawn")  
+    db.actor:give_info_portion("krest_razborka_spawn")
+	
    elseif has_alife_info("krest_dead") and has_alife_info("krest_razborka_spawn") and not has_alife_info("krest_razborka_done") then
-db.actor:give_info_portion("krest_razborka_fail")
+    db.actor:give_info_portion("krest_razborka_fail")
+	
    elseif (has_alife_info("razbor_ban1_see") or has_alife_info("razbor_ban2_see") or has_alife_info("razbor_ban3_see") or has_alife_info("razbor_ban4_see") or has_alife_info("razbor_ban5_see")) and has_alife_info("krest_razborka_spawn") and not has_alife_info("krest_razborka_begin") then
-db.actor:give_info_portion("krest_razborka_fail") 
+    db.actor:give_info_portion("krest_razborka_fail") 
    end
-if level.name()=="l11_pripyat" and not has_alife_info("my_spawn_est") then 
-spawn_mervin()
-db.actor:give_info_portion("my_spawn_est")
-end
+   
+   if level.name()=="l11_pripyat" and not has_alife_info("my_spawn_est") then 
+    spawn_mervin()
+    db.actor:give_info_portion("my_spawn_est")
+   end
 end
 
 function spawn_mervin()

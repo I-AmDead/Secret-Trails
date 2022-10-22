@@ -429,69 +429,6 @@ end
 -- используется ниже
 local func_by_string = {}
 
-	-- Proper70: Надоело добавлять сюда строки - сделал универсальный запуск по таймеру любой служебной функции.
-	-- params_string = нужная функция.
-	-- Ограничения: нельзя передавать в качестве параметров функции переменные, только конкретные значения.
-	func_by_string["run"] = function (params_string)
-		if params_string then
-			loadstring(params_string)()
-		end
-	end
-	-- следующие экземпляры на всякий случай)
-	func_by_string["run2"] = function (params_string)
-		if params_string then
-			loadstring(params_string)()
-		end
-	end
-	func_by_string["run3"] = function (params_string)
-		if params_string then
-			loadstring(params_string)()
-		end
-	end
-	func_by_string["run4"] = function (params_string)
-		if params_string then
-			loadstring(params_string)()
-		end
-	end
-	func_by_string["run5"] = function (params_string)
-		if params_string then
-			loadstring(params_string)()
-		end
-	end
-
-	func_by_string["no_save"] = function (params_string)
- 	end
-	func_by_string["set_flame_ammo"] = function (params_string)
-		flamethrower.set_flame_ammo(params_string)
-	end
-	func_by_string["zonedocs_gg_kill"] = function (params_string)
-		       db.actor:kill( db.actor )
-	end
-
-	func_by_string["gg_need_sleep"] = function (params_string)
-		mod_call("test_for_need_sleep")
-	end
-	func_by_string["sleep_nrg"] = function (params_string)
-		mod_call("test_for_need_sleep_nrg",params_string)
-	end
-	func_by_string["sleep_med"] = function (params_string)
-		mod_call("test_for_need_sleep_med",params_string)
-	end
-	func_by_string["sleep_matras"] = function (params_string)
-		mod_call("test_for_need_sleep_matras",params_string)
-	end
-	func_by_string["sleep_tr_item"] = function (params_string)
-		mod_call("test_for_need_sleep_tr_item",params_string)
-	end
-	func_by_string["sleep_notebook"] = function (params_string)
-		mod_call("test_for_need_sleep_notebook",params_string)
-	end
-	func_by_string["sleep_fake_wpn"] = function (params_string)
-		mod_call("fake_weapon", params_string)
-	end
-	func_by_string["block_sleep_menu"] = function (params_string)
-		save_variable("block_sleep_menu",0)
-	end
 	func_by_string["radar_fix"] = function (params_string)
     mod_call("radar_fix")
   end
@@ -506,24 +443,6 @@ local func_by_string = {}
     if amk.load_variable("freeplay",0)==1 and level.name()=="l12_stancia_2" then
       xr_effects.game_credits()
     end
-  end
-	func_by_string["blowout"] = function (params_string)
-    mod_call("Blowout_pp",params_string)
-  end
-	func_by_string["test"] = function (params_string)
-		mod_call("Run_Blowout_pp")
-	end
-	func_by_string["blowout_ss"] = function (params_string)
-    mod_call("blowout_scary_sounds")
-  end
-	func_by_string["blow_shift"] = function (params_string)
-		mod_call("Run_Blowout_pp")
-	end
-	func_by_string["sleep_repbox"] = function (params_string)
-    mod_call("repair_weapon", params_string)
-  end
-	func_by_string["repbox_cond"] = function (params_string)
-    mod_call("after_repair_weapon", params_string)
   end
 	func_by_string["healing_enemies"] = function (params_string)
 		local arr = unpack_array_from_string(params_string)
@@ -573,18 +492,6 @@ local func_by_string = {}
 			--amk.send_tip("переложили","переложили",0,15,"gen_info")
 		end
  	end
-	func_by_string["rep_wpn_timer"] = function (params_string)
-		mod_call("repair_timer", params_string)
-	end
-	func_by_string["rep_box_spawn"] = function (params_string)
-		mod_call("spawn_repbox", params_string)
-	end
-	func_by_string["rep_boxs_spawn"] = function (params_string)
-		amk_mod.spawn_repboxs()
-	end
-	func_by_string["nano_health_start"] = function (params_string)
-		skunk.nano_health_s()
-	end
 
 function __do_timer_action( select_string, params_string )
   if func_by_string[ select_string ] then
@@ -1257,11 +1164,6 @@ function on_game_load()
   mod_call( "first_run" )
   convert_timers() -- переносим старые и новые таймеры в таблицу
 
-  if sys_ini:r_float( "gg_kick","enabled" ) > 0.0 then
-    gg_kick = true
-  else
-    gg_kick = false
-  end
   mod_call( "check_spawn" )
   
   local timers = load_table( "timers" )

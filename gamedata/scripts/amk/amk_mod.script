@@ -7,7 +7,7 @@
 
 function attach( sm )
   sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
-  sm:subscribe({ signal = "on_use",          fun = this.check_sleep_item  })
+  sm:subscribe({ signal = "on_use",          fun = this.treasure_create   })
   sm:subscribe({ signal = "on_spawn",        fun = this.on_actor_spawn    })
 end
 
@@ -24,6 +24,16 @@ function on_actor_spawn()
       })
     end
   end
+end
+
+
+function treasure_create(obj)
+	local section = obj:section()
+	if section=="treasure_item" then
+        if news_main then
+            news_main.create_treasurebox()
+        end
+	end
 end
 
 
@@ -214,64 +224,34 @@ function freeplay()
 end
 
 
---'*******************************************************************************
---'   **   **   **   **   **    **   **   **      SLEEP_AMK          **   **   **   **   **    **   **   **   **
---'*******************************************************************************
-function check_sleep_item(obj)
-	local flagg = amk.load_variable("flagg")
-	local section = obj:section()
-	local stype=nil
-	
-	if section=="treasure_item" then
-		stype="tr_item"
-	end
- 
-	if stype~=nil then
-		amk.start_timer("sleep_"..stype,0.1,obj:id())
-	end
-end
-
-function test_for_need_sleep( add )
-end
-
-function test_for_need_sleep_tr_item(oid)
-        if alife():object(oid)==nil then
-            if news_main then
-              news_main.create_treasurebox()
-            end
-        end
-end
-
-
 --'****************************************************************************
 --'   **   **   **   **   **    **   **   **      RADAR_FIX         **   **   *
 --'****************************************************************************
 
 
 function check_radar_off()
-  ogse_signals.get_mgr():reschedule( 1000 )
-		if not has_alife_info("esc_serious_talk") then
-			local pos = db.actor:position()
-    if pos.z > 65 and pos.x > 350 and pos.x < 410 then
-      if amk.load_variable( "radar_fix", 0 ) == 0 then
-        level.add_pp_effector( "fire_hit.ppe", 1523, true )
-        level.set_pp_effector_factor( 1523, 0.5 )
-        amk.save_variable( "radar_fix", 1 )
-        amk.start_timer( "radar_fix", 5 )
-				end
+	ogse_signals.get_mgr():reschedule( 1000 )
+	if not has_alife_info("esc_serious_talk") then
+		local pos = db.actor:position()
+    	if pos.z > 65 and pos.x > 350 and pos.x < 410 then
+      		if not ogse.var_exists("radar_fix") then
+        		level.add_pp_effector( "fire_hit.ppe", 1523, true )
+        		level.set_pp_effector_factor( 1523, 0.5 )
+        		ogse.save_var("radar_fix", true)
+				ogse_st_mgr.start_timer("radar_fix", 5, "amk_mod.radar_fix")
 			end
 		end
 	end
-
+end
 
 function radar_fix()
-  level.remove_pp_effector( 1523 )
-  local pos = db.actor:position()
-  if pos.z > 65 and pos.x > 350 and pos.x < 410 then
-    db.actor:kill( db.actor )
-  end
-  amk.del_variable( "radar_fix" )
+	level.remove_pp_effector( 1523 )
+	local pos = db.actor:position()
+	if pos.z > 65 and pos.x > 350 and pos.x < 410 then
+		db.actor:kill( db.actor )
+	end
 end
+
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **      AF_TRANSFORM         **   **   **   **   **    **   **   **
 --'*******************************************************************************
@@ -363,9 +343,6 @@ function check_for_af_drop(obj)
 			tbl.lv			= lv
 			tbl.gv			= gv
 			amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
-
-			-- перенесено в amk.script
-			--check_af_transform(obj, obj_sect, obj_pos, anom_id, anom_sect, anom_pos, anom_radius, lv, gv)
 		end
 	end
 end
@@ -1013,8 +990,6 @@ end
 --'****************************************************************************
 --'   **   **   **   **   **    **   **   **   **      BLOWOUT        **   **
 --'****************************************************************************
-
-
 local blowout_phantoms_subscribed
 
 function blowout_phantoms()
@@ -1054,161 +1029,6 @@ function blowout_phantoms()
     blowout_phantoms_subscribed = nil
   end
 end
-
-
-function blowout_scary_sounds()
-	local blow=amk.load_variable("blowout",-1)
-	if blow>0 and blow<4 then
-                local snd_obj = xr_sound.get_safe_sound_object(amk_hideouts.blowout_sounds[math_random(#amk_hideouts.blowout_sounds)])
-                local a=vector():set( 0, 0, 0 )
-                a.x=math_random(0,10)
-                a.y=math_random(0,10)
-                a.z=math_random(0,10)
-                snd_obj:play_at_pos(db.actor, db.actor:position():add(a))
-                amk.start_timer("blowout_ss",math_random(10,30),0)
-        end
-end
-
-function blowout_psy_sound(action)
-	if action=="start" then
-		snd_obj_eq = sound_object([[ambient\earthquake]],sound_object.looped+sound_object.s2d)
-    snd_obj_eq:play(db.actor, 4, sound_object.looped+sound_object.s2d)
-	end
-	if action == "stop" then
-		if snd_obj_eq then snd_obj_eq:stop() end
-	end
-	
-	local lname=level.name()
-	if not amk_hideouts.blowouts_phantoms[lname] then return end
-	local psy_sound=amk_hideouts.blowouts_phantoms[lname].psy_sounds or false	
-	if not psy_sound then return end
-
-	if action=="start" then
-		local level_vol=amk_hideouts.blowouts_phantoms[lname].level_vol or 1				
-		sound_obj_right, sound_obj_left = xr_sound.get_sound_object("psy_voices", "random")
-		sound_obj_left:play_at_pos (db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d + sound_object.looped)
-		sound_obj_right:play_at_pos(db.actor, vector():set( 1, 0, 1), 0, sound_object.s2d + sound_object.looped)
-		snd_volume	= level.get_snd_volume()
-		level.set_snd_volume( level_vol )
-	end
-	if action == "stop" then
-		if sound_obj_left then sound_obj_left:stop() end
-		if sound_obj_right then sound_obj_right:stop() end
-		if snd_volume then level.set_snd_volume(snd_volume) end
-	end	
-end
-
-function Run_Blowout_pp()
-end
-
-function Run_Blowout_pp_old()
-    if game_options.run_blowout_pp == 1 then
-		local bt=blowout_type()
-		if bt==2 then start_blow_timer() return end
-		sleep_manager.stopper()
-		amk.save_variable("blowout",1)
-		if bt<1 then
-			level.add_pp_effector("monolith_off.ppe", 2003, false)
-			level.add_cam_effector("camera_effects\\shell_shock.anm", 2004, false, "")
-			local snd_obj = xr_sound.get_safe_sound_object([[ambient\organic_moan1]])
-			snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
-		end
-		amk.start_timer("blowout_ss",math_random(5,15),0)
-		amk.start_timer("blowout",11,0)
-		dsh.blowout_modif_arts()
-	end
-	start_blow_timer()
-end
-
-function start_blow_timer()
-end
-
-function Blowout_pp(phase)
----------------------------------------------------
---' TimeFactor = 5
---' GameMin = 12 RealSec
---' TimeBlowout = 184 RealSec
-
---' начало (Timer = 36 sec)
---' первая фаза (Timer = 36 sec)
---' вторая фаза (Timer = 36 sec)
---' Tретья фаза (Timer = 36 sec)
---' четвертая фаза (Timer = 60 sec)
---' конечная фаза (Timer = 0 sec)
----------------------------------------------------
-
-amk.mylog("blowout "..phase)
-local basis = game_options.blow_phase_basis
-local shift = game_options.blow_phase_shift
-local max = game_options.blow_phase_max
-local resuls = basis + (math_random()*shift) - (shift/2)
-if resuls < 1 then resuls = 1 elseif resuls > max then resuls = max end
-local blow = amk.load_variable("blowout", 0)
-local bt=blowout_type()
-if blow > 0 and blow < 4 and bt == 2 then amk.g_start_timer("blowout", 0, 0, 3, 4) end
-        if phase==0 then
-                db.actor.blowout_outside = true
-                amk_anoms.pre_blow_off()
-		if bt<1 then
-			level.set_weather("pre_blow",true)
-			level.set_weather_fx("amk_surge_day")
-		end 
-amk.g_start_timer("blowout", 0, 0, resuls, 1)
-                elseif phase==1 then
-                local snd_obj = xr_sound.get_safe_sound_object([[ambient\earthquake]])
-                snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
-                level.add_cam_effector("camera_effects\\earthquake.anm", 2002, true, "")
-                snd_obj = xr_sound.get_safe_sound_object([[anomaly\blowout]])
-                snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
-                blowout_psy_sound("start")
-                if bt < 1 then
-                        level.add_pp_effector("vibros.ppe", 2001, true)
-                end
-                in_hide=false
-amk.g_start_timer("blowout", 0, 0, resuls, 2)
-                amk.save_variable("blowout",2)  
-        elseif phase==2 then
-                amk.g_start_timer("blowout",0,0,3,3)
-        elseif phase==3 then
-                amk_anoms.after_blow_on()
-                amk_anoms.off_testobj()
-		amk.save_variable("blowout",3)
-		local h = hit()
-		local cr
-		h.type = hit.strike
-		h.power = 1000
-		h.impulse = 1000
-                for a, sobj in alife():objects() do
-                        cr=level.object_by_id(a)
-                        if cr~=nil and cr:section()=="m_crow" and math_random(0,100)<70 then
-                                h.draftsman = cr
-                                h.direction = cr:direction()
-                                cr:hit(h)
-                        end
-                end
-amk.g_start_timer("blowout", 0, 0, resuls, 4)
-        elseif phase==4 then
-                amk.save_variable("blowout",4)
-                level.remove_cam_effector(2002)
-                if bt<1 then
-                        level.remove_pp_effector(2001)
-                        level.add_pp_effector("monolith_off.ppe", 2003, false)
-                end
-                blowout_psy_sound("stop")
-                amk.start_timer("blowout",5,5)
-        elseif phase==5 then
-                level.set_weather(amk.load_variable("weather","default1"))
-                if bt<1 then
-                        local snd_obj = xr_sound.get_safe_sound_object([[anomaly\teleport_work2]])
-                        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
-                end
-                amk.del_variable("blowout")
-        if game_options.zombie_team == 1 then
-            tag_spb.zombie_team()
-        end 
-        end
-end
-
 
 local blowout_hit_subscribed
 
@@ -1794,64 +1614,5 @@ function zomby_blow(obj)
                         snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
                         alife():release(alife():object(obj:id()))
                 end
-        end
-end
-
-function repair_weapon (st)
-        local arr = amk.unpack_array_from_string(st)
-        local oid = arr[1]
-        local repbox_health = arr[2]
-        local slot = arr[3]
-        if alife():object(oid)==nil then
-                local repair_coef = 0                                   
-                local item_in_slot = db.actor:item_in_slot(slot)  
-                if repbox_health==1 then                                 
-                        repair_coef=0.25                                           
-                elseif repbox_health<1 then                       
-                        repair_coef=0.2                                         
-                elseif repbox_health<0.8 then                       
-                        repair_coef=0.15                                            
-                elseif repbox_health<0.6 then                        
-                        repair_coef=0.1                                         
-                elseif repbox_health<0.4 then                        
-                        repair_coef=0.05         
-                end      
-                --------------------------------------------------------------------------- 
-                local rem
-                
-                if item_in_slot == nil then
-                        amk.send_tip(game.translate_string("rep_no_weapon_in_slot"),nil,nil,5)
-                        rem = amk.spawn_item_in_inv("repbox_s"..slot)
-                        amk.start_timer("repbox_cond",0.1, {rem.id, repbox_health} )
-                else
-                        if item_in_slot:condition()>0.95 then
-                                amk.send_tip(game.translate_string("rep_not_need"),nil,nil,5)
-                                rem = amk.spawn_item_in_inv("repbox_s"..slot)
-                                amk.start_timer("repbox_cond",0.1, {rem.id, repbox_health} )
-                        else 
-                                if item_in_slot:condition()>=0.7 then
-                                        item_in_slot:set_condition(item_in_slot:condition() + repair_coef)
-                                        if repbox_health>0.3 then
-                                                rem = amk.spawn_item_in_inv("repbox_s"..slot)
-                                                amk.start_timer("repbox_cond",0.1, {rem.id, repbox_health-0.2} )
-                                        end
-                                else
-                                        amk.send_tip(game.translate_string("rep_need_big"),nil,nil,5)
-                                        rem = amk.spawn_item_in_inv("repbox_s"..slot)
-                                        amk.start_timer("repbox_cond",0.1, {rem.id, repbox_health} )
-                                end
-                        end
-                end
-        end
-
-end
-
-function after_repair_weapon (st)
-        local arr = amk.unpack_array_from_string(st)
-        local oid = arr[1]
-        local repbox_health = arr[2]
-        local lobj = level.object_by_id(oid)
-        if lobj then
-                lobj:set_condition(repbox_health)
         end
 end

@@ -29,10 +29,9 @@ local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
 local hide_hand_speed = 1.5
 
-local anim_plays = nil
-local prev_active_slot = nil
-local hud = nil
-local prev_slot = nil
+local anim_plays
+local prev_active_slot
+local prev_slot
 
 local lowered_anm_kinds = {
 	["w_sniper"] 	= true,
@@ -161,15 +160,19 @@ end
 
 -- EMULATION PICKUP
 function on_item_before_pickup(obj)
+	local cam_pos = device().cam_pos
+	local cam_pos_y = cam_pos.y - 0.6
+	local obj_pos = obj:position()
 	local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
 	if not anim_plays and allow_animation() then
 		animation_on()
-		game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
+		pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
 		game.play_hud_anm(anm_name, 0, 1.4, 1, false)
-		pickup_anm_time = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
-		toggle_force_crouch()
-		dsh.level_timeout( pickup_anm_time, function() take_delay(obj) end )
-		dsh.level_timeout( pickup_anm_time + 200, function() toggle_force_crouch() end )
+		if obj_pos.y <= cam_pos_y then
+			toggle_force_crouch()
+			dsh.level_timeout( pickup_anm_time - 100, function() toggle_force_crouch() end )
+		end
+		dsh.level_timeout( pickup_anm_time - 300, function() take_delay(obj) end )
 		anim_plays = true
 	end
 end
@@ -180,24 +183,23 @@ function harvest(on_take)
         local anm_start = 0
         local prev_active_slot = 255
         local anm_subscribed = false
-
         level.disable_input()
 		anim_plays = true
 		
         local function play_anim()
-   		    local time_g = time_global()
+            local time_g = time_global()
             if mc_anm_state == 1 then
-				prev_slot = db.actor:active_slot()
+                prev_slot = db.actor:active_slot()
                 if prev_active_slot == 255 then
                     prev_active_slot = prev_slot
                 end
                 db.actor:activate_slot(255)
-				mc_anm_state = 2
-				toggle_force_crouch()
+                mc_anm_state = 2
+                toggle_force_crouch()
             elseif mc_anm_state == 2 and not db.actor:active_item() then
-				level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
-				level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
-				level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false,"")
+                level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
+                level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
+                level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false,"")
                 snd_harvest:play(db.actor, 0, sound_object.s2d)
                 anm_start = time_g
                 harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, 1.2)
@@ -209,8 +211,8 @@ function harvest(on_take)
                 loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, 0.75)
                 mc_anm_state = 4
             elseif mc_anm_state == 4 and time_g > anm_start + loot_anm_time - 500 then
-				toggle_force_crouch()
-				on_take()
+                toggle_force_crouch()
+                on_take()
                 level.enable_input()
                 mc_anm_state = 5
             elseif mc_anm_state == 5 and time_g > anm_start + loot_anm_time then

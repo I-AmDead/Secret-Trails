@@ -1,10 +1,5 @@
-
 local ANIMS_ENABLED = true
-
-local ANIM_IN_ACTION = false
-local ANIM_USED_TM, ANIM_COMPLETED_TM, CURRENT_ITEM_SECT, CURRENT_ANM_SECT = false, false, false, false
-local SLOT_RESTORE = false
-local ITEM_RELEASED = false
+local prev_active_slot
 
 local cfg = {
 	"eat_health",
@@ -42,8 +37,9 @@ local function respawn_item(obj)
 end
 
 local snd_in_use = false
+
 local function play_use_sound(sect, snd_name)
-	local snd = snd_name or get_string( sect, "use_sound" )
+	local snd = snd_name or get_string( sect, "snd_use" )
 	if snd then
 		if snd_in_use then
 			snd_in_use:stop()
@@ -53,142 +49,110 @@ local function play_use_sound(sect, snd_name)
 	end
 end
 
+local function play_item_use(item)
+    local anim = "anm_use"
+    local exo_anm
+    local item_hud = get_string(item, "hud")
+    local outfit = db.actor:item_in_slot(6)
+    if outfit then
+        local exo = get_string(outfit:section(), "exo")
+        if exo and (string.find(item, "^medkit") or item == "antirad") then
+            item_hud = get_string(item, "hud_exo")
+            exo_anm = true
+        end
+    end
+    local anm_state
+
+    local anm_start = 0
+    local anm_duration = 0
+
+    local anm_subscribed = false
+
+    local used_time = get_u32(item, "item_used_timing")
+    if exo_anm then
+        used_time = get_string(item, "item_used_timing_exo")
+    end
+
+    function play_anim()
+        local time_g = time_global()
+        if anm_state == 1 then
+            --log1("stage 1")
+            anm_state = 2
+
+            prev_active_slot = db.actor:active_slot()
+            db.actor:activate_slot(255)
+        elseif anm_state == 2 and not db.actor:active_item() then
+            --log1("stage 2")
+            anm_state = 3
+            anm_start = time_g
+
+            local snd = get_string(item, "snd_use_anm")
+            if exo_anm then
+                snd = get_string(item, "snd_use_exo_anm")
+            end
+            snd_in_use = sound_object(snd)
+            snd_in_use:play(db.actor, 0, sound_object.s2d)
+
+            anm_duration = game.play_hud_motion(2, item_hud, anim, true, 1, true)
+        elseif anm_state == 3 and time_g > anm_start + used_time then
+            --log1("stage 3")
+            anm_state = 4
+
+            apply_item(item)
+        elseif anm_state == 4 and time_g > anm_start + anm_duration then
+            --log1("stage 4")
+            level.only_allow_movekeys(false)
+            level.set_actor_allow_ladder(true)
+            db.actor:activate_slot(prev_active_slot)
+
+            if anm_subscribed then
+                ogse_signals.get_mgr():unsubscribe( anm_subscribed )
+                anm_subscribed = nil
+            end
+        end
+    end
+
+    level.only_allow_movekeys(true)
+    level.set_actor_allow_ladder(false)
+
+    anm_state = 1
+
+    anm_subscribed = {
+        signal = "on_update", fun = function() play_anim() end
+    }
+	ogse_signals.get_mgr():subscribe( anm_subscribed )
+end
+
 local function on_actor_before_use( obj, sobj )
-	local sect = obj:section()
+    local sect = obj:section()
 
-	if ANIMS_ENABLED then
-		local snd = get_string( sect, "use_sound_anm" )
-		if not snd then return end
+    if ANIMS_ENABLED then
 
-		if ANIM_IN_ACTION then
-			respawn_item(obj)
-			return
-		end
+        local hud = get_string(sect, "hud")
+        local hud_exo = get_string(sect, "hud_exo")
+        local slot_was_blocked = db.actor.inventory:is_active_slot_blocked()
 
-		if not db.actor.inventory:is_active_slot_blocked() then
+        if (hud or hud_exo) and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
+            local item_section = obj:section()
 
-			CURRENT_ANM_SECT = "anm_" .. obj:section()
+            if db.actor:has_info("ui_inventory") then
+                level.start_stop_menu(level.main_input_receiver(), true)
+             end
 
-			local outfit = db.actor:item_in_slot(6)
-			if outfit then
-				local exo = get_string( outfit:section(), "exo" )
-				if exo and ( string.find(sect, "^medkit") or sect == "antirad" ) then
-					CURRENT_ANM_SECT = "anm_exo_" .. obj:section()
-				end
-			end
+            obj:zero_effects()
 
-			CURRENT_ITEM_SECT = sect
-			ITEM_RELEASED = false
+            play_item_use(item_section)
 
-			ANIM_USED_TM = get_u32( CURRENT_ANM_SECT, "item_used_timing" )
-			ANIM_COMPLETED_TM = get_u32( CURRENT_ANM_SECT, "anim_timing" )
-
-			if not SLOT_RESTORE then
-				SLOT_RESTORE = db.actor:active_slot()
-			end
-
-			alife():create( CURRENT_ANM_SECT, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )
-			if db.actor:has_info( "ui_inventory" ) then
-				level.start_stop_menu( level.main_input_receiver(), true )
-			end
-			obj:zero_effects()
-			if db.actor:dont_has_info( "ui_inventory" ) then
-				db.actor:hide_weapon()
-			end
-		elseif db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
-			play_use_sound(sect)
-		else
-			respawn_item(obj)
-		end
-	else
-		play_use_sound(sect)
-	end
+        elseif hud and db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
+            play_use_sound(sect)
+        else
+            respawn_item(obj)
+        end
+    else
+        play_use_sound(sect)
+    end
 end
-
-
-local anim_applied = false
-local anim_exist_tm = false
-local anim_exist_used_tm = false
-local function on_item_to_ruck( obj, sobj )
-	if not string.find( obj:section(), "^anm_" ) then return end
-	local sect = obj:section()
-	if not ITEM_RELEASED then
-		alife():release(sobj)
-		ITEM_RELEASED = true
-	end
-
-	db.actor:restore_weapon()
-
-	if SLOT_RESTORE then
-		db.actor:activate_slot(SLOT_RESTORE)
-		SLOT_RESTORE = false
-	end
-
-	ANIM_USED_TM = false
-	ANIM_IN_ACTION = false
-	anim_applied = false
-	ANIM_COMPLETED_TM = false
-	anim_exist_tm = false
-	anim_exist_used_tm = false
-	CURRENT_ITEM_SECT = false
-	CURRENT_ANM_SECT = false
-end
-
-
-local function on_drop( obj, sobj )
-	on_item_to_ruck( obj, sobj )
-end
-
-
-local function on_item_to_slot( obj )
-	if CURRENT_ITEM_SECT and string.find( obj:section(), "^anm_" ) then
-		db.actor:restore_weapon()
-		db.actor:activate_slot(13)
-		ANIM_IN_ACTION = true
-	end
-end
-
-
-local function on_first_update()
-	local obj = db.actor:item_in_slot(13)
-	if obj and string.find( obj:section(), "^anm_" ) then
-		db.actor:move_to_ruck(obj) 
-	end
-end
-
-local function on_update()
-	if ANIM_IN_ACTION then
-		local tg = time_global()
-		if not anim_exist_tm then
-			if db.actor:active_slot() == 13 then
-				db.actor:hide_weapon()
-				anim_exist_tm = tg + ANIM_COMPLETED_TM
-				anim_exist_used_tm = tg + ANIM_USED_TM
-			end
-		end
-		if anim_exist_used_tm and not anim_applied then
-			if anim_exist_used_tm <= tg then
-				apply_item( CURRENT_ITEM_SECT )
-				anim_applied = true
-			end
-		end
-		if anim_exist_tm then
-			if anim_exist_tm <= tg then
-				local slot13 = db.actor:item_in_slot(13)
-				if slot13 then
-					db.actor:move_to_ruck(slot13)
-				end
-			end
-		end
-	end
-end
-
 
 function attach( sm )
-	sm:subscribe({ signal = "on_first_update",     fun = on_first_update })
-	sm:subscribe({ signal = "on_update",           fun = on_update })
-	sm:subscribe({ signal = "on_item_to_slot",     fun = on_item_to_slot })
-	sm:subscribe({ signal = "on_item_to_ruck",     fun = on_item_to_ruck })
-	sm:subscribe({ signal = "on_drop",             fun = on_drop })
 	sm:subscribe({ signal = "on_actor_before_use", fun = on_actor_before_use })
 end
