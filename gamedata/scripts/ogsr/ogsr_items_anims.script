@@ -51,14 +51,18 @@ end
 
 local function play_item_use(item)
     local anim = "anm_use"
-    local exo_anm
     local item_hud = get_string(item, "hud")
+    local cam_effect = get_string(item, "cam_effect")
+    local used_time = get_u32(item, "item_used_timing")
+    local snd = get_string(item, "snd_use_anm")
     local outfit = db.actor:item_in_slot(6)
     if outfit then
         local exo = get_string(outfit:section(), "exo")
         if exo and (string.find(item, "^medkit") or item == "antirad") then
             item_hud = get_string(item, "hud_exo")
-            exo_anm = true
+            used_time = get_string(item, "item_used_timing_exo")
+            snd = get_string(item, "snd_use_exo_anm")
+            cam_effect = get_string(item, "cam_effect_exo")
         end
     end
     local anm_state
@@ -68,10 +72,6 @@ local function play_item_use(item)
 
     local anm_subscribed = false
 
-    local used_time = get_u32(item, "item_used_timing")
-    if exo_anm then
-        used_time = get_string(item, "item_used_timing_exo")
-    end
 
     function play_anim()
         local time_g = time_global()
@@ -86,14 +86,11 @@ local function play_item_use(item)
             anm_state = 3
             anm_start = time_g
 
-            local snd = get_string(item, "snd_use_anm")
-            if exo_anm then
-                snd = get_string(item, "snd_use_exo_anm")
-            end
             snd_in_use = sound_object(snd)
             snd_in_use:play(db.actor, 0, sound_object.s2d)
 
             anm_duration = game.play_hud_motion(2, item_hud, anim, true, 1, true)
+            level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
         elseif anm_state == 3 and time_g > anm_start + used_time then
             --log1("stage 3")
             anm_state = 4
