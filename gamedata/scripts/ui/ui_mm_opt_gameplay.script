@@ -1,4 +1,30 @@
---РњРµРЅСЋ РЅР°СЃС‚СЂРѕРµРє РіРµР№РјРїР»РµСЏ. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЃРєСЂРёРїС‚РѕРј ui_mm_opt_main.script
+-- Меню расширенных настроек геймплея для OGSR Engine
+-- Глобальная переделка KRodin (c) 2019
+
+local gameplay_opt_params = {
+    { "difficulty",      "list",  0 },
+    { "autopause",       "check", 0 },
+    { "tips",            "check", 0 },
+    { "dist",            "check", 0 },
+    { "crosshair",       "check", 0 },
+    { "dyn_crosshair",   "check", 0 },
+    { "build_crosshair", "check", 0 },
+    { "show_weapon",     "check", 0 },
+    { "ambient",         "check", 0 },
+    { "3d_pda",          "check", 0 },
+    { "3d_scopes",       "check", 0 },
+    { "aim_toggle",      "check", 0 },
+    { "switch_slot",     "check", 0 },
+    { "font_scale_x",    "track", 0 },
+    { "font_scale_y",    "track", 0 },
+}
+
+local control_init_funs = {
+    ["track"] = "InitTrackBar",
+    ["list"]  = "InitComboBox",
+    ["check"] = "InitCheck",
+}
+
 
 class "opt_gameplay" (CUIWindow)
 function opt_gameplay:__init() super()
@@ -7,31 +33,35 @@ end
 function opt_gameplay:__finalize()
 end
 
-function opt_gameplay:InitControls(x, y, xml)
+function opt_gameplay:InitControls(x, y, xml, handler)
 	self:Init(x, y, 738, 416)
 	self:SetAutoDelete(true)
 
-	xml:InitFrame("frame", self)
+    xml:InitFrame("frame", self)
+    self.scroll_v = xml:InitScrollView("tab_gameplay:scroll_v", self)
 
-	xml:InitStatic("tab_gameplay:cap_difficulty", self)
+    -- перебираем с конца, поскольку в настройках scroll view в xml стоит параметр flip_vert="1",
+    -- который инвертирует порядок элементов, что в свою очередь сделано для того, чтобы визуально первые элементы
+    -- добавлялись последними, что в свою очередь позволяет раскрывающимся спискам перекрывать элементы, расположенные ниже по списку
+    for i = #gameplay_opt_params, 1, -1 do
+        local opt, ctr_type, need_restart, cond = unpack(gameplay_opt_params[i])
 
-	xml:InitCheck("tab_gameplay:check_autopause", self)
-	xml:InitCheck("tab_gameplay:check_tips", self)
-	xml:InitCheck("tab_gameplay:check_crosshair", self)
-	xml:InitCheck("tab_gameplay:check_dyn_crosshair", self)
-	xml:InitCheck("tab_gameplay:check_show_weapon", self)
-	xml:InitCheck("tab_gameplay:check_dist", self)
-	xml:InitCheck("tab_gameplay:check_ambient", self)
-	xml:InitCheck("tab_gameplay:check_3d_pda", self)
-	xml:InitCheck("tab_gameplay:check_build_crosshair", self)
-	xml:InitCheck("tab_gameplay:check_3d_scopes", self)
-	xml:InitCheck("tab_gameplay:check_aim_toggle", self)
-	xml:InitCheck("tab_gameplay:check_switch_slot", self)
+        local enabled = not cond or cond()
+        if not enabled then goto CONTINUE end
 
-	xml:InitStatic("tab_gameplay:cap_font_scale_x", self)
-	xml:InitTrackBar("tab_gameplay:track_font_scale_x", self)
-	xml:InitStatic("tab_gameplay:cap_font_scale_y", self)
-	xml:InitTrackBar("tab_gameplay:track_font_scale_y", self)
+        local _st = xml:InitStatic("tab_gameplay:templ_item", self.scroll_v)
+        local _st2 = xml:InitStatic("tab_gameplay:cap_" .. opt, _st)
+        local ctl = xml[control_init_funs[ctr_type]](xml, "tab_gameplay:" .. ctr_type .. "_" .. opt, _st)
 
-	xml:InitComboBox("tab_gameplay:list_difficulty", self)
+		if need_restart == 1 then
+			handler:Register(ctl, "tab_gameplay:"..ctr_type.."_"..opt)
+			handler:AddCallback(
+				"tab_gameplay:"..ctr_type.."_"..opt,
+				ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED,
+				handler.show_need_restart_wnd, handler
+			)
+		end
+
+        ::CONTINUE::
+    end
 end
