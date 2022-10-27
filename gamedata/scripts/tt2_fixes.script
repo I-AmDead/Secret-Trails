@@ -1,6 +1,7 @@
 function attach( sm )
   sm:subscribe({ signal = "on_first_update", fun = this.fix_first })
   sm:subscribe({ signal = "on_update", fun = this.spawn_sverhprovodnik })
+  sm:subscribe({ signal = "on_before_spawn",  fun = this.hemi_level })
 end
 
 function fix_first()
@@ -78,5 +79,25 @@ end
 function quest_fail()
   if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
     db.actor:give_info_portion("pobeg_net")
+  end
+end
+
+local indoor_levels = {
+  [ "l03u_agr_underground"  ] = true,
+  [ "l04u_labx18"           ] = true,
+  [ "l08u_brainlab"         ] = true,
+  [ "l10u_bunker"           ] = true,
+  [ "l12u_sarcofag"         ] = true,
+  [ "l12u_control_monolith" ] = true,
+}
+function isIndoor( lname )
+  return indoor_levels[ lname ] or false
+end
+
+function hemi_level()
+  if not isIndoor( level.name() ) then
+    cmd("r2_sun_lumscale_hemi 1.1")
+  else
+    cmd("r2_sun_lumscale_hemi 0")
   end
 end
