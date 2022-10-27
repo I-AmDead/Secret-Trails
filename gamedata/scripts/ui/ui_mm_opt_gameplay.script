@@ -1,22 +1,22 @@
 -- Меню расширенных настроек геймплея для OGSR Engine
--- Глобальная переделка KRodin (c) 2019
+-- Глобальная переделка I am dead подглядел у xrSimpodin
 
 local gameplay_opt_params = {
-    { "difficulty",      "list",  0 },
-    { "autopause",       "check", 0 },
-    { "tips",            "check", 0 },
-    { "dist",            "check", 0 },
-    { "crosshair",       "check", 0 },
-    { "dyn_crosshair",   "check", 0 },
-    { "build_crosshair", "check", 0 },
-    { "show_weapon",     "check", 0 },
-    { "ambient",         "check", 0 },
-    { "3d_pda",          "check", 0 },
-    { "3d_scopes",       "check", 0 },
-    { "aim_toggle",      "check", 0 },
-    { "switch_slot",     "check", 0 },
-    { "font_scale_x",    "track", 0 },
-    { "font_scale_y",    "track", 0 },
+    { "difficulty",      "list" },
+    { "autopause",       "check" },
+    { "tips",            "check" },
+    { "dist",            "check" },
+    { "crosshair",       "check" },
+    { "dyn_crosshair",   "check" },
+    { "build_crosshair", "check" },
+    { "show_weapon",     "check" },
+    { "ambient",         "check" },
+    { "3d_pda",          "check" },
+    { "3d_scopes",       "check" },
+    { "aim_toggle",      "check" },
+    { "switch_slot",     "check" },
+    { "font_scale_x",    "track" },
+    { "font_scale_y",    "track" },
 }
 
 local control_init_funs = {
@@ -44,7 +44,7 @@ function opt_gameplay:InitControls(x, y, xml, handler)
     -- который инвертирует порядок элементов, что в свою очередь сделано для того, чтобы визуально первые элементы
     -- добавлялись последними, что в свою очередь позволяет раскрывающимся спискам перекрывать элементы, расположенные ниже по списку
     for i = #gameplay_opt_params, 1, -1 do
-        local opt, ctr_type, need_restart, cond = unpack(gameplay_opt_params[i])
+        local opt, ctr_type, cond = unpack(gameplay_opt_params[i])
 
         local enabled = not cond or cond()
         if not enabled then goto CONTINUE end
@@ -52,15 +52,6 @@ function opt_gameplay:InitControls(x, y, xml, handler)
         local _st = xml:InitStatic("tab_gameplay:templ_item", self.scroll_v)
         local _st2 = xml:InitStatic("tab_gameplay:cap_" .. opt, _st)
         local ctl = xml[control_init_funs[ctr_type]](xml, "tab_gameplay:" .. ctr_type .. "_" .. opt, _st)
-
-		if need_restart == 1 then
-			handler:Register(ctl, "tab_gameplay:"..ctr_type.."_"..opt)
-			handler:AddCallback(
-				"tab_gameplay:"..ctr_type.."_"..opt,
-				ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED,
-				handler.show_need_restart_wnd, handler
-			)
-		end
 
         ::CONTINUE::
     end

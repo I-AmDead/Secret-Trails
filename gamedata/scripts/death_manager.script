@@ -181,7 +181,7 @@ function drop_manager:create_release_item(npc)
 
     --' Проверка на отсутствие спауна лута
     local ini = self.npc:spawn_ini()
-    if ini and ini:section_exist("dont_spawn_loot") then
+    if ini and ini:section_exist("dont_spawn_loot") and not self.npc:name() == "fedya_razboinik" then
         return
     end
 
@@ -212,9 +212,12 @@ function drop_manager:create_release_item(npc)
 		end
 	end
 
+if self.npc:name() =="fedya_razboinik" then
+  ogse.spawn_item_in_inv("amulet_1", self.npc)
+end
 if self.npc:name() =="solomon" then
   db.actor:give_info_portion("haron_need_stalker_fail")
-end  
+end
 if string.find(self.npc:name(),"mathon") then
   db.actor:give_info_portion("haron_naem_fail")  
 end
