@@ -66,9 +66,10 @@ function on_key_down(key, bind)
 	if bind == key_bindings.kSWIPE_MASK then
 	if get_con_string("r2_rain_drops_control") == "off" then return end
     	swipe_mask()
-	end
-	if bind == key_bindings.kHEADLAMP then
+	elseif bind == key_bindings.kHEADLAMP then
     	torch_switcher()
+	elseif bind == key_bindings.kNIGHT_VISION then
+    	nv_switcher()
 	end
 end
 
@@ -152,6 +153,49 @@ function torch_switcher()
 		ogse_torch.on_switch()
 		mc_anm_state = 4
 		dsh.level_timeout( torch_anm_time_2, function() torch_switcher() end )
+	elseif (mc_anm_state == 4) then
+		mc_anm_state = 1
+		animation_off()
+	end
+end
+
+-- EMULATION NV SWITCH
+function nv_switcher()
+	anm_name = "script\\headlamp.anm"
+	local anm_additional_length = 0.45
+	local itm = db.actor:active_item()
+
+	if (itm) then
+		local kind = get_string(itm:section(),"kind") or nil
+		local class = get_string(itm:section(),"class") or nil
+		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
+			anm_name = "script\\lower.anm"
+			anm_additional_length = 0.2
+		end
+	end
+	
+	if (mc_anm_state == 1) then
+		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_hide_hand", hide_hand_speed)
+		torch_anm_time_2 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
+		if db.actor:active_item() then
+			game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
+		end
+		game.play_hud_anm(anm_name, 0, 1, 1, false)	
+		new_speed = game.set_hud_anm_time(anm_name, ((torch_anm_time_1 + torch_anm_time_2) / 1000) + anm_additional_length)
+		animation_on()
+		mc_anm_state = 2
+		dsh.level_timeout( torch_anm_time_1 - 300, function() nv_switcher() end )
+	elseif (mc_anm_state == 2) then
+		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1)
+		snd_torch:play(db.actor,0,sound_object.s2d)
+		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
+		mc_anm_state = 3
+		dsh.level_timeout( torch_anm_time_2 - 250, function() nv_switcher() end )
+	elseif (mc_anm_state == 3) then
+		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		ogse_night_vision.call_pnv()
+		mc_anm_state = 4
+		dsh.level_timeout( torch_anm_time_2, function() nv_switcher() end )
 	elseif (mc_anm_state == 4) then
 		mc_anm_state = 1
 		animation_off()

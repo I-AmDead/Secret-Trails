@@ -52,16 +52,13 @@ function actor_binder:net_spawn( data )
     return false
   end
 
-  if self.st.disable_input_time == nil then
-    level.enable_input()
-  end
+  level.enable_input() --Õ≈ ”ƒ¿Àﬂ“‹!
 
   actor_stats.add_to_ranking( self.object:id() )
   
   death_manager.init_drop_settings()
 
-  if xrs_ai then xrs_ai.actor_net_spawn(self)
-end
+  if rx_ai then rx_ai.actor_net_spawn() end
 
   -- added by xStream for AMK miniSDK
   amk.on_game_load(obj)
@@ -123,6 +120,10 @@ function actor_binder:net_destroy()
   end
 
   xr_sound.stop_all_sound_object()
+
+  if ui_grenade_marks then
+    ui_grenade_marks.remove_grenade_marks()
+  end
 
   self.am:call( "on_destroy" )
 
@@ -306,7 +307,7 @@ function actor_binder:on_item_take( obj )
 	return
    end
 
-   if xrs_ai then xrs_ai.actor_item_take(obj) end 
+    if rx_ai then rx_ai.actor_item_take(obj) end
 
     amk.on_item_take( obj )
     braad_test.checking_use_item( obj, sobj )
@@ -322,13 +323,6 @@ function actor_binder:on_item_drop( obj )
   if not sobj then return end
 
   amk_utils.actor_item_drop( obj )
-
-  if obj:section() == "zamok" then
-    local box = obj:parent()
-      if box ~= nil then
-        table.insert(amk_offline_alife.protected, box:id())
-      end
-  end
 
   self.am:call("on_drop", obj, sobj)
 end
@@ -478,7 +472,7 @@ function actor_binder:update( delta )
 
   self.am:call( "on_update", delta )
 
-  if xrs_ai then xrs_ai.actor_update(delta) end  
+  if rx_ai then rx_ai.actor_update() end
 
   antreg.distance_check()
 end
@@ -590,6 +584,8 @@ function actor_binder:save( packet )
     "actor packet size is critical: %s", packet:w_tell()
   )
   log2( "~~Actor netpacket size %s", packet:w_tell() )
+
+  if rx_ai then rx_ai.actor_save(packet) end
 
   self.am:call( "on_save", packet )
   self.am:call( "on_save_after_all" )

@@ -48,6 +48,30 @@ function generic_object_binder:reinit()
 
 end
 
+function generic_object_binder:net_spawn(sobject)
+	if not object_binder.net_spawn(self, sobject) then
+		return false
+	end
+
+	db.add_obj(self.object)
+	if not self.object:alive() then if rx_ai then rx_ai.corpse_net_spawn(self.object, self.loaded) end end
+	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
+	amk.on_net_spawn(self.object)
+
+	local particle_param = utils.cfg_get_string(system_ini(), self.object:section(), "bones_particles", null, false, false, nil)
+	if particle_param and system_ini():section_exist(particle_param) then
+		local tmp=amk.parse_ini_section_to_array(system_ini(),particle_param)
+		for k,v in pairs(tmp) do
+			local t = amk.parse_ini_section_to_array(system_ini(), v)
+			t.obj = self.object
+			if not t.stop_on_death or self.object:alive() then
+				play_particle(self.object, t)
+			end
+		end
+	end
+	return true
+end
+
 prevent_gulag_registration_for_id=0
 
 function generic_object_binder:update(delta)
@@ -144,9 +168,9 @@ end
 
 function generic_object_binder:death_callback(victim, who)
 
-  if not self.object then self.object = victim end
+	if not self.object then self.object = victim end
 
-  self.object:set_tip_text_default()
+	self.object:set_tip_text_default()
 
 	if db.actor then -- добавлено KamikaZze  с целью отладки 25/02/2009
 		if who:is_actor() then -- добавление опыта за убийство
@@ -162,29 +186,31 @@ function generic_object_binder:death_callback(victim, who)
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
 	end
 
-  smart_terrain.on_death( self.object:id() )
+	smart_terrain.on_death( self.object:id() )
 	
-  -- Наносим небольшой импульс вперед.
-  local h = hit()
-  h.draftsman = self.object
-  h.type      = hit.fire_wound
-  h.direction = db.actor:position():sub( self.object:position() )
-  h:bone( "pelvis" )
-  h.power     =  1
-  h.impulse   = 10
-  self.object:hit( h )
+	if rx_ai then rx_ai.monster_death(victim, who) end
+
+	-- Наносим небольшой импульс вперед.
+	local h = hit()
+	h.draftsman = self.object
+	h.type      = hit.fire_wound
+	h.direction = db.actor:position():sub( self.object:position() )
+	h:bone( "pelvis" )
+	h.power     =  1
+	h.impulse   = 10
+	self.object:hit( h )
 	
-  if table.getn(self.particles)>0 then
-    for kk,vv in pairs(self.particles) do
-      vv:on_death()
-    end
-  end
+	if table.getn(self.particles)>0 then
+	  for kk,vv in pairs(self.particles) do
+	    vv:on_death()
+	  end
+	end
 
-  --AMK UTILS--
-  amk.on_death( victim, who )
-  --AMK UTILS--
+	--AMK UTILS--
+	amk.on_death( victim, who )
+	--AMK UTILS--
 
-  self.am:call( "on_monster_death", self.object, who )
+	self.am:call( "on_monster_death", self.object, who )
 end
 
 function generic_object_binder:hit_callback(obj, amount, local_direction, who, bone_index)
@@ -283,29 +309,6 @@ function generic_object_binder:use_callback(obj, who)
 
         ogsr_actor_animation.harvest(move_all)
     end
-end
-
-function generic_object_binder:net_spawn(sobject)
-	if not object_binder.net_spawn(self, sobject) then
-		return false
-	end
-
-	db.add_obj(self.object)
-	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
-	amk.on_net_spawn(self.object)
-
-	local particle_param = utils.cfg_get_string(system_ini(), self.object:section(), "bones_particles", null, false, false, nil)
-	if particle_param and system_ini():section_exist(particle_param) then
-		local tmp=amk.parse_ini_section_to_array(system_ini(),particle_param)
-		for k,v in pairs(tmp) do
-			local t = amk.parse_ini_section_to_array(system_ini(), v)
-			t.obj = self.object
-			if not t.stop_on_death or self.object:alive() then
-				play_particle(self.object, t)
-			end
-		end
-	end
-	return true
 end
 
 function generic_object_binder:net_destroy()

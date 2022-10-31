@@ -219,7 +219,7 @@ end
 function disable_generic_schemes(npc, stype)
   if stype == modules.stype_stalker then
     xr_combat.disable_scheme(npc, "combat")
-    if xrs_ai then xrs_ai.disable_schemes(npc, stype) end
+    if rx_ai then rx_ai.disable_schemes(npc) end
     xr_use.disable_scheme(npc, "use")
     xr_hit.disable_scheme(npc, "hit")
     xr_meet.disable_scheme(npc, "actor_dialogs")
@@ -288,7 +288,8 @@ function enable_generic_schemes(ini, npc, stype, section)
       xr_combat_ignore.set_combat_ignore_checker(npc, ini, "combat_ignore", combat_ignore_section)
     end
 
-  if xrs_ai then xrs_ai.enable_schemes(ini, npc, stype, section) end
+  if rx_ai then rx_ai.enable_schemes(ini,npc,section) end
+
   elseif stype == modules.stype_mobile then
     local combat_section = utils.cfg_get_string(ini, section, "on_combat", npc, false, "")
     if combat_section then
@@ -423,6 +424,7 @@ function reset_generic_schemes_on_scheme_switch(npc, scheme, section)
     stalker_generic.reset_threshold(npc, scheme, st, section)
     stalker_generic.reset_show_spot(npc, scheme, st, section)
 
+    if rx_ai then rx_ai.reset_schemes(npc, scheme, st, section) end
   elseif st.stype == modules.stype_mobile then
     --printf("_bp: disabling talk")
     --npc:disable_talk() -- теперь делается в dialog_manager_reset

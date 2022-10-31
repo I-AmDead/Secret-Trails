@@ -345,7 +345,7 @@ function action_knife_attack:execute()
 				get_target(npc,npc:best_enemy(),st)
 			else
 				self.relax_time = tg+math.random(500,1500)
-				if target:bone_position("bip01_neck"):distance_to(npc:bone_position("bip01_neck")) < 1.5 then
+				if target:bone_position(get_string(target:section(), "bone_head", "bip01_head")):distance_to(npc:bone_position("bip01_neck")) < 1.5 then
 					npc:set_item(object.fire1,knife)
 				else
 					npc:set_item(object.aim1,knife)
@@ -439,7 +439,7 @@ function action_knife_attack:execute()
 	self.tlvid = vertex
 	if on_target and (target:wounded() or is_easy_target(target,target:clsid())) then
 --		npc:set_sight(target,true,true)
-		npc:set_sight(look.fire_point,target:bone_position("bip01_neck"))
+		npc:set_sight(look.fire_point,target:bone_position(get_string(target:section(), "bone_head", "bip01_head")))
 		npc:set_dest_level_vertex_id(npc:level_vertex_id())
 		return
 	elseif st.type == mutant_defend or on_target and (st.type == mutant_hunt or st.type == close_attack and target_actor) then	--target:active_slot() ~= melee_slot for COP?
@@ -453,7 +453,7 @@ function action_knife_attack:execute()
 	if npc:mental_state() == anim.panic and not on_target then
 		npc:set_sight(look.path_dir,nil,0)
 --	elseif on_target or IsStalker(target) and not target_actor then
---		npc:set_sight(look.fire_point,target:bone_position("bip01_neck"))
+--		npc:set_sight(look.fire_point,target:bone_position(get_string(target:section(), "bone_head", "bip01_head")))
 --		npc:set_sight(look.fire_point,target:bone_position(rx_utils.get_fire_bone(target:section(),"head")))
 	elseif dodge then
 		npc:set_sight(target,true,false)
@@ -461,8 +461,7 @@ function action_knife_attack:execute()
 			npc:set_movement_type(move.walk)
 		end
 	else
---		npc:set_sight(look.fire_point,target:bone_position(rx_utils.get_fire_bone(target:section(),"head")))
-		npc:set_sight(look.fire_point,target:bone_position("bip01_neck"))
+		npc:set_sight(look.fire_point,target:bone_position(get_string(target:section(), "bone_head", "bip01_head")))
 	end
 	vertex = utils.send_to_nearest_accessible_vertex(npc,vertex)
 	if st.type ~= mutant_defend and level.vertex_position(vertex):distance_to_sqr(target_pos) > (target_actor and 6.2 or 10) then

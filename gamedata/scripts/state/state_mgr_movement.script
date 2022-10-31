@@ -1,0 +1,78 @@
+local state_lib_states = state_lib.states
+
+--' ПЕРЕМЕЩЕНИЕ
+--' мы уже находимся в необходимом состоянии?
+class "eva_state_mgr_movement" (property_evaluator)
+function eva_state_mgr_movement:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_movement:evaluate()
+	local movement = state_lib_states[self.st.target_state].movement
+	return movement == nil
+		or movement == self.object:target_movement_type()
+end
+
+
+--' нужно ли нам идти
+class "eva_state_mgr_movement_walk" (property_evaluator)
+function eva_state_mgr_movement_walk:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_movement_walk:evaluate()
+	return state_lib_states[self.st.target_state].movement == move.walk
+end
+
+--' нужно ли нам бежать
+class "eva_state_mgr_movement_run" (property_evaluator)
+function eva_state_mgr_movement_run:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_movement_run:evaluate()
+	return state_lib_states[self.st.target_state].movement == move.run
+end
+
+--' нужно ли нам стоять
+class "eva_state_mgr_movement_stand" (property_evaluator)
+function eva_state_mgr_movement_stand:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_movement_stand:evaluate()
+	return state_lib_states[self.st.target_state].movement == move.stand
+end
+
+
+--' стоим ли мы
+class "eva_state_mgr_movement_stand_now" (property_evaluator)
+function eva_state_mgr_movement_stand_now:__init(name) super (nil, name)
+end
+function eva_state_mgr_movement_stand_now:evaluate()
+	return self.object:target_movement_type() == move.stand
+end
+
+
+--' Включаем ходьбу
+class "act_state_mgr_movement_walk" (action_base)
+function act_state_mgr_movement_walk:__init(name, st) super (nil, name)
+end
+function act_state_mgr_movement_walk:execute()
+	action_base.execute(self)
+	self.object:set_movement_type(move.walk)
+end
+
+--' Включаем бег
+class "act_state_mgr_movement_run" (action_base)
+function act_state_mgr_movement_run:__init(name, st) super (nil, name)
+end
+function act_state_mgr_movement_run:execute()
+	action_base.execute(self)
+	self.object:set_movement_type(move.run)
+end
+
+--' Включаем стояние на месте
+class "act_state_mgr_movement_stand" (action_base)
+function act_state_mgr_movement_stand:__init(name, st) super (nil, name)
+end
+function act_state_mgr_movement_stand:execute()
+	action_base.execute(self)
+	self.object:set_movement_type(move.stand)
+end
