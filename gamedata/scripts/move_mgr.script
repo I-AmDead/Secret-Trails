@@ -138,16 +138,8 @@ function move_mgr:extrapolate_callback( npc, cur_pt )
   self.can_use_get_current_point_index = true
   self.current_point_init_time = time_global()
   self.current_point_index     = self.object:get_current_point_index()
-  -- эти две строчки делают магию. Без них zat_romale мечется между
-  -- точками 0 и 1. Как только я добавил эти строчки, он тут же
-  -- побежал по своему пути, как и положено.
-  if extrapolate_hack_type[ self.path_walk ] then
-    self.object:set_start_point( self.current_point_index )
-    self.object:set_patrol_path(
-      self.path_walk, extrapolate_hack_type[ self.path_walk ],
-      patrol.continue, true
-    )
-  end
+  self.object:set_start_point(self.current_point_index)
+  self.object:set_patrol_path(self.path_walk, ( extrapolate_hack_type[ self.path_walk ] or patrol.next ), patrol.continue, true)
 end
 
 
@@ -401,10 +393,11 @@ function move_mgr:setup_movement_by_patrol_path()
       )
     end
   else
-    -- путь недоступен, пусть стоит, где стоит
-    utils.send_to_nearest_accessible_vertex(
-      self.object, self.object:level_vertex_id()
-    )
+    -- путь недоступен. отправляем в ближайшую доступную точку
+    pp=patrol(self.path_walk)
+    if pp and pp:count()>0 then
+      utils.send_to_nearest_accessible_vertex(self.object,pp:level_vertex_id(0))
+    end
   end
   -- Red75 --
 
@@ -433,29 +426,27 @@ function move_mgr:arrived_to_first_waypoint()
 end
 
 
--- Проверка синхронизации с остальными солдатами на пути.
--- Возвращает true, если дальнейшее движение разрешено.
+--' Проверка синхронизации с остальными солдатами на пути.
+--' Возвращает true, если дальнейшее движение разрешено.
 function move_mgr:sync_ok()
-  local res = true
-  if self.team then
-    local del     = {}
-    local s       = sync[ self.team ]
-    local self_id = self.object:id()
-    for k, v in pairs( s ) do
-      local obj = level.object_by_id( k )
-      if obj and obj:alive() then
-        if v ~= true then
-          res = false
-        end
-      else
-        table.insert( del, k )
-      end
-    end
-    for _, k in ipairs( del ) do
-      s[ k ] = nil
-    end
-  end
-  return res
+	if self.team then
+		local s = sync[self.team]
+
+
+		local self_id = self.object:id()
+		
+		for k, v in pairs(s) do
+			local obj = level.object_by_id(k)
+			if obj and obj:alive() then
+				if v ~= true then
+					return false
+				end
+			else
+				sync[self.team][k] = nil
+			end
+		end
+	end
+	return true
 end
 
 
@@ -466,16 +457,12 @@ function move_mgr:update()
       self.syn_signal = nil
     end
   end
-  if
-    self.can_use_get_current_point_index
-    and not self:arrived_to_first_waypoint()
-  then
+  if self.can_use_get_current_point_index and not self:arrived_to_first_waypoint() then
     local t = time_global()
     if t >= self.keep_state_until then
       self.keep_state_until = t + keep_state_min_time
       local cur_pt = self.current_point_index
-      local dist = self.object:position()
-        :distance_to( self.patrol_walk:point( cur_pt ) )
+      local dist = self.object:position():distance_to(self.patrol_walk:point(cur_pt))
       if dist <= dist_walk or t < self.walk_until then
         self.cur_state_moving = self.default_state_moving1
       elseif dist <= dist_run or t < self.run_until then
@@ -485,6 +472,7 @@ function move_mgr:update()
       end
       self:update_movement_state()
     end
+    return
   end
 end
 
@@ -706,9 +694,7 @@ function move_mgr:waypoint_callback( obj, action_type, index )
     return
   end
 
-  local pt_chosen_idx, num_equal_pts = choose_look_point(
-    self.patrol_look, self.path_look_info, search_for
-  )
+  local pt_chosen_idx, num_equal_pts = choose_look_point(self.patrol_look, self.path_look_info, search_for)
   if pt_chosen_idx then
     local suggested_anim_set = self.path_look_info[ pt_chosen_idx ][ "a" ]
     if suggested_anim_set then
@@ -769,5 +755,6 @@ function move_mgr:waypoint_callback( obj, action_type, index )
     self:update()
   else
     self.at_terminal_waypoint_flag = true
+    return
   end
 end
