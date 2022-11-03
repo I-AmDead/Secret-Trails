@@ -111,20 +111,17 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 	return float4(behind_hit, sky_tc);
 }
 
+
 void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, inout float3 color, uint iSample : SV_SAMPLEINDEX)
 {
-	//const float splashes_scale = 0.15f;
-	//float3 wpos = mul(m_v2w, float4(P.xyz, 1)).xyz;
-	//float3 splashes = calc_rain_splashes(wpos.xz * splashes_scale);
-	//float3 normal_wet = normalize(mul(m_V, float3(splashes.x, 1 + splashes.y, 0)));
-	
-	//N = lerp(N, normal_wet, gloss);
-	
 	// Note: Distance falloff on "rain_patch_normal.ps"
-
+	
 	// Material conditions ( MAT_FLORA and Terrain for now... )
-	//bool m_terrain = abs(P.w - 0.95f) <= 0.02f;
-	//bool m_flora = abs(P.w - MAT_FLORA) <= 0.02f;
+	bool m_terrain = abs(P.w - 0.95f) <= 0.02f;
+	bool m_flora = abs(P.w - 6.0) <= 0.02f;
+
+	// Let's start with pure gloss.
+	float refl_power = gloss;
 	
 	// Calc reflection bounce
 	float3 inVec = normalize(P.xyz); // Incident
@@ -135,14 +132,10 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	float3 v2point	 = mul(m_v2w, inVec);
 	float3 v2reflect = reflect(v2point, nw);
 	
-	float fresnel = saturate(dot(v2reflect, v2point));
-	float fresnel_power = 1.0 - pow(1.0 - fresnel, 2);//smoothstep(0.99f, 1.0, pow(saturate(nw.y), 2));
-	float fresnel_amount = 0.25h + 0.25h * fresnel_power;
-	
-	//gloss *= fresnel_power;
-	
-	// Let's start with pure gloss.
-	float refl_power = gloss * fresnel_power;
+	// Fresnel
+	float fresnel = saturate (dot(v2reflect, v2point));
+	float fresnel_amount = pow(fresnel, 3);
+	refl_power *= fresnel_amount;
 	
 	float4 hit_uv = 0;
 
@@ -154,11 +147,12 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	float3 reflection = 0;
 	float2 uvcoor = 0;
 	
-	float3 env = SSFX_calc_sky(v2reflect);
-	env *= G_SSR_SKY_INTENSITY * env_color.xyz * fresnel_amount;
-	
 	// Sky is the reflection base...
-	reflection = env;
+#ifdef G_SSR_CHEAP_SKYBOX
+	reflection = SSFX_calc_env(v2reflect) * G_SSR_SKY_INTENSITY;
+#else
+	reflection = SSFX_calc_sky(v2reflect) * G_SSR_SKY_INTENSITY;
+#endif
 
 	// Valid UV coor? SSFX_trace_ssr_ray return 0.0f if uv is out of bounds or sky.
 	if (all(hit_uv.xy))
@@ -177,57 +171,45 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	}
 	else
 	{
+		// Reset gloss.
+		refl_power = gloss * fresnel_amount;
+
 		// Set reflection UV
 		uvcoor = hit_uv.zw;
-	
-		// Reset gloss.
-		refl_power = gloss * fresnel_power;
-
 	}
 
 	// Fade sky if !skyalways ( Terrain MAT )
-	float ray_fade = saturate(SSFX_calc_SSR_fade(uvcoor, 0.0f, G_SSR_SCREENFADE));
+	float ray_fade = saturate(SSFX_calc_SSR_fade(uvcoor, 0.0f, G_SSR_SCREENFADE) + 1.0f * m_terrain);
 
 	// Adjust the intensity of MAT_FLORA
-	//refl_power *= saturate(G_SSR_FLORA_INTENSITY + 1.0f * !m_flora);
+	refl_power *= saturate(G_SSR_FLORA_INTENSITY + 1.0f * !m_flora);
 
 	// Weapon Attenuation factor.
 	float WeaponFactor = smoothstep(G_SSR_WEAPON_MAX_LENGTH - 0.2f, G_SSR_WEAPON_MAX_LENGTH, length(P.xyz));
 
 	// Terrain MAT overwrite WeaponFactor.
-	//WeaponFactor = saturate(WeaponFactor + 1.0f * m_terrain);
+	WeaponFactor = saturate(WeaponFactor + 1.0f * m_terrain);
 	
 	// Global intensity and limit max value.
 	float main_clamp = clamp(refl_power * G_SSR_INTENSITY, 0, G_SSR_MAX_INTENSITY);
 	
 	// Raise reflection intensity and max limit when raining. ( NOTE: Reverted to rain intensity, but improvements are on the way... )
-	//float rain_extra = G_SSR_WEAPON_RAIN_FACTOR * rain_params.x;
+	float rain_extra = G_SSR_WEAPON_RAIN_FACTOR * rain_params.x;
 
 	// Weapon intensity and limit max value.
-	//float wpn_clamp = 0.0;//clamp((refl_power + rain_extra) * G_SSR_WEAPON_INTENSITY, 0, G_SSR_WEAPON_MAX_INTENSITY + rain_extra);
+	float wpn_clamp = clamp((refl_power + rain_extra) * G_SSR_WEAPON_INTENSITY, 0, G_SSR_WEAPON_MAX_INTENSITY + rain_extra);
 
-	//#ifdef G_SSR_WEAPON_REFLECT_ONLY_WITH_RAIN
-	//	wpn_clamp *= rain_params.x;
-	//#endif
+	#ifdef G_SSR_WEAPON_REFLECT_ONLY_WITH_RAIN
+		wpn_clamp *= rain_params.x;
+	#endif
 
 	// Lerp between general reflections and weapon reflections.
-	//refl_power = lerp(wpn_clamp, main_clamp, WeaponFactor);
-	refl_power *= WeaponFactor;
-	
+	refl_power = lerp(wpn_clamp, main_clamp, WeaponFactor);
+
 	// Apply SSR fade to reflection.
 	refl_power *= ray_fade;
 	
-	//color = lerp(color, reflection, refl_power);
-
-	refl_power *= smoothstep(0.3f, 0.6f, dot(eye_direction, v2reflect));
 
 	// Add the reflection to the scene.
-	reflection = lerp(env, reflection, refl_power);
-	
-	fresnel_power = 0.75h + 0.25h * fresnel_power;
-	
-	// Global intensity and limit max value.
-	refl_power = clamp(gloss * WeaponFactor * fresnel_power * G_SSR_INTENSITY, 0, G_SSR_MAX_INTENSITY);
-	
 	color = lerp(color, reflection, refl_power);
 }

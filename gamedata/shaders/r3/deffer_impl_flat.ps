@@ -4,8 +4,9 @@
 #ifdef SSLR_ENABLED
 #include "screenspace_common.h"
 Texture2D s_puddles;
-Texture2D s_puddles_mask;
 Texture2D s_puddles_normal;
+Texture2D s_puddles_perlin;
+Texture2D s_puddles_mask;
 #endif
 
 #define USE_4_DETAIL
@@ -24,7 +25,6 @@ f_deffer main(p_flat I)
 
     // diffuse
     float4 D = tbase(I.tcdh); // IN:  rgb.a
-    //	float4 L 	= tex2D		(s_lmap, I.tcdh);
     float4 L = s_lmap.Sample(smp_base, I.tcdh);
 
     float G = def_gloss;
@@ -37,11 +37,6 @@ f_deffer main(p_flat I)
 
 #ifdef USE_TDETAIL
 #ifdef USE_4_DETAIL
-
-    //	float3	d_R	= tex2D		(s_dt_r, I.tcdbump)*mask.r;
-    //	float3	d_G	= tex2D		(s_dt_g, I.tcdbump)*mask.g;
-    //	float3	d_B	= tex2D		(s_dt_b, I.tcdbump)*mask.b;
-    //	float3	d_A	= tex2D		(s_dt_a, I.tcdbump)*mask.a;
     float3 d_R = s_dt_r.Sample(smp_base, I.tcdbump) * mask.r;
     float3 d_G = s_dt_g.Sample(smp_base, I.tcdbump) * mask.g;
     float3 d_B = s_dt_b.Sample(smp_base, I.tcdbump) * mask.b;
@@ -50,11 +45,6 @@ f_deffer main(p_flat I)
     D.rgb = 2 * D.rgb * dt;
 
 #ifdef USE_4_BUMP
-
-    // 	 float4	n_Rt = tex2D	(s_dn_r, I.tcdbump).wzyx;
-    //	 float4	n_Gt = tex2D	(s_dn_g, I.tcdbump).wzyx;
-    //	 float4	n_Bt = tex2D	(s_dn_b, I.tcdbump).wzyx;
-    //	 float4	n_At = tex2D	(s_dn_a, I.tcdbump).wzyx;
     float4 n_Rt = s_dn_r.Sample(smp_base, I.tcdbump).wzyx;
     float4 n_Gt = s_dn_g.Sample(smp_base, I.tcdbump).wzyx;
     float4 n_Bt = s_dn_b.Sample(smp_base, I.tcdbump).wzyx;
@@ -62,63 +52,93 @@ f_deffer main(p_flat I)
 
     float3 n_R = (n_Rt - 0.5) * mask.r;
     float g_R = n_Rt.w * mask.r;
+
     float3 n_G = (n_Gt - 0.5) * mask.g;
     float g_G = n_Gt.w * mask.g;
+
     float3 n_B = (n_Bt - 0.5) * mask.b;
     float g_B = n_Bt.w * mask.b;
+
     float3 n_A = (n_At - 0.5) * mask.a;
     float g_A = n_At.w * mask.a;
 
     float3 mix = n_R + n_G + n_B + n_A;
-    mix.z *= 0.5; //. make bump twice as contrast (fake, remove me if possible)
-
+    mix	*= float3(G_SSR_TERRAIN_BUMP_INTENSITY, G_SSR_TERRAIN_BUMP_INTENSITY, 1); // Adjust bump strength
     float3 N = mul(float3x3(I.M1, I.M2, I.M3), mix.xyz);
-	
-#ifdef SSLR_ENABLED
-	puddles = saturate(s_puddles.Sample(smp_linear, I.tcdh * dt_params * G_PUDDLES_SCALE).r)/* * mask.g*/;
-	puddles = pow(saturate(puddles * 2 * saturate(rain_params.x)), 4);
-	
-	float3 normal_flat = mul(float3x3(I.M1, I.M2, I.M3), float3(0, 0, 1));
-	normal_flat = mul(normalize(normal_flat), m_V);
-	
-	//const float splashes_scale = 110.0;
-	//float3 splashes = calc_rain_splashes(I.tcdh * splashes_scale);
-	//splashes = normalize(mul(m_V, float3(splashes.x, 1 + splashes.y, 0)));
 
-	const float threshold = 0.01f;
-	puddles *= smoothstep(1.0 - threshold * G_PUDDLES_SLOPE_THRESHOLD, 1.0, saturate(normal_flat.y));
-	
-	puddles *= smoothstep(0.025f, 0.0, dot(L.rgb, 0.33));
-	//puddles *= smoothstep(0.0, 0.1, L.w);
-	
-	float puddles_mask = 1.0 - s_puddles_mask.Sample(smp_base, I.tcdh).r;
-	puddles *= puddles_mask;
-	
-	// Apply tint
-	D.rgb = lerp(D.rgb, D.rgb * G_PUDDLES_TINT, smoothstep(0.5, 1.0, puddles));
+#ifdef SSLR_ENABLED
+	// Wetness factor
+	float wetness_f = rain_params.y;
+
+	// Always render puddles if G_PUDDLES_ALLWAYS is defined
+	#ifdef G_PUDDLES_ALLWAYS
+		wetness_f = 1.0f;
+	#endif
+
+	// Intensity factor.
+	float puddles_f = wetness_f;
+
+	// Size factor. Convert 0 ~ 1 to 1 ~ -0.1f
+	float size_f = (1.0f - G_PUDDLES_SIZE * 1.1f);
+
+	// Texture mask
+	float puddles_mask = 1.0f - s_puddles_mask.Sample(smp_base, I.tcdh).r;
+
+	// Puddles perlin
+	puddles = saturate((s_puddles_perlin.Sample(smp_base, I.tcdh * 15.0f / G_PUDDLES_GLOBAL_SIZE).r - size_f) * puddles_f);
+
+	// Get normals and transform space to create a slope mask
+	float3 N1 = mul(float3x3(I.M1, I.M2, I.M3), float3(0, 0, 1));
+	N1 = mul(normalize(N1), m_V);
+
+	// Slope mask
+	float slope = max(N1.x, N1.y);
+
+	// Slope adjustements... Some magic numbers
+	slope = saturate((slope - 0.997f) * (102.0f + 0.997f));
+
+	// Slope & texture mask defines final puddles intensity
+	puddles *= slope * puddles_mask;
+
+	// Puddles border hardness
+	puddles = smoothstep(0, saturate(0.3f - G_PUDDLES_BORDER_HARDNESS * 0.3f), puddles);
 
 #ifdef G_PUDDLES_RIPPLES
 	float rain_int = saturate(rain_params.x * 1.5f);
 
 	// Ripples movement speed
-	float ripples_anim =  timers.x * 0.01f;/*(0.01f + (rain_int * 0.008f)) * G_PUDDLES_RIPPLES_SPEED*/;
+	float ripples_anim =  timers.x * ((0.01f + (rain_int * 0.008f)) * G_PUDDLES_RIPPLES_SPEED );
 	
 	// Ripples scale
 	float ripples_scale = 140 / G_PUDDLES_RIPPLES_SCALE;
 
+	// Ripples Normal
 	float3 WN0 = s_puddles_normal.Sample(smp_base, I.tcdh * ripples_scale + float2(0, ripples_anim));
 	float3 WN1 = s_puddles_normal.Sample(smp_base, I.tcdh * ripples_scale - float2(0.33f, ripples_anim));
-	float3 ripplesNormal = ((WN0 * 2 - 1) + (WN1 * 2 - 1)) * 0.5;
+	float3 ripplesNormal = ((WN0 * 2 - 1) + (WN1 * 2 - 1)) / 2.0f;
+
+	// Ripples Intensity
 	ripplesNormal *= (0.05f + rain_int * G_PUDDLES_RIPPLES_RAINING_INT) * G_PUDDLES_RIPPLES_INTENSITY;
+#else
+	float3 ripplesNormal = 0;
+#endif
 
 	// Normal Up and ripples for puddles
 	float3 MirrorUp	= mul(m_V, float3(ripplesNormal.x, 1.0f, ripplesNormal.y));
-	//MirrorUp = lerp(normal_flat, MirrorUp, G_PUDDLES_RIPPLES_INTENSITY);
 	N = lerp(N, MirrorUp, puddles);
 #endif
-#endif
-	G = g_R + g_G + g_B + g_A;
-	
+	// Apply tint
+	D.rgb = lerp( D.rgb, D.rgb * G_PUDDLES_TINT, puddles);
+
+	// Limit pudddle reflection.
+	puddles = clamp(puddles, 0, G_PUDDLES_REFLECTIVITY);
+
+	// Add at the end the extra wetness. Full intensity at 50% of wetness ( rain_params.y )
+	puddles = puddles + saturate(wetness_f * 2.0f) * G_PUDDLES_TERRAIN_EXTRA_WETNESS;
+
+	// Add gloss and puddles to the final gloss result
+	G = max(g_R + g_G + g_B + g_A, puddles);
+
 #else
     float3 N = I.N.xyz;
 #endif
@@ -140,7 +160,7 @@ f_deffer main(p_flat I)
     // 2. Standart output
     float4 Ne = float4(normalize(N), D.w);
     O = pack_gbuffer(Ne, // hemi
-                     float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), //
+                     float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, 0.95f), //
                      float4(D.x, D.y, D.z, G), float4(puddles, 0.f, 0.f, 0.f));
 
     return O;
