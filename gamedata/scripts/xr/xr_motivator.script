@@ -88,28 +88,31 @@ function motivator_binder:net_spawn(sobject)
   manager:add_evaluator(stalker_ids.property_anomaly, property_evaluator_const(false))
   manager:remove_evaluator( stalker_ids.property_items )
   manager:add_evaluator(stalker_ids.property_items, property_evaluator_const(false))
+  manager:add_evaluator(blowout_scheme.evid_outside, property_evaluator_const(false ))
+  manager:add_evaluator(blowout_scheme.evid_blowout, property_evaluator_const(false ))
+  manager:add_evaluator(blowout_scheme.evid_preblowout, property_evaluator_const(false))
   xr_sound.load_sound(self.object)
   xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_stalker, self.loaded )
 
   -- added by xStream for AMK miniSDK
-  amk.on_npc_spawn(self.object)
-
-        amk.on_net_spawn(self.object)
+  amk.on_npc_spawn( self.object )
+  amk.on_net_spawn( self.object )
   -- end of addition
 
-        local particle_param = utils.cfg_get_string(system_ini(), self.object:section(), "bones_particles", null, false, false, nil)
+  local particle_param = utils.cfg_get_string(
+    sys_ini, self.object:section(), "bones_particles", nil, false, false, nil
+  )
+  if particle_param and sys_ini:section_exist( particle_param ) then
+    local tmp = amk.parse_ini_section_to_array( sys_ini, particle_param )
+    for k, v in pairs( tmp ) do
+      local t = amk.parse_ini_section_to_array( sys_ini, v )
+      t.obj = self.object
+      if not t.stop_on_death or self.object:alive() then
+        play_particle( self.object, t )
+      end
+    end
+  end
 
-        if particle_param and system_ini():section_exist(particle_param) then
-                local tmp=amk.parse_ini_section_to_array(system_ini(),particle_param)
-
-                for k,v in pairs(tmp) do
-                        local t = amk.parse_ini_section_to_array(system_ini(), v)
-                        t.obj = self.object
-                        if not t.stop_on_death or self.object:alive() then
-                                play_particle(self.object, t)
-                        end
-                end
-        end
   if rx_ai then rx_ai.npc_net_spawn(self.object) end
   return true
 end
@@ -214,10 +217,6 @@ function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_i
   sr_territory.issue_event(self.object, "hit_callback", obj, amount, local_direction, who, bone_index)
 
   xr_wounded.hit_callback(self.object:id())
-
-  if blowout_scheme then
-    blowout_scheme.hit_callback(obj)
-  end
 
   -- added by xStream for AMK miniSDK
   amk.on_npc_hit(obj, amount, local_direction, who, bone_index)
@@ -499,10 +498,9 @@ function addCommonPrecondition(action)
   action:add_precondition (world_property(xr_evaluators_id.sidor_wounded_base + 0,  false))
   action:add_precondition (world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
   action:add_precondition (world_property(xr_evaluators_id.abuse_base, false))
-  action:add_precondition (world_property(blowout_scheme.evid_outside, false))
-  action:add_precondition (world_property(blowout_scheme.evid_blowout, false))
-  action:add_precondition (world_property(blowout_scheme.evid_preblowout, false))
-  action:add_precondition (world_property(blowout_scheme.evid_anomaly, false))
+  action:add_precondition(world_property( blowout_scheme.evid_outside, false))
+  action:add_precondition(world_property( blowout_scheme.evid_blowout, false))
+  action:add_precondition(world_property( blowout_scheme.evid_preblowout, false))
 
   if rx_ai then rx_ai.addCommonPrecondition(action) end
 end

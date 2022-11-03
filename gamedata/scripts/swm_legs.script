@@ -15,31 +15,13 @@ function attach( sm )
   sm:subscribe({ signal = "on_update",       fun = this.actor_update       })
 end      
 
--- debug
-last_pos = nil
-
 local disabled = false
 local hidden = false
-local hide_legs_low_crouch = true
-local toggle_turn_step_sound = false
-
-local last_pos_x
-local last_pos_z
+local hide_legs_low_crouch
 local cdir
 local pos_set
-
 local lean_reset = false
-
-local step_sound
-
-local turn_step_sound_volume
-
 local swm_current_outfit = {}
-
-local fdda_on = false
---if enhanced_animations then
---	fdda_on = true
---end
 
 --<!> Чтобы камера слишком сильно не входила в ноги, нужно в system.ltx поправить макс. углы поворота в actor_firsteye_cam и actor_ladder_cam
 
@@ -50,17 +32,28 @@ local DISTANCE_MOD_FWD	= -0.65										--> Сдвиг модели от игрока вперёд\назад 
 local DISTANCE_MOD_RGT	= 0.0										--> Сдвиг модели от игрока влево\вправо в метрах
 
 local LEGS_SECTION		= "actor_legs"								--> Секция ног
---local DEFAULT_LEGS		= get_string(LEGS_SECTION, "visual")		--> Дефолтная модель ног
 
-local DISABLED_FLAGS	= { [7] = 64 }	--> Коды заблокированных флагов (чтобы не дублировать всю таблицу по 2 раза ради наклонов влево\вправо)
+local DISABLED_FLAGS	= { [7] = 64, [14] = 8192, [15] = 16384 }	--> Коды заблокированных флагов (чтобы не дублировать всю таблицу по 2 раза ради наклонов влево\вправо)
 
  local SPEC_SHIFT = {	--> Уникальные смещения для отдельных анимаций
-	["lancew_legs_ladder_idle"]		= {fwd = -0.39,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_ladder_idle"]		= {fwd = -0.3,	rgt = DISTANCE_MOD_RGT},
 	["lancew_legs_ladder_down"]		= {fwd = -0.3,	rgt = DISTANCE_MOD_RGT},
-	["lancew_legs_ladder_up"]		= {fwd = -0.39,	rgt = DISTANCE_MOD_RGT},	
-	--["lancew_legs_moving_fl"]		= {fwd = -0.64,	rgt = DISTANCE_MOD_RGT},	
-	--["lancew_legs_moving_fr"]		= {fwd = -0.54,	rgt = DISTANCE_MOD_RGT},	
-	--["lancew_legs_sprint"]			= {fwd = -0.55,	rgt = DISTANCE_MOD_RGT},			
+	["lancew_legs_ladder_up"]		= {fwd = -0.3,	rgt = DISTANCE_MOD_RGT},				
+}
+
+local SPEC_SHIFT_PRONE = {
+	["lancew_legs_idle_sc"]				= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_jump_start_sc"]		        = {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_jump_idle_sc"]		        = {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_sc"]				= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_fl_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_fr_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_fr_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_b_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_bl_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_l_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+	["lancew_legs_walk_r_sc"]			= {fwd = -1.5,	rgt = DISTANCE_MOD_RGT},
+
 }
 
 local actor_flags	= {}	--> Разобраный побайтно флаг состояния тела игрока 
@@ -81,31 +74,14 @@ local actor_flags	= {}	--> Разобраный побайтно флаг состояния тела игрока
 13	-	бег						(4096)
 14	-	наклон влево			(8192)
 15	-	наклон вправо			(16384)
+16	-							(32768)
 ]]
-
---local body_states = { -- флажки состояния тела актора
---    [1]	= "fwd",            -- Вперёд
---    [2]	= "back",           -- Назад
---    [4]	= "l_strafe",       -- Стрейф влево
---    [8]	= "r_strafe",       -- Стрейф вправо
---    [16]	= "crouch",         -- Присед
---    [32]	= "accel",          -- Ускорение
---    [64]	= "turn",           -- Повернуть
---    [128]	= "jump",           -- Прыжок
---    [256]	= "fall",           -- Падение
---    [512]	= "landing",        -- Приземление
---    [1024]	= "landing2",       -- Приземление 2
---    [2048]	= "climb",          -- Взбираться
---    [4096]	= "sprint",         -- Спринт
---    [8192]	= "l_lookout",      -- Выглянуть влево
---    [16384]	= "r_lookout"       -- Выглянуть вправо
---}
 
 local AnimTable = {	--\\ Таблица соответствия кодов тела анимациям.	[0]					= "lancew_legs_idle",			--> Стоим
 	[0]					= "lancew_legs_idle",			--> Стоим
 	[0+16]				= "lancew_legs_idle_c",			--> Стоим (ctrl)
 	[0+32]				= "lancew_legs_idle",			--> Стоим (shift)
-	--[0+16+32]			= "lancew_legs_idle_sc",		--> Стоим (ctrl+shift)
+	[0+16+32]			= "lancew_legs_idle_sc",		--> Стоим (ctrl+shift)
 
 	[1+4096]			= "lancew_legs_sprint",			--> Бег
 	[1+4+4096]			= "lancew_legs_moving_fl",		--> Бег+влево
@@ -254,9 +230,9 @@ local AnimTable = {	--\\ Таблица соответствия кодов тела анимациям.	[0]					= "l
 	[1+32]				= "lancew_legs_walk",			--> Вперёд (shift)
 	[1+4+32]			= "lancew_legs_walk_l",			--> Вперёд+Влево  (shift)
 	[1+8+32]			= "lancew_legs_walk_r",			--> Вперёд+Вправо (shift)
-	--[1+16+32]			= "lancew_legs_walk_sc",		--> Вперёд (ctrl+shift)
-	--[1+4+16+32]			= "lancew_legs_walk_fl_sc",		--> Вперёд+Влево  (ctrl+shift)
-	--[1+8+16+32]			= "lancew_legs_walk_fr_sc",		--> Вперёд+Вправо (ctrl+shift)
+	[1+16+32]			= "lancew_legs_walk_sc",		--> Вперёд (ctrl+shift)
+	[1+4+16+32]			= "lancew_legs_walk_fl_sc",		--> Вперёд+Влево  (ctrl+shift)
+	[1+8+16+32]			= "lancew_legs_walk_fr_sc",		--> Вперёд+Вправо (ctrl+shift)
 	
 	[2]					= "lancew_legs_moving_b",		--> Назад	
 	[2+4]				= "lancew_legs_moving_bl",		--> Назад+Влево
@@ -267,19 +243,19 @@ local AnimTable = {	--\\ Таблица соответствия кодов тела анимациям.	[0]					= "l
 	[2+32]				= "lancew_legs_walk_b",			--> Назад (shift)
 	[2+4+32]			= "lancew_legs_walk_bl",		--> Назад+Влево  (shift)
 	[2+8+32]			= "lancew_legs_walk_br",		--> Назад+Вправо (shift)
-	--[2+16+32]			= "lancew_legs_walk_b_sc",		--> Назад (ctrl+shift)
-	--[2+4+16+32]			= "lancew_legs_walk_bl_sc",		--> Назад+Влево  (ctrl+shift)
-	--[2+8+16+32]			= "lancew_legs_walk_br_sc",		--> Назад+Вправо (ctrl+shift)
+	[2+16+32]			= "lancew_legs_walk_b_sc",		--> Назад (ctrl+shift)
+	[2+4+16+32]			= "lancew_legs_walk_bl_sc",		--> Назад+Влево  (ctrl+shift)
+	[2+8+16+32]			= "lancew_legs_walk_br_sc",		--> Назад+Вправо (ctrl+shift)
 	
 	[4]					= "lancew_legs_moving_l",		--> Влево	
 	[4+16]				= "lancew_legs_moving_l_c",		--> Влево (ctrl)
 	[4+32]				= "lancew_legs_walk_l",			--> Влево (shift)
-	--[4+16+32]			= "lancew_legs_walk_l_sc",		--> Влево (ctrl+shift)
+	[4+16+32]			= "lancew_legs_walk_l_sc",		--> Влево (ctrl+shift)
 	
 	[8]					= "lancew_legs_moving_r",		--> Вправо	
 	[8+16]				= "lancew_legs_moving_r_c",		--> Вправо (ctrl)
 	[8+32]				= "lancew_legs_walk_r",			--> Вправо (shift)
-	--[8+16+32]			= "lancew_legs_walk_r_sc",		--> Вправо (ctrl+shift)
+	[8+16+32]			= "lancew_legs_walk_r_sc",		--> Вправо (ctrl+shift)
 
 	[2048] 				= "lancew_legs_idle", 	--> Болтаемся на лестнице
 	[2048+1]			= "lancew_legs_moving_c",	--> Двигаемся по лестнице вверх
@@ -368,7 +344,6 @@ function actor_update()
 		
 	--\\ Проверяем что нужно спавнить ноги
 	if se_legs.LegsTbl[level.name()] == nil and CanShowLegs() then
-        --log1("create(LEGS_SECTION:" .. LEGS_SECTION)
 		alife():create(LEGS_SECTION, db.actor:position(), 1, db.actor:game_vertex_id())
 	end
 		
@@ -380,13 +355,12 @@ function CanShowLegs()
 	
 	--* Проверяем что мы не улетели далеко, и что мы не на лестнице
 	local abp = db.actor:bone_position("bip01_head")
-	if device().cam_pos:distance_to_sqr(abp) > (HIDE_DISTANCE*HIDE_DISTANCE) or not db.actor:alive() or actor_flags[12] == true or (hide_legs_low_crouch and IsMoveState('mcCrouch') and IsMoveState('mcAccel')) or hidden == true or disabled == true then
+	if device().cam_pos:distance_to_sqr(abp) > (HIDE_DISTANCE*HIDE_DISTANCE) or not db.actor:alive() or actor_flags[12] == true or hidden == true or disabled == true then
 		return false
 	end
 		
 	return true
 end
-
 
 function delete()
 
@@ -404,10 +378,8 @@ function delete()
   end	
 	
 end
-local legs_ini = ini_file("misc\\items_actor_legs_mapping.ltx")
 
 function actor_item_to_slot(item)
-    --local kind = get_string(item:section(),"kind")	
     if item:is_outfit() then
 	swm_current_outfit[item:id()] = true
 	hidden = true
@@ -456,22 +428,15 @@ end
 function load_settings()
 
     local defaults = {
-        ["hide_legs_low_crouch"] = true,
-
-        ["legs_offset"] = -0.55,
+        ["hide_legs_low_crouch"] = false,
+        ["legs_offset"] = -0.65,
         ["legs_offset_side"] = 0,
-
-        ["toggle_turn_step_sound"] = true,
-        ["turn_step_sound_volume"] = 0.5,
-
         ["disabled"] = false
     }
 
 	DISTANCE_MOD_FWD = defaults["legs_offset"]
 	DISTANCE_MOD_RGT = defaults["legs_offset_side"]
 	hide_legs_low_crouch = defaults["hide_legs_low_crouch"]
-	toggle_turn_step_sound = defaults["toggle_turn_step_sound"]
-	turn_step_sound_volume = defaults["turn_step_sound_volume"]
 	disabled = defaults["disabled"]
 
 	if disabled then
@@ -504,13 +469,10 @@ end
 function legs_binder:fastcall()
 		
 	xr_logic.mob_capture(self.object, true)
-
 	self.object.health = 1
 	
 	--\\ Получаем флаг текущего состояния тела ГГ из памяти и разбираем его
-	--local body_flag	 = swm_legs.get_actor_body_flag()
-	--local body_flag	 = level.actor_moving_state()
-    local body_flag	 = get_actor_obj():get_body_state()
+	local body_flag	= get_actor_obj():get_body_state()
 	
 	--\\ Вычитаем из флага состояния игрока ненужные нам флаги
 	for key, numb in pairs(DISABLED_FLAGS) do
@@ -523,14 +485,13 @@ function legs_binder:fastcall()
 	local anim_name = AnimTable[body_flag] or "lancew_legs_idle"
 
 	--\\ Устанавливаем позицию тела
-	local pos 			= device().cam_pos
-	local pos_st 		= db.actor:direction()
-	local pos_st2 		= device().cam_dir
-	local pos_real 		= db.actor:position()
-	local distance_H2B  = device().cam_pos:distance_to(db.actor:position())
-	local cdir2 		= device().cam_dir
-	--local AngleBetweenA = calc_Y(db.actor:direction():getH(), self.object:direction():getH())
+	local pos 		= device().cam_pos
+	local cdir 		= device().cam_dir
+	local distance_H2B      = device().cam_pos:distance_to(db.actor:position())
 	local AngleBetween 	= calc_Y(db.actor:direction():getH(), self.object:direction():getH())
+	local hp = db.actor:bone_position("bip01_head")
+	local pp = db.actor:bone_position("bip01_pelvis")
+	local ap = self.object:position()
 		
 	if self.posTimer < time_global() and distance_H2B < 1.7 then --> В падении модель игрока уходит вперёд камеры
 		pos.y = db.actor:position().y	
@@ -554,15 +515,13 @@ function legs_binder:fastcall()
 	
 	pos.y = pos.y + HEIGHT	
 	
+	local angle_down = cdir.y
 	local dir_fwd
-	if (math.abs(AngleBetween) < -0.08 or math.abs(AngleBetween) > 0.08) then	
-		if (fdda_on and not enhanced_animations.used_item) then
-			dir_fwd 	= vector():setHP(device().cam_dir:getH(), 0)
-		else
-			dir_fwd 	= vector():setHP(device().cam_dir:getH(), 0)
-		end
+	
+	if angle_down <= -0.75 then
+		dir_fwd			= vector():setHP(device().cam_top:getH(), 0)
 	else
-		dir_fwd 		= vector():setHP(db.actor:direction():getH(), 0)
+		dir_fwd			= vector():setHP(device().cam_dir:getH(), 0)
 	end
 	
 	local dir_rgt 		= vector():setHP(device().cam_right:getH(), 0)
@@ -570,6 +529,8 @@ function legs_binder:fastcall()
 	local dir_rgt_mod 	= DISTANCE_MOD_RGT
 	
 	local shift_tbl = SPEC_SHIFT[anim_name]
+	local shift_prone_tbl = SPEC_SHIFT_PRONE[anim_name]
+
 	if shift_tbl then
 		if shift_tbl.fwd then
 			dir_fwd_mod = shift_tbl.fwd 
@@ -579,13 +540,18 @@ function legs_binder:fastcall()
 		end		
 	end
 
+	if shift_prone_tbl and hide_legs_low_crouch and (IsMoveState('mcAccel') and IsMoveState('mcCrouch')) then
+		if shift_prone_tbl.fwd then
+			dir_fwd_mod = shift_prone_tbl.fwd 
+		end
+		if shift_prone_tbl.rgt then
+			dir_rgt_mod = shift_prone_tbl.rgt 
+		end		
+	end
+	
 	pos = pos:add(dir_fwd:mul(dir_fwd_mod))
 	pos = pos:add(dir_rgt:mul(dir_rgt_mod))
 
-	--log1(string.format("pos: %1.3f,%1.3f,%1.3f",pos.x,pos.y,pos.z))
-
-    last_pos = pos
-    
 	self.object:set_npc_position(pos)
 	
 	--\\ Проверяем что камера не улетела далеко от головы
@@ -601,7 +567,6 @@ function legs_binder:fastcall()
 		end
 		
 		se_legs.LegsTbl[level.name()] = nil
-		-- delete() ???
 		return
 	else
 		--self.object:force_visibility_state(2)		
@@ -628,45 +593,26 @@ function legs_binder:fastcall()
 					
 					if AngleBetween <= 0.0 then
 						self.turnAnim = "lancew_legs_turn_right"
-						if toggle_turn_step_sound and (not IsMoveState("mcCrouch") and not IsMoveState("mcAccel")) then
-							play_step_sound()
-						end
 					else
 						self.turnAnim = "lancew_legs_turn_left"	
-						if toggle_turn_step_sound and (not IsMoveState("mcCrouch") and not IsMoveState("mcAccel")) then
-							play_step_sound()
-						end
 					end
 					
-					-- if AngleBetween > 0.1 then
-						-- self.lastTurnTime = 0
-					-- end
-
 					anim_name = self.turnAnim
 				end		
 			end
 		end
 	end 
 	
-	-- tDir = vector():set(tDir.x, clamp(tDir.y, -0.89, 0.89), tDir.z)
-	-- tDir.x = math.floor(tDir.x + 0.5)
-	-- tDir.z = math.floor(tDir.z + 0.5)
-	
 	local tDir
-	if (math.abs(AngleBetween) < -0.04 or math.abs(AngleBetween) > 0.04) then
-		if (fdda_on and not enhanced_animations.used_item) then
-			tDir = device().cam_dir
-		else
-			tDir = device().cam_dir
-		end
+	if angle_down <= -0.75 then
+		tDir = vector():setHP(device().cam_top:getH(), 0)
 	else	
-		tDir = db.actor:direction()
+		tDir = vector():setHP(device().cam_dir:getH(), 0)
 	end
 	
 	local look_dir = look()
 	look_dir:type(2)
 	look_dir:direct(tDir)
-
 	action(self.object, look_dir, cond(cond.look_end))
 	
 	--\\ Проигрываем анимку
@@ -697,7 +643,6 @@ function legs_binder:respawn()
 	end
 	return true
 end
-
 
 function legs_binder:play_anim(anim_name)
 	if self.current_anim ~= anim_name  then

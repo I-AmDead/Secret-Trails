@@ -97,8 +97,6 @@ function generic_object_binder:update(delta)
             end
         end
     end
-
-    self:anomaly_evade()
 	
 	local act_scheme = db.storage[self.object:id()].active_section or ""
 	local is_fake = string.find(act_scheme, "mob_fake_death") or false
@@ -126,24 +124,6 @@ function generic_object_binder:update(delta)
 	
 	
 	
-end
-
-function generic_object_binder:anomaly_evade()
-	local npc=self.object
-	if npc:story_id()==29 then return end 
-	if not self.prev_pos then
-		self.prev_pos=vector():set(0,-100,0)
-	end
-	if self.prev_pos:distance_to(npc:position())>20 then
-		self.prev_pos=npc:position()
-		local list=amk_anoms.get_anomaly_list(npc,30)
-		for i,o in ipairs(list) do
-			amk_anoms_old.add_restriction(npc,o.id,o.name)
-		end
-	end
-	if amk_anoms_old.have_pending_sync(npc) then
-		amk_anoms_old.syncronize(npc)
-	end
 end
 
 function generic_object_binder:extrapolate_callback()

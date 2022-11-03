@@ -1,380 +1,16 @@
----------------------------------------------------------------------------------------------------------------------
---	Схема озвучки
---	автор:  Диденко Руслан  (Stohe)
---	update: Чугай Александр (Chugai)
-
--- оптимизация и устранение ненужных (повторных) загрузок данных: Зыков Андрей (Zander)
-----------------------------------------------------------------------------------------------------------------------
-
-local sModule = script_name() --/ string name of the file module
---/ ------------------------------------------------------------------
---/ for output of the debug information
-local log = function(fmt,...) _G.log(sModule..":"..tostring(fmt),...) end
-if to_log and type(string.exformat) == 'function' then
-	log = function(fmt,...) to_log(sModule..":"..string.exformat(fmt,...)) end
-end
-
-nstl = 64
-
-snd_ini = ini_file("misc\\script_sound.ltx")
-
-theme = {}
-ph_snd_themes = {}           
-ph_snd_themes["music"] = {  "characters_voice\\scenario\\megafon\\megafon_music_1",
-	                        "characters_voice\\scenario\\megafon\\megafon_music_2",
-	                        "characters_voice\\scenario\\megafon\\megafon_music_3"
-	                        }
-ph_snd_themes["humor"] = {  "characters_voice\\scenario\\escape\\comandir_megafon_1",
-							"characters_voice\\scenario\\escape\\comandir_megafon_2",
-							"characters_voice\\scenario\\escape\\comandir_megafon_3",
-							"characters_voice\\scenario\\escape\\comandir_megafon_4",
-							"characters_voice\\scenario\\escape\\comandir_megafon_5",
-							"characters_voice\\scenario\\escape\\comandir_megafon_6",
-							"characters_voice\\scenario\\escape\\comandir_megafon_7",
-							"characters_voice\\scenario\\escape\\comandir_megafon_8",
-							"characters_voice\\scenario\\escape\\comandir_megafon_9",
-							"characters_voice\\scenario\\escape\\comandir_megafon_10",
-							"characters_voice\\scenario\\escape\\comandir_megafon_11",
-							"characters_voice\\scenario\\escape\\comandir_megafon_12",
-							"characters_voice\\scenario\\escape\\comandir_megafon_13",
-							"characters_voice\\scenario\\escape\\comandir_megafon_14",
-							"characters_voice\\scenario\\escape\\comandir_megafon_15",
-							"characters_voice\\scenario\\escape\\comandir_megafon_16",
-							"characters_voice\\scenario\\escape\\comandir_megafon_17"
-	                        }	  
-ph_snd_themes["epic"] = { "characters_voice\\scenario\\escape\\megafon_1",
-							"characters_voice\\scenario\\escape\\megafon_2",
-							"characters_voice\\scenario\\escape\\megafon_3",
-							"characters_voice\\scenario\\escape\\megafon_4"
-	                        }                      
-ph_snd_themes["alarm1"] = { "characters_voice\\scenario\\megafon\\megafon_alarm_1",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_10",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_11",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_12",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_13"
-	                        }
-ph_snd_themes["alarm2"] = { "characters_voice\\scenario\\megafon\\megafon_alarm_2",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_3",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_4",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_5",
-	                        "characters_voice\\scenario\\megafon\\megafon_alarm_6"
-	                      }
-ph_snd_themes["siren"] =  { "ambient\\siren2" }
-ph_snd_themes["bomb"] = {"detectors\\bomb_timer"}
-ph_snd_themes["detector"] = {"detectors\\da-2_beep1"}
+-- -*- mode: lua; coding: windows-1251-dos -*-
 
 
-ph_snd_themes["radio_music"] = {"characters_voice\\scenario\\bandits\\ban_treck1",
-                                "characters_voice\\scenario\\bandits\\ban_treck2",
-                                "characters_voice\\scenario\\bandits\\ban_treck3",						
-                                "characters_voice\\scenario\\bandits\\ban_treck4", 
-                                "characters_voice\\scenario\\bandits\\ban_treck5"
-}
-
-ph_snd_themes["leila_music"] = {"characters_voice\\scenario\\leila_music\\leila"}
-ph_snd_themes["lukash_music"] = {"characters_voice\\scenario\\lukash_music\\jamaika",
-                                 "characters_voice\\scenario\\lukash_music\\soldat"
-}
-ph_snd_themes["nebo_music"] = {"characters_voice\\scenario\\nebo_music\\nebo1",
-                               "characters_voice\\scenario\\nebo_music\\nebo2"
-}
-ph_snd_themes["saharov_music"] = {"characters_voice\\scenario\\sahar_music\\bambino",
-                                  "characters_voice\\scenario\\sahar_music\\lovewooman"
-}
-ph_snd_themes["doctor_music"] = {"characters_voice\\scenario\\doctor_music\\sting_doctor"}
-ph_snd_themes["sidor_music"] = {"characters_voice\\scenario\\sidor_music\\sidor_priemnik"}
-ph_snd_themes["nato_music"] = {"characters_voice\\scenario\\nato_music\\usa"}
-ph_snd_themes["brown_music"] = {"characters_voice\\scenario\\brown_music\\brown"}
-ph_snd_themes["dolg_music"] = {"characters_voice\\scenario\\dolg_music\\dolg"}
-ph_snd_themes["osvedom_music"] = {"characters_voice\\scenario\\osvedom_music\\osvedomitel"}
-ph_snd_themes["lektor_music"] = {"characters_voice\\scenario\\lektor_music\\lektor"}
-ph_snd_themes["maloy_music"] = {"characters_voice\\scenario\\maloy_music\\musorok"}
-ph_snd_themes["hunter_music"] = {"characters_voice\\scenario\\hunter_music\\hunter"}
-ph_snd_themes["lesnik_music"] = {"characters_voice\\scenario\\lesnik_music\\lesnichok"}
-ph_snd_themes["koldun_music"] = {"characters_voice\\scenario\\koldun_music\\koldunchik"}
-ph_snd_themes["tankist_music"] = {"characters_voice\\scenario\\tankist_music\\tankist"}
-
-ph_snd_themes["dolg_speech"]		= {[[characters_voice\scenario\bandits\totalizator]],
-									   [[characters_voice\scenario\bandits\ban_d_treck2]],
-
-[[characters_voice\scenario\bandits\totalizator1]],
-									   [[characters_voice\scenario\bandits\ban_d_treck1]]
-}
-
-ph_snd_themes["dolg_zahvat"]		= {[[characters_voice\scenario\bandits\dolg_megafono]],
-									   [[characters_voice\scenario\bandits\dolg_megafon1]]
-}
-
-ph_snd_themes["dolg_final"]		= {[[characters_voice\scenario\bandits\dolg_megafon2]],
-									   [[characters_voice\scenario\bandits\dolg_megafon3]],
-
-[[characters_voice\scenario\bandits\dolg_megafono]],
-
-[[characters_voice\scenario\bandits\dolg_megafon4]],
-
-[[characters_voice\scenario\bandits\dolg_megafono]],
-									   [[characters_voice\scenario\bandits\dolg_megafon5]],
-
-[[characters_voice\scenario\bandits\dolg_megafono]]
-}
-
-ph_snd_themes["dolg_alarm"]			= {[[characters_voice\scenario\bar\dolg_megafon\megaphone_duty_alarm]]}
-ph_snd_themes["dolg_megafon_1_hit"] = {[[characters_voice\scenario\bar\dolg_megafon\duty_gunfire_mega_1]]}
-ph_snd_themes["dolg_megafon_2_hit"] = {[[characters_voice\scenario\bar\dolg_megafon\duty_gunfire_mega_2]]}
-ph_snd_themes["dolg_megafon_kill"]	= {[[characters_voice\scenario\bar\dolg_megafon\duty_gunfire_mega_3]]}
-ph_snd_themes["arena_introduce_pseudodog"]	= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_pseudodog]]}
-ph_snd_themes["arena_introduce_snork"]		= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_snork]]}
-ph_snd_themes["arena_introduce_bloodsucker"]= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_bloodsucker]]}
-ph_snd_themes["arena_introduce_burer"]		= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_burer]]}
-ph_snd_themes["arena_introduce_savage"]		= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_zver]]}
-ph_snd_themes["arena_actor_afraid"]			= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_coward]]}
-ph_snd_themes["arena_fight_begin"]			= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_start]]}
-ph_snd_themes["arena_fight_victory"]		= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_win_1]]}
-ph_snd_themes["arena_fight_victory_notime"]	= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_win_2]]}
-ph_snd_themes["arena_fight_lose"]			= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_out_of_time_win]]}
-ph_snd_themes["arena_fight_death"]			= {[[characters_voice\scenario\bar\arena_megafon\mega_arena_dead]]}
-
-ph_snd_themes["bar_start_megafon"]		= {[[characters_voice\scenario\bar\barman_megafon\megaphone_barman_1]],
-									   [[characters_voice\scenario\bar\barman_megafon\megaphone_barman_2]],
-									   [[characters_voice\scenario\bar\dolg_megafon\mega_duty_propaganda_1]],
-									   [[characters_voice\scenario\bar\dolg_megafon\mega_duty_propaganda_2]]}
-
-ph_snd_themes["mon_monolith_damaged"]			= {[[characters_voice\scenario\sarcofag\monolith_damaged]]}
-ph_snd_themes["mon_monolith_heavy_damaged"]		= {[[characters_voice\scenario\sarcofag\monolith_heavy_damaged]]}
-ph_snd_themes["mon_monolith_alarm"]				= {[[characters_voice\scenario\sarcofag\monolith_alarm]]}
-ph_snd_themes["mon_monolith_recharged"]			= {[[characters_voice\scenario\sarcofag\monolith_recharged]]}
-
-ph_snd_themes["sar_monolith_call"]			= {[[characters_voice\scenario\sarcofag\monolith_call_1]],
-												[[characters_voice\scenario\sarcofag\monolith_call_2]],
-												[[characters_voice\scenario\sarcofag\monolith_call_3]],
-												[[characters_voice\scenario\sarcofag\monolith_call_4]],
-												[[characters_voice\scenario\sarcofag\monolith_call_5]],
-												[[characters_voice\scenario\sarcofag\monolith_call_6]],
-												[[characters_voice\scenario\sarcofag\monolith_call_7]]}
-
-ph_snd_themes["gar_seryi_shooting"]	= {[[characters_voice\scenario\garbage\distance_shooting]]}
-ph_snd_themes["gar_seryi_shooting_2"]	= {[[characters_voice\scenario\bandits\bandit_replic_2]]}
-ph_snd_themes["aes_battle1"] =        {"ambient\\battle_1"}
-ph_snd_themes["aes_battle2"] =        {"ambient\\battle_2"}
-ph_snd_themes["gar_bandits_seryi"] =   {[[characters_voice\scenario\garbage\grey_bandit_1]],      
-										[[characters_voice\scenario\garbage\grey_bandit_2]],
-										[[characters_voice\scenario\garbage\grey_bandit_3]],
-										[[characters_voice\scenario\garbage\grey_bandit_4]],
-										[[characters_voice\scenario\garbage\grey_bandit_5]]}
-ph_snd_themes["radar_drone"] = {"ambient\\radar_1"}
-ph_snd_themes["radar_thunder"] = {"ambient\\radar_2"}
-ph_snd_themes["radar_sparks"] = {"ambient\\radarsparks_1"}
-ph_snd_themes["aes_teleport"] = {"anomaly\\teleport_incoming"}
-
-ph_snd_themes["yan_antenna"] = {{"characters_voice\\scenario\\yantar\\psy_voices_1"}} --' Стерео
-
-ph_snd_themes["radar_meh_on"] = {"ambient\\cooling_run"}
-ph_snd_themes["radar_meh_off"] = {"ambient\\cooling_stop"}                               
-ph_snd_themes["system_message_1"]	= {[[characters_voice\scenario\yantar\system_message_1]]}
-ph_snd_themes["system_message_2"]	= {[[characters_voice\scenario\yantar\system_message_2]]}
-ph_snd_themes["system_message_3"]	= {[[characters_voice\scenario\yantar\system_message_3]]}
-ph_snd_themes["system_message_4"]	= {[[characters_voice\scenario\yantar\system_message_4]]}
-ph_snd_themes["system_message_5"]	= {[[characters_voice\scenario\yantar\system_message_5]]}
-ph_snd_themes["agro_test"]	= {[[weapons\grenade1]]}
-ph_snd_themes["bar_arena_public"]	= {"characters_voice\\scenario\\bar\\arena_public\\new_arena_public_1",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_1",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_2",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_3",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_4",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_5",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_6",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_7",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_8",
-	                        "characters_voice\\scenario\\bar\\arena_public\\new_arena_public_9"
-	                        }
-ph_snd_themes["bar_arena_public_death"]	= {"ambient\\arena\\crowd_wave_1",
-	                        "ambient\\arena\\crowd_wave_2",
-	                        "ambient\\arena\\crowd_wave_3"
-	                        }
-ph_snd_themes["bar_arena_fight_1"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_1_ready"}
-ph_snd_themes["bar_arena_fight_1_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_1_finish"}
-ph_snd_themes["bar_arena_fight_2"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_2_ready"}
-ph_snd_themes["bar_arena_fight_2_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_2_finish"}
-ph_snd_themes["bar_arena_fight_3"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_3_ready"}
-ph_snd_themes["bar_arena_fight_3_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_3_finish"}
-ph_snd_themes["bar_arena_fight_4"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_4_ready"}
-ph_snd_themes["bar_arena_fight_4_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_4_finish"}
-ph_snd_themes["bar_arena_fight_5"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_5_ready"}
-ph_snd_themes["bar_arena_fight_5_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_5_finish"}
-ph_snd_themes["bar_arena_fight_6"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_6_ready"}
-ph_snd_themes["bar_arena_fight_6_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_6_finish"}
-ph_snd_themes["bar_arena_fight_7"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_7_ready"}
-ph_snd_themes["bar_arena_fight_7_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_7_finish"}
-ph_snd_themes["bar_arena_fight_8"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_8_ready"}
-ph_snd_themes["bar_arena_fight_8_end"]	= {"characters_voice\\scenario\\bar\\arena_sound\\bar_fight_8_finish"}
-
-ph_snd_themes["x18_sound_1"] = {"ambient\\x18\\x18_hit_8"}
-ph_snd_themes["x18_sound_2"] = {"ambient\\x18\\x18_metal_2"}
-ph_snd_themes["x18_sound_3"] = {"ambient\\x18\\x18_metal_3"}
-ph_snd_themes["x18_sound_4"] = {"ambient\\x18\\x18_metal_4"}
-ph_snd_themes["x18_sound_5"] = {"ambient\\x18\\x18_metal_5"}
-ph_snd_themes["x18_sound_6"] = {"ambient\\x18\\x18_creak_2"}
-ph_snd_themes["x18_sound_7"] = {"ambient\\x18\\x18_creak_1"}
-ph_snd_themes["x18_sound_8"] = {"ambient\\x18\\x18_hit_7"}
-ph_snd_themes["x18_sound_9"] = {"ambient\\x18\\x18_footsteps_2"}
-ph_snd_themes["x18_sound_10"] = {"ambient\\x18\\x18_move_4"}
-ph_snd_themes["x18_sound_11"] = {"ambient\\x18\\x18_footsteps"}
-ph_snd_themes["x18_sound_12"] = {"ambient\\x18\\x18_move_3"}
-
-ph_snd_themes["x16_engine1_run"] = {"ambient\\x16\\x16_engine1_run"}
-ph_snd_themes["x16_engine1_stop"] = {"ambient\\x16\\x16_engine1_stop"}
-
-ph_snd_themes["x16_engine2_run"] = {"ambient\\x16\\x16_engine2_run"}
-ph_snd_themes["x16_engine2_stop"] = {"ambient\\x16\\x16_engine2_stop"}
-
-ph_snd_themes["x16_hum_2"] = {"ambient\\x16\\x16_hum_2"}
-ph_snd_themes["x16_switch_1"] = {"ambient\\x16\\switch_1"}
-ph_snd_themes["x16_switch_2"] = {"ambient\\x16\\switch_2"}
-
-ph_snd_themes["x18_firedoor"] = {"anomaly\\fireball_idle"}
-ph_snd_themes["mon_poltergeist"] = {"anomaly\\anomaly_gravy_hit1"}
-
-ph_snd_themes["psy_voices"] = {{[[characters_voice\scenario\yantar\psy_voices_1]]}} --' Стерео
-
-ph_snd_themes["heli_explosion"] = {[[weapons\heli_explosion]]}
-
-ph_snd_themes["trader_door_open_start"]		= {[[device\door_start]]}
-ph_snd_themes["trader_door_close_start"]	= {[[device\door_closing]]}
-ph_snd_themes["trader_door_close_stop"]		= {[[device\door_stop]]}
-ph_snd_themes["trader_door_locked"]			= {[[device\door_locked]]}
-ph_snd_themes["trader_door_unlock"]			= {[[device\door_servomotor]]}
-ph_snd_themes["wood_small_open"]			= {[[device\wood_small_open]]}
-ph_snd_themes["wood_small_close_start"]		= {[[device\wood_small_close_start]]}
-ph_snd_themes["wood_small_close_stop"]		= {[[device\wood_small_close_stop]]}
-ph_snd_themes["wood_large_open"]			= {[[device\wood_large_open]]}
-ph_snd_themes["wood_large_close_start"]		= {[[device\wood_large_close_start]]}
-ph_snd_themes["wood_large_close_stop"]		= {[[device\wood_large_close_stop]]}
-ph_snd_themes["metal_small_open"]			= {[[device\metal_small_open]]}
-ph_snd_themes["metal_small_close_start"]	= {[[device\metal_small_close_start]]}
-ph_snd_themes["metal_small_close_stop"]		= {[[device\metal_small_close_stop]]}
-
------------------------------------------------------------------------------------------------------------------------------------
---	тема рации на КПП Толика Кордон
------------------------------------------------------------------------------------------------------------------------------------
--------------------------испорченный вариант-----------------------------------------------------
-ph_snd_themes["day_music_dolg_tolikk_razija"] = {"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_noise_1",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_noise_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_voice_1",
-"characters_voice\\scenario\\radio\\radio_voice_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1"
-}
-
-ph_snd_themes["night_music_dolg_tolikk_razija"] = {"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_voice_3",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_noise_1",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\radio_noise_2",
-"characters_voice\\scenario\\radio\\radio_voice_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1"
-}
---------------------------рабочий вариант----------------------------------------------------
-ph_snd_themes["day_dolg_tolikk_razija"] = {"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\talk_1\\radio_4",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\talk_1\\radio_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\bar\\dolg_megafon\\mega_duty_propaganda_3",
-"characters_voice\\scenario\\radio\\radio_voice_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1"
-}
-
-ph_snd_themes["night_dolg_tolikk_razija"] = {"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\radio\\talk_1\\radio_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\bar\\dolg_megafon\\mega_duty_propaganda_1",
-"characters_voice\\scenario\\radio\\radio_turn_off_1",
-"characters_voice\\scenario\\radio\\radio_turn_on_1",
-"characters_voice\\scenario\\bar\\barman_megafon\\megaphone_barman_1",
-"characters_voice\\scenario\\radio\\radio_voice_2",
-"characters_voice\\scenario\\radio\\radio_turn_off_1"
-}
------------------------------электростанция Фаната-------------------------------------------------
-ph_snd_themes["day_leger_fanat_energi"] = {"characters_voice\\scenario\\dwigek\\car_traktor",
-"characters_voice\\scenario\\dwigek\\car_traktor",
-"characters_voice\\scenario\\dwigek\\car_traktor",
-"characters_voice\\scenario\\dwigek\\car_traktor",
-"characters_voice\\scenario\\dwigek\\car_traktor",
-"characters_voice\\scenario\\dwigek\\car_traktor"
-}
-
-ph_snd_themes["night_leger_fanat_energi"] = {"characters_voice\\scenario\\dwigek\\car1",
-"characters_voice\\scenario\\dwigek\\car2",
-"characters_voice\\scenario\\dwigek\\car1",
-"characters_voice\\scenario\\dwigek\\car2",
-"characters_voice\\scenario\\dwigek\\car1",
-"characters_voice\\scenario\\dwigek\\car1",
-"characters_voice\\scenario\\dwigek\\car2"
-}
-
------------------------------------------------------------------------------------------------------------------------------------
---	тема приемника для Предбанника --- позже расширить по темам 
----для Серба: Любе, Голубые береты; 
----для Панаса: Владимирский централ, Шансон;
----для Гудвина: Верка Сердючка и т.п.
-----------------------------------------------------------------------------------------------
-ph_snd_themes["day_music"] = {"characters_voice\\scenario\\bar_schti_mafon\\day_music_1",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_3",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_4",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_5",
-"characters_voice\\scenario\\bar_schti_mafon\\day_music_2",
-}
-
-ph_snd_themes["night_music"] = {"characters_voice\\scenario\\bar_schti_mafon\\night_music_1",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_3",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_4",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_2",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_5",
-"characters_voice\\scenario\\bar_schti_mafon\\night_music_2",
-}
-
-
-
-
------------------------------------------------------------------------------------------------------------------------------------
---	Theme  functions
------------------------------------------------------------------------------------------------------------------------------------
 function weather_class(avail_types, npc)
-	local type = "weather_good"
-	if level.rain_factor() < 0.07 then
-		type = "weather_good"
-	else
-		type = "weather_bad"
-	end
-	return type
+	return level.rain_factor() < 0.07 and "weather_good" or "weather_bad"
 end
 
 function combat_class(avail_types, npc)
-	if npc:best_enemy() ~= nil or
-	   npc:best_danger() ~= nil
-	then
-		return ""
-	end
-	return "state"
+	return ( npc:best_enemy() or npc:best_danger() ) and "" or "state"
 end
 
 -------------------------------------------------------------------------
--- ЗВУКИ СТАЛКЕРОВ
+-- Р—Р’РЈРљР РЎРўРђР›РљР•Р РћР’
 -------------------------------------------------------------------------
 local sounds_base = stalker_ids.sound_script + 10000
 function id()
@@ -382,21 +18,20 @@ function id()
 	return sounds_base - 1
 end
 
-function reinit()
-local subtheme = {
-	-- погода
-	weather = {	exec = sound_theme.weather_class, 
+theme = {
+	-- РїРѕРіРѕРґР°
+	weather = {	exec = this.weather_class, 
 				types = {weather_bad	= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 						 weather_good	= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}} }},
 
-	-- состояния тела
-	state = {	exec = sound_theme.combat_class, 
+	-- СЃРѕСЃС‚РѕСЏРЅРёСЏ С‚РµР»Р°
+	state = {	exec = this.combat_class, 
 				types = {state	= {min_snd = 60, max_snd = 90, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}}} },
 	
 
 	sleep				= {min_snd = 10, max_snd = 15, rnd = 75, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- просьба о помощи
+	-- РїСЂРѕСЃСЊР±Р° Рѕ РїРѕРјРѕС‰Рё
 	help				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	help_see			= {min_snd = 5, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	help_see_tutor		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -405,29 +40,22 @@ local subtheme = {
 	wounded_psy			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	wounded_psy_shoot	= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- окрик
+	-- РѕРєСЂРёРє
 	hail				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- ожидание
+	-- РѕР¶РёРґР°РЅРёРµ
 	wait				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
 	-- speech
     speech				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     speech1				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     
-	-- угрозы
+	-- СѓРіСЂРѕР·С‹
 	threat_weap			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	threat_back			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	threat_stop			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-		-- новый мод ---
-	aspid_stop_grabez			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	shnir_stop_grabez			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	shnir_yshel			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	aspid_priwet			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	fenshyi_priwet			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	fenshyi_stop			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- реакции
+	-- СЂРµР°РєС†РёРё
 --	reac_hear				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	reac_see				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 --	reac_crps_monstr		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -440,7 +68,7 @@ local subtheme = {
 	reac_music				= {min_snd = 1, max_snd = 2, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	reac_joke				= {min_snd = 1, max_snd = 2, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- болтовня
+	-- Р±РѕР»С‚РѕРІРЅСЏ
 	talk_hello				= {min_snd = 5, max_snd = 7, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	talk_hello_friend		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	talk_bye				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -448,7 +76,7 @@ local subtheme = {
 	talk_reject				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	talk_abuse				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- реакции на юзание
+	-- СЂРµР°РєС†РёРё РЅР° СЋР·Р°РЅРёРµ
 	use_yes_fight			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	use_yes_sleep			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	use_yes_kamp			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -459,28 +87,44 @@ local subtheme = {
 	use_no_default			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	use_abuse				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- бой
+	-- Р±РѕР№
 	fight_attack			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	zombied_fight_attack	= {min_snd = 5, max_snd = 10,rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	fight_search			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	fight_enemy				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_attack_many		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_attack_one		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_backup			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_detour			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_enemy_down		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_enemy_hit			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_friend_hitted		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_friendly_fire		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_enemy_lost		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_threat_close		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_threat_distant	= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	fight_tolls				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	
-	-- торговля
+	
+	beware_grenade			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	
+	zombied_fight_attack	= {min_snd = 5, max_snd = 10,rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	
+	-- С‚РѕСЂРіРѕРІР»СЏ
 	trade_yes				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	trade_no				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- игра на губной гармошке
+	-- РёРіСЂР° РЅР° РіСѓР±РЅРѕР№ РіР°СЂРјРѕС€РєРµ
 	intro_music				= {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	harmonica				= {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- игра на гитаре
+	-- РёРіСЂР° РЅР° РіРёС‚Р°СЂРµ
 	guitar					= {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	
-	-- шутки, прибаутки
+	-- С€СѓС‚РєРё, РїСЂРёР±Р°СѓС‚РєРё
 	intro_joke				= {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	joke					= {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
-	-- Истории
+	-- РСЃС‚РѕСЂРёРё
 	story_01				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {},
 					depence	= {	[2] = {theme = "story_reac_cool_info", min = 1, max = 1},
 								[3] = {theme = "story_reac_continue", min = 2, max = 3},
@@ -556,54 +200,10 @@ local subtheme = {
 	story_reac_wonder			= {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	story_reac_yes				= {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	
-	
-	
 
-	-- УНИКАЛЬНЫЕ ТЕМЫ	
+	-- РЈРќРРљРђР›Р¬РќР«Р• РўР•РњР«	
 	-- Escape
 	esc_tolik_help				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        help_lesnik1				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        help_lesnik2				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        leila				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        karina				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        magomet				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        reac_dyak				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        dyak_hail				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        barman_mir				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        bookmaker				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        dan				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        demon				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        feldsher				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        grig				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        pekar				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        knyaz				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        lesnik_start				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        sidor_new				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        skit_trader				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        sutuly				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        tankist				        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        vasilyev				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        vasilyev_2				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        voronin_bar_hello		        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        privet		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        vstrecha		                = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        antikvar		                = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        doktor		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        lesnik		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        cezar		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        graf		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        sledopyt		                = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        mervin1		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        mervin2		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        mervin3		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        prince		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        smith		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        maroder		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        smeh		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        david		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        iuda		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        vano1		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-        vano2		                        = {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	esc_guard_camp				= {min_snd = 7, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	esc_factory_raid			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	esc_factory_attack			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -629,44 +229,7 @@ local subtheme = {
 	esc_petruha_call			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	esc_fox_thanks				= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	esc_shustryi_thanks			= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	-- NEW
-	dark_kogot_help		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	yarotheev_hello		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	esc_fanat_help		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	esc_wolf		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 agro_varayg		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-    bes_wait		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},	
-	agr_levsha_help		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	zastava_one3_speak		    = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	nadzir_glav		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	nadzir_zapret		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	saha_help		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	vovan_thanks		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	kot_thanks		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	leader_hello		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	mahon_pripyat		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	haron_and_mahon		        = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	haron_hello		            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	aes_solomon_start		    = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	kliyk_prov_vorgit		    = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	spy_aes			            = {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	prizrak_plen_help			= {min_snd = 5, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 solomon			        = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 trade_mono			        = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 monach			            = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 bratok_trader			    = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-     atp_stalker			    = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},	
-	 atp_komendant			    = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 agr_und_zombi			    = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-     agr_und_zombi2			    = {min_snd = 6, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},	
-    esc_saha_hello			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	dark_bratok1			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	 esc_wound			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	esc_koha_hello			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	esc_cherv_hello			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	krest1_hello			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	dark_knyaz_hello			    = {min_snd = 3, max_snd = 10, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	-- NEW
+			
 	-- Garbage DramMoment
 	gar_dm_bandit_backoff1		= {min_snd = 5, max_snd = 8, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	gar_dm_bandit_backoff2		= {min_snd = 5, max_snd = 8, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -744,7 +307,6 @@ local subtheme = {
 	bar_dolg_base_guard_backoff		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	bar_dolg_base_guard_no_talk		= {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	bar_bar_osvedomitel_hello		= {min_snd = 15, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	bar_borov			        = {min_snd = 2, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	bar_bar_barmen_hello			= {min_snd = 2, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	bar_bar_barmen_hello_room		= {min_snd = 10, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	bar_dolg_leader_hello			= {min_snd = 10, max_snd = 15, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -786,8 +348,6 @@ local subtheme = {
     rostok_kruglov_torrid                       = {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	kruglov_stop_enemy_1                        = {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 	kruglov_stop_enemy_2                        = {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
-	
-		-- Predbannik_devjan
 	
 	--yantar sounds
 	yantar_professor_idle						= {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -832,6 +392,114 @@ local subtheme = {
     brainlab_system_message_4                   = {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     brainlab_system_message_5                   = {min_snd = 1, max_snd = 1, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
 
+--  Jek@n's_work
+
+    muzikant_play_1                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_2                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_3                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_4                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_5                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_6                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_7                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    muzikant_play_8                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    nese_galya_vodu                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    first_neutral_bred_2                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    kulg_agent_meet                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    kulg_agent_goodbye                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    hohol_drink_replik                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    secret_villager_birth                   = {min_snd = 3, max_snd = 5, rnd = 25, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    hohol_scary_replik                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_1                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_2                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_3                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_4                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_5                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_6                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    garb_arthunter_phrase_7                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    dolg_sergant_speech                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    i_am_surrend1                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    i_am_surrend2                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    dar_merc_hello1                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    dar_merc_hello2                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    izgoy_pomoshnik_meet                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    dar_officer_naezd                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    izgoy_patient_ston                   = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    izgoy_lider_speech                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    gorbovsky_talking                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    somewater                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    getout                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    drifter_dog_howling                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    drifter_scream                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    drifter_to_dog                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    drifter_helpme                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    hunter_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    cleaner_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    bratstvo_lider_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    vrach_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    orujeinik_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    drifter_yes                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    kolbasa_i_batony                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    shesterka_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    ds_telohr1_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    agent_ston                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    vrach_port_goodbye                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    gaz_dolg_lider_talk                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+pervert_song                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   pervert_smeh                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   pervert_metamorph                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   girl_smeh                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   girl_metamorph                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   girl_talking                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   tikar_common                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   brother_cry                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   freezer_smeh                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   freezer_terror                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   bro2_scare                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   yan_soldier_sad                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   yan_sold_see                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   yan_sold_scary                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   stalin_meet                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   atp_lider_punch                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   swamp_doc_hello                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   trabantnoise                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   sinyak_hello                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   sinyak_drink                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   digger_hello                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   digger_laugh                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   gop_stop                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+   potsik_talk                 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+    yan_captain_punch                = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	patrol_bored                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	car_engine_work                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_trader_car_snd                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bridge_kulgband_shoot                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bridge_kulgband_glavar_talk1                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bridge_kulgband_glavar_talk2                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bridge_kulgband_glavar_talk3                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bridge_kulgband_speech                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_hutor_radio_snd                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	drunk                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_hutor_deadman_hello                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_scout_hush                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_informer_deal1                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	kulgband_informer_deal2                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bandit_fight                  = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	bandit_idle					 = {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	cit_kulgband_glavar_klondike_action		= {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	cit_kulgband_glavar_klondike_action2		= {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	dar_samogon_trance		= {min_snd = 10, max_snd = 20, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+	
+
+-- РЈРќРРљРђР›Р¬РќР«Р• РўР•РњР« 
+-- Escape
+
+-- Escape РѕС…СЂР°РЅРЅРёРє РЎРёРґРѕСЂР° 
+ esc_guard_hello   = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+ esc_guard_pristrely  = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+ esc_guard_kozly   = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+ esc_guard_nemeschaj  = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+ esc_guard_stop   = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
+ esc_guard_prohodi  = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     -- Military sounds
     mil_max_thanx                  = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     mil_max_before_collect         = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
@@ -892,51 +560,9 @@ local subtheme = {
     mil_dolg_fight                 = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     mil_dolg_silent                = {min_snd = 3, max_snd = 5, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}},
     mil_cherep_hi                 = {min_snd = 1, max_snd = 3, rnd = 100, prior = 5, rnd_id = id(), into_id = id(), max_ids = {}}
-
 }
-
-return subtheme
-end
-
-local loaded_theme = {}
-function init()
-	theme = sound_theme.reinit()
-	
-	--local k,v = 0,0
-	
-	-- загрузка звуков на основе данных ltx
-	function preload_sound_from_ltx(name, tbl)	
-		--zander_log("sound_theme:preload_sound_from_ltx", name, tbl)
-		tbl.config = {}
-		tbl.profiles = {}
-		if snd_ini:section_exist(name.."_rnd") then		
-			tbl.config[name.."_rnd"] = true
-		end
-		if snd_ini:section_exist(name.."_seq") then
-			tbl.config[name.."_seq"] = true
-		end
-		if snd_ini:section_exist(name.."_single") then
-			tbl.config[name.."_single"] = true
-		end
-	end
-	
-	function preload_theme_sound(tbl)
-	--zander_log("sound_theme:preload_theme_sound")
-		for k,v in pairs(tbl) do
-			if v.types == nil then
-				preload_sound_from_ltx(k, v)
-			else
-				preload_theme_sound(v.types)
-			end
-		end
-	end
-
-	preload_theme_sound(theme)
-
-	
-end
    
---' В темах для игрока интервал задается в миллисекундах!!!
+--' Р’ С‚РµРјР°С… РґР»СЏ РёРіСЂРѕРєР° РёРЅС‚РµСЂРІР°Р» Р·Р°РґР°РµС‚СЃСЏ РІ РјРёР»Р»РёСЃРµРєСѓРЅРґР°С…!!!
 actor_theme = {
 	level_border_detector = {
 		min_snd = 10,
@@ -954,153 +580,3 @@ actor_theme = {
 		}
 	}
 }
-   										
-function select_sound_from_ltx(obj, section, ltx, tbl)
-	--zander_log("sound_theme:select_sound_from_ltx", obj, section, ltx)
---	1. проверка по story_id
-	local c = obj:story_id()
-	if c and c > 0 and c < 65535 then
-	local cs = utils.to_str(c)
-	if ltx:line_exist(section, cs) then
-		local new_profile = ltx:r_string(section, cs)
-		if new_profile then
-		tbl.profiles[new_profile] = {}
-		local flag, path = check_prefix(new_profile)
-		tbl.profiles[new_profile].flag = flag
-		tbl.profiles[new_profile].path = path
-		return new_profile
-	end end end
-
---	2. проверка по npc_profile
-	local cp = obj:profile_name()
-	if ltx:line_exist(section, cp) then
-		local new_profile = ltx:r_string(section, cp)
-		if tbl.profiles[new_profile] then --- already loaded
-		
-		else
-		tbl.profiles[new_profile] = {}
-		local flag, path = check_prefix(new_profile)
-		tbl.profiles[new_profile].flag = flag
-		tbl.profiles[new_profile].path = path
-		end
-		return new_profile
-	end
-
---	3. проверка по character_community
-	local cm = obj:character_community()
-	if ltx:line_exist(section, cm) then
-		local new_profile = ltx:r_string(section, cm)
-		if tbl.profiles[new_profile] then --- already loaded
-		
-		else
-		tbl.profiles[new_profile] = {}
-		local flag, path = check_prefix(new_profile)
-		tbl.profiles[new_profile].flag = flag
-		tbl.profiles[new_profile].path = path
-		end
-		return new_profile
-	end
-	
---	4. загрузка дефолта
-	if ltx:line_exist(section, "stalker") then
-		local new_profile = ltx:r_string(section, "stalker")
-		if tbl.profiles[new_profile] then --- already loaded
-		
-		else
-		tbl.profiles[new_profile] = {}
-		local flag, path = check_prefix(new_profile)
-		tbl.profiles[new_profile].flag = flag
-		tbl.profiles[new_profile].path = path
-		end
-		return new_profile
-	else
-		return nil
-	end
-end
-
------------------------------------------------------------------------------------------------------------------------------------
-local character_prefix = ""
-local default_prefix = "characters_voice\\"
-function check_prefix(s)
-	local flag = string.sub(s, 1, 1)
-	return flag, string.sub(s, 3)
-end
-
-function load_sound(obj)
-	local a = 0
-
-		function loaddata_sound_from_ltx(prime_object, name, tbl)	
-		--zander_log("sound_theme:loaddata_sound_from_ltx", prime_object, name, tbl)
-		tbl.max_ids[prime_object:id()] = {}
-		if tbl.config[name.."_rnd"] then		
-			
-			local s = select_sound_from_ltx(prime_object, name.."_rnd", snd_ini, tbl)			
-			if s then
-				--local flag, path = check_prefix(s)
-				if tbl.profiles[s].flag == "0" then
-					character_prefix = prime_object:sound_prefix()
-					prime_object:sound_prefix(default_prefix)
-				end
-
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", prime_object:name(), flag, prime_object:sound_prefix(), path)
-				tbl.max_ids[prime_object:id()].rnd_max = prime_object:add_sound(tbl.profiles[s].path, nstl, snd_type.talk, 2, 1, tbl.rnd_id)
-				a = a + 1
-				if tbl.profiles[s].flag == "0" then
-					prime_object:sound_prefix(character_prefix)
-				end
-			end
-		end
-		if tbl.config[name.."_seq"] then
-			local s = select_sound_from_ltx(prime_object, name.."_seq", snd_ini, tbl)
-			if s then
-				if tbl.profiles[s].flag == "0" then
-					character_prefix = prime_object:sound_prefix()
-					prime_object:sound_prefix(default_prefix)
-				end
-
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", prime_object:name(), flag, prime_object:sound_prefix(), path)
-				tbl.max_ids[prime_object:id()].into_max = prime_object:add_sound(tbl.profiles[s].path, nstl, snd_type.talk, 2, 1, tbl.into_id)
-				tbl.max_ids[prime_object:id()].into_cycled = true
-				a = a + 1
-				if tbl.profiles[s].flag == "0" then
-					prime_object:sound_prefix(character_prefix)
-				end
-			end
-		end
-		if tbl.config[name.."_single"] then
-			local s = select_sound_from_ltx(prime_object, name.."_single", snd_ini, tbl)
-			if s then
-				if tbl.profiles[s].flag == "0" then
-					character_prefix = prime_object:sound_prefix()
-					prime_object:sound_prefix(default_prefix)
-				end
-
-				--printf("NPC[%s] flag[%s] prefix[%s] path[%s]", prime_object:name(), flag, prime_object:sound_prefix(), path)
-				tbl.max_ids[prime_object:id()].into_max = prime_object:add_sound(tbl.profiles[s].path, nstl, snd_type.talk, 2, 1, tbl.into_id)
-				tbl.max_ids[prime_object:id()].into_cycled = false
-				a = a + 1
-				if tbl.profiles[s].flag == "0" then
-					prime_object:sound_prefix(character_prefix)
-				end		
-			end
-		end
-	end
-	
-	function loaddata_theme_sound(npc, tbl)
-	--zander_log("sound_theme:loaddata_theme_sound", npc)
-		for k,v in pairs(tbl) do
-			if v.types == nil then
-				loaddata_sound_from_ltx(npc, k, v)
-			else
-				loaddata_theme_sound(npc, v.types)
-			end
-		end
-	end
-
-	loaddata_theme_sound(obj, theme)
-
-	-- делаем заготовку в db.sound
-	db.sound[obj:id()] = {}
-	
-end
-

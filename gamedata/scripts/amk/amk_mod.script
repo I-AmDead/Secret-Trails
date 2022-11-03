@@ -319,38 +319,33 @@ local afs={
 
 -- проверка на упавший предмет/артефакт
 function check_for_af_drop(obj)
-	local obj_sect = obj:section()
-	
+  local obj_sect = obj:section()
 	-- проверка не один ли это из компонентов
-	if afs[obj_sect] == true then
-		local anom_id,anom_pos,anom_radius,dist = amk_anoms.get_nearest_anomaly(obj)
-		
-		if anom_id and anom_radius - dist > -2 then
-			--local anom_sect = level.object_by_id(anom_id):section()
-			--local obj_pos = obj:position()
-			local lv = level.object_by_id(anom_id):level_vertex_id()
-			local gv = level.object_by_id(anom_id):game_vertex_id()
-			if gv == 65535 then gv = obj:game_vertex_id() end
-			if gv == 65535 then gv = db.actor:game_vertex_id() end
-			if gv == 65535 then return end -- похоже, что рядом нету вертекса
+  if not is_komponent( obj_sect, obj:condition() ) then return end
+  local anom_id, anom_pos, anom_radius, dist =
+    amk_anoms.get_nearest_anomaly( db.actor )
+  if not ( anom_id and dist < 3 ) then return end
+  local lv = level.object_by_id(anom_id):level_vertex_id()
+  local gv = level.object_by_id(anom_id):game_vertex_id()
+  if gv == 65535 then gv = obj:game_vertex_id() end
+  if gv == 65535 then gv = db.actor:game_vertex_id() end
+  if gv == 65535 then return end -- похоже, что рядом нету вертекса
 			
-			-- предмет подходит - отправляем его на экспертизу
-			-- узнаем не съели ли его или вvложили в нvчку
-			local tbl		= {}
-			tbl.obj_id		= obj:id()
-			tbl.anom_id		= anom_id
-			tbl.anom_radius	= anom_radius
-			tbl.lv			= lv
-			tbl.gv			= gv
-			amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
-		end
-	end
+  -- предмет подходит - отправляем его на экспертизу
+  -- узнаем не съели ли его или вvложили в нvчку
+  local tbl		= {}
+  tbl.obj_id		= obj:id()
+  tbl.anom_id		= anom_id
+  tbl.anom_radius	= anom_radius
+  tbl.lv			= lv
+  tbl.gv			= gv
+  amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
 end
 
 -- проверка: является ли компонентом для варки
 -- параметр - название секции
-function is_komponent(sec)
-     return (afs[sec] ~= nil)
+function is_komponent(sect)
+     return afs[sect]
 end
 
 -- аномали "узнаітся" по части названия!
@@ -849,23 +844,23 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 
 end
 
-function af_flash(af)
-	level.add_pp_effector("teleport.ppe", 1524, false)
-	amk.remove_item(af)
+function af_flash( obj )
+  level.add_pp_effector( "teleport.ppe", 1524, false )
+  amk.remove_item( obj )
 end
 
--- случайно вvбирает результат, возвра ает таблицу с секциями результатов
-function af_select_result(v_udachi, v_virogd, virogd, cel, komp)
-	local rnd=math_random(0,100)
-	if rnd > v_udachi then --неудача
-		if rnd > v_virogd + v_udachi then -- отторжение
-			return komp, false
-		else -- вvрождение
-			return virogd, false
-		end
-	else -- удача
-		return cel, true
-	end
+-- случайно выбирает результат, возвращает таблицу с секциями результатов
+function af_select_result( v_udachi, v_virogd, virogd, cel, komp )
+  local rnd = math_random(0,100)
+  if rnd > v_udachi then -- неудача
+    if rnd > v_virogd + v_udachi then -- отторжение
+      return komp, false
+    else -- вырождение
+      return virogd, false
+    end
+  else -- удача
+    return cel, true
+  end
 end
 
 -- запускаем трансофрмациі 
@@ -916,72 +911,68 @@ function af_start_transform_timer(af,pos,delay_d,delay_h,delay_m,af_sect)
 end
 
 
--- завершаем варку/мутациі
--- может бvть много результатов
-function af_transform_universal_end(params)
-	--get_console():execute("load ~#I#:"..string.format(" af_transform_universal_end "))
-	-- если есть результатv
-	local count = 0
-	for k, v in pairs(params.result) do
-		count = count + 1
-	end
-	if count > 0 then
-		local anom_pos = vector():set(params.pos.x, params.pos.y, params.pos.z)
-		if db.actor:position():distance_to(anom_pos) < 15 then
-			level.add_pp_effector("teleport.ppe", 1524, false)
-		end
-		-- формируем строку с названиями компонентов
-		local from_komp = ""
-		for k,v in pairs(params.komp) do
-			if k then
-				from_komp = from_komp..game.translate_string(news_manager.get_inv_name(k))..", "
-			end
-		end
-		-- отсекаем ", " в хвосте
-		from_komp = string_sub(from_komp, 1, -2)
-		
-		-- спавним результат(v)
-		for k,v in pairs(params.result) do
-			local obj
-			obj = amk.spawn_item(k, vector():set(params.pos.x,params.pos.y+10,params.pos.z), params.gv, params.lv)
-	                local sobj = alife():object( obj.id )
-                        alife():use_ai_locations(sobj, false)
-			amk.add_spot_on_map(obj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
-		end
+-- завершаем варку/мутации
+-- может быть много результатов
+function af_transform_universal_end( params )
+  -- для совместимости со старыми варками
+  for _, k in ipairs({ "komp", "result" }) do
+    if not params[ k ] then
+      params[ k ] = {}
+    elseif type( params[ k ] ) == "string" then
+      params[ k ] = parse_names( params[ k ] )
+    end
+  end
+  -- если есть результаты
+  local af_sobj
+  if table.getn( params.result ) > 0 then
+    local anom_pos = vector():set( params.pos.x, params.pos.y, params.pos.z )
+    if
+      level.name() == params.lname
+      and db.actor:position():distance_to( anom_pos ) < 15
+    then
+      level.add_pp_effector( "teleport.ppe", 1524, false )
+    end
+    -- формируем строку с названиями компонентов
+    local from_komp = {}
+    for _, k in ipairs( params.komp ) do
+      table.insert( from_komp, game.translate_string( news_manager.get_inv_name( k ) ) )
+    end
+    -- спавним результат(v)
+    for _, k in ipairs( params.result ) do
+      af_sobj = amk.spawn_item(
+        k,
+        vector():set( params.pos.x, params.pos.y + 1, params.pos.z ),
+        params.gv, params.lv
+      )
+      amk.add_spot_on_map(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+    end
+    amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+  end
 	
-		amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
-	end
+  -- даем инфопорциі, если есть
+  if params.info_portion and db.actor:dont_has_info( params.info_portion ) then
+    db.actor:give_info_portion( params.info_portion )
+  end
 	
-	-- даїм инфопорциі, если есть
-	if params.info_portion and db.actor:dont_has_info(params.info_portion) then
-		db.actor:give_info_portion(params.info_portion)
-	end
-	
-	-- удаляем аномалии, если нужно и она не в исклічениях
-	-- код взят из amk_anoms.turn_off_all()
-	if params.remove_anomaly then
-		local sobj = alife():object(params.remove_anomaly_id)
-		if sobj and game_graph():valid_vertex_id(sobj.m_game_vertex_id) then
-			local map = alife():level_name(game_graph():vertex(sobj.m_game_vertex_id):level_id())
-local obj_name=sobj:name()
-	--		if not amk_anoms.check_exclusion(sobj, map) then 
-				local status = amk_anoms.get_anomaly_status(sobj)
-				if status=="" or status == "on" then
-					amk_anoms.set_anomaly_status(sobj, "del")
-			end
-				alife():release(sobj, true)
-	--		end
-		end
-	end
+  -- удаляем аномалии, если нужно и она не в исключениях
+  -- код взят из amk_anoms.turn_off_all()
+  if params.remove_anomaly then
+    local sobj = alife():object( params.remove_anomaly_id )
+    if sobj and game_graph():valid_vertex_id( sobj.m_game_vertex_id ) then
+      if is_generated_anomaly( sobj ) then
+        dsh_anomaly_detector.remove_restriction( nil, sobj.id )
+      end
+    end
+  end
+  return af_sobj
 end
+
 
 -- старая функция
 function af_transform_end(params)
 	local from_sect="\""..params.from_sect.."\""
 	local obj
         obj=amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
-	local sobj = alife():object( obj.id )
-	alife():use_ai_locations(sobj, false)
 	amk.add_spot_on_map(obj.id,"red_location",game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 	amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 end
@@ -1139,17 +1130,17 @@ function outfit_hideout()
 end
 
 function check_npc_in_hideout(npc,hide)
-	local not_in_zone=true
-	if hide and hide.zone then
-		for k,v in pairs(hide.zone) do
-			if v.p3 then 
-				not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
-			else
-				not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
-			end
-		end
-	end
-	return not not_in_zone
+        local not_in_zone=true
+        if hide and hide.zone then
+                for k,v in pairs(hide.zone) do
+                        if v.p3 then 
+                                not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
+                        else
+                                not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
+                        end
+                end
+        end
+        return not not_in_zone
 end
 
 function initial_spawn(action)

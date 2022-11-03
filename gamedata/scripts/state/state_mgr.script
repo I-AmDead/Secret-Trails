@@ -482,6 +482,15 @@ function stop_sounds_on_combat(npc)
 	end
 end
 
+operators = {
+  [ "state_mgr_to_idle_combat" ] = xr_actions_id.state_mgr + 1,
+  [ "state_mgr_to_idle_alife"  ] = xr_actions_id.state_mgr + 2,
+}
+
+properties = {
+  [ "state_mgr_idle_combat" ] = xr_evaluators_id.state_mgr + 1,
+  [ "state_mgr_idle_alife"  ] = xr_evaluators_id.state_mgr + 2,
+}
 
 function bind_manager(object)
 	if not object:alive() then
@@ -539,4 +548,18 @@ function bind_manager(object)
 	end
 
 	return state_manager
+end
+
+
+function add_to_idle_preconditions( manager, props, val )
+  if val == nil then val = false end
+  for _, k in ipairs({
+    -- "state_mgr_to_idle_combat",
+    "state_mgr_to_idle_alife",
+  }) do
+    local action = manager:action( operators[ k ] )
+    for _, id in ipairs( props ) do
+      action:add_precondition( world_property( id, val ) )
+    end
+  end
 end
