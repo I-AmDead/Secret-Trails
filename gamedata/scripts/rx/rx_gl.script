@@ -1191,16 +1191,20 @@ function trace_shell(obj)
 end
 
 function create_grenade(section,owner)
-	local obj = alife():create(section,owner:position(),owner:level_vertex_id(),owner:game_vertex_id(),owner:id())
-	local data = xrs_utils.get_item_data(obj)
-	data.oflags = bit_or(data.oflags,2)				-- поставить флаг flSwitchOnline
-	data.oflags = bit_and(data.oflags,bit_not(4))	-- снять флаг flSwitchOffline
-	data.oflags = bit_and(data.oflags,bit_not(16))	-- снять флаг flVisibleForAI
-	data.oflags = bit_and(data.oflags,bit_not(32))	-- снять флаг flUsefulForAI
-	data.oflags = bit_and(data.oflags,bit_not(128))	-- снять флаг flUsedAI_Locations
-	data.oflags = bit_and(data.oflags,bit_not(512))	-- снять флаг flCanSave
-	xrs_utils.set_item_data(data,obj)
-	return obj
+	local sobj = alife():create(section,owner:position(),owner:level_vertex_id(),owner:game_vertex_id(),owner:id())
+
+	local pk = get_netpk( sobj, 1 )
+	ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+	local data = pk:get()
+	data.object_flags = bit_or(  data.object_flags, object_flags.SwitchOnline )
+	data.object_flags = bit_and( data.object_flags, bit_not(object_flags.SwitchOffline) )
+	data.object_flags = bit_and( data.object_flags, bit_not(object_flags.VisibleForAI) )
+	data.object_flags = bit_and( data.object_flags, bit_not(object_flags.UsefulForAI) )
+	data.object_flags = bit_and( data.object_flags, bit_not(object_flags.UsedAI_Locations) )
+	data.object_flags = bit_and( data.object_flags, bit_not(object_flags.CanSave) )
+	pk:set( data )
+
+	return sobj
 end
 
 function destroy_after_explode(obj)

@@ -3,6 +3,15 @@
 Чугай Александр
 --------------------------------------------------------------------------------------------------------------------]]
 
+-- bak  - информация для скриптов: включено ли игнорирование врага
+function is_ignored(obj,enemy)
+	local st = db.storage[obj:id()].combat_ignore
+	if st and st.enabled and st.ignore[enemy:id()] then
+		return true
+	end
+	return false
+end
+
 function is_enemy( obj, enemy, st )
 
 	if obj:critically_wounded() then

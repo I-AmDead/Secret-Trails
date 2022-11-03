@@ -189,8 +189,9 @@ local function check_section(sect)
 			and sys_ini:line_exist(sect, "visual")
 			and sys_ini:line_exist(sect, "description") then	-- inventory item
 			
-			if  get_bool(sect, "can_take", true) == false	-- can't take it
-				or sect:find("^mp_") then -- from multiplayer
+			if get_bool(sect, "can_take", true) == false	-- can't take it
+				or sect:find("^mp_") 
+				or get_bool(sect, "can_spawner", true) == false then -- from multiplayer
 				return false
 			end
 			

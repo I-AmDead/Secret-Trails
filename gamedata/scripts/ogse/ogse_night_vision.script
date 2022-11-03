@@ -9,7 +9,6 @@
 function attach(sm)
   sm:subscribe({ signal = "on_destroy",      fun = this.on_destroy      })
   sm:subscribe({ signal = "on_hit",          fun = this.on_hit          })
-  sm:subscribe({ signal = "on_key_down",     fun = this.call_pnv        })
   sm:subscribe({ signal = "on_load",         fun = this.on_game_load    })
   sm:subscribe({ signal = "on_scope_zoom",   fun = this.on_scope_zoom   })
   sm:subscribe({ signal = "on_sniper_mode",  fun = this.on_sniper_mode  })
@@ -81,14 +80,10 @@ function on_spawn()
 end
 
 -- Вызов вкл/выкл ПНВ из коллбэка нажатия клавиши
-function call_pnv( key, bind )
-  if level.main_input_receiver()
-  or not db.actor:alive() then return end
-  if bind == key_bindings.kNIGHT_VISION then
-    quicklaunch_nv_call()
-    quicklaunch_nv_scope_call()
-    quicklaunch_nv_binocular_call()
-  end
+function call_pnv()
+  quicklaunch_nv_call()
+  quicklaunch_nv_scope_call()
+  quicklaunch_nv_binocular_call()
 end
 
 -- Включение/выключение ПНВ из меню быстрого доступа

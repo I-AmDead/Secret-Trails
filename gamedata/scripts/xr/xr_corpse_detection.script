@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------------------------------------------
---'	Схема обыска трупов и собирания предметов, версия 3.06
+--'	РЎС…РµРјР° РѕР±С‹СЃРєР° С‚СЂСѓРїРѕРІ Рё СЃРѕР±РёСЂР°РЅРёСЏ РїСЂРµРґРјРµС‚РѕРІ, РІРµСЂСЃРёСЏ 3.06
 --' AI Additions
 --'	Rulix aka Bak
 --'	26.05.2016
@@ -22,13 +22,13 @@ local check_prd = rx_utils.read_from_ini(cd_ini,'main',"check_period",5000,3)
 local check_prd_active = 2700
 
 local visible_mod	= 1.2
-local cost_factor = 1				-- Множитель цены предмета при расчете приоритета
-local distance_factor = 1.8			-- Влияние расстояния на приоритет собирания
-local memory_factor = 0.1			-- Влияние memory_time на приоритет собирания
-local max_dist_from_node = 11		-- Максимальное расстояние лута до аи сетки (квадрат)
+local cost_factor = 1				-- РњРЅРѕР¶РёС‚РµР»СЊ С†РµРЅС‹ РїСЂРµРґРјРµС‚Р° РїСЂРё СЂР°СЃС‡РµС‚Рµ РїСЂРёРѕСЂРёС‚РµС‚Р°
+local distance_factor = 1.8			-- Р’Р»РёСЏРЅРёРµ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РЅР° РїСЂРёРѕСЂРёС‚РµС‚ СЃРѕР±РёСЂР°РЅРёСЏ
+local memory_factor = 0.1			-- Р’Р»РёСЏРЅРёРµ memory_time РЅР° РїСЂРёРѕСЂРёС‚РµС‚ СЃРѕР±РёСЂР°РЅРёСЏ
+local max_dist_from_node = 11		-- РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ СЂР°СЃСЃС‚РѕСЏРЅРёРµ Р»СѓС‚Р° РґРѕ Р°Рё СЃРµС‚РєРё (РєРІР°РґСЂР°С‚)
 local knife_slot = 0
 
-local item_clsids = {	-- список clsid собираемых предметов
+local item_clsids = {	-- СЃРїРёСЃРѕРє clsid СЃРѕР±РёСЂР°РµРјС‹С… РїСЂРµРґРјРµС‚РѕРІ
 
 --	[clsid.equ_exo] = true,
 --	[clsid.equ_military] = true,
@@ -65,7 +65,7 @@ local item_clsids = {	-- список clsid собираемых предметов
 	[clsid.wpn_svu_s] = true,
 	[clsid.wpn_rpg7_s] = true,
 	[clsid.wpn_val_s] = true,
-	[clsid.wpn_walther_s] = true,
+	--[clsid.wpn_walther_s] = true,
 	[clsid.wpn_usp45_s] = true,
 	[clsid.wpn_groza_s] = true,
 	[clsid.wpn_knife_s] = true,
@@ -248,13 +248,13 @@ function evaluator_corpse:evaluate()
 		return false
 	end
 
-	if PR.max_loot_distance > 0 then	-- начало поиска
+	if PR.max_loot_distance > 0 then	-- РЅР°С‡Р°Р»Рѕ РїРѕРёСЃРєР°
 
 	local loot,rating,id,cls_id,item,wanted_ammo
-	-- Будем искать оружие лучше имеющегося
-	-- Если нет оружия - искать любое
-	-- Если нет патронов - искать патроны к имеющемуся оружию
-	-- Если нужен нож - найдём и его
+	-- Р‘СѓРґРµРј РёСЃРєР°С‚СЊ РѕСЂСѓР¶РёРµ Р»СѓС‡С€Рµ РёРјРµСЋС‰РµРіРѕСЃСЏ
+	-- Р•СЃР»Рё РЅРµС‚ РѕСЂСѓР¶РёСЏ - РёСЃРєР°С‚СЊ Р»СЋР±РѕРµ
+	-- Р•СЃР»Рё РЅРµС‚ РїР°С‚СЂРѕРЅРѕРІ - РёСЃРєР°С‚СЊ РїР°С‚СЂРѕРЅС‹ Рє РёРјРµСЋС‰РµРјСѓСЃСЏ РѕСЂСѓР¶РёСЋ
+	-- Р•СЃР»Рё РЅСѓР¶РµРЅ РЅРѕР¶ - РЅР°Р№РґС‘Рј Рё РµРіРѕ
 	weapon_manager = npc:get_wm(true)
 	best_weapon_prm,best_knife_prm = get_best_weapon_prm(npc)
 	if best_weapon_prm == -1 and not rx_utils.IsTrader(npc) then
@@ -368,7 +368,7 @@ function evaluator_corpse:evaluate()
 		return true
 	end
 
-	end		-- конец поиска
+	end		-- РєРѕРЅРµС† РїРѕРёСЃРєР°
 
 	if npc:best_item() and PR.gather_items_enabled then
 		local item = npc:best_item()
@@ -461,7 +461,13 @@ function action_search_corpse:execute()
 
 	local is_mutant = self.a.is_corpse and IsMonster(target)
 	local npc_pos = npc:position()
-	local dist = npc_pos:distance_to(self.a.is_corpse and target:bone_position(monster_parts_cut_bones[target:clsid()] or "bip01_spine1") or target:center())
+
+	local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+	if target:get_bone_id( valid_bone ) == 65535 then
+		valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+	end
+
+	local dist = npc_pos:distance_to(self.a.is_corpse and target:bone_position(valid_bone) or target:center())
 
 	if self.timer < time_global() then
 		if dist > 3 then
@@ -481,12 +487,12 @@ function action_search_corpse:execute()
 		return
 	end
 
-	-- ништяк кто-то подобрал!
+	-- РЅРёС€С‚СЏРє РєС‚Рѕ-С‚Рѕ РїРѕРґРѕР±СЂР°Р»!
 	if not self.a.is_corpse and target:parent() then
 		if target:parent():id() == npc:id() then
 			if not self.a.anim_started then
 				self.a.active = nil
-				self.a.dtimer = 0	-- найти новую цель
+				self.a.dtimer = 0	-- РЅР°Р№С‚Рё РЅРѕРІСѓСЋ С†РµР»СЊ
 				return
 			end
 		else--if dist < 15 or npc:see(target:parent()) then
@@ -496,12 +502,12 @@ function action_search_corpse:execute()
 	end
 
 	local target_pos = target:position()
-	-- если цель вдруг сместилась от своего вертекса
+	-- РµСЃР»Рё С†РµР»СЊ РІРґСЂСѓРі СЃРјРµСЃС‚РёР»Р°СЃСЊ РѕС‚ СЃРІРѕРµРіРѕ РІРµСЂС‚РµРєСЃР°
 	if self.a.is_corpse then
 		if target_pos:distance_to_sqr(level.vertex_position(self.a.target_vertex)) > max_dist_from_node then
 			self.a.active = nil
-			self.a.dtimer = time_global()+7000	-- обождать
-			if db.actor and db.actor:position():distance_to(target_pos) < 2 then	-- ГГ тянет труп, ну его
+			self.a.dtimer = time_global()+7000	-- РѕР±РѕР¶РґР°С‚СЊ
+			if db.actor and db.actor:position():distance_to(target_pos) < 2 then	-- Р“Р“ С‚СЏРЅРµС‚ С‚СЂСѓРї, РЅСѓ РµРіРѕ
 				npc:enable_memory_object(target,false)
 				self.a.obj_stor[self.id] = false
 			end
@@ -522,19 +528,26 @@ function action_search_corpse:execute()
 	end
 
 	if dist <= (self.a.is_corpse and 0.85 or 0.75) or npc:level_vertex_id() == self.a.target_vertex then
-		local look_pos = self.a.is_corpse and target:bone_position(monster_parts_cut_bones[target:clsid()] or "bip01_spine1") or target:center()
+		local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+		if target:get_bone_id( valid_bone ) == 65535 then
+			valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+		end
+
+		local look_pos = self.a.is_corpse and target:bone_position(valid_bone) or target:center()
 		npc:set_sight(look.direction,vector():sub(vector():set(0,0.3,npc_pos:distance_to_xz(target_pos)<0.3 and 0.5 or 0):add(look_pos),npc:bone_position(self.torso_look==true and "bip01_neck" or "bip01_spine")),self.torso_look==true)
 		if self.a.anim_started then
 			if self.a.do_chik and self.a.do_chik < time_global() then
 				self.a.do_chik = nil
-				chik_chik(npc,target)
+				if self.a.is_corpse then
+					chik_chik(npc, target)
+				end
 			end
 			self:update_animation()
 			return
 		end
 		self.torso_look = nil
 		if self.a.is_corpse then
-			if target:object_count() < (is_mutant and 1 or 3) then	-- оппа! игрок уже обобрал
+			if target:object_count() < (is_mutant and 1 or 3) then	-- РѕРїРїР°! РёРіСЂРѕРє СѓР¶Рµ РѕР±РѕР±СЂР°Р»
 				self:set_animation("search_corpse_high")
 			elseif is_mutant then
 				self.timer = time_global()+9000
@@ -568,7 +581,7 @@ function action_search_corpse:execute()
 		return
 	end
 
-	-- во время анимации кто-то пихнул
+	-- РІРѕ РІСЂРµРјСЏ Р°РЅРёРјР°С†РёРё РєС‚Рѕ-С‚Рѕ РїРёС…РЅСѓР»
 	if self.a.anim_started then
 		if dist > 1.2 then
 			if self.a.is_corpse then
@@ -619,7 +632,7 @@ function action_search_corpse:execute()
 		end
 	end
 
-	-- фикс застревания на месте (что-то мешает пройти)
+	-- С„РёРєСЃ Р·Р°СЃС‚СЂРµРІР°РЅРёСЏ РЅР° РјРµСЃС‚Рµ (С‡С‚Рѕ-С‚Рѕ РјРµС€Р°РµС‚ РїСЂРѕР№С‚Рё)
 	local lvid = npc:level_vertex_id()
 	if lvid == self.last_vertex_id then
 		if self.last_vertex_time + (npc:movement_type() == move.stand and 1500 or 6000) < time_global() then
@@ -660,7 +673,7 @@ function action_search_corpse:finalize()
 	self.a.target_id = nil
 	npc:clear_animations()
 	npc:set_dest_level_vertex_id(npc:level_vertex_id())
---	npc:set_sight(look.danger,npc:direction(),0)	-- удовлетворить стейт менеджер
+--	npc:set_sight(look.danger,npc:direction(),0)	-- СѓРґРѕРІР»РµС‚РІРѕСЂРёС‚СЊ СЃС‚РµР№С‚ РјРµРЅРµРґР¶РµСЂ
 	npc:set_body_state(move.standing)
 	local wm = npc:get_wm(true)
 	if wm then
@@ -833,12 +846,16 @@ end
 local knife_snd = {}
 
 function chik_chik(npc,target)
-	local bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
-	local pos = target:bone_position(bone)
+	local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+	if target:get_bone_id( valid_bone ) == 65535 then
+		valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+	end
+
+	local pos = target:bone_position(valid_bone)
 	local knife = npc:item_in_slot(knife_slot)
 	pos.y = pos.y+0.05
 	local hi = hit()
-	hi:bone(bone)
+	hi:bone(valid_bone)
 	hi.type = hit.wound
 	hi.power = 1
 	hi.impulse = 30
@@ -858,7 +875,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 -- BINDER
 ----------------------------------------------------------------------------------------------------------------------
--- Будем подменять движковую схему gather_items
+-- Р‘СѓРґРµРј РїРѕРґРјРµРЅСЏС‚СЊ РґРІРёР¶РєРѕРІСѓСЋ СЃС…РµРјСѓ gather_items
 
 evid_corpse_exist = rx_ai.base_id+47
 actid_corpse_exist = stalker_ids.action_gather_items
@@ -904,6 +921,15 @@ function add_to_binder(npc, char_ini, scheme, section, st)
 	if xrs_grenade then
 		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
 	end
+
+	if xr_combat_companion then
+		action:add_precondition(world_property(xr_combat_companion.prop_combat,false))	
+	end
+
+	if xr_companion then --РћС‚РєР»СЋС‡Р°РµС‚ СЃРѕР±РёСЂР°С‚РµР»СЊСЃС‚РІРѕ РґР»СЏ РєРѕРјРїР°РЅСЊРѕРЅРѕРІ. Р§С‚РѕР±С‹ РІРєР»СЋС‡РёС‚СЊ - Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ СЌС‚РѕС‚ РєСѓСЃРѕРє Рё СЂР°СЃРєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РґСЂСѓРіРѕР№ РІ СЃР°РјРѕРј xr_companion
+		action:add_precondition(world_property(xr_companion.property_need_companion,false))	
+	end
+
 	action:add_precondition		(world_property(evid_corpse_exist,	true))
 	action:add_effect (world_property(evid_corpse_exist, 			false))
 	manager:add_action (actid_corpse_exist, action)
@@ -929,7 +955,7 @@ function reset_corpse_detection(npc, scheme, st, section)
 		st.corpse_detection.corpse_detection_enabled = rx_utils.read_from_ini(st.ini,st.section_logic,"corpse_detection_enabled",true,0)
 	end
 	local pr = read_profile(npc, scheme, st, section)
-	-- отрубаемся с профиля dont_loot и с метки disabled_strict
+	-- РѕС‚СЂСѓР±Р°РµРјСЃСЏ СЃ РїСЂРѕС„РёР»СЏ dont_loot Рё СЃ РјРµС‚РєРё disabled_strict
 	if pr.disabled_strict or pr.max_loot_distance <= 0 and not pr.gather_items_enabled then
 		st.corpse_detection.corpse_detection_enabled = false
 	end
@@ -1013,15 +1039,15 @@ end
 
 function read_profile(npc, scheme, stor, section)
 	local pr = {}
-	-- 1 если профиль задан в логике
+	-- 1 РµСЃР»Рё РїСЂРѕС„РёР»СЊ Р·Р°РґР°РЅ РІ Р»РѕРіРёРєРµ
 	if section and stor.ini:line_exist(section,"corpse_detection_profile") then
 		table.insert(pr,stor.ini:r_string(section,"corpse_detection_profile"))
 	elseif stor.ini:line_exist(stor.section_logic,"corpse_detection_profile") then
 		table.insert(pr,stor.ini:r_string(stor.section_logic,"corpse_detection_profile"))
 	end
-	-- 2 если есть профиль имени
+	-- 2 РµСЃР»Рё РµСЃС‚СЊ РїСЂРѕС„РёР»СЊ РёРјРµРЅРё
 	table.insert(pr,npc:profile_name())
-	-- 3 смарта
+	-- 3 СЃРјР°СЂС‚Р°
 	local sobj = alife():object(npc:id())
 	if sobj and sobj:smart_terrain_id() ~= 65535 then
 		local smart = alife():object(sobj:smart_terrain_id())
@@ -1029,11 +1055,11 @@ function read_profile(npc, scheme, stor, section)
 			table.insert(pr,smart:name())
 		end
 	end
-	-- 4 активной схемы
+	-- 4 Р°РєС‚РёРІРЅРѕР№ СЃС…РµРјС‹
 	if scheme then
 		table.insert(pr,scheme)
 	end
-	-- 5 группировки
+	-- 5 РіСЂСѓРїРїРёСЂРѕРІРєРё
 	table.insert(pr,npc:character_community())
 	--
 	pr = rx_utils.collect_sections(cd_ini,pr,true)
@@ -1085,14 +1111,14 @@ function npc_death(npc,who)
 		return
 	end
 	local npc_id = npc:id()
-	-- запретить лут убитого
+	-- Р·Р°РїСЂРµС‚РёС‚СЊ Р»СѓС‚ СѓР±РёС‚РѕРіРѕ
 	local weapon = npc:active_item()
 	if weapon then
 		restricted[weapon:id()] = whodid
 	end
 	restricted[npc_id] = whodid
 	rx_ai.save_var(npc,"cd_restr",whodid)
-	-- при убийстве лутающего НПС, запретить его цель
+	-- РїСЂРё СѓР±РёР№СЃС‚РІРµ Р»СѓС‚Р°СЋС‰РµРіРѕ РќРџРЎ, Р·Р°РїСЂРµС‚РёС‚СЊ РµРіРѕ С†РµР»СЊ
 	local cd = db.storage[npc_id].corpse_detection
 	if cd and cd.target_id then
 		restricted[cd.target_id] = whodid
@@ -1111,10 +1137,10 @@ function actor_item_take(item)
 end
 
 function actor_net_spawn()
-	level.add_call(function() return device().precache_frame < 2 end,fill_restricted_by_anomaly)
+	--level.add_call(function() return device().precache_frame < 2 end,fill_restricted_by_anomaly)
 end
-
--- находит все предметы на уровне
+--[==[ --РќР°Рј СЌС‚Рѕ РЅРµ РЅСѓР¶РЅРѕ, РїРѕС‚РѕРјСѓ С‡С‚Рѕ СЃРёСЃС‚РµРјР° РѕР±С…РѕРґР° Р°РЅРѕРјР°Р»РёР№ СЃР°РјР° РёСЃРєР»СЋС‡РёС‚ С‚Р°РєРёРµ СЃРёС‚СѓР°С†РёРё, РЅРїСЃСѓ РїСЂРѕСЃС‚Рѕ Р·Р°РїСЂРµС‰РµРЅРѕ Р·Р°С…РѕРґРёС‚СЊ РІ Р°РЅРѕРјР°Р»РёРё, РјРµС‚РѕРґ npc:accessible(...) РЅРµ РїРѕР·РІРѕР»РёС‚.
+-- РЅР°С…РѕРґРёС‚ РІСЃРµ РїСЂРµРґРјРµС‚С‹ РЅР° СѓСЂРѕРІРЅРµ
 function fill_restricted_by_anomaly()
 	local sim,ggraph,is_anomaly = alife(),game_graph(),rx_utils.is_anomaly
 	local seobj,gv,vpos = sim.object,ggraph.vertex,level.vertex_position
@@ -1149,6 +1175,7 @@ function fill_restricted_by_anomaly()
 		end
 	end
 end
+--]==]
 
 function corpse_net_spawn(npc)
 	local whodid = rx_ai.get_var(npc,"cd_restr")

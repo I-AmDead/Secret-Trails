@@ -1,8 +1,7 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
+
 -- Movement manager
 -- Created by: Andrey Fidrya (Zmey), af@svitonline.com
-
-local debug = false
 
 local dist_walk =   10          -- < dist_run
 local dist_run  = 50 --2500
@@ -10,9 +9,7 @@ local dist_run  = 50 --2500
 local walk_min_time = 3000
 local run_min_time  = 2000
 
--- переключившись в состояние (бег, ходьба, спринт), не переключаться
--- в другое N ms
-local keep_state_min_time = 1500
+local keep_state_min_time = 1500 -- переключившись в состояние (бег, ходьба, спринт), не переключаться в другое N ms
 
 local default_wait_time      = 5000
 local default_state_standing = "guard"
@@ -287,6 +284,13 @@ function move_mgr:reset( path_walk, path_walk_info, path_look, path_look_info, t
     self.use_default_sound = use_default_sound
     self.object:patrol_path_make_inactual()
   end
+
+  if rx_ai.is_reset_protected_action(self.object) then
+--  	rx_utils.printf("move_mgr[%s] block activity of %s for %s ",self.object:character_name(),db.storage[self.object:id()].active_scheme,self.object:motivation_action_manager():current_action_id())
+  	self.setup_movement_postponed = true
+  	return
+  end
+
   self:setup_movement_by_patrol_path()
 end
 

@@ -1,0 +1,251 @@
+
+local DIST_TO_FLAME = 1
+local DIST_TO_ACTOR = 4 --2^2
+local ACTOR_STAND_TIME = 3000
+
+
+function attach(sm)
+	sm:subscribe({signal = "on_update", fun = this.on_actor_update, queued = true})
+end
+
+function bind_flame(obj)
+	obj:bind_object(flame_binder(obj))
+end
+
+function bind_light(obj)
+	obj:bind_object(campfire_binder(obj))
+end
+
+
+local start_stand_time  = time_global()
+local prev_actor_pos
+function on_actor_update()
+	ogse_signals.get_mgr():reschedule(math.random(1000, 1500))
+	if not prev_actor_pos then prev_actor_pos = db.actor:position() end
+	if prev_actor_pos:distance_to_sqr(db.actor:position()) > 0.01 then -- 0.1^2
+		start_stand_time = time_global()
+	end
+	prev_actor_pos = db.actor:position()
+end
+
+function stand_time()
+	return time_global() - start_stand_time
+end
+
+
+local flames, sheduled_flames, lights = {}, {}, {}
+
+function get_nearest_campfire( pos, radius )
+  local found = {}
+  for _, campfire in pairs( lights ) do
+    local pos2 = campfire.object:position()
+    if pos2:distance_to( pos ) < radius then
+      table.insert( found, campfire )
+    end
+  end
+  table.sort(
+    found,
+    function( a, b )
+      return pos:distance_to( a.object:position() ) < pos:distance_to( b.object:position() )
+    end
+  )
+  if table.getn( found ) > 0 then
+    return found[ 1 ]
+  end
+end
+
+function switch_light(light, ena)
+	local lamp = light:get_hanging_lamp()
+	if lamp == nil then	return end
+	if ena then
+		lamp:turn_on()
+	else
+		lamp:turn_off()			
+	end
+end
+
+function switch_flame(flame, ena)
+	if ena then
+		flame:enable_anomaly()
+	else
+		flame:disable_anomaly()			
+	end
+end
+
+function check_shedule(flame)
+	for k, t in pairs(sheduled_flames) do
+		if t.pos:distance_to_sqr(flame:position()) < DIST_TO_FLAME then
+			switch_flame(flame, ena)
+			sheduled_flames[k] = nil
+			return
+		end
+	end
+end
+
+function switch_flame_near_light(light, ena)
+	for _, campfire in pairs(flames) do
+		if campfire.object:position():distance_to_sqr(light:position()) < DIST_TO_FLAME then
+			switch_flame(campfire.object, ena)
+			return
+		end
+	end
+	
+	local t = sheduled_flames[light:name()]
+	if t == nil then
+		sheduled_flames[light:name()] = {}
+		t = sheduled_flames[light:name()]		
+	end
+	t.pos = light:position()
+	t.ena = ena
+end
+
+function play_particle_near_light(light, particle)
+	for _, campfire in pairs(flames) do
+		if campfire.object:position():distance_to_sqr(light:position()) < DIST_TO_FLAME then
+			particle:play_at_pos(campfire.object:position())
+			return
+		end
+	end
+	local pos = light:position()
+	pos.y = pos.y - 0.5
+	particle:play_at_pos(pos)	
+end
+
+
+--[[
+  типа конечный автомат:
+    next - переводит КА в следующее состояние
+	action - вызывается при переходе в данное состояние
+]]
+states = {
+	-- костер полностью погашен: аномалия отключена, лампа погашена, партиклы не играют
+	turn_off = {
+		next = function(has_users, now, prev)
+			if has_users then return states.firing
+			else return states.turn_off end
+		end,
+		action = function(self)
+			switch_flame_near_light(self.object, false)
+			if self.particle then self.particle:stop() end
+			switch_light(self.object, false)
+		end,
+	},
+	
+	-- костер горит на полную: аномалия включена, лампочка отключена (т.к. у аномалии в конфиге включено idle_light), партиклов нет
+	firing = {
+		next = function(has_users, now, prev)
+			if has_users or prev + 10000 > now then return states.firing
+			else return states.down end
+		end,
+		action = function(self)
+			switch_flame_near_light(self.object, true)
+			switch_light(self.object, false)
+			if self.particle then self.particle:stop() end
+		end,
+	},
+	
+	-- костер начинает гаснуть: аномалия еще включена, лампочка отключена (т.к. у аномалии в конфиге включено idle_light), включается партикл затухающего огня
+	down = {
+		next = function(has_users, now, prev)
+			if has_users then return states.firing
+			elseif prev + 5000 < now then return states.flame_off
+			else return states.down end
+		end,
+		action = function(self)
+			switch_flame_near_light(self.object, true)
+			switch_light(self.object, false)
+			if not self.particle then self.particle = particles_object("dyn_kfire\\dyingfire") end
+			play_particle_near_light(self.object, self.particle)
+		end,
+	},
+	
+	-- следующий этап угасания: отключается аномалия, включается лампочка (чтоб не было резкого затухания костра после отключения аномалии), партикл играется
+	flame_off = {
+		next = function(has_users, now, prev)
+			if has_users then return states.firing
+			elseif prev + 32000 < now then return states.turn_off
+			else return states.flame_off end
+		end,
+		action = function(self)
+			switch_flame_near_light(self.object, false)
+			switch_light(self.object, true)
+			if not self.particle then 
+				self.particle = particles_object("dyn_kfire\\dyingfire")
+				play_particle_near_light(self.object, self.particle)
+			end
+		end,
+	},
+}
+
+
+class "flame_binder" (object_binder)
+function flame_binder:__init(obj) super(obj)
+end
+
+function flame_binder:net_spawn()
+	flames[self.object:id()] = self
+	check_shedule(self.object)
+	return true
+end
+
+function flame_binder:net_destroy()
+	flames[self.object:id()] = nil
+end
+
+
+class "campfire_binder" (object_binder)
+function campfire_binder:__init(obj) super(obj)
+	self.state = states.turn_off
+	self.has_users = false --Этим управляет xr_kamp
+end
+
+function campfire_binder:net_spawn()
+	lights[self.object:id()] = self
+	return true
+end
+
+function campfire_binder:net_destroy()
+	lights[self.object:id()] = nil
+end
+
+function campfire_binder:check_actor()
+	return db.actor:alive() and self.object:position():distance_to_sqr(db.actor:position()) < DIST_TO_ACTOR and stand_time() > ACTOR_STAND_TIME
+end
+
+function campfire_binder:update(delta)
+	local time = time_global()
+	if self.scan_time == nil then
+		self.scan_time = time
+		self.state.action(self)
+		self.time = time
+	elseif self.scan_time < time then
+		local new_state = self.state.next(self.has_users or self:check_actor(), time, self.time)
+		ASSERT(new_state ~= nil, "new_state ~= nil")
+		if new_state ~= self.state then
+			new_state.action(self)
+			self.state = new_state
+			self.time = time
+		end		
+
+		self.scan_time = time + 5000
+	end
+end
+
+function campfire_binder:net_save_relevant()
+	return true
+end
+
+function campfire_binder:save(packet)
+	local state_name = nil
+	for k,v in pairs(states) do
+		if v == self.state then state_name = k end
+	end
+	ASSERT(state_name ~= nil, "state_name ~= nil")
+	packet:w_stringZ(state_name)
+end
+
+function campfire_binder:load(reader)
+	if reader:r_eof() then return end
+	self.state = states[reader:r_stringZ()]
+	ASSERT(self.state ~= nil, "self.state ~= nil")
+end

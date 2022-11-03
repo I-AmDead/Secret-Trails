@@ -38,27 +38,21 @@ function checking_use_item( obj, sobj )
   elseif obj:section()=="part8" and db.actor:has_info("semeckii_treasure_start") then
     db.actor:give_info_portion("semeckii_treasure_part8") alife():release(sobj)
 
-  elseif obj:section()=="money_gg" then db.actor:give_info_portion("delete_ggm") alife():release(sobj)
+  elseif obj:section()=="money_gg" then money_gg() alife():release(sobj)
 
-  elseif obj:section()=="money_ggg" then db.actor:give_info_portion("delete_gggm") alife():release(sobj)
+  elseif obj:section()=="money5" then money_5() alife():release(sobj)
 
-  elseif obj:section()=="money_gggg" then db.actor:give_info_portion("delete_ggggm") alife():release(sobj)
+  elseif obj:section()=="money10" then money_10() alife():release(sobj)
 
-  elseif obj:section()=="money_ggggg" then db.actor:give_info_portion("delete_gggggm") alife():release(sobj)
+  elseif obj:section()=="money15" then money_15() alife():release(sobj)
 
-  elseif obj:section()=="money5" then db.actor:give_info_portion("delete_5") alife():release(sobj)
+  elseif obj:section()=="money20" then money_20() alife():release(sobj)
 
-  elseif obj:section()=="money10" then db.actor:give_info_portion("delete_10") alife():release(sobj)
+  elseif obj:section()=="money25" then money_25() alife():release(sobj)
 
-  elseif obj:section()=="money15" then db.actor:give_info_portion("delete_15") alife():release(sobj)
+  elseif obj:section()=="money30" then money_30() alife():release(sobj)
 
-  elseif obj:section()=="money20" then db.actor:give_info_portion("delete_20") alife():release(sobj)
-
-  elseif obj:section()=="money25" then db.actor:give_info_portion("delete_25") alife():release(sobj)
-
-  elseif obj:section()=="money30" then db.actor:give_info_portion("delete_30") alife():release(sobj)
-
-  elseif obj:section()=="money50" then db.actor:give_info_portion("delete_50") alife():release(sobj)
+  elseif obj:section()=="money50" then money_50() alife():release(sobj)
 
   elseif level.name()=="predbannik" and db.actor:has_info("nato_enemy") and not has_alife_info("nato_zasada") then db.actor:give_info_portion("nato_zasada")
 
@@ -1031,7 +1025,7 @@ end
 
 function remove_spot3()
   for a, obj in alife():objects() do
-    if obj:name() == "aes_case33" then 
+    if obj:name() == "aes_case3" then 
       level.map_remove_object_spot(obj.id,"crlc_big")
       break
     end
@@ -2170,14 +2164,15 @@ end
 function new_logic()
   for a, obj in alife():objects() do
     if obj:name() == "agr_und_zombi" then
-      assing_cd_and_sid(
-        obj, "[logic]\ncfg = scripts\\new\\agr_und_zombi_new.ltx", 9810
-      )
+      alife():release(obj , true)
+      level.add_cam_effector( "camera_effects\\prison_1.anm", 25, false, "" )
+      level.add_pp_effector( "black.ppe", 2506, false, "" )
+      local sobj = alife():create( "agr_und_zombi", db.actor:position(),db.actor:level_vertex_id(),db.actor:game_vertex_id() )
+      sobj.custom_data = "[logic]\ncfg = scripts\\new\\agr_und_zombi_new.ltx"
+      alife():assign_story_id( sobj.id, 9810 )
       break
     end
   end
-  level.add_cam_effector( "camera_effects\\prison_1.anm", 25, false, "" )
-  level.add_pp_effector( "black.ppe", 2506, false, "" )   
 end
 
 function mayor_yarofeev_spawn()
@@ -2258,20 +2253,6 @@ function spawn_ammo_shilo()
   local sobj = alife():object( obj.id )
   alife():use_ai_locations(sobj, false)
 end
-
-function clear_shilo()
-  local npc,obj
-  for i=0,65534 do 
-    npc = level.object_by_id(i)
-    if npc and npc:name() == "esc_shilo_band" then
-      obj = alife():object(npc:id())  
-      clear_npc_inventory(npc)
-      alife():create("part6",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-      alife():create("wpn_ks23",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-      alife():create("money_ggg",obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id, obj.id)
-    end
-  end
-end	
 
 function clear_npc_inventory(npc)
   npc:iterate_inventory(__del_item, npc)

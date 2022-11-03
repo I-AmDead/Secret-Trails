@@ -276,7 +276,7 @@ function is_anomaly(o,c)
 end
 
 function is_story_object(game_obj)
-	return game_obj:story_id() < 4294967296
+	return game_obj:story_id() < 4294967295
 end
 
 function init_clsid()
@@ -343,36 +343,6 @@ function get_sound(snd)
 		return xr_sound.get_safe_sound_object(snd)
 	end
 end
---------------------------------------net------------------------------------------
-function get_weapon_data(sobj)
-	return m_net_utils.get_weapon_data(sobj)
---	return get_netpk(sobj,1):get()
-end
-
-function set_weapon_data(t,sobj)
-	m_net_utils.set_weapon_data(t,sobj)
---	get_netpk(sobj,1):set(t)
-end
-
-function get_weapon_full_data(sobj)
-	return m_net_utils.get_weapon_full_data(sobj)
---	return get_netpk(sobj):get()
-end
-
-function set_weapon_full_data(t,sobj)
-	m_net_utils.set_weapon_full_data(t,sobj)
---	get_netpk(sobj):set(t)
-end
-
-function get_weapon_w_gl_full_data(sobj)
-	return m_net_utils.get_weapon_w_gl_full_data(sobj)
---	return get_netpk(sobj):get()
-end
-
-function set_weapon_w_gl_full_data(t,sobj)
-	m_net_utils.set_weapon_w_gl_full_data(t,sobj)
---	get_netpk(sobj):set(t)
-end
 
 --------------------------------------weapon---------------------------------------
 
@@ -389,42 +359,14 @@ function get_weapon(npc)
 end
 
 function get_ammo_type(wpn,id)
-	return get_weapon_data(alife():object(id or wpn:id())).ammo_type or 0
+	return alife():object(id or wpn:id()):get_weapon().ammo_type
 end
---[[
-function in_grenade_mode(wpn)
-	local pak = get_weapon_w_gl_full_data(alife():object(wpn:id()))
-	if bit_and(pak.addon_flags,2) == 2 then
-		return (pak.updgrenade_mode or pak.upd and pak.upd.grenade_mode or 0) ~= 0
-	end
-	return false
-end]]
 
-EWeaponStates = {
-	eIdle		= 0,
-	eFire		= 1,
-	eFire2		= 2,
-	eReload		= 3,
-	eShowing	= 4,
-	eHiding		= 5,
-	eHidden		= 6,
-	eMisfire	= 7,
-	eMagEmpty	= 8,
-	eSwitch		= 9,
-}
-function get_weapon_state(wpn,id)
---	return get_weapon_data(alife():object(id or wpn:id())).weapon_state
 
-	-- ïîëó÷èì ñîñòîÿíèå ïðèöåëèâàíèÿ
-	local swpn = alife():object(id or wpn:id())
-	if swpn then
-		local sp = net_packet()
-		sp:w_begin(0)
-		swpn:STATE_Write(sp)
-		local size = sp:w_tell()
-		sp:r_seek(size-3)
-		return sp:r_u8()
-	end
+EWeaponStates = _G["global_flags"] --Ð²Ð¾Ð·ÑŒÐ¼ÐµÐ¼ ÑÑ‚Ð¸ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð¸Ð· Ð´Ð²Ð¸Ð¶ÐºÐ°.
+
+function get_weapon_state(wpn)
+	return wpn:get_hud_item_state()
 end
 
 function get_mag_size(section)
@@ -453,7 +395,7 @@ function get_addon_flag(wpn,with_int)
 	local flag = 0
 	local sobj = alife():object(wpn:id())
 	if sobj then
-		flag = get_weapon_data(sobj).addon_flags or 0
+		flag = sobj:get_weapon().addon_flags:get()
 	end
 	if with_int then
 		if get_addon_status(wpn,"sc") == 1 then
@@ -655,14 +597,14 @@ function ABORT(s,...)
 	printf("rx_utils.abort: "..s,...)
 	sys_ini:r_bool("___aborting","a")
 end
-_G['ABORTX'] = ABORT
+
 
 function ASSERT(o,s,...)
 	if not o then
 		ABORT(s,...)
 	end
 end
-_G['ASSERTX'] = ASSERT
+
 
 function print_table(t,name)
 	local print_r_cache={}

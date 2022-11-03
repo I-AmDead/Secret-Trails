@@ -1,0 +1,162 @@
+
+--' Смотрим ли мы сейчас туда, куда нужно или нет?
+class "eva_state_mgr_direction" (property_evaluator)
+function eva_state_mgr_direction:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_direction:evaluate()
+    local st,sight_type = self.st,self.object:sight_params()
+
+	-- Если задан объект на который смотреть
+	if st.look_object ~= nil then
+		if sight_type.m_object == nil or
+           sight_type.m_object:id() ~= st.look_object or
+		   st.point_obj_dir ~= st.look_object_type
+		then
+			return false
+		end
+		self:callback()
+		return true
+	elseif sight_type.m_object ~= nil then
+		return false
+	end
+
+	--' Если мы смотрели не так как надо
+	if sight_type.m_sight_type ~= st.look_position_type then
+		return false
+	end
+
+	-- Если задана позиция в которую смотреть
+	if st.look_position ~= nil then
+		local dir = vector():sub(st.look_position, self.object:position())
+		if st.look_object_type == true then
+			dir.y = 0
+		end
+		if sight_type.m_vector:similar(dir,st.look_dir_acc or 0.02) ~= 1 then
+            return false
+        end
+		self:callback()
+		return true
+	end
+
+	-- Если не задано куда смотреть.
+	self:callback()
+	return true
+end
+function eva_state_mgr_direction:callback()
+	local cb = self.st.callback
+	if cb ~= nil and cb.turn_end_func ~= nil then
+		local func,obj = cb.turn_end_func,cb.obj
+		cb.turn_end_func = nil
+		func(obj)
+	end
+end
+
+class "eva_state_mgr_direction_search" (property_evaluator)
+function eva_state_mgr_direction_search:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_direction_search:evaluate()
+	if self.st.look_position ~= nil or self.st.look_object ~= nil then
+		return false
+	end
+	return true
+end
+
+--' Поворачиваемся ли мы сейчас
+class "eva_state_mgr_direction_turning" (property_evaluator)
+function eva_state_mgr_direction_turning:__init(name, st) super (nil, name)
+	self.st = st
+end
+function eva_state_mgr_direction_turning:evaluate()
+	return self.object:is_body_turning()
+	and self.st.look_position_type ~= look.path_dir	-- не лочимся для движения, так как не всегда поворачивает в сторону будущего движения
+end
+
+
+
+--' Включаем поворот
+class "act_state_mgr_direction_turn" (action_base)
+function act_state_mgr_direction_turn:__init(name, st) super (nil, name)
+	self.st = st
+end
+function act_state_mgr_direction_turn:execute()
+	action_base.execute(self)
+	self:turn()
+end
+function act_state_mgr_direction_turn:turn()
+	self.st.point_obj_dir = self.st.look_object_type
+	local obj = self.st.look_object and level.object_by_id(self.st.look_object)
+	if obj then
+		if self.st.point_obj_dir == true then
+			self.object:set_sight(obj,true, false, true)
+		else
+			self.object:set_sight(obj,true, true)
+		end
+	elseif self.st.look_position ~= nil then
+		local dir = vector():sub(self.st.look_position, self.object:position())
+		if self.st.point_obj_dir == true then
+			dir.y = 0
+		end
+		self.object:set_sight(self.st.look_position_type, dir, true)
+	end
+end
+
+
+--' Включаем поворот в никуда
+class "act_state_mgr_direction_search" (action_base)
+function act_state_mgr_direction_search:__init(name, st) super (nil, name)
+	self.st = st
+end
+function act_state_mgr_direction_search:execute()
+	action_base.execute(self)
+	self:turn()
+end
+function act_state_mgr_direction_search:turn()
+	self.object:set_sight(self.st.look_position_type, nil, 0)
+end
+
+
+local look_direction_states = {
+	threat = true,
+	threat_na = true,
+	wait_na = true,
+	guard_na = true,
+}
+
+function look_object_type(st)
+	--' Возвращает true  если нужно смотреть по направлению
+	--' false - нужно смотреть на объект
+    --' Задан тип смотрения
+	if look_direction_states[st.target_state] ~= nil then
+		return look_direction_states[st.target_state]
+	end
+	local state = state_lib.states[st.target_state]
+	if state.look_direction ~= nil then
+		return state.look_direction
+	end
+    --' Для анимации true
+	return state.animation ~= nil
+end
+
+function look_position_type(st)
+
+    --' Задан тип смотрения
+	local state = state_lib.states[st.target_state]
+    if state.direction then
+		return state.direction
+    end
+
+    --' Смотрим в позицию
+    if st.look_position ~= nil then
+         return look.direction
+    end
+
+    --' Для движения
+	if state.movement ~= move.stand then
+        return look.path_dir
+    end
+	
+    --' Для стояния
+    return look.danger
+end

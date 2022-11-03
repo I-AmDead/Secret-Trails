@@ -287,10 +287,14 @@ end
 function action_bandage:death_callback()
 	if self.animst > 1 and self.st.medkit then
 		local npc = self.object
-		local obj = alife():create(self.st.medkit,npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
-		local data = xrs_utils.get_item_data(obj)
-		data.oflags = bit_and(data.oflags,bit_not(128))	-- flUsedAI_Locations
-		xrs_utils.set_item_data(data,obj)
+		local sobj = alife():create(self.st.medkit,npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
+
+		local pk = get_netpk( sobj, 1 )
+		ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+		local data = pk:get()
+		data.object_flags = bit_and( data.object_flags, bit_not( object_flags.UsedAI_Locations ) )
+		pk:set( data )
+
 		local ban = npc:object(self.st.medkit)
 		if ban then
 			table.insert(rx_ai.ids_to_remove,ban:id())

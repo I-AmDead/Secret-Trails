@@ -1,0 +1,31 @@
+--[[
+ Shoker Weapon Mod 2.1 port, modified by Wang_Laoshi (Ethereal) to work with Anomaly mod. Thanks a lot to the original creators of this mod - Shoker, РикошеТ and SWM Team in general.
+--]]
+
+LegsTbl = {}
+
+class "se_legs" (cse_alife_monster_base)
+
+function se_legs:__init (section) super (section)
+	--
+end
+
+function se_legs:can_switch_offline()
+	return false
+end
+
+function se_legs:can_switch_online()
+	return true
+end
+
+function se_legs:on_register()
+	cse_alife_monster_base.on_register( self )
+	local level_name = alife():level_name(game_graph():vertex(self.m_game_vertex_id):level_id())
+	LegsTbl[level_name] = self.id
+end
+
+function se_legs:on_unregister()
+	local level_name = alife():level_name(game_graph():vertex(self.m_game_vertex_id):level_id())
+	LegsTbl[level_name] = nil
+	cse_alife_monster_base.on_unregister(self)
+end

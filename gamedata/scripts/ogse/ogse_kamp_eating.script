@@ -1,0 +1,65 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+------------------------------------------------
+----- Скрипт определения разрешения
+----- есть пить и курить
+----- по визуалу непися, OGSE мод,
+----- автор KamikaZze
+----- ибо нефиг жевать колбасу противогазом
+------------------------------------------------
+
+local forbidden = {
+	"nauch",
+	"ecolog",
+	"exo",
+	"militari",
+	"military",
+	"gas",
+	"gaz",
+	"protect",
+	"nebo",
+	"stalker_sv_heavy",
+	"stalker_sv_hood_9",
+	"stalker_sv_hood_91",
+	"stalker_sv_rukzak_3",
+	"stalker_sv_rukzak_3_1",
+	"stalker_do_antigas",
+	"stalker_do_balon_80",
+	"stalker_do_mask",
+	"stalker_mo_hood_9",
+	"stalker_ki_head_1",
+	"sidor_guard",
+	"stalker_2_ochki",
+	"stalker_4_rozh3",
+	"stalker_4_ochki",
+	"stalker_bar_security",
+	"stalker_neytral_balon_7",
+	"stalker_neytral_heavy",
+	"stalker_neytral_hood_7",
+	"stalker_neytral_hood_8",
+	"stalker_neytral_hood_9",
+	"stalker_neytral_rukzak_7",
+	"green_stalker_5",
+	"npc_duplet",
+	"npc_kruglov",
+	"npc_semenov",
+	"brat5",
+	"fashist",
+	"frits",
+}
+
+local cached = {}
+function can_eat( npc )
+  if cached[ npc:profile_name() ] == nil then
+    local vis = table.remove( string.explode( "\\", npc:get_visual_name() ) )
+    local can = true
+    for _, k in ipairs( forbidden ) do
+      if string.find( vis, k ) then
+        can = false
+        break
+      end
+    end
+    cached[ npc:profile_name() ] = can
+  end
+  return cached[ npc:profile_name() ]
+end

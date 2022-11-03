@@ -1,3 +1,5 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
 function allow_break_dialog(first_speaker, second_speaker, id)
 	if second_speaker:profile_name() == "osoznanie" then
 		return false
@@ -67,22 +69,64 @@ function transfer_medkit(first_speaker, second_speaker)
 		dialogs.relocate_item_section(second_speaker, "medkit_scientic", "out")
 	end
 
+	local obj_community = second_speaker:character_community()
 	--' Тут надо анлочить аптечку для использования.
 	xr_wounded.unlock_medkit(second_speaker)
 	
-	if second_speaker:relation(first_speaker) ~= game_object.enemy then
+	--' Добрые дела искупают прошлые грехи
+	local dead_friends = tonumber(ogse.load_variable("dead_fr", 0))
+	if dead_friends > 0 then 
+		dead_friends = dead_friends - 1
+		ogse.save_variable("dead_fr", dead_friends)	
+	end
+	
+	if second_speaker:relation(first_speaker) == game_object.enemy then
+		local rand = math.random()
+		if obj_community == "monolith" then
+			first_speaker:change_character_reputation(-25)
+			if rand < 0.1 then
+				-- друг
+				make_relationship_with_actor("friend", second_speaker, first_speaker)
+			elseif rand >= 0.1 and rand < 0.15 then
+				-- нейтрал
+				make_relationship_with_actor("neutral", second_speaker, first_speaker)
+			end
+		elseif obj_community == "zombied" then
+			make_relationship_with_actor("neutral", second_speaker, first_speaker)			
+		else
+			first_speaker:change_character_reputation(-10)
+			if rand < 0.35 then
+				-- друг
+				make_relationship_with_actor("friend", second_speaker, first_speaker)
+			elseif rand >= 0.35 and rand < 0.55 then
+				-- нейтрал
+				make_relationship_with_actor("neutral", second_speaker, first_speaker)		
+			end
+		end
+
+		second_speaker:set_character_community(actor_to_stalker_comms[first_speaker:character_community()] or first_speaker:character_community())
+		second_speaker:remove_memory_object( first_speaker )
+		ogse.reset_npc_logic( second_speaker )
+		xr_gulag.resetJob( second_speaker )
+		local sobj = alife():object( second_speaker:id() )
+		if sobj then
+			sobj.custom_data = ""
+			smart_terrain.unregister_npc( sobj )
+			dsh.clear_smart_terrain_conditions( sobj )
+			sobj:brain():can_choose_alife_tasks( true )
+			sobj:brain():update()
+		end
+
+	elseif second_speaker:relation(first_speaker) == game_object.neutral then
+		first_speaker:change_character_reputation(25)
+		make_relationship_with_actor("friend", second_speaker, first_speaker)	
+	elseif second_speaker:relation(first_speaker) == game_object.friend then
 		first_speaker:change_character_reputation(10)
-		second_speaker:set_relation(game_object.friend, first_speaker)
-	else
-		first_speaker:change_character_reputation(10)
-	    if db.actor:character_community()=="monolith" then
-            braad_test.help_wounded_mono(second_speaker)
-        else	
-		   xr_wounded.help_wounded(second_speaker)
-	    end
-    end
+		make_relationship_with_actor("friend", second_speaker, first_speaker)
+	end
 
 end
+
 function transfer_bandage(first_speaker, second_speaker)
 	dialogs.relocate_item_section(second_speaker, "bandage", "out")
 	second_speaker:set_relation(game_object.friend, first_speaker)
@@ -104,27 +148,20 @@ function relocate_item(victim, obj, type)
 	end
 end
 --' Use this function instead.
-function relocate_item_section(victim, section, type)
-	if db.actor and victim then
-		if type == "in" then
-
-			--' Трансферить нужно только квестовые предметы.
-			if quest_section[section] == true and
-			   victim:object(section) ~= nil 
-			then
-				victim:transfer_item(victim:object(section), db.actor)
-			else
-				alife():create(section,	
-					    db.actor:position(),
-						db.actor:level_vertex_id(),	
-						db.actor:game_vertex_id(),
-						db.actor:id())
-			end
-		elseif type == "out" then
-			db.actor:transfer_item(db.actor:object(section), victim)
-		end
-		news_manager.relocate_item(db.actor, type, section)
-	end
+function relocate_item_section( victim, section, type, n )
+  n = n or 1
+  if db.actor and victim then
+    if type == "in" then
+      for i = 1, n do
+        ogse.spawn_item_in_inv( section )
+      end
+      news_manager.relocate_item( db.actor, type, section )
+    elseif type == "out" then
+      amk_utils.out_items_number({
+        [ section ] = n,
+      })
+    end
+  end
 end
 
 
@@ -145,11 +182,11 @@ end
 --' DIALOG ALLOWED
 --'---------------------------------------------------------------------------------
 function dialog_allowed(object, victim, id)
-	if id ~= nil then
---		printf("*DIALOGS*: dialog_allowed: %s", id)
-	else
---		printf("*DIALOGS*: dialog_allowed: nil")
-	end
+	--if id ~= nil then
+--		log1("*DIALOGS*: dialog_allowed: %s", id)
+	--else
+--		log1("*DIALOGS*: dialog_allowed: nil")
+	--end
 	if db.storage[victim:id()].actor_dialogs ~= nil then
 		for k,v in pairs(db.storage[victim:id()].actor_dialogs) do
 			if v == id then return true end
@@ -158,11 +195,11 @@ function dialog_allowed(object, victim, id)
 	return false
 end
 function dialog_not_disable(object, victim, id)
-	if id ~= nil then
---		printf("*DIALOGS*: dialog_disable:%s", id)
-	else
---		printf("*DIALOGS*: dialog_disable:nil")
-	end
+	--if id ~= nil then
+--		log1("*DIALOGS*: dialog_disable:%s", id)
+	--else
+--		log1("*DIALOGS*: dialog_disable:nil")
+	--end
 	if db.storage[victim:id()].actor_disable ~= nil then
 		for k,v in pairs(db.storage[victim:id()].actor_disable) do
 			if v == id then return false end
@@ -233,7 +270,6 @@ function actor_not_in_dolg(actor, npc)
 	return not actor_in_dolg(actor, npc)
 end
 function actor_set_dolg(actor, npc)
-	printf("ACTOR NOW IN [DOLG] COMMUNITY")
 	if db.actor then
 		db.actor:set_character_community("actor_dolg", 0, 0)
 	end
@@ -247,7 +283,6 @@ function actor_set_monolith(actor, npc)
 	return true
 end
 function actor_clear_community(actor, npc)
-	printf("ACTOR NOW IN [NEUTRAL] COMMUNITY")
 	if db.actor then
 		db.actor:set_character_community("actor", 0, 0)
 	end

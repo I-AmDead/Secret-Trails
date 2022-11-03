@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------------------------
---'	Схема помощи раненым
---'	автор: Диденко Руслан (Stohe)
+--'	РЎС…РµРјР° РїРѕРјРѕС‰Рё СЂР°РЅРµРЅС‹Рј
+--'	Р°РІС‚РѕСЂ: Р”РёРґРµРЅРєРѕ Р СѓСЃР»Р°РЅ (Stohe)
 --'	AI Additions
 --'	Rulix aka Bak
 ----------------------------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ function action_help_wounded:initialize()
 			state_mgr.set_state(npc,"walk")
 		end
 	end
-	-- ищем аптечку
+	-- РёС‰РµРј Р°РїС‚РµС‡РєСѓ
 	local torch = npc:object("device_torch")
 	if not (torch and torch:attachable_item_enabled()) then
 		for _,s in ipairs(attchlist) do
@@ -193,7 +193,7 @@ function action_help_wounded:execute()
 		end
 	else
 		self.attach = true
-		local d	-- раненый решил куда-то смотаться
+		local d	-- СЂР°РЅРµРЅС‹Р№ СЂРµС€РёР» РєСѓРґР°-С‚Рѕ СЃРјРѕС‚Р°С‚СЊСЃСЏ
 		if not patient:wounded() and npc:accessible(patient:level_vertex_id()) then
 			self.a.vertex_id = patient:level_vertex_id()
 			self.a.vertex_position = level.vertex_position(self.a.vertex_id)
@@ -258,10 +258,13 @@ function action_help_wounded:death_callback()
 		local item = npc:object(self.medkit)
 		if item then
 			table.insert(rx_ai.ids_to_remove,item:id())
-			local obj = alife():create(self.medkit,npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
-			local data = xrs_utils.get_item_data(obj)
-			data.oflags = bit_and(data.oflags,bit_not(128))	-- flUsedAI_Locations
-			xrs_utils.set_item_data(data,obj)
+			local sobj = alife():create(self.medkit,npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
+
+			local pk = get_netpk( sobj, 1 )
+			ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+			local data = pk:get()
+			data.object_flags = bit_and( data.object_flags, bit_not( object_flags.UsedAI_Locations ) )
+			pk:set( data )
 		end
 	end
 end
@@ -280,14 +283,14 @@ function help_wounded(npc)
 	end
 	local medlist = {"medkit","medkit_army","medkit_scientic"}
 	local medkit
-	-- ищем аптечку у пациента
+	-- РёС‰РµРј Р°РїС‚РµС‡РєСѓ Сѓ РїР°С†РёРµРЅС‚Р°
 	for k,v in ipairs(medlist) do
 		medkit = selected_npc:object(v)
 		if medkit then
 			break
 		end
 	end
-	-- ищем аптечку у лекаря
+	-- РёС‰РµРј Р°РїС‚РµС‡РєСѓ Сѓ Р»РµРєР°СЂСЏ
 	if not medkit then
 		for k,v in ipairs(medlist) do
 			medkit = npc:object(v)
@@ -297,7 +300,7 @@ function help_wounded(npc)
 			end
 		end
 	end
-	-- создаём новую аптечку
+	-- СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ Р°РїС‚РµС‡РєСѓ
 	if not medkit then
 		local sec = "medkit"
 		local bst = db.storage[selected_id].bandage
@@ -358,6 +361,11 @@ function add_to_binder(npc, char_ini, scheme, section, st)
 		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
 --		action:add_precondition(world_property(xrs_grenade.evid_psyh,false))
 	end
+
+	if xr_combat_companion then
+		action:add_precondition(world_property(xr_combat_companion.prop_combat,false))	
+	end
+
 	action:add_precondition		(world_property(evid_wounded_exist,	true))
 	action:add_effect (world_property(evid_wounded_exist, 			false))
 	manager:add_action (actid_wounded_exist, action)

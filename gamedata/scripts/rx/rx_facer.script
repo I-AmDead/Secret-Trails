@@ -160,7 +160,7 @@ function action_facer:execute()
 			end
 		end
 	elseif self.hit_time < tg then
-		local spos,tpos = npc:bone_position("bip01_neck"),target:bone_position("bip01_neck")
+		local spos, tpos = npc:bone_position("bip01_neck"), target:bone_position(get_string(target:section(), "bone_head", "bip01_head"))
 		local ysub = spos.y - tpos.y
 		local cls,bone = target:clsid()
 		if IsStalker(nil,cls) then
@@ -207,6 +207,9 @@ function action_facer:execute()
 				end
 			end
 			local hi = hit()
+			if target:get_bone_id( bone ) == 65535 then
+				bone = get_string(target:section(), "bone_head", "bip01_head")
+			end
 			hi:bone(bone)
 			hi.type = hit.strike
 			hi.power = power/math.random(70,120)
@@ -400,7 +403,7 @@ end
 function test_kill(who_id,npc)
 	local who = level.object_by_id(who_id)
 	local hi = hit()
-	hi:bone("bip01_head")
+	hi:bone(get_string(npc:section(), "bone_head", "bip01_head"))
 	hi.type = hit.strike
 	hi.power = 1000
 	hi.impulse = 100
