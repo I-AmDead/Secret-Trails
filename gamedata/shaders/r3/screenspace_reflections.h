@@ -1,13 +1,15 @@
 /**
- * @ Version: SCREEN SPACE SHADERS - UPDATE 11.3
+ * @ Version: SCREEN SPACE SHADERS - UPDATE 12
  * @ Description: SSR implementation
- * @ Modified time: 2022-09-27 09:39
+ * @ Modified time: 2022-10-28 09:14
  * @ Author: https://www.moddb.com/members/ascii1457
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
 #include "screenspace_common.h"
+#include "settings_screenspace_SSR.h"
 
+uniform float4 rain_params;
 static const int2 q_ssr_steps[6] =
 {
 	int2(8,200),
@@ -47,8 +49,16 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 	for (int i = 0; i < q_ssr_steps[G_SSR_QUALITY].x; i++)
 	{
 		// Ray out of screen...
-		if (!SSFX_is_valid_uv(ssr_ray.r_pos))
+		if (!(ssr_ray.r_pos.y >= 0.0f && ssr_ray.r_pos.y <= 1.0f))
 			return 0;
+
+		// Trick for the horizontal out of bounds. Mirror border of the screen.
+		if (ssr_ray.r_pos.x < 0.0f || ssr_ray.r_pos.x > 1.0f)
+		{
+			ssr_ray.r_pos -= ssr_ray.r_step; // Step back
+			ssr_ray.r_step.x = -ssr_ray.r_step.x; // Invert Horizontal
+			ssr_ray.r_pos += ssr_ray.r_step; // Step
+		} 
 
 		// Ray intersect check
 		float2 ray_check = SSFX_ray_intersect(ssr_ray, iSample);
@@ -118,8 +128,8 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	
 	// Material conditions ( MAT_FLORA and Terrain for now... )
 	bool m_terrain = abs(P.w - 0.95f) <= 0.02f;
-	bool m_flora = abs(P.w - 6.0) <= 0.02f;
-
+	bool m_flora = abs(P.w - MAT_FLORA) <= 0.02f;
+	
 	// Let's start with pure gloss.
 	float refl_power = gloss;
 	
@@ -128,25 +138,25 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	float3 reVec = reflect(inVec , N); // Reflected
 
 	// Transform space and calc reflection vector ( Skybox & Fresnel )
-	float3 nw		 = mul(m_v2w, N);
-	float3 v2point	 = mul(m_v2w, inVec);
+	float3 nw		 = mul(m_inv_V, N);
+	float3 v2point	 = mul(m_inv_V, inVec);
 	float3 v2reflect = reflect(v2point, nw);
-	
+
 	// Fresnel
 	float fresnel = saturate (dot(v2reflect, v2point));
 	float fresnel_amount = pow(fresnel, 3);
 	refl_power *= fresnel_amount;
-	
+
 	float4 hit_uv = 0;
 
 	// Calc SSR ray. Discard low reflective pixels
 	if (refl_power > 0.02f)
 		hit_uv = SSFX_ssr_fast_ray(P.xyz, reVec, tc, iSample);
-	
+
 	float3 refl_ray;
 	float3 reflection = 0;
 	float2 uvcoor = 0;
-	
+
 	// Sky is the reflection base...
 #ifdef G_SSR_CHEAP_SKYBOX
 	reflection = SSFX_calc_env(v2reflect) * G_SSR_SKY_INTENSITY;
@@ -164,7 +174,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 		uvcoor = hit_uv.xy;
 
 		// Let's fade the reflection based on ray XY coor to avoid abrupt changes and glitches
-		float HitFade = SSFX_calc_SSR_fade(hit_uv.xy, 0.0f, G_SSR_SCREENFADE);
+		float HitFade = saturate(hit_uv.xy * G_SSR_VERTICAL_SCREENFADE);
 
 		// Mix base reflection ( skybox ) with ray reflection
 		reflection = lerp(reflection, refl_ray, HitFade);
@@ -179,7 +189,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	}
 
 	// Fade sky if !skyalways ( Terrain MAT )
-	float ray_fade = saturate(SSFX_calc_SSR_fade(uvcoor, 0.0f, G_SSR_SCREENFADE) + 1.0f * m_terrain);
+	float ray_fade = saturate(saturate(uvcoor * G_SSR_VERTICAL_SCREENFADE) + 1.0f * m_terrain);
 
 	// Adjust the intensity of MAT_FLORA
 	refl_power *= saturate(G_SSR_FLORA_INTENSITY + 1.0f * !m_flora);
@@ -208,7 +218,11 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 
 	// Apply SSR fade to reflection.
 	refl_power *= ray_fade;
-	
+
+	// 'Beefs Shader Based NVGs' optional intensity adjustment
+#ifdef G_SSR_BEEFS_NVGs_ADJUSTMENT
+	refl_power *= saturate(1.0f - (1.0f - G_SSR_BEEFS_NVGs_ADJUSTMENT) * (shader_param_8.x > 0.0f));
+#endif
 
 	// Add the reflection to the scene.
 	color = lerp(color, reflection, refl_power);

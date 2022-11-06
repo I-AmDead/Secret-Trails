@@ -22,7 +22,11 @@ struct vf
     float3 M2 : TEXCOORD4;
     float3 M3 : TEXCOORD5;
     float3 v2point_w : TEXCOORD6;
+#ifdef USE_SOFT_WATER
+#ifdef NEED_SOFT_WATER
     float4 tctexgen : TEXCOORD7;
+#endif //	USE_SOFT_WATER
+#endif //	NEED_SOFT_WATER
     float4 c0 : COLOR0;
     float4 c1 : COLOR1;
     float fog : FOG;
@@ -87,10 +91,12 @@ vf main(v_vert v)
     o.c1 = float4(L_final, 1.h);
 
 //	Igor: for additional depth dest
-
+#ifdef USE_SOFT_WATER
+#ifdef NEED_SOFT_WATER
     o.tctexgen = mul(m_texgen, P);
     float3 Pe = mul(m_V, P);
     o.tctexgen.z = Pe.z;
-	
+#endif //	USE_SOFT_WATER
+#endif //	NEED_SOFT_WATER
     return o;
 }

@@ -7,6 +7,7 @@
  */
 
 #include "screenspace_common.h"
+#include "settings_screenspace_SSS.h"
 
 float SSFX_ScreenSpaceShadows(float4 P, float2 tc, uint iSample)
 {
@@ -14,24 +15,33 @@ float SSFX_ScreenSpaceShadows(float4 P, float2 tc, uint iSample)
 	float3 L_dir = mul(m_V, float4(-normalize(L_sun_dir_w), 0)).xyz;
 
 	// Material conditions...
-	//bool mat_flora = abs(P.w - MAT_FLORA) <= 0.02f;
+	bool mat_flora = abs(P.w - MAT_FLORA) <= 0.02f;
 	bool mat_terrain = abs(P.w - 0.95f) <= 0.02f;
 
-	// Weapons mask. Depth below or equal to G_SSDO_WEAPON_LENGTH
-	bool weapon_mask = P.z >= G_SSDO_WEAPON_LENGTH;
+	// Weapons mask. Depth below or equal to 1.2
+	bool weapon_mask = P.z >= 1.2f;
 
-	if (weapon_mask)
-		return 1.0;
-	
 	// Weapon Factor.
 	float pLen = length(P.z);
 	float wpn_f = smoothstep(G_SSDO_WEAPON_LENGTH * 0.75f, G_SSDO_WEAPON_LENGTH, pLen);
 
+	//wpn_f = saturate(wpn_f + mat_terrain);
+	
 	// Adjust Settings for weapons and scene.
-	float ray_hardness	= 10.0f * G_SSDO_WEAPON_HARDNESS * (1.0 - wpn_f);
+	float ray_hardness	= lerp(10.0f * G_SSDO_WEAPON_HARDNESS, 15.0f * G_SSDO_SCENARY_HARDNESS, wpn_f);
 	float ray_detail	= clamp(pLen * 0.003f, G_SSS_DETAILS, 10);
 	float ray_thick		= (0.3f - wpn_f * 0.23f) + (pLen * 0.001f * wpn_f);
-	float ray_len		= G_SSDO_WEAPON_SHADOW_LENGTH * (1.0 - wpn_f);
+	float ray_len		= lerp(G_SSDO_WEAPON_SHADOW_LENGTH, G_SSDO_SCENARY_SHADOW_LENGTH, wpn_f);
+
+	// Grass overwrite. ( Sadly some weapons use MAT_FLORA, let's remove low depth values from the overwrite )
+	if (mat_flora && weapon_mask)
+	{
+		ray_hardness = G_SSDO_GRASS_HARDNESS * 5.0f;
+		ray_len = G_SSDO_GRASS_SHADOW_LENGTH;
+	}
+
+	if (ray_hardness <= 0)
+		return 1.0f;
 
 	RayTrace sss_ray = SSFX_ray_init(P, L_dir, ray_len, G_SSS_STEPS, SSFX_noise(tc));
 
