@@ -201,6 +201,7 @@ function motivator_binder:clear_callbacks()
   self.object:set_callback(callback.death, nil)
   self.object:set_callback(callback.on_item_drop, nil)
   self.object:set_callback(callback.on_item_take, nil)
+  self.object:set_enemy_callback()
 end
 
 function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_index)
@@ -495,6 +496,49 @@ function motivator_binder:on_item_take(obj)
     "on_npc_item_take." .. self.object:id(), self.object, obj, sobj
   )
 end
+
+--Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
+--Если вернёт false - объект не будет вступать в бой.
+--Вызывается:
+--Одноименным калбеком из движка (для движковой боёвки)
+--Из xr_danger
+--Из xr_camper.action_patrol:process_danger()
+--Из функции check_sound в мотиваторе
+local enemy_callback_freq = 1000
+function motivator_binder:enemy_callback( obj, enemy_st )
+  local valid, enemy = validate_enemy_object( enemy_st )
+  if not valid then return false end
+
+  local res, ttl, t
+  local cached = self[ "xr_motivator.cached" ]
+  if cached then
+    t = cached[ enemy:id() ]
+	if t then
+      res, ttl = unpack( t )
+    end
+  end
+  if res == nil or ttl < time_global() then
+    --log3("~~[%s] Called add_cache_rec for [%s], [%s]", script_name(), self.object:name(), enemy:name())
+    local result = {}
+    self.am:call( "on_npc_enemy_callback", self.object, enemy, result )
+    res = result[1] ~= false
+    if cached then
+	--
+      if t then
+        t[ 1 ] = res
+        t[ 2 ] = time_global() + enemy_callback_freq
+      else
+        cached[ enemy:id() ] = { res, time_global() + enemy_callback_freq }
+      end
+    else
+      self[ script_name() .. ".cached" ] = {
+        [ enemy:id() ] = { res, time_global() + enemy_callback_freq }
+      }
+    end
+  end
+  return res
+end
+
 
 function AddToMotivator(npc)
   if alife() then

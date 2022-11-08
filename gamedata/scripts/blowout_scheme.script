@@ -561,37 +561,11 @@ function add_to_binder(object, char_ini, scheme, section, st)
 end
 
 
--- Задаем список неписей с игнором на выброс (например постовых,
--- которые уже находятся в зоне укрытия и могут спокойно выполнять
--- свою работу во время выброса)
-local npcNameBlowoutIgnore = {
-  [ "agr_ratcatcher" ]        = true, -- Дезертир
-  ["bar_bar_guard"]           = true, --Гарик в баре
-  ["bar_bar_guard_2"]         = true, --Жорик в баре
-  ["bar_bar_osvedomitel"]     = true, --Информатор в баре
-  ["mil_freedom_member0009"]  = true, --Охранник Лукаша
-  ["mil_freedom_member0012"]  = true, --Лукаш
-  ["mil_freedom_member0019"]  = true, --Охранник Лукаша
-  ["mil_freedom_member0021"]  = true, --Скряга
-  ["mil_stalker0012"]         = true, --Псих на АС
-  ["yantar_ecolog_general"]   = true, --Сахаров
-}
-
-local npcCommunityBlowoutIgnore = {
-  ["arena_enemy"] = true,
-  ["trader"]      = true,
-  ["zombied"]     = true,
-}
-
-local npcSectionBlowoutIgnore = {}
-
-
 function bind_scheme(npc,storage)
   local evid_wounded=xr_evaluators_id.sidor_wounded_base
   local monolith=npc:character_community()=="monolith"
-  local zombi = npcCommunityBlowoutIgnore[npc:character_community()] or
-    npcNameBlowoutIgnore[npc:name()] or
-    npcSectionBlowoutIgnore[npc:section()]
+  local zombi=npc:character_community()=="zombied" or npc:character_community()=="trader" or npc:character_community()=="stranger" or npc:character_community()=="arena_enemy" or npc:name()=="mil_stalker0012" or npc:name()=="yantar_ecolog_general" or -- сумашедший на милитари и Сахаров
+          npc:name()=="mil_freedom_member0021" -- Скрягу в зомби!
 
   local manager = npc:motivation_action_manager ()
 
@@ -618,11 +592,11 @@ function bind_scheme(npc,storage)
     action = manager:action (xr_actions_id.alife)
     action:add_precondition (world_property(evid_blowout, false))
 
-    -- action = manager:action (stalker_ids.action_combat_planner)
-    -- action:add_precondition (world_property(evid_blowout, false))
+    action = manager:action (stalker_ids.action_combat_planner)
+    action:add_precondition (world_property(evid_blowout, false))
 
-    -- action = manager:action (stalker_ids.action_danger_planner)
-    -- action:add_precondition (world_property(evid_blowout, false))
+    action = manager:action (stalker_ids.action_danger_planner)
+    action:add_precondition (world_property(evid_blowout, false))
 
   else
     manager:add_evaluator (evid_blowout, evaluator_blowout(storage))
@@ -665,6 +639,7 @@ function bind_scheme(npc,storage)
     action:add_precondition(world_property(stalker_ids.property_enemy, false))
     action:add_precondition(world_property(stalker_ids.property_danger, false))
     action:add_precondition(world_property(evid_preblowout,true))
+    rx_ai.addCommonPrecondition( action )
     action:add_effect(world_property(evid_preblowout,false))
     action:add_effect(world_property(evid_wounded, true))
     manager:add_action(actid_preblow, action)
@@ -680,9 +655,6 @@ function bind_scheme(npc,storage)
     action:add_precondition (world_property(evid_outside, false))
     action:add_precondition (world_property(evid_blowout, false))
 
-    state_mgr.add_to_idle_preconditions(
-      manager, { evid_blowout, evid_outside }
-    )
   end
 end
 
@@ -691,11 +663,5 @@ function hit_callback( obj, amount, local_direction, who, bone_index )
   local t = db.storage[ obj:id() ]
   if t and t.blowout_scheme then
     t.blowout_scheme.washitat = time_global() + 20000
-    -- if t.blowout_scheme.processing then
-    --   -- кармическая реакция
-    --   if amount > 0 and who and who:is_actor() then
-    --     who:kill( obj )
-    --   end
-    -- end
   end
 end
