@@ -240,7 +240,11 @@ f_deffer main(p_bumped I)
 	// Limit pudddle reflection.
 	puddles = clamp(puddles, 0, G_PUDDLES_REFLECTIVITY);
 
+#ifdef REFLECTIONS_ONLY_ON_PUDDLES
 	const float puddles_limit = puddles;
+#else
+	const float puddles_limit = 1.0f;
+#endif
 
 	// Add at the end the extra wetness. Full intensity at 50% of wetness ( rain_params.y )
 	puddles = puddles + saturate(wetness_f * 2.0f) * G_PUDDLES_TERRAIN_EXTRA_WETNESS;

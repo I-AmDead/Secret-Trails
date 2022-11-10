@@ -8,7 +8,6 @@ uniform float4 pnv_params;
 
 #include "pnv.h"
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 #define EPSDEPTH 0.001
 
@@ -71,6 +70,7 @@ c2_out main(v2p_aa_AA I)
 
     if (addon_VControl.w == 1)
         img = visor_reflection(img, center);
+
     bloom = BrokeBloom(bloom);
 
 #ifdef USE_DISTORT
@@ -89,7 +89,7 @@ c2_out main(v2p_aa_AA I)
     if (pnv_color.w > 1.f)
         res.Color.rgb = calc_night_vision_effect(I.Tex0, float4(before), pnv_color, pnv_params);
     else
-        res.Color.rgb = Uncharted2Tonemap(res.Color.rgb);
+    res.Color.rgb = Uncharted2Tonemap(res.Color.rgb);
 
     return res;
 }

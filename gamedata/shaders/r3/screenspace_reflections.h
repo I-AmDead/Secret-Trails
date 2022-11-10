@@ -10,6 +10,7 @@
 #include "settings_screenspace_SSR.h"
 
 uniform float4 rain_params;
+
 static const int2 q_ssr_steps[6] =
 {
 	int2(8,200),
@@ -129,7 +130,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	// Material conditions ( MAT_FLORA and Terrain for now... )
 	bool m_terrain = abs(P.w - 0.95f) <= 0.02f;
 	bool m_flora = abs(P.w - MAT_FLORA) <= 0.02f;
-	
+
 	// Let's start with pure gloss.
 	float refl_power = gloss;
 	
@@ -174,7 +175,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 		uvcoor = hit_uv.xy;
 
 		// Let's fade the reflection based on ray XY coor to avoid abrupt changes and glitches
-		float HitFade = saturate(hit_uv.xy * G_SSR_VERTICAL_SCREENFADE);
+		float HitFade = saturate(hit_uv.y * G_SSR_VERTICAL_SCREENFADE);
 
 		// Mix base reflection ( skybox ) with ray reflection
 		reflection = lerp(reflection, refl_ray, HitFade);
@@ -189,7 +190,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	}
 
 	// Fade sky if !skyalways ( Terrain MAT )
-	float ray_fade = saturate(saturate(uvcoor * G_SSR_VERTICAL_SCREENFADE) + 1.0f * m_terrain);
+	float ray_fade = saturate(saturate(uvcoor.y * G_SSR_VERTICAL_SCREENFADE) + 1.0f * m_terrain);
 
 	// Adjust the intensity of MAT_FLORA
 	refl_power *= saturate(G_SSR_FLORA_INTENSITY + 1.0f * !m_flora);
