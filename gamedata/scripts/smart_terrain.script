@@ -214,6 +214,10 @@ function se_smart_terrain:initialize_if_needed()
   end
 end
 
+function se_smart_terrain:is_initialized()
+  return self.initialized
+end
+
 -- ˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
 function se_smart_terrain:preserve_exclusives()
   local e = exclusives[self:name()]
@@ -1071,24 +1075,32 @@ function on_death( obj_id )
   end
 end
 
------------------------
---' ˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜˜˜˜˜˜˜˜.
-function unregister_npc(npc)
+--' Óäàëÿåò îáúåêò èç ñìàğòòåğğåéíîâ.
+function unregister_npc( npc )
   local sim = alife()
-
   if sim then
-    local obj     = sim:object(npc.id)
-    local strn_id = obj:smart_terrain_id()
-
+    local obj           = sim:object( npc.id )
+    local strn_id       = obj:smart_terrain_id()
+    local free_logic_id = dsh.is_free_logic_mob( obj )
+    if free_logic_id then
+      strn_id = free_logic_id
+    end
     if strn_id ~= 65535 then
-      if sim:object(strn_id) then
-        sim:object(strn_id):unregister_npc(obj)
+      -- îáåğòêà äëÿ ôèêñà êğèâûõ smart_terrain
+      local strn = sim:object( strn_id )
+      if strn then
+        if strn:clsid() == clsid.smart_terrain then
+          strn:unregister_npc( obj )
+        else
+          log1(
+            "smart_terrain.unregister_npc: Îáíàğóæåíà ïğèâÿçêà ê íåñóùåñòâóşùåìó smart_terrain: "..obj:name()..", smart_terrain_id: "..tostring(strn_id)..". Ïğèâÿçêà óäàëåíà."
+          )
+          obj:clear_smart_terrain()
+        end
       end
     end
   end
 end
-
-
 
 --------------------
 -- ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ [smart_terrains]

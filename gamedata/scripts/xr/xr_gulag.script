@@ -353,7 +353,7 @@ function gulag:object_setup_offline( obj_id, was_online )
 
 	if not was_online then
 		local obj = level.object_by_id( obj_id )
-		if obj ~= nil then
+		if obj then
 			self:object_setup_online( obj_id, obj, true )
 		end
 	end
@@ -364,7 +364,7 @@ end
 -- если он уже пришёл на работу, настроить ему логику и рестрикторы (при необходимости).
 -- obj=game_object
 function gulag:object_setup_online( obj_id, obj, need_setup_logic, need_setup_restrictors )
-	printf( "[smart_terrain %s] gulag: object_setup_online: obj=%s need_setup_logic=%s need_setup_restrictors=%s", self.name, obj:name(), tostring(need_setup_logic), tostring(need_setup_restrictors) )
+--	log3( "[smart_terrain %s] gulag: object_setup_online: obj=%s need_setup_logic=%s need_setup_restrictors=%s", self.name, obj:name(), tostring(need_setup_logic), tostring(need_setup_restrictors) )
 
 	self.Object[obj_id] = obj
 
@@ -385,9 +385,7 @@ end
 -- вызывается только из se_smart_terrain:unregister_npc() !
 -- если объект жив и он в онлайне, то переинициализировать логику.
 function gulag:removeObject( obj_id )
-	self:free_obj_and_reinit( obj_id )
-
-
+  self:free_obj_and_reinit( obj_id )
   self.Object[ obj_id ] = nil
   self:clear_restrictors_info( obj_id )
   self.population = self.population - 1
@@ -396,22 +394,21 @@ function gulag:removeObject( obj_id )
   end
 end
 
-
 -- Обновление гулага.
 function gulag:update()
   if not self.stateBegin then
     self.stateBegin = game.get_game_time()
   end
+
   self:update_objs()
   self:update_beginning_jobs()
+
   if self.calculateStates and db.actor_proxy.online then
     self:changeState( self.calculateStates( self ) )
   end
   self:updateJob()
   self:update_beginning_jobs()
---  self:print()
 end
-
 
 -- убирает мёртвых.
 -- следит, кто прыгнул в офлайн и не сообщил об этом (случается при переходе с уровня на уровень
@@ -595,36 +592,29 @@ end
 -- также освобождение недошедших до своих работ.
 function gulag:prepare_available_jobs()
 	local Job_avail = {}
-
 	for i, job in ipairs( self.Job_avail_in_state ) do
 		if self:availJob( job ) then
-      if
-        job.object
-        and (
-          ( not self:availCurrent( job ) )
-          or ( not self.Object_begin_job[ job.object ] )
-        )
-      then
+			if job.object and ( not self:availCurrent( job ) or not self.Object_begin_job[job.object] ) then
 				self:free_obj_and_reinit( job.object )
 			end
 			table.insert( Job_avail, job )
-		else
-			--'printf( "job unavailable: %d %s", job.num, job.section )
+		--else
 		end
 	end
 	return Job_avail
 end
 
--- составить список персонажей, доступных для распределения по свободным
--- работам
+-- составить список персонажей, доступных для распределения по свободным работам
 function gulag:get_available_objs()
-  local obj_avail = {}
-  for obj_id, obj in pairs( self.Object ) do
-    if not self:getJob( obj_id ) then
-      obj_avail[ obj_id ] = true
-    end
-  end
-  return obj_avail
+	local obj_avail = {}
+
+	for obj_id, obj in pairs( self.Object ) do
+		if self:getJob( obj_id ) == nil then
+			obj_avail[obj_id] = true
+		end
+	end
+
+	return obj_avail
 end
 
 -- посчитать условное расстояние от персонажа до места указанной работы.
@@ -1082,10 +1072,9 @@ end
 -- как будто он только что загрузился
 function gulag:free_obj_and_reinit( obj_id )
 	self:free_obj(obj_id)
-
-	local t = self.Object[obj_id]
-	if t ~= nil and t ~= true and self.Object_begin_job[obj_id] then
-		xr_logic.initialize_obj( t, nil, false, db.actor, self:get_stype( obj_id ) )
+	local obj = self.Object[obj_id]
+	if obj and obj ~= true and level.object_by_id(obj_id) then
+		xr_logic.initialize_obj( level.object_by_id(obj_id), nil, false, db.actor, self:get_stype( obj_id ) )
 	end
 end
 
@@ -1098,15 +1087,14 @@ function gulag:idNPCOnJob(job_name)
 			end
 		end
 	end
-	return nil
 end
 
--- получить потери
+-- получить кол-во убитых в данном гулаге.
 function gulag:getCasualities()
 	return self.casualities
 end
 
--- изменить потери
+-- увеличить потери
 function gulag:changeCasualities(delta)
 	self.casualities = self.casualities + delta
 end
@@ -1241,24 +1229,6 @@ function get_gulag( name_or_sid )
 	end
 end
 
--- получить гулаг персонажа
--- obj=game_object
-function get_npc_gulag( obj )
-	local sim = alife()
-
-	obj = sim:object( obj:id() )
-
-	if obj:smart_terrain_id() ~= 65535 then
-		local strn = sim:object( obj:smart_terrain_id() )
-
-		strn:initialize_if_needed()
-
-		return strn.gulag
-	else
-		return nil
-	end
-end
-
 -- получить кол-во населения смарта по имени
 function getGulagPopulation( name_or_sid )
 	local gulag = get_gulag( name_or_sid )
@@ -1309,11 +1279,33 @@ function getGulagState( name_or_sid )
 	return ( gulag and gulag.state ) or 0
 end
 
--- освободить персонажа от работы.
--- obj=game_object
-function resetJob( obj )
-	printf( "gulag resetJob: obj=%s", obj:name() )
+-- Получить кол-во убитых в гулаге
+function getCasualities( name_or_sid )
+	local gulag = get_gulag( name_or_sid )
+	return gulag:getCasualities()
+end
 
+
+-- получить гулаг персонажа
+-- obj=game_object
+function get_npc_gulag( obj )
+	local sim = alife()
+
+	obj = sim:object( obj:id() )
+
+	if obj:smart_terrain_id() ~= 65535 then
+		local strn = sim:object( obj:smart_terrain_id() )
+
+		strn:initialize_if_needed()
+
+		return strn.gulag
+	else
+		return nil
+	end
+end
+
+-- освободить персонажа от работы.
+function resetJob( obj )
 	local gulag = get_npc_gulag( obj )
 	if gulag then
 		gulag:free_obj_and_reinit( obj:id() )

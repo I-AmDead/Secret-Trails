@@ -3,32 +3,44 @@
 --  автор: Диденко Руслан (Stohe)
 --	Wounded cover by Rulix
 ----------------------------------------------------------------------------------------------------------------------
-
-local pseudo_wounded = {
-	[ "esc_tolik" ] = 0.35,
-	[ "esc_fox" ] = 0.3,
-	[ "val_sos_wounded" ] = 0.3,
-	[ "val_escort_bandit_halfdead" ] = 0.3,
---[==[ --NS2016
-	[ "avu_killer" ]             = 0.3,
-	[ "esc_foto_muzhik_zapas" ]  = 0.3,
-	[ "esc_foto_muzhik" ]        = 0.3,
-	[ "milit_zapas_fotomuzhik" ] = 0.3,
-	[ "military_fotomuzhik" ]    = 0.3,
-	[ "foto_monolitovets" ]      = 0.3,
-	[ "nevid_monolit" ]          = 0.3,
---]==]
-}
-
 ---------------------------------------------------------------------------------------------------------------------
 --Evaluators
 ----------------------------------------------------------------------------------------------------------------------
+
+pseudo_wounded = {
+  -- Хамелеон
+  [ "chaes_mamai_master" ] = {
+    [ "until_info" ] = "chaes_mamai_est_help",
+  },
+}
+
+
+function is_pseudo_wounded( k )
+  local d = pseudo_wounded[ k ]
+  if d then
+    if type( d ) == "table" then
+      if d.until_info then
+        return db.actor:dont_has_info( d.until_info )
+      end
+    end
+    return true
+  end
+  return false
+end
+
 class "evaluator_wound" (property_evaluator)
 function evaluator_wound:__init(name, storage) super(nil, name)
     self.a = storage
 end
 function evaluator_wound:evaluate ()
+	local npc = self.object
 	if self.a.wounded_set ~= true then return false end
+	if not self.a.regen then
+	   if not is_pseudo_wounded( npc:name() ) then
+	      self.a.regen = npc:character_community() == "zombied"
+	      or npc:character_community() == "monolith"
+	   end
+	end
 
 --'	self.a.wound_manager:update()
 
@@ -65,7 +77,7 @@ function action_wounded:__init(name, storage) super(nil, name)
 	self.cover_check_time = -1
 end
 function action_wounded:initialize ()
-    action_base.initialize (self)
+	action_base.initialize (self)
 	self.object:set_desired_position()
 	self.object:set_desired_direction()
 	self.sound = "nil"
@@ -73,7 +85,9 @@ function action_wounded:initialize ()
 	if self.a.help_start_dialog then
 		self.object:set_start_dialog(self.a.help_start_dialog)
 	end
-	self.object:wounded(true)
+	if not self.a.regen then
+		self.object:wounded(true)
+	end
 end
 function action_wounded:execute ()
     action_base.execute (self)
@@ -151,7 +165,6 @@ function action_wounded:execute ()
 				elseif not enemy then
 					wound_manager_state = "wounded_wait"
 				end
-				self.object.health = 0.00004	-- автовосстановление в кавере
 			end
 		end
 
@@ -327,9 +340,14 @@ function Cwound_manager:update()
 	hp	= 100*self.npc.health
 	psy	= 100*self.npc.psy_health
 
-	if pseudo_wounded[ self.npc:name() ] and self.npc.health < pseudo_wounded[ self.npc:name() ] then --Квестовые раненые не должны вставать, самолечиться и тп.
+	local sobj=alife():object(self.npc:id())
+	if sobj.wounded and (not self.a.regen) then
+	   hp = 1 -- симулируем раненость
+	end
+
+	if is_pseudo_wounded(self.npc:name()) and self.npc.health > 0.1 then --Квестовые раненые не должны вставать, самолечиться и тп.
 		if self.npc.health > 0.1 then
-			self.npc.health = -0.01
+			self.npc.health = - 0.09
 		end
 		hp = 1
 	end
@@ -486,13 +504,13 @@ function add_to_binder (object, ini, scheme, section, st)
     local action = this.action_wounded("wounded_action", st)
     action:add_precondition (world_property(stalker_ids.property_alive,		true))
     action:add_precondition (world_property(properties["wounded"],			true))
-	if rx_bandage then
-		action:add_precondition(world_property(rx_bandage.evid_bandage,false))
-	end
+    if rx_bandage then
+        action:add_precondition(world_property(rx_bandage.evid_bandage,false))
+    end
     action:add_effect (world_property(properties["wounded"],        false))
     action:add_effect (world_property(stalker_ids.property_enemy,	false))
     action:add_effect (world_property(properties["can_fight"],		true))
-   	manager:add_action      (operators["wounded"], action)
+    manager:add_action      (operators["wounded"], action)
 
     action = manager:action (xr_actions_id.alife)
     action:add_precondition (world_property(properties["wounded"],			false))
@@ -552,7 +570,7 @@ function init_wounded(npc, ini, section, st, scheme)
 
 	local def = {}
 	local npc_community = npc:character_community()
-	if npc_community == "monolith" then
+	if is_pseudo_wounded( npc:name() ) then
 		local state = wounded_by_state[math.mod(npc:id(), 3)]
 		def.hp_state			= "12|"..state.."@help_heavy"
 		def.hp_state_see		= "12|"..state.."@help_heavy"

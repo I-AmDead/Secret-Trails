@@ -57,9 +57,25 @@ function actor_have_medkit(first_speaker, second_speaker)
 		   first_speaker:object("medkit_army") ~= nil or
 		   first_speaker:object("medkit_scientic") ~= nil
 end
+--KRodin: убрал здесь установку отношений с напарниками. Не понятно, зачем это нужно.
+--Если для того, чтобы не воевали - enemy_callback и так им воевать не разрешит.
+function make_relationship_with_actor(relation, npc, actor)
+	if relation == "friend" then
+		npc:set_relation(game_object.friend, actor)
+		npc:set_goodwill(5000, actor)
+	elseif relation == "neutral" then
+		npc:set_relation(game_object.neutral, actor)
+		npc:set_goodwill(500, actor)
+	elseif relation == "enemy" then
+		npc:set_relation(game_object.enemy, actor)
+		npc:set_goodwill(-5000, actor)
+	end	
+end
+
 function actor_have_bandage(first_speaker, second_speaker)
 	return first_speaker:object("bandage") ~= nil
 end
+
 function transfer_medkit(first_speaker, second_speaker)
 	if first_speaker:object("medkit") ~= nil then
 		dialogs.relocate_item_section(second_speaker, "medkit", "out")
@@ -72,13 +88,7 @@ function transfer_medkit(first_speaker, second_speaker)
 	local obj_community = second_speaker:character_community()
 	--' Тут надо анлочить аптечку для использования.
 	xr_wounded.unlock_medkit(second_speaker)
-	
-	--' Добрые дела искупают прошлые грехи
-	local dead_friends = tonumber(ogse.load_variable("dead_fr", 0))
-	if dead_friends > 0 then 
-		dead_friends = dead_friends - 1
-		ogse.save_variable("dead_fr", dead_friends)	
-	end
+
 	
 	if second_speaker:relation(first_speaker) == game_object.enemy then
 		local rand = math.random()
@@ -104,7 +114,7 @@ function transfer_medkit(first_speaker, second_speaker)
 			end
 		end
 
-		second_speaker:set_character_community(actor_to_stalker_comms[first_speaker:character_community()] or first_speaker:character_community())
+		second_speaker:set_character_community(first_speaker:character_community())
 		second_speaker:remove_memory_object( first_speaker )
 		ogse.reset_npc_logic( second_speaker )
 		xr_gulag.resetJob( second_speaker )
@@ -112,7 +122,7 @@ function transfer_medkit(first_speaker, second_speaker)
 		if sobj then
 			sobj.custom_data = ""
 			smart_terrain.unregister_npc( sobj )
-			dsh.clear_smart_terrain_conditions( sobj )
+			clear_smart_terrain_conditions( sobj )
 			sobj:brain():can_choose_alife_tasks( true )
 			sobj:brain():update()
 		end
@@ -125,6 +135,10 @@ function transfer_medkit(first_speaker, second_speaker)
 		make_relationship_with_actor("friend", second_speaker, first_speaker)
 	end
 
+end
+
+function clear_smart_terrain_conditions( sobj )
+  sobj.smart_terrain_conditions = nil
 end
 
 function transfer_bandage(first_speaker, second_speaker)
@@ -157,9 +171,10 @@ function relocate_item_section( victim, section, type, n )
       end
       news_manager.relocate_item( db.actor, type, section )
     elseif type == "out" then
-      amk_utils.out_items_number({
-        [ section ] = n,
-      })
+      for i = 1, n do
+        ogse.remove_inv_items_by_section( section )
+      end
+      news_manager.relocate_item( db.actor, type, section )
     end
   end
 end
