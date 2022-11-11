@@ -1,0 +1,86 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach( sm )
+  sm:subscribe({ signal = "on_actor_weapon_zoom_in",      fun = this.on_actor_weapon_zoom_in      })
+  sm:subscribe({ signal = "on_actor_weapon_zoom_out",     fun = this.on_actor_weapon_zoom_out     })
+  sm:subscribe({ signal = "on_actor_weapon_reload",       fun = this.on_actor_weapon_reload       })
+  sm:subscribe({ signal = "on_actor_weapon_reload_end",   fun = this.on_actor_weapon_reload_end   })
+  sm:subscribe({ signal = "on_first_update",              fun = this.on_first_update              })
+  sm:subscribe({ signal = "ui_on_dialog_show",            fun = this.dof_enable                   })
+  sm:subscribe({ signal = "ui_on_dialog_hide",            fun = this.dof_disable                  })
+end
+
+local reload
+local interface
+local pda
+
+local dof_reload_timer
+local function start_dof_reload( min, max, reduce )
+	if dof_reload_timer then
+		dof_reload_timer:stop()
+		dof_reload_timer = nil
+	end
+
+	dof_reload_timer = dsh.wait_condition(
+		function()
+			set_dof_params( 0, 0, min / 1000, 0 )
+			if reduce then
+				min = min - 100
+			else
+				min = min + 100
+			end
+			return min == max
+		end,
+		function() dof_reload_timer = nil end,
+		function() ogse_signals.get_mgr():reschedule( 10 ) end
+	)
+end
+
+function on_actor_weapon_zoom_in( obj )
+  set_dof_params( 0.1, 0.4, 0.0, 1.6 )
+end
+
+function on_actor_weapon_zoom_out( obj )
+  set_dof_params( 0.0, 0.0, 0.0, 0.0 )
+end
+
+function on_actor_weapon_reload( obj )
+  if not interface then
+    start_dof_reload( 0, 1000, false )
+  end
+  reload = true
+end
+
+function on_actor_weapon_reload_end( obj )
+  start_dof_reload( 1000, 0, true )
+  reload = nil
+end
+
+function dof_enable()
+  if db.actor:dont_has_info("ui_pda") then
+    set_dof_params( 1.0, 1.0, 1.0, 1.1 )
+  else
+    start_dof_reload( 0, 1000, false )
+	pda = true
+  end
+  interface = true
+end
+
+function dof_disable()
+  if not reload then
+    if pda then
+      start_dof_reload( 1000, 0, true )
+	  pda = nil
+    else
+      set_dof_params( 0.0, 0.0, 0.0, 0.0 )
+	end
+  else
+    set_dof_params( 0.0, 0.0, 1.0, 0.0 )
+  end
+  interface = nil
+end
+
+function on_first_update()
+  cmd("ssfx_wpn_dof_2 0.5")
+  set_dof_params( 0.0, 0.0, 0.0, 0.0 )
+end
