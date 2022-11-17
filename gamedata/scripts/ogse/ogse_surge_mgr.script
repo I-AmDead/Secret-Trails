@@ -26,6 +26,9 @@ is_surge_raskolbas = false --Находится ли выброс в смерт�
 
 local debug_logging = false
 local fsurgelog
+local snd_pda_dead = sound_object('device\\pda\\pda_dead')
+local pda_anm_time
+local anim
 
 local aux_counter = 0
 function surge_log(f,...)
@@ -287,7 +290,7 @@ function surge_db_init()
   }
   surge_db.surge_process_stage_05 = { --3. Проигрываем промежуточные эффекты
     on_info = {
-      call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
+      call1 = pda_off,
       if_surface     = { Flag2 = 1, },
       if_underground = { Flag2 = 0, },
     },
@@ -307,7 +310,7 @@ function surge_db_init()
   }
   surge_db.surge_process_stage_06 = {-- 4. Спустя период затишья начинаем выброс
     on_info = {
-      call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
+      call1 = pda_off,
       if_surface     = { Flag2 = 1, },
       if_underground = { Flag2 = 0, },
     },
@@ -334,7 +337,7 @@ function surge_db_init()
   surge_db.surge_process_stage_07 = { -- 5. Начинаем расколбас
     on_info = {
       call1 = function()
-        set_pda_params(vector():set(0.5,0.2,0.0))
+        pda_off()
         amk.save_variable( "blowout", 3 )
       end,
       if_surface = {
@@ -373,7 +376,7 @@ function surge_db_init()
   }
   surge_db.surge_process_stage_08 = {
     on_info = {
-      call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
+      call1 = pda_off,
       if_surface = {
         Flag2 = 1,
         Dead2 = 1,
@@ -420,7 +423,7 @@ function surge_db_init()
   }
   surge_db.surge_process_stage_09 = {
     on_info = {
-      call1 = set_pda_params(vector():set(0.5,0.2,0.0)),
+      call1 = pda_off,
       if_surface = {
         Flag2 = 1,
         Dead2 = 1,
@@ -469,7 +472,7 @@ function surge_db_init()
   surge_db.surge_process_stage_13 = { -- 6. Выброс близится к концу
     on_info = {
       call1 = function()
-        set_pda_params(vector():set(0.5,0.2,0.0))
+        pda_off()
         amk.save_variable( "blowout", 4 )
         amk_mod.blowout_phantoms()
         amk_mod.on_blowout_hit_actor()
@@ -854,17 +857,13 @@ function R_Vibros:Run()
     xr_sound.set_actor_sound( "level_border_detector" )
     xr_sound.set_actor_sound_factor( 0.01 )
     level.add_cam_effector( "camera_effects\\fatigue.anm", 2004, true, "" )
-    level.add_pp_effector( "yantar_underground_psi.ppe", 299, true )
-    level.set_pp_effector_factor( 299, 1.0 )
     self.work = 1
   end
 end
 
 function R_Vibros:Stop()
   if self.work == 1 then
-    level.remove_pp_effector( 1003 )
     level.remove_cam_effector( 2004 )
-    level.remove_pp_effector( 299 )
     xr_sound.set_actor_sound( "" )
     self.work = 0
   end
@@ -873,4 +872,15 @@ end
 
 function get_blowout_count()
   return ogse.load_var( "ogse_surge_mgr.blowout_count", 0 )
+end
+
+function pda_off()
+	set_pda_params(vector():set(0.5,0.2,0.0))
+	if db.actor:active_slot() == 7 and not (anim and ogsr_actor_animation.allow_animation()) then
+		local pda_anm_time = game.play_hud_motion(2, "pda_hud", "anm_empty", true, 1)
+		snd_pda_dead:play(db.actor,0,sound_object.s2d)
+		ogsr_actor_animation.animation_on()
+		dsh.level_timeout( pda_anim_time, function() ogsr_actor_animation.animation_off() end )
+		anim = true
+	end
 end

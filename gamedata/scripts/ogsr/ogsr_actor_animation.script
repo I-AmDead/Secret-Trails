@@ -1,7 +1,8 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
 function attach( sm )
-  sm:subscribe({ signal = "on_key_down", fun = this.on_key_down })
+  sm:subscribe({ signal = "on_first_update",          fun = this.animation_off         })
+  sm:subscribe({ signal = "on_key_down",              fun = this.on_key_down           })
   sm:subscribe({ signal = "on_item_before_pickup",    fun = this.on_item_before_pickup })
 end
 
@@ -130,33 +131,25 @@ function torch_switcher()
 		local class = get_string(itm:section(),"class") or nil
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\lower.anm"
-			anm_additional_length = 0.1
+			anm_additional_length = 0.45
 		end
 	end
 	
 	if (mc_anm_state == 1) then
-		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_hide_hand", hide_hand_speed)
-		torch_anm_time_2 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
-		if db.actor:active_item() then
-			game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
-		end
+		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
 		game.play_hud_anm(anm_name, 0, 1, 1, false)	
-		new_speed = game.set_hud_anm_time(anm_name, ((torch_anm_time_1 + torch_anm_time_2) / 1000) + anm_additional_length)
-		animation_on()
-		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 300, function() torch_switcher() end )
-	elseif (mc_anm_state == 2) then
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1)
+		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
+		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 0.8)
 		snd_torch:play(db.actor,0,sound_object.s2d)
 		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-		mc_anm_state = 3
-		dsh.level_timeout( torch_anm_time_2 - 250, function() torch_switcher() end )
-	elseif (mc_anm_state == 3) then
+		mc_anm_state = 2
+		dsh.level_timeout( torch_anm_time_1 - 250, function() torch_switcher() end )
+	elseif (mc_anm_state == 2) then
 		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
 		ogse_torch.on_switch()
-		mc_anm_state = 4
-		dsh.level_timeout( torch_anm_time_2, function() torch_switcher() end )
-	elseif (mc_anm_state == 4) then
+		mc_anm_state = 3
+		dsh.level_timeout( torch_anm_time_1, function() torch_switcher() end )
+	elseif (mc_anm_state == 3) then
 		mc_anm_state = 1
 		animation_off()
 	end
@@ -178,28 +171,20 @@ function nv_switcher()
 	end
 	
 	if (mc_anm_state == 1) then
-		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_hide_hand", hide_hand_speed)
-		torch_anm_time_2 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
-		if db.actor:active_item() then
-			game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
-		end
+		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
 		game.play_hud_anm(anm_name, 0, 1, 1, false)	
-		new_speed = game.set_hud_anm_time(anm_name, ((torch_anm_time_1 + torch_anm_time_2) / 1000) + anm_additional_length)
-		animation_on()
-		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 300, function() nv_switcher() end )
-	elseif (mc_anm_state == 2) then
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1)
+		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
+		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 0.8)
 		snd_torch:play(db.actor,0,sound_object.s2d)
 		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-		mc_anm_state = 3
-		dsh.level_timeout( torch_anm_time_2 - 250, function() nv_switcher() end )
-	elseif (mc_anm_state == 3) then
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		mc_anm_state = 2
+		dsh.level_timeout( torch_anm_time_1 - 250, function() nv_switcher() end )
+	elseif (mc_anm_state == 2) then
+		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, false) end
 		ogse_night_vision.call_pnv()
-		mc_anm_state = 4
-		dsh.level_timeout( torch_anm_time_2, function() nv_switcher() end )
-	elseif (mc_anm_state == 4) then
+		mc_anm_state = 3
+		dsh.level_timeout( torch_anm_time_1, function() nv_switcher() end )
+	elseif (mc_anm_state == 3) then
 		mc_anm_state = 1
 		animation_off()
 	end

@@ -35,11 +35,6 @@ function attach( sm )
   sm:subscribe({ signal = "on_first_update", fun = this.on_first_update })
 end
 
-
-function printf()
-end
-
-
 function alt_choose_look_point( patrol_look, path_look_info, search_for )
   -- количество найденных точек (с нужными флагами)
   local pts_found_total_weight = 0
@@ -105,7 +100,6 @@ function move_mgr:__init( npc )
   ASSERT( npc, "move_mgr:__init() - npc is nil, please update the script" )
   self.object = npc
 end
-
 
 function move_mgr:initialize( npc )
   ASSERT(
@@ -334,16 +328,7 @@ function validate_accessibility( npc, ppname )
   pp_validated[ ppname ] = false
   local pp = patrol( ppname )
   if pp then
-    if debug then
-      log2( "MOVE_MGR validating %s for %s",  ppname, npc:name() )
-    end
     for i = 0, pp:count() - 1 do
-      if debug then
-        log2(
-          "MOVE_MGR verifying point [%s] on path %s VTX [%s] for %s",
-          i, ppname, pp:level_vertex_id( i ), npc:name()
-        )
-      end
       if not level.valid_vertex_id( pp:level_vertex_id( i ) ) then
         log2(
           "[%s]: wrong point [%s] on path [%s]: level_vertex_id = %s, vertex_count = %s",
@@ -352,9 +337,7 @@ function validate_accessibility( npc, ppname )
         )
         return pp_validated[ ppname ], ppname
       end
-      if debug then log1( "MOVE_MGR verifying point end" ) end
       if not npc:accessible( pp:level_vertex_id( i ) ) then
-        if debug then log1( "MOVE_MGR checked point" ) end
         return pp_validated[ ppname ], ppname
       end
     end

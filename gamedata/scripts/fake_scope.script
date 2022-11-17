@@ -1,0 +1,60 @@
+-- based on:
+-- CrookR 9/3/2021
+-- Support for 2D scope shader, helper script for easier interfacing with engine. Uses
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+function attach(sm)
+    sm:subscribe({ signal = "on_actor_weapon_zoom_out", fun = this.actor_on_weapon_zoom_out   })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_in",  fun = this.actor_on_weapon_zoom_in    })
+    sm:subscribe({ signal = "on_death",                 fun = this.actor_on_before_death })
+end
+
+local lastSens = get_con_float("mouse_sens")
+
+function actor_on_weapon_zoom_out()
+    cmd("mouse_sens " .. lastSens)
+    cmd("scope_params_4 0.0, 1.25, 4.0")
+end
+
+function actor_on_weapon_zoom_in()
+	if (get_con_string("fake_scope_enable") == "off" 
+	or get_con_string("fake_scope_enable") == "0")
+	and (db.actor and db.actor:alive()) then return end
+
+    local wpn = db.actor:active_item()
+    if not (wpn) then return end
+
+    local wpn_w = wpn:get_weapon()
+    if wpn_w and wpn_w:UseScopeTexture() then
+        updateScope(wpn)
+    end
+end
+
+function actor_on_before_death()
+    cmd("mouse_sens " .. lastSens)
+    cmd("scope_params_4 0.0, 1.25, 4.0")
+end
+
+local scopeBaseFactors = {}
+
+function updateScope(wpn)
+    if wpn then
+        local scopeName = nil
+        if ogse_wpn_utils.get_scope_status(wpn) == 2 and ogse_wpn_utils.get_scope_flag(wpn) then
+            local scope_section = get_string(wpn:section(), "scope_name")
+            scopeName = get_string(scope_section, "scope_texture")
+        elseif ogse_wpn_utils.get_scope_status(wpn) == 1 then
+            scopeName = get_string(wpn:section(), "scope_texture")
+        end
+
+        if scopeName and fake_scope_radius.scope_radius[scopeName] then
+			cmd("scope_params_4 " .. fake_scope_radius.scope_radius[scopeName] .. ", 1.25" .. ", 10")
+            local cweapon = wpn:get_weapon()
+            local zf = cweapon.zoom_factor
+            local sf = get_con_float("scope_power")
+            if cweapon and zf and sf then
+                cmd("mouse_sens " .. (lastSens))
+            end
+        end
+    end
+end

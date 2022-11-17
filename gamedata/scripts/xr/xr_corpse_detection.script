@@ -65,7 +65,7 @@ local item_clsids = {	-- список clsid собираемых предмет�
 	[clsid.wpn_svu_s] = true,
 	[clsid.wpn_rpg7_s] = true,
 	[clsid.wpn_val_s] = true,
-	--[clsid.wpn_walther_s] = true,
+	[clsid.wpn_walther_s] = true,
 	[clsid.wpn_usp45_s] = true,
 	[clsid.wpn_groza_s] = true,
 	[clsid.wpn_knife_s] = true,
@@ -460,14 +460,17 @@ function action_search_corpse:execute()
 	end
 
 	local is_mutant = self.a.is_corpse and IsMonster(target)
-	local npc_pos = npc:position()
 
-	local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
-	if target:get_bone_id( valid_bone ) == 65535 then
-		valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+	local function target_bone()
+	        local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+	        if target:get_bone_id(valid_bone) == 65535 then
+	            valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+	        end
+	        return target:bone_position(valid_bone)
 	end
 
-	local dist = npc_pos:distance_to(self.a.is_corpse and target:bone_position(valid_bone) or target:center())
+	local npc_pos = npc:position()
+	local dist = npc_pos:distance_to(self.a.is_corpse and target_bone() or target:center())
 
 	if self.timer < time_global() then
 		if dist > 3 then
@@ -528,13 +531,11 @@ function action_search_corpse:execute()
 	end
 
 	if dist <= (self.a.is_corpse and 0.85 or 0.75) or npc:level_vertex_id() == self.a.target_vertex then
-		local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
-		if target:get_bone_id( valid_bone ) == 65535 then
-			valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
-		end
 
-		local look_pos = self.a.is_corpse and target:bone_position(valid_bone) or target:center()
-		npc:set_sight(look.direction,vector():sub(vector():set(0,0.3,npc_pos:distance_to_xz(target_pos)<0.3 and 0.5 or 0):add(look_pos),npc:bone_position(self.torso_look==true and "bip01_neck" or "bip01_spine")),self.torso_look==true)
+		local look_pos = self.a.is_corpse and target_bone() or target:center()
+		local look_vector = vector():sub(vector():set(0, 0.3, npc_pos:distance_to_xz(target_pos) < 0.3 and 0.5 or 0):add(look_pos), npc:bone_position(self.torso_look == true and "bip01_neck" or "bip01_spine"))
+
+		npc:set_sight(look.direction, look_vector, self.torso_look == true)
 		if self.a.anim_started then
 			if self.a.do_chik and self.a.do_chik < time_global() then
 				self.a.do_chik = nil
@@ -920,14 +921,6 @@ function add_to_binder(npc, char_ini, scheme, section, st)
 	end
 	if xrs_grenade then
 		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
-	end
-
-	if xr_combat_companion then
-		action:add_precondition(world_property(xr_combat_companion.prop_combat,false))	
-	end
-
-	if xr_companion then --Отключает собирательство для компаньонов. Чтобы включить - закомментировать этот кусок и раскомментировать другой в самом xr_companion
-		action:add_precondition(world_property(xr_companion.property_need_companion,false))	
 	end
 
 	action:add_precondition		(world_property(evid_corpse_exist,	true))

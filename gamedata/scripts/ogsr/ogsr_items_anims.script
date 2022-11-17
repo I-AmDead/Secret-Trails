@@ -150,6 +150,12 @@ local function on_actor_before_use( obj, sobj )
     end
 end
 
+local function animation_off()
+	level.only_allow_movekeys(false)
+	level.set_actor_allow_ladder(true)
+end
+
 function attach( sm )
 	sm:subscribe({ signal = "on_actor_before_use", fun = on_actor_before_use })
+	sm:subscribe({ signal = "on_first_update",     fun = animation_off })
 end
