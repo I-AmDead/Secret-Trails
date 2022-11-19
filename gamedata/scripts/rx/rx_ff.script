@@ -185,7 +185,14 @@ function friends_on_fire_line(npc)
 	end
 	local enemy = npc:best_enemy()
 	local npc_pos = npc:bone_position("bip01_l_finger02")
-	local enemy_pos = enemy:bone_position(get_string(enemy:section(), "bone_torso", "bip01_spine"))
+	local function enemy_bone()
+	        local valid_bone = "bip01_spine1"
+	        if enemy:get_bone_id(valid_bone) == 65535 then
+	            valid_bone = get_string(enemy:section(), "bone_torso", "bip01_spine")
+	        end
+	        return enemy:bone_position(valid_bone)
+	end
+	local enemy_pos = enemy_bone() or enemy:center()
 	if rx_knife then
 		local ktrg = rx_knife.targets[enemy:id()]
 		if ktrg and ktrg ~= sid then

@@ -1140,39 +1140,24 @@ function maroder_grab(actor,npc)
   out_object = db.actor
   in_object = inv_box_1
   db.actor:inventory_for_each(transfer_object_items)
-end
-
-function ClearPstor(vn)
-  if db.storage[0].pstor[vn] then
-    db.storage[0].pstor[vn] = nil
-  end 
 end 
 
-function ReadPstor(vn, defolt)
-  return xr_logic.pstor_retrieve(db.actor, vn, defolt)
-end
-
-function WritePstor(vn, value)
-  xr_logic.pstor_store(db.actor, vn, value)
-end
-
 function maroder_money()
-  local iMoney = db.actor:money()
-  WritePstor("iMoneyActor",iMoney)
-  db.actor:give_money(-iMoney)
+  local money_actor = db.actor:money()
+  ogse.save_var( "money_actor", money_actor, "u8" )
+  db.actor:give_money(-money_actor)
 end
 
 function mervin_money()
-  local iMoney = db.actor:money()
-  db.actor:give_money(-iMoney)
+  local money_actor = db.actor:money()
+  db.actor:give_money(-money_actor)
 end
 
 ------------------------------------money------------------------------------
 
 function money_gg()
-  local iMoney = ReadPstor("iMoneyActor",0)
-  db.actor:give_money(iMoney)
-  ClearPstor("iMoneyActor")
+  local money_actor = ogse.load_var( "iMoneyActor", 0 )
+  db.actor:give_money(money_actor)
 end
 
 function money_5()
