@@ -1,181 +1,253 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+--РњРёРЅРёРјР°Р»СЊРЅРѕРµ Рё РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РІСЂРµРјСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ Р°СЃСЃРѕСЂС‚РёРјРµРЅС‚Р° РІ РёРіСЂРѕРІС‹С… С‡Р°СЃР°С….
+local MIN_TRADE_UPD_TIME, MAX_TRADE_UPD_TIME = 3, 6
 
 
-local trade_manager = {
-}
-
-
-
-
-
-function trade_init(npc, cfg)
-	printf("TRADE INIT[%s]", npc:name())
---'	if trade_manager[npc:id()] == nil then
-		trade_manager[npc:id()] = {}
---'	end
-
-	trade_manager[npc:id()].cfg_ltx = cfg
-	trade_manager[npc:id()].config = ini_file(cfg)
-	
-	-- ����������� �������
-	local str = utils.cfg_get_string(trade_manager[npc:id()].config, "trader", "buy_condition", npc, true, "")
-	if str == nil then
-		abort("Incorrect trader settings. Cannot find buy_condition. [%s]->[%s]", npc:name(), cfg)
-	end
-	trade_manager[npc:id()].buy_condition = xr_logic.parse_condlist(npc, "trade_manager", "buy_condition", str)
-	
-	-- ����������� �������
-	str = utils.cfg_get_string(trade_manager[npc:id()].config, "trader", "sell_condition", npc, true, "")
-	if str == nil then
-		abort("Incorrect trader settings. Cannot find sell_condition. [%s]->[%s]", npc:name(), cfg)
-	end	
-	trade_manager[npc:id()].sell_condition = xr_logic.parse_condlist(npc, "trade_manager", "sell_condition", str)
-	
-	-- ������ �������
-	str = utils.cfg_get_string(trade_manager[npc:id()].config, "trader", "buy_supplies", npc, false, "")
-	if str ~= nil then
-		trade_manager[npc:id()].buy_supplies = xr_logic.parse_condlist(npc, "trade_manager", "buy_supplies", str)
-	end
+function attach( sm )
+  sm:subscribe({ signal = "on_monster_death",       fun = this.on_death })
+  sm:subscribe({ signal = "on_monster_net_destroy", fun = this.on_death })
+  sm:subscribe({ signal = "on_npc_death",           fun = this.on_death })
+  sm:subscribe({ signal = "on_npc_net_destroy",     fun = this.on_death })
+  sm:subscribe({ signal = "on_trade_open", fun = this.on_trade_open })
+  sm:subscribe({ signal = "on_trade",      fun = this.on_trade      })
+  sm:subscribe({ signal = "on_trade_hide", fun = this.on_trade_hide })
 end
 
 
-function update(npc)
-	local tt = trade_manager[npc:id()]
-	
-	if tt == nil then
-		return
-	end
+local sold_items    = {}
+local trade_manager = {}
 
-	if tt.update_time ~= nil and tt.update_time < time_global() then
-		return
-	end
-	tt.update_time = time_global() + 3600000
-	
-	local str = xr_logic.pick_section_from_condlist(db.actor, npc, tt.buy_condition)
-	if tt.current_buy_condition ~= str then
-		printf("TRADE [%s]: buy condition = %s", npc:name(), str)
-		npc:buy_condition(tt.config, str)
-		tt.current_buy_condition = str
-	end
 
-	str = xr_logic.pick_section_from_condlist(db.actor, npc, tt.sell_condition)
-	if tt.current_sell_condition ~= str then
-		printf("TRADE [%s]: sell condition = %s", npc:name(), str)
-		npc:sell_condition(tt.config, str)
-		tt.current_sell_condition = str
-	end
-
-	if tt.buy_supplies == nil then
-		return
-	end
-
-	str = xr_logic.pick_section_from_condlist(db.actor, npc, tt.buy_supplies)
-	if tt.current_buy_supplies ~= str then
-		if tt.resuply_time ~= nil and tt.resuply_time < time_global() then
-			return
-		end
-		printf("TRADE [%s]: buy_supplies = %s", npc:name(), str)
-		npc:buy_supplies(tt.config, str)
-		tt.current_buy_supplies = str
-		tt.resuply_time = time_global() + 24*3600000
-	end	
+function on_death( obj )
+  local binder = obj:binded_object()
+  local slots = { script_name() .. ".subscribed", script_name() .. ".subscribed2", script_name() .. ".subscribed3"}
+  for i=1, #slots do
+    local slot = binder[ slots[i] ]
+    if slot then
+      --
+      --if slots[i] == script_name() .. ".subscribed3" then --Dbg
+      --  log3("~~[%s] Trade update unsubscribed from update signal for NPC [%s]", script_name(), obj:name())
+      --end
+      --
+      ogse_signals.get_mgr():unsubscribe( slot )
+      binder[ slots[i] ] = nil
+    end
+  end
+  trade_manager[ obj:id() ] = nil
 end
 
 
-function save(obj, packet)
-	local tt = trade_manager[obj:id()]
-
-	--' ��������� ������������ �� ������������������ �������� � ��������.
-	if tt == nil then
-		printf("TRADE SAVE [%s]: ignored", obj:name())
-		packet:w_bool(false)
-		return
-	else
-		packet:w_bool(true)
-	end
-
-	packet:w_stringZ(tt.cfg_ltx)
-
-	printf("TRADE SAVE [%s]: current_buy_condition = %s", obj:name(), tostring(tt.current_buy_condition))
-	if tt.current_buy_condition == nil then
-		packet:w_stringZ("")
-	else
-		packet:w_stringZ(tt.current_buy_condition)
-	end
-
-	printf("TRADE SAVE [%s]: current_sell_condition = %s", obj:name(), tostring(tt.current_sell_condition))
-	if tt.current_sell_condition == nil then
-		packet:w_stringZ("")
-	else
-		packet:w_stringZ(tt.current_sell_condition)
-	end
-
-	printf("TRADE SAVE [%s]: current_buy_supplies = %s", obj:name(), tostring(tt.current_buy_supplies))
-	if tt.current_buy_supplies == nil then
-		packet:w_stringZ("")
-	else
-		packet:w_stringZ(tt.current_buy_supplies)
-	end
-
-	local cur_tm = time_global()
-
-	if tt.update_time == nil then
-		packet:w_s32(-1)
-	else
-	 	packet:w_s32(tt.update_time - cur_tm)
-	end
-
-	if tt.resuply_time == nil then
-		packet:w_s32(-1)
-	else
-	 	packet:w_s32(tt.resuply_time - cur_tm)
-	end
+function on_trade_open( npc )
+  sold_items = {}
 end
 
-function load(obj, packet)
-	local a = packet:r_bool()
-	if a == false then
-		printf("TRADE LOAD [%s]: ignored", obj:name())
-		return
-	end
 
-	trade_manager[obj:id()] = {}
-
-	local tt = trade_manager[obj:id()]
-
-	tt.cfg_ltx = packet:r_stringZ()
-	printf("TRADE LOAD [%s]: cfg_ltx = %s", obj:name(), tostring(tt.cfg_ltx))
-
-	tt.config = ini_file(tt.cfg_ltx)
-
-	a = packet:r_stringZ()
-	printf("TRADE LOAD [%s]: current_buy_condition = %s", obj:name(), tostring(a))
-	if a ~= "" then
-		tt.current_buy_condition = a
-		obj:buy_condition(tt.config, a)
-	end
-	
-	a = packet:r_stringZ()
-	printf("TRADE LOAD [%s]: current_sell_condition = %s", obj:name(), tostring(a))
-	if a ~= "" then
-		tt.current_sell_condition = a
-		obj:sell_condition(tt.config, a)
-	end
-
-	a = packet:r_stringZ()
-	printf("TRADE LOAD [%s]: current_buy_supplies = %s", obj:name(), tostring(a))
-	if a ~= "" then
-		tt.current_buy_supplies = a	
-	end
-
-	local cur_tm = time_global()
-
-	a = packet:r_s32()
-	if a ~= -1 then
-		tt.update_time = cur_tm + a
-	end
-
-	a = packet:r_s32()
-	if a ~= -1 then
-		tt.resuply_time = cur_tm + a
-	end
+function on_trade( item, is_sold, money )
+  if is_sold then
+    table.insert( sold_items, item:id() )
+  end
 end
+
+
+function on_trade_hide( npc )
+  for _, id in ipairs( sold_items ) do
+    local obj = level.object_by_id( id )
+    if obj then
+      local trader = obj:parent()
+      if trader then
+        local tt = trade_manager[ trader:id() ]
+        if tt and tt.buy_supplies then
+          ogse.remove_item_from_inventory( obj, trader )
+        end
+      end
+    end
+  end
+  sold_items = {}
+end
+
+
+function trade_init( npc, cfg )
+  local tt = {}
+  trade_manager[ npc:id() ] = tt
+  --log3( "~~[%s] TRADE INIT [%s]", script_name(), npc:name() )
+  tt.cfg_ltx     = cfg
+  tt.config      = dsh.cached_ini_file( cfg )
+
+  -- РєРѕСЌС„РёС†РёРµРЅС‚С‹ РїРѕРєСѓРїРєРё
+  local str = get_string( "trader", "buy_condition", nil, tt.config )
+  ASSERT(
+    str,
+   "Incorrect trader settings. Cannot find buy_condition. [%s]->[%s]",
+   npc:name(), cfg
+  )
+  tt.buy_condition = xr_logic.parse_condlist(
+    npc, "trade_manager", "buy_condition", str
+  )
+
+  -- РєРѕСЌС„РёС†РёРµРЅС‚С‹ РїСЂРѕРґР°Р¶Рё
+  str = get_string( "trader", "sell_condition", nil, tt.config )
+  ASSERT(
+    str,
+    "Incorrect trader settings. Cannot find sell_condition. [%s]->[%s]",
+    npc:name(), cfg
+  )
+  tt.sell_condition = xr_logic.parse_condlist(
+    npc, "trade_manager", "sell_condition", str
+  )
+
+  -- СЃРїРёСЃРѕРє Р·Р°РєСѓРїРєРё
+  str = get_string( "trader", "buy_supplies", nil, tt.config )
+  if str then
+    tt.buy_supplies = xr_logic.parse_condlist(
+      npc, "trade_manager", "buy_supplies", str
+    )
+    if not tt.resuply_time then
+      local sobj = alife():object( npc:id() )
+      if sobj then
+        local ini  = sobj:spawn_ini()
+        local sect = "trade_manager"
+        if ini:section_exist( sect ) then
+          local resuply_time = get_string( sect, "resuply_time", nil, ini )
+          if resuply_time then
+            tt.resuply_time = unpack_time_from_string( resuply_time )
+            --log3( "~~[%s] TRADE INIT [%s] resuply_time is [%s]", script_name(), npc:name(), time2string(tt.resuply_time, "%04d/%02d/%02d %02d:%02d:%02d.%03d", {'y','m','d','h','min','s','ms'}))
+          end
+         end
+       end
+     end
+  else
+    tt.buy_supplies = nil
+  end
+  --
+  update( npc, true ) --Р’ РїРµСЂРІС‹Р№ СЂР°Р· Р°РїРґРµР№С‚РёРј СЃСЂР°Р·Сѓ.
+  --
+  if npc:alive() then
+    local sm = ogse_signals.get_mgr()
+    local binder = npc:binded_object()
+    local s_name = ( npc:clsid() == clsid.script_trader )
+      and ( "on_monster_update." .. npc:id() )
+      or  ( "on_npc_update."     .. npc:id() )
+    --buy_supplies РѕР±РЅРѕРІР»СЏРµРј РѕС‚РґРµР»СЊРЅРѕ, РІ СЃС‚СЂРѕРіРѕ РѕРїСЂРµРґРµР»С‘РЅРЅРѕРµ РІСЂРµРјСЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ С‚Р°Р№РјР°СѓС‚РѕРј.
+    if tt.buy_supplies and not binder[ script_name() .. ".subscribed" ] then
+      local s = {
+        [ "signal" ] = s_name,
+        [ "fun"    ] = this.update_buy_supplies,
+        --[ "queued" ] = true, --РЅРµ РЅСѓР¶РЅРѕ.
+      }
+      if tt.resuply_time then --Р•РіРѕ РјРѕР¶РµС‚ РЅРµ Р±С‹С‚СЊ, РµСЃР»Рё РёРЅРёС‚РёРј С‚РѕСЂРіРѕРІР»СЋ РІРїРµСЂРІС‹Рµ.
+        s.timeout = time_global() + ( ( tt.resuply_time:diffSec( game.get_game_time() )  * 1000 )  / ogse.game_time_factor )
+      else
+        tt.skip_updates = 10
+      end
+      binder[ script_name() .. ".subscribed" ] = s
+      sm:subscribe( s )
+      --РЎРёРіРЅР°Р» РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ РїРѕСЃР»Рµ СЃРЅР°.
+      local s2 = {
+        [ "signal" ] = "after_time_change",
+		[ "self"   ] = npc:id(),
+        [ "fun"    ] = this.update_after_time_change,
+      }
+      binder[ script_name() .. ".subscribed2" ] = s2
+      sm:subscribe( s2 )
+    end
+	--Р’СЃС‘ РѕСЃС‚Р°Р»СЊРЅРѕРµ РїСЂРѕСЃС‚Рѕ РїРµСЂРёРѕРґРёС‡РµСЃРєРё РѕР±РЅРѕРІР»СЏРµРј.
+    if not binder[ script_name() .. ".subscribed3" ] then
+	  --
+	  --log3("--[%s] Trade update subscribed on signal [%s] for NPC [%s]", script_name(), s_name, npc:name()) --Dbg
+	  --
+      local s3 = {
+        [ "signal" ] = s_name,
+        [ "fun"    ] = this.update,
+        [ "queued" ] = true,
+      }
+      binder[ script_name() .. ".subscribed3" ] = s3
+      sm:subscribe( s3 )
+    end
+  end
+end
+
+
+function update( npc, forced )
+  if forced ~= true then
+    ogse_signals.get_mgr():reschedule( math.random(60000, 300000) )
+  end
+  --
+  local tt = trade_manager[ npc:id() ]
+  ASSERT( tt, "trade_manager[ npc:id() ] npc found: %s", npc:name() )
+
+  local str = xr_logic.pick_section_from_condlist( db.actor, npc, tt.buy_condition )
+  if str then
+    --log3( "~~[%s] TRADE UPDATE [%s]: buy condition = [%s]", script_name(), npc:name(), str )
+    npc:buy_condition( tt.config, str )
+  end
+
+  str = xr_logic.pick_section_from_condlist( db.actor, npc, tt.sell_condition )
+  if str then
+    --log3( "~~[%s] TRADE UPDATE [%s]: cell condition = [%s]", script_name(), npc:name(), str )
+    npc:sell_condition( tt.config, str )
+  end
+end
+
+
+--------------------------------------------------------------------------------
+local function change_new_update_time( slot, next_update, forced )
+  local sm = ogse_signals.get_mgr()
+  local current_time = game.get_game_time()
+  local next_upd_game_time = time2string(next_update, "%04d/%02d/%02d %02d:%02d:%02d.%03d", {'y','m','d','h','min','s','ms'}) --СѓР±СЂР°С‚СЊ РїРѕС‚РѕРј.
+  local game_time_delta = next_update:diffSec(current_time) --РџРѕСЃС‡РёС‚Р°РµРј, С‡РµСЂРµР· СЃРєРѕР»СЊРєРѕ РёРіСЂРѕРІС‹С… СЃРµРєСѓРЅРґ РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ С‚РѕСЂРіРѕРІР»СЋ
+  local game_time_delta_ms = game_time_delta * 1000 --РџРµСЂРµРІРѕРґРёРј РІ РёРіСЂРѕРІС‹Рµ РјРёР»Р»РёСЃРµРєСѓРЅРґС‹
+  local REAL_time_delta_ms = game_time_delta_ms / ogse.game_time_factor --РљРѕРЅРІРµСЂС‚РёСЂСѓРµРј РІ Р Р•РђР›Р¬РќРћР• РІСЂРµРјСЏ
+  --log3("##[%s] Next trade update game time: %s, \nDelta in game seconds: [%s], \nDelta in game ms: [%s] \nTime Factor: [%s] \nDelta in REAL ms: [%s] \nCurrent global time: [%s] \nNext update global time: [%s]", script_name(), next_upd_game_time, game_time_delta, game_time_delta_ms, ogse.game_time_factor, REAL_time_delta_ms, time_global(), time_global() + REAL_time_delta_ms)
+  if not forced then --Р•СЃР»Рё СЌС‚Рѕ РѕР±С‹С‡РЅС‹Р№ Р°РїРґРµР№С‚, РІС‹Р·РІР°РЅРЅС‹Р№ РјРµРЅРµРґР¶РµСЂРѕРј СЃРёРіРЅР°Р»РѕРІ
+    sm:reschedule( REAL_time_delta_ms ) --РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјР°СѓС‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ СЃР»РѕС‚Р°
+  else --Р•СЃР»Рё СЌС‚Рѕ РІС‹РЅСѓР¶РґРµРЅРЅС‹Р№ Р°РїРґРµР№С‚, РІС‹Р·РІР°РЅРЅС‹Р№ РќР• РёР· РјРµРЅРµРґР¶РµСЂР° СЃРёРіРЅР°Р»РѕРІ
+    sm:rechange_scheduled_time( slot, REAL_time_delta_ms ) --РџРµСЂРµСѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјР°СѓС‚ РґР»СЏ СЃР»РѕС‚Р° РѕР±РЅРѕРІР»РµРЅРёСЏ РґСЂСѓРіРёРј РјРµС‚РѕРґРѕРј, С‚.Рє. РјРµС‚РѕРґ reschedule РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ РЅРµ РїРѕРґС…РѕРґРёС‚.
+  end
+end
+
+function update_after_time_change( id ) --РћР±РЅРѕРІР»РµРЅРёРµ РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёСЏ РІСЂРµРјРµРЅРё (СЃРЅР°)
+  local obj = level.object_by_id( id )
+  if not obj then return end
+  local binder = obj:binded_object()
+  if not binder then return end
+  --
+  local slot = binder[ script_name() .. ".subscribed" ]
+  if slot then
+    local tt = trade_manager[ obj:id() ]
+    change_new_update_time( slot, tt.resuply_time, true )
+  end
+end
+
+function update_buy_supplies( npc )
+  local tt = trade_manager[ npc:id() ]
+  ASSERT( tt, "trade_manager[ npc:id() ] npc found: %s", npc:name() )
+  --
+  --РРЅРёС†РёР°Р»РёР·Р°С†РёСЋ С‚РѕСЂРіРѕРІР»Рё РїРµСЂРµРґРІРёРЅСѓР» РЅР° 10-Р№ Р°РїРґРµР№С‚. РРЅР°С‡Рµ РЅРµ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ Р°СЃСЃРѕСЂС‚РёРјРµРЅ Сѓ С‚РѕСЂРіРѕРІС†РµРІ, РєРѕС‚РѕСЂС‹Рµ С‚РµР»РµРїРѕСЂС‚РёСЂСѓСЋС‚СЃСЏ РЅР° СЃРІРѕРµ РјРµСЃС‚Рѕ, С‚РёРїР° РЎР°С…Р°СЂРѕРІР°.
+  if tt.skip_updates and tt.skip_updates > 0 then
+    tt.skip_updates = tt.skip_updates - 1
+    return
+  end
+  --
+  if tt.resuply_time and tt.resuply_time > game.get_game_time() then return end --KRodin: РєРѕСЃС‚С‹Р»СЊ РґР»СЏ СЃРІРѕРµРІСЂРµРјРµРЅРЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕСЂРіРѕРІР»Рё РїРѕСЃР»Рµ СЃРµР№РІ-Р»РѕР°РґР°, С‡С‚РѕР±С‹ РѕРїСЏС‚СЊ РјРµРЅРµРґР¶РµСЂ СЃРёРіРЅР°Р»РѕРІ РЅРµ РїСЂР°РІРёС‚СЊ, Р»СѓС‡С€Рµ РїСѓСЃС‚СЊ Р±СѓРґРµС‚ С‚Р°Рє.
+  --
+  local str = xr_logic.pick_section_from_condlist(db.actor, npc, tt.buy_supplies )
+  if str then
+    npc:buy_supplies( tt.config, str )
+  end
+  --Р’РѕС‚ С‚СѓС‚ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІСЂРµРјСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕСЂРіРѕРІР»Рё.
+  tt.resuply_time = game.get_game_time() + seconds2ctime( math.random( MIN_TRADE_UPD_TIME, MAX_TRADE_UPD_TIME ) * 3600 )
+  change_new_update_time( nil, tt.resuply_time, false )
+  --
+  local sobj = alife():object( npc:id() )
+  if sobj then
+    local ini  = sobj:spawn_ini()
+    local sect = "trade_manager"
+    ini.readonly = false
+    ini:w_string(
+      sect, "resuply_time", pack_time_to_string( tt.resuply_time )
+    )
+    sobj:save_spawn_ini()
+  end
+end
+--------------------------------------------------------------------------------

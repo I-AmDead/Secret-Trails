@@ -359,7 +359,6 @@ function motivator_binder:update( delta )
     sr_light.check_light(self.object)
     self.last_update = time_global()
   end
-
   self.object:info_clear()
 
   self.am:call( "on_npc_update", self.object, delta )
@@ -388,7 +387,6 @@ function motivator_binder:save(packet)
   packet:w_bool(self.treasure_processed)
   xr_logic.save_obj(self.object, packet)
   dialog_manager.save(self.object, packet)
-  trade_manager.save(self.object, packet)
 end
 
 function motivator_binder:load(reader)
@@ -412,7 +410,6 @@ function motivator_binder:load(reader)
   end
   local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
   self.object:invulnerable(is_invulnerable)
-  trade_manager.load(self.object, reader)
 end
 
 function motivator_binder:hear_callback(self, who, sound_type, sound_position, sound_power)

@@ -40,12 +40,7 @@ function generic_object_binder:reinit()
   self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
   self.object:set_callback(callback.hit, self.hit_callback, self)
   self.object:set_callback(callback.death, self.death_callback,	self)
-  if self.object:clsid() == clsid.script_trader and self.object:alive() then
-    self.object:set_callback(callback.use_object, self.use_callback_trader, self)
-  else
-    self.object:set_callback(callback.use_object, self.use_callback, self)
-  end
-
+  self.object:set_callback(callback.use_object, self.use_callback, self)
 end
 
 function generic_object_binder:net_spawn(sobject)
@@ -235,22 +230,6 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 	
 end
 
-function generic_object_binder:use_callback_trader(obj, who)
-    if self.object == nil then
-        return
-    end
-    if self.object:alive() then
-        if self.st.active_section then
-            xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
-            -- инициализация торговли
-            if who:id() == db.actor:id() then
-                bind_stalker.trader = nil
-                trade_manager.update(obj)
-            end
-        end
-    end
-end
-
 function generic_object_binder:use_callback(obj, who)
     if self.object and not self.object:alive() then
         xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
@@ -344,15 +323,8 @@ function generic_object_binder:save( packet )
 
 	ASSERT( not db.saving_obj, "found saving_obj = %s", tostring( db.saving_obj and db.saving_obj:name() or nil ) )
 	db.saving_obj = self.object
-
 	object_binder.save(self, packet)
-
 	xr_logic.save_obj(self.object, packet)
-
-
-	if self.object:clsid() == clsid.script_trader then
-		trade_manager.save( self.object, packet )
-	end
   	db.saving_obj = false
 end
 
@@ -368,10 +340,6 @@ function generic_object_binder:load( reader )
 		abort("[bind_monster.script]SAVE FILE IS CORRUPT "..self.object:name())
 	end
 	xr_logic.load_obj(self.object, reader)
-
-	if self.object:clsid() == clsid.script_trader then
-    		trade_manager.load( self.object, reader )
-	end
 end
 
 function play_particle(obj,params)
