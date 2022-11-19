@@ -9,6 +9,7 @@ $npc          = on                 ; option for Level Editor
 $prefetch         = 16
 visual          = monsters\mutant_boar\mutant_boar
 corpse_visual     = monsters\mutant_boar\mutant_boar_dead
+keep_visual = true
 icon          = ui_npc_monster_mutant_boar
 
 ;------------------------------------------------------------------------
@@ -29,6 +30,26 @@ smart_terrain_choose_interval = 00:15:00
 Spawn_Inventory_Item_Section = mutant_boar_leg
 Spawn_Inventory_Item_Probability = 1.0
 
+;------------------------------------------------------------------------
+; Influences
+;------------------------------------------------------------------------
+
+fire_max_distance			=	0
+fire_max_power				=	5
+fire_linear_factor			=	0
+fire_quadratic_factor		=	0.025
+
+psy_max_distance			=	0
+psy_max_power				=	5
+psy_linear_factor			=	0.05
+psy_quadratic_factor		=	0
+
+radiation_max_distance		=	0
+radiation_max_power			=	0.01
+radiation_linear_factor		=	1
+radiation_quadratic_factor	=	1
+radiation_pp_effector_name	= 	postprocess_rad
+radiation_pp_highest_at		= 	0.02
 ;------------------------------------------------------------------------
 ; Physics
 ;------------------------------------------------------------------------
@@ -59,13 +80,22 @@ ph_skel_shot_up_factor        = 0.25
 ;------------------------------------------------------------------------
 
 ; speed factors     linear | angular_real | angular_path | min   |  max
-Velocity_Stand      = 0,    1.4,      1.4,    1,    1 
-Velocity_RunFwdNormal =11.5,   3.5,      3.5,    0.4,  1 
-Velocity_RunFwdDamaged  = 5.5,    3.0,      3.0,    0.2,  1
-Velocity_WalkFwdDamaged = 2.3,    2.5,      2.5,    0.2,  2.0 
-Velocity_WalkFwdNormal  = 3.75,   2.5,      2.5,    0.02, 3.0 
-Velocity_Drag     = -1.0,   1.0,      1.0,    1,    1
-Velocity_Steal      = 1.5,    3.0,      3.0,    1,    1
+Velocity_Stand			= 0,		3.4,			3.0,		1,		1
+Velocity_RunFwdNormal	= 5.5,		3.0,			2.8,		0.4,	1
+Velocity_RunFwdDamaged	= 4.5,		3.0,			2.8,		0.2,	1
+Velocity_WalkFwdDamaged	= 1.3,		3.0,			2.8,		0.2,	2.0
+Velocity_WalkFwdNormal	= 1.75,		3.0,			2.8,		0.02,	3.0
+Velocity_Drag			= -1.0,		1.0,			1.0,		1,		1
+Velocity_Steal			= 1.5,		3.0,			2.5,		1,		1
+
+; speed factors			linear | angular_real | angular_path | min	 |  max
+;Velocity_Stand			= 0,		3.4,			3.0,		1,		1
+;Velocity_RunFwdNormal	= 7.5,		3.0,			2.8,		0.4,	1
+;Velocity_RunFwdDamaged	= 4.5,		3.0,			2.8,		0.2,	1
+;Velocity_WalkFwdDamaged	= 1.3,		3.0,			2.8,		0.2,	2.0
+;Velocity_WalkFwdNormal	= 1.75,		3.0,			2.8,		0.02,	3.0
+;Velocity_Drag			= -1.0,		1.0,			1.0,		1,		1
+;Velocity_Steal			= 1.5,		3.0,			2.5,		1,		1
 
 ; acceleration
 Accel_Generic     = 1.5
@@ -81,7 +111,7 @@ attack_params     = m_boar_attack_params
 ;attack parameters
 MinAttackDist     = 2.6 
 MaxAttackDist     = 3.2
-as_min_dist       = 1.4
+as_min_dist				= 1.6
 as_step         = 0.5
 
 Run_Attack_Dist     = 3.5,    4.0
@@ -91,6 +121,19 @@ Melee_Rotation_Factor = 2.2
 
 hit_type        = wound       ; type of attack
 
+;------------------------------------------------------------------------
+; Attack On Move
+;------------------------------------------------------------------------
+
+aom_enabled								=	1
+aom_animation_left         				=	stand_attack_run_left_
+aom_animation_right       				=	stand_attack_run_right_
+aom_far_radius							=	8
+aom_max_go_close_time					=	8
+aom_prepare_time						=	4
+aom_attack_radius						=	1
+aom_update_side_period					=	3
+aom_prediction_factor					=	1.2
 
 ;------------------------------------------------------------------------
 ; Conditions
@@ -111,6 +154,7 @@ health_restore_v      = 0.0005
 
 ;Immunities 
 immunities_sect     = boar_immunities
+protections_sect		= boar_protections
 
 ;открытые раны
 bleeding_v          = 0.05            ;потеря крови при номинальной ране в секунду
@@ -164,22 +208,6 @@ attack_sound_delay    = 4000
 
 SoundThreshold      = 0.06             ; range [0..1]
 max_hear_dist     = 60
-
-;------------------------------------------------------------------------
-; Vision
-;------------------------------------------------------------------------
-eye_fov           = 110 ;130
-eye_range         = 40  ;60 
-
-min_view_distance       = 0.5       ; коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance     = 1.0       ; коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold    = 100.0       ; значение, при достижении суммой которого объект считается видимым
-always_visible_distance   = 0.3
-time_quant          = 0.001
-decrease_value        = 0.01        ; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor         = 0.5
-luminocity_factor     = 0.5         ; фактор освещения (только для Актёра)
-transparency_threshold    = 0.25
 
 ;-------------------------------------------------------------------------
 ; Morale
@@ -237,7 +265,7 @@ step_params       = m_boar_step_params
 LegsCount       = 4
 
 DayTime_Begin         = 0     ; эрўрыр фэ  фы  ьюэёЄЁр
-DayTime_End           = 23    ; ъюэхЎ фэ  фы  ьюэёЄЁр
+DayTime_End           = 21    ; ъюэхЎ фэ  фы  ьюэёЄЁр
 
 distance_to_corpse        = 2.1   ; фшёЄ. фю ЄЁєяр, яЁш ъюЄюЁющ юэ яхЁхїюфшЄ т ёюёЄю эшх хфv
 
@@ -250,6 +278,40 @@ DynamicObjectsCount   = 32
 ;species of monster
 species       = boar
 
+;------------------------------------------------------------------------
+; Vision
+;------------------------------------------------------------------------
+eye_fov						= 110	;130
+eye_range					= 40	;60
+
+vision_free_section			= boar_vision_free
+vision_danger_section		= boar_vision_danger
+
+; ЗНАЧЕНИЯ visibility_threshold ДОЛЖНЫ БЫТЬ РАВНЫ для денжера и фри,
+; иначе возникают артефакты с потерей видимости при переходе от денжера во фри.
+
+[boar_vision_free]
+min_view_distance   		= 0.51				; коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance	 		= 1.01				; коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold	 	= 100.01			; значение, при достижении суммой которого объект считается видимым
+always_visible_distance 	= 0.31
+time_quant					= 0.0011
+decrease_value				= 0.011				; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor		     	= 0.51
+luminocity_factor			= 0.51 				; фактор освещения (только для Актёра)
+transparency_threshold		= 0.251
+
+[boar_vision_danger]
+min_view_distance   		= 0.5				; коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance	 		= 1.0				; коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold	 	= 100.0				; значение, при достижении суммой которого объект считается видимым
+always_visible_distance 	= 0.3
+time_quant					= 0.001
+decrease_value				= 0.01				; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor		     	= 0.5
+luminocity_factor			= 0.5 				; фактор освещения (только для Актёра)
+transparency_threshold		= 0.25
+
 ;===========================================================================
 ; ATTACK PARAMS
 ;===========================================================================
@@ -258,12 +320,16 @@ species       = boar
 ; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, bottom, top ) | Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =      0.30,   0.25,       150,        0.0, 0.5, 0.5,   -0.6, 0.6, -0.6, 0.6,            3.2
+tand_attack_0 =	  	0.30,		0.65,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Bite2
-stand_attack_1 =      0.30,   0.25,       150,        0.0, 0.5, 0.5,   -0.6, 0.6, -0.6, 0.6,            3.2
+stand_attack_1 =	  	0.30,		0.65,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Right Leg Attack
-stand_attack_2 =      0.30,   0.35,       200,        0.0, 1.0, 2.0,   -0.6, 0.6, -0.6, 0.6,            3.2
-stand_attack_run_0 =    0.50,   0.35,       200,        0.0, 1.0, 2.0,   -0.6, 0.6, -0.6, 0.6,            2.2
+stand_attack_2 =	  	0.30,		0.65,	      200,        0.0, 1.0, 2.0,	 -0.6, 0.6, -0.6, 0.6,	3.2
+
+stand_attack_run_0	=    0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+
+stand_attack_run_left_0  =   0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
+stand_attack_run_right_0 =   0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
 
 ;===========================================================================
 ; SPECIAL EFFECTORS
@@ -298,13 +364,18 @@ ce_power      = 2.5; 2.0      ; power
 ;<hit_scale>  - коэфф. изменения хита (уменьшения здоровья) 
 ;<wound_scale>  - коэфф. изменения величины открытой раны
 
-default       = 1, -1, 0.3
+default				= 0.5, -1, 0.3
 
-bip01_pelvis    = 0.8, -1, 0.3
-bip01_spine     = 0.6, -1, 0.3
-bip01_spine1    = 0.6, -1, 0.3
-bip01_neck      = 0.5, -1, 1.5
-bip01_head      = 0.1, -1, 0.1, 1
+bip01_pelvis 		= 1.0, -1, 0.3
+bip01_spine 		= 1.0, -1, 0.3
+bip01_spine1 		= 1.0, -1, 0.3
+bip01_spine2		= 1.0, -1, 0.3
+bip01_l_upperarm	= 1.0, -1, 0.3
+bip01_r_upperarm	= 1.0, -1, 0.3
+bip01_l_thigh		= 1.0, -1, 0.3
+bip01_r_thigh		= 1.0, -1, 0.3
+bip01_neck 			= 1.5, -1, 1.5
+bip01_head	 		= 1.5, -1, 0.3
 
 
 [boar_critical_wound_bones_head]
@@ -374,14 +445,14 @@ bip01_tail1
 [m_boar_step_params]
    
 ;-------------------------------------------------------------------------------------------------------------
-; anim      | Cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
+;	anim			| Cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
 ;-------------------------------------------------------------------------------------------------------------
-stand_walk_fwd_0  =   5,    0.01,   1,     0.5,     0.7,    0.15,   1.0,     0.5,   1.0
-stand_walk_dmg_0  =     4,  0.2,    1,       0.25,    0.7,    0.5,    1.0,     0.7,   1.0
-stand_run_fwd_0   =     1,  0.01,   1,       0.05,    0.7,    0.2,    1.0,     0.2,   0.2
-stand_run_dmg_0   =   4,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
-stand_steal_0   =   1,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
-stand_drag_0    =   1,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_walk_fwd_0 	=	  5,    0.01,   1,           0.5,     0.7,    0.15,   1.0,     0.5,   1.0
+stand_walk_fwd_dmg_0	=  	  4,	0.2,    1,	     0.25,    0.7,    0.5,    1.0,     0.7,   1.0
+stand_run_fwd_0	 	=  	  1,	0.01,   1,	     0.05,    0.7,    0.2,    1.0,     0.2,   0.2
+stand_run_dmg_0		=	  4,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_steal_0		=	  1,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_drag_0		=	  1,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
 
 
 ;===========================================================================
@@ -397,6 +468,18 @@ telepatic_immunity    = 1.0
 chemical_burn_immunity  = 0.8
 explosion_immunity    = 0.1
 fire_wound_immunity   = 0.1
+
+;*********************************************************************************
+; PROTECTIONS
+;*********************************************************************************
+[boar_protections]
+skin_armor				= 0.5
+hit_fraction_monster	= 0.3
+
+
+
+
+
 
 ;*********************************************************************************
 ; BASE PROFILES
@@ -429,18 +512,21 @@ fire_wound_immunity   = 0.09
 
 [boar_attack_params_weak]
 ;---------------------------------------------------------------------------------------------------------------------------------------------
-; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, bottom, top ) | Test Dist
+;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =      0.30,   0.15,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_0 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Bite2
-stand_attack_1 =      0.30,   0.15,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_1 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Right Leg Attack
-stand_attack_2 =      0.30,   0.20,       100,        0.0, 1.0, 2.0,   -0.8, 0.8, -1.0, 1.0,            2.5
-stand_attack_run_0 =    0.50,   0.30,       200,        0.0, 1.0, 2.0,   -1.0, 1.0, -1.0, 1.0,            2.2
+stand_attack_2 =	  	0.20,		0.7,	      50,        0.0, 1.0, 2.0,	 -0.8, 0.8, -1.0, 1.0,					  2.5
+stand_attack_run_0 =    0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,				  3.2
+stand_attack_run_left_0  =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_right_0 =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
 
-
-
+;*********************************************************************************
+; NORMAL PROFILE
+;*********************************************************************************
 [boar_normal]:m_boar_e
 $spawn        = "monsters\boars\boar_02_normal"
 visual        = monsters\mutant_boar\mutant_boar
@@ -452,9 +538,6 @@ attack_params   = boar_attack_params_normal
 spec_rank     = normal
 community     = boar
 
-;*********************************************************************************
-; NORMAL PROFILE
-;*********************************************************************************
 [boar_immunities_normal]
 burn_immunity     = 0.5
 strike_immunity     = 1.0
@@ -468,15 +551,17 @@ fire_wound_immunity   = 0.08
 
 [boar_attack_params_normal]
 ;---------------------------------------------------------------------------------------------------------------------------------------------
-; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, bottom, top ) | Test Dist
+;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =      0.30,   0.25,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_0 =	  	0.30,		0.65,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Bite2
-stand_attack_1 =      0.30,   0.25,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_1 =	  	0.30,		0.65,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Right Leg Attack
-stand_attack_2 =      0.30,   0.35,       100,        0.0, 1.0, 2.0,   -0.8, 0.8, -1.0, 1.0,            2.5
-stand_attack_run_0 =    0.50,   0.50,       200,        0.0, 1.0, 2.0,   -1.0, 1.0, -1.0, 1.0,            2.2
+stand_attack_2 =	  	0.30,		0.65,	      50,        0.0, 1.0, 2.0,	 -0.8, 0.8, -1.0, 1.0,					  2.5
+stand_attack_run_0 =    0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,					  3.2
+stand_attack_run_left_0  =   0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_right_0 =   0.40,		0.65,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
 
 
 
@@ -507,15 +592,17 @@ fire_wound_immunity   = 0.07
 
 [boar_attack_params_strong]
 ;---------------------------------------------------------------------------------------------------------------------------------------------
-; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, bottom, top ) | Test Dist
+;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =      0.20,   0.35,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_0 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Bite2
-stand_attack_1 =      0.20,   0.35,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_1 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Right Leg Attack
-stand_attack_2 =      0.20,   0.50,       100,        0.0, 1.0, 2.0,   -0.8, 0.8, -1.0, 1.0,            2.5
-stand_attack_run_0 =    0.50,   0.70,       200,        0.0, 1.0, 2.0,   -1.0, 1.0, -1.0, 1.0,            2.2
+stand_attack_2 =	  	0.20,		0.7,	      50,        0.0, 1.0, 2.0,	 -0.8, 0.8, -1.0, 1.0,					  2.5
+stand_attack_run_0 =    0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,				  3.2
+stand_attack_run_left_0  =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_right_0 =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
 
 [boar_super]:m_boar_e
 $spawn        = "monsters\boars\boar_super"
@@ -550,20 +637,14 @@ fire_wound_immunity   = 0.009
 
 [boar_attack_params_super]
 ;---------------------------------------------------------------------------------------------------------------------------------------------
-; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, bottom, top ) | Test Dist
+;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =      0.20,   0.35,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_0 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Bite2
-stand_attack_1 =      0.20,   0.35,       100,        0.0, 0.5, 0.5,   -1.0, 1.0, -1.0, 1.0,            2.3
+stand_attack_1 =	  	0.20,		0.7,	      50,        0.0, 0.5, 0.5,	 -1.0, 1.0, -1.0, 1.0,					  2.3
 ;Right Leg Attack
-stand_attack_2 =      0.20,   0.50,       100,        0.0, 1.0, 2.0,   -0.8, 0.8, -1.0, 1.0,            2.5
-stand_attack_run_0 =    0.50,   0.70,       200,        0.0, 1.0, 2.0,   -1.0, 1.0, -1.0, 1.0,            2.2
-
-
-
-
-
-
-
-
+stand_attack_2 =	  	0.20,		0.7,	      50,        0.0, 1.0, 2.0,	 -0.8, 0.8, -1.0, 1.0,					  2.5
+stand_attack_run_0 =    0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,				  3.2
+stand_attack_run_left_0  =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_right_0 =   0.40,		0.7,	      1800,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
