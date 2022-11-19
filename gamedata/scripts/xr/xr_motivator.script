@@ -82,6 +82,7 @@ function motivator_binder:net_spawn(sobject)
   self.object:set_callback(callback.death, self.death_callback, self)
   self.object:set_callback(callback.on_item_drop, self.on_item_drop, self)	
   self.object:set_callback(callback.on_item_take, self.on_item_take, self)
+  self.object:set_callback(callback.on_foot_step, self.on_foot_step, self )
   self.object:set_enemy_callback( self.enemy_callback, self )
   self.am:call( "on_npc_before_spawn", self.object, self )
   if not self.object:alive() then
@@ -201,6 +202,7 @@ function motivator_binder:clear_callbacks()
   self.object:set_callback(callback.death, nil)
   self.object:set_callback(callback.on_item_drop, nil)
   self.object:set_callback(callback.on_item_take, nil)
+  self.object:set_callback(callback.on_foot_step, nil)
   self.object:set_enemy_callback()
 end
 
@@ -495,6 +497,13 @@ function motivator_binder:on_item_take(obj)
   self.am:call(
     "on_npc_item_take." .. self.object:id(), self.object, obj, sobj
   )
+end
+
+function motivator_binder:on_foot_step(obj, power)
+  if not obj then return end
+  local sobj = alife():object(obj:id())
+  if not sobj then return end
+  self.am:call( "on_npc_foot_step", self.object, obj, sobj )
 end
 
 --Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
