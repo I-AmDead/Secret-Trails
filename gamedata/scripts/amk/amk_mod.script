@@ -915,48 +915,41 @@ end
 -- может быть много результатов
 function af_transform_universal_end( params )
   -- для совместимости со старыми варками
-  for _, k in ipairs({ "komp", "result" }) do
-    if not params[ k ] then
-      params[ k ] = {}
-    elseif type( params[ k ] ) == "string" then
-      params[ k ] = parse_names( params[ k ] )
-    end
-  end
-  -- если есть результаты
-  local af_sobj
-  if table.getn( params.result ) > 0 then
-    local anom_pos = vector():set( params.pos.x, params.pos.y, params.pos.z )
-    if
-      level.name() == params.lname
-      and db.actor:position():distance_to( anom_pos ) < 15
-    then
-      level.add_pp_effector( "teleport.ppe", 1524, false )
-    end
-    -- формируем строку с названиями компонентов
-    local from_komp = {}
-    for _, k in ipairs( params.komp ) do
-      table.insert( from_komp, game.translate_string( news_manager.get_inv_name( k ) ) )
-    end
-    -- спавним результат(v)
-    for _, k in ipairs( params.result ) do
-      af_sobj = amk.spawn_item(
-        k,
-        vector():set( params.pos.x, params.pos.y + 1, params.pos.z ),
-        params.gv, params.lv
-      )
-      amk.add_spot_on_map(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
-    end
-    amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
-  end
+	local count = 0
+	for k, v in pairs(params.result) do
+		count = count + 1
+	end
+	if count > 0 then
+		local anom_pos = vector():set(params.pos.x, params.pos.y, params.pos.z)
+		if db.actor:position():distance_to(anom_pos) < 15 then
+			level.add_pp_effector("teleport.ppe", 1524, false)
+		end
+		-- формируем строку с названиями компонентов
+		local from_komp = ""
+		for k,v in pairs(params.komp) do
+			if k then
+				from_komp = from_komp..game.translate_string(news_manager.get_inv_name(k))..", "
+			end
+		end
+		-- отсекаем ", " в хвосте
+		from_komp = string_sub(from_komp, 1, -2)
+		
+		-- спавним результат(v)
+		for k,v in pairs(params.result) do
+			af_sobj = amk.spawn_item(k, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.gv, params.lv)
+			amk.add_spot_on_map(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+		end
+		amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+	end
 	
-  -- даем инфопорциі, если есть
-  if params.info_portion and db.actor:dont_has_info( params.info_portion ) then
-    db.actor:give_info_portion( params.info_portion )
-  end
+	-- даїм инфопорциі, если есть
+	if params.info_portion and db.actor:dont_has_info(params.info_portion) then
+		db.actor:give_info_portion(params.info_portion)
+	end
 	
-  -- удаляем аномалии, если нужно и она не в исключениях
-  -- код взят из amk_anoms.turn_off_all()
-  if params.remove_anomaly then
+	-- удаляем аномалии, если нужно и она не в исклічениях
+	-- код взят из amk_anoms.turn_off_all()
+	if params.remove_anomaly then
     local sobj = alife():object( params.remove_anomaly_id )
     if sobj and game_graph():valid_vertex_id( sobj.m_game_vertex_id ) then
       if is_generated_anomaly( sobj ) then
@@ -973,6 +966,8 @@ function af_transform_end(params)
 	local from_sect="\""..params.from_sect.."\""
 	local obj
         obj=amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
+	local sobj = alife():object( obj.id )
+	alife():use_ai_locations(sobj, false)
 	amk.add_spot_on_map(obj.id,"red_location",game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 	amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 end
