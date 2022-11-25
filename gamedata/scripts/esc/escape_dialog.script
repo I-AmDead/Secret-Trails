@@ -9,11 +9,11 @@ function trader_repair_precond(trader, actor)
 	local item_in_slot_1 = db.actor:item_in_slot(1)
 	local item_in_slot_2 = db.actor:item_in_slot(2)
 	local item_in_slot_6 = db.actor:item_in_slot(6)
-	if ( item_in_slot_1 ~= nil and 1 > item_in_slot_1:condition() + 0.01 )
-	or ( item_in_slot_2 ~= nil and 1 > item_in_slot_2:condition() + 0.01 )
-	or ( item_in_slot_6 ~= nil and 1 > item_in_slot_6:condition() + 0.01 ) then return true
+	if ( item_in_slot_1 and item_in_slot_1:condition() < 1 )
+	or ( item_in_slot_2 and item_in_slot_2:condition() < 1 )
+	or ( item_in_slot_6 and item_in_slot_6:condition() < 1 ) then return true
 	else return false
-	end	 
+	end
 end
 
 function trader_check_money_s1(trader, actor)

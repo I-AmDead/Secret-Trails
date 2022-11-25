@@ -35,7 +35,6 @@ local nagrad = {
   "wpn_abakan_n_m2",
   "wpn_desert_eagle",
   "wpn_mp153_m1",
-  "wpn_spas12_m1",
   "wpn_groza_m1",
   "wpn_scar_siber_m1_black",
   "wpn_kiparis_s",
@@ -171,11 +170,11 @@ function trader_repair_precond(trader, actor)
 	local item_in_slot_1 = db.actor:item_in_slot(1)
 	local item_in_slot_2 = db.actor:item_in_slot(2)
 	local item_in_slot_6 = db.actor:item_in_slot(6)
-	if item_in_slot_1 ~= nil and 1 > item_in_slot_1:condition() + 0.01 then return true
-	elseif item_in_slot_2 ~= nil and 1 > item_in_slot_2:condition() + 0.01 then return true
-	elseif item_in_slot_6 ~= nil and 1 > item_in_slot_6:condition() + 0.01 then return true
+	if ( item_in_slot_1 and item_in_slot_1:condition() < 1 )
+	or ( item_in_slot_2 and item_in_slot_2:condition() < 1 )
+	or ( item_in_slot_6 and item_in_slot_6:condition() < 1 ) then return true
 	else return false
-	end	 
+	end 
 end
 
 function trader_check_money_s1(trader, actor)
@@ -2680,7 +2679,7 @@ function sidr_thihty_mutant_psevdodog_tail_dal(first_speaker, second_speaker)
 		actor = second_speaker
 		trader = first_speaker
 	end
-	dialogs.relocate_item_section(actor, "wpn_spas12", "in", 1)
+	dialogs.relocate_item_section(actor, "wpn_mp153_m1", "in", 1)
 	new_dialog.out_item_much("mutant_psevdodog_tail",30)
 end
 
@@ -2698,7 +2697,7 @@ function sidr_twentyfife_mutant_krovosos_jaw_dal(first_speaker, second_speaker)
 		actor = second_speaker
 		trader = first_speaker
 	end
-	dialogs.relocate_item_section(actor, "wpn_kiparis_s", "in", 1)
+	dialogs.relocate_item_section(actor, "wpn_vz61_scorpion", "in", 1)
 	new_dialog.out_item_much("mutant_krovosos_jaw",25)
 end
 
@@ -3045,7 +3044,7 @@ function knyaz_abakan_done(first_speaker, second_speaker)
 		trader = first_speaker
 	end
 	dialogs.relocate_item_section(trader, "wpn_abakan_n_m2", "out", 1)
-	dialogs.relocate_item_section(actor, "wpn_spas12_m1", "in", 1)
+	dialogs.relocate_item_section(actor, "wpn_saiga12s_m2", "in", 1)
 	dialogs.relocate_item_section(actor, "check", "in", 1)
 end
 
