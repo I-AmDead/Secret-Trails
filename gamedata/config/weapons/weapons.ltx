@@ -11,26 +11,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [bullet_manager]
-tracer_width					= 0.08
-tracer_length_max				= 10
-tracer_length_min				= 1
 tracer_shader					= effects\bullet_tracer ;hud\default
 tracer_texture					= fx\fx_tracer_weapons
-;СЂР°СЃСЃС‚РѕСЏРЅРёРµ РїРѕСЃР»Рµ РєРѕС‚РѕСЂРѕРіРѕ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ hit_probabilty РїРѕР»РЅРѕСЃС‚СЊСЋ
-hit_probability_max_dist		= 3 ;10
+fire_circle_k					= 2.0f ; means tracer_width*2
+
+tracer_width					= 0.08
+tracer_length_max				= 225 ;10.0	;24.0 ;14.0
+tracer_length_min				= 0 ;1 ;2		;0.2
+;расстояние после которого учитывается hit_probabilty полностью
+hit_probability_max_dist		= 3;
 
 gravity_const					= 9.81
-;СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ РІРѕР·РґСѓС…Р°, РїСЂРѕС†РµРЅС‚, РєРѕС‚РѕСЂС‹Р№ РѕС‚РЅРёРјР°РµС‚СЃСЏ РѕС‚ СЃРєРѕСЂРѕСЃС‚Рё РїРѕР»РµС‚Р° РїСѓР»Рё
+;сопротивление воздуха, процент, который отнимается от скорости полета пули
 air_resistance_k				= 1.82
 
-;СЂР°Р·РјРµСЂ С€Р°РіР° РІСЂРµРјРµРЅРё (РІ РјРёР»РёСЃРµРєСѓРЅРґР°С…), РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РїСЂРѕРёРіСЂС‹РІР°СЋС‚СЃСЏ 
+;размер шага времени (в милисекундах), по которому проигрываются
 time_step						= 33
-;РјРёРЅРёРјР°Р»СЊРЅР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ (Рј/СЃ), РЅР° РєРѕС‚РѕСЂРѕР№ РїСѓР»СЏ РµС‰Рµ СЃС‡РёС‚Р°РµС‚СЃСЏ Рё РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ
-min_bullet_speed				= 3
-;cРєРѕР»СЊРєРѕ РїСЂРѕС†РµРЅС‚РѕРІ СЌРЅРµСЂРіРёРё РїРѕС‚РµСЂСЏРµС‚ РїСѓР»СЏ РїСЂРё СЃС‚РѕР»РєРЅРѕРІРµРЅРёРё СЃ РјР°С‚РµСЂРёР°Р»РѕРј (РїСЂРё РїР°РґРµРЅРёРё РїРѕРґ РїСЂСЏРјС‹Рј СѓРіР»РѕРј)
-collision_energy_min			= 0.8
-;СЃРєРѕР»СЊРєРѕ РїСЂРѕС†РµРЅС‚РѕРІ СЌРЅРµСЂРіРёРё РѕСЃС‚Р°РЅРµС‚СЃСЏ Сѓ РїСѓР»Рё РїСЂРё Р»СЋР±РѕРј СЃС‚РѕР»РєРЅРѕРІРµРЅРёРё
-collision_energy_max			= 0.5
+;минимальная скорость (м/с), на которой пуля еще считается и показывается
+min_bullet_speed				= 3.0
+;cколько процентов энергии потеряет пуля при столкновении с материалом (при падении под прямым углом)
+collision_energy_min			= 0.80 ;0.75; 0.90
+;сколько процентов энергии останется у пули при любом столкновении
+collision_energy_max			= 0.5 ;0.7;0.50
 
 whine_sounds					= weapons\whine_1, weapons\whine_2, weapons\whine_3, weapons\whine_4, weapons\whine_5,
 								weapons\whine_6, weapons\whine_7, weapons\whine_8, weapons\whine_9, weapons\whine_10,
@@ -38,10 +40,10 @@ whine_sounds					= weapons\whine_1, weapons\whine_2, weapons\whine_3, weapons\wh
 explode_particles				= explosions\expl_bullet,explosions\expl_bullet_00,explosions\expl_bullet_01
 
 
-[tracers_color_table]	;color_table
-color_0 = 255, 130, 0, 255 ; Vanilla yellow
-color_1 = 38, 247, 129, 255			;64, 144, 32, 255 ; Green (Russia)
-color_2 = 255, 46, 137, 255			;255, 96, 96, 255 ; Red (NATO)
+[tracers_color_table]
+color_0 = 255, 130, 	  0,	255	; yellow
+color_1 = 255, 255, 	255,	255	; white
+color_2 = 255,  25, 	  0,	255	; red
 color_3 = 77,  255, 	 77,	255	; green
 color_4 = 0, 	 0, 	 25,	255	; blue
 color_5 = 255,  127, 	 63,     150 ;79
@@ -73,6 +75,8 @@ inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 0 ;11
 inv_grid_y			= 0 ;12
+
+icon_name = 9x18
 
 
 k_dist			= 1
@@ -112,6 +116,8 @@ inv_grid_height		= 1
 inv_grid_x			= 1 ;12
 inv_grid_y			= 0 ;12
 
+icon_name = 9x18pb
+
 k_dist			= 1 ;1.5
 k_disp			= 1 ;3
 k_hit			= 2.3 ;1.9
@@ -149,6 +155,8 @@ inv_grid_height		= 1
 inv_grid_x			= 1 ;14
 inv_grid_y			= 1 ;12
 
+icon_name = 9x19bp
+
 k_dist			= 1 ;1.2
 k_disp			= 1 ;2.1
 k_hit			= 2.3 ;1.9
@@ -185,6 +193,8 @@ inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 0 ;15
 inv_grid_y			= 1 ;12
+
+icon_name = 9x19
 
 k_dist			= 1
 k_disp			= 1 ;2.5
@@ -238,6 +248,8 @@ inv_grid_height		= 1
 inv_grid_x			= 0 ;12
 inv_grid_y			= 9 ;11
 
+icon_name = 545ap
+
 k_dist				= 1 ;1.2
 k_disp		        = 1 ;0.9
 k_hit		        = 1.9 ;1.75 ;2.185
@@ -275,6 +287,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 0 ;16
 inv_grid_y			= 8 ;11
+
+icon_name = 545
 
 k_dist				= 1
 k_disp		        = 1 ;1.5
@@ -314,6 +328,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;10
 inv_grid_y			= 1 ;11
 
+icon_name = 556ap
+
 k_dist			= 1 ;1.3
 k_disp		      = 1 ;1.45
 k_hit		      = 1.9 ;1.86 ;2.32
@@ -352,6 +368,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;14
 inv_grid_y			= 0 ;11
 
+icon_name = 556
+
 k_dist				= 1
 k_disp		        = 1 ;1.1
 k_hit		        = 1.4 ;1.56 ;1.95 ;2.065 ;2.265
@@ -389,6 +407,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 2 ;15
 inv_grid_y			= 7 ;10
+
+icon_name = 76254_ap
 	
 k_dist			= 1 ;1.2
 k_disp			= 1 ;1.02 
@@ -428,6 +448,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;17
 inv_grid_y			= 6 ; 9
 
+icon_name = 76254_h14
+
 k_dist			= 1.4
 k_disp			= 0.6 
 k_hit			= 2.4
@@ -465,6 +487,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 2 ;15
 inv_grid_y			= 5 ; 9
+
+icon_name = 76254_h1
 
 k_dist			= 1 ;1.4 ;1.2
 k_disp			= 1 ;0.6 ;1.0
@@ -504,6 +528,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;18
 inv_grid_y			= 3 ;11
 
+icon_name = 939sp5
+
 k_dist			= 1
 k_disp			= 0.6 ;0.8
 k_hit			= 3.0 ;3.2
@@ -540,6 +566,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 2 ; 5
 inv_grid_y			= 4 ;12
+
+icon_name = 939sp6
 
 k_dist			= 1
 k_disp			= 1.5
@@ -578,6 +606,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;17
 inv_grid_y			= 2 ;10
 
+icon_name = 939pab9
+
 k_dist			= 0.8
 k_disp			= 2.75
 k_hit			= 2.9 ;3.0 ;3.5
@@ -615,6 +645,8 @@ inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 6 ; 4
 inv_grid_y			= 6 ;14
+
+icon_name = gauss
 
 k_dist			= 1
 k_disp			= 1
@@ -664,6 +696,8 @@ inv_grid_height		= 1
 inv_grid_x			= 0 ; 9
 inv_grid_y			= 4 ;12
 
+icon_name = 11_43x23
+
 k_dist			= 1
 k_disp			= 1 ;2.2
 k_hit			= 2.9 ;2.62 ;2.35
@@ -700,6 +734,8 @@ inv_grid_width		= 2;1
 inv_grid_height		= 1
 inv_grid_x			= 0 ; 7
 inv_grid_y			= 5 ;12
+
+icon_name = 11_43x23g
 
 k_dist			= 1
 k_disp			= 1 ;2.5
@@ -738,6 +774,8 @@ inv_grid_height		= 1
 inv_grid_x			= 4 ;13
 inv_grid_y			= 1 ;10
 
+icon_name = 12x70dart
+
 k_dist			= 2
 k_disp			= 1 ;1.2
 k_hit			= 20 ;5.0
@@ -775,6 +813,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 4 ;11
 inv_grid_y			= 0 ;10
+
+icon_name = 12x70zhekan
 
 k_dist			= 1.5
 k_disp			= 2.0 ;2.8
@@ -820,6 +860,8 @@ inv_grid_height		= 1
 inv_grid_x			= 2 ;13
 inv_grid_y			= 8 ; 9
 
+icon_name = 12x70buck
+
 k_dist			= 1.0
 k_disp			= 18 ;5
 k_hit			= 0.425 ;0.85
@@ -857,6 +899,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x		= 2 ;46
 inv_grid_y		= 9 ;49
+
+icon_name = 12x70kart
 
 k_dist			= 1.5
 k_disp			= 8 ;3 ;6.5
@@ -896,6 +940,8 @@ inv_grid_height		= 1
 inv_grid_x			= 4 ;20
 inv_grid_y			= 2 ;22
 
+icon_name = 762
+
 k_dist			= 1
 k_disp			= 1
 k_hit			= 1.7 ;2.12 ;2.32 ;2.52
@@ -933,6 +979,8 @@ inv_grid_height		= 1
 inv_grid_x			= 4 ;20
 inv_grid_y			= 3 ;23
 
+icon_name = 762ap
+
 k_dist			= 1 ;1.2
 k_disp			= 1 ;0.8
 k_hit			= 2.15 ;2.1 ;2.6
@@ -969,6 +1017,8 @@ inv_grid_width		= 3
 inv_grid_height		= 1
 inv_grid_x			= 8 ;15
 inv_grid_y			= 3 ;19
+
+icon_name = rpg7
 
 k_dist			= 1
 k_disp			= 1
@@ -1009,6 +1059,8 @@ inv_grid_height		= 1
 inv_grid_x			= 0 ;10
 inv_grid_y			= 2 ;65
 
+icon_name = 7.62x25_p
+
 k_dist			= 1
 k_disp			= 1 ;1.8
 k_hit			= 2.5 ;2.25
@@ -1044,6 +1096,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 0 ;12
 inv_grid_y			= 3 ;65
+
+icon_name = 7.62x25_ps
 
 k_dist			= 1
 k_disp			= 1 ;2
@@ -1155,6 +1209,9 @@ inv_grid_height		= 1
 inv_grid_x			= 8 ;16
 inv_grid_y			= 7 ;40
 
+
+icon_name = 76251
+
 k_dist     		      = 1 ;1.2
 k_disp            	= 1 ;0.8 
 k_hit            		= 2.4
@@ -1191,6 +1248,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 8 ;18
 inv_grid_y			= 8 ;40
+
+icon_name = 76251ap
 
 k_dist     		      = 1 ;1.2
 k_disp            	= 1 ;0.8 
@@ -1229,6 +1288,8 @@ inv_grid_height		= 1
 inv_grid_x			= 4 ;15
 inv_grid_y			= 5 ;61
 
+icon_name = 792
+
 k_dist		= 1 ;1.2
 k_disp		= 1
 k_hit			= 1.68 ;2.1 ;2.48 ;2.68
@@ -1264,6 +1325,8 @@ inv_grid_width		= 2
 inv_grid_height		= 1
 inv_grid_x			= 4 ;15
 inv_grid_y			= 6 ;62
+
+icon_name = 792ap
 
 k_dist			= 1 ;1.2
 k_disp			= 1
@@ -1303,6 +1366,8 @@ inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 6 ;19
 inv_grid_y			= 4 ;10
+
+icon_name = vog25p
 
 kill_msg_x			= 17
 kill_msg_y			= 232
@@ -1362,6 +1427,8 @@ inv_grid_height		= 1
 inv_grid_x			= 6 ;19
 inv_grid_y			= 3 ; 9
 
+icon_name = vog25
+
 kill_msg_x			= 38
 kill_msg_y			= 233
 kill_msg_width		= 21
@@ -1411,6 +1478,8 @@ inv_grid_width		= 1
 inv_grid_height		= 1
 inv_grid_x			= 6 ; 5
 inv_grid_y			= 5 ;13
+
+icon_name = ammo209
 
 kill_msg_x			= 61
 kill_msg_y			= 232
