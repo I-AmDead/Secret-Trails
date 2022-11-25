@@ -145,13 +145,13 @@ end
 
 
 function remove_quotes( s )
-  local  s2 = string.gsub( s, "[В«В»\"\']", "" )
+  local  s2 = string.gsub( s, "[«»\"\']", "" )
   return s2
 end
 
 
 function strip_quotes( s )
-  return string.gsub( s, "^%s*[В«В»\"\']+%s*(.+)%s*[В«В»\"\']+%s*$", "%1" )
+  return string.gsub( s, "^%s*[«»\"\']+%s*(.+)%s*[«»\"\']+%s*$", "%1" )
 end
 
 
@@ -199,7 +199,7 @@ function set_none_smart_terrain( sobj )
   sobj:save_spawn_ini()
 end
 
--- РЎРѕР·РґР°С‚СЊ СЃРІРѕР±РѕРґРЅРѕРіРѕ РјРѕР±Р°, РєРѕС‚РѕСЂРѕРіРѕ РЅРµ Р·Р°С‚СЏРЅРµС‚ РІ РєР°РєРѕР№-РЅРёР±СѓРґСЊ РіСѓР»Р°Рі.
+-- Создать свободного моба, которого не затянет в какой-нибудь гулаг.
 function create_free_mob( ... )
   is_creating_free_mob = true
   local sobj = alife():create( ... )
@@ -218,7 +218,7 @@ function create_free_npc( ... )
   return create_free_mob( ... )
 end
 
--- РџСЂРѕРІРµСЂРёС‚СЊ СЂР°СЃСЃС‚РѕСЏРЅРёРµ РѕС‚ РіСѓР»Р°РіР° РґРѕ Р“Р“, РµСЃР»Рё РјРµРЅСЊС€Рµ.
+-- Проверить расстояние от гулага до ГГ, если меньше.
 function gulag_distance_to_actor_lt( gulag_name, check_dist )
   if db.zone_by_name[ gulag_name ] then
     local sobj = alife():object( gulag_name )
@@ -924,7 +924,7 @@ end
 
 
 function on_before_script_gc()
-  ogse_signals.get_mgr():call( "on_update" )
+  ogse_signals.get_mgr():call( "on_update", 0 )
 end
 
 

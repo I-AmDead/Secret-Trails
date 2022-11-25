@@ -196,16 +196,15 @@ function determine_section_to_activate(npc, ini, section_logic, actor)
   local active_section_cond = cfg_get_condlist(ini, section_logic, "active", npc)
   local active_section
   if not active_section_cond then
-    abort("object '%s': section '%s': unable to find field 'active'", npc:name(), section_logic)
+    return "nil"
   else
     active_section = pick_section_from_condlist(actor, npc, active_section_cond.condlist)
     if not active_section then
-      abort("object '%s': section '%s': section 'active' has no conditionless else clause",
-        npc:name(), section_logic)
+      return "nil"
     end
   end
   if active_section and db.storage[npc:id()].stype and db.storage[npc:id()].stype<=1 and db.storage[npc:id()].stype~=stypes[utils.get_scheme_by_section(active_section)] then
-  -- Блокируем активацию схемы для зверушек в человеческих гулагах. Dirty Hack.
+    -- Блокируем активацию схемы для зверушек в человеческих гулагах. Dirty Hack.
     return "nil"
   else
   return active_section
@@ -1391,4 +1390,47 @@ function load_logic_online(obj)
 		end
 	end
 	return false
+end
+
+function has_active_logic( npc )
+  local st = db.storage[ npc:id() ]
+  if not st.active_section then return false end
+  ASSERT(
+    st.active_scheme,
+    "[%s]: %s: active_scheme is nil", script_name(), npc:name()
+  )
+  if st.active_scheme == "sr_idle" then
+    local t = st[ st.active_scheme ]
+    if table.getn( t.logic ) == 0 then
+      return false
+    end
+  end
+  return true
+end
+
+
+function logic_needs_update( npc )
+  if not has_active_logic( npc ) then return false end
+  local st = db.storage[ npc:id() ]
+  if st.active_scheme == "sr_idle" then
+    local t = st[ st.active_scheme ]
+    for _, c in ipairs( t.logic ) do
+      if
+        not (
+          c.field == "on_actor_inside" or c.field == "on_actor_outside"
+          or ( c.field == "on_actor_in_zone"     and c.v1 == npc:name() )
+          or ( c.field == "on_actor_not_in_zone" and c.v1 == npc:name() )
+          or ( c.field == "on_npc_in_zone"       and c.v2 == npc:name() )
+          or ( c.field == "on_npc_not_in_zone"   and c.v2 == npc:name() )
+        )
+      then
+        return true
+      end
+    end
+    return false
+  elseif st.active_scheme == "sr_no_weapon" then
+    local t = st[ st.active_scheme ]
+    return table.getn( t.logic ) > 0
+  end
+  return true
 end
