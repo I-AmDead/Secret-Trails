@@ -130,8 +130,8 @@ function torch_switcher()
 		local kind = get_string(itm:section(),"kind") or nil
 		local class = get_string(itm:section(),"class") or nil
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-			anm_name = "script\\lower.anm"
-			anm_additional_length = 0.45
+			anm_name = "script\\headlamp.anm"
+			anm_additional_length = 0.35
 		end
 	end
 	
@@ -139,11 +139,12 @@ function torch_switcher()
 		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
 		game.play_hud_anm(anm_name, 0, 1, 1, false)	
 		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 0.8)
+		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
 		snd_torch:play(db.actor,0,sound_object.s2d)
 		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
+		animation_on()
 		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 250, function() torch_switcher() end )
+		dsh.level_timeout( torch_anm_time_1 - 850, function() torch_switcher() end )
 	elseif (mc_anm_state == 2) then
 		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
 		ogse_torch.on_switch()
@@ -165,8 +166,8 @@ function nv_switcher()
 		local kind = get_string(itm:section(),"kind") or nil
 		local class = get_string(itm:section(),"class") or nil
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-			anm_name = "script\\lower.anm"
-			anm_additional_length = 0.1
+			anm_name = "script\\headlamp.anm"
+			anm_additional_length = 0.35
 		end
 	end
 	
@@ -174,13 +175,14 @@ function nv_switcher()
 		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
 		game.play_hud_anm(anm_name, 0, 1, 1, false)	
 		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 0.8)
+		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
 		snd_torch:play(db.actor,0,sound_object.s2d)
 		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
+		animation_on()
 		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 250, function() nv_switcher() end )
+		dsh.level_timeout( torch_anm_time_1 - 850, function() nv_switcher() end )
 	elseif (mc_anm_state == 2) then
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, false) end
+		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
 		ogse_night_vision.call_pnv()
 		mc_anm_state = 3
 		dsh.level_timeout( torch_anm_time_1, function() nv_switcher() end )
