@@ -1,3 +1,5 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
 
 ----------------------------------------------------------------------------------------------------
 -- Mob remarks
@@ -20,7 +22,6 @@ function mob_walker:__init(obj, storage)
 end
 
 function mob_walker:reset_scheme()
-	printf("_bp: mob_walker:reset_scheme: %s", self.object:name())
 	
 	mob_state_mgr.set_state(self.object, db.actor, self.st.state)
 
@@ -65,12 +66,11 @@ function mob_walker:reset_scheme()
 	self.last_index = nil
 	self.last_look_index = nil
 	
-	action(self.object, move(move.run_fwd, patrol(self.st.path_walk, patrol.next, patrol.continue)),
-		cond(cond.move_end))
+	--log3("~~[mob_walker:update_movement_state1] patrol path for [%s] is [%s]", self.object:name(), self.st.path_walk)
+	action(self.object, move(move.run_fwd, patrol(self.st.path_walk, patrol.next, patrol.continue)), cond(cond.move_end))
 end
 
 function mob_walker:update(delta)
---	printf("__bp: mob_walker update: %d", time_global())
 	--if not xr_logic.is_active(self.object, self.st) then
 	--	return
 	--end
@@ -87,7 +87,8 @@ function mob_walker:update(delta)
 		return
 	end
 
-	if self:arrived_to_first_waypoint() then
+	--if self:arrived_to_first_waypoint() then
+	if self:arrived_to_first_waypoint() or self.st.alife_mode.actor_friendly then	-- В ОП-2 для дружественных зверушек нужна постоянная проверка смены логики, а не только в конце пути
 		if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
 			return
 		end
@@ -113,9 +114,7 @@ function mob_walker:arrived_to_first_waypoint()
 end
 
 function mob_walker:waypoint_callback(obj, action_type, index)
-	printf("mob_walker:waypoint_callback(): name=%s, index=%d", self.object:name(), index)
 	if index == -1 or index == nil then
-		printf("ERROR: mob_walker: waypoint_callback: index is %s", if_then_else(index == -1, "-1", "nil"))
 		return
 	end
 
@@ -147,7 +146,6 @@ function mob_walker:waypoint_callback(obj, action_type, index)
 		local scheme = db.storage[npc_id]["active_scheme"]
 		local signals = db.storage[npc_id][scheme].signals
 		signals[sig] = true
-		printf("_bp: mob_walker [%s]: SIGNALLING: %s", self.object:name(), sig)
 	end
 	
 	local beh = self.path_walk_info[index]["b"]
@@ -160,7 +158,6 @@ function mob_walker:waypoint_callback(obj, action_type, index)
 	local search_for = self.path_walk_info[index].flags
 	if search_for:get() == 0 then
 		-- TODO: запретить одноточечные пути без соответствующего path_look по аналогии с move_mgr
-		printf("_bp: no flags")
 		self:update_movement_state() -- идти дальше
 		return
 	end
@@ -212,7 +209,6 @@ function mob_walker:waypoint_callback(obj, action_type, index)
 end
 
 function mob_walker:update_movement_state()
-	printf("_bp [%s]: update_movement_state", self.object:name())
 	xr_logic.mob_capture(self.object, true)
 	
 	local m
@@ -225,11 +221,12 @@ function mob_walker:update_movement_state()
 	end
 
 	if self.scheduled_snd then
-		printf("_bp [%s]: playing scheduled sound", self.object:name())
+		--log3("~~[mob_walker:update_movement_state2] patrol path for [%s] is [%s]", self.object:name(), self.st.path_walk)
 		action(self.object, move(m, patrol(self.st.path_walk, patrol.next, patrol.continue)),
 			sound(sound[self.scheduled_snd]), cond(cond.move_end))
 		self.scheduled_snd = nil
 	else
+		--log3("~~[mob_walker:update_movement_state3] patrol path for [%s] is [%s]", self.object:name(), self.st.path_walk)
 		action(self.object, move(m, patrol(self.st.path_walk, patrol.next, patrol.continue)), cond(cond.move_end))
 	end
 end
