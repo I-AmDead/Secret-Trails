@@ -116,11 +116,6 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.on_cell_item_mouse, nil )
   self.object:set_callback( callback.on_foot_step, nil )
 
-  if sr_psy_antenna.psy_antenna then
-    sr_psy_antenna.psy_antenna:destroy()
-    sr_psy_antenna.psy_antenna = false
-  end
-
   xr_sound.stop_all_sound_object()
 
   if ui_grenade_marks then
@@ -608,7 +603,6 @@ function actor_binder:save_old( packet )
   packet:w_bool( false )
 
   xr_logic.pstor_save_all( self.object, packet )
-  sr_psy_antenna.save( packet )
   self.actor_detector:save( packet )
 end
 
@@ -637,7 +631,6 @@ function actor_binder:load( reader )
 	end
 
   xr_logic.pstor_load_all( self.object, reader )
-  sr_psy_antenna.load( reader )
   if load_treasure_manager == true then
     treasure_manager.load( reader )
 	end                                  
