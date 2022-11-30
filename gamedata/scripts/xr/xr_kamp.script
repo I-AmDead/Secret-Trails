@@ -44,7 +44,7 @@ local kamp_stalkers   = {} -- могут ли сталкеры в лагере �
 local deadmansids     = {} -- кто какой труп оттаскивает
 
 
-function get_kamp_level_vertex_id( path )
+function get_kamp_level_vertex_id( path, npc )
   local sect = "dsh.xr_kamp." .. path
   local vertex
   if sys_ini:section_exist( sect ) then
@@ -53,16 +53,6 @@ function get_kamp_level_vertex_id( path )
       path = center_point
     else
       vertex = get_u32( sect, "level_vertex_id" )
-      if vertex then
-        local cond = get_string( sect, "lv_switch_cond" )
-        if cond then
-          cond = xr_logic.parse_condlist( nil, sect, nil, cond )
-          if not xr_logic.pick_section_from_condlist(db.actor, db.actor, cond) then
-            --log3("--Condlist not picked for switch lv for path [%s]", path)
-            vertex = nil
-          end
-        end
-      end
     end
   end
   if not vertex then
@@ -71,15 +61,15 @@ function get_kamp_level_vertex_id( path )
   end
   ASSERT(
     level.valid_vertex_id( vertex ),
-    "[%s]: kamp %s has wrong level_vertex_id = %s, vertex_count() = %s",
-    script_name(), path, vertex, level.vertex_count()
+    "[%s]: [%s] kamp %s has wrong level_vertex_id = %s, vertex_count() = %s",
+    script_name(), npc:name(), path, vertex, level.vertex_count()
   )
   return vertex
 end
 
 
 function get_my_kamp( npc, path, scheme, radius )
-  local vertex = get_kamp_level_vertex_id( path )
+  local vertex = get_kamp_level_vertex_id( path, npc )
   local kamp   = kamps[ vertex ]
   if not kamp then
     local pos     = level.vertex_position( vertex )
