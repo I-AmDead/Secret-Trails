@@ -1,3 +1,5 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
 ---------------------------------------------------------------------------------
 -- Mob alife manager
 ---------------------------------------------------------------------------------
@@ -16,10 +18,8 @@ function cfg_get_mode(ini, section, npc)
 end
 
 function issue_combat_event(obj)
-	--printf("_bp: issue_combat_event?")
 	local st = db.storage[obj:id()]
 	if st.mob_combat then
-		printf("_bp: alife_control: issuing event combat_callback")
 		xr_logic.issue_event(obj, st.mob_combat, "combat_callback")
 	end
 end
@@ -34,7 +34,6 @@ function alife_control(obj, actor, mode)
 	-- Монстры, у которых есть враг - также должны работать в alife
 	local enemy = obj:get_enemy()
 	if enemy then
-		--printf("_bp: got enemy")
 		if not mode.braindead and
 		   not mode.friendly and
 		   (not mode.actor_friendly or enemy:id () ~= actor:id ()) and
@@ -47,7 +46,7 @@ function alife_control(obj, actor, mode)
 	
 	-- Отпускать в alife монстров, которых обстреляли
 	local h = obj:get_monster_hit_info()
-	if h.who and h.time ~= 0 then
+	if (not string.find(obj:name(), "^dog_povodyr")) and (h.who and h.time ~= 0) then
 		if mode.braindead then
 			-- Braindead монстры не уходят из под скрипта даже если их обстрелять
 			return false
