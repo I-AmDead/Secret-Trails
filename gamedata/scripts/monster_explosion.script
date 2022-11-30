@@ -1,14 +1,29 @@
+function attach( sm )
+  sm:subscribe({ signal = "on_monster_death", fun = this.zombi_blow })
+end
+
+local blow_monster = {
+	[ "doc_vodyanoy1" ] = true,
+	[ "doc_vodyanoy2" ] = true,
+	[ "doc_vodyanoy3" ] = true,
+	[ "les_vodyanoy1" ] = true,
+	[ "les_vodyanoy2" ] = true,
+	[ "agro_vodyanoy" ] = true,
+	[ "mk_vodyanoy" ]   = true,
+}
+
 function zombi_blow(obj)
+	if not blow_monster[ obj:section() ] then return end
 	local particle_blow = particles_object([[explosions\explosion_01]])
 	particle_blow:play_at_pos(obj:bone_position("bip01_spine1"))
 	local id = obj:id()
 	local pos = obj:position()
 	local lvid = obj:level_vertex_id()
 	local gvid = obj:game_vertex_id()
-	level.add_pp_effector("rename.ppe", 1001, false)
-	level.add_cam_effector("water_blow.anm", 1002, false, "")
-	for i = 1,6 do
-		local pos1 = obj:position():add(vector():set((math.random()*2-1),1,(math.random()*2-1)))
+	local dist = db.actor:position():distance_to(pos)
+	if dist < 7 then
+		level.add_pp_effector("rename.ppe", 1001, false)
+		level.add_cam_effector("water_blow.anm", 1002, false, "")
 	end
 	alife():create("zombi_corpse_blow", pos, lvid, gvid)
 end
