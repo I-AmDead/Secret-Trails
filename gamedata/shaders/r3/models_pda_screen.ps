@@ -2,18 +2,16 @@
 
 uniform float4 m_affects;
 uniform Texture2D s_vp2;
-uniform Texture2D s_load;
 
 struct v2p
 {
     float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
     float4 c0 : COLOR0; // sun.(fog*fog)
 };
 
 float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
 
-float4 problems_main(v2p I)
+float4 main(v2p I) : SV_Target
 {
     // узкая полоска искажений
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
@@ -40,13 +38,5 @@ float4 problems_main(v2p I)
     //отключение экрана
     t_vp2.rgb = (m_affects.x > 0.41) ? 0 : t_vp2.rgb;
 
-    return float4(t_vp2.r, t_vp2.g, t_vp2.b, 1);
+    return float4(t_vp2.r, t_vp2.g, t_vp2.b, m_affects.z);
 }
-
-float4 loading_main(v2p I)
-{
-    float4 t_load = s_load.Sample(smp_base, I.tc0);
-    return float4(t_load.r, t_load.g, t_load.b, 1);
-}
-
-float4 main(v2p I) : SV_Target { return (m_affects.a > 0 && m_affects.x >= 0.08) ? loading_main(I) : problems_main(I); }

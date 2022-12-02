@@ -1,7 +1,7 @@
 /**
- * @ Version: SCREEN SPACE SHADERS - UPDATE 8
+ * @ Version: SCREEN SPACE SHADERS - UPDATE 12.5
  * @ Description: Water implementation
- * @ Modified time: 2022-07-13 08:39
+ * @ Modified time: 2022-11-23 15:38
  * @ Author: https://www.moddb.com/members/ascii1457
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
@@ -35,11 +35,19 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 
 	// Ray-march
 	[unroll (q_steps[G_SSR_WATER_QUALITY].x)]
-	for (int step = 1; step <= q_steps[G_SSR_WATER_QUALITY].x; step++)
+	for (int st = 1; st <= q_steps[G_SSR_WATER_QUALITY].x; st++)
 	{
 		// Ray out of screen...
-		if (!SSFX_is_valid_uv(ssr_ray.r_pos))
+		if (!(ssr_ray.r_pos.y >= 0.0f && ssr_ray.r_pos.y <= 1.0f))
 			return 0;
+
+		// Trick for the horizontal out of bounds. Mirror border of the screen.
+		if (ssr_ray.r_pos.x < 0.0f || ssr_ray.r_pos.x > 1.0f)
+		{
+			ssr_ray.r_pos -= ssr_ray.r_step; // Step back
+			ssr_ray.r_step.x = -ssr_ray.r_step.x; // Invert Horizontal
+			ssr_ray.r_pos += ssr_ray.r_step; // Step
+		}
 
 		// Ray intersect check ( x = difference | y = depth sample )
 		float2 ray_check = SSFX_ray_intersect(ssr_ray, iSample);
@@ -98,7 +106,7 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 		}
 
 		// Pass through condition
-		bool PTh = (!NoWpnSky && ray_check.y > 0.01f && step > q_steps[G_SSR_WATER_QUALITY].x * 0.4f);
+		bool PTh = (!NoWpnSky && ray_check.y > 0.01f && st > q_steps[G_SSR_WATER_QUALITY].x * 0.4f);
 
 		// Step ray... Try to pass through closer objects ( Like weapons and sights )
 		ssr_ray.r_pos += ssr_ray.r_step * (1.0f + 2.5f * PTh);
