@@ -39,7 +39,6 @@ end
 
 
 function actor_binder:net_spawn( data )
-  sound_theme.init()      --  оптимизация загрузки звуков. Автор: Zander_driver
   db.add_actor( self.object )
   self.am:call( "on_before_spawn" )
 
@@ -115,8 +114,6 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.on_cell_item_focus_lost, nil )
   self.object:set_callback( callback.on_cell_item_mouse, nil )
   self.object:set_callback( callback.on_foot_step, nil )
-
-  xr_sound.stop_all_sound_object()
 
   if ui_grenade_marks then
     ui_grenade_marks.remove_grenade_marks()
@@ -386,9 +383,6 @@ function actor_binder:update( delta )
 
   -- апдейт схемы детектора
   self.actor_detector:update()
-
-  -- апдейт звуковой схемы актера
-  xr_sound.update_actor()
    
   -- Обновление отключения ввода с клавиатуры.
   if self.st.disable_input_time ~= nil and
