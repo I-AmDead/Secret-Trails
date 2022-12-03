@@ -7,8 +7,8 @@ theme         = sound_theme_data.theme
 
 
 function attach( sm )
-  sm:subscribe({ signal = "on_init",             fun = this.on_actor_init }) --РќСѓР¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊ РґРѕ РЅР°С‡Р°Р»Р° СЃРїР°РІРЅР° РќРџРЎ.
-  sm:subscribe({ signal = "on_npc_before_spawn", fun = this.load_sound  }) --Р’СЂРѕРґРµ РєР°Рє РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РґРѕ Р·Р°РіСЂСѓР·РєРё РіСѓР»Р°РіР°
+  sm:subscribe({ signal = "on_init",             fun = this.on_actor_init }) --Нужно вызывать до начала спавна НПС.
+  sm:subscribe({ signal = "on_npc_before_spawn", fun = this.load_sound  }) --Вроде как должно вызываться до загрузки гулага
 end
 
 
@@ -53,7 +53,7 @@ local function select_sound_from_ltx( obj, section )
   end
 end
 
--- Р·Р°РіСЂСѓР·РєР° Р·РІСѓРєРѕРІ РЅР° РѕСЃРЅРѕРІРµ РґР°РЅРЅС‹С… ltx
+-- загрузка звуков на основе данных ltx
 local default_prefix = "characters_voice\\"
 
 function load_sound_from_ltx( obj, name, tbl )

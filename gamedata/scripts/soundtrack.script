@@ -1,14 +1,15 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
 ------Copyright DEXXX-------
 -- стилистическая правка Malandrinus (26/11/2011)
 
-snd_obj = {}
-snd_obj = xr_sound.get_safe_sound_object([[soundtrack\escape_theme]])
+local snd_obj = xr_sound.get_safe_sound_object([[$no_sound]])
 
 function s_stop()
-	if snd_obj:playing()==true then snd_obj:stop() end
+	if snd_obj:playing() then snd_obj:stop() end
 end
 
-function s_play(path)
+local function s_play(path)
 	s_stop()
 	snd_obj = xr_sound.get_safe_sound_object(path)
 	if snd_obj then
@@ -16,10 +17,22 @@ function s_play(path)
 	end
 end
 
-function s_play_no_feedback(path)
+-- независимый объект для звуков выброса
+--local surge_snd_obj = xr_sound.get_safe_sound_object([[$no_sound]])
+-- и функция к нему
+local function surge_play(path)
+	--if surge_snd_obj:playing() then surge_snd_obj:stop() end
+	local surge_snd_obj = xr_sound.get_safe_sound_object(path)
+	if surge_snd_obj then
+		surge_snd_obj:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
+	end
+end
+
+function s_play_no_feedback(path, volume)
 	local snd_obj = xr_sound.get_safe_sound_object(path)
 	if snd_obj then
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), 1.0)
+		local vlm = volume or 1.0
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), vlm)
 	end
 end
 -------------------
@@ -65,7 +78,10 @@ function ti_zombie() 				s_play([[characters_voice\scenario\trader\trader_tutori
 function trader_kakogo() 			s_play([[soundtrack\trader_kakogo]]) end
 
 local function play_random_from_tbl(sounds_tbl)
-	s_play(sounds_tbl[math.random(1, #sounds_tbl)])
+	s_play(sounds_tbl[math.random(#sounds_tbl)])
+end
+local function surge_play_random_from_tbl(sounds_tbl)
+	surge_play(sounds_tbl[math.random(#sounds_tbl)])
 end
 
 local otchajanie_snds = {
@@ -213,23 +229,23 @@ local preblow_snds = {
 	[[ambient\blowout\blowout_begin_02]],
 }
 function preblow()
-	play_random_from_tbl(preblow_snds)
+	surge_play_random_from_tbl(preblow_snds)
 end
 
-function attention_everyone() s_play([[ambient\blowout\blowout_siren]]) end
-function surge_begin() 		  s_play([[ambient\blowout\blowout_rumble]]) end
-function surge_wave_1() 	  s_play([[ambient\blowout\blowout_wave_01]]) end
-function surge_wave_2() 	  s_play([[ambient\blowout\blowout_wave_02_short]]) end
+function attention_everyone() surge_play([[ambient\blowout\blowout_siren]]) end
+function surge_begin() 		  surge_play([[ambient\blowout\blowout_rumble]]) end
+function surge_wave_1() 	  surge_play([[ambient\blowout\blowout_wave_01]]) end
+function surge_wave_2() 	  surge_play([[ambient\blowout\blowout_wave_02_short]]) end
 local surge_wave_3_snds = {
 	[[ambient\blowout\blowout_wave_03]],
 	[[ambient\blowout\blowout_wave_03_short]],
 }
 function surge_wave_3()
-	play_random_from_tbl(surge_wave_3_snds)
+	surge_play_random_from_tbl(surge_wave_3_snds)
 end
-function surge_wave_4() s_play([[ambient\blowout\blowout_wave_04]]) end
-function surge_rumble() s_play([[ambient\blowout\blowout_rumble]]) end
-function surge_outro()  s_play([[ambient\blowout\blowout_outro]]) end
+function surge_wave_4() surge_play([[ambient\blowout\blowout_wave_04]]) end
+function surge_rumble() surge_play([[ambient\blowout\blowout_rumble]]) end
+function surge_outro()  surge_play([[ambient\blowout\blowout_outro]]) end
 
 -- Проигрыш звуков осыпей
 local rock_sound_snds = {
@@ -239,7 +255,7 @@ local rock_sound_snds = {
 	[[ambient\rnd_outdoor\rnd_rock3]],
 }
 function rock_sound()
-	play_random_from_tbl(rock_sound_snds)
+	surge_play_random_from_tbl(rock_sound_snds)
 end
 -- Проигрыш эмбиента
 local ambient_snds = {
@@ -250,7 +266,7 @@ local ambient_snds = {
 	[[ambient\sfx_amb_wind_tat_a_loop]],
 }
 function play_ambient()
-	play_random_from_tbl(ambient_snds)
+	surge_play_random_from_tbl(ambient_snds)
 end
 
 -- Проигрыш звуков, сигналов, шумов Выброса
@@ -262,11 +278,10 @@ local surge_sound_snds = {
 	[[anomaly\dezodor4]],
 }
 function surge_sound()
-	play_random_from_tbl(surge_sound_snds)
+	surge_play_random_from_tbl(surge_sound_snds)
 end
 
 -- Проигрыш странных звуков
--- TODO: разобраться с этой странной системой и возможно переделать
 local strange_sounds_snds_left = {
 	[[ambient\rnd_outdoor\rnd_dark4]],
 	[[ambient\rnd_outdoor\rnd_moan1]],
@@ -280,34 +295,29 @@ local strange_sounds_snds_right = {
 	[[ambient\rnd_outdoor\rnd_dark6]],
 }
 
-local sound_obj_right = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror]])
-local sound_obj_left = xr_sound.get_safe_sound_object([[ambient\random\rnd_the_horror]])
+local sound_obj_left = xr_sound.get_safe_sound_object([[$no_sound]])
+local sound_obj_right = xr_sound.get_safe_sound_object([[$no_sound]])
+
+local function get_random_sound(sounds_names)
+	return sound_object(sounds_names[math.random(1,#sounds_names)])
+end
 
 function strange_sounds()
-	sound_obj_right.volume = 0.5
-	sound_obj_left.volume = 0.5
-
 	if not sound_obj_left:playing() then 
-		local i=math.random(1,#strange_sounds_snds_left)
-		sound_obj_left = sound_object(strange_sounds_snds_left[i])
-		if sound_obj_left then
-			sound_obj_left:play_at_pos (db.actor, vector():set(1, 0, 1), 0, sound_object.s2d) 
-		end
+		sound_obj_left = get_random_sound(strange_sounds_snds_left)
+		sound_obj_left:play_at_pos (db.actor, vector():set(1, 0, 1), 0, sound_object.s2d) 
+		sound_obj_left.volume = 0.5
 	end
-
 	if not sound_obj_right:playing() then 
-		local i=math.random(1,#strange_sounds_snds_right)
-		sound_obj_right = sound_object(strange_sounds_snds_right[i])
-		if sound_obj_right then
-			sound_obj_right:play_at_pos (db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d) 
-		end
+		sound_obj_right = get_random_sound(strange_sounds_snds_right)
+		sound_obj_right:play_at_pos (db.actor, vector():set(-1, 0, 1), 0, sound_object.s2d) 
+		sound_obj_right.volume = 0.5
 	end
-
 end
 
 -- ещё звуки для выброса
-function earthquake_sound() 	s_play([[ambient\earthquake]]) end
-function actor_breath_sound() 	s_play([[actor\breath_1]]) end
+function earthquake_sound() 	surge_play([[ambient\earthquake]]) end
+function actor_breath_sound() 	surge_play([[actor\breath_1]]) end
 
 
 
@@ -445,7 +455,7 @@ function afscanner_off()               s_play([[characters_voice\scenario\afscan
 function new_art_birth()               s_play([[characters_voice\multiplayer\automatic\artefact_new]]) end
 function kommander_box_open()          s_play([[device\metal_small_close_start]]) end
 function diplomat_open()               s_play([[device\wood_small_close_stop]]) end
-function svd_shot()                    s_play([[weapons\svd_shoot]]) end
+function svd_shot()                    s_play([[weapons\svd\svd_shoot]]) end
 function cheb_fakeart_konteiner_open() s_play([[device\wood_small_close_stop]]) end
 function magnit_portal()               s_play([[anomaly\teleport_work_1]]) end
 function vodka_drink()                 s_play([[inv_sounds\inv_vodka]]) end
@@ -454,4 +464,4 @@ function break_crowbar()               s_play([[ambient\x18\x18_creak_1]]) end
 function keys()                        s_play([[characters_voice\scenario\keys]]) end
 function cit_tow_box_open()            s_play([[ambient\x18\h_or_metal_large]]) end
 function cit_tow_box_dont_open()       s_play([[ambient\x18\h_tal_grate_impact_hard2]]) end
-function play_strike()				   s_play([[weapons\knife\knife_1]]) end
+function play_strike()                 s_play([[weapons\knife\knife_1]]) end

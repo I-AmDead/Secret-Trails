@@ -18,11 +18,11 @@ function evaluator_need_remark:__init(storage, name) super(nil, name)
     self.st = storage
 end
 function evaluator_need_remark:evaluate()
-  if xr_logic.is_active(self.object, self.st) then
-    ogse_debug.add_active_eval( self.object, script_name(), "evaluator_need_remark" )
-    return true
-  end
-  return false
+    if xr_logic.is_active(self.object, self.st) then
+		ogse_debug.add_active_eval( self.object, script_name(), "evaluator_need_remark" )
+		return true
+	end
+	return false
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -31,9 +31,9 @@ function action_remark_activity:__init (storage, name) super(nil, name)
   self.st = storage
 end
 function action_remark_activity:initialize()
-  action_base.initialize(self)
-  self.object:set_desired_position()
-  self.object:set_desired_direction()
+	action_base.initialize(self)
+	self.object:set_desired_position()
+	self.object:set_desired_direction()
 	--log3("--[%s] action_remark_activity:initialize [%s] state [%s]", script_name(), self.object:name(), self.state)
 	if self.action_end_signalled then -- уже всЄ отыграно, нужно просто зан€ть стейт
 		log3("~~[%s] action_remark_activity:initialize [%s] action_end_signalled! reset state [%s]...)", script_name(), self.object:name(), self.state)
@@ -42,7 +42,7 @@ function action_remark_activity:initialize()
 		log3("~~[%s] action_remark_activity:initialize [%s] reset action (state [%s]), signals: [%s,%s,%s]", script_name(), self.object:name(), self.state, self.sound_end_signalled and "true" or "false", self.anim_end_signalled and "true" or "false", self.action_end_signalled and "true" or "false")
 		self.state = state_initial
 	end
-  xr_sound.set_sound(self.object, nil)
+	xr_sound.set_sound(self.object, nil)
 end
 function action_remark_activity:activate_scheme()
     self.st.signals = {}
@@ -72,7 +72,7 @@ function action_remark_activity:get_target()
   --' ≈сли таргет не проинициализирован, то запускаем инициализатор.
   if self.st.target_init == false then
     self.st.target_position, self.st.target_id, self.st.target_init = initialize_gulag_target(self.object, self.st.target)
-		if self.st.target_init == false then
+    if self.st.target_init == false then
       return nil
     end
   end
@@ -134,14 +134,17 @@ function action_remark_activity:update()
 
 	-- ƒолжны выдать сигнал anim_end
 	if not self.anim_end_signalled then
-      self.anim_end_signalled = true
-      self.st.signals["anim_end"] = true
-    end
-  
-    if self.snd_scheduled == true then
-      self.snd_started = true
-      xr_sound.set_sound_play(self.object, self.st.snd, 50, true)
-    end
+		self.anim_end_signalled = true
+		self.st.signals["anim_end"] = true
+	end
+
+	if self.snd_scheduled == true then
+		self.snd_started = true
+		--log3("--Called play sound [%s] for [%s]", self.st.snd, self.object:name())
+		-- KRodin: добавленный четвЄртый аргумент фиксит проблему: если попытатьс€ проиграть звук повторно, после рестарта, он не воспроизводилс€.
+		-- “еперь сделано так, что он проиграетс€ принудительно, в любом случае.
+		xr_sound.set_sound_play(self.object, self.st.snd, 50)
+	end
 
     -- Ќужно выдать св€занный типс.
     if self.st.tips_id ~= nil then
@@ -153,29 +156,29 @@ function action_remark_activity:update()
     end
 
     self.state = state_finish
-    
+
   -- 3. ћы должны выдать сигнал об окончании действи€
   elseif self.state == state_finish then
-    -- ƒолжны выдать сигнал sound_end
-    -- KRodin: мне кажетс€, тут достаточно проверить, что звук запустили когда-то, и что сейчас ничего не проигрываетс€,
-    -- следовательно запущенный звук уже проигралс€. –анее было слишком много условий, не рассчитанных на то,
-    -- что схема может перебиватьс€ например боЄвкой. ¬ результате, непись частенько висел.
-    if self.snd_started and self.object:active_sound_count() == 0 then
-      if not self.sound_end_signalled then
-        self.st.signals["sound_end"] = true
-        self.sound_end_signalled = true
-      end
-    end
+	-- ƒолжны выдать сигнал sound_end
+	-- KRodin: мне кажетс€, тут достаточно проверить, что звук запустили когда-то, и что сейчас ничего не проигрываетс€,
+	-- следовательно запущенный звук уже проигралс€. –анее было слишком много условий, не рассчитанных на то,
+	-- что схема может перебиватьс€ например боЄвкой. ¬ результате, непись частенько висел.
+	if self.snd_started and self.object:active_sound_count() == 0 then
+		if not self.sound_end_signalled then
+			self.st.signals["sound_end"] = true
+			self.sound_end_signalled = true
+		end
+	end
 
-    -- ƒолжны выдать сигнал action_end
-    if ( not self.snd_started or self.sound_end_signalled ) and self.anim_end_signalled then
-      if not self.action_end_signalled then
-        self.st.signals["action_end"] = true
-        self.action_end_signalled = true
-      end
-    end
+	-- ƒолжны выдать сигнал action_end
+	if ( not self.snd_started or self.sound_end_signalled ) and self.anim_end_signalled then
+		if not self.action_end_signalled then
+			self.st.signals["action_end"] = true
+			self.action_end_signalled = true
+		end
+	end
   end
-  
+
 end
 
 function action_remark_activity:execute()
@@ -209,7 +212,7 @@ function add_to_binder(npc, ini, scheme, section, storage)
     
     operators["action_remark"] = xr_actions_id.zmey_remark_base + 1
 
-    -- // evaluators
+      -- // evaluators
     manager:add_evaluator(properties["need_remark"], evaluator_need_remark(storage, "remark_need_remark"))
 
     local new_action = action_remark_activity(storage, "action_remark_activity")
@@ -265,19 +268,19 @@ end
 
 -- ¬ключение схемы
 function set_scheme(npc, ini, scheme, section, gulag_name)
-  local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 
-  st.logic     = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 
-  st.snd_anim_sync = utils.cfg_get_bool(ini, section, "snd_anim_sync", npc, false)
+	st.snd_anim_sync = utils.cfg_get_bool(ini, section, "snd_anim_sync", npc, false)
   
-  st.snd      = utils.cfg_get_string(ini, section, "snd", npc, false, "", nil)
-  if not st.snd then --KRodin: поставил здесь ассерт, чтобы вылавливать кос€ки в логике. Ћучше вылететь с пон€тной диагностикой, чем гадать, почему непись повис.
-    local on_signal = get_string(section, "on_signal", nil, ini)
-    if on_signal then
-      ASSERT(not on_signal:find("sound_end"), "Found signal 'sound_end' in logic section [%s] of object [%s], but 'snd' not specified!", section, npc:name())
-    end
-  end
+	st.snd = utils.cfg_get_string(ini, section, "snd", npc, false, "", nil)
+	if not st.snd then --KRodin: поставил здесь ассерт, чтобы вылавливать кос€ки в логике. Ћучше вылететь с пон€тной диагностикой, чем гадать, почему непись повис.
+		local on_signal = get_string(section, "on_signal", nil, ini)
+		if on_signal then
+			ASSERT(not on_signal:find("sound_end"), "Found signal 'sound_end' in logic section [%s] of object [%s], but 'snd' not specified!", section, npc:name())
+		end
+	end
 
   st.anim     = utils.cfg_get_string(ini, section, "anim", npc, false, "", "wait")
   st.tips_id    = utils.cfg_get_string(ini, section, "tips", npc, false, "")
@@ -305,7 +308,7 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
             st.target_id = id_by_sid(sid)
             if not st.target_id then
                   st.target_id = nil                
-                  log3("!!remark <error>: Wrong story id [%s] for [%s] in section [%s]", st.target, npc:name(), section)
+				  log3("!!remark <error>: Wrong story id [%s] for [%s] in section [%s]", st.target, npc:name(), section)
             end
             st.target_init = true
             else
