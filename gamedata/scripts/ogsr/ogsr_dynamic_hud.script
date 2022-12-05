@@ -13,25 +13,8 @@ function attach(sm)
 	sm:subscribe({ signal = "on_drop",            fun = this.update_suit_hud })
 end
 
-
-local last_shader_mode = "off"
-local function switch_shader_effects(mode)
-	if mode ~= last_shader_mode then
-		cmd("r2_rain_drops_control "..mode)
-		last_shader_mode = mode
-	end
-end
-
 local suithud_enable = false --когда садимся/выходим из БТР, этот параметр убирает/возвращает худ
 local function check_my_suit_hud()
-	if not suithud_enable then
-		cmd("r2_mask_control 0")
-		cmd("r2_visor_refl_intensity 0")	
-		cmd("r2_visor_refl_control 0")
-		switch_shader_effects("off")
-		return
-	end
-
 	local outfit = db.actor:item_in_slot(6)
 	if outfit then
 		local outfitname = outfit:section()
@@ -41,23 +24,22 @@ local function check_my_suit_hud()
 		cmd("r2_mask_control "..control)
 		cmd("r2_visor_refl_control "..control)
 		cmd("r2_visor_refl_intensity "..intensity)
-		switch_shader_effects(tonumber(control) > 0 and "on" or "off")
+		cmd("r2_rain_drops_control "..control)
 	else
 		cmd("r2_mask_control 0")
 		cmd("r2_visor_refl_control 0")
 		cmd("r2_visor_refl_intensity 0")
-		switch_shader_effects("off")
+		cmd("r2_rain_drops_control 0")
 	end
 end
 
 function update_suit_hud()
-	suithud_enable = true
 	check_my_suit_hud()
 end
 
 function off_shader_effects()
-	switch_shader_effects("off")
 	cmd("r2_mask_control 0")
 	cmd("r2_visor_refl_control 0")
 	cmd("r2_visor_refl_intensity 0")
+	cmd("r2_rain_drops_control 0")
 end
