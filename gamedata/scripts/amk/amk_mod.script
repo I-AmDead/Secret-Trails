@@ -1258,36 +1258,6 @@ function check_usable_item(obj)
 	amk_dialogs.info_received()
 end
 
-function generate_recipe(obj)
-	if IsMonster(obj) then
-		return
-	end
-	local info=nil
-	local prop=100
-  if level.name()=="l07_military" and obj.character_community and
-          obj:character_community()=="killer" then
-		info="info_amk_recipt_titan_kolobok"
-		prob=3
-  elseif level.name()=="l10_radar" and obj.character_community and
-          obj:character_community()=="monolith" then
-		info="info_amk_recipt_controller_skalp"
-		prob=1  
-	end
-	if not info then return end
-	local recipes=amk.load_table("amk_body_recipe")
-	-- Проверим не генерился ли уже этот рецепт
-	for k,v in pairs(recipes) do
-		if v==info then
-			return
-		end
-	end
-	-- Сгенерим рецепт
-	if math.random(100)<=prob then
-		recipes[obj:id()]=info
-		amk.save_table("amk_body_recipe",recipes)
-	end
-end
-
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **     SPAWN_OBJ        **   **   **   **   **    **   **   **   **   
 --'*******************************************************************************
@@ -1548,57 +1518,5 @@ btrs_friends={}
 function build_btrs_table(obj)
         if obj and (IAmAStalker[obj:clsid()] and obj:character_community()=="military" and obj:alive()) or obj:section()=="vehicle_btr" then
                         btrs_friends[obj:id()] = obj:section()
-        end
-end
-
-function zomby_blow(obj)
-	if obj:object("wpn_flame") then
-		amk_particle.amk_particle({
-				particle="explosions\\explosion_fuelcan",
-				pos=obj:position(),
-				sound=[[weapons\t_rgd5_explosion]]
-			})
-		local dist = db.actor:position():distance_to(obj:position())
-		if dist < 10 and db.actor:see(obj) then
-			local h = hit()
-			h.impulse = 0
-			h.draftsman = db.actor
-			h.direction = vector():set(0,0,0)
-                        h:bone("bip01_spine") -- чтобv учитvвалась броня
-			h.power = 1/dist
-			h.type = hit.strike --chemical_burn
-			db.actor:hit(h)
-			h.power = 15/dist
-			h.type = hit.chemical_burn
-			db.actor:hit(h)
-		end
-		alife():release(alife():object(obj:id()))
-		return
-	end
-
-	if obj:section()=="zombie_blow" then
-		amk_particle.amk_particle({
-                        particle="monsters\\polter_death_00",
-                        pos=obj:bone_position("bip01_head"),
-                        sound="anomaly\\anomaly_gravy_hit1"
-			})
-                local dist = db.actor:position():distance_to(obj:position())
-                if dist < 20 and db.actor:see(obj) then
-                        local h = hit()
-                        h.impulse = 0
-                        h.draftsman = db.actor
-                        h.direction = vector():set(0,0,0)
-                        h:bone("bip01_spine")
-                        h.power = 1/dist
-                        h.type = hit.burn
-                        db.actor:hit(h)
-                        h.power = 15/dist
-                        h.type = hit.burn
-                        db.actor:hit(h)
---            level.add_pp_effector("amk_shoot.ppe", 2016, false)
-            local snd_obj = xr_sound.get_safe_sound_object([[monsters\zombie\zombie_take_damage_]]..tostring(math.random(1,6)))
-                        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
-                        alife():release(alife():object(obj:id()))
-                end
         end
 end
