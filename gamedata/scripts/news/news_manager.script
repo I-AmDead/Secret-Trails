@@ -105,23 +105,23 @@ local pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 
 -- При добавлении новых квестовиков добавлять для них иконки в ui_iconstotal и прописывать сюда полное имя, как оно идет в смс. Или прописывать sender в вызов send_tip. Сортировать по алфавиту.
 local tips_icons = {
-	arena    	= {332,141,"АРНИ:","Арни:"},
-	barman   	= {332,235,"БАРМЕН:","Бармен:"},
+	arena    	= {332,141, game.translate_string( "name_arni" ), game.translate_string( "name_arni_small" )},
+	barman   	= {332,235, game.translate_string( "name_barmen" ), game.translate_string( "name_barmen_small" )},
 	default  	= {0,658}, -- по умолчанию
-	dolg     	= {498,47,"ДОЛГ:","Долг:"},
-	ecolog   	= {498,376},
-	freedom  	= {498,0,"СВОБОДА:","Свобода:"},
-	killer   	= {498,94,"НАЁМНИКИ:","Наёмники:"},
-	krot     	= {332,47,"КРОТ:","Крот:"},
-	monolith 	= {498, 282,"МОНОЛИТ:","Монолит:"},
-	o_soznanie 	= {415,893,"О-СОЗНАНИЕ:","О-Сознание:"},
+	dolg     	= {498,141, game.translate_string( "name_barduty" ), game.translate_string( "name_barduty_small" )},
+	ecolog   	= {498,0},
+	freedom  	= {498,94, game.translate_string( "name_svoboda" ), game.translate_string( "name_svoboda_small" )},
+	killer   	= {913,940, game.translate_string( "name_nayomniki" ), game.translate_string( "name_nayomniki_small" )},
+	krot     	= {332,47, game.translate_string( "name_krot" ), game.translate_string( "name_krot_small" )},
+	monolith 	= {913, 893, game.translate_string( "name_monolit" ), game.translate_string( "name_monolit_small" )},
+	o_soznanie 	= {415,893, game.translate_string( "name_o_soznanie" ), game.translate_string( "name_o_soznanie_small" )},
 	pda_tips  	= {581,376,},
-	prizrak  	= {415,705,"ПРИЗРАК:","Призрак:"},
-	saharov  	= {332,470,"САХАРОВ:","Сахаров:"},
-	stalker  	= {498,141,"СТАЛКЕРЫ:","Сталкеры:"},
+	prizrak  	= {415,705, game.translate_string( "name_prizrak" ), game.translate_string( "name_prizrak_small" )},
+	saharov  	= {332,470, game.translate_string( "name_saharov" ), game.translate_string( "name_saharov_small" )},
+	stalker  	= {0,658},
 	trader   	= {332,893}, -- сидорович
 	surge   	= {581,94}, -- сидорович
-	wolf	 	= {332,940,"ВОЛК:","Волк:"},
+	wolf	 	= {332,940, game.translate_string( "name_volk" ), game.translate_string( "name_volk_small" )},
 }
 
 -- Получение иконки отправителя
@@ -311,19 +311,19 @@ end
 
 function send_treasure(name)
 	local 	level_name = {
-		["esc"]  = "Кордон",
-		["gar"]  = "Свалка",
-		["agr"]  = "Агропром",
-		["agr_u"] = "Подземелье Агропрома",
-		["val"]  = "Тёмная Долина",
-		["mil"]  = "Армейские Склады",
-		["yan"]  = "Янтарь",
-		["x16"]  = "Лаборатория Х-16",
-		["rad"]  = "Радар",
-		["pri"]  = "Припять",
-		["x18"]  = "Лаборатория Х-18",
-		["bar"]  = "Бар",
-		["ros"]  = "Дикая Территория"
+		["esc"]  = game.translate_string( "ln_l01_escape_0" ),
+		["gar"]  = game.translate_string( "ln_l02_garbage_0" ),
+		["agr"]  = game.translate_string( "ln_l03_agroprom_0" ),
+		["agr_u"] = game.translate_string( "ln_l03u_agr_underground_0" ),
+		["val"]  = game.translate_string( "ln_l04_darkvalley_0" ),
+		["mil"]  = game.translate_string( "ln_l07_military_0" ),
+		["yan"]  = game.translate_string( "ln_l08_yantar_0" ),
+		["x16"]  = game.translate_string( "ln_l08u_brainlab_0" ),
+		["rad"]  = game.translate_string( "ln_l10_radar_0" ),
+		["pri"]  = game.translate_string( "ln_l11_pripyat_0" ),
+		["x18"]  = game.translate_string( "ln_l04u_labx18_0" ),
+		["bar"]  = game.translate_string( "ln_l05_bar_0" ),
+		["ros"]  = game.translate_string( "ln_l06_rostok_0" ),
 	}
 	pda_news:play(db.actor, 0, sound_object.s2d)
 	local task_texture, task_rect = get_texture_info("ui_iconsTotal_found_thing")
@@ -337,8 +337,8 @@ function send_treasure(name)
 end
 
 
-function get_inv_name(section)
-	return sys_ini:r_string(section,"inv_name")
+function get_inv_name( section )
+  return get_string( section, "inv_name" )
 end
 
 function relocate_item(actor, type, item)
