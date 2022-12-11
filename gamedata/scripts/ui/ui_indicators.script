@@ -9,6 +9,25 @@ function attach(sm)
 	sm:subscribe({signal = "on_update", fun = this.ShowIndicators})
 end
 
+arc_rad = arc_radiation.get_radiation_dose() or 0
+
+-- Радиация
+function radiation_level()
+	if arc_rad > 100 and arc_rad < 150 then
+        return 1
+ 	end
+	if arc_rad > 150 and arc_rad < 250 then
+        return 2
+	end
+	if arc_rad > 250 and arc_rad < 300 then
+        return 3
+	end
+	if arc_rad > 300 then
+        return 4
+	end
+    return 0
+end
+
 -- Кровотечения
 function bleeding_level()
 	if db.actor:get_bleeding() > 0.01 and db.actor:get_bleeding() < 0.25 then
@@ -26,7 +45,7 @@ function bleeding_level()
     return 0
 end
 
--- пси
+-- Пси
 function psy_level()
 	if db.actor.psy_health < 0.9 and db.actor.psy_health >= 0.7 then
         return 1
@@ -42,7 +61,6 @@ function psy_level()
 	end
     return 0
 end
-
 
 -- Голод
 function hunger_level()
@@ -132,12 +150,9 @@ local curr_overweight_level = 0
 
 -- Вывод индикаторов опасности
 function ShowIndicators()
-	if not db.actor:alive() then
-        return
-    end
+    if not db.actor:alive() then return end
 
-    --log1("ShowIndicators")
-
+    arc_rad = arc_radiation.get_radiation_dose() or 0
     local hud = get_hud()
 
     local new_bleeding_level = bleeding_level()
@@ -145,7 +160,7 @@ function ShowIndicators()
         hud:RemoveCustomStatic("indik_blood" .. curr_bleeding_level)
         curr_bleeding_level = new_bleeding_level
         if curr_bleeding_level > 0 then
-		    hud:AddCustomStatic("indik_blood" .. curr_bleeding_level, true)
+            hud:AddCustomStatic("indik_blood" .. curr_bleeding_level, true)
         end
     end
 
@@ -154,7 +169,16 @@ function ShowIndicators()
         hud:RemoveCustomStatic("hud_hunger" .. curr_hunger_level)
         curr_hunger_level = new_hunger_level
         if curr_hunger_level > 0 then
-		    hud:AddCustomStatic("hud_hunger" .. curr_hunger_level, true)
+            hud:AddCustomStatic("hud_hunger" .. curr_hunger_level, true)
+        end
+    end
+
+    local new_radiation_level = radiation_level()
+    if curr_radiation_level ~= new_radiation_level then
+        hud:RemoveCustomStatic("hud_rad" .. curr_radiation_level)
+        curr_radiation_level = new_radiation_level
+        if curr_radiation_level > 0 then
+            hud:AddCustomStatic("hud_rad" .. curr_radiation_level, true)
         end
     end
 
@@ -163,7 +187,7 @@ function ShowIndicators()
         hud:RemoveCustomStatic("indik_wpn" .. curr_wpn_level)
         curr_wpn_level = new_wpn_level
         if curr_wpn_level > 0 then
-		    hud:AddCustomStatic("indik_wpn" .. curr_wpn_level, true)
+            hud:AddCustomStatic("indik_wpn" .. curr_wpn_level, true)
         end
     end
 
@@ -172,7 +196,7 @@ function ShowIndicators()
         hud:RemoveCustomStatic("outfit_broken" .. curr_outfit_level)
         curr_outfit_level = new_outfit_level
         if curr_outfit_level > 0 then
-		    hud:AddCustomStatic("outfit_broken" .. curr_outfit_level, true)
+            hud:AddCustomStatic("outfit_broken" .. curr_outfit_level, true)
         end
     end
 
@@ -181,19 +205,8 @@ function ShowIndicators()
         hud:RemoveCustomStatic("indik_over" .. curr_overweight_level)
         curr_overweight_level = new_overweight_level
         if curr_overweight_level > 0 then
-		    hud:AddCustomStatic("indik_over" .. curr_overweight_level, true)
+            hud:AddCustomStatic("indik_over" .. curr_overweight_level, true)
         end
     end
-
-    local new_psy_level = psy_level()
-    if curr_psy_level ~= new_psy_level then
-        hud:RemoveCustomStatic("hud_psy" .. curr_psy_level)
-        curr_psy_level = new_psy_level
-        if curr_psy_level > 0 then
-		    hud:AddCustomStatic("hud_psy" .. curr_psy_level, true)
-        end
-    end
-
-
 
 end

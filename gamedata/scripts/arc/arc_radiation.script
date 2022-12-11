@@ -116,6 +116,10 @@ function get_dose_string()
 	return string.format("%.2f", RAD_DOSE/100)
 end
 
+function get_radiation_dose()
+	return RAD_DOSE/100
+end
+
 function get_dose_string_color()
 	local rd = RAD_DOSE / DOSE_DEADLY
 	return math.min(round(196+196*rd),255), math.max(round(255-255*rd),0), math.max(round(196-255*rd),0)
@@ -161,11 +165,11 @@ function use_antirad()
 	add_rad_dose(-r)
 end
 -----------------------------------------------------------------------------------
-function init()
+function load()
 	RAD_DOSE = ogse.load_var("rad_dose", 0)
 end
 
 function attach( sm )
-  sm:subscribe({ signal = "on_spawn", fun = this.init })
+  sm:subscribe({ signal = "on_load", fun = this.load })
   sm:subscribe({ signal = "on_save_after_all", fun = this.save_rad_dose })
 end
