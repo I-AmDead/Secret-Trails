@@ -148,11 +148,7 @@ function generic_object_binder:death_callback(victim, who)
 
 	self.object:set_tip_text_default()
 
-	if db.actor then -- добавлено KamikaZze  с целью отладки 25/02/2009
-		if who:is_actor() then -- добавление опыта за убийство
-			xr_statistic.addKillCount(who, self.object)
-		end
-	end
+	xr_statistic.addKillCount(who, self.object)
 
 	if self.st and self.st.mob_death then
 		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", self.object, who)
