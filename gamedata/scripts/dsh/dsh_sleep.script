@@ -1,6 +1,6 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
-function attach( sm ) -- РґР»СЏ РјРµРЅРµРґР¶РµСЂР° СЃРёРіРЅР°Р»РѕРІ
+function attach( sm ) -- для менеджера сигналов
   sm:subscribe({ signal = "on_first_update",   fun = this.on_first_update   })
   sm:subscribe({ signal = "on_sleep_finished", fun = this.on_sleep_finished })
   sm:subscribe({ signal = "on_use",            fun = this.on_item_use       })
@@ -31,7 +31,7 @@ local sleep_step  = math.floor( 360 / time_factor ) * 1000
 
 function on_update()
   ogse_signals.get_mgr():reschedule( sleep_step )
-  if not ogse_sleep_mgr.is_sleep_active() then
+  if db.actor:alive() and not ogse_sleep_mgr.is_sleep_active() then
     test_for_need_sleep()
   end
 end
@@ -41,7 +41,7 @@ function on_item_use( obj )
   local section = obj:section()
   if section == "matras" then
     test_for_need_sleep_matras()
-    return true -- РјР°С‚СЂР°СЃ Р±РѕР»СЊС€Рµ РЅРёРєРѕРјСѓ РЅРµ РЅР°РґРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ
+    return true -- матрас больше никому не надо использовать
   end
 end
 
@@ -139,15 +139,15 @@ function test_for_need_sleep_matras()
     ogse.autohiding_msg( game.translate_string( "blowout_not_sleep" ), 1500 )
   else
 
-      -- Р·РІСѓРєРѕРІРѕРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёРµ
+      -- звуковое сопровождение
       local snd = xr_sound.get_safe_sound_object( "zwuk\\inv_sleeping" )
       snd:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 2.0 )
-      -- Р·Р°РєСЂС‹РІР°РµРј РёРЅРІРµРЅС‚Р°СЂСЊ
+      -- закрываем инвентарь
       local wnd = level.main_input_receiver()
       if wnd then
         wnd:GetHolder():start_stop_menu( wnd, true )
       end
-      -- РѕС‚РєСЂС‹РІР°РµРј РґРёР°Р»РѕРі СЃРЅР°
+      -- открываем диалог сна
       level.start_stop_menu( ui_sleep.sleep(), true )
 
 	end
@@ -203,5 +203,5 @@ end
 
 function surge_soon()
   local surge_hours = dsh_cop_weather.get_surge_time()
-  return surge_hours < 0.25     -- РґРѕ РІС‹Р±СЂРѕСЃР° РјРµРЅСЊС€Рµ 15-С‚Рё РјРёРЅСѓС‚
+  return surge_hours < 0.25     -- до выброса меньше 15-ти минут
 end
