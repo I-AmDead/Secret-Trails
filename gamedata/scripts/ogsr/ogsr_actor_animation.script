@@ -56,7 +56,12 @@ local lowered_anm_classes = {
 }
 
 function allow_animation()
-	return (game.hud_motion_allowed() and (not level.only_allow_movekeys()))
+	local active_item = db.actor:active_item()
+	if active_item then
+		return active_item:get_hud_item_state() == 0 and game.hud_motion_allowed() and not level.only_allow_movekeys()
+	else
+		return game.hud_motion_allowed() and not level.only_allow_movekeys()
+	end
 end
 
 function on_key_down(key, bind)
@@ -126,7 +131,7 @@ function torch_switcher()
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
 
-	if (itm) then
+	if itm then
 		local kind = get_string(itm:section(),"kind") or nil
 		local class = get_string(itm:section(),"class") or nil
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
@@ -162,7 +167,7 @@ function nv_switcher()
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
 
-	if (itm) then
+	if itm then
 		local kind = get_string(itm:section(),"kind") or nil
 		local class = get_string(itm:section(),"class") or nil
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
