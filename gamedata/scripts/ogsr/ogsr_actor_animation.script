@@ -69,17 +69,17 @@ function on_key_down(key, bind)
     or not db.actor:alive()
     or not allow_animation() then return end
 	
-	local torch = db.actor:item_in_slot( 9 )
-	local pnv =  db.actor:item_in_slot( 11 )
+    local torch = db.actor:item_in_slot( 9 )
+    local pnv =  db.actor:item_in_slot( 11 )
 	
-	if bind == key_bindings.kSWIPE_MASK then
-	if get_con_string("r2_rain_drops_control") == "off" then return end
-    	swipe_mask()
-	elseif torch and bind == key_bindings.kHEADLAMP then
-    	torch_switcher()
-	elseif pnv and bind == key_bindings.kNIGHT_VISION then
-    	nv_switcher()
-	end
+    if bind == key_bindings.kSWIPE_MASK then
+        if get_con_string("r2_rain_drops_control") == "off" then return end
+        swipe_mask()
+    elseif torch and bind == key_bindings.kHEADLAMP then
+        torch_switcher()
+    elseif pnv and bind == key_bindings.kNIGHT_VISION then
+        nv_switcher()
+    end
 end
 
 -- EMULATION SWIPE RAIN DROPS
@@ -88,9 +88,9 @@ function swipe_mask()
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
 				
-	if (itm) then
-		local kind = get_string(itm:section(),"kind") or nil
-		local class = get_string(itm:section(),"class") or nil
+	if itm then
+		local kind = get_string(itm:section(),"kind")
+		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\lower.anm"
 			anm_additional_length = 0.4
@@ -132,8 +132,8 @@ function torch_switcher()
 	local itm = db.actor:active_item()
 
 	if itm then
-		local kind = get_string(itm:section(),"kind") or nil
-		local class = get_string(itm:section(),"class") or nil
+		local kind = get_string(itm:section(),"kind")
+		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\headlamp.anm"
 			anm_additional_length = 0.35
@@ -168,8 +168,8 @@ function nv_switcher()
 	local itm = db.actor:active_item()
 
 	if itm then
-		local kind = get_string(itm:section(),"kind") or nil
-		local class = get_string(itm:section(),"class") or nil
+		local kind = get_string(itm:section(),"kind")
+		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\headlamp.anm"
 			anm_additional_length = 0.35
