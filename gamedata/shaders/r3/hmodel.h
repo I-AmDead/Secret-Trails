@@ -5,8 +5,6 @@
 
 TextureCube env_s0;
 TextureCube env_s1;
-TextureCube sky_s0;
-TextureCube sky_s1;
 
 uniform float4 env_color; // color.w  = lerp factor
 uniform float3x4 m_v2w;
@@ -56,7 +54,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float s
     float4 light = s_material.SampleLevel(smp_material, float3(hscale, hspec, m), 0).xxxy;
 
     // diffuse color
-    float3 env_d = SmallSkyCompute(nw) * env_color.rgb;
+    float3 env_d = SmallSkyCompute(nw) * env_color.xyz;
     env_d *= env_d; // contrast
 
     hdiffuse = env_d * light.xyz + L_ambient.rgb;
@@ -64,7 +62,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float s
     // specular color
     vreflect.y = vreflect.y * 2 - 1; // fake remapping
 
-    float3 env_s = SmallSkyCompute(vreflect) * env_color.rgb;
+    float3 env_s = SmallSkyCompute(vreflect) * env_color.xyz;
     env_s *= env_s; // contrast
 
     hspecular = env_s * light.w * s;

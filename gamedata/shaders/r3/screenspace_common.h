@@ -1,5 +1,5 @@
 /**
- * @ Version: SCREEN SPACE SHADERS - UPDATE 11
+ * @ Version: SCREEN SPACE SHADERS - UPDATE 12.5
  * @ Description: Main file
  * @ Modified time: 2022-11-23 15:37
  * @ Author: https://www.moddb.com/members/ascii1457
@@ -19,8 +19,8 @@
 
 uniform float4 sky_color;
 
-//TextureCube sky_s0;
-//TextureCube sky_s1;
+TextureCube sky_s0;
+TextureCube sky_s1;
 
 static const float2 ssfx_pixel_size = 1.0f / screen_res.xy;
 static const float ssfx_PI = 3.14159265f;

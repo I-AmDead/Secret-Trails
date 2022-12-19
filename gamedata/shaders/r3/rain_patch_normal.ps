@@ -90,9 +90,8 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1) : SV_Target
 
     //	Apply distance falloff
     // Using fixed fallof factors according to float16 depth coordinate precision.
-	float	d_len = length( _P.xyz );
-	float	fAtten = 1 - smoothstep( 80, 100, d_len );
-	s	*= fAtten*fAtten;
+    float fAtten = 1 - smoothstep(5, 25, _P.z);
+    s *= fAtten * fAtten;
 
     //	Apply rain density
     s *= RainDensity.x;
@@ -104,7 +103,7 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1) : SV_Target
 //	note from meatchunk: using timers.x*3.0 seems to cause big FPS drops for some
 	float3 waterSplash = GetNVNMap( s_water, WorldP.xz, timers.x);	//timers.x*3.0 );
 
-    float WeaponAttenuation = smoothstep(0.9, 1.0, d_len);
+    float WeaponAttenuation = smoothstep(0.8, 0.9, length(_P.xyz));
     float ApplyNormalCoeff = s * WeaponAttenuation;
 
     float3 water = waterSplash * (fIsUp * ApplyNormalCoeff);

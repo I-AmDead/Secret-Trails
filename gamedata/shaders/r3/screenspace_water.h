@@ -1,7 +1,7 @@
 /**
- * @ Version: SCREEN SPACE SHADERS - UPDATE 12.5
+ * @ Version: SCREEN SPACE SHADERS - UPDATE 12.6
  * @ Description: Water implementation
- * @ Modified time: 2022-11-23 15:38
+ * @ Modified time: 2022-11-26 02:05
  * @ Author: https://www.moddb.com/members/ascii1457
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
@@ -30,6 +30,9 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 	// Initialize Ray
 	RayTrace ssr_ray = SSFX_ray_init(ray_start_vs, ray_dir_vs, 150, q_steps[G_SSR_WATER_QUALITY].x, noise);
 
+	// Save the original step.x
+	float ori_x = ssr_ray.r_step.x;
+
 	// Depth from the start of the ray
 	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start, iSample);
 
@@ -38,16 +41,12 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 	for (int st = 1; st <= q_steps[G_SSR_WATER_QUALITY].x; st++)
 	{
 		// Ray out of screen...
-		if (!(ssr_ray.r_pos.y >= 0.0f && ssr_ray.r_pos.y <= 1.0f))
+		if (ssr_ray.r_pos.y < 0.0f || ssr_ray.r_pos.y > 1.0f)
 			return 0;
 
-		// Trick for the horizontal out of bounds. Mirror border of the screen.
-		if (ssr_ray.r_pos.x < 0.0f || ssr_ray.r_pos.x > 1.0f)
-		{
-			ssr_ray.r_pos -= ssr_ray.r_step; // Step back
-			ssr_ray.r_step.x = -ssr_ray.r_step.x; // Invert Horizontal
-			ssr_ray.r_pos += ssr_ray.r_step; // Step
-		}
+		// Horizontal stretch to avoid borders
+		float2 hor = ssr_ray.r_pos.x > 0.5f ? float2(1.0f, -0.1) : float2(-0.1, 1.0f);
+		ssr_ray.r_step.x = ori_x * lerp(hor.x, hor.y, saturate(ssr_ray.r_pos.x * 2.0f));
 
 		// Ray intersect check ( x = difference | y = depth sample )
 		float2 ray_check = SSFX_ray_intersect(ssr_ray, iSample);

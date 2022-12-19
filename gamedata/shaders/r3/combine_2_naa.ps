@@ -2,15 +2,10 @@
 #include "mblur.h"
 #include "dof.h"
 #include "visor.h"
-
-#ifdef SSFX_DEBAND
-    #include "screenspace_debanding.h"
-#endif
+#include "pnv.h"
 
 uniform float4 pnv_color;
 uniform float4 pnv_params;
-
-#include "pnv.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #define EPSDEPTH 0.001
@@ -70,18 +65,12 @@ c2_out main(v2p_aa_AA I)
     float3 img = dof(center);
     float4 bloom = s_bloom.Sample(smp_rtlinear, center);
 
-    // Sky Debanding Implementation
-#ifdef SSFX_DEBAND
-    if (depth <= SKY_EPS)
-        img = ssfx_debanding(img, I.Tex0.xy);
-#endif
-
     img = mblur(center, gbd.P, img.rgb);
+
+	bloom = BrokeBloom(bloom);
 
     if (addon_VControl.w == 1)
         img = visor_reflection(img, center);
-
-    bloom = BrokeBloom(bloom);
 
 #ifdef USE_DISTORT
     float3 blurred = bloom * def_hdr;

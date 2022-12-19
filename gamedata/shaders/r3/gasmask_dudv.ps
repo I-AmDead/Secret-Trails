@@ -12,8 +12,8 @@
 
 float4 main(p_screen I) : SV_Target
 {
-	//Sample gasmask texture
-	float4 gasmask_tex;
+    //Sample gasmask texture
+    float4 gasmask_tex;
 
     if (m_actor_params.y > 0.9)
     {    
@@ -59,28 +59,19 @@ float4 main(p_screen I) : SV_Target
 	//Prepare refracted texcoord	
     float2 refr_tc = I.tc0.xy + (gasmask_tex.xy * 2.0 - 1.0) * GM_DIST_INT;
 	
-	//Sample scene with refracted texcoord
-	float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
+    //Sample scene with refracted texcoord
+    float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
 
-	//Mix gasmask cracks with image
-	image += (gasmask_tex.w * image) * GM_DIFF_INT;
+    //Mix gasmask cracks with image
+    image += (gasmask_tex.w * image) * GM_DIFF_INT;
 
-	//Add glass reflection on top
-	if (mask_control.z == 1)
-	{	
-		//Prepare aspect-ratio correct TC for attenuation
-		//float2 vig_tc = I.tc0.xy;
-	    //vig_tc -= 0.5;
-		//vig_tc.x *= screen_res.x / screen_res.y;
-		//vig_tc += 0.5;	
+    //Add glass reflection on top
+    if (mask_control.z == 1)
+    {	
 		
-		//Get refl attenuation
-		//float refl_att = smoothstep(0.8, 1.0, distance(vig_tc, float2(0.5, 0.5)));
+    	image = visor_reflection(image, I.tc0.xy);
+    }
 		
-		image = visor_reflection(image, I.tc0.xy);
-		//image = lerp(image, visor_reflection(image, refr_tc.xy), refl_att);
-	}
-		
-	//Output
-	return float4(image, 1.0);
+    //Output
+    return float4(image, 1.0);
 } 
