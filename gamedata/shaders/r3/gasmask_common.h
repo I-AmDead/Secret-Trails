@@ -35,8 +35,8 @@ float4 mask_control;
 float3 drops_control;
 
 //Gasmask settings
-#define GM_DIST_INT 0.01f //Refraction intensity
-#define GM_DIFF_INT 0.25f //Diffuse cracks intensity
+#define GM_DIST_INT 0.065f //Refraction intensity
+#define GM_DIFF_INT 0.2f //Diffuse cracks intensity
 
 #define GM_VIG_INT 0.5f //Vignette intensity
 
