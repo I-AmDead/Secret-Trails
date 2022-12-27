@@ -6,12 +6,14 @@ local BOBBING_MAX = 6
 
 
 function attach( sm ) -- для менеджера сигналов
-  sm:subscribe({ signal = "on_first_update",   fun = this.on_first_update   })
-  sm:subscribe({ signal = "on_mm_return_game", fun = this.on_mm_return_game })
-  sm:subscribe({
-    signal = "update_artefacts_on_belt", fun = this.update_artefacts_on_belt,
-    [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"
-  })
+  if get_con_string("g_god ") == "off" then
+    sm:subscribe({ signal = "on_first_update",   fun = this.on_first_update   })
+    sm:subscribe({ signal = "on_mm_return_game", fun = this.on_mm_return_game })
+    sm:subscribe({
+      signal = "update_artefacts_on_belt", fun = this.update_artefacts_on_belt,
+      [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"
+    })
+  end
 end
 
 
