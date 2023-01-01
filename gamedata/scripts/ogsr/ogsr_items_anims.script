@@ -1,5 +1,8 @@
 local ANIMS_ENABLED = true
-local prev_active_slot
+local prev_active_slot = false
+local anm_duration = 0
+local anm_start = 0
+local item_section = false
 
 local cfg = {
 	"eat_health",
@@ -50,30 +53,30 @@ local function play_use_sound(sect, snd_name)
 end
 
 local function play_item_use(item)
-    local anim = "anm_use"
+    local outfit = db.actor:item_in_slot(6)
+    local exo = nil
+    if outfit then
+        exo = get_string(outfit:section(), "exo")
+    end
+    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and dsh.get_next_random("anim_random", 1, 5) and "anm_use_alt" or "anm_use"
     local item_hud = get_string(item, "hud")
     local cam_effect = get_string(item, "cam_effect")
     local used_time = get_u32(item, "item_used_timing")
     local snd = get_string(item, "snd_use_anm")
-    local outfit = db.actor:item_in_slot(6)
+
     if outfit then
-        local exo = get_string(outfit:section(), "exo")
-        if exo and (string.find(item, "^medkit") or item == "antirad") then
+        if exo and ( string.find(item, "^medkit") or item == "antirad" ) then
             item_hud = get_string(item, "hud_exo")
             used_time = get_string(item, "item_used_timing_exo")
             snd = get_string(item, "snd_use_exo_anm")
             cam_effect = get_string(item, "cam_effect_exo")
         end
     end
-    local anm_state
 
-    local anm_start = 0
-    local anm_duration = 0
-
+    local anm_state = false
     local anm_subscribed = false
 
-
-    function play_anim()
+    local function play_anim()
         local time_g = time_global()
         if anm_state == 1 then
             anm_state = 2
@@ -93,6 +96,7 @@ local function play_item_use(item)
             level.only_allow_movekeys(false)
             level.set_actor_allow_ladder(true)
             db.actor:activate_slot(prev_active_slot)
+            anm_start = 0
 
             if anm_subscribed then
                 ogse_signals.get_mgr():unsubscribe( anm_subscribed )
@@ -106,20 +110,19 @@ local function play_item_use(item)
 
     anm_state = 1
 
-    anm_subscribed = {
-        signal = "on_update", fun = function() play_anim() end
-    }
-	ogse_signals.get_mgr():subscribe( anm_subscribed )
+    anm_subscribed = { signal = "on_update", fun = play_anim }
+    ogse_signals.get_mgr():subscribe( anm_subscribed )
 end
 
 local function on_actor_before_use( obj, sobj )
     local sect = obj:section()
+
     if ANIMS_ENABLED then
-        local hud = get_string(sect, "hud")
-        local hud_exo = get_string(sect, "hud_exo")
+        local hud = get_string(sect, "hud") or get_string(sect, "hud_exo")
         local slot_was_blocked = db.actor.inventory:is_active_slot_blocked()
-        if (hud or hud_exo) and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
-            local item_section = obj:section()
+        if hud and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
+            item_section = sect
+
             if db.actor:has_info("ui_inventory") then
                 level.start_stop_menu(level.main_input_receiver(), true)
              end
