@@ -7,10 +7,12 @@ function attach( sm )
   sm:subscribe({ signal = "on_monster_death", fun = this.show_dead_hitmarker })
 end
 
+local bone_name_index = nil
+
 function show_hitmarker(victim, amount, local_direction, who, bone_index)
 	if amount > 0 then
 		if who and who:id() == db.actor:id() then
-			show_add(victim)
+			show_add(victim, amount, bone_index)
 		end
 	end
 end
@@ -22,66 +24,34 @@ function show_dead_hitmarker( victim, who )
 end
 
 
-function show_add(victim)
+function show_add(victim, amount, bone_index)
 	for i=1, 4 do	
 		local hud = get_hud()
 		if not hud:GetCustomStatic("hud_xmark_"..i) then
 			st = hud:AddCustomStatic("hud_xmark_"..i, true)
-			local pos = get_screen_coords(victim:bone_position("bip01_head"))
+			local pos = get_screen_coords(victim:bone_position(get_bone_name_by_id(victim, bone_index)))
+			st:wnd():SetText("-"..game.translate_string(string.format("%.1f", amount * 1000)))
 			st:wnd():SetWndPos( pos.x, pos.y)
 		else
 			hud:RemoveCustomStatic("hud_xmark_"..i)
 		end
-
-		dsh.level_timeout( 50, function() remove_hitmarker() end )
-		dsh.level_timeout( 50, function() show_add2(victim) end )
+		dsh.level_timeout( 300, function() remove_hitmarker() end )
 	end
 end
-
-function show_add2(victim)
-	for i=1, 4 do	
-		local hud = get_hud()
-		if hud:GetCustomStatic("hud_xmark_1"..i) == nil then
-			st = hud:AddCustomStatic("hud_xmark_1"..i, true)
-			local pos = get_screen_coords(victim:bone_position("bip01_head"))
-			st:wnd():SetWndPos( pos.x, pos.y)
-		else
-			hud:RemoveCustomStatic("hud_xmark_1"..i)
-		end
-
-  		dsh.level_timeout( 200, function() remove_hitmarker2() end )
-	end
-end
-
 
 function show_dead_add(victim)
 	for i=1, 4 do	
 		local hud = get_hud()
 		if not hud:GetCustomStatic("hud_xmark_dead_"..i) then
 			st = hud:AddCustomStatic("hud_xmark_dead_"..i, true)
-			local pos = get_screen_coords(victim:bone_position("bip01_head"))
+			local pos = get_screen_coords(victim:position())
+			st:wnd():SetText("DEAD")
 			st:wnd():SetWndPos( pos.x, pos.y)
 		else
 			hud:RemoveCustomStatic("hud_xmark_dead_"..i)
 		end
 
-  		dsh.level_timeout( 50, function() remove_dead_hitmarker() end )
-  		dsh.level_timeout( 50, function() show_dead_add2(victim) end )
-	end
-end
-
-function show_dead_add2(victim)
-	for i=1, 4 do	
-		local hud = get_hud()
-		if not hud:GetCustomStatic("hud_xmark_dead_1"..i) then
-			st = hud:AddCustomStatic("hud_xmark_dead_1"..i, true)
-			local pos = get_screen_coords(victim:bone_position("bip01_head"))
-			st:wnd():SetWndPos( pos.x, pos.y)
-		else
-			hud:RemoveCustomStatic("hud_xmark_dead_1"..i)
-		end
-
-  		dsh.level_timeout( 200, function() remove_dead_hitmarker2() end )
+  		dsh.level_timeout( 200, function() remove_dead_hitmarker() end )
 	end
 end
 
@@ -94,15 +64,6 @@ function remove_hitmarker()
 	end
 end
 
-function remove_hitmarker2()
-	for i=1, 4 do
-		local hud = get_hud()
-		if hud:GetCustomStatic("hud_xmark_1"..i) then
-			hud:RemoveCustomStatic("hud_xmark_1"..i) 
-		end	
-	end
-end
-
 function remove_dead_hitmarker()
 	for i=1, 4 do
 		local hud = get_hud()
@@ -110,25 +71,6 @@ function remove_dead_hitmarker()
 			hud:RemoveCustomStatic("hud_xmark_dead_"..i) 
 		end	
 	end
-end
-
-function remove_dead_hitmarker2()
-	for i=1, 4 do
-		local hud = get_hud()
-		if hud:GetCustomStatic("hud_xmark_dead_1"..i) then
-			hud:RemoveCustomStatic("hud_xmark_dead_1"..i) 
-		end	
-	end
-end
-
-function on_update(victim)
-    if st then
-		if victim then
-			log1("update")
-			local pos = get_screen_coords(victim:bone_position("bip01_head"))
-			st:wnd():SetWndPos( pos.x, pos.y)
-		end
-    end
 end
 
 function get_screen_coords(point)

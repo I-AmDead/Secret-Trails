@@ -58,7 +58,7 @@ local function play_item_use(item)
     if outfit then
         exo = get_string(outfit:section(), "exo")
     end
-    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and dsh.get_next_random("anim_random", 1, 5) and "anm_use_alt" or "anm_use"
+    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and dsh.get_next_random("anim_random", 1, 3) and "anm_use_alt" or "anm_use"
     local item_hud = get_string(item, "hud")
     local cam_effect = get_string(item, "cam_effect")
     local used_time = get_u32(item, "item_used_timing")
@@ -87,7 +87,7 @@ local function play_item_use(item)
             anm_start = time_g
             snd_in_use = sound_object(snd)
             snd_in_use:play(db.actor, 0, sound_object.s2d)
-            anm_duration = game.play_hud_motion(2, item_hud, anim, true, 1, true)
+            anm_duration = game.play_hud_motion(2, item_hud, anim, false, 1, true)
             level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
         elseif anm_state == 3 and time_g > anm_start + used_time then
             anm_state = 4

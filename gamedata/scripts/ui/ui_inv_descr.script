@@ -239,7 +239,7 @@ function CUIDescriptionWnd:ShowDescription(item)
 	end
 
 	self.weight_static:SetText(string.format("%s: %.2f %s", game.translate_string("descr_weight"), item:get_weight(), game.translate_string("descr_kg")) )
-	self.cost:SetText(string.format("%s: %d %s", game.translate_string("descr_cost"), item:cost(), game.translate_string("descr_rub")) )
+	self.cost:SetText(string.format("%s: %d %s", game.translate_string("descr_cost"), get_actual_cost(item), game.translate_string("descr_rub")) )
 
 	if need_show_condition(item) then
 		self.cond_frame:Show(true)
@@ -536,4 +536,17 @@ end
 function need_show_condition(item)
 	local b = sys_ini:r_bool(item:section(), "show_condition", nil)
 	return ( ( item:is_weapon() or item:is_outfit() ) and b ~= false ) or b == true
+end
+
+function get_actual_cost(obj) -- костыль для расчета реально цеты айтема в окне торговли. не лутшее решение но в целом пойдет
+    local trade_wnd = level.get_trade_wnd()
+    if trade_wnd and trade_wnd:IsShown() then
+        local b_buying = obj:parent() and obj:parent():id() == db.actor:id()
+        local trader = level:get_second_talker()
+        if trader then
+            local cur_price = trader:calculate_item_price(obj, b_buying)
+            return cur_price
+        end
+    end
+    return obj:cost()
 end
