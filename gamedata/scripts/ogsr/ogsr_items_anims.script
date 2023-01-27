@@ -1,37 +1,28 @@
 local ANIMS_ENABLED = true
-local prev_active_slot = false
-local anm_duration = 0
-local anm_start = 0
-local item_section = false
 
 local cfg = {
-	"eat_health",
-	"eat_power",
-	"eat_radiation",
-	"eat_satiety",
-	"eat_alcohol",
-	"eat_psy_health",
-	"wounds_heal_perc",
+	["eat_health"]		= function(v) db.actor.health = v end,
+	["eat_power"]		= function(v) db.actor.power = v end,
+	["eat_radiation"]	= function(v) db.actor.radiation = v end,
+	["eat_satiety"]		= function(v) db.actor.satiety = v end,
+	["eat_thirst"]		= function(v) db.actor.thirst = v end,
+	["eat_alcohol"]		= function(v) db.actor.alcohol = v end,
+	["eat_psy_health"]	= function(v) db.actor.psy_health = v end,
+	["wounds_heal_perc"]= function(v) db.actor:heal_wounds( v ) end,
 }
 
 local function apply_item( sect )
+	for line, func in pairs( cfg ) do
+		local val = get_float( sect, line )
+		if val ~= 0	then
+			func(val)
+		end
+	end
 
 	if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
 		arc_radiation.use_antirad()
 	end
-	for k, v in ipairs( cfg ) do
-		local val = get_float( sect, v )
-		if val ~= 0	then
-			if     k == 1 then db.actor.health = val
-			elseif k == 2 then db.actor.power = val
-			elseif k == 3 then db.actor.radiation = val
-			elseif k == 4 then db.actor.satiety = val
-			elseif k == 5 then db.actor.alcohol = val
-			elseif k == 6 then db.actor.psy_health = val
-			elseif k == 7 then db.actor:heal_wounds( val )
-			end
-		end
-	end
+
 end
 
 local function respawn_item(obj)
@@ -53,18 +44,15 @@ local function play_use_sound(sect, snd_name)
 end
 
 local function play_item_use(item)
-    local outfit = db.actor:item_in_slot(6)
     local exo = nil
-    if outfit then
-        exo = get_string(outfit:section(), "exo")
-    end
-    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and dsh.get_next_random("anim_random", 1, 3) and "anm_use_alt" or "anm_use"
     local item_hud = get_string(item, "hud")
     local cam_effect = get_string(item, "cam_effect")
     local used_time = get_u32(item, "item_used_timing")
     local snd = get_string(item, "snd_use_anm")
+    local outfit = db.actor:item_in_slot(6)
 
     if outfit then
+        exo = get_string(outfit:section(), "exo")
         if exo and ( string.find(item, "^medkit") or item == "antirad" ) then
             item_hud = get_string(item, "hud_exo")
             used_time = get_string(item, "item_used_timing_exo")
@@ -73,45 +61,39 @@ local function play_item_use(item)
         end
     end
 
-    local anm_state = false
-    local anm_subscribed = false
+    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and "anm_use_alt" or "anm_use"
 
-    local function play_anim()
-        local time_g = time_global()
-        if anm_state == 1 then
-            anm_state = 2
-            prev_active_slot = db.actor:active_slot()
-            db.actor:activate_slot(255)
-        elseif anm_state == 2 and not db.actor:active_item() then
-            anm_state = 3
-            anm_start = time_g
-            snd_in_use = sound_object(snd)
-            snd_in_use:play(db.actor, 0, sound_object.s2d)
-            anm_duration = game.play_hud_motion(2, item_hud, anim, false, 1, true)
-            level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
-        elseif anm_state == 3 and time_g > anm_start + used_time then
-            anm_state = 4
-            apply_item(item)
-        elseif anm_state == 4 and time_g > anm_start + anm_duration then
-            level.only_allow_movekeys(false)
-            level.set_actor_allow_ladder(true)
-            db.actor:activate_slot(prev_active_slot)
-            anm_start = 0
-
-            if anm_subscribed then
-                ogse_signals.get_mgr():unsubscribe( anm_subscribed )
-                anm_subscribed = nil
-            end
-        end
+    if level.get_inventory_wnd():IsShown() then
+    	level.start_stop_menu(level.get_inventory_wnd(), true)
+    elseif level.get_car_body_wnd():IsShown() then
+    	level.start_stop_menu(level.get_car_body_wnd(), true)			
     end
 
     level.only_allow_movekeys(true)
     level.set_actor_allow_ladder(false)
 
-    anm_state = 1
+    local prev_active_slot = db.actor:active_slot()
+    db.actor:activate_slot(255)
 
-    anm_subscribed = { signal = "on_update", fun = play_anim }
-    ogse_signals.get_mgr():subscribe( anm_subscribed )
+    dsh.wait_condition(function() return not db.actor:active_item() end, function()
+    	snd_in_use = sound_object(snd)
+    	snd_in_use:play(db.actor, 0, sound_object.s2d)
+
+    	local anm_start = time_global()
+    	local anm_duration = game.play_hud_motion(2, item_hud, anim, true, 1, true)
+    	level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
+
+    	dsh.timeout(used_time, function()
+    		apply_item(item)
+    	end)
+
+    	local tmr = dsh.timeout(anm_duration, function()
+    	    level.only_allow_movekeys(false)
+    	    level.set_actor_allow_ladder(true)
+
+    	    db.actor:activate_slot(prev_active_slot)
+    	end)
+    end)
 end
 
 local function on_actor_before_use( obj, sobj )
@@ -121,13 +103,11 @@ local function on_actor_before_use( obj, sobj )
         local hud = get_string(sect, "hud") or get_string(sect, "hud_exo")
         local slot_was_blocked = db.actor.inventory:is_active_slot_blocked()
         if hud and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
-            item_section = sect
-
             if db.actor:has_info("ui_inventory") then
                 level.start_stop_menu(level.main_input_receiver(), true)
-             end
+            end
             obj:zero_effects()
-            play_item_use(item_section)
+            play_item_use(sect)
         elseif hud and db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
             play_use_sound(sect)
         else

@@ -9,30 +9,14 @@ end
 --------------------------------------------------------------
 -- Trigger
 --------------------------------------------------------------
-local new_speed = 0
 local mc_anm_state = 1
-local mc_anm_time_1 = 0
-local mc_anm_time_2 = 0
-local torch_anm_time_1 = 0
-local torch_anm_time_2 = 0
-local pickup_anm_time = 0
-local harvest_anm_time = 0
-local loot_anm_time = 0
-local mc_anm_sec = "anim_mask_clean"
-local torch_anm_sec = "anim_headlamp"
-local pickup_anm_sec = "anim_pickup"
-local harvest_anm_sec = "anim_harvest"
-local loot_anm_sec = "anim_loot"
 local snd_gasmask = sound_object('interface\\item_usage\\gasmask_swipe')
 local snd_torch = sound_object('interface\\item_usage\\headflash_switch')
 local snd_pickup = sound_object('interface\\item_usage\\pickup')
 local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
 local hide_hand_speed = 1.5
-
 local anim_plays
-local prev_active_slot
-local prev_slot
 
 local lowered_anm_kinds = {
 	["w_sniper"] 	= true,
@@ -87,6 +71,7 @@ function swipe_mask()
 	local anm_name = "script\\gasmask.anm"
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
+	local mc_anm_sec = "anim_mask_clean"
 				
 	if itm then
 		local kind = get_string(itm:section(),"kind")
@@ -97,39 +82,35 @@ function swipe_mask()
 		end
 	end
 	
-	if (mc_anm_state == 1) then
-		mc_anm_time_1 = game.get_motion_length(mc_anm_sec, "anm_hide_hand", hide_hand_speed)
-		mc_anm_time_2 = game.get_motion_length(mc_anm_sec, "anm_wipe", 1)
-		if db.actor:active_item() then
-			game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
-		end
-		game.play_hud_anm(anm_name, 0, 1, 1, false)
-		new_speed = game.set_hud_anm_time(anm_name, ((mc_anm_time_1 + mc_anm_time_2) / 1000) + anm_additional_length)
-		animation_on()
-		mc_anm_state = 2
-		dsh.level_timeout( mc_anm_time_1, function() swipe_mask() end )
-	elseif (mc_anm_state == 2) then
-		game.play_hud_motion(1, mc_anm_sec, "anm_wipe", false, 1)
-		snd_gasmask:play(db.actor,0,sound_object.s2d)
-		level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
-		mc_anm_state = 3
-		dsh.level_timeout( mc_anm_time_2 - 400, function() swipe_mask() end )
-	elseif (mc_anm_state == 3) then
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
-		rain_drops_restart()
-		mc_anm_state = 4
-		dsh.level_timeout( mc_anm_time_2, function() swipe_mask() end )
-	elseif (mc_anm_state == 4) then
-		mc_anm_state = 1
-		animation_off()
+	local mc_anm_time_1 = game.get_motion_length(mc_anm_sec, "anm_hide_hand", hide_hand_speed)
+	local mc_anm_time_2 = game.get_motion_length(mc_anm_sec, "anm_wipe", 1)
+	if db.actor:active_item() then
+		game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
 	end
+	game.play_hud_anm(anm_name, 0, 1, 1, false)
+	local new_speed = game.set_hud_anm_time(anm_name, ((mc_anm_time_1 + mc_anm_time_2) / 1000) + anm_additional_length)
+	animation_on()
+
+	dsh.timeout( mc_anm_time_1, function()
+		game.play_hud_motion(1, mc_anm_sec, "anm_wipe", false, 1)
+		snd_gasmask:play(db.actor, 0, sound_object.s2d)
+		level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
+		dsh.timeout( mc_anm_time_2 - 400, function()
+			if new_speed then
+				game.play_hud_anm(anm_name, 0, new_speed, 1, false, true)
+			end
+			rain_drops_restart()
+			dsh.timeout( mc_anm_time_2, animation_off )
+		end )
+	end )
 end
 
 -- EMULATION TORCH SWITCH
 function torch_switcher()
-	anm_name = "script\\headlamp.anm"
+	local anm_name = "script\\headlamp.anm"
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
+	local torch_anm_sec = "anim_headlamp"
 
 	if itm then
 		local kind = get_string(itm:section(),"kind")
@@ -140,32 +121,26 @@ function torch_switcher()
 		end
 	end
 	
-	if (mc_anm_state == 1) then
-		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
-		game.play_hud_anm(anm_name, 0, 1, 1, false)	
-		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
-		snd_torch:play(db.actor,0,sound_object.s2d)
-		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-		animation_on()
-		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 850, function() torch_switcher() end )
-	elseif (mc_anm_state == 2) then
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+	local torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
+	animation_on()
+	game.play_hud_anm(anm_name, 0, 1, 1, false)	
+	local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
+	game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
+	snd_torch:play(db.actor,0,sound_object.s2d)
+	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
+	dsh.timeout( torch_anm_time_1 - 800, function()
 		ogse_torch.on_switch()
-		mc_anm_state = 3
-		dsh.level_timeout( torch_anm_time_1, function() torch_switcher() end )
-	elseif (mc_anm_state == 3) then
-		mc_anm_state = 1
-		animation_off()
-	end
+		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		dsh.timeout( torch_anm_time_1, animation_off )
+	end )
 end
 
 -- EMULATION NV SWITCH
 function nv_switcher()
-	anm_name = "script\\headlamp.anm"
+	local anm_name = "script\\headlamp.anm"
 	local anm_additional_length = 0.45
 	local itm = db.actor:active_item()
+	local torch_anm_sec = "anim_headlamp"
 
 	if itm then
 		local kind = get_string(itm:section(),"kind")
@@ -176,36 +151,31 @@ function nv_switcher()
 		end
 	end
 	
-	if (mc_anm_state == 1) then
-		torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
-		game.play_hud_anm(anm_name, 0, 1, 1, false)	
-		new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-		game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
-		snd_torch:play(db.actor,0,sound_object.s2d)
-		level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-		animation_on()
-		mc_anm_state = 2
-		dsh.level_timeout( torch_anm_time_1 - 850, function() nv_switcher() end )
-	elseif (mc_anm_state == 2) then
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+	local torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1)
+	animation_on()
+	game.play_hud_anm(anm_name, 0, 1, 1, false)	
+	local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
+	game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
+	snd_torch:play(db.actor,0,sound_object.s2d)
+	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
+	dsh.timeout( torch_anm_time_1 - 800, function()
 		ogse_night_vision.call_pnv()
-		mc_anm_state = 3
-		dsh.level_timeout( torch_anm_time_1, function() nv_switcher() end )
-	elseif (mc_anm_state == 3) then
-		mc_anm_state = 1
-		animation_off()
-	end
+		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		dsh.timeout( torch_anm_time_1, animation_off )
+	end )
+
 end
 
 -- EMULATION PICKUP
 function on_item_before_pickup(obj)
+	local pickup_anm_sec = "anim_pickup"
 	local cam_pos = device().cam_pos
 	local cam_pos_y = cam_pos.y - 0.7
 	local obj_pos = obj:position()
 	local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
 	if not anim_plays and allow_animation() then
 		animation_on()
-		pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
+		local pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
 		game.play_hud_anm(anm_name, 0, 1.4, 1, false)
 		if obj_pos.y <= cam_pos_y then
 			toggle_force_crouch()
@@ -218,17 +188,21 @@ end
 
 -- EMULATION HARVEST
 function harvest(on_take)
-	if not anim_plays and allow_animation() then
+    if not anim_plays and allow_animation() then
         local anm_start = 0
         local prev_active_slot = 255
         local anm_subscribed = false
         level.disable_input()
-		anim_plays = true
+        local harvest_anm_sec = "anim_harvest"
+        local loot_anm_sec = "anim_loot"
+        local harvest_anm_time
+        local loot_anm_time
+        anim_plays = true
 		
         local function play_anim()
             local time_g = time_global()
             if mc_anm_state == 1 then
-                prev_slot = db.actor:active_slot()
+                local prev_slot = db.actor:active_slot()
                 if prev_active_slot == 255 then
                     prev_active_slot = prev_slot
                 end
@@ -310,7 +284,7 @@ end
 function rain_drops_restart()
 	level.only_allow_movekeys(false)
 	cmd("r2_rain_drops_control off")
-	dsh.level_timeout( 10, function() cmd("r2_rain_drops_control on") end )
+	dsh.timeout( 10, function() cmd("r2_rain_drops_control on") end )
 end
 
 local force_crouch = false

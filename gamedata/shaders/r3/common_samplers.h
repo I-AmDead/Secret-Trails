@@ -61,14 +61,14 @@ TEXTURE2DMS(float4, MSAA_SAMPLES) s_accumulator; // rgb.a = diffuse.specular
 Texture2D s_diffuse; // rgb.a = diffuse.gloss
 Texture2D s_accumulator; // rgb.a = diffuse.specular
 #endif
-
-Texture2D s_blur_2;
-Texture2D s_blur_4;
-Texture2D s_blur_8;
-
 // uniform sampler2D       s_generic;              //
 Texture2D s_bloom; //
 Texture2D s_image; // used in various post-processing
 Texture2D s_tonemap; // actually MidleGray / exp(Lw + eps)
+
+// Other
+Texture2D s_blur_2;
+Texture2D s_blur_4;
+Texture2D s_blur_8;
 
 #endif //	#ifndef	common_samplers_h_included
