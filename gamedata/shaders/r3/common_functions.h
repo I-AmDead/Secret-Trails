@@ -11,9 +11,7 @@ float3 vibrance(float3 img, half val)
     return float3(lerp(luminance, float3(img.rgb), val));
 }
 
-float noise(float2 tc) {
-    return frac(sin(dot(tc, float2(12.0, 78.0) + (timers.x))) * 43758.0) * 0.25f;
-}
+float noise(float2 tc) { return frac(sin(dot(tc, float2(12.0, 78.0) + (timers.x))) * 43758.0) * 0.25f; }
 
 //	contrast function
 float Contrast(float Input, float ContrastPower)
