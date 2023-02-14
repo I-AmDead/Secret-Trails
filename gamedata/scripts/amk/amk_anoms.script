@@ -1161,7 +1161,6 @@ end
 
 
 function check_coordinates( pos )
-  if not check_anti_spawn_zones( pos ) then return false end
   if restrictions:check_position( pos, 6 ) then return false end
   if not check_hideouts( pos ) then return false end
   return true
@@ -1375,7 +1374,7 @@ end
 function restricted_areas:check_position( pos, radius )
   for _, t in ipairs( self.positions ) do
     local p, r = unpack( t )
-    if pos:distance_to( p ) <= r + radius then return true end
+    if pos and pos:distance_to( p ) <= r + radius then return true end
   end
   return false
 end

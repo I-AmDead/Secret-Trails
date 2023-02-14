@@ -15,58 +15,63 @@ local body_states = { -- флажки состояния тела актора
     [8192] = "l_lookout", -- Выглянуть влево
     [16384] = "r_lookout" -- Выглянуть вправо
 }
+local body_states_inv = {}
+for k, v in pairs(body_states) do
+	body_states_inv[v] = k
+end
 
 local crouch = false
 local crouch_long = false
 
-local function actor_body_state()
-    if (get_actor_obj():get_body_state() < 2048 and get_actor_obj():get_body_state() >= 512) or get_actor_obj():get_body_state() == 4609 then
+
+local function update_actor_body_state()
+    if bit_and(get_actor_obj():get_body_state(), body_states_inv["landing"]) ~= 0 or bit_and(get_actor_obj():get_body_state(), body_states_inv["landing2"]) ~= 0 then
         level.add_cam_effector( "camera_effects\\actor_move\\landingold.anm", 8559, false, "" )
         ogse_signals.get_mgr():reschedule( 1000 )
     end
 end
 
-function on_key_press(key)
-    if level.main_input_receiver() and not db.actor:alive() then return end
-    if key == bind_to_dik(key_bindings.kR_LOOKOUT) then
+local function on_key_press(key, bind)
+	if level.main_input_receiver() or not db.actor:alive() then
+		return
+	end
+
+    if bind == key_bindings.kR_LOOKOUT then
         level.add_cam_effector("camera_effects\\actor_move\\lean_right.anm", 1903, false, "")
-    end
-    if key == bind_to_dik(key_bindings.kL_LOOKOUT) then
+    elseif bind == key_bindings.kL_LOOKOUT then
         level.add_cam_effector("camera_effects\\actor_move\\lean_left.anm", 1902, false, "")
-    end
-    if key == bind_to_dik(key_bindings.kCROUCH) then
+    elseif bind == key_bindings.kJUMP then
+        level.add_cam_effector("camera_effects\\actor_move\\jump.anm", 1906, false, "")
+    elseif bind == key_bindings.kCROUCH then
         level.add_cam_effector("camera_effects\\actor_move\\crouch_down.anm", 1900, false, "")
         crouch = true
-    end
-    if crouch and key == bind_to_dik(key_bindings.kACCEL) then
+    elseif crouch and bind == key_bindings.kACCEL then
         level.add_cam_effector("camera_effects\\actor_move\\crouch_down.anm", 1900, false, "")
         crouch_long = true
     end
 end
 
-function on_key_release(key)
-    if level.main_input_receiver() and not db.actor:alive() then return end
-    if key == bind_to_dik(key_bindings.kR_LOOKOUT) then
+local function on_key_release(key, bind)
+	if level.main_input_receiver() or not db.actor:alive() then
+		return
+	end
+
+    if bind == key_bindings.kR_LOOKOUT then
         level.add_cam_effector("camera_effects\\actor_move\\lean_right.anm", 1903, false, "")
-    end
-    if key == bind_to_dik(key_bindings.kL_LOOKOUT) then
+    elseif bind == key_bindings.kL_LOOKOUT then
         level.add_cam_effector("camera_effects\\actor_move\\lean_left.anm", 1902, false, "")
-    end
-    if key == bind_to_dik(key_bindings.kCROUCH) then
+    elseif crouch and bind == key_bindings.kCROUCH then
         level.add_cam_effector("camera_effects\\actor_move\\crouch_up.anm", 1900, false, "")
         crouch = false
-    end
-    if crouch and key == bind_to_dik(key_bindings.kACCEL) then
+        crouch_long = false
+    elseif crouch_long and bind == key_bindings.kACCEL then
         level.add_cam_effector("camera_effects\\actor_move\\crouch_up.anm", 1900, false, "")
         crouch_long = false
-    end
-    if crouch_long and key == bind_to_dik(key_bindings.kCROUCH) then
-        level.add_cam_effector("camera_effects\\actor_move\\crouch_up.anm", 1900, false, "")
     end
 end
 
 function attach( sm )
-    sm:subscribe({ signal = "on_update", fun = actor_body_state })
-    sm:subscribe({ signal = "on_key_down", fun = this.on_key_press })
-    sm:subscribe({ signal = "on_key_up", fun = this.on_key_release })
+    sm:subscribe({ signal = "on_update", fun = update_actor_body_state })
+    sm:subscribe({ signal = "on_key_down", fun = on_key_press })
+    sm:subscribe({ signal = "on_key_up", fun = on_key_release })
 end
