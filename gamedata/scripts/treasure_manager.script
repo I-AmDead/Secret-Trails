@@ -3,33 +3,6 @@
 
 local rare_list = {
   novice_section = {
-    "0kp2",
-    "specter",
-    "okp",
-    "aimpoint",
-    "kobra",
-    "ps01",
-    "ac10632",
-    "c-more",
-    "eot",
-    "pso2",
-    "1p59",
-    "1pn93",
-    "mepro",
-    "aim_low",
-    "pka",
-    "ekp8_18",
-    "pn23",
-    "gauss_sight",
-    "1p78gs",
-    "susat",
-    "rakurs",
-    "marchf",
-    "usp1",
-    "rmr",
-    "point_aimpro",
-    "susatov",
-	
     "wpn_walther_p99",
     "wpn_toz34",
     "ammo_vog-25p",
@@ -42,37 +15,38 @@ local rare_list = {
     "af_cristall",
     "af_gold_fish",
     "af_night_star",
-    "af_electra_moonlight"
+    "af_electra_moonlight",
+    {
+    "0kp2",
+    "specter",
+    "okp",
+    "aimpoint",
+    "kobra",
+    "ps01",
+    "ac10632",
+    "c-more",
+    "eot",
+    "pso2",
+    "1p59",
+    "1pn93",
+    "mepro",
+    "aim_low",
+    "pka",
+    "ekp8_18",
+    "pn23",
+    "gauss_sight",
+    "1p78gs",
+    "susat",
+    "rakurs",
+    "marchf",
+    "usp1",
+    "rmr",
+    "point_aimpro",
+    "susatov",
+   },
   },
 
   experienced_section = {
-    "deltapoint",
-    "specter",
-    "ekp8_02",
-    "aimpoint",
-    "1p29",
-    "ps01",
-    "pso1m21",
-    "c-more",
-    "acog",
-    "pso2",
-    "d0cter",
-    "1pn93",
-    "leupold",
-    "aim_low",
-    "1p76",
-    "ekp8_18",
-    "e0t2",
-    "gauss_sight",
-    "1pn93n2_1gs",
-    "susat",
-    "compm4s",
-    "marchf",
-    "kemper",
-    "rmr",
-    "kp_sr2",
-    "susatov",
-
     "ammo_7.62x54_7h1",
     "ammo_7.62x54_ap",
     "ammo_7.62x54_7h14",
@@ -85,10 +59,49 @@ local rare_list = {
     "af_dummy_pellicle",
     "af_dummy_battery",
     "af_dummy_dummy",
-    "af_dummy_spring"
+    "af_dummy_spring",
+    {
+    "deltapoint",
+    "specter",
+    "ekp8_02",
+    "aimpoint",
+    "1p29",
+    "ps01",
+    "pso1m21",
+    "c-more",
+    "acog",
+    "pso2",
+    "d0cter",
+    "1pn93",
+    "leupold",
+    "aim_low",
+    "1p76",
+    "ekp8_18",
+    "e0t2",
+    "gauss_sight",
+    "1pn93n2_1gs",
+    "susat",
+    "compm4s",
+    "marchf",
+    "kemper",
+    "rmr",
+    "kp_sr2",
+    "susatov",
+   },
   },
 
   veteran_section = {
+    "af_spirit_1",        
+    "af_cry_1",
+    "af_babka_1",
+    "af_pudd_1",
+    "af_dik_1",
+    "af_kol_1",
+    "af_armor_1",
+    "wpn_l85_m1",
+    "wpn_m4a1_siber",
+    {
+    "wpn_groza",
     "deltapoint",
     "0kp2",
     "ekp8_02",
@@ -115,19 +128,23 @@ local rare_list = {
     "usp1",
     "kp_sr2",
     "point_aimpro",
-    "af_spirit_1",        
-    "af_cry_1",
-    "af_babka_1",
-    "af_pudd_1",
-    "af_dik_1",
-    "af_kol_1",
-    "af_armor_1",
-    "wpn_l85_m1",
-    "wpn_m4a1_siber",
-    "wpn_groza"
+   },
   },
 
   master_section = {
+    "wpn_vintorez_isg",
+    "wpn_svu",
+    "wpn_svds",
+    "af_simbion",        
+    "wpn_l85_m3",
+    "af_spirit_2",         
+    "af_cry_2",
+    "af_babka_2",
+    "af_pudd_2",
+    "af_dik_2",
+    "af_kol_2",
+    "af_armor_2",
+    {
     "deltapoint",
     "0kp2",
     "specter",
@@ -167,19 +184,7 @@ local rare_list = {
     "kp_sr2",
     "point_aimpro",
     "susatov",
-
-    "wpn_vintorez_isg",
-    "wpn_svu",
-    "wpn_svds",
-    "af_simbion",        
-    "wpn_l85_m3",
-    "af_spirit_2",         
-    "af_cry_2",
-    "af_babka_2",
-    "af_pudd_2",
-    "af_dik_2",
-    "af_kol_2",
-    "af_armor_2"  
+   },
   }
 }
 
@@ -335,7 +340,7 @@ end
 -- Юзание инициатора (возможность выдать тайник)
 function CTreasure:use( npc )
   if npc:character_community() == "zombied" then return end
-	
+  log1("treasure use start")
   if npc and db.actor then
     give_money( npc )
   end
@@ -372,12 +377,13 @@ function CTreasure:use( npc )
     end
   end
   if tr_sum == 0 then return end
+  table.sort( avail, function( a, b ) return a.k < b.k end )
 
   local tr_w = dsh.get_next_random( "treasure_manager.rnd.use", tr_sum )
-  for k, v in pairs( avail ) do
+  for _, v in ipairs( avail ) do
     tr_w = tr_w - v.prob
     if tr_w <= 0 then
-      --' Выдать тайник
+      -- Выдать тайник
       self:give_treasure( v.k )
       break
     end
@@ -427,12 +433,11 @@ function CTreasure:give_treasure( k, silent, skip_onetime_items )
 
     --' Сгенерить вещи
     for kk, vv in pairs( v.items ) do
-      local prop = amk_utils.get_item_props( vv.section )
       vv.id = {}
       for i = 1, vv.prob do
-        local sect = vv.section
+      log3("treasure number: [%s]", vv.section)
         local sobj = alife():create(
-          sect,
+          vv.section,
           obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id,
           obj.id
         )
@@ -444,14 +449,6 @@ function CTreasure:give_treasure( k, silent, skip_onetime_items )
     self.treasure_info[ k ].active = true
     self.treasure_info[ k ].done   = true
     -- Отправим тайник в оффлайн
---[=[
-    if level.object_by_id( obj.id ) then
-      alife():set_switch_online(  obj.id, false )
-      alife():set_switch_offline( obj.id, true  )
-      -- ставим в очередь на вывод в онлайн
-      amk.convert_npc_timer( obj.id, 1 ):start()
-    end
---]=]
     return v.items
   else
     log2( "TREASURE %s, target doesnt exist", k )
@@ -578,6 +575,7 @@ function CTreasure:give_item_list( skip_onetime_items )
   -- сколько наименований предметов будет в тайнике
   local rnd_k = "treasure_manager.rnd.item_list." .. rank
   local i = dsh.get_next_random( rnd_k, 1, 4 )
+  log3("treasure number: [%s]", i)
 
   for j = 1, i do
     local cnt     = 0
@@ -586,14 +584,25 @@ function CTreasure:give_item_list( skip_onetime_items )
     -- установка кол-ва предметов в зависимости от секции
     local s   = tostring( spawn.section )
     local cls = get_string( s, "class" )
-    if ammo_section( s ) then -- патроны
-      cnt = dsh.get_next_random( rnd_k, 1, 3 )
-    elseif cls == "E_STLK" or cls == "W_SILENC" or cls == "W_GLAUNC" or string.find( cls, "WP_" ) then -- броники, оружие, аддоны
+    if get_string( s, "treasure_manager.item_is", "" ) == "onetime" then
       cnt = 1
-    elseif string.find(s, "^af_") or string.find(s, "^mutant_") then  -- артефакты, трофеи
-      cnt = dsh.get_next_random( rnd_k, 1, 2 )
-    else 
-      cnt = dsh.get_next_random( rnd_k, 1, 5 )
+      remember_given_onetime( s )
+    elseif get_string( s, "treasure_manager.item_is", "" ) == "unique" then
+      cnt = 1
+    elseif ammo_section( s ) then -- патроны
+      cnt = dsh.get_next_random( rnd_k, 1, 3 )
+    elseif
+      cls == "E_STLK" or cls == "W_SILENC" or cls == "W_GLAUNC"
+      or string.find( cls, "WP_" )
+    then                        -- броники, оружие
+      cnt = 1
+      log3("treasure wpn and addon number: [%s]", cnt)
+    elseif string.find(s, "^af_") then  -- артефакты, трофеи
+      cnt = dsh.get_next_random( rank, 1, 2 )
+      log3("treasure art number: [%s]", cnt)
+    else
+      cnt = dsh.get_next_random( rank, 1, 4 )
+      log3("treasure other number: [%s]", cnt)
     end
     -- сохраняем инфу о текущем предмете
     spawn.prob = cnt
