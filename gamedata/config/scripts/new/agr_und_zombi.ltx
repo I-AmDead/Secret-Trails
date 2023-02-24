@@ -2,9 +2,10 @@
 none = true
 
 [logic]
-active = {+agr_und_zombi_hit} camper@agr_und_zombi, camper@agr_und_zombi
+active = {+agr_und_zombi_hit} camper@agr_und_zombi, walker@zombi
 on_hit = hit@zombi
 on_death = death@zombi
+combat_ignore = combat_ignore
 
 [walker@zombi]
 path_walk = agr_und_zombi_walk
@@ -23,7 +24,6 @@ on_timer = 1 | walker2@zombi %=make_invulnerable%
 [camper@agr_und_zombi]
 path_walk = agr_und_zombi_walk
 path_look = agr_und_zombi_look
-combat_ignore_cond = always
 meet = no_meet  
 on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
 on_actor_dist_le_nvis = 5 | remark@agr_und_zombi
@@ -31,9 +31,9 @@ on_actor_dist_le_nvis = 5 | remark@agr_und_zombi
 [remark@agr_und_zombi]
 anim = guard
 target = actor
+combat_ignore_cond = always
 snd = agr_und_zombi
 on_signal = sound_end| remark@agr_und_zombi1
-combat_ignore_cond = always
 meet = no_meet
 on_info = {+agr_und_zombi_hit_new} walker@agr_und_zombi
 
@@ -73,6 +73,7 @@ use_wpn = true
 meet_talk_enabled = true
 meet_state = 1|ward@agr_und_zombi|2|ward
 meet_state_wpn = 1|ward@agr_und_zombi|2|ward
+combat_ignore_cond = always
 
 [meet@agr_und_zombi2]
 use = true
@@ -80,13 +81,19 @@ use_wpn = true
 meet_talk_enabled = true
 meet_state = 1|ward@agr_und_zombi2|2|ward
 meet_state_wpn = 1|ward@agr_und_zombi2|2|ward
+combat_ignore_cond = always
 
 
 [hit@zombi]
-on_info = {=hit_by_actor_kolt} %+agr_und_zombi_hit%
+on_info = {=hit_by_actor +agr_und_zombi_hit} %+agr_und_zombi_hit_new%
+on_info2 = {=hit_by_actor_kolt} %+agr_und_zombi_hit%
 
 [death@zombi]
 on_info = %+agr_und_zombi_enemy%
+
+[combat_ignore]
+combat_ignore_cond = always
+combat_ignore_keep_when_attacked = true
 
 
 
