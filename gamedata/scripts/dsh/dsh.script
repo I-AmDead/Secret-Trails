@@ -913,6 +913,14 @@ function preload_free_logic_gulag()
   end
 end
 
+function level_timeout(ms, func)
+    local t = level.add_call(
+            function() return true end,
+            function() func() end
+        )
+    t:set_pause(ms)
+    return t
+end
 
 function start_on_spawn_another_level( s, lname )
   if lname then
