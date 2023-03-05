@@ -22,12 +22,19 @@ local function apply_item( sect )
 	if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
 		arc_radiation.use_antirad()
 	end
+    apply_boost(sect)
+end
 
+function apply_boost(sect)
+    local boost_time = get_float(sect, "boost_time", 0)
+    if boost_time then
+        laucer_item_special_effect.on_item_use(sect)
+    end
 end
 
 local function respawn_item(obj)
 	obj:zero_effects()
-	alife():create( obj:section(), db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )	   
+	alife():create( obj:section(), db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )	
 end
 
 local snd_in_use = false

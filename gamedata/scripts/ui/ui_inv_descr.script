@@ -20,7 +20,6 @@ local is_grenade={
 -- Пушки, для которых дополнительное описание не пишем
 local forbidden_wpns = {
 	['wpn_binoc']                   = true,		-- бинокль
-	['wpn_gravigun']                = true,	-- гравицапа
 }
 
 local forbidden_ammo = {
@@ -288,7 +287,7 @@ function CUIDescriptionWnd:ShowEatableParams()
 		end
 	end
 
-		local tm = get_float(self.section, 'effect_time')
+		local tm = get_float(self.section, 'boost_time')
 		if tm then
 			self:ShowProps( { {"time", string.format("%s: %d %s", game.translate_string("descr_time"), tm, game.translate_string("descr_seconds"))} } )
 		end
@@ -414,6 +413,48 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	st.icon_mag_size:SetTextX(19)
 	st.icon_mag_size:SetTextY(2)
 
+	local n1 = get_float(self.section, 'scope_status')
+
+	-- Прицелы
+	if n1 == 2 then
+		local s1 = sys_ini:line_exist(self.section, 'scope_names') and sys_ini:r_string(self.section, 'scope_names') or sys_ini:r_string(self.section, 'scope_name')
+		st = self.xml:InitStatic("props", self.scroll_v)
+		st:SetText(sys_ini:line_exist(self.section, 'scope_names') and game.translate_string("descr_scopes") or game.translate_string("descr_scope"))
+		st:SetTextColor(255, 0, 255, 110)
+		self.addH = self.addH + stH
+		for a in string.gfind(s1, "[%w_%-%.]+") do
+			self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+		end
+	end
+
+	local n2 = get_float(self.section, 'silencer_status')
+
+	-- Глушитель
+	if n2 == 2 then
+	local s2 = sys_ini:r_string(self.section, 'silencer_name')	
+	st = self.xml:InitStatic("props", self.scroll_v)
+	st:SetText(game.translate_string("descr_silencer"))
+	st:SetTextColor(255, 0, 255, 110)
+	self.addH = self.addH + stH
+    for a in string.gfind(s2, "[%w_%-%.]+") do
+        self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+    end
+end
+
+	local n3 = get_float(self.section, 'grenade_launcher_status')
+
+	-- Подствольник
+	if n3 == 2 then
+	local s3 = sys_ini:r_string(self.section, 'grenade_launcher_name')	
+	st = self.xml:InitStatic("props", self.scroll_v)
+	st:SetText(game.translate_string("descr_pg"))
+	st:SetTextColor(255, 0, 255, 110)
+	self.addH = self.addH + stH
+    for a in string.gfind(s3, "[%w_%-%.]+") do
+        self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+    end
+end
+
 end
 
 -- Показываем параметры артефактов
@@ -473,8 +514,6 @@ function CUIDescriptionWnd:ShowOutfitParams()
 			table.insert( params, {t.prop, txt} )
 		end
 	end
-
-
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
 		val = get_float(self.section, "additional_inventory_weight2")

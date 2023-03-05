@@ -1,0 +1,188 @@
+function attach(sm)
+    sm:subscribe({ signal = "on_first_update", fun = this.on_first_update })
+    sm:subscribe({ signal = "on_save", fun = this.on_save })
+end
+
+local our_hits = {
+    [hit.fire_wound] = "boost_fire_wound_protection",
+    [hit.radiation] = "boost_radiation_protection",
+    [hit.telepatic] = "boost_telepat_protection",
+}
+
+local normal_time_factor = get_float("alife", "time_factor")
+
+local boosters =
+{
+    ["boost_health_restore"]        = false,
+    ["boost_power_restore"]         = false,
+    ["boost_radiation_restore"]     = false,
+    ["boost_bleeding_restore"]      = false,
+    ["boost_psy_health_restore"]    = false,
+    ["boost_fire_wound_protection"] = false,
+    ["boost_max_weight"]            = false,
+    ["boost_radiation_protection"]  = false,
+    ["boost_telepat_protection"]    = false,
+    ["boost_time_factor"]           = false,
+}
+
+function on_first_update()
+    cmd("time_factor", 1)
+
+    for k, v in pairs(boosters) do
+        local tname = "special_effect." .. k
+        local ttl   = ogse.load_var_safe(tname .. ".ttl") or 0
+        local value = ogse.load_var_safe(tname) or 0
+
+        if ttl > 0 then
+            local boost = {}
+            boost.ttl = ttl
+            boost.value = value
+            boosters[k] = boost
+            set_boost(k, value, true)
+        end
+    end
+
+    local sm = ogse_signals.get_mgr()
+    sm:subscribe({
+        signal = "update_artefacts_on_belt",
+        fun = this.process_boost,
+        ["script_name"] = "laucer_item_special_effect.process_boost"
+    })
+    sm:subscribe({
+        signal = "on_actor_before_hit",
+        fun = this.on_before_hit,
+        ["script_name"] = "laucer_item_special_effect.on_before_hit"
+    })
+end
+
+function on_save()
+    for k, v in pairs(boosters) do
+        if v and v.ttl > 0 then
+            ogse.save_var("special_effect." .. k .. ".ttl", v.ttl)
+            ogse.save_var("special_effect." .. k, v.value)
+        else
+            ogse.delete_var("special_effect." .. k)
+            ogse.delete_var("special_effect." .. k .. ".ttl")
+        end
+    end
+end
+
+function on_item_use(section)
+    local boost_time = get_float(section, "boost_time", 0)
+    if boost_time == 0 then -- not a booster
+        return
+    end
+
+    for k, v in pairs(boosters) do
+        local boostValue = get_float(section, k, 0)
+        if boostValue ~= 0 then
+            local boost
+            if v then
+                boost = v
+                --log1("disable k=" .. k .. " by override")
+                set_boost(k, -v.value, false) -- disable prev boost affect
+            else
+                boost = {}
+                boosters[k] = boost
+            end
+            boost.ttl = boost_time
+            boost.value = boostValue
+            --log1("apply k=" .. k .. " for ttl=" .. boost_time .. " with value=" .. boostValue)
+            set_boost(k, boostValue, true)
+        end
+    end
+end
+
+function on_before_hit(hit_data)
+    local amount   = hit_data.power
+    local hit_type = hit_data.hit_type
+
+    if not (amount > 0 and db.actor:alive()) then
+        return
+    end
+
+    local protection_type = our_hits[hit_type]
+    if not protection_type then
+        return
+    end
+    local protection = boosters[protection_type]
+    if not protection then
+        return
+    end
+
+    --log1("decrease hit with " .. protection_type .. " by value=" .. protection.value)
+    hit_data.power = amount - protection.value
+    if hit_data.power < 0 then hit_data.power = 0 end
+end
+
+function process_boost(dt)
+    for k, v in pairs(boosters) do
+        if v then
+            v.ttl = v.ttl - (dt / normal_time_factor)
+            if v.ttl <= 0 then
+                --log1("disable k=" .. k .. " by ttl")
+                set_boost(k, -v.value, false) -- disable prev boost affect
+                boosters[k] = false
+            end
+        end
+    end
+end
+
+local booster_hud =
+{
+    ["boost_health_restore"]       = "indicator_booster_health",
+    ["boost_power_restore"]        = "indicator_booster_power",
+    ["boost_radiation_restore"]    = "indicator_booster_rad_cleanup",
+    ["boost_psy_health_restore"]   = "indicator_booster_psy_cleanup",
+    ["boost_bleeding_restore"]     = "indicator_booster_wound",
+    ["boost_max_weight"]           = "indicator_booster_weight",
+    ["boost_radiation_protection"] = "indicator_booster_rad",
+    ["boost_telepat_protection"]   = "indicator_booster_psy",
+}
+
+function set_boost(type, value, state)
+    if type == "boost_health_restore" then
+        get_actor_obj().condition.health_restore_v = get_actor_obj().condition.health_restore_v + value
+    elseif type == "boost_power_restore" then
+        get_actor_obj().condition.power_v = get_actor_obj().condition.power_v + value
+    elseif type == "boost_radiation_restore" then
+        get_actor_obj().condition.radiation_v = get_actor_obj().condition.radiation_v + value
+    elseif type == "boost_bleeding_restore" then
+        get_actor_obj().condition.wound_incarnation_v = get_actor_obj().condition.wound_incarnation_v + value
+    elseif type == "boost_psy_health_restore" then
+        get_actor_obj().condition.psy_health_v = get_actor_obj().condition.psy_health_v + value
+    elseif type == "boost_max_weight" then
+        local curr_max = db.actor:get_actor_max_weight()
+        db.actor:set_actor_max_weight(curr_max + value)
+        local cur_max_walk = db.actor:get_actor_max_walk_weight()
+        db.actor:set_actor_max_walk_weight(cur_max_walk + value)
+    end
+
+    if type == "boost_time_factor" then
+        if state then
+            cmd("time_factor", value)
+        else
+            cmd("time_factor", 1)
+        end
+    elseif type == "boost_fire_wound_protection" then
+        if state then
+            level.add_pp_effector("intoxication_2.ppe", 1021, true)
+            level.add_pp_effector("escape.ppe", 1022, true)
+        else
+            level.remove_pp_effector(1021)
+            level.remove_pp_effector(1022)
+        end
+    else
+        update_inventory_window()
+        local hud = get_hud()
+        if state then
+            hud:AddCustomStatic(booster_hud[type], true)
+        else
+            hud:RemoveCustomStatic(booster_hud[type])
+        end
+    end
+end
+
+function boosting(k)
+    return boosters[k] and boosters[k].ttl > 0
+end
