@@ -888,7 +888,7 @@ function add_to_binder(npc, char_ini, scheme, section, st)
 	local manager = npc:motivation_action_manager()
 
 	-- Evaluators
-	if excluded_communities[npc:character_community()] or excluded_npcs[npc:name()] or excluded_npcs[npc:profile_name()] or not npc:alive() then
+	if ogse.is_quest_npc(npc) or excluded_communities[npc:character_community()] or excluded_npcs[npc:name()] or excluded_npcs[npc:profile_name()] or not npc:alive() then
 		manager:add_evaluator (evid_corpse_exist,property_evaluator_const(false))
 		local action = manager:action(stalker_ids.action_gather_items)
 		action:add_precondition(world_property(xr_evaluators_id.state_mgr+2,true))
