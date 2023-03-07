@@ -30,9 +30,7 @@ function generic_object_binder:reinit()
 
   -- У торговца нет поддержки перемещения
   if self.object:clsid() ~= clsid.script_trader then
-    self.object:set_patrol_extrapolate_callback(
-      generic_object_binder.extrapolate_callback, self
-    )
+    self.object:set_patrol_extrapolate_callback(generic_object_binder.extrapolate_callback, self)
   end
 
   db.storage[ self.object:id() ] = {}
@@ -69,6 +67,16 @@ function generic_object_binder:net_spawn(sobject)
 end
 
 prevent_gulag_registration_for_id=0
+
+function generic_object_binder:unsubscribe_updaters()
+  if not self.updaters then return end
+
+  for k, s in pairs( self.updaters ) do
+    self.am:unsubscribe( s )
+	self.updaters[k] = nil
+  end
+  self.updaters = nil
+end
 
 function generic_object_binder:update(delta)
     local obj = self.object
@@ -123,7 +131,7 @@ function generic_object_binder:update(delta)
 end
 
 function generic_object_binder:extrapolate_callback()
-    if not self.object:get_script() then return false end
+	if not self.object:get_script() then return false end
 	--
 	local cur_pt = self.object:get_current_point_index() 
 	local patr = self.object:patrol()
@@ -143,7 +151,7 @@ function generic_object_binder:waypoint_callback(obj, action_type, index)
 end
 
 function generic_object_binder:death_callback(victim, who)
-
+	self:unsubscribe_updaters()
 	if not self.object then self.object = victim end
 
 	self.object:set_tip_text_default()
@@ -283,6 +291,9 @@ function generic_object_binder:net_destroy()
 
   db.del_obj( self.object )
   db.storage[ self.object:id() ] = nil
+  self.am:call( "on_monster_net_destroy", self.object, self )
+  self:unsubscribe_updaters()
+  self.am:cleanup_signal_subs( "on_monster_update." .. self.object:id() )
 
   object_binder.net_destroy(self)
 
@@ -315,6 +326,10 @@ end
 function generic_object_binder:save( packet )
 	if string.find(self.object:name(), "crow_") then return false end
 
+	if self.object:clsid() ~= clsid.script_trader then
+		xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
+	end
+
 	ASSERT( not db.saving_obj, "found saving_obj = %s", tostring( db.saving_obj and db.saving_obj:name() or nil ) )
 	db.saving_obj = self.object
 	object_binder.save(self, packet)
@@ -334,6 +349,11 @@ function generic_object_binder:load( reader )
 		abort("[bind_monster.script]SAVE FILE IS CORRUPT "..self.object:name())
 	end
 	xr_logic.load_obj(self.object, reader)
+
+	if self.object:clsid() ~= clsid.script_trader then
+		local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
+		self.object:invulnerable(is_invulnerable)
+	end
 end
 
 function play_particle(obj,params)

@@ -263,21 +263,8 @@ function actor_binder:info_callback( npc, info_id )
   end
 end
 
-
-local is_on_trade = false
-
 function actor_binder:on_trade( item, sell_bye, money )
-  if sell_bye then
-    game_stats.money_trade_update( money )
-  else       
-    if item:is_weapon_magazined() then
-      item:unload_magazine()
-    end
-    game_stats.money_trade_update( -money )
-  end
-
-  self.am:call( "on_trade", item, sell_bye, money )
-  is_on_trade = true
+  self.am:call("on_trade", item, sell_bye, money)
 end
 
 

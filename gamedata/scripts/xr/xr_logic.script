@@ -342,6 +342,13 @@ function activate_by_section(npc, ini, section, loading)
     db.storage[npc_id].activation_game_time = game.get_game_time()
   end
 
+	if not section or not ini:section_exist(section) then
+		if not ini:section_exist(section) and section ~= "nil" then --такое может быть если сбросить нпс логику, к примеру вылечить врага.
+			log3("~~[%s] section [%s] not found in logic of object [%s]", script_name(), section, npc:name())
+		end
+		section = "nil"
+	end
+
   if section == "nil" then
     db.storage[npc_id].overrides = nil
     reset_generic_schemes_on_scheme_switch(npc, "nil", "nil")
@@ -386,9 +393,6 @@ function activate_by_section(npc, ini, section, loading)
     else
       issue_event(npc, db.storage[npc_id][scheme], "reset_scheme", loading, npc)
     end
-  else
-    abort("object '%s': activate_by_section: section '%s' does not exist",
-      npc:name(), section)
   end
 end
 
@@ -910,7 +914,6 @@ function cfg_get_switch_conditions(ini, section, npc)
   local function add_conditions(func, cond)
     local i = 1
     local c = func(ini, section, cond, npc)
-
     while c ~= nil do
       c.field = cond
       n = add_condition(l, n, c, npc)
@@ -959,18 +962,14 @@ function cfg_get_npc_and_zone(ini, section, field, npc)
   if t then
     local sim = alife()
     if sim then
-      local se_obj = sim:story_object(tonumber(t.v1))
+      local se_obj = sim:story_object(tonumber(t.v1) or abort(""))
       if se_obj then
         t.npc_id = se_obj.id
       else
         t.npc_id = -1
-        abort("object '%s': section '%s': field '%s': there is no object with story_id '%s'",
-                    npc:name(), section, field, t.v1)
       end
     else
       t.npc_id = -1
-      printf("WARNING: object '%s': section '%s': field '%s': can't use story_id without simulation!",
-              npc:name(), section, field)
     end
   end
 
