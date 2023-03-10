@@ -3,6 +3,7 @@
 
 local rare_list = {
   novice_section = {
+    "grenade_rgd5",
     "wpn_walther_p99",
     "wpn_toz34",
     "ammo_vog-25p",
@@ -10,12 +11,24 @@ local rare_list = {
     "ammo_9x39_pab9",
     "ammo_9x39_ap",
     "ammo_9x39_sp5",
+    "ammo_12x70_buck",     
+    "ammo_9x19_fmj",
+    "ammo_9x19_pbp",
+    "ammo_9x18_pmm",
+    "ammo_9x18_fmj",
     "af_ameba_mica",
     "af_soul",
     "af_cristall",
     "af_gold_fish",
     "af_night_star",
     "af_electra_moonlight",
+    "af_drops",
+    "af_ameba_slime",
+    "af_rusty_thorn",
+    "af_electra_sparkler",
+    "af_blood",
+    "af_vyvert",
+    "af_medusa",
     {
     "wpn_sil_9mm",
     "wpn_sil_45",
@@ -57,12 +70,19 @@ local rare_list = {
   },
 
   experienced_section = {
+    "grenade_rgd5",
+    "grenade_f1",  
+    "wpn_ak74_n",
+    "wpn_abakan_n",
     "ammo_7.62x54_7h1",
     "ammo_7.62x54_ap",
     "ammo_7.62x54_7h14",
-    "ammo_og-7b",
-    "wpn_ak74_n",
-    "wpn_abakan_n",
+    "ammo_og-7b",   
+    "ammo_9x19_pbp",
+    "ammo_9x18_pmm",
+    "ammo_5.45x39_fmj",
+    "ammo_11.43x23_fmj",
+    "ammo_5.56x45_ss190",
     "af_fuzz_kolobok",
     "af_rusty_sea-urchin",
     "af_dummy_glassbeads",
@@ -70,6 +90,13 @@ local rare_list = {
     "af_dummy_battery",
     "af_dummy_dummy",
     "af_dummy_spring",
+    "af_cristall_flower",
+    "af_gravi",
+    "af_mincer_meat",
+    "af_electra_flash",
+    "af_rusty_kristall",
+    "af_ameba_slug",
+    "af_fireball",
     {
     "wpn_sil_pbs1",
     "wpn_sil_pbs4",
@@ -110,6 +137,17 @@ local rare_list = {
   },
 
   veteran_section = {
+    "grenade_f1",
+    "wpn_l85_m1",
+    "wpn_m4a1_siber",
+    "wpn_groza",
+    "ammo_vog-25",     
+    "ammo_m209",
+    "ammo_5.45x39_ap",
+    "ammo_11.43x23_hydro",
+    "ammo_9x39_pab9",
+    "ammo_5.56x45_ss190",
+    "ammo_12x76_zhekan",
     "af_spirit_1",        
     "af_cry_1",
     "af_babka_1",
@@ -117,9 +155,13 @@ local rare_list = {
     "af_dik_1",
     "af_kol_1",
     "af_armor_1",
-    "wpn_l85_m1",
-    "wpn_m4a1_siber",
-    "wpn_groza",
+    "af_night_star",
+    "af_gold_fish",
+    "af_soul",
+    "af_electra_moonlight",
+    "af_rusty_sea-urchin",
+    "af_ameba_mica",
+    "af_cristall",
     {
     "wpn_sil_nato",
     "wpn_sil_salvo",
@@ -163,9 +205,17 @@ local rare_list = {
   master_section = {
     "wpn_vintorez_isg",
     "wpn_svu",
-    "wpn_svds",
-    "af_simbion",        
+    "wpn_svds",    
     "wpn_l85_m3",
+    "ammo_m209",
+    "ammo_vog-25p",     
+    "ammo_9x39_ap",
+    "ammo_12x76_dart",
+    "ammo_7.62x54_7h14",
+    "ammo_9x39_sp5",
+    "ammo_5.56x45_ap",
+    "ammo_7.62x54_7h1",
+    "af_simbion",
     "af_spirit_2",         
     "af_cry_2",
     "af_babka_2",
@@ -173,6 +223,12 @@ local rare_list = {
     "af_dik_2",
     "af_kol_2",
     "af_armor_2",
+    "af_dummy_glassbeads",
+    "af_dummy_pellicle",
+    "af_dummy_battery",
+    "af_dummy_dummy",
+    "af_dummy_spring",
+    "af_fuzz_kolobok",
     {
     "wpn_sil_black_box",
     "wpn_sil_daniel",
@@ -273,7 +329,12 @@ end
 
 local given_onetime = {}
 function on_spawn()
-  local given = ogse.load_var_safe( "treasure_manager.given_onetime" )
+  if not ogse.var_exists("treasure_onetime_fix") then
+    local given_fix = {}
+    ogse.save_var("treasure_manager.given_onetime", given_fix)
+    ogse.save_var("treasure_onetime_fix", true)
+  end
+  local given = ogse.load_var_safe( "treasure_manager.given_onetime")
   if given then
     for _, sect in ipairs( given ) do
       given_onetime[ sect ] = true
@@ -382,7 +443,7 @@ end
 -- ёзание инициатора (возможность выдать тайник)
 function CTreasure:use( npc )
   if npc:character_community() == "zombied" then return end
-  log1("treasure use start")
+
   if npc and db.actor then
     give_money( npc )
   end
@@ -392,7 +453,7 @@ function CTreasure:use( npc )
   else
     n_rank = 0
   end
-  local rarets = 50
+  local rarets = 80
 	
   if dsh.get_next_random( "treasure_manager.rnd.use", 100 ) < rarets then return end
 	
@@ -418,6 +479,7 @@ function CTreasure:use( npc )
       end
     end
   end
+
   if tr_sum == 0 then return end
   table.sort( avail, function( a, b ) return a.k < b.k end )
 
@@ -477,7 +539,6 @@ function CTreasure:give_treasure( k, silent, skip_onetime_items )
     for kk, vv in pairs( v.items ) do
       vv.id = {}
       for i = 1, vv.prob do
-      log3("treasure number: [%s]", vv.section)
         local sobj = alife():create(
           vv.section,
           obj.position, obj.m_level_vertex_id, obj.m_game_vertex_id,
@@ -617,7 +678,6 @@ function CTreasure:give_item_list( skip_onetime_items )
   -- сколько наименований предметов будет в тайнике
   local rnd_k = "treasure_manager.rnd.item_list." .. rank
   local i = dsh.get_next_random( rnd_k, 1, 4 )
-  log3("treasure number: [%s]", i)
 
   for j = 1, i do
     local cnt     = 0
@@ -638,13 +698,10 @@ function CTreasure:give_item_list( skip_onetime_items )
       or string.find( cls, "WP_" )
     then                        -- броники, оружие
       cnt = 1
-      log3("treasure wpn and addon number: [%s]", cnt)
     elseif string.find(s, "^af_") then  -- артефакты, трофеи
       cnt = dsh.get_next_random( rank, 1, 2 )
-      log3("treasure art number: [%s]", cnt)
     else
       cnt = dsh.get_next_random( rank, 1, 4 )
-      log3("treasure other number: [%s]", cnt)
     end
     -- сохран€ем инфу о текущем предмете
     spawn.prob = cnt
