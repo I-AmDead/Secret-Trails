@@ -147,7 +147,7 @@ local function start_pda_distortion( min, max )
 
 	pda_distortion_timer = dsh.wait_condition(
 		function()
-			set_pda_params(min / 1000, min / 1000, 1, 0)
+			set_pda_params(vector():set(min / 1000, min / 1000, 0))
 			min = min + 1
 			return min == max
 		end,
@@ -197,7 +197,7 @@ function surge_db_init()
       },
     },
 		on_reinit = {
-			call1 = set_pda_params(0, 0.1, 1, 0)
+			call1 = function() set_pda_params(vector():set(0,0.1,0)) end
 		},
 	}
   surge_db.surge_process_stage_02 = {
@@ -221,7 +221,7 @@ function surge_db_init()
 
     on_reinit = {
       call1 = function() 
-      set_pda_params(0.2, 0.2, 1, 0)
+      set_pda_params(vector():set(0.15,0.15,0))
       end,
       if_surface = {Flag2 = 1},
     },
@@ -245,7 +245,7 @@ function surge_db_init()
     },
     on_reinit = {
       call1 = function() 
-      set_pda_params(0.2, 0.2, 1, 0)
+      set_pda_params(vector():set(0.2,0.2,0))
       end,
       if_surface = { Flag2 = 1 },
     },
@@ -276,7 +276,7 @@ function surge_db_init()
     on_reinit = {
       call1 = function()
         dsh_anomaly_detector.pre_blow_off()
-        set_pda_params(0.25, 0.25, 1, 0)
+        set_pda_params(vector():set(0.25,0.25,0.0))
         amk_anoms.pre_blow_off() -- Поднимаем флаги выброса для локаций
       end,
       if_surface     = { Flag2 = 1 },
@@ -303,7 +303,7 @@ function surge_db_init()
       },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1 },
       if_underground = { Flag2 = 0 },
     },
@@ -329,7 +329,7 @@ function surge_db_init()
       cam_eff1 = { "camera_effects\\earthquake.anm", 1974, true },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1 },
       if_underground = { Flag2 = 0 },
     },
@@ -369,7 +369,7 @@ function surge_db_init()
       },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1, Dead2 = 1 },
       if_underground = { Flag2 = 0, Dead2 = 0 },
     },
@@ -416,7 +416,7 @@ function surge_db_init()
       },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1, Dead2 = 1 },
       if_underground = { Flag2 = 0, Dead2 = 0 },
     },
@@ -461,7 +461,7 @@ function surge_db_init()
       },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1, Dead2 = 1 },
       if_underground = { Flag2 = 0, Dead2 = 0 },
     },
@@ -495,7 +495,7 @@ function surge_db_init()
       },
     },
     on_reinit = {
-      call1 = set_pda_params(0.5, 0.2, 0, 0),
+      call1 = set_pda_params(vector():set(0.5, 0.2, 0)),
       if_surface     = { Flag2 = 1, Dead2 = 1 },
       if_underground = { Flag2 = 0, Dead2 = 0 },
     },
@@ -556,7 +556,7 @@ function on_surge_end()
   amk.del_variable( "blowout" )
   db.actor:disable_info_portion("blowout")
   db.actor:disable_info_portion("pre_blowout2")
-  set_pda_params(0.1, 0.0, 1, 0)
+  set_pda_params(vector():set(0.1,0.0,1))
   ogse_signals.get_mgr():call( "on_after_blowout" )
 end
 
@@ -598,7 +598,7 @@ function surge_final()
   -- тут вставляем перезапуск выброса в погодном менеджере
   dsh_cop_weather.get_weather_mgr():prepare_new_surge()
   dsh.timeout( 10000, function() autosave_blowout() end )
-  set_pda_params(0, 0, 1, 0)
+  set_pda_params(vector():set(0,0,0))
 end
 
 -- Парсер единичного действия
@@ -738,7 +738,7 @@ end
 -- выполняем реинициализацию фазы выброса при перезагрузке
 function on_first_update()
   -- выполняем восстановление временных эффектов, флагов и т.п.
-  set_pda_params(0, 0, 1, 0)
+  set_pda_params(vector():set(0,0,0))
   if db.actor:has_info( "pre_blowout" ) then
     -- ищем текущую стадию выброса
     for stage_infoportion, stage_actions in pairs( surge_db ) do
@@ -875,7 +875,8 @@ function get_blowout_count()
 end
 
 function pda_off()
-	set_pda_params(0.5, 0.2, 0, 0)
+	set_pda_params(vector():set(0.5,0.2,0.0))
+	if db.actor:dont_has_info("no_net_signal") then return end
 	if db.actor:active_slot() == 7 and not (anim and ogsr_actor_animation.allow_animation()) then
 		local pda_anm_time = game.play_hud_motion(2, "pda_hud", "anm_empty", true, 1)
 		snd_pda_dead:play(db.actor,0,sound_object.s2d)

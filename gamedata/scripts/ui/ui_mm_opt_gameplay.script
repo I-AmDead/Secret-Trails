@@ -1,30 +1,4 @@
--- Меню расширенных настроек геймплея для OGSR Engine
--- Глобальная переделка I am dead подглядел у xrSimpodin
-
-local gameplay_opt_params = {
-    { "difficulty",      "list" },
-    { "autopause",       "check" },
-    { "tips",            "check" },
-    { "dist",            "check" },
-    { "crosshair",       "check" },
-    { "dyn_crosshair",   "check" },
-    { "build_crosshair", "check" },
-    { "show_weapon",     "check" },
-    { "ambient",         "check" },
-    { "3d_pda",          "check" },
-    { "fakescope",       "check" },
-    { "aim_toggle",      "check" },
-    { "switch_slot",     "check" },
-    { "font_scale_x",    "track" },
-    { "font_scale_y",    "track" },
-}
-
-local control_init_funs = {
-    ["track"] = "InitTrackBar",
-    ["list"]  = "InitComboBox",
-    ["check"] = "InitCheck",
-}
-
+--РњРµРЅСЋ РЅР°СЃС‚СЂРѕРµРє РіРµР№РјРїР»РµСЏ. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЃРєСЂРёРїС‚РѕРј ui_mm_opt_main.script
 
 class "opt_gameplay" (CUIWindow)
 function opt_gameplay:__init() super()
@@ -33,26 +7,31 @@ end
 function opt_gameplay:__finalize()
 end
 
-function opt_gameplay:InitControls(x, y, xml, handler)
-	self:Init(x, y, 738, 416)
+function opt_gameplay:InitControls(x, y, xml)
+	self:Init(0, 0, 1024, 768)
 	self:SetAutoDelete(true)
 
-    xml:InitFrame("frame", self)
-    self.scroll_v = xml:InitScrollView("tab_gameplay:scroll_v", self)
+	xml:InitFrame("frame", self)
 
-    -- перебираем с конца, поскольку в настройках scroll view в xml стоит параметр flip_vert="1",
-    -- который инвертирует порядок элементов, что в свою очередь сделано для того, чтобы визуально первые элементы
-    -- добавлялись последними, что в свою очередь позволяет раскрывающимся спискам перекрывать элементы, расположенные ниже по списку
-    for i = #gameplay_opt_params, 1, -1 do
-        local opt, ctr_type, cond = unpack(gameplay_opt_params[i])
+	xml:InitStatic("tab_gameplay:cap_difficulty", self)
 
-        local enabled = not cond or cond()
-        if not enabled then goto CONTINUE end
+	xml:InitCheck("tab_gameplay:check_autopause", self)
+	xml:InitCheck("tab_gameplay:check_tips", self)
+	xml:InitCheck("tab_gameplay:check_crosshair", self)
+	xml:InitCheck("tab_gameplay:check_dyn_crosshair", self)
+	xml:InitCheck("tab_gameplay:check_show_weapon", self)
+	xml:InitCheck("tab_gameplay:check_dist", self)
+	xml:InitCheck("tab_gameplay:check_ambient", self)
+	xml:InitCheck("tab_gameplay:check_3d_pda", self)
+	xml:InitCheck("tab_gameplay:check_build_crosshair", self)
+	xml:InitCheck("tab_gameplay:check_fakescope", self)
+	xml:InitCheck("tab_gameplay:check_aim_toggle", self)
+	xml:InitCheck("tab_gameplay:check_switch_slot", self)
 
-        local _st = xml:InitStatic("tab_gameplay:templ_item", self.scroll_v)
-        local _st2 = xml:InitStatic("tab_gameplay:cap_" .. opt, _st)
-        local ctl = xml[control_init_funs[ctr_type]](xml, "tab_gameplay:" .. ctr_type .. "_" .. opt, _st)
+	xml:InitStatic("tab_gameplay:cap_font_scale_x", self)
+	xml:InitTrackBar("tab_gameplay:track_font_scale_x", self)
+	xml:InitStatic("tab_gameplay:cap_font_scale_y", self)
+	xml:InitTrackBar("tab_gameplay:track_font_scale_y", self)
 
-        ::CONTINUE::
-    end
+	xml:InitComboBox("tab_gameplay:list_difficulty", self)
 end

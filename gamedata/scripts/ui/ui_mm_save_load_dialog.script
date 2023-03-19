@@ -1,7 +1,7 @@
--- Меню сохранения/загрузки сейвов для OGSR.
+-- РњРµРЅСЋ СЃРѕС…СЂР°РЅРµРЅРёСЏ/Р·Р°РіСЂСѓР·РєРё СЃРµР№РІРѕРІ РґР»СЏ OGSR.
 -- KRodin (c) 2018
--- Собрал из двух скриптов в один, выкинул весь мусор, убрал тормоза.
--- Так же исправлен вылет из-за большого кол-ва сейвов в папке.
+-- РЎРѕР±СЂР°Р» РёР· РґРІСѓС… СЃРєСЂРёРїС‚РѕРІ РІ РѕРґРёРЅ, РІС‹РєРёРЅСѓР» РІРµСЃСЊ РјСѓСЃРѕСЂ, СѓР±СЂР°Р» С‚РѕСЂРјРѕР·Р°.
+-- РўР°Рє Р¶Рµ РёСЃРїСЂР°РІР»РµРЅ РІС‹Р»РµС‚ РёР·-Р·Р° Р±РѕР»СЊС€РѕРіРѕ РєРѕР»-РІР° СЃРµР№РІРѕРІ РІ РїР°РїРєРµ.
 
 function fill_savedgames_list( wnd )
   if wnd.is_save_dlg then
@@ -63,19 +63,20 @@ function save_load_item:__init() super()
 	self.fn = CUIStatic()
 	self.fn:SetAutoDelete(true)
 	self:AttachChild(self.fn)
-	self.fn:SetWndRect(0,0,230,22)
+	self.fn:SetWndRect(0,0,230,25)
 	self.fn:SetText("filename")
 	self.fn:SetFont(GetFontLetterica18Russian())
-	self.fn:SetTextColor(255, 255, 255, 255)
+	self.fn:SetTextColor(255, 216, 186, 140)
+	self.fn:SetTextAlign(CGameFont.alLeft)
 
 	self.fage = CUIStatic()
 	self.fage:SetAutoDelete(true)
 	self:AttachChild(self.fage)
-	self.fage:SetWndRect(250,0,150,22)
+	self.fage:SetWndRect(817,0,150,25)
 	self.fage:SetText("fileage")
 	self.fage:SetFont(GetFontLetterica16Russian())
-	self.fage:SetTextColor(255, 255, 255, 255)
-	
+	self.fage:SetTextColor(255, 216, 186, 140)
+	self.fage:SetTextAlign(CGameFont.alRight)
 end
 function save_load_item:__finalize()
 	--log1("--save_load_item:__finalize() called!")
@@ -92,21 +93,21 @@ function save_load_dialog:__init( is_save_dlg ) super()
 	end
 	self:InitCallBacks()
 	self.msgbox_id = 0
-	self.mm = _G.main_menu.get_main_menu()
 end
 
 function save_load_dialog:__finalize()
 	--log1("--save_load_dialog:__finalize() called!")
 end
 
-
 function save_load_dialog:InitControlsSave()
+	local screen = device()
+	screen_aspect_ratio = screen.width / screen.height
+	
 	self:Init(0,0,1024,768)
 
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_mm_save_dlg.xml")
-
-
+	self.bg_st = xml:InitStatic("back_movie", self)	
 	xml:InitStatic("background", self)	
 	self.form = xml:InitStatic("form", self)
 
@@ -135,11 +136,14 @@ function save_load_dialog:InitControlsSave()
 end
 
 function save_load_dialog:InitControlsLoad()
+	local screen = device()
+	screen_aspect_ratio = screen.width / screen.height
+
 	self:Init(0,0,1024,768)
 
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_mm_load_dlg.xml")
-
+	self.bg_st = xml:InitStatic("back_movie", self)	
 	xml:InitStatic("background", self)
 
 	self.form = xml:InitStatic("form", self)
@@ -263,7 +267,6 @@ function save_load_dialog:OnMsgYes()
 	end
 
 	self.msgbox_id = 0
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:delete_selected_file()
@@ -280,7 +283,6 @@ function save_load_dialog:delete_selected_file()
 	delete_save_game(filename)
 	list:RemoveItem(index)
 	self:OnListItemClicked()
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 
@@ -304,7 +306,6 @@ function save_load_dialog:load_game_internal()
 	end
 
 	self:OnButton_back_clicked()
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:SaveFile(fileName)
@@ -318,7 +319,6 @@ function save_load_dialog:OnButton_ok_clicked()
 	else
 		self:OnButton_load_clicked()
 	end
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:OnButton_save_clicked()
@@ -345,7 +345,6 @@ function save_load_dialog:OnButton_save_clicked()
 	self:SaveFile(self.new_save)
 
 	self:OnButton_back_clicked()
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function save_load_dialog:OnButton_load_clicked()
@@ -373,14 +372,12 @@ function save_load_dialog:OnButton_load_clicked()
 		self.message_box:Init("message_box_invalid_saved_game")
 		self:GetHolder():start_stop_menu(self.message_box, true)
 	end
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 
 function save_load_dialog:OnButton_back_clicked()
 	self:GetHolder():start_stop_menu(self, true)
 	self.owner:Show(true)
-	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function save_load_dialog:OnButton_del_clicked()
@@ -395,7 +392,6 @@ function save_load_dialog:OnButton_del_clicked()
 	self.msgbox_id = self.is_save_dlg and 2 or 1
 	self.message_box:Init("message_box_delete_file_name")
 	self:GetHolder():start_stop_menu(self.message_box, true)
-	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function save_load_dialog:OnKeyboard( dik, keyboard_action )

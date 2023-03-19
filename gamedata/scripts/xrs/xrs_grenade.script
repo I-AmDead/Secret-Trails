@@ -103,7 +103,7 @@ end
 class "evaluator_crazy_grenadier" (property_evaluator)
 function evaluator_crazy_grenadier:__init(npc, name, storage, planner) super (nil, name)
 	self.a = storage
-	self.a.next_check_time = time_global()+math.random(4000,12000)
+	self.a.next_check_time = time_global()+math.random(20000,40000)
 	self.a.throwing = false
 	self.a.rank = rx_utils.rank_unit*npc:character_rank()
 	self.disp = 2+math.max(1-self.a.rank,0)*dispersion_base
@@ -610,7 +610,7 @@ function action_fire_in_the_hole:execute()
 	end
 
 	if tg > self.end_time then
-		local obj = create_grenade(grenade:section().."_fake",self.a.grenades_from_pos,npc:level_vertex_id(),npc:game_vertex_id())
+		local obj = create_grenade(grenade:section(), self.a.grenades_from_pos, npc:level_vertex_id(), npc:game_vertex_id())
 		level.client_spawn_manager():add(obj.id,-1,throw,self.a)
 		self.a.grenade_data = {section = grenade:section(),initiator = npc:id(),target = self.a.result_pos}
 		local sgren = alife():object(grenade:id())
@@ -687,7 +687,7 @@ function action_fire_in_the_hole:death_callback()
 	if grenade and grenade:parent() then
 		local npc = self.object
 		if not self.finalized and self.armed_time and self.armed_time < time_global() then
-			local obj = create_grenade(grenade:section().."_fake",npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
+			local obj = create_grenade(grenade:section(), npc:bone_position("bip01_r_hand"), npc:level_vertex_id(), npc:game_vertex_id())
 			local d = {section = grenade:section(),target = grenade:position()}
 			level.client_spawn_manager():add(obj.id,-1,throw,{grenade_data = d})
 			table.insert(rx_ai.ids_to_remove,self.act_grenade)
@@ -954,7 +954,7 @@ function action_psyh:execute()
 	end
 
 	if self.armed_time and time_global()-self.armed_time > grenade_params[self.a.psyh_grenade].explode_time then
-		local obj = create_grenade(self.a.psyh_grenade.."_fake", npc:bone_position("bip01_r_hand"), npc:level_vertex_id(), npc:game_vertex_id())
+		local obj = create_grenade(self.a.psyh_grenade, npc:bone_position("bip01_r_hand"), npc:level_vertex_id(), npc:game_vertex_id())
 		level.client_spawn_manager():add(obj.id,-1,explode,{section = self.a.psyh_grenade,initiator = npc:id()})
 		local sgren = alife():object(grenade:id())
 		if sgren then
@@ -981,7 +981,7 @@ function action_psyh:finalize()
 			local enemy = npc:best_enemy()
 			local pos = enemy and npc:memory_position(enemy)
 			if pos and pos:distance_to(npc:position()) < 20 then
-				local obj = create_grenade(grenade:section().."_fake",npc:bone_position("bip01_head"),npc:level_vertex_id(),npc:game_vertex_id())
+				local obj = create_grenade(grenade:section(),npc:bone_position("bip01_head"),npc:level_vertex_id(),npc:game_vertex_id())
 				local d = {section = grenade:section(),target = pos,time = self.armed_time-time_global()}
 				level.client_spawn_manager():add(obj.id,-1,throw,{grenade_data = d,throwing_type = 0,target_point = pos,mark = rx_utils.is_actor(enemy) and 'red' or nil})
 				npc:play_cycle("norm_all_6_attack_2",true)
@@ -1021,7 +1021,7 @@ function action_psyh:death_callback()
 	if grenade and grenade:parent() then
 		if self.armed_time then
 			local npc = self.object
-			local obj = create_grenade(grenade:section().."_fake",npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
+			local obj = create_grenade(grenade:section(),npc:bone_position("bip01_r_hand"),npc:level_vertex_id(),npc:game_vertex_id())
 			local d = {section = grenade:section(),target = grenade:position(),time = self.armed_time-time_global()}
 			level.client_spawn_manager():add(obj.id,-1,throw,{grenade_data = d,throwing_type = 4,target_point = npc:position():add(npc:direction():mul(4))})
 			table.insert(rx_ai.ids_to_remove,self.act_grenade)
@@ -1215,7 +1215,6 @@ function spawn_grenade(eva)
 	local npc = eva.object
 	if time_global() > eva.spawn_update_time then
 		eva.spawn_update_time=time_global()+spawn_period+math.random(spawn_period*0.1)-spawn_period*level.get_game_difficulty()*spawn_period_gd_factor
---		printf("spawn_grnade[%s] set time %s , chance %s",npc:character_name(),(eva.spawn_update_time-time_global())/1000,spawn_chance_base+eva.a.rank*spawn_chance_rank_factor)
 		if spawn_chance_base+eva.a.rank*spawn_chance_rank_factor < math.random() and npc:best_weapon() then
 			return
 		end
@@ -1253,10 +1252,12 @@ function throw(st,id,obj)
 	if ps == nil then
 		printf("try to throw[%s] no ps! parent %s typ %s",obj:name(),obj:parent(),typ)
 	end
-	if ui_grenade_marks then
-		ui_grenade_marks.add_new_marker(id,st.mark)
-	else
-		level.map_add_object_spot(id,"grenade_location","grenade")
+	if not st.grenade_data.test then
+		if ui_grenade_marks then
+			ui_grenade_marks.add_new_marker(id,st.mark)
+		else
+			level.map_add_object_spot(id,"grenade_location","grenade")
+		end
 	end
 	if st.throwing_type then
 		local dir = vector():sub(st.target_point,obj:position())
@@ -1273,7 +1274,7 @@ function throw(st,id,obj)
 			dir:mul(250)
 		end
 		dir:mul(obj:mass())
---		printf("throw[%s] force %s dist %s mass %s",obj:name(),dir:magnitude(),st.target_point:distance_to(obj:position()),obj:mass())
+
 		local bone = ps:get_element_by_bone_name("wpn_body")
 		if bone then
 			bone:apply_force(dir.x,dir.y,dir.z)
@@ -1304,7 +1305,7 @@ function spoof_grenade(t)
 	if t[1] < time_global() then
 		local sobj,gobj = alife():object(t[2]),get_grenade(t[2])
 		if sobj and gobj and not gobj:parent() and sobj:name() == t[3] then
-			local obj = create_grenade(gobj:section().."_fake",gobj:position(),gobj:level_vertex_id(),gobj:game_vertex_id())
+			local obj = create_grenade(gobj:section(), gobj:position(), gobj:level_vertex_id(), gobj:game_vertex_id())
 			local d = {section = gobj:section(),target = sobj.position,time = t[4],initiator = t[5]}
 			level.client_spawn_manager():add(obj.id,-1,throw,{grenade_data = d})
 			table.insert(rx_ai.ids_to_remove,sobj.id)
@@ -1373,6 +1374,6 @@ function update()
 		end
 	end
 	if ui_grenade_marks then
-		ui_grenade_marks.update_grenade_marks()
+	    ui_grenade_marks.update_grenade_marks()
 	end
 end

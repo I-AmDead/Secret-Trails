@@ -8,7 +8,6 @@
 
 function attach(sm)
   sm:subscribe({ signal = "on_destroy",      fun = this.on_destroy      })
-  sm:subscribe({ signal = "on_hit",          fun = this.on_hit          })
   sm:subscribe({ signal = "on_load",         fun = this.on_game_load    })
   sm:subscribe({ signal = "on_scope_zoom",   fun = this.on_scope_zoom   })
   sm:subscribe({ signal = "on_sniper_mode",  fun = this.on_sniper_mode  })
@@ -502,20 +501,6 @@ function get_active_nv_device()
     return active_nv_device
   end
   return nil
-end
-
-
-function on_hit( obj, amount, local_direction, who, bone_index )
-  if amount > 0 and bone_index and bone_index > 0 and db.actor:alive() then
-    if bone_index >= 11 and bone_index < 18 then -- попадание в голову
-      local active_nv = get_active_nv_device()
-      if active_nv then
-        if math.random() < 0.9 then
-          db.actor:move_to_ruck( active_nv )
-        end
-      end
-    end
-  end
 end
 
 

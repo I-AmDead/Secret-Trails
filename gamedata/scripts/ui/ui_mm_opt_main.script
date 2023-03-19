@@ -14,8 +14,6 @@ function options_dialog:__init() super()
 	self:InitControls()
 	self:InitCallBacks()
 	self:UpdateOptValues()
-	
-	self.mm = _G.main_menu.get_main_menu()
 end
 
 function options_dialog:__finalize()
@@ -23,13 +21,16 @@ function options_dialog:__finalize()
 end
 
 function options_dialog:InitControls()
+	local screen = device()
+	screen_aspect_ratio = screen.width / screen.height
+
 	self:Init(0,0,1024,768)
 	self:Enable(true)
 
 	local xml = CScriptXmlInit()
 	xml:ParseFile("ui_mm_opt.xml")
 
-	xml:InitStatic("background", self)
+	self.bg_st = xml:InitStatic("back_movie", self)	
 	self.dialog = xml:InitStatic("main_dialog:dialog", self)
 
 	xml:InitFrame("frame_hint", self)
@@ -144,7 +145,6 @@ function options_dialog:OnBtnAccept()
 	self:HintRefresh()
 
 	cmd("cfg_save") -- сохраняем файл настроек на диск
-	self.mm:PlaySound("mod\\mainmenu_button_sound")
 end
 
 function options_dialog:OnBtnCancel()
@@ -154,7 +154,6 @@ function options_dialog:OnBtnCancel()
 	self.owner:Show(true)
 
 	self:HintRefresh()
-	self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 end
 
 function options_dialog:OnTabChange()
@@ -177,7 +176,6 @@ function options_dialog:OnTabChange()
 	elseif i == 3 then
 		self.dlg_controls:Show(true)
 	end
-	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnBtnAdvGraphic()
@@ -186,7 +184,6 @@ function options_dialog:OnBtnAdvGraphic()
 
 	self.current_view = 2
 	self:HintRefresh()
-	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnSimplyGraphic()
@@ -195,7 +192,6 @@ function options_dialog:OnSimplyGraphic()
 
 	self.current_view = 1
 	self:HintRefresh()
-	self.mm:PlaySound("mod\\mainmenu_button_change_sound")
 end
 
 function options_dialog:OnKeyboard(dik, keyboard_action)
@@ -209,11 +205,9 @@ function options_dialog:OnKeyboard(dik, keyboard_action)
 				self.dlg_video:Show(true)
 				self.current_view = 1
 			else
-				self:GetHolder():start_stop_menu(self, true)
-				self.owner:Show(true)
+				self:OnBtnCancel() --KRodin: мне кажется при нажатии esc - делать отмену настроек правильно. А то они не сбросятся.
 			end
 			self:HintRefresh()
-			self.mm:PlaySound("mod\\mainmenu_button_cancel_sound")
 		end
 		return true
 	end
