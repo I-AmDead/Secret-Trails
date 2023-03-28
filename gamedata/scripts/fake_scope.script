@@ -9,17 +9,18 @@ function attach(sm)
     sm:subscribe({ signal = "on_death",                 fun = this.actor_on_before_death })
 end
 
-local lastSens = get_con_float("mouse_sens")
+local pnv_mode_save
 
 function actor_on_weapon_zoom_out()
-    cmd("mouse_sens " .. lastSens)
+    apply_pnv()
     cmd("scope_params_4 0.0, 1.25, 4.0")
 end
 
 function actor_on_weapon_zoom_in()
-	if (get_con_string("fake_scope_enable") == "off" 
-	or get_con_string("fake_scope_enable") == "0")
-	and (db.actor and db.actor:alive()) then return end
+    pnv_mode_save = get_con_float("r__pnv_mode", 0.0)
+    if (get_con_string("fake_scope_enable") == "off" 
+    or get_con_string("fake_scope_enable") == "0")
+    and (db.actor and db.actor:alive()) then return end
 
     local wpn = db.actor:active_item()
     if not (wpn) then return end
@@ -31,30 +32,58 @@ function actor_on_weapon_zoom_in()
 end
 
 function actor_on_before_death()
-    cmd("mouse_sens " .. lastSens)
     cmd("scope_params_4 0.0, 1.25, 4.0")
+    apply_pnv()
 end
 
 local scopeBaseFactors = {}
 
 function updateScope(wpn)
+    local scope_section
     if wpn then
         local scopeName = nil
         if ogse_wpn_utils.get_scope_status(wpn) == 2 and ogse_wpn_utils.get_scope_flag(wpn) then
             local scope_section = get_string(wpn:section(), "scope_name")
             scopeName = get_string(scope_section, "scope_texture")
+            nv_enable = get_bool(scope_section, "scope_night_vision")
         elseif ogse_wpn_utils.get_scope_status(wpn) == 1 then
             scopeName = get_string(wpn:section(), "scope_texture")
+            nv_enable = get_bool(wpn:section(), "scope_night_vision")
         end
 
         if scopeName and fake_scope_radius.scope_radius[scopeName] then
-			cmd("scope_params_4 " .. fake_scope_radius.scope_radius[scopeName] .. ", 1.25" .. ", 10")
-            local cweapon = wpn:get_weapon()
-            local zf = cweapon.zoom_factor
-            local sf = get_con_float("scope_power")
-            if cweapon and zf and sf then
-                cmd("mouse_sens " .. (lastSens))
+            cmd("scope_params_4 " .. fake_scope_radius.scope_radius[scopeName] .. ", 1.25" .. ", 10")
+            local scope_section = get_string(wpn:section(), "scope_name")
+            if pnv_mode_save > 0.0 then
+                cmd("r__pnv_mode", 0)
+            end
+            if nv_enable then
+                apply_pnv(scope_section)
             end
         end
+    end
+end
+
+function apply_pnv(nv_sect)
+    if nv_sect then
+        local mode = get_float(nv_sect, "r__pnv_mode", 0)
+        local color = get_vector(nv_sect, "r__pnv_color")
+        cmd("r__pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+        cmd("r__pnv_noise", get_string(nv_sect, "r__pnv_noise"))
+        cmd("r__pnv_scanlines", get_string(nv_sect, "r__pnv_scanlines"))
+        cmd("r__pnv_mode", tostring(mode))
+    else
+        local nv_slot = db.actor:item_in_slot( 11 )
+        local mode = pnv_mode_save
+        if nv_slot then
+            local nv_sect = nv_slot:section()
+            if nv_sect then
+                local color = get_vector(nv_sect, "r__pnv_color")
+                cmd("r__pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+                cmd("r__pnv_noise", get_string(nv_sect, "r__pnv_noise"))
+                cmd("r__pnv_scanlines", get_string(nv_sect, "r__pnv_scanlines"))
+            end
+        end
+        cmd("r__pnv_mode", tostring(mode))
     end
 end

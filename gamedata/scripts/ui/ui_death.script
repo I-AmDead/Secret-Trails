@@ -1,0 +1,68 @@
+function death_screen()
+    local hud = death_screen_ui()
+    level.start_stop_menu(hud, true)
+end
+
+class "death_screen_ui" (CUIScriptWnd)
+
+function death_screen_ui:__init() super()
+    self:InitControls()
+    self:InitCallBacks()
+end
+
+function death_screen_ui:__finalize() end
+
+function death_screen_ui:InitControls()
+    self:Init(0,0,1024,768)
+
+    local xml = CScriptXmlInit()
+    xml:ParseFile("ui_death.xml") 
+
+    xml:InitStatic("background", self)
+    xml:InitStatic("cherepuha", self)
+
+    self:Register(xml:Init3tButton("caption", self),"caption")
+    self:Register(xml:Init3tButton("btn_load_last_save", self),"btn_load_last_save") 
+    self:Register(xml:Init3tButton("btn_load", self),"btn_load") 
+    self:Register(xml:Init3tButton("btn_to_mm", self),"btn_to_mm") 
+end
+
+function death_screen_ui:InitCallBacks()
+    self:AddCallback("btn_load_last_save", ui_events.BUTTON_CLICKED, self.On_loadlastsave_clicked, self) 
+    self:AddCallback("btn_load", ui_events.BUTTON_CLICKED, self.On_toloadscreen_clicked, self) 
+    self:AddCallback("btn_to_mm", ui_events.BUTTON_CLICKED, self.On_tomainmenu_clicked, self) 
+end
+
+function death_screen_ui:On_loadlastsave_clicked()
+    cmd("load_last_save")
+end
+
+function death_screen_ui:On_toloadscreen_clicked()
+	if not self.load_dlg then
+		self.load_dlg = ui_mm_save_load_dialog.save_load_dialog()
+		self.load_dlg.owner = self
+	end
+
+	ui_mm_save_load_dialog.fill_savedgames_list(self.load_dlg)
+	self:GetHolder():start_stop_menu(self.load_dlg, true)
+	self:Show(false)
+end
+
+
+function death_screen_ui:On_tomainmenu_clicked()
+	cmd("main_menu on")
+end
+
+function death_screen_ui:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik_to_bind(dik) == key_bindings.kQUICK_LOAD then
+			self:On_loadlastsave_clicked()
+		elseif dik == DIK_keys.DIK_ESCAPE then --personal_test
+			self:On_tomainmenu_clicked()
+		end
+	end
+
+	return true
+end
