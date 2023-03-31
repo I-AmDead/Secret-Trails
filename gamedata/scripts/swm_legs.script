@@ -333,8 +333,8 @@ function actor_update()
 
 	local iBite = 1
 
-	for i=1, 16 do
-		if body_flag ~= nil then
+	for i = 1, 16 do
+		if body_flag then
 			actor_flags[i] = ( bit_and(body_flag, iBite) ~= 0 )
 			iBite = iBite * 2
 		else
@@ -476,7 +476,7 @@ function legs_binder:fastcall()
 	
 	--\\ Вычитаем из флага состояния игрока ненужные нам флаги
 	for key, numb in pairs(DISABLED_FLAGS) do
-		if actor_flags[key] == true then
+		if actor_flags[key] then
 			body_flag = body_flag - numb
 		end
 	end
@@ -488,10 +488,6 @@ function legs_binder:fastcall()
 	local pos 		= device().cam_pos
 	local cdir 		= device().cam_dir
 	local distance_H2B      = device().cam_pos:distance_to(db.actor:position())
-	local AngleBetween 	= calc_Y(db.actor:direction():getH(), self.object:direction():getH())
-	local hp = db.actor:bone_position("bip01_head")
-	local pp = db.actor:bone_position("bip01_pelvis")
-	local ap = self.object:position()
 		
 	if self.posTimer < time_global() and distance_H2B < 1.7 then --> В падении модель игрока уходит вперёд камеры
 		pos.y = db.actor:position().y	
@@ -552,7 +548,7 @@ function legs_binder:fastcall()
 	pos = pos:add(dir_fwd:mul(dir_fwd_mod))
 	pos = pos:add(dir_rgt:mul(dir_rgt_mod))
 
-	self.object:set_npc_position(pos)
+	self.object:set_npc_position(pos, true)
 	
 	--\\ Проверяем что камера не улетела далеко от головы
 	local bHided = false
@@ -573,13 +569,15 @@ function legs_binder:fastcall()
 	end
 
 	---\\ Проверяем что ГГ не улетел далеко от ног
-	if self.lastActorPos ~= nil then
+	if self.lastActorPos then
 		if bHided == false and db.actor:position():distance_to_sqr(self.lastActorPos) > (RSPN_DISTANCE * RSPN_DISTANCE) then
 			self:respawn()
 			return true
 		end
 	end
 	
+	self.lastActorPos = db.actor:position()
+
 	--\\ Устанавливаем взгляд
 	if body_flag == 0 then
 		if self.lastTurnTime >= time_global() then
@@ -626,9 +624,6 @@ function legs_binder:fastcall()
 		self.object:clear_animations()
 		self.VisualUpdateCnt = 5
 	end
-	
-	self.lastActorPos = db.actor:position()
-	
 end
 
 function legs_binder:respawn()
