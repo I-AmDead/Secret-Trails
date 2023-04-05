@@ -42,7 +42,6 @@ function sleep:__init() super()
 	self:Register(xml:Init3tButton("main:caption_1", self),"caption_1")
 	self:Register(xml:Init3tButton("main:btn_cancel", self),"btn_cancel")
 	self:AddCallback("btn_cancel", 	ui_events.BUTTON_CLICKED, self.on_quit, self)
-	db.actor:hide_weapon()
 end
 function sleep:__finalize()
 	--log1("~~sleep:__finalize()")
@@ -61,10 +60,10 @@ end
 function sleep:on_hour_btn_click( h )
 	ogse_sleep_mgr.begin_sleep( h )
 	self:on_quit()
+	xr_effects.disable_ui()
 end
 
 function sleep:on_quit()
 	self:GetHolder():start_stop_menu(self,true)
 	self:ClearCallbacks()
-	db.actor:restore_weapon()
 end

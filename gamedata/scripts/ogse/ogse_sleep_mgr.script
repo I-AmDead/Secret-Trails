@@ -30,6 +30,8 @@ function begin_sleep( desired_sleep_time )
   break_sleep_request = false
   db.actor:stop_talk()
   level.disable_input()
+  level.add_cam_effector("camera_effects\\surge_02.anm", 6666, false, "")
+  level.add_pp_effector("surge_fade.ppe", 11, false)
   level.add_pp_effector( "black.ppe", 105, false )
   dsh.level_timeout( 2000, function() begin_sleep2( desired_sleep_time ) end )
 end
@@ -114,15 +116,17 @@ function begin_sleep2( desired_sleep_time )
     u3_utils.savegame, game.translate_string("save_sleep") .. " - " .. game.translate_string( level.name() )
   )
 
-  level.add_cam_effector( "camera_effects\\prison_1.anm", 25, false, "" )
-  level.add_pp_effector( "yantar_underground_psi.ppe", 2007, false )
-  level.add_pp_effector( "total_recall.ppe", 2008, false )
-  level.enable_input()
+  swm_legs.hidden_legs()
+  level.add_cam_effector("camera_effects\\surge_01.anm", 6666, false, "ogse_sleep_mgr.sleep_finish")
+  level.add_pp_effector("surge_fade.ppe", 11, false)
 
-  local snd_obj = xr_sound.get_safe_sound_object(
-    [[characters_voice\human_01\stalker\states\breath\breath_2]]
-  )
-	if snd_obj then
+  local snd_obj = xr_sound.get_safe_sound_object([[actor\watch_timer]])
+  if snd_obj then
     snd_obj:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 15.0 )
-	end
+  end
+end
+
+function sleep_finish()
+  swm_legs.show_legs()
+  xr_effects.enable_ui()
 end
