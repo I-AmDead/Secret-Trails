@@ -18,7 +18,6 @@ function disable_ui_elements(actor, npc, p)
             level.hide_indicators()
         end
     end
-    --printf("xr_effects <disable_ui_elements>")
 end
 
 function enable_ui_elements(actor, npc, p)
@@ -43,14 +42,12 @@ function disable_ui(actor, npc)
     db.actor:hide_weapon()
     level.disable_input()
     level.hide_indicators()
-    --printf("xr_effects <disable_ui>")
 end
 
 function enable_ui(actor, npc)
     level.show_indicators()
     level.enable_input()
     db.actor:restore_weapon()
-    --printf("xr_effects <enable_ui>")
 end
 
 function run_cam_effector(actor, npc, p)
@@ -258,7 +255,6 @@ function hit_npc(actor, npc, p)
   h:bone(p[2])
   h.power = p[3]
   h.impulse = p[4]
-  --printf("HIT EFFECT: (%s, %s,%d,%d) health(%s)", npc:name(), p[2], h.power, h.impulse, npc.health)
   npc:hit(h)
 end
 
@@ -339,7 +335,6 @@ function set_friends(actor, npc, p)
   for i, v in pairs(p) do
     npc1 = level_object_by_sid(v)
     if npc1 and npc1:alive() then
-      --printf("_bp: %d:set_friends(%d)", npc:id(), npc1:id())
       npc:set_relation(game_object.friend, npc1)
       npc1:set_relation(game_object.friend, npc)
     end
@@ -349,7 +344,6 @@ end
 function set_enemies(actor, npc, p)
     local npc1
   for i, v in pairs(p) do
-    --printf("_bp: set_enemies(%d)", v)
     npc1 = level_object_by_sid(v)
     if npc1 and npc1:alive() then
       npc:set_relation(game_object.enemy, npc1)
@@ -373,7 +367,6 @@ function play_snd_from_obj(actor, npc, p)
     local snd_obj = xr_sound.get_safe_sound_object(p[2])
     local obj     = level_object_by_sid(p[1])
         if obj ~= nil then
-           printf("can't find object with story id %s", tostring(p[1]))
         
 --    snd_obj:play_at_pos(obj, obj:position(), sound_object.s3d)
     snd_obj:play_no_feedback(obj, sound_object.s3d, 0, obj:position(), 1.0)
@@ -390,14 +383,12 @@ end
 -- прибавить к указанному счётчику актёра 1
 function inc_counter(actor, npc, p)
   if p[1] then
-    printf( "inc_counter '%s'", p[1] )
     xr_logic.pstor_store(actor, p[1], xr_logic.pstor_retrieve(actor, p[1], 0) + 1)
   end
 end
 
 function dec_counter(actor, npc, p)
   if p[1] then
-    printf( "dec_counter '%s'", p[1] )
     xr_logic.pstor_store(actor, p[1], xr_logic.pstor_retrieve(actor, p[1], 0) - 1)
   end
 end
@@ -405,7 +396,6 @@ end
 
 -- переключает камеру на монстра или на актёра
 function alien_control( actor, npc, p )
-  printf( "alien_control(%s)", p[1] )
   npc:set_alien_control( p[1] == "true" )
 end
 
@@ -419,7 +409,6 @@ end
 -- принудительное обновление смарта. Использовать только в КРАЙНИХ случаях!!!
 -- каждое использование согласовывать со мной. Чугай.
 function smart_terrain_force_update(actor, npc, p)
-  printf( "xr_effects.smart_terrain_force_update called" )
 
   if p[1] then
     local gulag = xr_gulag.get_gulag(p[1])
@@ -465,7 +454,6 @@ end
 
 -- забывание обиды
 function clearAbuse(npc)
-  printf("CLEAR_ABUSE")
   xr_abuse.clear_abuse(npc)
 end
 
@@ -538,7 +526,6 @@ function gar_dm_bandits_fight(actor, npc)
 end
 
 function gar_dm_bandit_demand(actor, npc)
-  printf("_bp: gar_dm_bandit_demand: actor=%s", actor:name())
 
   if has_alife_info("gar_dm_bandit1_demand") or
      has_alife_info("gar_dm_bandit2_demand") or
@@ -641,7 +628,6 @@ end
 
   
 function actor_friend(actor, npc)
-  printf("_bp: xr_effects: actor_friend(): npc='%s': time=%d", npc:name(), time_global())
   npc:set_relation(game_object.friend, actor)
 end
 
@@ -683,9 +669,7 @@ function disable_combat_ignore_handler(actor, npc)
   end
 end
 
-function log_bp1(actor, npc)
-  printf("xr_effects: log_bp1 (actor='%s', npc='%s'", actor:name(), npc:name())
-end
+function log_bp1(actor, npc) end
 
 function psi_hit_npc(actor, npc,p)
 end
@@ -721,8 +705,6 @@ function military_dolg_dead (actor, npc)
     end    
     -- проапдейтим количество мертвых долговцев
     db.storage[id].mil_dolg_killed = db.storage[id].mil_dolg_killed + 1
-
-    --printf ("!!! DOLG STALKER IS DEAD, KILLED %d STALKERS !!!", db.storage[db.actor:id ()].mil_dolg["killed"])
 
     -- взведем флажок, что мужика замочили мы (нужно для Свободы) 
     local st = db.storage[npc:id ()]
@@ -1199,7 +1181,6 @@ function mil_bomb_explode (actor, npc)
 end
 
 function mil_set_alarm (actor, npc)
-  printf("pl:millitary base is under attack!!!!!!!")
     actor:give_info_portion ("mil_freedom_under_attack")
     
     local skull = level_object_by_sid (708)
@@ -1311,7 +1292,6 @@ end
 -- Функции для DarkValley
 -------------------------------------------------------------------------------------
 function val_escort_guard_death(actor, npc)
-    --printf("xr_effects <val_escort_guard_death>: %s.", npc:name())
     local idx = string.sub(npc:name(), -1)
   local t = db.storage[npc:id()].death
 
@@ -1457,20 +1437,16 @@ end
 --------------------------------------------------------- 
 function pri_zombied_in_combat_inc(actor, npc)
     gulag_pripyat.zombied_in_combat[npc:name()] = true
-    --printf("effect <pri>: zombied in combat(%s) inc.", npc:name())
 end
 
 function pri_zombied_in_combat_dec(actor, npc)
     gulag_pripyat.zombied_in_combat[npc:name()] = nil
-    --printf("effect <pri>: zombied in combat(%s) dec.", npc:name())
 end
 
 function pri_drop_rpg_ammo(actor, npc)
     local item = npc:object("ammo_og-7b")
     if item then
         npc:drop_item(item)
-    else
-        printf("xr_effects <pri_drop_rpg_ammo>: there is no [ammo_og-7b] in [%s] inventory.", npc:name())
     end
 end
 
@@ -1589,7 +1565,6 @@ local sar2_hero_next_free_id = 1
 local sar2_heroes_sel = {}
 
 function sar2_scene_start(actor, npc)
-    printf("effects <sar2>: scene start initializing.")
     local i = 0
     
     sar2_heroes_sel = {}
@@ -1603,7 +1578,6 @@ function sar2_scene_start(actor, npc)
     end
 
     print_table(sar2_heroes_sel)
-    printf("effects <sar2>: scene end initializing.")
 end
 
 function sar_hero_dead(actor, npc)
@@ -1616,12 +1590,9 @@ function sar_hero_dead(actor, npc)
     if sar2_heroes_count == 0 and sar2_hero_next_free_id > sar2_heroes_sel_number then
         actor:give_info_portion("sar2_monolith_end")
     end
-
-    printf("effects <sar2>: hero dead.")
 end
 
 function sar2_hero_spawn(actor, npc)
-    printf("effects <sar2>: hero count - %d, max - %d.", sar2_heroes_count, sar2_heroes_max_count)
     local c = sar2_heroes_max_count - sar2_heroes_count
 
     -- check if we need to spawn stalkers
@@ -1630,10 +1601,6 @@ function sar2_hero_spawn(actor, npc)
 
         for i = sar2_hero_next_free_id, n do
             actor:give_info_portion("sar2_spawn_" .. sar2_heroes_sel[i])
-        end
-
-        if n >= sar2_hero_next_free_id then
-            printf("effects <sar2>: hero spawn.")
         end
         
         sar2_heroes_count = sar2_heroes_count + (n - sar2_hero_next_free_id + 1)
@@ -1939,11 +1906,7 @@ function rad_sos_spam(actor, npc)
   news_manager.send_tip(actor, "tips_rad_sos_suicide", nil, "stalker", nil, 1004)
 end
 
-
-function monolith_generator_hit (actor, npc)
-    printf ("ON GENERATOR HIT !!!")
-end
-
+function monolith_generator_hit (actor, npc) end
 
 function start_x18_dream(actor, npc)
   game.start_tutorial("x18_dream")

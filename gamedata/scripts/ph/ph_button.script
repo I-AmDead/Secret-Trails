@@ -44,8 +44,6 @@ function ph_button:hit_callback(obj, amount, local_direction, who, bone_index)
 		who_name = "nil"
 	end
 
-	printf("_bp: ph_button:hit_callback: obj='%s', amount=%d, who='%s'", obj:name(), amount, who_name)
-
 	if time_global() - self.last_hit_tm > 500 then
 		self.last_hit_tm = time_global()
 		if self:try_switch() then
@@ -56,9 +54,6 @@ function ph_button:hit_callback(obj, amount, local_direction, who, bone_index)
 end
 
 function ph_button:use_callback(victim, who)
-	printf("_bp: ph_button:use_callback: [%s] used by [%s]",
-		victim:name(), who:name())
-
 	if self:try_switch() then
 		return
 	end
@@ -66,10 +61,7 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
-	printf("DEBUG: add_to_binder: npc:name()='%s', scheme='%s', section='%s'", npc:name(), scheme, section)
-
  	local new_action = ph_button(npc, storage)
-
 	xr_logic.subscribe_action_for_events(npc, storage, new_action)
 end
 

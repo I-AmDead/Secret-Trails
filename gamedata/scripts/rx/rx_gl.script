@@ -23,10 +23,6 @@ local active_shells = {}
 local config_data = {}
 local enemy_memory = {}
 
-local function printf(s, ...)
---	rx_utils.printf("gl:"..s,...)
---	get_console():execute("flush")
-end
 local function delete_obj(id)
 	table.insert(rx_ai.ids_to_remove,id)
 end
@@ -286,7 +282,6 @@ function action_launch_grenade:execute()
 	action_base.execute(self)
 	local npc,wpn = self.object,self.object:active_item()
 	if not (self.stage and wpn) then
-		printf("action_launch_grenade[%s]:there is a proplem in action manager %s %s %s",npc:character_name(),self.stage,wpn~=nil,self.st.launch)
 		return
 	end
 	if not self.fake_missile then
@@ -710,11 +705,8 @@ function check_weapon(wpn)
 				for i,s in ipairs(rx_utils.parse_list(ini,sec,"grenade_class")) do
 					if ini:section_exist("gl_test_shell_"..s) and ini:section_exist("gl_fake_missile_"..s) then
 						table.insert(shells,s)
-					else
-						rx_utils.printf("not found rx_gl sections for shell [%s]!!!",s)
 					end
 				end
---				printf("read_wpn_params[%s]:vel=[%s],launcher=[%s],prtcl=[%s],sshoot=[%s],sreload=[%s],sswitch=[%s],fp=[%s]",sec,vel,launcher,particles,sound_shoot,sound_reload,sound_switch,rx_utils.vec_to_str(fire_point))
 				config_data[sec] = {shells = shells,vel = vel,prtcl = particles,sshoot = sound_shoot,sreload = sound_reload,sswitch = sound_switch,fp = fire_point}
 			end
 			if #config_data[sec].shells == 0 then
@@ -1049,7 +1041,6 @@ local function launch_shell(obj,data)
 	---------------------------
 	local canfire,dir = TransferenceAndThrowVelToThrowDir(dir,lvel,world_gravity)
 --	if canfire == 0 then
---		printf("canfire == 0 dir.y=%s",canfire,dir.y)
 --		data.time = 0
 --		return 0
 --	end
@@ -1068,7 +1059,6 @@ local function launch_shell(obj,data)
 	h.draftsman = obj
 	h.direction = dir
 	obj:hit(h)
---	printf("launch_shell[%s]:lvel %s lgv %s mass %s",obj:name(),data.lvel,lgv,obj:mass())
 	return lgv	-- возващает начальную горизонтальную скорость
 end
 
@@ -1105,7 +1095,6 @@ end
 local function correct_speed(obj,data)
 	local ps = obj:get_physics_shell()
 	if not ps then
-		printf("correct_speed[%s] not ps!!!",obj:name())
 		return false
 	end
 	local vel = vector()
@@ -1157,17 +1146,14 @@ function trace_shell(obj)
 	local id = obj:id()
 --	if not alife():object(id) then
 --		remove_shell(id)
---		printf("[%s]fail sobj!!!!!",id)
 --		return true
 --	end
 	if obj:parent() then
 		remove_shell(id)
-		printf("[%s:%s]fail parent",id,obj:name())
 		return true
 	end
 	local data = active_shells[id]
 	if not data then
-		printf("[%s:%s]not data!",id,obj:name())
 		return true
 	end
 	if not data.launched then

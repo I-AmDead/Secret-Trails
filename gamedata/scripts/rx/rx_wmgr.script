@@ -2,12 +2,6 @@
 ---- Rulix aka Bak ----
 ---- 1.7.2009,12.12.2015
 
-function printf(s,...)
---	rx_utils.printf("wm:"..s,...)
-end
-local function printw(s,...)
-	rx_utils.printf("wm:"..s.."!!!",...)
-end
 local function read_from_ini(ini,sec,val,def,typ)
 	return rx_utils.read_from_ini(ini,sec,val,def,typ)
 end
@@ -136,7 +130,6 @@ function weapon_manager:initialize()
 	self.modes = read_wm_modes(self.npc:character_community(),ranks.get_obj_rank_name(self.npc),sect)
 	if not wm_modes.enabled or self.modes.disabled == true or rx_utils.IsTrader(self.npc) then
 		self.disabled = true
---		printf(":initialize[%s]: disabled(trader)",self.name)
 		return
 	end
 	--self.pr_state = false
@@ -145,7 +138,6 @@ function weapon_manager:initialize()
 	self.do_update_weapon = true
 	self.disabled_temp = -1
 	rx_ai.subscribe_for_events(self.npc,self)
---	printf("initialize[%s] comm[%s], rank[%s], name[%s], profile[%s]",self.name,self.npc:character_community(),ranks.get_obj_rank_name(self.npc),self.npc:name(),self.npc:profile_name())
 end
 
 function weapon_manager:action_switch(new,last)
@@ -306,7 +298,6 @@ function weapon_manager:set_weapon(wpn)
 		local id = wpn:id()
 --		if not self:have_ammo(wpn) then	-- такого быть не должно
 --			self:remove_weapon(id,true)
---			printw("set_weapon[%s]:not self:have_ammo %s[%s]",self.name,wpn:id(),wpn:section())
 --			return
 --		end
 		--if not get_box() then	-- ждать пока появится ящик
@@ -323,7 +314,6 @@ function weapon_manager:set_weapon(wpn)
 		else
 			return
 		end
---		printf("set_weapon[%s]:set %s[%s]",self.name,wpn:id(),wpn:section())
 		--do_process = true
 	else
 		self.weapon_id = nil
@@ -353,7 +343,6 @@ function weapon_manager:update_ammo(wpn,cur_ammo)
 	local wpn_sec = wpn:section()
 	local ammos = self.ammos[wpn_sec]
 	if not ammos or ammos._c then	-- если мы не знаем такого оружия, либо у нас только один тип патронов, или их вообще нет
---		printf("update_ammo[%s]:one or less ammo types",self.name)
 --		self.spy:finish("update_ammo")
 		return
 	end
@@ -404,7 +393,6 @@ function weapon_manager:update_ammo(wpn,cur_ammo)
 	end
 	-----------Этап 5: Задание типа боеприпаса
 	local ctype = weapon_params[wpn_sec].ams[res.sec]-1
-	printf("update_ammo[%s]:set ammo type %s(%s)",self.name,ctype,res.sec)
 	wpn:set_next_ammo_type(ctype)
 --	self.spy:finish("update_ammo")
 --	global_spy:finish("update_ammo")
@@ -502,7 +490,6 @@ function weapon_manager:update_weapon(bedist)
 					local dd = wm_modes.types.disd[w.typ]	-- or weapon_params[w.sec].disd
 					local dv = wm_modes.types.disv[w.typ]	-- or weapon_params[w.sec].disv
 					if not dd then
-						printf(" cant find 'dist' (%s) for [%s]",w.typ,w.sec)
 						tpres = 0
 					else
 						local i,pd,cd = 0
@@ -669,7 +656,6 @@ function weapon_manager:update_weapon_list(skip_ammo)
 	--	if obj then
 	--		weapon_iterator(true,obj)
 	--	else
-	--		printw("update_weapon_list[%s]:prstor: no obj %s",self.name,id)
 	--		self.wpns_prstor[id] = nil
 	--	end
 	--end
@@ -758,7 +744,6 @@ function weapon_manager:update_weapon_list(skip_ammo)
 				wbst[#wbst+1] = w
 			end
 		end
---		printf("update_weapon_list[%s]:slots:[%s] [%s]",self.npc:character_name(),tostring(wbst[1] and wbst[1].sec),tostring(wbst[2] and wbst[2].sec))
 		cnt = #wbst
 		__weapons = wbst
 	elseif cnt > 2 then
@@ -800,14 +785,12 @@ function weapon_manager:update_weapon_list(skip_ammo)
 		end
 		mw = self.modes.max_weapons
 		if mw ~= 0 and cnt > mw then								-- выносим лишнее оружие по общему числу
---			printf("update_weapon_list[%s]:cut all [%s], remove %s",self.npc:character_name(),cnt,cnt-mw)
 			for i = mw+1,cnt do
 				table.remove(__weapons,mw+1)				-- удаляем всё лишнее
 			end
 			cnt = mw
 		end
 	end
---	printf("update_weapon_list[%s]:cnt:[%s]",self.name,cnt)
 	if cnt ~= 0 and #self.weapons ~= 0 and __weapons[1].prm > self.weapons[1].prm+1 then
 		self.do_update_weapon = true								-- если найдено оружие лучше прежнего - нужно обновить
 	end
@@ -936,15 +919,12 @@ function weapon_manager:get_weapon_prior(wpn,addonf)
 		local kf = wm_modes.koeffs[modes.koeffs]
 		if params.bls then		-- для гранатомётов нам не важен разброс, и дальность не ограничена
 			prm = (params.dmg*kf.dmg) + (params.rpm*kf.rpm) + (50*kf.dst) + (50*kf.dsp)
---			printf("get_weapon_prior[%s][%s](blaster):dmg = %s, rpm = %s, dst = %s, dsp = %s, result = %s",sec,ammo_sec,(params.dmg*kf.dmg),(params.rpm*kf.rpm),(50*kf.dst),(50*kf.dsp),prm)
 		else
 			prm = (params.dmg*aparams.dmg)*kf.dmg + (params.rpm*kf.rpm) + (params.dst*aparams.dst*kf.dst) + ((100/(params.dsp*aparams.dsp))*kf.dsp)
---			printf("get_weapon_prior[%s][%s]:dmg = %s, rpm = %s, dst = %s, dsp = %s, result = %s",sec,ammo_sec,(params.dmg*aparams.dmg)*kf.dmg,(params.rpm*kf.rpm),(params.dst*aparams.dst*kf.dst),((100/(params.dsp*aparams.dsp))*kf.dsp),prm)
 		end
 	elseif modes.priority_mode == 3 then
 		prm = (wm_modes.priors[modes.priors][sec] or 0) + (wm_modes.priors[modes.priors][ammo_sec] or 0)
 	end
---	printf("get_weapon_prior[%s][%s]:result = %s",sec,ammo_sec,prm)
 	local af = rx_utils.get_addon_flag(wpn,true)+(addonf and addonf-rx_utils.get_addon_flag(wpn) or 0)
 	if modes.scope ~= 0 and rx_utils.addon_attached(wpn,"sc",af) then
 		pr = pr + prm*modes.scope/100
@@ -965,7 +945,6 @@ function weapon_manager:get_weapon_prior(wpn,addonf)
 --	if upgrades > 0 then
 --		pr = pr + prm*upgrades*3/100		-- каждый апгрейд добавляет 3% приоритета
 --	end
---	printf("get_weapon_prior[%s][%s]: result = %s (%s+%s) cond %s",self.name,sec,prm+pr+id/500000+wpn:condition()*prm/5,prm,pr,wpn:condition())
 	prm = prm+pr+id/500000+wpn:condition()*prm/5
 	if not addonf then
 		self.priors_mem[id] = prm
@@ -984,7 +963,6 @@ function weapon_manager:get_ammo_prior(sec)
 	elseif modes.priority_mode == 3 then
 		prm = wm_modes.priors[modes.priors][sec] or 1
 	end
---	printf("get_ammo_prior[%s]:result = %s",sec,prm)
 	return prm
 end
 
@@ -1028,7 +1006,6 @@ function weapon_manager:on_item_take(item)
 		self.do_update_list = true							-- иначе обновляем список оружия
 		self.do_update_ammo = true							-- и патрон
 		self.priors_mem = {}
---		printf("on_item_take[%s]:ammo %s",self.name,item:name())
 	--elseif cls == clsid.wpn_knife_s then
 	--	self.wpns_prstor[item:id()] = nil
 	end
@@ -1065,7 +1042,6 @@ function weapon_manager:remove_weapon(id,full,update)
 		end
 	end
 	if id == self.weapon_id then				-- если это активное оружие
---		printf("remove_weapon[%s]: dropt current weapon",self.npc:character_name())
 		self.weapon_id = nil					-- нужно срочно обновлять
 		if #weapons ~= 0 then
 			if update then
@@ -1107,20 +1083,16 @@ function clear_wm(npc)
 end
 
 function return_all()
---	printf("return_all:start")
 	local dt = time_global()+500
 	for k,v in pairs(wms) do
 		local st = rx_ai.get_storage(k)
 		if st and st.wm then
---			printf("return %s",k)
 			--st.wm:return_items()
 			st.wm:disable(dt)
 		else
-			printf("clear %s",k)
 			wms[k] = nil
 		end
 	end
---	printf("return_all:end")
 end
 
 function global_update()
@@ -1130,7 +1102,6 @@ function global_update()
 	if time_global() > update_time then
 		for k,v in pairs(wms) do
 			if not db.storage[k] then
-				printw("wms %s",k)
 				wms[k] = nil
 			end
 		end
@@ -1157,8 +1128,6 @@ function npc_update(npc,st)	-- на первом апдейте создание менеджера, обновление 
 			if se_npc and se_npc.online then
 				st.wm = weapon_manager(npc)
 				wms[npc:id()] = true
-			else
-				printf("%s update, npc offline!!! se_obj(%s) dbst(%s)",npc,se_npc,db.storage[npc:id()])
 			end
 		end
 	end
@@ -1173,14 +1142,12 @@ function manage_box()
 	local sim = alife()
 	local box = boxid and sim:object(boxid)
 	if not box then
---		printf("manage_box:find")
 		boxid = nil
 		local ggraph = game_graph()
 		local clid = ggraph:vertex(db.actor:game_vertex_id()):level_id()
 		for id=1,65534 do
 			local obj = sim:object(id)
 			if obj and obj:section_name() == "rx_wmgr_box" and obj.position.y == -300 and ggraph:vertex(obj.m_game_vertex_id):level_id() == clid then
---				printf("manage_box: found %s",id)
 				box = obj
 				boxid = id
 				clear_box()
@@ -1189,14 +1156,12 @@ function manage_box()
 		end
 	end
 	if not box then
---		printf("manage_box:create")
 		create_box()
 		return
 	end
 	--if not get_box() then
 	--	box:can_switch_offline(false)
 	--	rx_utils.switch_online(boxid)
---		printf("manage_box:box[%s] switch online",box.id)
 	--	return
 	--end
 	return true
@@ -1208,7 +1173,6 @@ function create_box()
 		local obj = alife():create("rx_wmgr_box",pos,db.actor:level_vertex_id(),db.actor:game_vertex_id())
 		if obj then
 			boxid = obj.id
-			printf("box[%s] created on level '%s'",obj.id,level.name())
 		end
 	end
 end
@@ -1222,7 +1186,6 @@ function clear_box()
 		for i=1,65534 do
 			local sobj = sim:object(i)
 			if sobj and sobj.parent_id == boxid then
-				printf("clear_box: remove %s",sobj:name())
 				table.insert(rx_ai.ids_to_remove,i)	--sim:release(sobj,true)
 			end
 		end
@@ -1278,7 +1241,6 @@ local function read_custom_sect(sect,mt)
 		ct = read_mode_section(sect)
 		modes[sect] = ct
 		read_priors_section(ct,sect)
---		rx_utils.print_table(ct,sect)
 	end
 	-- скопировать
 	local res = {}
@@ -1394,9 +1356,6 @@ function read_wpn_params(sect)
 			k,t = next(wm_modes.types.list,k)
 			c = typ ~= t
 		end
-		if c then
-			printw("!weapon_manager: not registered weapon type '%s' in [%s]",typ,sect)
-		end
 --		ASSERTX(not c,"!weapon_manager: not registered weapon type '%s' in [%s]",typ,sect)
 		local ammos,ammot = rx_utils.parse_list(nil,sect,"ammo_class",-1)
 		local dmg, blast = get_dmg(sect)
@@ -1455,7 +1414,6 @@ function read_ammo_params(sect)
 		local k_hit,blast = get_ammo_dmg(sect)
 		local k_disp = blast and 0.5 or get_ammo_disp(sect)	-- просто умножение на коэффициент
 		local k_dist = blast and 1 or read_if_exist_float(sect,"k_dist",1)		-- просто умножение на коэффициент
---		printf("read_ammo_params[%s]:cost %s, k_hit %s, k_dist %s, k_disp %s blast %s",sect,cost,k_hit,k_dist,k_disp,tostring(blast))
 		ammo_params[sect] = {cst = cost,dmg = k_hit,dsp = k_disp,dst = k_dist,bls = blast}
 	end
 	return ammo_params[sect]
@@ -1571,7 +1529,6 @@ function can_use_blaster(npc,radius)
 			local friend_dir = vector():sub(friend_pos,npc_pos)
 			if vector():set(friend_dir):normalize():similar(dir_aim,0.3) == 1 then			-- проверяем наличие друга перед собой
 				if vector():slide(friend_dir,dir_aim):magnitude() < radius then				-- проверяем наличие друга в потенциальной зоне поражения
---					printf("can_use_blaster[%s]:friend in danger! [%s]",npc:character_name(),friend:name())
 					return false
 				end
 			end
@@ -1591,27 +1548,20 @@ end
 
 --[==[
 function weapon_manager:process_items()
---	printf("process_items[%s]",self.name)
 	local box = get_box()
 	if not box then
-		printf("process_items: not box[%s]!!!",boxid)
 		return
 	end
 	for id,obj in pairs(self.process_list) do
 		if not self.wpns_prstor[id] and id ~= self.weapon_id and obj and obj.parent then
 			local parent = obj:parent()
-			if not parent then
-				printw("process_items[%s]:not parent!!! [%s]",self.name,obj:name())
-			end
 			if parent and parent:id() == self.npc_id then
---				printf("process_items[%s]: do %s",self.name,obj:name())
 				self.wpns_prstor[id] = true
 				self.npc:transfer_item(obj,box)
 			else
 --				if parent and parent:id() == boxid then
 --					self.wpns_prstor[id] = true
 --				end
-				printw("process_items[%s]:parent:id() ~= self.npc_id [%s] parent %s",self.name,obj:name(),parent)
 			end
 		end
 	end
@@ -1626,19 +1576,13 @@ function weapon_manager:return_items(return_id,death,destroy)
 		self.pr_state = false
 		return
 	end
---	printf("return_items[%s]:start",self.name)
 	local se_npc = alife():object(self.npc_id)
 	if not destroy and not level.object_by_id(self.npc_id) then
-		printw("return_items[%s]:not npc",self.name)
 		return
 	elseif not se_npc then
-		printw("return_items[%s]:not se_npc",self.name)
 		return
 	elseif not get_box() then
-		printw("return_items: not box[%s]",tostring(boxid))
 		return
-	elseif not se_npc.online then
-		printw("return_items[%s]:not se_npc.online",self.name)
 	end
 	if death then
 		--local act = self.npc:active_slot()
@@ -1649,12 +1593,10 @@ function weapon_manager:return_items(return_id,death,destroy)
 		if obj then
 			local parent = obj:parent()
 			if not parent then
-				printw("transfer_to_npc[%s]:%s[%s]:not parent",self.name,obj:section(),obj:id())
 				self.wpns_prstor[id] = nil
 				return
 			end
 			if parent:id() ~= boxid then
---				printw("transfer_to_npc[%s]:%s[%s]:parent[%s %s] ~= box[%s]",self.name,obj:section(),obj:id(),parent:character_name(),parent:id(),boxid)
 				self.wpns_prstor[id] = nil
 				if death or parent:id() ~= self.npc_id then
 					return
@@ -1664,21 +1606,16 @@ function weapon_manager:return_items(return_id,death,destroy)
 			if death then
 				death_manager.keep_item(self.npc,obj)
 			end
---			printf("transfer_to_npc[%s]:%s",self.npc:character_name(),obj:name())
 		else
 			local sobj = alife():object(id)
 			if sobj then
-				printw("transfer_to_npc[%s]:release [%s_%s]",self.name,sobj:section_name(),sobj.id)
 				table.insert(rx_ai.ids_to_remove,id)	--alife():release(sobj,true)
-			else
-				printw("transfer_to_npc[%s]:item not found [%s]",self.name,id)
 			end
 			self.wpns_prstor[id] = nil
 		end
 	end
 	if return_id then
 		if self.wpns_prstor[return_id] then
---			printf("return_items[%s]:by id[%s]",self.name,return_id)
 			transfer_to_npc(return_id)
 		end
 		return
@@ -1761,15 +1698,11 @@ function weapon_manager:set_prefer_weapon(section)
 end
 
 function weapon_manager:change_modes(cm,replace)
-	if not self.modes then
-		printf("change_modes[%s]:wm not initialized!",self.name)
-	end
 	self.do_update_list = true
 	self.priors_mem = {}
 	if (replace or not cm) and self.modes._sc == true then
 		local mt = getmetatable(self.modes)
 		self.modes = mt.__index
---		rx_utils.print_table(self.modes)
 	end
 	if not cm then
 		return
@@ -1815,16 +1748,13 @@ function reset_scheme(npc,scheme,st,section)
 		sect = st.ini:r_string(st.section_logic,"weapon_manager")
 	end
 	if sect ~= wm.custom_section then
---		printf("reset_scheme[%s]: new sect %s, old %s",wm.name,sect,wm.custom_section)
 		wm.custom_section = sect
 		if not sect then
 			sect = npc:name()
 		end
---		printf("reset_scheme[%s]: read modes for %s",wm.name,sect)
 		wm.modes = read_wm_modes(npc:character_community(),ranks.get_obj_rank_name(npc),sect)
 		if wm.modes.disabled == true then
 			wm:disable(nil,true)
---			printf("reset_scheme[%s]: disabled",wm.name)
 		else
 			wm.do_update_list = true
 			wm.priors_mem = {}

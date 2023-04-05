@@ -4,42 +4,29 @@ local func_sinus = 0
 local func_cosinus = 1
 local func_linear = 2
 
-function printf () end
-
-
 class "PPData" (effector)
-----------------
+
 function PPData:__init (host) super (1003,10000000)
     self.params = effector_params ()
     self.host = host
     self.time = time_global ()
 end
-----------------
+
 function PPData:process (pp)
-	printf	("0")
     effector.process (self, pp)
-	printf	("1")
     local t = time_global ()
-	printf	("2")
     --if t - self.time ~= 0 then
        self.host:update2 ((t - self.time) * 0.001)
-	printf	("3")
        self.time = t
        pp:assign (self.params)
-	printf	("4")
     --end    
     return true
 end
 
-function PPData:__finalize()
-	printf	("PPData::~PPData() called!")
-end
-----------------
+function PPData:__finalize() end
 
-
-----------------
 class "PPEffector"
-----------------
+
 function PPEffector:__init (ini_file, section)
     self.settings = {}
     self.section = section

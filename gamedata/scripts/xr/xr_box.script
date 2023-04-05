@@ -20,7 +20,6 @@ function ph_item_box:__init(obj)
 	
 	for k,v in pairs(community_list) do
         --' Необходимо заполнить таблицу
-		-- printf("pl: community = %s",v )
         item_by_community[v] = {}
         if death_ini:section_exist(v) then
 		    local n = death_ini:line_count(v)
@@ -28,7 +27,6 @@ function ph_item_box:__init(obj)
 		    for i=0,n-1 do
 			    result, id, value	= death_ini:r_line(v,i,"","")
                 item_by_community[v][id] = 100*tonumber(value)
-				-- printf("PL : id=%s  value=%s",id, value)
 		    end
         end
     end
@@ -96,13 +94,11 @@ function ph_item_box:spawn_items()
 		return
 	end
 			
-		printf(" community = %s", community)
 	--' Доспавниваем необходимое количество итемов:
     --' Необходимо составить список объектов которые могут быть заспавнены для персонажа
     local spawn_items = item_by_community[community]
 	--' Если комьюнити задана не верно, то ставим дефолт и срем в лог.
 	if spawn_items == nil then 
-		printf("xr_box: wrong community -- %s setting default def_box ", community)
 		local spawn_items = {}
         local spawn_items = item_by_community["def_box"]
 	end
@@ -117,7 +113,6 @@ end
 
 --' Функция спавнит необходимое число предметов
 function create_items(obj, section, number, rnd)
-    printf("create %s of %s", tostring(number), tostring(section))
     if ammo_sections[section] == true then
 		if math.random(100) <= rnd	then
 				

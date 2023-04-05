@@ -18,7 +18,6 @@ function add_member (npc)
     end    
     --нету :( Внесем нахала в черный список.
     table.insert (members, npc.id)
-    printf ("Stalker %s is added to list", npc:name ())
     -- и изгоним из мира живых
     this.switch_offline (npc.id)    
 end
@@ -31,7 +30,6 @@ function start_raid ()
     zone.raid_wait = device ():time_global ()
     for a = 1, table.getn (members), 1 do
         this.switch_online (members[a])
-        printf ("Switch to online stalker with id %d", members[a])
     end
     --в идеале, здесь нужно рассортировать команды в случае гибели отдельных мужиков
 end
@@ -43,7 +41,6 @@ class "escape_raid"
 function escape_raid:__init (zone, ini)
     -- абсолютный стандарт
     self.ini_ok = true
-    printf ("Zone %s is added to binder", zone:name ())
     self.time = 0
     self.raid_wait = 0
 end
@@ -127,7 +124,6 @@ function escape_raid:on_leave (obj)
     end        
     -- зарегистрируем выход
     local t = {object = obj, id = obj:id (), out = true}
-    printf ("Stalker %s is outed", obj:name ())
     table.insert (moved, t)
 end
 

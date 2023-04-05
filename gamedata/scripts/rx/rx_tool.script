@@ -460,7 +460,6 @@ function npc_in_cover(npc)
 		if be and not xr_wounded.is_wounded(be) then
 			enemies[1] = be
 		else
---			rx_ai.printf("npc_in_cover[%s]:not be",npc:character_name())
 			st.evn = true
 			return st.evn
 		end
@@ -469,7 +468,6 @@ function npc_in_cover(npc)
 			local obj = o:object()
 			local id = obj:id()
 			if obj and obj.clsid and (IsStalker(obj) or IsMonster(obj)) and obj:alive() and npc:relation(obj) == game_object.enemy and not xr_wounded.is_wounded(obj) then
---				rx_ai.printf("npc_in_cover[%s]:add enemy[%s]",npc:character_name(),obj:name())
 				table.insert(enemies,obj)
 				tt[id] = true
 			end
@@ -479,7 +477,6 @@ function npc_in_cover(npc)
 			local id = obj:id()
 			if not tt[id] then
 				if obj and obj.clsid and (IsStalker(obj) or IsMonster(obj)) and obj:alive() and npc:relation(obj) == game_object.enemy and not xr_wounded.is_wounded(obj) then
---					rx_ai.printf("npc_in_cover[%s]:add enemy[%s]",npc:character_name(),obj:name())
 					table.insert(enemies,obj)
 				end
 			end
@@ -492,7 +489,6 @@ function npc_in_cover(npc)
 			or seez 
 			or (dist >= 25 and cover < 0.8)
 			then
---				rx_ai.printf("npc_in_cover[%s]:enemy![dist = %s,seez = %s,cover = %s]",npc:character_name(),dist,tostring(seez),cover)
 				st.evn = false
 				st.wait = tg+2000
 				return st.evn

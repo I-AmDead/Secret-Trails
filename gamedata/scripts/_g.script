@@ -841,9 +841,6 @@ end
 -------======= / ini reading functions by sapsan =======------
 ----------------------------------------------------------------------
 
-function printf(fmt,...)
-end
-
 local bufferedmessages={}
 
 function mylog(msg)
@@ -987,10 +984,6 @@ end
 function debug_get_level_object(obj_name)
     local res = level.debug_object(obj_name)
     while res == nil do
-
--- НЕ ЗАКОММЕНТАРИВАЙТЕ, ИНАЧЕ НЕ БУДЕТ ВИДНО ОШИБОК ПРИ РАССТАНОВКЕ ОБЪЕКТОВ!
-        printf("get_level_object() is waiting for object \"%s\"", obj_name)
-
         res         = level.object(obj_name)
         wait        ()
     end
@@ -1046,8 +1039,6 @@ function FSM:__init(script_name, npc_obj)
 
     -- флаг того, что машина вклічена
     self.machine_running = true
-
-    printf("inialization FSM for NPC %s", self.npc:name())
 end
 
 function FSM:is_running()
@@ -1055,12 +1046,10 @@ function FSM:is_running()
 end
 
 function FSM:start()
-    printf("starting FSM for %s", self.npc:name())
     self.machine_running = true
 end
 
 function FSM:stop()
-    printf("stoping FSM for %s", self.npc:name())
     self.machine_running = false
     self:reset_script_control()
 end
@@ -1069,8 +1058,6 @@ end
 --  добавление указателя на булеву
 --  функциі условия перехода
 function FSM:set_transition(from_state_num, to_state_num, cond_func)
-    printf("in setting transition %d, %d ", from_state_num, to_state_num)
-
     if self.transition_matrix[from_state_num] == nil then
        self.transition_matrix[from_state_num] = {[to_state_num] = cond_func}
     else
@@ -1084,7 +1071,6 @@ function FSM:run()
     table.foreach(transition_vector,
                   function(to_state_num, cond_func)
                         if cond_func(self.npc, self) == true then
-                            printf("transition from %d to %d", self.current_state, to_state_num)
 
                             if to_state_num == 0 then
                                 self:reset_script_control()
@@ -1104,14 +1090,12 @@ end
 
 -- запуск бесконечного цикла FSM
 function FSM:run_loop()
-    printf("running FSM loop for NPC %s", self.npc:name())
 
     while self:is_running() do
         local transition_vector = self.transition_matrix[self.current_state]
         table.foreach(transition_vector,
                       function(to_state_num, cond_func)
                             if cond_func(self.npc, self) == true then
-                                printf("transition from %d to %d", self.current_state, to_state_num)
 
                                 if to_state_num == 0 then
                                     self:reset_script_control()
@@ -1136,13 +1120,11 @@ end
 
 -- взятие под контроль скрипта NPC (переход из нулевого состояния)
 function FSM:set_script_control()
-    printf("set script control for FSM of NPC %s", self.npc:name())
     self.npc:script(true, self.script_name)
 end
 
 -- отпускание из под контроля скрипта NPC (переход в нулевое состояние)
 function FSM:reset_script_control()
-    printf("reset script control for FSM of NPC %s", self.npc:name())
     self.npc:script(false, self.script_name)
 end
 
@@ -1266,9 +1248,6 @@ end
 
 function set_current_time (hour, min, sec)
     local current_time_factor = level.get_time_factor ()
-
-    printf ("Need time : %d:%d:%d", hour, min, sec)
-
     local current_time = game.time ()
     local c_day = math.floor (current_time / 86400000)
     local c_time = current_time - c_day * 86400000
@@ -1523,7 +1502,6 @@ function str_split (str)
         str4 = string.format ("%s%c", str4, ref[a])
     end
 
-    printf ("%s %s %d %d", str1, str2, str3, str4)
     return str1, str2, (str3 + 1) - 1, (str4 + 1) - 1
 end
 
@@ -1998,24 +1976,7 @@ function print_table(table, subs)
   end
   for k,v in pairs(table) do
     if type(v) == "table" then
-      printf(sub.."%s:", tostring(k))
       print_table(v, sub.."    ")
-    elseif type(v) == "function" then
-      printf(sub.."%s:function", tostring(k))
-    elseif type(v) == "userdata" then
-      printf(sub.."%s:userdata", tostring(k))
-    elseif type(v) == "boolean" then
-  if v == true then
-    printf(sub.."%s:true", tostring(k))
-  else
-    printf(sub.."%s:false", tostring(k))
-  end
-    else
-      if v ~= nil then
-        printf(sub.."%s:%s", tostring(k),v)
-      else
-        printf(sub.."%s:nil", tostring(k),v)
-      end
     end
   end
 end

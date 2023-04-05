@@ -265,26 +265,18 @@ function se_respawn:create( prob )
 	amk.on_REspawn(obj,self)
     local tt = self.sectSpawnProps[spawn_section]
 
---    printf("SPAWN [%s] -> [%s]", tostring(self:name()), obj:name())
-
     if self.item_spawn == false then        
       if tt.check == true and not self.amk_name then
         obj:brain():update()
         local smart_terrain_id = obj:smart_terrain_id()
 
-        --printf("SPAWN [%s] move_offline [%s], interactive [%s], smart_terrain_id [%s]", tostring(self:name()), tostring(self:move_offline()), tostring(self:interactive()), smart_terrain_id)
-
         if smart_terrain_id ~= 65535 then   
           table.insert(self.spawned_obj ,obj.id)
           local pos = obj.position
-					--printf("SPAWNING [%s] -> [%s], position [%s][%s][%s]", tostring(self:name()), spawn_section, pos.x, pos.y, pos.z)
-          local sm_obj = alife():object(smart_terrain_id)
-
-					--printf("SPAWNING for SMART [%s] : [%s] -> [%s]", self:name(), obj:name(), sm_obj:name())    
+          local sm_obj = alife():object(smart_terrain_id)    
 					return true
         else
           alife():release(obj, true)
-					--printf("SPAWNING [%s] -> [%s], CANT SPAWN. NO SMART_TERRAIN AVAILABLE!!!", tostring(self:name()), spawn_section)
           return false
         end
       end
@@ -297,7 +289,6 @@ end
 -- Попытка спаунить объекты. Анализируется сколько уже заспавнено и выбирается один из механизмов - либо 
 -- мы доспавниваем до минимального количества, либо спавним с заданной вероятностью
 function se_respawn:spawn()	
-	--printf("RESPAWN: [%s] spawn execute", tostring(self:name()))
 	if not self.spawn_once then
 		-- Пробегаемся по списку уже заспавненных объектов и удаляем из них мертвые либо уничтоженные.
 		for k,v in pairs(self.spawned_obj) do
@@ -316,8 +307,6 @@ function se_respawn:spawn()
 		end 
 	end
   if xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions) == "0" then
-		--printf("SPAWNING [%s], CANT SPAWN. PROBABILITY ZERO!!!", tostring(self:name()))
-
     return
   end
 
@@ -338,7 +327,6 @@ function se_respawn:spawn()
   -- делаем несколько попыток заспаунить объект.
   for i=1,self.max_spawn do   
     if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
-			--printf("SPAWNING [%s], CANT SPAWN. MAX COUNT REACHED!!!", tostring(self:name()))
       return
     end   
     if self:create(xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions)) == false then
@@ -386,8 +374,6 @@ end
 -- Обновление в онлайне
 function se_respawn:update_online()
 	--'cse_alife_smart_zone.update( self )
-
-	--'printf("RESPAWN: [%s] se_respawn update_online", tostring(self:name()))
 
 	if self.respawn_radius == -1 then
 

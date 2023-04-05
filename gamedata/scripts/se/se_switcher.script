@@ -1,45 +1,28 @@
---server entity
-function _printf(ss)
---if editor() == false then
---	printf(ss)
---end	
-end
-
-
 class "cse_switcher" (CSE_AbstractVisual)
 
 function cse_switcher:__init(sect) super(sect)
 	self.m_state = 0
-	_printf("cse_switcher:Constructor done")
 end
 
 function cse_switcher:STATE_Read(packet, size)
-	_printf("cse_switcher:STATE_Read called")
 	CSE_AbstractVisual.STATE_Read(self, packet, size)
 	self.m_state = packet:r_u32()
-	_printf("cse_switcher:STATE_Read done")
 end
 
 function cse_switcher:STATE_Write(packet)
-	_printf("cse_switcher:STATE_Write called")
 	CSE_AbstractVisual.STATE_Write(self, packet)
 	packet:w_u32(self.m_state)
-	_printf("cse_switcher:STATE_Write done")
 end
 
 
 function cse_switcher:UPDATE_Read(packet)
-	_printf("cse_switcher:UPDATE_Read called")
 	CSE_AbstractVisual.UPDATE_Read(self, packet)
 	self.m_state = packet:r_u32()
-	_printf("cse_switcher:UPDATE_Read done")
 end
 
 function cse_switcher:UPDATE_Write(packet)
-	_printf("cse_switcher:UPDATE_Write called")
 	CSE_AbstractVisual.UPDATE_Write(self, packet)
 	packet:w_u32(self.m_state)
-	_printf("cse_switcher:UPDATE_Write done")
 end
 
 function cse_switcher:FillProps(pref, values)

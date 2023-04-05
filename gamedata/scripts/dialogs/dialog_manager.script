@@ -216,46 +216,21 @@ function get_t_size(t)
 	return counter
 end
 
-function draw_t_keys(t)
-	for i,v in pairs(t) do
-		printf("key [%s]", tostring(i))
-	end
-end
-
 function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
 
 	--' Надо проверить доступна ли запомненная фраза
-	if ( (sel_tbl ~= nil) and (sel_tbl[npc:id()] ~= nil) ) then
+	if ( (sel_tbl ~= nil) and (sel_tbl[npc:id()]) ) then
 		
 		local lll = sel_tbl[npc:id()]
-		if (lll==nil) then
-			printf("lll is nil")
-		end
 		local ttt = tbl[lll.phrase]
 
 		if (ttt==nil) then
-			printf("!!! %s", lll.phrase)
-			print_table(tbl)
 			local a = lll.phrase + 1
---[[		
-		
-			printf("%d", get_t_size(tbl))
-			printf("%d", get_t_size(sel_tbl))
-			printf("needed phrase=[%s]",lll.phrase)
-			printf("----")
-			draw_t_keys(sel_tbl)
-			printf("----")
-			printf("%d", get_t_size(phrase))
-			printf("%d", get_t_size(phrase.intro))
-			printf("%d", get_t_size(phrase.cool_info))
-			printf("%d", get_t_size(phrase.help_thanks))
-]]	
 		end
 		
 		local value, number = calculate_predicate(npc, ttt )
 		--' Если запомненная фраза недоступна - необходимо забыть ее
 		if value == false then
-			printf("*** restore memory phrase")
 			sel_tbl[npc:id()] = nil
 		end
 	end	
@@ -268,7 +243,6 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
 	if ( (sel_tbl ~= nil) and (sel_tbl[npc:id()] ~= nil) ) then
 		--' Если проверяется не запомненная фраза
 		if (sel_tbl[npc:id()].phrase ~= phrase.phr_id) then
-			printf("*** not memory phrase [%s] ~= [%s]", sel_tbl[npc:id()].phrase, phrase.phr_id)
 			return false
 		end
 		if (sel_tbl[npc:id()].count >= 1) then

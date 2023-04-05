@@ -48,7 +48,6 @@ function HeliManager:initialize( sid, path, patrol_speed, attack_speed )
 end
 
 function HeliManager:HeliOnHit( power, impulse, hit_type, enemy_id )
---	printf( "HeliOnHit" )
 
 	if self.b_prepared_to_die then
 		return
@@ -62,7 +61,6 @@ function HeliManager:HeliOnHit( power, impulse, hit_type, enemy_id )
 	end
 
 	local enemy = level.object_by_id( enemy_id )
-	printf( "[heli] enemy name = %s", enemy:name() )
 	self:set_enemy( enemy )
 end
 
@@ -77,9 +75,6 @@ function HeliManager:HeliOnPoint( distance, position, path_idx )
 		--select next point
 --	end
 
---	printf( "on_point_range_dist = %d", self.heliObject.on_point_range_dist )
-
-	printf( "[heli] OnPoint" )
 	-- если пролетел над позицией во время атаки
 	if self.heliObject:GetState() == CHelicopter.eMovingByAttackTraj then
 		if self.attack_passes > 0 then
@@ -94,17 +89,13 @@ function HeliManager:HeliOnPoint( distance, position, path_idx )
 --				self.p2  = self.p1:add( v:mul( pass_dist * 1.5 ) )
 
 				self.attack_pass_state = 1
-				printf( "0" )
 --[[			elseif self.attack_pass_state == 1 then
 				-- заходим вправо
 				self.heliObject:SetDestPosition( self.p2 )
 				--self.heliObject:SetCurrVelocity( patrol_speed )
 
 				self.attack_pass_state = 2
-
-				printf( "1" ) ]]
 			else
-				printf( "2" )
 				if is_object_online( self.enemy:id() ) and self.enemy:alive() then
 					-- опять заходим на врага
 					self.heliObject:SetDestPosition( self.enemy:position() )
@@ -144,8 +135,6 @@ function HeliManager:finish_attack()
 
 	self.attack_pass_state = 0
 	--self.heliObject.on_point_range_dist = 10
-
-	printf( "[heli] attack finished" )
 end
 
 function HeliManager:update()
@@ -166,11 +155,9 @@ function HeliManager:update()
 	if self.b_prepared_to_die == false and state ~= CHelicopter.eDead and health < 0.3 then
 		self.b_prepared_to_die = true
 		self.heliObject:PrepareDie()
-		printf( "[heli] prepare to die" )
 	end
 
 	if state ~= CHelicopter.eDead and health <= 0.05 and not self.not_die then
-		printf( "[heli] DIE" )
 		self.heliObject:Die()
 
 		self.last_alt       = self.heliObject:GetRealAltitude()
@@ -183,7 +170,6 @@ function HeliManager:update()
 
 		if altitude < 3.0 then
 			self.b_exploded = true
-			printf("[heli] EXPLODE")
 			self.heliObject:Explode()
 		end
 
@@ -192,7 +178,6 @@ function HeliManager:update()
 
 			if self.last_alt - altitude < 1 then
 				self.b_exploded = true
-				printf("[heli] EXPLODE (hanged)")
 				self.heliObject:Explode()
 			end
 
@@ -206,8 +191,6 @@ end
 function HeliManager:set_enemy( enemy, attack_passes )
 	if enemy then
 		self.enemy = enemy
-
-		printf( "[heli] attack %s", enemy:name() )
 		self.heliObject:SetEnemy( enemy )
 		self.heliObject:SetCurrAltitude( self.attack_altitude )
 		self.heliObject:SetCurrVelocity( self.attack_speed ) -- m/sec (max)
@@ -218,10 +201,8 @@ function HeliManager:set_enemy( enemy, attack_passes )
 --		self.heliObject.on_point_range_dist = 30
 
 		if self.heli:position():distance_to_sqr( self.enemy:position() ) >= pass_dist * pass_dist then
---			printf( "fly straight" )
 			self.heliObject:SetDestPosition( enemy:position() )
 		else
---			printf( "fly far" )
 			self:HeliOnPoint()
 		end
 	end

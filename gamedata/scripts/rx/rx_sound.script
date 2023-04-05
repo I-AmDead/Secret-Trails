@@ -30,10 +30,8 @@ end
 
 --' Играть тему
 function set_sound_play(npc_id,sound,cb_func,override)
---	rx_ai.printf("SET_SOUND_PLAY. theme[%s] object[%s]", tostring(sound), npc_id)
 	local snd_theme = theme[sound]
 	if not snd_theme then
-		rx_ai.printf("set_sound_play. Wrong sound theme [%s], npc[%s]", tostring(sound), npc_id)
 		return
 	end
 	if sound_table[npc_id] == nil then
@@ -42,8 +40,6 @@ function set_sound_play(npc_id,sound,cb_func,override)
 			sound_table[npc_id] = snd_theme
 			return true
 		end
---	else
---		rx_ai.printf("rx_sound: cannot play sound [%s] because i'm [%s] already play snd [%s]",sound,npc_id,sound_table[npc_id].section)
 	end
 end
 
@@ -120,7 +116,6 @@ function npc_sound_generic:init_npc(npc)
 				local prefix = string.gsub(npc_prefix,"%human_(%w+)","human_0"..i,1)
 				if f:exist("$game_sounds$",prefix..self.path..".ogg") or f:exist("$game_sounds$",prefix..self.path.."1.ogg") then
 					new_prefix = prefix
-					rx_ai.printf("found new sounds %s prefix %s", tostring(self.path), prefix)
 					break
 				end
 			end
@@ -159,7 +154,6 @@ end
 function npc_sound_generic:play(npc_id,override)
 	local npc = level.object_by_id(npc_id)
 	if npc == nil then
-		rx_ai.printf("sound[%s]:coudnt find npc!!!",npc_id)
 		return false
 	end
 	if not override and npc:active_sound_count() > 0 then

@@ -17,11 +17,6 @@ function on_npc_death( obj )
 	end
 end
 
-
-function printf()
---	rx_utils.printf(str,...)
-end
-
 local mgr_combat_actions = {
 [stalker_ids.action_combat_planner] = true,
 [stalker_ids.action_danger_planner] = true,
@@ -316,7 +311,6 @@ function state_manager:unsubscribe()
 end
 
 function state_manager:set_state(state_name, callback, timeout, target, emerg, synsound, extrakeys)
---	printf("Set State called: for %s State: %s", self.npc:name(), state_name)
 
 	if state_name and state_lib.states[state_name] == nil then
 --		abort("ERROR: ILLEGAL SET STATE CALLED!!! %s fo %s :active_section %s", tostring(state_name), self.npc:name(), db.storage[self.npc:id()].active_section)
@@ -418,8 +412,6 @@ function state_manager:update()
 		end
 		if self.combat or self.alife or self.locked then
 			if self.target_state ~= "idle" then
---				rx_utils.printf("set_state called while state_mgr is locked [%s state %s section %s current_action %s]",self.npc:name(),self.target_state,db.storage[self.npc:id()].active_section,self.mgr_action_id)
---				rx_utils.printf("%s want to be fixed?",db.storage[self.npc:id()].active_scheme)
 				self:set_state("idle")
 			end
 		end

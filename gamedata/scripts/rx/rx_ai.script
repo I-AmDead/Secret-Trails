@@ -10,21 +10,15 @@ local alife = alife()
 local death_sound_prob = rx_utils.read_from_ini(rx_ini,"sound","death_probability",50)/100
 local ff_sound_prob = rx_utils.read_from_ini(rx_ini,"sound","friendlyfire_probability",50)/100
 
-function printf(str,...)
-	rx_utils.printf(str,...)
-end
-
 -----------------------------------storage-------------------------------------
 function get_storage(id,name)
 	local st = db.storage[id]
 	if not st then
 		if not id then
-			printf("get_storage[%s|%s]:not id!!!",id,name)
 			return {}
 		end
 		local obj = level.object_by_id(id)
 		local objname = obj and obj:character_name() or "<nil>"
-		printf("get_storage[%s|%s]:not npc storage!!! (%s)",id,name,objname)
 		return {}
 	end
 	if not st.rx_ai then
@@ -106,7 +100,6 @@ end
 function npc_update(npc,st)	-- порядок важен
 	st = st.rx_ai	--get_storage(npc:id())
 	if not st then
-		printf("npc_update[%s]:not st!!!",npc:name())
 		return
 	end
 	if rx_wmgr then

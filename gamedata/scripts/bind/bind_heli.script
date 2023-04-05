@@ -13,8 +13,6 @@ Helicoter binding
 ---------------------------------------------------------------------------------------------
 
 function bind( obj )
---    printf( "BIND HELICOPTER id=%d", obj:id() )
-
    	local ini = obj:spawn_ini()
    	if ini and ini:section_exist("logic") then
 		obj:bind_object( heli_binder( obj, ini ) )
@@ -38,9 +36,6 @@ end
 
 function heli_binder:reinit()
 	object_binder.reinit( self )
-
-	printf( "heli_binder:reinit()" )
-
 	db.storage[self.object:id()] = {}
 	self.st = db.storage[self.object:id()]
 
@@ -66,9 +61,6 @@ end
 
 function heli_binder:update( delta )
 	object_binder.update( self, delta )
-
---	printf( "heli_binder update" )
---	printf( "%d", self.object:level_vertex_light( db.actor:level_vertex_id() ) )
 
 	if not self.initialized and db.actor then
 		self.initialized = true
@@ -118,32 +110,19 @@ end
 
 function heli_binder:save( packet )
 	object_binder.save( self, packet )
-
-	printf( "heli_binder: save")
-
 	xr_logic.save_obj( self.object, packet )
-
 	self.st.combat:save( packet )
 end
 
 function heli_binder:load( packet )
 	self.loaded = true
-
-	--printf("generic_object_binder:load(): self.object:name()='%s'", self.object:name())
 	object_binder.load( self, packet )
-
-	printf( "heli_binder: load")
-
 	xr_logic.load_obj( self.object, packet )
-
 	self.st.combat:load( packet )
 end
 
 function heli_binder:check_health()
 	local heli = self.heliObject
-
---	printf( "heli health: %d", heli:GetfHealth() )
-
 	if not heli.m_dead then
 		local health = get_heli_health( self.heliObject, self.st )
 
@@ -163,7 +142,6 @@ end
 
 ------------------------------ callbacks ---------------------------------
 function heli_binder:on_hit( power, impulse, hit_type, enemy_id )
-	printf( "heli_binder: hit callback")
 
 	local enemy        = level.object_by_id( enemy_id )
 	local enemy_cls_id = get_clsid( enemy )

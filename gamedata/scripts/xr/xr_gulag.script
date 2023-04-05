@@ -87,7 +87,6 @@ function gulag:load_jobs()
 	self.capacity               = math.min( capacity, self.capacity )
 	self.capacity_non_exclusive = self.capacity
 
---	printf("LOAD JOBS %s", tostring(self.name))
 	-- DEBUG
 --	self:validate_jobs()
 end
@@ -345,7 +344,6 @@ end
 -- настроить персонажа на работу в офлайне.
 -- если он в это время в онлайне, то вызвать object_setup_online
 function gulag:object_setup_offline( obj_id, was_online )
-	printf( "[smart_terrain %s] gulag: object_setup_offline: obj=%s", self.name, self.npc_info[obj_id].name )
 
 	self.Object[obj_id] = true
 
@@ -784,37 +782,18 @@ end
 function gulag:print()
 	local npc_info, going
 
-	printf("***  %s -- State: %d -- Total population: %d/%d -- Non exclusive population: %d/%d",
-	         self.name, self.state, self:get_population(), self.capacity, self:get_non_exclusive_population(), self.capacity_non_exclusive)
-
 	if true then
 		return
 	end
 
-	printf("Resources:")
-	for k,v in pairs( self.Object ) do
-		printf("id: %d name: %s", k, self.npc_info[k].name)
-	end
-
-	printf("Jobs in this state:")
 	for k,v in ipairs( self.Job_avail_in_state ) do
-		printf("section: %s, prior %d", v.section, v.prior)
 		if v.object ~= nil then
 			npc_info = self.npc_info[v.object]
-
-			printf("    ObjID: %d", v.object)
-			printf("    Actor: %s, [%s][%s][%s]", npc_info.name, npc_info.team, npc_info.squad, npc_info.group)
 
 			if self.Object_begin_job[v.object] then
 				going = ""
 			else
 				going = "(going to job)"
-			end
-
-			if self.Object[v.object] == true then
-				printf("    current section: <<<offline>>> %s", going)
-			else
-				printf("    current section: %s %s", db.storage[v.object].active_section or "<<<nil>>>", going)
 			end
 		end
 	end
@@ -869,12 +848,10 @@ function gulag:setup_squad_and_group( obj_id, job )
 
 		local squad = level_groups[level.name()]
 		if not obj:alive() then
-			printf("CHANGE TEAM [%s] to [%s][%s][%s]. Object is DEAD, clearing", obj:name(), npc_info.team, squad or npc_info.o_squad, job.group or npc_info.o_group)
 			self:clear_dead(obj_id) --'Затычка против вылета.
 			return
 		end
 
-		printf("CHANGE TEAM [%s] to [%s][%s][%s]", obj:name(), npc_info.team, squad or npc_info.o_squad, job.group or npc_info.o_group )
 		obj:change_team( npc_info.team, squad or npc_info.o_squad, job.group or npc_info.o_group )
 
 		npc_info.squad = obj:squad()
@@ -892,8 +869,6 @@ end
 
 -- установить npc работу, к ней рестрикторы, настроить логику, поменять squad, group
 function gulag:setJob(obj_id, job)
-  --amk.mylog("set job for "..obj_id.." in "..self.name)
-	printf( "[smart_terrain %s] gulag: setJob: obj=%s job=%d %s", self.name, self.npc_info[obj_id].name, job.num, job.section )
 
 	job.object = obj_id
 
@@ -913,7 +888,6 @@ end
 -- вызвать спавнер.
 function gulag:beginJob( obj_id )
 	local job = self.Job[self.ObjectJob[obj_id]]
-	printf( "[smart_terrain %s] gulag: beginJob: obj=%s job=%d %s", self.name, self.npc_info[obj_id].name, job.num, job.section )
 
 	self.Object_begin_job[obj_id] = true
 
@@ -961,10 +935,6 @@ end
 -- установить объекту рестрикторы в онлайне.
 -- obj - game_object
 function gulag:set_restrictions(obj, r_out, r_in, r_info)
---'	printf( "RESTR [%s] HAVE (IN)  : %s", obj:name(), obj:in_restrictions() )
---'	printf( "RESTR [%s] HAVE (OUT) : %s", obj:name(), obj:out_restrictions() )
---'	printf( "RESTR [%s] NEED (IN)  : %s", obj:name(), r_in )
---'	printf( "RESTR [%s] NEED (OUT) : %s", obj:name(), r_out )
 
 	-- узнать, какие рестрикторы уже были назначены этим гулагом
 	local restr = self.restrictors[obj:id()]
@@ -1008,17 +978,11 @@ function gulag:set_restrictions(obj, r_out, r_in, r_info)
 	end
 
 	if change_r_in ~= "" or change_r_out ~= "" then
---'		printf( "RESTR [%s] SET: %s, %s", obj:name(), change_r_out, change_r_in)
 		obj:add_restrictions( change_r_out, change_r_in )
 	end
 
---'	printf( "RESTR [%s] AFTER (IN) : %s", obj:name(), obj:in_restrictions()  )
---'	printf( "RESTR [%s] AFTER (OUT): %s", obj:name(), obj:out_restrictions() )
-
 	-- информационный рестриктор
 	db.info_restr[obj:id()] = r_info
-
---'	printf( "INFO [%s] RESTR      : %s", obj:name(), utils.to_str( r_info ) )
 end
 
 -- убрать записи о том, что смарт устанавливал объекту рестрикторы.
@@ -1169,8 +1133,6 @@ function setup_gulag_and_logic_on_spawn( obj, st, sobject, stype, loaded )
 			strn_id = 65535
 		end
 
-		printf( "setup_gulag_and_logic_on_spawn obj=%s, strn_id=%s", obj:name(), tostring(strn_id) )
-    
 	--  if strn_id and strn_id ~= 65535 then
 		if strn_id ~= 65535 then
 			local strn                   = sim:object( strn_id )
@@ -1366,7 +1328,6 @@ end
 -----------------------------------------------------------------------------------------------------------------
 
 function checkStalker(npc_community, gulag_type, npc_rank, se_obj)
-    --printf ("CHECKSTALKER, COMMUNITY = %s, TYPE = %s", npc_community, gulag_type)
 	if gulag_type == "test" or gulag_type == "test1" or gulag_type == "test_restr_changer" or gulag_type == "test_out"  then
 		return true
 	end
@@ -1403,8 +1364,6 @@ function checkMonster(npc_community, gulag_type, npc_rank, se_obj)
 end
 
 function checkNpc(npc_community, is_stalker, gulag_type, npc_rank, se_obj)
---	printf("COMM %s !! %s", npc_community, gulag_type)
-
 	if is_stalker then
 		return checkStalker(npc_community, gulag_type, npc_rank, se_obj)
 	else

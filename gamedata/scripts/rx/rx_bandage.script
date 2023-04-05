@@ -9,10 +9,6 @@ pills = { {a = "cr_raciya_0_draw_0",t = 750},{a = "cr_raciya_0_draw_1",t = 900},
 drink = { {a = "idle_0_to_sit_2",t = 2350},{a = "vodka_3",t = 3650},{a = "sit_2_to_idle_0",t = 550},crouch = {{a = "vodka_3",t = 3800}}} ,
 }
 
-function printf(s, ...)
-	rx_utils.printf("bandage:"..s,...)
-end
-
 local bg_ini = ini_file([[misc\ai_additions\bandage.ltx]])
 ASSERTX(bg_ini:section_exist("default"),"no bg_ini")
 bandage_sets = {}
@@ -167,7 +163,6 @@ function action_bandage:execute()
 	end
 	if not self.st.action then		-- цикл прошёл, но запущен снова без переключения
 		if not (self.st.medkit and npc:object(self.st.medkit)) then
-			printf("act[%s]:restart: not medkit",npc:character_name())
 			return
 		end
 		self.st.action = true

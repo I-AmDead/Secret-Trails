@@ -5,10 +5,6 @@
 --'	26.05.2016
 ----------------------------------------------------------------------------------------------------------------------
 
-local function printf(s, ...)
---	rx_utils.printf("cd:"..s,...)
-end
-
 local cd_ini = ini_file([[misc\ai_additions\corpse_detection.ltx]])
 ASSERTX(cd_ini:section_exist("default"),"no cd_ini")
 local excluded_npcs = rx_utils.collect_sections(cd_ini,{"excluded_npcs"},nil,true)
@@ -275,7 +271,6 @@ function evaluator_corpse:evaluate()
 	min_loot_distance = PR.min_loot_distance
 	local dist_length,rating_length = PR.max_loot_distance-min_loot_distance,PR.max_loot_value-PR.min_loot_value
 	if dist_length == 0 then
-		printf("eva[%s]:max_loot_distance == min_loot_distance == %s",npc:character_name(),min_loot_distance^0.5)
 		dist_length = 1
 	end
 	local dist_ratio = min_loot_distance/dist_length
@@ -953,7 +948,6 @@ function reset_corpse_detection(npc, scheme, st, section)
 		st.corpse_detection.corpse_detection_enabled = false
 	end
 	st.corpse_detection.pr = pr
---	printf("[%s]reset_corpse_detection: scheme %s section %s enabled %s md %s gi %s ds %s",npc:character_name(),scheme,section,st.corpse_detection.corpse_detection_enabled,pr.max_loot_distance,pr.gather_items_enabled,pr.disabled_strict)
 end
 
 function is_under_corpse_detection(npc)

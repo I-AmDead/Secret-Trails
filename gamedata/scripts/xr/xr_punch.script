@@ -30,7 +30,6 @@ function evaluator_need_punch:__init(storage, name) super (nil, name)
 end
 
 function evaluator_need_punch:evaluate ()
-	--printf("evaluator_need_punch:evaluate()")
 	return self.st.enabled
 end
 
@@ -42,7 +41,6 @@ function action_punch_activity:__init(npc_name, action_name, storage) super (nil
 end
 
 function action_punch_activity:initialize()
-	--printf("_bp: action_punch_activity: initialize")
 	action_base.initialize(self)
 --	self.object:set_node_evaluator()
 --	self.object:set_path_evaluator()
@@ -69,7 +67,6 @@ end
 function action_punch_activity:execute()
 	action_base.execute(self)
 
-	--printf("exec!")
 	local whom = db.actor
 
 	if not whom:alive() then
@@ -78,7 +75,6 @@ function action_punch_activity:execute()
 	end
 
 	if self.state == state_approaching then
-		--printf("approaching")
 		if self.object:position():distance_to(whom:position()) < 1.5 then
 			self.object:set_movement_type(move.stand)
 			state_mgr.set_state(self.object, "punch",
@@ -130,7 +126,6 @@ end
 
 ----------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc)
-	--printf("_bp: add_to_binder (punch)")
 	local operators    = {}
 	local properties  = {}
 

@@ -16,8 +16,6 @@ function evaluator_need_guide:__init(storage) super(nil, name)
 end
 
 function evaluator_need_guide:evaluate()
-	--printf("guide [%s] best_enemy = ", self.object:name()--[[,
-	--	if_then_else(self.object:best_enemy(), self.object:best_enemy():name(), "none")]])
   	return self.st.enabled == true
 end
 
@@ -30,24 +28,18 @@ function action_guide_activity:__init (npc_name, action_name, storage) super(nil
 end
 
 function action_guide_activity:initialize()
-	--printf("_bp: action_guide_activity: initialize")
 	action_base.initialize(self)
 --	self.object:set_node_evaluator()
 --	self.object:set_path_evaluator()
 	self.object:set_desired_position()
 	self.object:set_desired_direction()
-
 	self.move_mgr:initialize(self.object)
-
-	--printf("initiz")
 	self.initialized = true
-
 	self:reset_scheme()
 end
 
 
 function action_guide_activity:reset_scheme()
-	--printf("reset_scheme, initialized=%s", utils.to_str(self.initialized))
 	if not self.initialized then
 		return
 	end
@@ -77,7 +69,6 @@ end
 
 function action_guide_activity:move_callback(mode, number)
 	if number == 1 then
-		printf("WAIT")
 		local actor = level.actor()
 		if not actor then
 			return false
@@ -90,7 +81,6 @@ function action_guide_activity:move_callback(mode, number)
 		end
 		return false
 	elseif number == 2 then
-		printf("SWITCH_TO_ROBBER")
 		self.st.enabled = false
 		xr_motivator.storage[self.object:id()].robber.enabled = true
 		return false -- false т.к. мы не меняли параметры движения в схеме, просто активировали другую...
@@ -146,7 +136,6 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, char_ini)
 	if char_ini == nil  or char_ini:section_exist ("guide") == true then
-		printf("xr_guide: add_to_binder")
   		local operators	= {}
 	  	local properties  = {}
 		
@@ -187,7 +176,6 @@ end
 -- 
 -- enabled - включена ли схема
 function set_guide(object, enabled, path_main_walk, path_main_look, path_lead_walk, path_lead_look, team)
-	--printf("_bp: set_guide (path_main_walk=%s)", path_main_walk)
 	local char_ini = object:spawn_ini()	
 	local st = xr_motivator.storage[object:id()].guide
 
@@ -204,7 +192,6 @@ function set_guide(object, enabled, path_main_walk, path_main_look, path_lead_wa
 	st.path_lead_look_info = nil -- не загружены.
 
 	if st.action ~= nil then
-		printf("_bp: set_guide: reset_scheme")
 		st.action:reset_scheme()
 	end
 	xr_motivator.checkStorage(object)

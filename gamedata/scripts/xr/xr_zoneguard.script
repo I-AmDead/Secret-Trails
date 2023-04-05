@@ -42,7 +42,6 @@ function action_zoneguard_activity:__init(npc_name, action_name, storage) super(
 end
 
 function action_zoneguard_activity:initialize()
-	--printf("_bp: action_zoneguard_activity: initialize")
 	action_base.initialize(self)
 	self.object:set_node_evaluator()
 	self.object:set_path_evaluator()
@@ -200,8 +199,6 @@ function action_zoneguard_activity:fsm_step()
 			end
 			self.zone_appear_wait_end_time = nil
 		else
-			--printf("_bp: object '%s': waiting for zone_guard '%s'",
-			--	self.object:name(), self.st.zone_guard)
 			if not self.zone_appear_wait_end_time then
 				self.zone_appear_wait_end_time = time_global() + zone_appear_in_db_wait_timeout
 			elseif time_global() >= self.zone_appear_wait_end_time then
@@ -221,8 +218,6 @@ function action_zoneguard_activity:fsm_step()
 			end
 			self.zone_appear_wait_end_time = nil
 		else
-			--printf("_bp: object '%s': waiting for zone_warn '%s'",
-			--	self.object:name(), self.st.zone_warn)
 			if not self.zone_appear_wait_end_time then
 				self.zone_appear_wait_end_time = time_global() + zone_appear_in_db_wait_timeout
 			elseif time_global() >= self.zone_appear_wait_end_time then
@@ -239,7 +234,6 @@ function action_zoneguard_activity:fsm_step()
 	end
 
 	if self.sound_activated and distance_between(self.object, actor) <= 5 then
-		--printf("_bp: zoneguard: sound_update: maxidle = %d, sumidle = %s", self.snd.maxidle, self.snd.sumidle)
 		xr_sound.set_sound(self.object, self.snd.themes)
 	else
 		xr_sound.set_sound(self.object, nil)
@@ -330,7 +324,6 @@ function action_zoneguard_activity:fsm_step()
 			end
 		end
 		--if self.st.anim then
-			--printf("_bp: anim_update: %s", self.st.anim)
 			--xr_state.anim_update(self.st.anim, self.object)
 		--end
 		return
@@ -415,7 +408,6 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	st.no_danger = utils.cfg_get_bool          (ini, section, "no_danger",      npc, false)
 	st.anim = utils.cfg_get_string             (ini, section, "anim",           npc, false, "")
 	st.snd_anim_sync = utils.cfg_get_bool      (ini, section, "snd_anim_sync",  npc, false)
-	--printf("_bp: st.anim == %s", st.anim)
 	
 	st.path_walk_info = nil -- Будут инициализированы в reset(), сейчас пути могут быть еще
 	st.path_look_info = nil -- не загружены.

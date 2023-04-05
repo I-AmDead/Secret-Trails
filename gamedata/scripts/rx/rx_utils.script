@@ -576,11 +576,6 @@ function switch_offline(id)
 end
 
 --------------------------------------output---------------------------------------
-function printf(str,...)
-	get_console():execute("load ~#I#:"..format_safe(str,...))
---	log(format_safe(str,...))
---	get_console():execute("flush")
-end
 
 function prints(str)
 	get_console():execute("load ~#I#:"..str)
@@ -594,7 +589,6 @@ function give_game_news(str,time,...)
 end
 
 function ABORT(s,...)
-	printf("rx_utils.abort: "..s,...)
 	sys_ini:r_bool("___aborting","a")
 end
 
@@ -637,11 +631,8 @@ function print_table(t,name)
 		end
 	end
 	if (type(t)=="table") then
-		printf("print_table %s: %s {",(name or 'unnamed'),tostring(t))
 		sub_print_r(t,"  ")
 		prints("}")
-	else
-		printf("print_table %s: %s(%s) is not table!",(name or 'unnamed'),type(t),t)
 	end
 end
 

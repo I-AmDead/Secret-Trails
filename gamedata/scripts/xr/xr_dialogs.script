@@ -58,8 +58,6 @@ function dialog_mgr:reset( npc, team )
 			self.a = teams[team]
 --			self.a.npcs[npc:id()] = npc
 			table.insert( self.a.npcs, npc )
-
---			printf( "[dialogs] adding %s to dlgteam %s", npc:name(), team )
 		end
 	end
 end
@@ -118,7 +116,6 @@ function dialog_mgr:new_dialog()
 
 	self.a.last_dlg = self.a.cur_dlg
 
---	printf( "!!!!! NEW_DIALOG="..self.a.cur_dlg )
 	-- попробовать выбрать первую фразу
 	if not self:new_phrase() then
 		-- если не смогли, то диалог начаться не может
@@ -137,8 +134,6 @@ function dialog_mgr:reset_dialog()
 
 	-- следующий диалог может начаться лишь по истечению периода молчанки
 	self.a.idle_end   = time_global() + math.random( idle_min, idle_max ) * 1000
-
---	printf( "reset dialog" )
 end
 
 -- отменить текущий период молчанки между диалогами
@@ -190,7 +185,6 @@ function dialog_mgr:new_phrase()
 
 	-- выбор новой фразы
 	if not self.a.cur_phrase then
-		printf( self.a.cur_dlg )
 		self.a.cur_phrase = dialogs[self.a.cur_dlg][1]
 	else
 		local p = self.a.cur_phrase.next
@@ -210,7 +204,6 @@ function dialog_mgr:new_phrase()
 	self.a.phrase_delay_end = time_global() + math.random( pause_min, pause_max ) * 1000
 	self.a.phrase_playing   = false
 
---	printf( "phrase selected" )
 	return true
 end
 
@@ -236,7 +229,6 @@ function dialog_mgr:update()
 					snd.themes[1] = self.a.cur_phrase.snd
 					xr_sound.sound_update( self.a.cur_npc, snd, true )
 					self.a.phrase_playing = true
-				-- printf( "SNDSNDNSNDND = " .. snd.themes[1] )	
 				end
 			end
 		end

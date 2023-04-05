@@ -4,8 +4,6 @@
 --	TODO: 
 ----------------------------------------------------------------------------------------------------------------------
 
-function printf() end
-
 local key = nil
 local data = nil
 
@@ -111,8 +109,6 @@ function TalesManager:start_tale ()
     if self.tale == nil then
        abort ("Invalid tale")
     end   
-    printf ("NARRATOR THEME = %s", self.tale.theme)
-    printf ("NARRATOR NAME = %s", self.npc_list[self.narrator]:name ())
     xr_sound.set_sound_play (self.npc_list[self.narrator], self.tale.theme)
 end
 
@@ -156,10 +152,8 @@ function TalesManager:set_next_tale ()
        return
     end        
     if self.tale.type == "narrator" then
-       printf ("NARRATOR THEME = %s", self.tale.theme)
        xr_sound.set_sound_play (self.npc_list[self.narrator], self.tale.theme)
     else
-       printf ("REACTIONER THEME = %s", self.tale.theme)
        for a = 1, table.getn (self.npc_list_id), 1 do
            if self.npc_list_id[a] ~= self.narrator then
               xr_sound.set_sound_play (self.npc_list[self.npc_list_id[a]], self.tale.theme, math.random (1, 1.5) * 1000)
@@ -244,11 +238,7 @@ function PatrolManager:add_npc (npc, leader)
     --' если мужик первый или считается лидером, то установим, как лидера    
     if self.npc_count == 1 or leader == true then
        self.commander_id = npc:id ()
-       printf ("[XR_PATROL] ASSIGNED NPC %s AS PATROL COMMANDER", npc:name ())
     end    
-    
-
-    printf ("[XR_PATROL] NPC %s added to patrol manager %s", npc:name (), self.path_name) 
     
     if tm_enabled == true then
        self.tm:add_npc (npc)
@@ -265,7 +255,6 @@ function PatrolManager:remove_npc(npc)
     if self.npc_list[npc:id()] == nil then
 		return
 	end
-    printf ("[XR_PATROL] NPC %s removed from patrol manager %s", npc:name(), self.path_name) 
     self.npc_list[npc:id ()] = nil
     self.npc_count = self.npc_count - 1
     
@@ -291,7 +280,6 @@ function PatrolManager:reset_positions ()
         end
         -- пересчитаем позиции
         if self.commander_id ~= self.npc_list[key].soldier:id () then
-		   printf("key[%s] index[%s]", tostring(key), tostring(index))
            self.npc_list[key].dir = form_[index].dir
            self.npc_list[key].dist = form_[index].dist
 	       self.npc_list[key].vertex_id = -1
@@ -488,7 +476,6 @@ end
 ----------------------
 function action_commander:activate_scheme()
 	self.st.signals = {}
-	printf ("[XR_PATROL] SET PATROL PATH : %s", self.st.path_walk)
 	if self.st.path_walk_info == nil then
 		self.st.path_walk_info = utils.path_parse_waypoints(self.st.path_walk)
 	end
@@ -515,7 +502,6 @@ end
 ----------------------
 function action_commander:finalize ()
     if self.object:alive () == true then
-       --printf ("ACTION_COMMANDER:FINALIZE CALLED")
 	   patrols[self.st.path_walk]:set_command (self.object, "guard", self.st.formation)
 	   self.move_mgr:finalize()
 	end   
@@ -575,10 +561,6 @@ end
 function action_patrol:activate_scheme()
 	self.st.signals = {}
 end
-----------------------
---function action_patrol:reset_scheme ()
-    --printf ("ACTION_PATROL:RESET_SCHEME CALLED")
---end
 ----------------------
 function action_patrol:execute()
 	action_base.execute (self)
@@ -707,7 +689,6 @@ end
 
 -- включение патруля
 function set_scheme(npc, ini, scheme, section, gulag_name)
-    printf ("XR_PATROL CALLED 'SET_SCHEME' FOR NPC %s", npc:name ())
 	local st = xr_logic.assign_storage_and_bind (npc, ini, scheme, section)
 
 	st.logic = xr_logic.cfg_get_switch_conditions (ini, section, npc)		

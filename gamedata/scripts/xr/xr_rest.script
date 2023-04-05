@@ -87,7 +87,6 @@ function action_position:execute ()
     else 
        if self.set == false then 
           xr_state.change_state (self.object, 3)
-          --printf ("Change state at %d", device ():time_global ())
           self.set = true
           return
        end   
@@ -96,7 +95,6 @@ function action_position:execute ()
 	if xr_state.finish_state (self.object) ~= true then 
 	   return 
 	end
-	--printf ("End of change state at %d", device ():time_global ())
 	self.st.on_position = true    
 	self.st.standing = false
 end
@@ -146,7 +144,6 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 function action_position:callback (mode, number)
 
-    printf ("CALLBACK CALLED")
     if self.on_position == true then return end
     
 	self.object:set_movement_type(move.stand)
@@ -224,12 +221,10 @@ function action_rest:execute ()
             self.object:clear_animations () 
             self.stage = 1
           end   
-          --printf ("ENABLE BREAD 1")
           self.object:set_item (object.use, self.eat_object)
           self.time_to_eat = device ():time_global () + 30000
           return
        end   
-       --printf ("ENABLE BREAD 2")
        if device ():time_global () - self.time_to_eat > 0 then
           self.eat_enable = false
           self.stage = 0
@@ -244,12 +239,10 @@ function action_rest:execute ()
             self.object:clear_animations () 
             self.stage = 1
           end   
-          --printf ("ENABLE VODKA 1")
           self.object:set_item (object.use, self.drink_object)
           self.time_to_eat = device ():time_global () + 20000
           return
        end   
-       --printf ("ENABLE VODKA 2")
        if device ():time_global () - self.time_to_eat > 0 then
           self.object:set_item (object.deactivate, self.drink_object)
           self.drink_enable = false
@@ -262,7 +255,6 @@ function action_rest:execute ()
     --if xr_state.finish_state (self.object) ~= true then return end
 
     if self.rest_end_signalled == false then
-       --printf ("ON SIGNAL !") 
        self.st.signals["rest_end"] = true
        self.rest_end_signalled = true
     end   
@@ -278,7 +270,6 @@ end
 ----------------------
 function  action_rest:finalize ()
 //    if self.object:best_enemy () ~= nil then
-//       printf ("ANIMATIONS CLEARED") 
 //       self.object:clear_animations ()
 //       self.object:set_item (object.deactivate, self.object:active_item ())
 //    end    

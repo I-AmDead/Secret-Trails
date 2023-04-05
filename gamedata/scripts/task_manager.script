@@ -460,8 +460,6 @@ function CRandomTask:action_give_task( actor, npc, p1, p2 )
   --' �������� ������� ���� ������
   if task_desc.target_objects ~= nil then
     self.task_info[task_id].selected_target = task_desc.target_objects[math.random(table.getn(task_desc.target_objects))]
-    printf("TARGET DEBUG INFO")
-    printf("selected = %s", tostring(self.task_info[self.task_id_by_yes_phrase_id[p2]].selected_target))
     print_table(task_desc.target_objects)
   end
 
@@ -551,9 +549,7 @@ function CRandomTask:task_complete(p1, p2)
 
   local sel_task = self.task_info[self.active_task_by_type[p1]]
   if sel_task == nil then
-    printf("!!!")
     print_table(self.active_task_by_type)
-    printf("!!!")
     print_table(self.task_info)
 --    abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
     return false
@@ -588,10 +584,8 @@ function CRandomTask:task_complete(p1, p2)
 
       --' �������� ����
       if oo == nil then
-        printf("selected_target = %s", tostring(sel_task.selected_target))
         abort("OBJ = nil for task %s", tostring(self.active_task_by_type[p1]))
       elseif oo.alive == nil then 
-        printf("OBJ.ALIVE = nil for task %s", tostring(self.active_task_by_type[p1]))
         abort("OBJ.NAME = %s", obj:name())        
       end   
 
@@ -628,9 +622,7 @@ function CRandomTask:task_fail(p1, p2)
     local sel_task = self.task_info[self.active_task_by_type[p1]]
     
     if sel_task == nil then
-      printf("!!!")
       print_table(self.active_task_by_type)
-      printf("!!!")
       print_table(self.task_info)
 --      abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
       return false
@@ -727,17 +719,12 @@ function CRandomTask:task_avail(actor, npc, p1, p2, p3, calculate)
     return t
   end
 
---' printf("@@@prior %s -> %s [%s]", task_desc.complex_type, task_desc.prior, tostring(calculate))
 --' print_table(self.current_parent_type_prior)
 
   if self.current_parent_type_prior[task_desc.complex_type] ~= nil and
      self.current_parent_type_prior[task_desc.complex_type] < task_desc.prior then
     return false
   end
-
---' printf("@@@avail %s", tostring(self.task_id_by_init_phrase_id[p3]))
---' printf("@@@enabled %s", tostring(self.task_info[self.task_id_by_init_phrase_id[p3]].enabled))
---' printf("@@@enabled_props %s", tostring(self.task_info[self.task_id_by_init_phrase_id[p3]].enabled_props))
   
   return task_desc.enabled and 
        task_desc.enabled_props and
@@ -806,7 +793,6 @@ function CRandomTask:check_task_props(task_id)
     
       --' �������� ����
       if obj ~= nil and obj.alive == nil then 
-        printf("OBJ.ALIVE = nil for task %s", task_id)
         print_table(self.task_info[task_id].target_objects)
         abort("OBJ.NAME = %s", obj:name())        
       end     
@@ -1111,7 +1097,6 @@ function CRandomTask:register_target(obj)
         if self.task_info[v].target_objects == nil then
           self.task_info[v].target_objects = {}
         end
---        printf("@@@register new target %s[%s] for task %s", obj:name(), obj.id, v)
         table.insert(self.task_info[v].target_objects, obj.id)
       end
     end
@@ -1151,6 +1136,7 @@ function CRandomTask:register_target(obj)
     end
   end
 end
+
 --' ������������� ����� ��� �������.
 function CRandomTask:unregister_target(obj)
   if IsStalker(obj) then
@@ -1178,15 +1164,15 @@ function CRandomTask:unregister_target(obj)
     end
   end
 end
+
 function CRandomTask:stats(obj)
-  printf("### TASK STATISTIC ###")
   for k,v in pairs(self.task_info) do
     if v.init_condition ~= nil then
-      printf("[%s] %s : %s", v.status, k, tostring(v.enabled_props))
       print_table(v.init_condition)
     end
   end
 end
+
 function get_random_task()
   if random_task == nil then
     random_task = CRandomTask()

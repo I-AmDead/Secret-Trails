@@ -22,7 +22,6 @@ end
 -- RESET SCHEME
 ----------------------------------------------------------------------------------------------------
 function mob_jump:reset_scheme()
-    printf("Jump: reset_scheme: %s", self.object:name())
 	xr_logic.mob_capture		(self.object, true)
 
 	-- reset signals
@@ -86,8 +85,6 @@ end
 -- ADD_TO_BINDER
 ----------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
-	printf("DEBUG: add_to_binder: npc:name()='%s', scheme='%s', section='%s'", npc:name(), scheme, section)
-
 	local new_action = mob_jump(npc, storage)
 
 	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
@@ -106,12 +103,8 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
 	storage.jump_path_name	= utils.cfg_get_string(ini, section, "path_jump",		npc, false, gulag_name)
 	storage.ph_jump_factor	= utils.cfg_get_number(ini, section, "ph_jump_factor",	npc, false, 1.8)
 	
-	local offset_str		= utils.cfg_get_string(ini, section, "offset",			npc, true, "") 
-	printf( "offset_str=%s", offset_str )
-
-	local elems				= parse_names(offset_str)
-	printf( "elems = %s | %s | %s", tostring(elems[1]), tostring(elems[2]), tostring(elems[3]) )
-	
+	local offset_str		= utils.cfg_get_string(ini, section, "offset",			npc, true, "")
+	local elems			= parse_names(offset_str)
 	storage.offset			= vector():set(tonumber(elems[1]), tonumber(elems[2]), tonumber(elems[3]))
 	
 	if	not ini:line_exist( section, "on_signal" ) then

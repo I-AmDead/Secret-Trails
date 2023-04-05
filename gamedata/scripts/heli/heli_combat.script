@@ -169,8 +169,6 @@ end
 function heli_combat:save( packet )
 --	packet:w_bool( self.retreat_already )
 
---	printf( "heli_combat:save level_changing=%s", tostring( utils.level_changing() ) )
-
 	if utils.level_changing() then
 		packet:w_bool( false )
 		return
@@ -240,7 +238,6 @@ end
 function heli_combat:waypoint_callback()
 	if self.enemy_id and not self:combat_ignore_check() then
 		self.was_callback = true
-		printf( "heli_combat:waypoint_callback" )
 		return true
 	else
 		return false
@@ -255,7 +252,6 @@ function heli_combat:update_custom_data_settings()
 		self.heliObject.m_use_mgun_on_attack   = self.combat_use_mgun
 
 		if self.combat_type == combat_type_flyby then
-			printf( "heli_combat:update_custom_data_settings SetMaxVelocity=%d", self.max_velocity )
 			self.heliObject:SetMaxVelocity( self.max_velocity )
 		end
 
@@ -303,8 +299,6 @@ function heli_combat:update_combat_type( see_enemy )
 
 	local ct = self.combat_type
 
---	printf( "flyby_states_for_one_pass=%d", self.flyby_states_for_one_pass )
-
 	if self.combat_type == combat_type_flyby then
 		if self.flyby_states_for_one_pass <= 0 then
 			if self.attack_before_retreat then
@@ -351,9 +345,7 @@ function heli_combat:update_combat_type( see_enemy )
 		end
 	end
 
---	printf( "combat_type = %s", tostring( self.combat_type ) )
 	self:set_combat_type( ct )
---	printf( "combat_type = %s", tostring( self.combat_type ) )
 end
 
 -- нужно ли игнорировать врага
@@ -462,8 +454,6 @@ function heli_combat:round_initialize()
 	self.change_combat_type_allowed = true
 	self.round_begin_shoot_time    = 0
 
-
-	printf( "heli_combat:round_initialize SetMaxVelocity=%d", self.round_velocity )
 	self.heliObject:SetMaxVelocity( self.round_velocity )
 	self.heliObject:SetSpeedInDestPoint( self.round_velocity )
 	self.heliObject:UseFireTrail( false )
@@ -481,8 +471,6 @@ end
 function heli_combat:round_setup_flight( direction )
 	self.center_pos   = self.enemy_last_seen_pos
 	self.center_pos.y = self.safe_altitude
-
-	printf( "heli_combat:round_setup_flight GoPatrolByRoundPath" )
 	self.heliObject:GoPatrolByRoundPath( self.center_pos, self.search_attack_dist, direction )
 	self.heliObject:LookAtPoint( self.enemy:position(), true )
 end
@@ -515,9 +503,6 @@ function heli_combat:round_update_flight( see_enemy )
 		end
 
 		self.change_dir_time = time_global() + t --+ 1000000
-
-		printf( "heli_combat: going by round path, t=%d", t )
-
 		self.flight_direction = not self.flight_direction
 		self:round_setup_flight( self.flight_direction )
 
@@ -535,8 +520,6 @@ function heli_combat:round_update_flight( see_enemy )
 		end
 
 		if distance_2d( self.center_pos, self.enemy_last_seen_pos ) > 10 then
-			printf( "heli_combat: enemy has changed his position" )
-
 			self:round_setup_flight( self.flight_direction )
 		end
 	end
@@ -546,8 +529,6 @@ function heli_combat:round_update( see_enemy )
 	if not self.round_initialized then
 		self:round_initialize()
 	end
-
---	printf( "heli_combat: round_update" )
 
 	self:round_update_shooting( see_enemy )
 	self:round_update_flight  ( see_enemy )
@@ -590,11 +571,8 @@ function heli_combat:search_setup_flight()
 		v = self.search_velocity
 	end
 
-	printf( "heli_combat:search_setup_flight SetMaxVelocity=%d", v )
 	self.heliObject:SetMaxVelocity( v )
 	self.heliObject:SetSpeedInDestPoint( v )
-
-	printf( "heli_combat:search_setup_flight GoPatrolByRoundPath" )
 	self.heliObject:GoPatrolByRoundPath( self.center_pos, self.search_attack_dist, self.flight_direction )
 	self.heliObject:LookAtPoint( self.enemy:position(), true )
 end
@@ -641,8 +619,6 @@ function heli_combat:search_update_flight( see_enemy )
 		end
 
 		if distance_2d( self.center_pos, self.enemy_last_seen_pos ) > 10 then
-			printf( "heli_combat: enemy has changed his position" )
-
 			self:search_setup_flight( self.flight_direction )
 		end
 	end
@@ -652,8 +628,6 @@ function heli_combat:search_update( see_enemy )
 	if not self.search_initialized then
 		self:search_initialize()
 	end
-
---	printf( "heli_combat: search_update" )
 
 	self:search_update_shooting( see_enemy )
 	self:search_update_flight  ( see_enemy )
@@ -670,7 +644,6 @@ function heli_combat:flyby_initialize()
 	self.flyby_states_for_one_pass = 2
 	self.flyby_initialized         = true
 
-	printf( "heli_combat:flyby_initialize SetMaxVelocity=%d", self.max_velocity )
 	self.heliObject:SetMaxVelocity( self.max_velocity )
 	self.heliObject:SetSpeedInDestPoint( self.max_velocity )
 	self.heliObject:LookAtPoint( dummy_vector, false )
@@ -697,11 +670,8 @@ end
 function heli_combat:flyby_update_flight( see_enemy )
 	if self.was_callback then
 		if self.state == flyby_state_to_attack_dist then
-			printf( "switch state -> ENEMY" )
 			self.state = flyby_state_to_enemy
-
 		elseif self.state == flyby_state_to_enemy then
-			printf( "switch state -> DIST" )
 			self.state = flyby_state_to_attack_dist
 		end
 
@@ -712,7 +682,6 @@ function heli_combat:flyby_update_flight( see_enemy )
 	if self.state == flyby_state_to_attack_dist then
 		if not self.state_initialized then
 			local p = self:calc_position_in_radius( self.flyby_attack_dist )
---			printf( "heli_combat:flyby_update_flight 1 SetDestPosition %f %f %f", p.x, p.y, p.z )
 			self.heliObject:SetDestPosition( p )
 
 			self.heliObject:ClearEnemy()
@@ -737,7 +706,6 @@ function heli_combat:flyby_update_flight( see_enemy )
 
 		self.change_combat_type_allowed = distance_2d( self.object:position(), p ) > self.search_attack_dist
 
---		printf( "heli_combat:flyby_update_flight 2 SetDestPosition %f %f %f", p.x, p.y, p.z )
 		self.heliObject:SetDestPosition( p )
 	end
 end
@@ -747,11 +715,7 @@ function heli_combat:flyby_update( see_enemy )
 		self:flyby_initialize()
 	end
 
---	printf( "heli_combat: flyby_update" )
-
 	self:flyby_update_flight( see_enemy )
-
---	printf( "speed in dest point %d", self.heliObject:GetSpeedInDestPoint(0) )
 end
 
 ----------------------------------------------------------------------------------------------
@@ -776,6 +740,4 @@ function heli_combat:retreat_update()
 	if not self.retreat_initialized then
 		self:retreat_initialize()
 	end
-
---	printf( "heli_combat: retreat_update" )
 end

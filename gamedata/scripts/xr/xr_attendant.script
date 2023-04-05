@@ -56,12 +56,7 @@ function evaluator_leader:evaluate ()
     if self.time == 0 then 
        self.time = device ():time_global () 
     else
-       if device ():time_global () - self.time > 10000 then
-          if t ~= nil and t.dependent ~= nil then 
-             printf ("!!! ERROR !!! FOLLOWER %s NOT FOUND LEADER WITH JOB %s", self.object:name (), t.dependent)
-          else
-             printf ("!!! ERROR !!! FOLLOWER %s NOT FOUND LEADER BECAUSE LEADER NOT DEFINED", self.object:name ())
-          end    
+       if device ():time_global () - self.time > 10000 then  
           abort ("!!! ERROR !!! Leader for object %s not defined from GULAG system", self.object:name ())
           self.time = 0
           xr_gulag.resetJob (gulag, self.object)
@@ -103,7 +98,6 @@ end
 function action_wait:execute ()
     action_base.execute (self)
 
-    --printf("follower<wait.execute>: try_switch_to_another_section")
     if xr_logic.try_switch_to_another_section (self.object, self.st, db.actor) then
        return 
     end
@@ -149,7 +143,6 @@ function action_follow:execute ()
        self:reset_scheme()
     end
     
-    --printf("follower<follow.execute>: try_switch_to_another_section")
     if xr_logic.try_switch_to_another_section (self.object, self.st, db.actor) then
        self.st.leader_id = nil
        return 
@@ -158,7 +151,6 @@ function action_follow:execute ()
     -- FIXME !!! 
     --xr_sound.set_sound(self.object, self.st.sound_theme)
     --local pos = self.object:position ()
-    --printf ("FOLLWER %s POSITION x = %f, y = %f, z = %f", self.object:name (), pos.x, pos.y, pos.z)
     -- проверим, а жив ли еще старшОй.
     local leader = level.object_by_id(self.st.leader_id)
     if leader == nil then
@@ -178,10 +170,7 @@ function action_follow:execute ()
     self:check_list ()
     
     if self.st.leader_section == nil then
-       self.st.leader_section = db.storage[self.st.leader_id].active_section
-       --if self.st.leader_section ~= nil then
-          --printf ("FOLLOWER %s, LEADER SCHEME  = %s", self.object:name (), self.st.leader_section)
-       --end   
+       self.st.leader_section = db.storage[self.st.leader_id].active_section 
     end
            
     if db.storage[self.st.leader_id].active_section ~= self.st.leader_section then
@@ -193,7 +182,6 @@ function action_follow:execute ()
     
     --получим целевую точку, дистанцию до нее и позицию.
     local vid, vdist, vpos = self:calculate_position ()
-    --printf ("FOLLOWER %s HAVE A %d VERTEX ID", self.object:name (), vid)
     if self.state == 0 then
        if vdist > 1 then 
           self.object:set_dest_level_vertex_id (vid)
@@ -212,13 +200,10 @@ function action_follow:execute ()
           self.object:set_path_type (game_object.level_path)
           if vdist > 20 then
              state_mgr.set_state (self.object, self.st.animation_sprint)
-             --printf ("FOLLOWER %s IS SPRINTED", self.object:name ())
           elseif vdist < 3 then
              state_mgr.set_state (self.object, self.st.animation_move)
-             --printf ("FOLLOWER %s IS MOVED", self.object:name ())
           elseif vdist > 5 then
              state_mgr.set_state (self.object, self.st.animation_run)
-             --printf ("FOLLOWER %s IS RUNNING", self.object:name ())
           end   
        else
           self.state = 1
@@ -237,10 +222,8 @@ function action_follow:execute ()
           end   
        
           if xr_meet.is_meet (leader) == true then
-             --printf ("LEADER IN MEET STATE")
              state_mgr.set_state (self.object, self.st.state_if_leader_in_meet, nil, nil, db.actor)
           else   
-             --printf ("LEADER NOT IN MEET STATE")
              state_mgr.set_state (self.object, "idle")
           end  
        end   
@@ -308,7 +291,6 @@ function action_follow:calculate_position ()
     if self.object:accessible (need_id) == false then
        need_id = leader:level_vertex_id ()
        if self.object:accessible (need_id) == false then
-          printf ("!!!ERROR!!! Follower %s can't found accessible vertex id !!!", self.object:name ())
           need_id = self.object:nearest_accessible_position ()
           --abort ("ERROR: can't find vertex id for object %s", self.object:name ())
        end 
@@ -328,7 +310,6 @@ function action_follow:check_list ()
     if storage.followers == nil then
        storage.followers = {}
        table.insert (storage.followers, self.object:id ())
-       --printf ("SET OBJECT %s AS FOLLOWER 1", self.object:name ())
        self.index = 1
        return
     end
@@ -342,7 +323,6 @@ function action_follow:check_list ()
     -- не нашли... добавим.
     table.insert (storage.followers, self.object:id ())
     self.index = table.getn (storage.followers)
-    --printf ("SET OBJECT %s AS FOLLOWER %d", self.object:name (), self.index)
 end
 --------
 function action_follow:free ()
@@ -351,11 +331,9 @@ function action_follow:free ()
 
     if gulag ~= nil then
        if self.st.dont_change_job == false then
-          printf ("!!!FOLLOWER %s!!! LEADER SECTION CHANGED - NEED NEW JOB FROM GULAG", self.object:name ()) 
           xr_gulag.resetJob (self.object)
        end   
     else
-       --printf("follower<follow.free>: try_switch_to_another_section")
        xr_logic.try_switch_to_another_section (self.object, self.st, db.actor)
     end
 end

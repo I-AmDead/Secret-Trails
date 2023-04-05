@@ -92,10 +92,6 @@ local function read_profile(section)
 end
 read_profile('default')
 
-function printf(s, ...)
---	rx_utils.printf("gre:"..s,...)
---	get_console():execute("flush")
-end
 ----------------------------------------------------------------------------------------------------------------------
 -- EVALUATORS
 ----------------------------------------------------------------------------------------------------------------------
@@ -271,7 +267,6 @@ function evaluator_crazy_grenadier:update_test()
 	local npc,st = self.object,self.a
 	local sobj = alife():object(id)
 	if not sobj then
-		printf("[%s]test:fail sobj[%s], obj %s",npc:name(),id,get_grenade(id))
 		return false
 	end
 	local obj = id and get_grenade(id)
@@ -279,15 +274,12 @@ function evaluator_crazy_grenadier:update_test()
 		if self.wait_for_online > time_global() then
 			return
 		end
-		printf("[%s]test:fail obj %s (%s)",npc:character_name(),id,sobj)
 		return false
 	end
 	if not grenades[id] then
-		printf("[%s]fail grenades[%s]",self.object:name(),id)
 		return false
 	end
 	if obj:parent() then
-		printf("[%s]test:fail [%s] parent %s",npc:name(),obj:name(),obj:parent():name())
 		return false
 	end
 	if not self.a.test_end_time then
@@ -1239,7 +1231,6 @@ function spawn_grenade(eva)
 		local rnd = math.random()
 		for _,t in ipairs(spch) do
 			if rnd < t[2] then
---				printf("spawn_grenade[%s]:create %s",npc:character_name(),t[1])
 				alife():create(t[1],npc:position(),npc:level_vertex_id(),npc:game_vertex_id(),npc:id())
 				return
 			end
@@ -1249,9 +1240,6 @@ end
 
 function throw(st,id,obj)
 	local ps = obj:get_physics_shell()
-	if ps == nil then
-		printf("try to throw[%s] no ps! parent %s typ %s",obj:name(),obj:parent(),typ)
-	end
 	if not st.grenade_data.test then
 		if ui_grenade_marks then
 			ui_grenade_marks.add_new_marker(id,st.mark)
@@ -1359,13 +1347,10 @@ function update()
 						else
 							level.map_remove_object_spot(id,"grenade_location")
 						end
-					else
---						printf("explode[%s] fail: not obj!!!!!!!!",sobj:name())
 					end
 				end
 				grenades[id] = nil
 			else	-- возможно граната взорвалась сама?
---				printf("update[%s] not sobj %s !!!!",id)
 				grenades[id] = nil
 				if ui_grenade_marks then
 					ui_grenade_marks.start_fading(id)

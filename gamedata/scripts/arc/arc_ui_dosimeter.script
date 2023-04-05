@@ -8,6 +8,8 @@ local is_fading = false
 local fade_delay, fade_total_time, fade_time_left
 
 local enabled
+local dosimeter
+local arc_hud
 
 function show()
 	is_fading = false
@@ -46,11 +48,18 @@ function update(delta)
 	
 	-- Updating dosimeter:
 	show_dosimeter(delta)
+
+	if not arc_hud then
+
+		local hud = get_hud()
+		arc_hud = hud:GetCustomStatic("arc_hud")
+
+		if not arc_hud then
+			hud:AddCustomStatic("arc_hud", true)
+			arc_hud = hud:GetCustomStatic("arc_hud")
+		end
+	end
 end
-
-local dosimeter
-
-local arrow_velocity, arrow_position = 0, 0
 
 function show_dosimeter(delta) -- FIXME
 
