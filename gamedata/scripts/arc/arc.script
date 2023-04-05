@@ -1,80 +1,39 @@
 function attach(sm)
-  sm:subscribe({ signal = "on_update",       fun = this.on_actor_update     })
+  sm:subscribe({ signal = "on_update",       fun = this.on_actor_update })
+  sm:subscribe({ signal = "on_key_down",     fun = this.on_key_down	})
+  sm:subscribe({ signal = "on_key_up",       fun = this.on_key_up	})
 end
 
 function on_actor_update(delta)
   arc_radiation.on_actor_update(delta)
   arc_health.on_actor_update(delta)
+  arc_ui_dosimeter.update(delta)
   on_hud_update(delta)
 end
 
-local custom_msgs =
-{
-"monster_claws",
-"main_task",
-"cs_psy_danger",
-"cs_radiation_danger",
-"game_saved",
-"autosave",
-"item_used",
-"gun_jammed",
-"cant_walk",
-"cant_walk_weight",
-"not_enough_money_mine",
-"not_enough_money_other"
-}
-
-local cs_states = {}
-
-local arc_cs_string = "arc_hud"
-
 local arc_hud
-
 function on_hud_update(delta)
 	if not arc_hud then
+
 		local hud = get_hud()
-		
-		arc_hud = hud:GetCustomStatic(arc_cs_string)
-		
+		arc_hud = hud:GetCustomStatic("arc_hud")
+
 		if not arc_hud then
-			hud:AddCustomStatic(arc_cs_string, true)
-			arc_hud = hud:GetCustomStatic(arc_cs_string)
-
-			if not arc_hud then return end
-
-		end
-		
-		local wnd = arc_hud:wnd()
-		
-		wnd:SetWndRect(0, 0, 1024, 768)
-	end
-	
-	for i = 1, table.getn(custom_msgs) do
-		local s = custom_msgs[i]
-		local cs = get_hud():GetCustomStatic(s)
-		
-		if cs then
-			if not cs_states[s] then
-				cs_states[s] = true
-				on_custom_static_show(s)
-			end
-		elseif cs_states[s] then
-			cs_states[s] = nil
-			on_custom_static_hide(s)
+			hud:AddCustomStatic("arc_hud", true)
+			arc_hud = hud:GetCustomStatic("arc_hud")
 		end
 	end
-	
-	arc_ui_dosimeter.update(delta)
 end
 
-function on_custom_static_show(cs_name)	
-	if cs_name == "main_task" then
+function on_key_down(key, bind)
+	if level.main_input_receiver() or not db.actor:alive() or device().precache_frame > 1 then return end
+	if bind == key_bindings.kSCORES then
 		arc_ui_dosimeter.show()
 	end
 end
 
-function on_custom_static_hide(cs_name)
-	if cs_name == "main_task" then
-		arc_ui_dosimeter.fade() --.hide
+function on_key_up(key, bind)
+	if bind == key_bindings.kSCORES then
+		arc_ui_dosimeter.fade()
 	end
 end
