@@ -19,7 +19,11 @@
 #define SCANLINES_INTENSITY 0.175 // NV_PARAMS.y
 #define VIGNETTE_RADIUS 1.0
 
+uniform float4 fakescope_params1; // power, inner blur, outer blur, brightness
+uniform float4 fakescope_params2; // chroma abber, fog attack(aim), fog attack(move), fog max travel
+uniform float4 fakescope_params3; // radius, relative fog radius, fog sharpness
 uniform float4 m_affects;
+uniform float4 m_hud_params;
 
 // https://stackoverflow.com/a/10625698
 float random(float2 p)
@@ -32,7 +36,7 @@ float random(float2 p)
 
 float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
 
-float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float4 NV_PARAMS)
+float4 vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float4 NV_PARAMS)
 {
     float lum = dot(color.rgb, float3( 0.3f, 0.38f, 0.22f)*NV_COLOR.w );  //instead of float3 use LUMINANCE_floatTOR in stalker
     color.rgb = NV_COLOR.xyz*lum;
@@ -87,4 +91,35 @@ float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float
     color = random(timers.xz) > mig ? 0 : color;
 
     return color;
+}
+
+float2 aspect_ratio_correction (float2 tc)
+{
+    tc.x -= 0.5f;
+    tc.x *= (screen_res.x / screen_res.y);
+    tc.x += 0.5f;
+
+    return tc;
+}
+
+float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float4 NV_PARAMS)
+{
+    if(m_hud_params.x > 0 && fakescope_params3.x > 0) //
+    {
+        float2 corrected_texturecoords = aspect_ratio_correction(tc0);
+        float2 scope_center = float2(0.5f, 0.5f);
+
+        float distToCenter = distance(corrected_texturecoords, scope_center);
+
+        if(m_hud_params.x >= 1.0 && fakescope_params3.x > 0 && step(distToCenter, fakescope_params3.x) == 1)
+        {
+            return vision_effect(tc0, color, NV_COLOR, NV_PARAMS); //return vision_effect(tc0, color, float4(0.f,1.f,0.f, NV_COLOR.w), NV_PARAMS);
+        }
+
+        return color;
+    }
+    else
+    {
+        return vision_effect(tc0, color, NV_COLOR, NV_PARAMS);
+    }
 }
