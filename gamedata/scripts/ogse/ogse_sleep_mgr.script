@@ -23,6 +23,8 @@ function break_sleep()            -- принудительное прерывание сна
   break_sleep_request = true
 end
 
+local snd_volume_eff
+local snd_volume_music
 
 function begin_sleep( desired_sleep_time )
   -- если кто-то запрашивал прерывание сна во время бодрствования, то
@@ -34,6 +36,10 @@ function begin_sleep( desired_sleep_time )
   level.add_pp_effector("surge_fade.ppe", 11, false)
   level.add_pp_effector( "black.ppe", 105, false )
   dsh.level_timeout( 2000, function() begin_sleep2( desired_sleep_time ) end )
+  snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
+  snd_volume_music = get_con_float("snd_volume_music", 1.0)
+  cmd("snd_volume_eff", 0.0)
+  cmd("snd_volume_music", 0.0)
 end
 
 
@@ -115,6 +121,9 @@ function begin_sleep2( desired_sleep_time )
   dsh.exec_on_update(
     u3_utils.savegame, game.translate_string("save_sleep") .. " - " .. game.translate_string( level.name() )
   )
+
+  cmd("snd_volume_eff", tostring(snd_volume_eff))
+  cmd("snd_volume_music", tostring(snd_volume_music))
 
   swm_legs.hidden_legs()
   level.add_cam_effector("camera_effects\\surge_01.anm", 6666, false, "ogse_sleep_mgr.sleep_finish")

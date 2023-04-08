@@ -26,7 +26,6 @@ class "actor_binder" ( object_binder )
 function actor_binder:__init( obj ) super( obj )
   sim = alife()
   self.bCheckStart = false
-  self.actor_detector  = xr_detector.actor_detector()
   self.is_saved    = false
   self.am          = ogse_signals.get_mgr()
   self.am:call( "on_load_before_all" )
@@ -212,13 +211,11 @@ end
 
 
 function actor_binder:level_border_enter( npc, info_id )
-  self.actor_detector:actor_enter() 
   self.am:call( "on_level_border_enter", npc, info_id )
 end
 
 
 function actor_binder:level_border_exit( npc, info_id )
-  self.actor_detector:actor_exit() 
   self.am:call( "on_level_border_exit", npc, info_id )
 end
 
@@ -369,9 +366,6 @@ function actor_binder:update( delta )
   object_binder.update( self, delta )
 
   game_stats.update (delta, self.object)
-
-  -- апдейт схемы детектора
-  self.actor_detector:update()
    
   -- Обновление отключения ввода с клавиатуры.
   if self.st.disable_input_time ~= nil and
@@ -586,7 +580,6 @@ function actor_binder:save_old( packet )
   packet:w_bool( false )
 
   xr_logic.pstor_save_all( self.object, packet )
-  self.actor_detector:save( packet )
 end
 
 
@@ -618,7 +611,6 @@ function actor_binder:load( reader )
     treasure_manager.load( reader )
 	end                                  
   task_manager.load( reader )
-  self.actor_detector:load( reader )
 
   self.am:call( "on_load", reader )
 
