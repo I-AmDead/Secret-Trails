@@ -1,3 +1,32 @@
+function attach( sm )
+  sm:subscribe({ signal = "on_spawn",		fun = this.on_spawn })
+  sm:subscribe({ signal = "on_save_after_all", 	fun = this.on_save  })
+  sm:subscribe({ signal = "on_load",		fun = this.on_load  })
+end
+
+local show_wnd_tutorial
+
+function on_spawn()
+	if not show_wnd_tutorial then return end
+
+	local text = string.format("%s", game.translate_string("later_other"))
+	local hud = get_hud()
+	hud:AddCustomStatic("main_task", true)
+	hud:GetCustomStatic("main_task"):wnd():SetTextST(text)
+	hud:GetCustomStatic("main_task").m_endTime = time_global() / 1000 + 10
+	show_wnd_tutorial = false
+end
+
+function on_save()
+	if show_wnd_tutorial then
+		ogse.save_var("teleport_tutorial", show_wnd_tutorial)
+	end
+end
+
+function on_load()
+	show_wnd_tutorial = ogse.load_var("teleport_tutorial", false)
+end
+
 function teleport_actor( lvid, gvid, pos, dir )
   level.add_pp_effector( "teleport.ppe", 2006, false )
   if type( pos ) == "table" then
@@ -49,12 +78,15 @@ end
 
 function stadium_teleport() 
 	teleport_actor(218545, 2265, vector():set(106.772,1.017,407.975), vector():set(0.0, 3.0, 0.0))
+	show_wnd_tutorial = true
 end
 
 function sarcofag_teleport()
 	teleport_actor(10193, 2437, vector():set(46.698,12.195,-5.712), vector():set(0.0, 0.0, 0.0))
+	show_wnd_tutorial = true
 end
 
 function chaos_teleport()
 	teleport_actor(172158, 2385, vector():set(393.82781,-0.0035887,63.712), vector():set(0.0,3.0,0.0))
+	show_wnd_tutorial = true
 end
