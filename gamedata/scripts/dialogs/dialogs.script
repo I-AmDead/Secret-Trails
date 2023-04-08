@@ -75,7 +75,7 @@ function actor_have_bandage(first_speaker, second_speaker)
 end
 
 function transfer_medkit(first_speaker, second_speaker)
-	if first_speaker:object("medkit") ~= nil then
+	if first_speaker:object("medkit") then
 		dialogs.relocate_item_section(second_speaker, "medkit", "out")
 	elseif first_speaker:object("medkit_army") ~= nil then
 		dialogs.relocate_item_section(second_speaker, "medkit_army", "out")
@@ -167,13 +167,12 @@ function relocate_item_section( victim, section, type, n )
       for i = 1, n do
         ogse.spawn_item_in_inv( section )
       end
-      news_manager.relocate_item( db.actor, type, section )
     elseif type == "out" then
       for i = 1, n do
         db.actor:transfer_item( db.actor:object( section ), victim )
       end
-      news_manager.relocate_item( db.actor, type, section )
     end
+    news_manager.relocate_item( db.actor, type, section )
   end
 end
 
