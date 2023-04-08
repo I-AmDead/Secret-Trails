@@ -657,7 +657,7 @@ function parse_and_process_surge_stage( stage_info )
         parse_and_process_surge_stage( item )
       end
     elseif key == "if_not_safe" then
-      if not ogse_hideouts.npc_inside_safe_zone( db.actor ) then
+      if not npc_inside_safe_zone( db.actor ) then
         parse_and_process_surge_stage( item )
       end
     elseif key == "rnd" then
@@ -710,7 +710,7 @@ function on_actor_update()
     deferred_actions = nil
   end
   if db.actor:has_info( "blowout" ) then
-    if ogse_hideouts.npc_inside_safe_zone( db.actor ) then
+    if npc_inside_safe_zone( db.actor ) then
       db.FlagEsc = 1
     else
       db.FlagEsc = 0
@@ -883,4 +883,39 @@ function pda_off()
 		dsh.timeout( pda_anim_time, function() ogsr_actor_animation.animation_off() end )
 		anim = true
 	end
+end
+
+-- Нужно ли нам прятаться вообще и нервничать
+function check_not_need_hide(obj)
+	if obj and obj:alive() then
+		for k,v in pairs(ogsm_respawn.restrictor_list) do
+			local zone = level.object_by_id(v.id)
+			if zone and utils.npc_in_zone(obj, zone) then
+				local community, radius = ogsm_respawn.get_community_hide(v)
+				if string.find(community, "fake") then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	return false
+end
+
+-- Проверка нахождения непися в безопасной зоне
+function npc_inside_safe_zone(obj)
+	local location = level.name()
+	
+	if isIndoor(location) then
+		return true
+	end
+	
+	if obj and obj:alive() then	
+		for k,v in ipairs( amk_hideouts.hide[ location ] or {} ) do
+			if amk_mod.check_npc_in_hideout( obj, v ) then
+				return true
+			end
+		end		
+	end
+	return false
 end
