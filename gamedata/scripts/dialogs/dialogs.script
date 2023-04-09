@@ -159,6 +159,7 @@ function relocate_item(victim, obj, type)
 		--'news_manager.relocate_item(db.actor, type, obj)
 	end
 end
+
 --' Use this function instead.
 function relocate_item_section( victim, section, type, n )
   n = n or 1
@@ -168,14 +169,11 @@ function relocate_item_section( victim, section, type, n )
         ogse.spawn_item_in_inv( section )
       end
     elseif type == "out" then
-      for i = 1, n do
-        db.actor:transfer_item( db.actor:object( section ), victim )
-      end
+      ogse.remove_inv_items_by_section( section, n )
     end
     news_manager.relocate_item( db.actor, type, section )
   end
 end
-
 
 function relocate_money(victim, num, type)
 	if db.actor and victim then
