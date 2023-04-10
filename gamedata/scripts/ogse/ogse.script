@@ -370,18 +370,27 @@ end
 
 -- Очищаем инвентарь непися, можно ГГ
 function clear_npc_inventory(npc)
-    npc:iterate_inventory(function(_, item)
-		local section = item:section()
-		if section == "bolt" or section == "device_torch" then
-			return
-		end
+    local npc = npc or db.actor
+    npc:inventory_for_each(clear_clear)
+end
 
-		npc:mark_item_dropped(item)
-		local sobj = alife():object(item:id())
-		if sobj then
-			alife():release(sobj, true)
-		end
-	end)
+-- Очищаем инвентарь непися, можно ГГ
+function clear_clear(item)
+    local sect = item:section() 
+    if sect == "detector_simple"
+    or sect == "matras" 
+    or sect == "bioradar"
+    or sect == "detector_kruglov" 
+    or sect == "device_torch"
+    or sect == "wpn_knife"
+    or sect == "wpn_binoc"   
+    then
+        return
+    end
+    local sobj = alife():object(item:id())
+    if sobj then
+    	alife():release(sobj, true)
+    end
 end
 
 -- Проверка, запущена ли игра
