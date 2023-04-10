@@ -990,13 +990,26 @@ end
 
 function transfer_object_item(item)
   out_object:transfer_item(item, in_object)
-end 
+end
+
+function switch_online(id)
+    if id == -1 then return end
+    local sim = alife()
+    if sim then
+        sim:set_switch_online(id,true)
+        sim:set_switch_offline(id,false)
+    end
+end
 
 function mervin_vzyal(actor,npc)
-  local inv_box_1 = level_object_by_sid(9608)
-  out_object = db.actor
-  in_object = inv_box_1
-  db.actor:inventory_for_each(transfer_object_items)
+  local sobj = alife():story_object(9608)
+  switch_online(sobj.id)
+  dsh.wait_condition(function() return level_object_by_sid(9608) end, function()
+    local inv_box_1 = level_object_by_sid(9608)
+    out_object = db.actor
+    in_object = inv_box_1
+    db.actor:inventory_for_each(transfer_object_items)
+  end)
 end
 
 function pripyat_pustoy(actor,npc)
