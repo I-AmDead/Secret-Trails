@@ -263,9 +263,10 @@ end
 function Cmeet_manager:process_meet()
   local key
   local is_talking = self.npc:is_talking()
-  if isWeapon(db.actor:active_item()) and
-       self.npc:relation(db.actor) ~= game_object.friend and self:actor_targets_npc(self.npc)
-    then
+  local act_it = db.actor:active_item()
+  if act_it and act_it:is_weapon() and not act_it:is_binoculars() and not act_it:get_weapon().lowered_active
+      and self.npc:relation(db.actor) ~= game_object.friend and self:actor_targets_npc(self.npc)
+  then
     key = self:get_key_from_distance(self.a.meet_state_wpn)
     if key ~= nil then
       self.wpn_meet=true
@@ -370,7 +371,8 @@ function Cmeet_manager:process_use()
   end
 
   local t
-  if isWeapon(db.actor:active_item()) then
+  local act_it = db.actor:active_item()
+  if act_it and act_it:is_weapon() and not act_it:is_binoculars() and  not act_it:get_weapon().lowered_active then
     t = xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.use_wpn)
     if t == "false" then
       self.disable_talk_weapon = true
