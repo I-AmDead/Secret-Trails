@@ -67,6 +67,21 @@ local eatable_params = {
 	{ prop = "eat_alcohol",				text = string.format("%s:", game.translate_string("ui_inv_alcohol")),		tex = "alcohol"		},
 	{ prop = "eat_radiation",			text = string.format("%s:", game.translate_string("ui_inv_radiation")),	tex = "radiation_2"	},
 	{ prop = "eat_radiation_arc",			text = string.format("%s:", game.translate_string("ui_inv_radiation")),	tex = "radiation_2"	},
+
+	{ prop = "boost_health_restore",		text = string.format("%s:", game.translate_string("ui_inv_health")),		tex = "health"		},
+	{ prop = "boost_bleeding_restore",		text = string.format("%s:", game.translate_string("ui_inv_bleeding")),		tex = "bleeding"	},
+	{ prop = "boost_psy_health_restore",		text = string.format("%s:", game.translate_string("ui_inv_psy_health")),	tex = "telepatic"	},
+	{ prop = "boost_telepat_protection",		text = string.format("%s:", game.translate_string("ui_inv_outfit_telepatic_protection")),	
+tex = "telepatic"	},
+	{ prop = "boost_time_factor",			text = string.format("%s:", game.translate_string("ui_inv_satiety")),		tex = "satiety"		},
+	{ prop = "boost_power_restore",			text = string.format("%s:", game.translate_string("ui_inv_power")),	    
+tex = "power"		},
+	{ prop = "boost_radiation_restore",		text = string.format("%s:", game.translate_string("ui_inv_radiation")),	
+tex = "radiation_2"	},
+	{ prop = "boost_radiation_protection",		text = string.format("%s:", game.translate_string("ui_inv_outfit_radiation_protection")),	
+tex = "radiation"	},
+	{ prop = "boost_fire_wound_protection",		text = string.format("%s:", game.translate_string("ui_inv_outfit_fire_wound_protection")),	
+tex = "fire_wound"	},
 }
 --------------------------------------------------------------------------------------------------------
 class "CUIDescriptionWnd" (CUIScriptWnd)
@@ -287,10 +302,18 @@ function CUIDescriptionWnd:ShowEatableParams()
 		end
 	end
 
-		local tm = get_float(self.section, 'boost_time')
-		if tm then
-			self:ShowProps( { {"time", string.format("%s: %d %s", game.translate_string("descr_time"), tm, game.translate_string("descr_seconds"))} } )
+	local tm = get_float(self.section, 'boost_time')
+	if tm then
+		self:ShowProps( { {"time", string.format("%s: %d %s", game.translate_string("descr_time"), tm, game.translate_string("descr_seconds"))} } )
+	end
+
+	if sys_ini:line_exist(self.section, "boost_max_weight") then
+		val = get_float(self.section, "boost_max_weight")
+		if val~=0 then
+			txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
+			table.insert( params, {"additional_weight", txt} )
 		end
+	end
 
 	if #params>0 then
 		self:ShowProps(params)
