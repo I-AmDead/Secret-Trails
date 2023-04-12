@@ -21,9 +21,6 @@
 #include "screenspace_il.h"
 #endif
 
-uniform float4 pnv_color;
-uniform float4 pnv_params;
-
 //////////////////////////////////////////////////////////////////////////////////////////
 #define EPSDEPTH 0.001
 
@@ -104,9 +101,9 @@ c2_out main(v2p_aa_AA I)
 
 #ifdef SSFX_BEEFS_NVG
 	// NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
-	float lua_param_nvg_generation = floor(shader_param_8.x);			// 1, 2, or 3
-	float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;		// 1, 2, 4, 1.1, or 1.2
-	if (lua_param_nvg_generation < 0.01f && compute_lens_mask(aspect_ratio_correction(I.Tex0), lua_param_nvg_num_tubes) == 0.0f)
+	float lua_param_nvg_generation = floor(pnv_param_2.x);			// 1, 2, or 3
+	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;		// 1, 2, 4, 1.1, or 1.2
+	if (pnv_color.w > 0 && lua_param_nvg_generation < 0.01f && compute_lens_mask(aspect_ratio_correction(I.Tex0), lua_param_nvg_num_tubes) == 0.0f)
 	{
 		img = blend_soft(img, bloom.xyz*bloom.w);
 	}
@@ -116,7 +113,7 @@ c2_out main(v2p_aa_AA I)
 
     bloom = BrokeBloom(bloom);
 
-    if (addon_VControl.w == 1)
+    if (pnv_color.w < 1 && addon_VControl.w == 1)
         img = visor_reflection(img, center);
 
 

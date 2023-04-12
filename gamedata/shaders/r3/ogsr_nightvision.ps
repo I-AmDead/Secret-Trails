@@ -51,7 +51,7 @@ float4 main(p_screen I) : SV_Target
 	///////////////////////////////////////////////////////
 	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
 	
-	float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;  
+	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;  
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{
 			// GRAB SAMPLES FOR NVG SHADER
@@ -69,9 +69,9 @@ float4 main(p_screen I) : SV_Target
 			float depth = blurred_depth(I.tc0);
 
 			//image.r = lerp(half_res_blur.r,image.r,0.6f);
-			//image = pow(image,0.75);
+			image = pow(image,0.85);
 
-			image = lerp(image,half_res_blur,clamp(1-smoothstep(0,15,depth),0.4,1)); // NEAR BLUR
+			image = lerp(image,half_res_blur,clamp(1-smoothstep(0,15,depth),0.2,1)); // NEAR BLUR
 				
 			if (depth < 1000)
 			{
@@ -83,7 +83,7 @@ float4 main(p_screen I) : SV_Target
 			}
 		
 			// GLITCH EFFECT -- TO DO
-			float lua_param_glitch_power = fmod(shader_param_8.z,1.0f); 
+			float lua_param_glitch_power = fmod(pnv_param_2.z,1.0f); 
 				if (lua_param_glitch_power > 0.0f)
 				{
 				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.9);
@@ -100,26 +100,26 @@ float4 main(p_screen I) : SV_Target
 
 
 			// APPLY CRT EFFECT
-			image = lerp(image,make_crt_ified(half_res_blur, I.tc0),gen_1_crt_effect_factor); // Adds a CRT effect that I think looks better than draw_scanlines
+			image = lerp(image,make_crt_ified(half_res_blur, I.tc0),pnv_param_3.y); // Adds a CRT effect that I think looks better than draw_scanlines
 
 			// APPLY NOISE
-			float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f;
-			image.r += jitter.y * (gen_1_nvg_noise_factor * (pow(lua_param_nvg_gain_current,0.5) )); // Add the noise to the image
+			float lua_param_nvg_gain_current = floor(pnv_param_2.y) / 10.0f;
+			image.r += jitter.y * (pnv_param_3.x * (pow(lua_param_nvg_gain_current,0.5) )); // Add the noise to the image
 			
 			// APPLY SCINTILLATION EFFECT 
-			if (jitter.z > (gen_1_scintillation_constant - ( (1.0-gen_1_scintillation_constant) * (lua_param_nvg_gain_current - 1.0f) ) ) )
+			if (jitter.z > (pnv_param_3.z - ( (1.0-pnv_param_3.z) * (lua_param_nvg_gain_current - 1.0f) ) ) )
 			{ image.r = 1.0f; }
 			
 			
 			// APPLY IMAGE COLOR CORRECTION AND MAKE BRIGHT SPOTS WHITE
-			image.rgb = saturate(image.r) * gen_1_saturation_color;
+			image.rgb = saturate(image.r) * pnv_color.rgb;
 			if	(image.g >= 0.95)
 			{
 				image.rgb = pow(image.ggg,2);
 			}
 			
 			// APPLY VIGNETTE
-			float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;
+			float lua_param_vignette_current = floor(pnv_param_2.z) / 100.0f;
 			float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
 			image = clamp(image,0.0,1.0);
 			image *= vignette;
@@ -134,7 +134,7 @@ float4 main(p_screen I) : SV_Target
 	///////////////////////////////////////////////////////
 	else
 	{	
-		float lua_param_nvg_mode = frac(shader_param_8.w) * 10;
+		float lua_param_nvg_mode = frac(pnv_param_2.w) * 10;
 		
 		if (abs(lua_param_nvg_mode-0.0) <= 0.01) // mode 0 - blur
 		{

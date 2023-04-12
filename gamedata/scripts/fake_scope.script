@@ -17,7 +17,7 @@ function actor_on_weapon_zoom_out()
 end
 
 function actor_on_weapon_zoom_in()
-    pnv_mode_save = get_con_float("r__pnv_mode", 0.0)
+    pnv_mode_save = get_con_string("r_pnv_mode", 0)
     if (get_con_string("fake_scope_enable") == "off" 
     or get_con_string("fake_scope_enable") == "0")
     and (db.actor and db.actor:alive()) then return end
@@ -54,8 +54,8 @@ function updateScope(wpn)
         if scopeName and fake_scope_radius.scope_radius[scopeName] then
             cmd("scope_params_4 " .. fake_scope_radius.scope_radius[scopeName] .. ", 1.25" .. ", 10")
             local scope_section = get_string(wpn:section(), "scope_name")
-            if pnv_mode_save > 0.0 then
-                cmd("r__pnv_mode", 0)
+            if pnv_mode_save == "1" then
+                cmd("r_pnv_mode", 0)
             end
             if nv_enable then
                 apply_pnv(scope_section)
@@ -66,24 +66,24 @@ end
 
 function apply_pnv(nv_sect)
     if nv_sect then
-        local mode = get_float(nv_sect, "r__pnv_mode", 0)
-        local color = get_vector(nv_sect, "r__pnv_color")
-        cmd("r__pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
-        cmd("r__pnv_noise", get_string(nv_sect, "r__pnv_noise"))
-        cmd("r__pnv_scanlines", get_string(nv_sect, "r__pnv_scanlines"))
-        cmd("r__pnv_mode", tostring(mode))
+        local mode = get_u32(nv_sect, "r_pnv_mode", 0)
+        local color = get_vector(nv_sect, "r_pnv_color")
+        cmd("r_pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+        cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
+        cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
+        cmd("r_pnv_mode", tostring(mode))
     else
         local nv_slot = db.actor:item_in_slot( 11 )
         local mode = pnv_mode_save
         if nv_slot then
             local nv_sect = nv_slot:section()
             if nv_sect then
-                local color = get_vector(nv_sect, "r__pnv_color")
-                cmd("r__pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
-                cmd("r__pnv_noise", get_string(nv_sect, "r__pnv_noise"))
-                cmd("r__pnv_scanlines", get_string(nv_sect, "r__pnv_scanlines"))
+                local color = get_vector(nv_sect, "r_pnv_color")
+                cmd("r_pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+                cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
+                cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
             end
         end
-        cmd("r__pnv_mode", tostring(mode))
+        cmd("r_pnv_mode", tostring(mode))
     end
 end

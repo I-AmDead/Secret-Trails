@@ -1,6 +1,10 @@
 #include "common.h"
-uniform float4  shader_param_8;
-uniform float4  shader_param_7;
+
+uniform float4 pnv_color;
+uniform float4 pnv_param_3;
+
+uniform float4  pnv_param_2;
+uniform float4  pnv_param_1;
 
 float rand(float n)
 {
@@ -28,92 +32,25 @@ float rand(float n)
 // USER SETTINGS HERE
 ///////////////////////////////////////////////////////
 
-	//////// GLOBAL SETTINGS(ALL GENERATIONS)////////
-		#define sky_brightness_factor float (1.0f)			// Sky brightness factor. If your sky is too bright, decrease this slightly, if too dim, increase this slightly.
-		
-	// NVG CRT & NOISE VALUES 
-	//(BE AWARE THAT NOISE AND SCINTILLATION SCALE WITH NVG GAIN)
-		
-		#define gen_1_crt_effect_factor float(0.05)				// Default 0.05 - How much CRT effect to add to NVG image (0 = none, 1 = max).
-		#define gen_1_nvg_noise_factor float (0.15)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
-		#define gen_1_scintillation_constant float (0.999f) 	// Default 0.999 - The closer the number is to 1.00000, the less scintillation effect.
-		#define gen_1_luma_sharpen_factor float(0.0f)			// Default 0.0 - How much luma sharpen is added in. (0 = none, 1 = max)
-		
-		#define gen_2_crt_effect_factor float(0.07)				// Default 0.07 - How much CRT effect to add to NVG image (0 = none, 1 = max).
-		#define gen_2_nvg_noise_factor float (0.1)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
-		#define gen_2_scintillation_constant float (0.9991f) 	// Default 0.9991 - The closer the number is to 1.00000, the less scintillation effect.
-		#define gen_2_luma_sharpen_factor float(0.25f)			// Default 0.25f - How much luma sharpen is added in. (0 = none, 1 = max)
-	
-		#define gen_3_crt_effect_factor float(0.1)				// Default 0.1 - How much CRT effect to add to NVG image (0 = none, 1 = max).
-		#define gen_3_nvg_noise_factor float (0.08)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
-		#define gen_3_scintillation_constant float (0.9992f) 	// Default 0.9992 - The closer the number is to 1.00000, the less scintillation effect.
-		#define gen_3_luma_sharpen_factor float(0.5f)			// Default 0.5 - How much luma sharpen is added in. (0 = none, 1 = max)
-		
-	// NVG COLOR OPTIONS:
-
-		#define gen_1_saturation_color float3 (0.7,1,0.6)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
-		#define gen_2_saturation_color float3 (0.5,1,0.4)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
-		#define gen_3_saturation_color float3 (0.2,1,0.9)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
-
-		// EXAMPLE COLOR SCHEMES:
-		//  (0.7,1,0.6) - gen 1 soft green
-		//	(0.5,1,0.4) - gen 2 hard green
-		//  (0.2,1,0.9) - gen 3 blueish
-		//	(1.0,1.0,1.0) - black and white
-		// 	(1.0,0.7,0.1) - yellow or amber color
-		
-///////////////////////////////////////////////////////
-// PROBABLY DON'T CHANGE STUFF BELOW HERE UNLESS YOU KNOW WHAT YOU'RE DOING
-///////////////////////////////////////////////////////
+#define sky_brightness_factor float (1.0f)
 										
-	// Constants
-		#define tube_radius float (frac(shader_param_7.y))
+// Constants
+#define tube_radius float (frac(pnv_param_1.y))
 		
-		#define single_tube_centered float2(0.5f, -0.5f + (floor(shader_param_7.x) / 100))
-		#define single_tube_offset_left float2(0.25f, -0.5f + (floor(shader_param_7.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
-		#define single_tube_offset_right float2(0.75f, -0.5f + (floor(shader_param_7.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
+#define single_tube_centered float2(0.5f, -0.5f + (floor(pnv_param_1.x) / 100))
+#define single_tube_offset_left float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
+#define single_tube_offset_right float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
 		
-		#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for dual tube left eye
-		#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for dual tube right eye
+#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube left eye
+#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube right eye
 		
-		#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for quad tube left outer tube
-		#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for quad tube left inner tube
-		#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for quad tube right inner tube
-		#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(shader_param_7.x) / 100))			// Offset for quad tube right outer tube
+#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left outer tube
+#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left inner tube
+#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right inner tube
+#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right outer tube
 	
-	#define luma_conversion_coeff float3 (0.299, 0.587, 0.114)// When we convert to YUV, these are the coefficients for Y (since we discard UV)
-	#define farthest_depth float (25.0f) 						// The farthest far place that we can reach in regards to DOF effects
-	
-	
-	// LUA PACKING
-		//	local x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
-		//	local x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
-		//	local y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
-		//	local y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
-		//	local z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
-		//	local z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
-		//	local w_1 = tostring((math.floor(nvg_gain_offset * 10)) )      -- Gain Offset (0.5 to 3.0) - outputs 5.w to 30.w in 1. increment
-		//	local w_2 = tostring(nvg_mode)                  		         -- Mode (0,1) - outputs w.0 or w.1 depending on mode
-
-	// SHADER UNPACKING
-		// float lua_param_nvg_generation = floor(shader_param_8.x);           	  // 1, 2, or 3
-		// float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;   	  // 1, 2, 4, 1.1, or 1.2
-		// float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f;	  // 0.0 to 3.0
-		// float lua_param_nvg_washout_thresh = frac(shader_param_8.y);    		  // 0.0 to 0.9
-		// float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;   // 0.0 to 1.0
-		// float lua_param_glitch_power = frac(shader_param_8.z);        		  // 0.0 to 0.9
-		// float lua_param_nvg_gain_offset = floor(shader_param_8.w) / 10.0f;	  // 0.5 to 3.0
-		// float lua_param_nvg_mode = frac(shader_param_8.w) * 10;                // 0 to 9 in 1.0 increment 
-			// mode 0: blurred background (default)
-			// mode 1: black background
-			// mode 2: image overlay
-			// mode 3: no changes (clear vision)
-			
-			
-		// float lua_param_flip_down = floor(shader_param_7.x);
-		
-		
-		// float lua_param_nvg_radius = frac(shader_param_7.y);
+#define luma_conversion_coeff float3 (0.299, 0.587, 0.114)// When we convert to YUV, these are the coefficients for Y (since we discard UV)
+#define farthest_depth float (25.0f) 						// The farthest far place that we can reach in regards to DOF effects
 
 	
 ///////////////////////////////////////////////////////
@@ -121,7 +58,7 @@ float rand(float n)
 ///////////////////////////////////////////////////////
 float compute_lens_mask(float2 masktc, float num_tubes)
 {
-	float lua_param_flip_down = floor(shader_param_7.x);
+	float lua_param_flip_down = floor(pnv_param_1.x);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
 	masktc.y = masktc.y * lua_param_flip_down;
 	
@@ -241,7 +178,7 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 	float vignette;
 	float2 corrected_texturecoords = aspect_ratio_correction(tc);
 	
-	float lua_param_flip_down = floor(shader_param_7.x);
+	float lua_param_flip_down = floor(pnv_param_1.x);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
 	
 	corrected_texturecoords.y = corrected_texturecoords.y * lua_param_flip_down;

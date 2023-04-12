@@ -63,15 +63,15 @@ local debug = false
 function on_spawn()
   if debug then
     for _, k in ipairs({
-      "r__pnv_color",
-      "r__pnv_mode",
-      "r__pnv_noise",
-      "r__pnv_scanlines",
+      "r_pnv_color",
+      "r_pnv_mode",
+      "r_pnv_noise",
+      "r_pnv_scanlines",
     }) do
       get_console():disable_command( k )
     end
   end
-  cmd( "r__pnv_mode 0" )
+  cmd( "r_pnv_mode 0" )
   dsh.exec_on_update( this.on_first_update )
   nv_scope_fx_autoenable = ogse.load_var_safe(
     "ogse_night_vision.nv_scope_fx_autoenable", false
@@ -291,16 +291,16 @@ end
 function turn_on_nv_fx( nightvision_section, nv_item )
   if not is_nv_working() then
     local nv_sect = nv_item:section()
-    local r__pnv_mode = get_float( nv_sect, "r__pnv_mode", 0 )
-    if r__pnv_mode > 1 then
-      local color = get_vector( nv_sect, "r__pnv_color" )
+    local r_pnv_mode = get_u32( nv_sect, "r_pnv_mode", 0 )
+    if r_pnv_mode > 0 then
+      local color = get_vector( nv_sect, "r_pnv_color" )
       cmd(
-        "r__pnv_color",
+        "r_pnv_color",
         string.format( "%f,%f,%f", color.x, color.y, color.z )
       )
-      cmd( "r__pnv_noise", get_float( nv_sect, "r__pnv_noise" ) )
-      cmd( "r__pnv_scanlines", get_float( nv_sect, "r__pnv_scanlines" ) )
-      cmd( "r__pnv_mode", r__pnv_mode )
+      cmd( "r_pnv_noise", get_float( nv_sect, "r_pnv_noise" ) )
+      cmd( "r_pnv_scanlines", get_float( nv_sect, "r_pnv_scanlines" ) )
+      cmd( "r_pnv_mode", r_pnv_mode )
     end
     night_vision_fx_on = true
     snd_fx_start()
@@ -312,7 +312,7 @@ end
 function turn_off_nv_fx( section )
   if is_nv_working() then
     -- local nv = db.actor:item_in_slot( 11 )
-    cmd( "r__pnv_mode", 0 )
+    cmd( "r_pnv_mode", 0 )
     level.remove_pp_effector( 2997 )
     night_vision_fx_on = false
     snd_fx_stop()
@@ -505,7 +505,7 @@ end
 
 
 function on_destroy()
-  cmd( "r__pnv_mode 0" )
+  cmd( "r_pnv_mode 0" )
   turn_off_scope_sights_lighting()
   get_grids():reset()
 end
