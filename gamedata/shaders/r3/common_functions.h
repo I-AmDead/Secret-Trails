@@ -4,6 +4,7 @@
 #include "cgim.h"
 
 uniform float4 m_actor_params;
+uniform float4 L_hotness;
 
 float3 vibrance(float3 img, half val)
 {
@@ -212,6 +213,11 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, uint imask, const boo
                                              ));
     res.C = col;
 #endif
+
+    if (L_hotness.x > 0.0)
+        res.H = float4(L_hotness.x, 0.0, 0.0, 1.0);
+    else
+        res.H = float4(0.0, 0.0, 0.0, 0.0);
 
 #ifdef EXTEND_F_DEFFER
     res.mask = imask;
