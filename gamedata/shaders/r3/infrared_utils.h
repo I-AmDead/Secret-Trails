@@ -1,6 +1,5 @@
 #include "common.h"
 uniform float4  heatvision_params3;
-uniform float4  heatvision_params4;
 
 ///////////////////////////////////////////////////////
 //      BEEF'S SHADER BASED NIGHT VISION EFFECT      //
@@ -67,19 +66,19 @@ float rand(float n)
 ///////////////////////////////////////////////////////
 										
 	// Constants
-		#define tube_radius float (frac(heatvision_params4.y))
+		#define tube_radius float (frac(heatvision_params3.w))
 		
-		#define single_tube_centered float2(0.5f, -0.5f + (floor(heatvision_params4.x) / 100))
-		#define single_tube_offset_left float2(0.25f, -0.5f + (floor(heatvision_params4.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
-		#define single_tube_offset_right float2(0.75f, -0.5f + (floor(heatvision_params4.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_centered float2(0.5f, -0.5f + (floor(heatvision_params3.z) / 100))
+		#define single_tube_offset_left float2(0.25f, -0.5f + (floor(heatvision_params3.z) / 100))		// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_offset_right float2(0.75f, -0.5f + (floor(heatvision_params3.z) / 100))	// Single tube screen position (0.5, 0.5 is centered)
 		
-		#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for dual tube left eye
-		#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for dual tube right eye
+		#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(heatvision_params3.z) / 100))			// Offset for dual tube left eye
+		#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(heatvision_params3.z) / 100))			// Offset for dual tube right eye
 		
-		#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for quad tube left outer tube
-		#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for quad tube left inner tube
-		#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for quad tube right inner tube
-		#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(heatvision_params4.x) / 100))			// Offset for quad tube right outer tube
+		#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(heatvision_params3.z) / 100))			// Offset for quad tube left outer tube
+		#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(heatvision_params3.x) / 100))			// Offset for quad tube left inner tube
+		#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(heatvision_params3.z) / 100))			// Offset for quad tube right inner tube
+		#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(heatvision_params3.z) / 100))			// Offset for quad tube right outer tube
 	
 	#define luma_conversion_coeff float3 (0.299, 0.587, 0.114)// When we convert to YUV, these are the coefficients for Y (since we discard UV)
 	#define farthest_depth float (25.0f) 						// The farthest far place that we can reach in regards to DOF effects
@@ -110,10 +109,10 @@ float rand(float n)
 			// mode 3: no changes (clear vision)
 			
 			
-		// float lua_param_flip_down = floor(heatvision_params4.x);
+		// float lua_param_flip_down = floor(heatvision_params3.z);
 		
 		
-		// float lua_param_nvg_radius = frac(heatvision_params4.y);
+		// float lua_param_nvg_radius = frac(heatvision_params3.w);
 
 	
 ///////////////////////////////////////////////////////
@@ -121,7 +120,7 @@ float rand(float n)
 ///////////////////////////////////////////////////////
 float compute_lens_mask(float2 masktc, float num_tubes)
 {
-	float lua_param_flip_down = floor(heatvision_params4.x);
+	float lua_param_flip_down = floor(heatvision_params3.z);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
 	masktc.y = masktc.y * lua_param_flip_down;
 	
@@ -241,7 +240,7 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 	float vignette;
 	float2 corrected_texturecoords = aspect_ratio_correction(tc);
 	
-	float lua_param_flip_down = floor(heatvision_params4.x);
+	float lua_param_flip_down = floor(heatvision_params3.z);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
 	
 	corrected_texturecoords.y = corrected_texturecoords.y * lua_param_flip_down;
