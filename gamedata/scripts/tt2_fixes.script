@@ -1,17 +1,4 @@
-function attach( sm )
-  sm:subscribe({ signal = "on_first_update", fun = this.fix_first })
-  sm:subscribe({ signal = "on_update", fun = this.spawn_sverhprovodnik })
-  sm:subscribe({ signal = "on_before_spawn",  fun = this.hemi_level })
-end
-
-function fix_first()
-  del_lampa()
-  fix_recept()
-  fix_amk_zones()
-  spawn_sverhprovodnik()
-end
-
-function fix_recept()
+local function fix_recept()
   if (not db.actor:has_info( "info_amk_recipt_drop_souls" )) and db.actor:has_info( "info_amk_recipt_souls" ) then
     db.actor:give_info_portion( "info_amk_recipt_soul_drops" )
     db.actor:give_info_portion( "info_amk_recipt_soul_fire" )
@@ -27,16 +14,7 @@ function fix_recept()
   end
 end
 
-
-function fix_amk_zones()
-  local se_obj = alife():object("amk_zone_mincer_average22851")
-  if se_obj then
-    alife():release(se_obj, true)
-  end
-end
-
-
-function del_lampa()
+local function del_lampa()
   local sim = alife()
   local obj = sim:object("light_uglovaya_1_glass_0006")
   if obj then
@@ -44,7 +22,7 @@ function del_lampa()
   end
 end
 
-function spawn_sverhprovodnik()
+local function spawn_sverhprovodnik()
 	if db.actor:has_info( "sverhprovodnik_dialog_done" ) then return end
 	if db.actor:dont_has_info( "sverhprovodnik_dialog_start" ) then return end
 	if db.actor:object( "sverhprovodnik" ) then return end
@@ -82,10 +60,45 @@ function quest_fail()
   end
 end
 
-function hemi_level()
+local function hemi_level()
   if not isIndoor( level.name() ) then
     cmd("r2_sun_lumscale_hemi 1.1")
   else
     cmd("r2_sun_lumscale_hemi 0")
   end
+end
+
+local function fix_first()
+  fix_recept()
+  del_lampa()
+  hemi_level()
+end
+
+local function on_drag_drop( obj )
+	local section = obj:section()
+
+	if not (db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "nano_outfit") then return end
+	if not (section and (section == "af_buliz" or section == "af_spirit_4")) then return end
+
+	if section == "af_buliz" and new_dialog.item_much("af_buliz",5) then
+		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_w"), nil, nil, 15000)
+		ogse.remove_inv_items_by_section(section, 5)
+		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
+		ogse.spawn_item_in_inv("nano_outfit_addw")
+		local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+	elseif section == "af_spirit_4" and new_dialog.item_much("af_spirit_4",5) then
+		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_h"), nil, nil, 15000)
+		ogse.remove_inv_items_by_section(section, 5)
+		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
+		ogse.spawn_item_in_inv("nano_outfit_addh")
+		local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+	end
+end
+
+function attach( sm )
+  sm:subscribe({ signal = "on_first_update", 	fun = fix_first       	   })
+  sm:subscribe({ signal = "on_update", 		fun = spawn_sverhprovodnik })
+  sm:subscribe({ signal = "on_fake_drag_drop", 	fun = on_drag_drop         })
 end
