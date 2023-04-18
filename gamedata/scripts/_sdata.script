@@ -30,7 +30,6 @@ GlobalEnable = false		--Включить скрипт? Подробные настройки смотрите ниже
 local subscribed
 function subscribe()
 	GlobalEnable = true
-	ogse_benchmark.subscribe()
 	subscribed = {
 		{ signal = "on_info",   fun = this.infos },
 		{ signal = "on_update", fun = this.vis_int },
@@ -46,7 +45,6 @@ function unsubscribe()
 	end
 	subscribed = nil
 	switch_off()
-	ogse_benchmark.unsubscribe()
 	GlobalEnable = false
 end
 
@@ -426,14 +424,12 @@ function vis_int()
 		local pos,dir,campos = db.actor:position(),device().cam_dir,device().cam_pos
 		--local valid = level.vertex_position(lvid):distance_to(pos)<=0.7
 		local valid = level.valid_vertex_id( level.vertex_id( pos ) )
- 		local fps_check = ogse_benchmark.get_fps()
 		local PosText = string.format("pos: %f,%f,%f\\n",pos.x,pos.y,pos.z)..	-- позиция ГГ (x,y,z)
 						string.format("cam_pos: %f,%f,%f\\n",campos.x,campos.y,campos.z)..	-- позиция камеры (x,y,z)
 						string.format("dir: %f,%f,%f\\n",dir.x,dir.y,dir.z)..	-- поворот ГГ вокруг осей (x,y,z) (гонит)
 		                string.format("lvid: %d\\n",lvid)..								-- левел вертекс
 						string.format("gvid: %d\\n",gvid)..								-- гейм вертекс
-						string.format("valid: %s\\n",tostring(valid))..					-- наличие AI-сетки в данной координате
-						string.format("fps: %d\\n",fps_check)							-- наличие AI-сетки в данной координате
+						string.format("valid: %s\\n",tostring(valid))				-- наличие AI-сетки в данной координате
 		if PosCS ~= nil then PosCS:wnd():SetText(PosText) end
 	end
 

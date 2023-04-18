@@ -10,6 +10,8 @@ function attach(sm)
 end
 
 local pnv_mode_save
+local scope_radius
+local zooming_t
 
 function actor_on_weapon_zoom_out()
     apply_pnv()
@@ -52,13 +54,27 @@ function updateScope(wpn)
         end
 
         if scopeName and fake_scope_radius.scope_radius[scopeName] then
-            cmd("scope_params_4 " .. fake_scope_radius.scope_radius[scopeName] .. ", 1.25" .. ", 10")
+            scope_radius = fake_scope_radius.scope_radius[scopeName]
+            cmd("scope_params_4 " .. scope_radius .. ", 1.25" .. ", 10")
             local scope_section = get_string(wpn:section(), "scope_name")
-            if pnv_mode_save == "1" then
-                cmd("r_pnv_mode", 0)
-            end
             if nv_enable then
-                apply_pnv(scope_section)
+                zooming_t = dsh.wait_condition(
+                    function()
+                        local wpn = db.actor:active_item()
+                        if wpn and wpn.get_weapon then
+                            return not (wpn:get_weapon().zoom_rotation_factor < 1)
+                        else
+                            return true -- что б если пушка куда то пропала - не ждать вечно
+                        end
+                    end,
+                    function()
+                        zooming_t = nil
+                        if pnv_mode_save == "1" then
+                            cmd("r_pnv_mode", 0)
+                        end
+                        apply_pnv(scope_section)
+                    end
+                )
             end
         end
     end
@@ -72,6 +88,9 @@ function apply_pnv(nv_sect)
         cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
         cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
         cmd("r_pnv_mode", tostring(mode))
+        cmd("r_pnv_radius", scope_radius)
+        cmd("r_pnv_not_and_vignete_mode", get_float(nv_sect, "r_pnv_not_and_vignete_mode", 2.1))
+        cmd("r_pnv_brightness_and_alfa_vignete", get_float(nv_sect, "r_pnv_brightness_and_alfa_vignete", 10.0))
     else
         local nv_slot = db.actor:item_in_slot( 11 )
         local mode = pnv_mode_save
@@ -82,6 +101,9 @@ function apply_pnv(nv_sect)
                 cmd("r_pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
                 cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
                 cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
+                cmd("r_pnv_radius", get_float(nv_sect, "r_pnv_radius", 0.5))
+                cmd("r_pnv_not_and_vignete_mode", get_float(nv_sect, "r_pnv_not_and_vignete_mode", 2.2))
+                cmd("r_pnv_brightness_and_alfa_vignete", get_float(nv_sect, "r_pnv_brightness_and_alfa_vignete", 10.1))
             end
         end
         cmd("r_pnv_mode", tostring(mode))
