@@ -1,6 +1,5 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 function attach( sm )
-  sm:subscribe({ signal = "on_update",     fun = this.on_update })
   sm:subscribe({ signal = "on_save",       fun = this.save_changed_variables })
 end
 
@@ -23,8 +22,6 @@ local string_rep = string.rep
 local string_gmatch = string.gmatch
 
 ----------------
-local npc_spawner={}  --служебный массив, работает автоматически - не трогать шаловливыми ручками
-
 local timers={}   --хранит реал-тайм таймеры
 local g_timers={} --хранит таймеры в игровом времени
 local markers={}  --хранит маркеры на карте
@@ -296,17 +293,9 @@ function convert_timers()
 	--local time_factor = sys_ini:r_float("alife","time_factor")
 	local time_factor = getIniValueFloat("alife","time_factor",5,nil)
 	local timers_to_unpack = {
-		["sleep_fake_wpn"]					= true,
 		["af_transform"]					= true,
 		["af_transform_universal"]			= true,
-		["sleep_repbox"]					= true,
-		["repbox_cond"]						= true,
-		["outfit_cond"]						= true,
-		["healing_enemies"]					= true,
 		["timer_drop_obj_varka"]			= true,
-		["timer_drop_obj_transform"]		= true,
-		["timer_drop_obj_teleport"]			= true,
-		["timer_drop_obj_hand_teleporter"]	= true
 	}
     for a=1,100,1 do
 		-- реальные таймеры
@@ -458,45 +447,18 @@ local func_by_string = {}
 			loadstring(params_string)()
 		end
 	end
-	func_by_string["radar_fix"] = function (params_string)
-    mod_call("radar_fix")
-  end
 	func_by_string["af_transform"] = function (params_string)
-    mod_call("af_transform_end",unpack_array_from_string(params_string))
-  end
+		mod_call("af_transform_end",unpack_array_from_string(params_string))
+	end
 	func_by_string["af_transform_universal"] = function (params_string)
-		--get_console():execute("load ~#I#:"..string.format(" af_transform_universal_end: "..params_string))
 		mod_call("af_transform_universal_end", unpack_array_from_string(params_string))
 	end
 	func_by_string["amk_freeplay"] = function (params_string)
-    if amk.load_variable("freeplay",0)==1 and level.name()=="l12_stancia_2" then
-      xr_effects.game_credits()
-    end
-  end
-	func_by_string["healing_enemies"] = function (params_string)
-		local arr = unpack_array_from_string(params_string)
-		local npc_id = arr[1]
-		local npc_com = arr[2]
-		local npc = level.object_by_id(npc_id)
-		if math.random(1,100) > 50 then
-			npc:set_character_community(npc_com)
-			npc:set_relation(game_object.enemy, db.actor)
-		else
-			xr_wounded.custom_change(npc)
+		if amk.load_variable("freeplay",0)==1 and level.name()=="l12_stancia_2" then
+			xr_effects.game_credits()
 		end
 	end
-	func_by_string["healing_enemies_mono"] = function (params_string)
-		local arr = unpack_array_from_string(params_string)
-		local npc_id = arr[1]
-		local npc_com = arr[2]
-		local npc = level.object_by_id(npc_id)
-		if math.random(1,100) > 50 then
-			npc:set_character_community(npc_com)
-			npc:set_relation(game_object.enemy, db.actor)
-		else
-			braad_test.custom_change_mono(npc)
-		end
-	end
+
 	func_by_string["timer_drop_obj_varka"] = function (params_string)
 		local tbl = unpack_array_from_string(params_string)
 		local sobj = alife():object(tbl.obj_id)
@@ -535,30 +497,6 @@ function spawn_item( spawn_item, pos, gv, lv )
   if not gv then gv = db.actor:game_vertex_id()  end
   if not lv then lv = db.actor:level_vertex_id() end
   return alife():create( spawn_item, pos, lv, gv )
-end
-
-
---для спавна патронов используем spawn_ammo_in_inv
-function spawn_item_in_inv(spawn_item,npc)
-	if not npc then 
-		npc = db.actor 
-	end
-	local item = alife():create(spawn_item, 
-		npc:position(),
-		npc:level_vertex_id(),  
-		npc:game_vertex_id(),
-		npc:id())
-	
-	if npc:id() ~= db.actor:id() then
-		-- Фикс пропадания доспавненного предмета при сейв/лоаде
-		level.client_spawn_manager():add(item.id, -1, fix_spawn_item_in_inv, npc)  -- Калбек на выход item в онлайн
-	end
-
-	return item
-end
-
-function fix_spawn_item_in_inv(npc, id, item)
-    npc:transfer_item(item, npc)
 end
 
 --используем для спавна патронов
@@ -658,29 +596,6 @@ function remove_item_from_inventory(remove_item,npc)
   end
   return false
 end
-
---создаем "ожидатели" для неписей нужно для корректной работы с объектами, созданными внутри скрипта
-function create_waiter_for_npc(npc,select_string)--неписи
-  npc_spawner[npc.id]=select_string
-  save_variable("x_npc_spawner",pack_array_to_string(npc_spawner) )
-end
---
-
---очищаем инвентарь непися, можно ГГ, использует следующую фунцию для удаления предмета
-function clear_npc_inventory(npc)
-    npc:iterate_inventory(__del_item, npc)
-end
-function __del_item(npc, item)
-    local section = item:section()
-
-    if section == "bolt" or section == "device_torch" then
-        return false
-    end
---    npc:mark_item_dropped(item)
-    alife():release(alife():object(item:id()), true)
-end
-
----------------------------
 
 --проверка запущена ли игра
 function check_game()
@@ -1000,7 +915,6 @@ end
 --колбэк на взятие предмета в инвентарь ГГ из ящика
 function on_item_take_from_box( obj, item )
   remove_spot_from_map( obj:id(), "crlc_big" )
-  skunk.nano_bronik_on_take( obj )
 end
 
 -- колбэк на апдейт ГГ (удобно для проверки условий, так как вызывается
@@ -1008,17 +922,6 @@ end
 function on_actor_upade()
   ogse_signals.get_mgr():reschedule( 100 )
   check_timers()
-end
-
-function on_update()
-  if amk_target then amk_target.update() end
-  if amk_offline_alife then amk_offline_alife.update() end
-
-  if (amk_corpses) then
-  	for a=1, 3 do
-  		amk_corpses.update()
-  	end
-  end
 end
 
 class "convert_npc_timer" ( ogse_qt.quick_timer )
@@ -1057,64 +960,9 @@ function convert_npc_timer:update()
   end
 end
 
-
-
---колбэк на создание непися (точнее на его переход в онлайн), использует следующую за ним функцию для выбора действия
-function on_npc_spawn(npc)
-  if npc == nil then return end
-	if (news_main and news_main.on_spawn) then
-		news_main.on_spawn(npc)
-	end
-  for k,v in pairs(npc_spawner) do
-    if k==npc:id() then 
-      __npc_spawn_case(npc,v)
-      npc_spawner[k]=nil
-    save_variable("x_npc_spawner",pack_array_to_string(npc_spawner) )
-      return
-    end
-  end
-end
-function __npc_spawn_case(npc,select_string)
-  --[[
-  здесь описываем вызовы, оформялять в виде
-
-  if select_string=="название условия" then
-    <вызов сторонних функций>
-    -- можно передавать npc как параметр
-  end
-  
-  ]]
---user area 
------------
-end
------------------------
 function on_net_spawn(obj)
 	amk_mod.build_btrs_table(obj)
 end
-
---колбэк на удаление непися (точнее на его переход в оффлайн), использует следующую за ним функцию для выбора действия
-function on_npc_go_offline(npc)
-
-  if amk_target then
-    amk_target.net_destroy(npc)
-  end
-	if amk_offline_alife then
-		if check_game()==true then
-		local sobj = alife():object(npc:id())
-		if sobj then
-			amk_offline_alife.process_trade(sobj)
-		end
-	end
-end
-end
-
-function on_monster_go_offline(npc)
-
-  if amk_target then
-    amk_target.net_destroy(npc)
-  end
-end
------------------------
 
 --колбэк на юзание объекта
 function on_use(victim, who)
@@ -1168,10 +1016,6 @@ function on_game_load()
   if db.storage[ db.actor:id()].pstor == nil then
     db.storage[ db.actor:id() ].pstor = {}
   end
-
-  npc_spawner = unpack_array_from_string(
-    load_variable( "x_npc_spawner", "" )
-  )
 
   mod_call( "first_run" )
   convert_timers() -- переносим старые и новые таймеры в таблицу
@@ -1439,11 +1283,6 @@ function on_REspawn(obj,respawner)
 		if IsMonster(obj) then
 			if respawner.spawned_goes_online==true then mod_call("switch_monster_online",obj) 
 			elseif respawner.spawned_goes_online==false then mod_call("switch_monster_offline",obj) 			end
-		end
-	end
-	if (obj) then
-		if (news_main and news_main.on_spawn) then
-			news_main.on_spawn(obj)
 		end
 	end
 end

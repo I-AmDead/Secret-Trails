@@ -98,7 +98,6 @@ function motivator_binder:net_spawn(sobject)
   xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_stalker, self.loaded )
 
   -- added by xStream for AMK miniSDK
-  amk.on_npc_spawn( self.object )
   amk.on_net_spawn( self.object )
   -- end of addition
 
@@ -162,10 +161,6 @@ function motivator_binder:net_destroy()
       end
     end
   end
-
-  -- added by xStream for AMK miniSDK
-  amk.on_npc_go_offline(self.object)
-  -- end of addition
 
   if self.object == nil then return end
 
@@ -263,8 +258,6 @@ function motivator_binder:death_callback(victim, who)
   sr_territory.issue_event(self.object, "death_callback", self.object, who)
 
   smart_terrain.on_death(self.object:id())
-
-  news_main.on_death( self.object, who )
 
   self:clear_callbacks()
 

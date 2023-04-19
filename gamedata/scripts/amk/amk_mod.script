@@ -16,23 +16,16 @@ function on_actor_spawn()
     on_blowout_hit_actor()
     blowout_phantoms()
   end
-  if level.name() == "l10_radar" then
-    if not has_alife_info( "esc_serious_talk" ) then
-      ogse_signals.get_mgr():subscribe({
-        signal = "on_update", fun = this.check_radar_off,
-        script_name = script_name(),
-      })
-    end
-  end
 end
 
 
 function treasure_create(obj)
 	local section = obj:section()
 	if section=="treasure_item" then
-        if news_main then
-            news_main.create_treasurebox()
-        end
+		local sobj = alife():create("m_inventory_box", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id())
+		sobj = alife():object( sobj.id )
+		sobj.custom_data = "[logic]\ncfg = scripts\\treasure_inventory_box.ltx\n"
+		sobj:used_ai_locations( false )
 	end
 end
 
@@ -100,7 +93,7 @@ function first_run()
   -- На момент вызова этой функции актор уже доступен - переделано на поршень.
   if has_alife_info( "x_first_run" ) then return end
   
-  amk.spawn_item_in_inv("matras")
+  ogse.spawn_item_in_inv("matras")
 
   amk.spawn_item("x18_zapiska_ruk",vector():set( 21.6, -3.94, -18.28 ), 1140, 5991 )
   amk.spawn_item("x16_zapiska_ruk",vector():set( -128.0, 22.5, -30.0), 1543, 7083 )
@@ -135,9 +128,6 @@ local weather_on_load
 function check_spawn()
   amk_anoms.init()
   spawn_unspawned_respawners() 
-  news_main.init()
-  amk_offline_alife.update_trade()
-  amk_offline_alife.update_npc_tables()
 
   -- level_changers section
   local lname = level.name()
@@ -160,18 +150,6 @@ function check_spawn()
   obj = alife():story_object(6002)
   if obj then
   	level.map_add_object_spot(obj.id, "level_changer", "to_darkvalley")
-  end
-  
-  if (amk_offline_alife) then
-  	amk_offline_alife.init()
-  end
-
-  if (amk_corpses) then
-  	amk_corpses.init()
-  end
-
-  if (amk_objects) then
-  	amk_objects.init()
   end
 
   local obj = alife():story_object(6000)
@@ -1255,7 +1233,6 @@ function check_usable_item(obj)
 		return
 	end
 	db.actor:give_info_portion(info)
-	amk_dialogs.info_received()
 end
 
 --'*******************************************************************************

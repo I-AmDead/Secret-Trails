@@ -1,0 +1,26 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+--|Чтобы при отключении в настройках динамических новостей, они не вызывались вообще.
+
+local random_news = get_u32("options", "random_news", 1)
+
+function attach(sm)
+	if random_news == 1 then
+		sm:subscribe({ signal = "on_spawn",		fun = this.on_spawn })
+		sm:subscribe({ signal = "on_update",	fun = this.on_update, queued = true })
+		sm:subscribe({ signal = "on_after_blowout",	fun = this.on_after_blowout })
+	end
+end
+
+function on_spawn()
+	news_main_data.message_filter()
+end
+
+function on_update()
+	news_main_data.show_news_main()
+end
+
+function on_after_blowout()
+	news_main_data.on_connect_vbs() -- выдаем сообщение о коннекте
+	news_main_new.vubros_out_msg() -- сообщение о завершении выброса
+end
