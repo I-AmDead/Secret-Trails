@@ -661,7 +661,7 @@ function get_af_transform_param(name, recept, recepti)
 		result = anom_recept_komp["default"][name]
 	else
 		-- нет информации!!!
-		amk.send_tip("нет информации для "..name.."!","варка артефактов",0,15,"gen_info")
+		news_manager.send_tip("нет информации для "..name.."!","варка артефактов",0,15,"gen_info")
 		result = nil
 	end
 	return result
@@ -737,7 +737,7 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 			end
 			
 			if recept_podhodit then -- если нашли хоть один имеіийся подходяий рецепт
-				--amk.send_tip("іецепт подошел. anom_radius "..anom_radius," варка",0,15,"gen_info")
+				--news_manager.send_tip("іецепт подошел. anom_radius "..anom_radius," варка",0,15,"gen_info")
 				--ием рядом другие компонентv
 				--если находим их в вvбраннvх рецептах, то удаляем их из рецептов
 				--как только какой-то рецепт остаїтся без компонентов - рецепт сработал
@@ -757,7 +757,7 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 									recepti_est[info]["komp"][obj_sect] = obj:id()
 									-- уменьшаем количество компонентов в рецепте
 									recepti_est[info]["count"] = recepti_est[info]["count"] - 1
-									--amk.send_tip(obj_sect.." найден. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"],"варка",0,15,"gen_info")
+									--news_manager.send_tip(obj_sect.." найден. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"],"варка",0,15,"gen_info")
 									--get_console():execute("load ~#I#:"..string.format(obj_sect.." найден. Lном: "..anom.." рец. "..info.." "..recepti_est[info]["count"]))
 									
 									-- если рецепт пуст, то он сработал
@@ -915,9 +915,9 @@ function af_transform_universal_end( params )
 		-- спавним результат(v)
 		for k,v in pairs(params.result) do
 			af_sobj = amk.spawn_item(k, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.gv, params.lv)
-			amk.add_spot_on_map(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+			level.map_add_object_spot(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 		end
-		amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+		news_manager.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
 	
 	-- даїм инфопорциі, если есть
@@ -941,13 +941,13 @@ end
 
 -- старая функция
 function af_transform_end(params)
-	local from_sect="\""..params.from_sect.."\""
+	local from_sect = "\""..params.from_sect.."\""
 	local obj
-        obj=amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
+        obj = amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
 	local sobj = alife():object( obj.id )
 	alife():use_ai_locations(sobj, false)
-	amk.add_spot_on_map(obj.id,"red_location",game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
-	amk.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
+	level.map_add_object_spot(obj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
+	news_manager.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 end
 
 

@@ -82,52 +82,6 @@ function mylog(msg)
 	end
 end
 
---показываем типс
-function send_tip(news_text, header, timeout, showtime, sender, sound)
-  if news_text==nil then return end
-  if header==nil then header=game.translate_string("st_tip") end
-  if timeout == nil then timeout = 0 end
-  if showtime == nil then showtime = 5 end
-  
-  local player
-  if sound=="news" then
-    player=pda_news
-  elseif sound=="task" then
-    player=pda_task
-  elseif sound=="questman_death" then
-    player=pda_sos
-  elseif sound=="rememb" then
-    player=pda_rem
-  else
-    player=pda_tips
-  end   
-  
-  --' Играем дефолтный звук
-  player:play_no_feedback(db.actor, sound_object.s2d, timeout, vector():set( 0, 0, 0 ), 1.0)
---  player:play(db.actor, timeout, sound_object.s2d)
-  
-  local news_text = "%c[255,160,160,160]"..header.."\\n".."%c[default]"..news_text
-  local x,y = news_manager.get_sender_icon(news_text, sender)
-  db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(x,y,83,47), timeout*1000, showtime*1000)
-  return true
-end
-
-function add_spot_on_map(obj_id,type,text)
-  --возможные типы type смотри в ui\map_spots.xml 
-  if obj_id then
-    if text==nil then text=" " end
-    -- Ставим метку на серверный объект чтобы её не пришлось обновлять
-    level.map_add_object_spot_ser(obj_id, type, text)
-  end
-end
-
-function remove_spot_from_map(obj_id,type)
-  if obj_id and level.map_has_object_spot(obj_id, type)~= 0 then
-    level.map_remove_object_spot(obj_id, type)
-  end
-end
-
-
 function start_timer( name, delay, params )
   if not delay then return false end
   if not params then params = "" end
@@ -907,14 +861,14 @@ end
 --колбэк на взятие предмета в инвентарь ГГ
 function on_item_take( obj )
   escape_dialog.have_a_art()
-  remove_spot_from_map( obj:id(), "red_location" )
+  level.map_remove_object_spot( obj:id(), "red_location" )
   amk_mod.check_usable_item( obj )
 end
 
 
 --колбэк на взятие предмета в инвентарь ГГ из ящика
 function on_item_take_from_box( obj, item )
-  remove_spot_from_map( obj:id(), "crlc_big" )
+  level.map_remove_object_spot( obj:id(), "crlc_big" )
 end
 
 -- колбэк на апдейт ГГ (удобно для проверки условий, так как вызывается

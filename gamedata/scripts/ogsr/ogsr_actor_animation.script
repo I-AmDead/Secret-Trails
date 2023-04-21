@@ -263,7 +263,7 @@ function multipickup(dist,radius,actor)
 	local dir = device().cam_dir
 	pos = pos:add(dir:mul(dist))
 	level.iterate_nearest(pos,dist,function(obj)
-		if obj:get_inventory_item() and pos:distance_to(obj:position()) <= radius then
+		if obj:get_inventory_item() and obj:actor_can_take() and pos:distance_to(obj:position()) <= radius then
 			db.actor:transfer_item(obj, db.actor)
 		end
 	end)
