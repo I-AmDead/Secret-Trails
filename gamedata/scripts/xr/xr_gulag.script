@@ -187,21 +187,24 @@ function gulag:prepare_jobs()
 		
 	end
 
+	local job
+	
+
 	for obj_id, jobN in pairs( self.ObjectJob ) do
-		local job = self.Job[jobN]
-		if job then
-			job.object = obj_id
-			self.ObjectJobPathName[obj_id] = job.path_name
+	
+
+		job        = self.Job[jobN]
 		
-			if not self:availState(job.state, self.state) then
-				self.Need_Reinit[obj_id] = true
-				log1("!!DEBUG_GULAG_UNAVAIL ["..obj_id.."] ["..job.section.."] path ["..tostring(job.path_name).."]")
-			end
-		else
-			self.Need_Reinit[obj_id] = true
-			log3("!!DEBUG_GULAG_job_not_found for objid: [%s], jobn: [%s]", obj_id, jobN)
+		job.object = obj_id
+		self.ObjectJobPathName[obj_id] = job.path_name
+		
+		if not self:availState(job.state, self.state) then
+			self.Need_Reinit[obj_id]	= true
+			log1("!!DEBUG_GULAG_UNAVAIL ["..obj_id.."] ["..job.section.."] path ["..tostring(job.path_name).."]")
 		end
+		
 	end
+	
 end
 
 -- составить список работ существующих в данном состоянии гулага.
@@ -1030,9 +1033,7 @@ function gulag:free_obj( obj_id )
 		
 		self.ObjectJob[obj_id] = nil
 
-		if self.Job[jobN] then
-			self.Job[jobN].object  = nil
-		end
+		self.Job[jobN].object  = nil
 
 		self.ObjectJobPathName[obj_id] = nil
 

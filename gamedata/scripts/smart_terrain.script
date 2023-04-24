@@ -37,6 +37,9 @@ class "se_smart_terrain" ( cse_alife_smart_zone )
 
 function se_smart_terrain:__init( section ) super( section )
 	self.registred = false
+	self.duration_end = game.CTime() -- убрать
+	self.idle_end     = game.CTime() -- убрать
+
 	self.obj_exclusive_tbl = {} --В этой табличке будем временно хранить значения, возвращенные функцией obj_accepts_smart_terrain, чтоб не вызывать её три раза подряд
 end
 
@@ -49,6 +52,9 @@ end
 function se_smart_terrain:STATE_Write( packet )
 --	log1( "se_smart_terrain::STATE_Write called!" )
 	cse_alife_smart_zone.STATE_Write( self, packet )
+
+	utils.w_CTime( packet, self.duration_end ) -- убрать
+	utils.w_CTime( packet, self.idle_end ) -- убрать
 
 	if self.gulag_working then
 		packet:w_bool( true )
@@ -94,8 +100,8 @@ function se_smart_terrain:STATE_Read( packet, size )
 		return
 	end
 
-	self.duration_end = utils.r_CTime( packet )
-	self.idle_end     = utils.r_CTime( packet )
+	self.duration_end = utils.r_CTime( packet ) -- убрать
+	self.idle_end     = utils.r_CTime( packet ) -- убрать
 
 	self.gulag_working = packet:r_bool()
 
