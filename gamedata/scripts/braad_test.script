@@ -98,7 +98,13 @@ local function on_take(obj, sobj)
 		end
 	elseif level.name()=="aver" then
 		if obj:section()=="mandra" then 
-			antreg.remove_spot_m()
+			local sim = alife()
+			for a, obj in alife():objects() do
+				if obj:section_name()=="mandra" then
+					level.map_remove_object_spot(obj.id,"crlc_big")
+					break
+				end
+			end
 		end
 	elseif level.name()=="predbannik" then
 		if db.actor:has_info("nato_enemy") and not has_alife_info("nato_zasada") then 
@@ -134,10 +140,6 @@ local function on_take(obj, sobj)
 		elseif obj:section()=="amk_zapiska" then
 			db.actor:give_info_portion("info_amk_recipt_sopl_dikoobraz")
 			alife():release(sobj)
-		end
-	elseif level.name()=="l11_pripyat" then
-		if obj:section()=="wpn_knife" then 
-			antreg.del_gluk2()
 		end
 	elseif level.name()=="l12_stancia" then
 		if obj:section()=="wpn_knife" and db.actor:has_info("haron_spy_start") then 

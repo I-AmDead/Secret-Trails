@@ -1,130 +1,330 @@
-function attach( sm )
-  sm:subscribe({ signal = "on_update", fun = this.spider_kostolom_dead })
+local function on_first_update()
+
+	if level.name()=="dead_city" then
+  		if has_alife_info("eda_dialog_start") and not has_alife_info("skit_spawn") then
+			db.actor:give_info_portion("skit_spawn")
+		end
+
+		if has_alife_info("about_magomet_dialog_start") and not has_alife_info("spawn_drug") then
+			db.actor:give_info_portion("spawn_drug")
+		end
+
+		if has_alife_info("povodyr_mesto") and not has_alife_info("mg_nechto") then
+			db.actor:give_info_portion("mg_nechto")
+		end
+
+		if has_alife_info("finish_put_start") and not has_alife_info("mg_nechto_start") then
+			db.actor:give_info_portion("mg_nechto_start")
+		end
+
+		if not has_alife_info("lesnik_spawn") then
+			db.actor:give_info_portion("lesnik_spawn")
+		end
+
+		if has_alife_info("graf_tri_dialog_done") and not has_alife_info("mg_maloy2_spawn") then
+			db.actor:give_info_portion("mg_maloy2_spawn")
+		end
+
+		if has_alife_info("karina_poisk_dialog_start") and not has_alife_info("dogs_perehod") then
+			db.actor:give_info_portion("dogs_perehod")
+		end
+	end
+
+	if level.name()=="aver" then
+		if not has_alife_info("lesnichok_mafon") then
+			db.actor:give_info_portion("lesnichok_mafon")
+		end
+
+		if has_alife_info("grig_swamp_dialog_done") and not has_alife_info("lesnik_cats_start") then
+			db.actor:give_info_portion("lesnik_cats_start")
+		end
+
+  		if not has_alife_info("lesnik2_spawn") then
+			db.actor:give_info_portion("lesnik2_spawn")
+		end
+
+		if has_alife_info("lesnik2_mesto") and not has_alife_info("delete_mg_aver") then
+			db.actor:give_info_portion("delete_mg_aver")
+		end
+	end
+
+	if level.name()=="predbannik" then
+		if not has_alife_info("usa_spawn") then
+			db.actor:give_info_portion("usa_spawn")
+		end
+
+		if has_alife_info("pekar_first_dialog_have") and not has_alife_info("psy_mir_spawn") then
+			db.actor:give_info_portion("psy_mir_spawn")
+		end
+
+		if has_alife_info("voronin_zapiska_dialog_done") and not has_alife_info("barman_strelka_pogovority") then
+			db.actor:give_info_portion("barman_strelka_pogovority")
+		end
+
+		if has_alife_info("voronin_zapiska_dialog_done") and not has_alife_info("wolki_mk_spawn") then
+			db.actor:give_info_portion("wolki_mk_spawn")
+		end
+
+	end
+
+	if level.name()=="l02_garbage" then
+		if not has_alife_info("tankist_start") then 
+			db.actor:give_info_portion("tankist_start")
+		end
+	end
+
+	if level.name()=="l03_agroprom" then
+		if not has_alife_info("koldun_spawn") then
+			db.actor:give_info_portion("koldun_spawn")
+		end
+	end
+
+	if level.name()=="l04_darkvalley"then
+		if not has_alife_info("gigant_x18_delete") then
+			db.actor:give_info_portion("gigant_x18_delete")
+		end
+
+		if not has_alife_info("dolg_mafon_spawn") then
+			db.actor:give_info_portion("dolg_mafon_spawn")
+		end
+
+		if has_alife_info("voronin_zapiska_dialog_start") and not has_alife_info("barman_start_delete") then
+			db.actor:give_info_portion("barman_start_delete")
+		end
+
+		if has_alife_info("barman_posle_dialog_start") and not has_alife_info("barman_sidor_delete") then
+			db.actor:give_info_portion("barman_sidor_delete")
+		end
+	end
+
+	if level.name()=="l04u_labx18" then
+		if has_alife_info("tankist_start_dialog_start") and not has_alife_info("zombak_spawn") then
+			db.actor:give_info_portion("zombak_spawn")
+		end
+
+		if not has_alife_info("elchimera_start") then
+			db.actor:give_info_portion("elchimera_start")
+		end
+	end
+
+	if level.name()=="l05_bar" then
+		if not has_alife_info("antirestr_spawn") then
+			db.actor:give_info_portion("antirestr_spawn")
+		end
+
+		if not has_alife_info("totaliz_mos") then
+			db.actor:give_info_portion("totaliz_mos")
+		end
+	end
+
+	if level.name()=="l06_rostok" then
+		if has_alife_info("lektor_dialog_start") and not has_alife_info("vertel_spawn") then
+			db.actor:give_info_portion("vertel_spawn")
+		end
+	end
+
+	if level.name()=="l07_military" then
+		if not has_alife_info("osvedom_mafon_spawn") then
+			db.actor:give_info_portion("osvedom_mafon_spawn")
+		end
+
+		if has_alife_info("povodyr_mesto") and not has_alife_info("ac_nechto") then
+			db.actor:give_info_portion("ac_nechto")
+		end
+	end
+
+	if level.name()=="l08_yantar" then
+		if not has_alife_info("vas_delete") then
+			db.actor:give_info_portion("vas_delete")
+		end
+
+		if not has_alife_info("vasil2_restrict_spawn") then
+			db.actor:give_info_portion("vasil2_restrict_spawn")
+		end
+
+		if has_alife_info("vasil2_yantar") and not has_alife_info("vasil2_spawn") then -- пока оставлю, непонятно что за рестриктор
+			db.actor:give_info_portion("vasil2_spawn")
+		end
+
+		if has_alife_info("vasil2_spawn") and not has_alife_info("zombi_zadan") then -- это зависит от верхнего, поэтому тоже пока пусть будет
+			db.actor:give_info_portion("zombi_zadan")
+		end
+	end
+
+	if level.name()=="l10_radar" then
+		if not has_alife_info("spawn_rad_soldat") then
+			db.actor:give_info_portion("spawn_rad_soldat")
+		end
+	end
+
+	if level.name()=="l11_pripyat" then
+		if not has_alife_info("tushkanchiki_new") then
+			db.actor:give_info_portion("tushkanchiki_new")
+		end
+
+		if not has_alife_info("mervin_anim") then
+			db.actor:give_info_portion("mervin_anim")
+		end
+
+		local obj = alife():object( "pri_surprise_box_0002" )
+		if obj then
+			alife():release(obj , true)
+		end
+
+		local obj = alife():object( "pri_surprise_box_0003" )
+		if obj then
+			alife():release(obj , true)
+		end
+
+		local obj = alife():object( "pri_surprise_box_0008" )
+		if obj then
+			alife():release(obj , true)
+		end
+	end
+
+	if level.name()=="l12_stancia" then
+		if has_alife_info("monolit_bunker_doc_have") and not has_alife_info("klychara_spawn") then
+			db.actor:give_info_portion("klychara_spawn")
+		end
+	end
+
+	if level.name()=="l12u_sarcofag" then
+		if has_alife_info("rule_konec") and not has_alife_info("pobeg_finish") then
+			db.actor:give_info_portion("pobeg_finish")
+		end
+
+		if has_alife_info("monolit_bunker_doc_start") and not has_alife_info("solomonchik_spawn") then
+			db.actor:give_info_portion("solomonchik_spawn")
+		end
+
+		if has_alife_info("monolit_bunker_doc_have") and not has_alife_info("iuda_spawn") then
+			db.actor:give_info_portion("iuda_spawn")
+		end
+
+		if has_alife_info("prizrak_help_have") and not has_alife_info("iuda_delete") then
+			db.actor:give_info_portion("iuda_delete")
+		end
+
+		if not has_alife_info("david_spawn") then
+			db.actor:give_info_portion("david_spawn")
+		end
+
+		if has_alife_info("monolit_bunker_doc_have") and not has_alife_info("klyk_delete") then
+			db.actor:give_info_portion("klyk_delete")
+		end
+	end
+
+	if level.name()=="l12_stancia_2" then
+		if not has_alife_info("dogs_ch2_spawn") then
+			db.actor:give_info_portion("dogs_ch2_spawn")
+		end
+
+		if has_alife_info("gromov_second_dialog_done") and not has_alife_info("monolit_brat_spawn") then
+			db.actor:give_info_portion("monolit_brat_spawn")
+		end
+	end
+
+	if level.name()=="l12u_control_monolith" then
+		if has_alife_info("pobeg_mesto") and not has_alife_info("pobeg_finish") then
+			db.actor:give_info_portion("pobeg_finish")
+		end
+
+		if has_alife_info("pobeg_finish") and not has_alife_info("coda_final") then
+			db.actor:give_info_portion("coda_final")
+		end
+	end
+
+	if level.name()=="swamp" then
+		if not has_alife_info("boloto_start") then
+			db.actor:give_info_portion("boloto_start")
+		end
+
+		if not has_alife_info("boloto_zadan") then
+			db.actor:give_info_portion("boloto_zadan")
+		end
+
+		if has_alife_info("karina_perehod_dialog_start") and not has_alife_info("karina_razgovor") then
+			db.actor:give_info_portion("karina_razgovor")
+		end
+
+		if has_alife_info("finish_put_start") and not has_alife_info("swamp_nechto") then
+			db.actor:give_info_portion("swamp_nechto")
+		end
+	end
 end
 
-function start_antreg()
-  if level.name()=="dead_city" and has_alife_info("eda_dialog_start") and not has_alife_info("skit_spawn") then db.actor:give_info_portion("skit_spawn")
 
-  elseif level.name()=="aver" and not has_alife_info("lesnichok_mafon") then db.actor:give_info_portion("lesnichok_mafon")
+local function on_info()
+	if level.name()=="dead_city" then
+		if has_alife_info("postovoy_mesto") and not has_alife_info("mg_aver1_spawn") then
+			db.actor:give_info_portion("mg_aver1_spawn")
+		end
+	end
 
-  elseif level.name()=="l08_yantar" and not has_alife_info("vas_delete") then db.actor:give_info_portion("vas_delete")
+	if level.name()=="aver" then
+		if has_alife_info("izba_dialog_start") and not has_alife_info("lesnik_del") then
+			db.actor:give_info_portion("lesnik_del")
+		end
 
-  elseif level.name()=="l12_stancia_2" and has_alife_info("monolit_pogovorils") and not has_alife_info("monolit_final") then db.actor:give_info_portion("monolit_final")
+		if has_alife_info("zahar_mesto") and not has_alife_info("sms_zahar") then
+			db.actor:give_info_portion("sms_zahar")
+		end
 
-  elseif level.name()=="l10_radar" and not has_alife_info("spawn_rad_soldat") then db.actor:give_info_portion("spawn_rad_soldat")
+	end
 
-  elseif level.name()=="l12u_sarcofag" and has_alife_info("rule_konec") and not has_alife_info("pobeg_finish") then db.actor:give_info_portion("pobeg_finish")
+	if level.name()=="l05_bar" then
+		if has_alife_info("bar_help_done") and not has_alife_info("dolg_attak_start") then
+			db.actor:give_info_portion("dolg_attak_start")
+		end
+	end
 
-  elseif level.name()=="l12u_sarcofag" and has_alife_info("monolit_bunker_doc_start") and not has_alife_info("solomonchik_spawn") then db.actor:give_info_portion("solomonchik_spawn")
+	if level.name()=="l06_rostok" then
+		if has_alife_info("graf_tri_dialog_have") and not has_alife_info("perehod_yantar") then
+			db.actor:give_info_portion("perehod_yantar")
+		end
+	end
 
-  elseif level.name()=="l12u_sarcofag" and has_alife_info("monolit_bunker_doc_have") and not has_alife_info("iuda_spawn") then db.actor:give_info_portion("iuda_spawn")
+	if level.name()=="l08_yantar" then
+		if has_alife_info("vasil2_yantar") and not has_alife_info("vasil2_spawn") then
+			db.actor:give_info_portion("vasil2_spawn")
+		end
 
-  elseif level.name()=="l12u_sarcofag" and has_alife_info("prizrak_help_have") and not has_alife_info("iuda_delete") then db.actor:give_info_portion("iuda_delete")
+		if has_alife_info("vasil2_spawn") and not has_alife_info("zombi_zadan") then
+			db.actor:give_info_portion("zombi_zadan")
+		end
+	end
 
-  elseif level.name()=="l12u_sarcofag" and not has_alife_info("david_spawn") then db.actor:give_info_portion("david_spawn")
+	if level.name()=="l11_pripyat" then
+		if has_alife_info("mathon_naem_done") and not has_alife_info("tushkanchiki_midle") then
+			db.actor:give_info_portion("tushkanchiki_midle")
+		end
 
-  elseif level.name()=="l12u_control_monolith" and has_alife_info("pobeg_mesto") and not has_alife_info("pobeg_finish") then db.actor:give_info_portion("pobeg_finish")
+		if has_alife_info("actor_poslednii_put") and not has_alife_info("tushkanchiki_last") then
+			db.actor:give_info_portion("tushkanchiki_last")
+		end
+	end
 
-  elseif level.name()=="l12u_control_monolith" and has_alife_info("pobeg_finish") and not has_alife_info("coda_final") then db.actor:give_info_portion("coda_final")
+	if level.name()=="l12_stancia_2" then
+		if has_alife_info("monolit_pogovorils") and not has_alife_info("monolit_final") then
+			db.actor:give_info_portion("monolit_final")
+		end
+	end
 
-  elseif level.name()=="l04_darkvalley" and not has_alife_info("gigant_x18_delete") then db.actor:give_info_portion("gigant_x18_delete")
+	if level.name()=="l12u_sarcofag" then
+		if has_alife_info("rule_konec") and not has_alife_info("pobeg_finish") then -- тоже пока не понял
+			db.actor:give_info_portion("pobeg_finish")
+		end
+	end
 
-  elseif level.name()=="l04_darkvalley" and not has_alife_info("dolg_mafon_spawn") then db.actor:give_info_portion("dolg_mafon_spawn")
+	if level.name()=="swamp" then
+		if has_alife_info("doctor_enemy") and not has_alife_info("enemy_doctor") then
+			db.actor:give_info_portion("enemy_doctor")
+		end
 
-  elseif level.name()=="l07_military" and not has_alife_info("osvedom_mafon_spawn") then db.actor:give_info_portion("osvedom_mafon_spawn")
-
-  elseif level.name()=="l03_agroprom" and not has_alife_info("koldun_spawn") then db.actor:give_info_portion("koldun_spawn")
-
-  elseif level.name()=="l04_darkvalley" and has_alife_info("voronin_zapiska_dialog_start") and not has_alife_info("barman_start_delete") then db.actor:give_info_portion("barman_start_delete")
-
-  elseif level.name()=="l04_darkvalley" and has_alife_info("barman_posle_dialog_start") and not has_alife_info("barman_sidor_delete") then db.actor:give_info_portion("barman_sidor_delete")
-
-  elseif level.name()=="dead_city" and has_alife_info("about_magomet_dialog_start") and not has_alife_info("spawn_drug") then db.actor:give_info_portion("spawn_drug")
-
-  elseif level.name()=="dead_city" and has_alife_info("povodyr_mesto") and not has_alife_info("mg_nechto") then db.actor:give_info_portion("mg_nechto")
-
-  elseif level.name()=="dead_city" and has_alife_info("finish_put_start") and not has_alife_info("mg_nechto_start") then db.actor:give_info_portion("mg_nechto_start")
-
-  elseif level.name()=="swamp" and has_alife_info("finish_put_start") and not has_alife_info("swamp_nechto") then db.actor:give_info_portion("swamp_nechto")
-
-  elseif level.name()=="predbannik" and has_alife_info("voronin_zapiska_dialog_done") and not has_alife_info("barman_strelka_pogovority") then db.actor:give_info_portion("barman_strelka_pogovority")
-
-  elseif level.name()=="predbannik" and has_alife_info("voronin_zapiska_dialog_done") and not has_alife_info("wolki_mk_spawn") then db.actor:give_info_portion("wolki_mk_spawn")
-
-  elseif level.name()=="dead_city" and has_alife_info("karina_poisk_dialog_start") and not has_alife_info("dogs_perehod") then db.actor:give_info_portion("dogs_perehod")
-
-  elseif level.name()=="l05_bar" and has_alife_info("bar_help_done") and not has_alife_info("dolg_attak_start") then db.actor:give_info_portion("dolg_attak_start")
-
-  elseif level.name()=="l05_bar" and not has_alife_info("antirestr_spawn") then db.actor:give_info_portion("antirestr_spawn")
-
-  elseif level.name()=="l12_stancia_2" and not has_alife_info("dogs_ch2_spawn") then db.actor:give_info_portion("dogs_ch2_spawn")
-
-  elseif level.name()=="l12_stancia_2" and has_alife_info("gromov_second_dialog_done") and not has_alife_info("monolit_brat_spawn") then db.actor:give_info_portion("monolit_brat_spawn")
-
-  elseif level.name()=="l06_rostok" and has_alife_info("graf_tri_dialog_have") and not has_alife_info("perehod_yantar") then db.actor:give_info_portion("perehod_yantar")
-
-  elseif level.name()=="l06_rostok" and has_alife_info("lektor_dialog_start") and not has_alife_info("vertel_spawn") then db.actor:give_info_portion("vertel_spawn")
-
-  elseif level.name()=="l05_bar" and not has_alife_info("totaliz_mos") then db.actor:give_info_portion("totaliz_mos")
-
-  elseif level.name()=="l02_garbage" and not has_alife_info("tankist_start") then db.actor:give_info_portion("tankist_start")
-
-  elseif level.name()=="predbannik" and not has_alife_info("usa_spawn") then db.actor:give_info_portion("usa_spawn")
-
-  elseif level.name()=="predbannik" and has_alife_info("pekar_first_dialog_have") and not has_alife_info("psy_mir_spawn") then db.actor:give_info_portion("psy_mir_spawn")
-
-  elseif level.name()=="swamp" and not has_alife_info("boloto_start") then db.actor:give_info_portion("boloto_start")
-
-  elseif level.name()=="swamp" and not has_alife_info("boloto_zadan") then db.actor:give_info_portion("boloto_zadan")
-
-  elseif level.name()=="swamp" and has_alife_info("karina_perehod_dialog_start") and not has_alife_info("karina_razgovor") then db.actor:give_info_portion("karina_razgovor")
-
-  elseif level.name()=="swamp" and has_alife_info("doctor_enemy") and not has_alife_info("enemy_doctor") then db.actor:give_info_portion("enemy_doctor")
-
-  elseif level.name()=="dead_city" and has_alife_info("postovoy_mesto") and not has_alife_info("mg_aver1_spawn") then db.actor:give_info_portion("mg_aver1_spawn")
-
-  elseif level.name()=="dead_city" and not has_alife_info("lesnik_spawn") then db.actor:give_info_portion("lesnik_spawn")
-
-  elseif level.name()=="dead_city" and has_alife_info("graf_tri_dialog_done") and not has_alife_info("mg_maloy2_spawn") then db.actor:give_info_portion("mg_maloy2_spawn")
-
-  elseif level.name()=="aver" and has_alife_info("izba_dialog_start") and not has_alife_info("lesnik_del") then db.actor:give_info_portion("lesnik_del")
-
-  elseif level.name()=="aver" and has_alife_info("grig_swamp_dialog_done") and not has_alife_info("lesnik_cats_start") then db.actor:give_info_portion("lesnik_cats_start")
-
-  elseif level.name()=="aver" and not has_alife_info("lesnik2_spawn") then db.actor:give_info_portion("lesnik2_spawn")
-
-  elseif level.name()=="l08_yantar" and not has_alife_info("vasil2_restrict_spawn") then db.actor:give_info_portion("vasil2_restrict_spawn")
-
-  elseif level.name()=="aver" and has_alife_info("lesnik2_mesto") and not has_alife_info("delete_mg_aver") then db.actor:give_info_portion("delete_mg_aver")
-
-  elseif level.name()=="aver" and has_alife_info("zahar_mesto") and not has_alife_info("sms_zahar") then db.actor:give_info_portion("sms_zahar")
-
-  elseif level.name()=="l08_yantar" and has_alife_info("vasil2_yantar") and not has_alife_info("vasil2_spawn") then db.actor:give_info_portion("vasil2_spawn")
-
-  elseif level.name()=="l08_yantar" and has_alife_info("vasil2_spawn") and not has_alife_info("zombi_zadan") then db.actor:give_info_portion("zombi_zadan")
-
-  elseif level.name()=="l07_military" and has_alife_info("povodyr_mesto") and not has_alife_info("ac_nechto") then db.actor:give_info_portion("ac_nechto")
-
-  elseif level.name()=="l04u_labx18" and has_alife_info("tankist_start_dialog_start") and not has_alife_info("zombak_spawn") then db.actor:give_info_portion("zombak_spawn")
-
-  elseif level.name()=="l04u_labx18" and not has_alife_info("elchimera_start") then db.actor:give_info_portion("elchimera_start")
-
-  elseif level.name()=="l12u_sarcofag" and has_alife_info("monolit_bunker_doc_have") and not has_alife_info("klyk_delete") then db.actor:give_info_portion("klyk_delete")
-
-  elseif level.name()=="l12_stancia" and has_alife_info("monolit_bunker_doc_have") and not has_alife_info("klychara_spawn") then db.actor:give_info_portion("klychara_spawn")
-
-  elseif level.name()=="swamp" and has_alife_info("doctor_one_start") and not has_alife_info("klychara_delete") then db.actor:give_info_portion("klychara_delete")
-
-  elseif level.name()=="l11_pripyat" and not has_alife_info("del_yaschik") then db.actor:give_info_portion("del_yaschik")
-
-  elseif level.name()=="l11_pripyat" and not has_alife_info("tushkanchiki_new") then db.actor:give_info_portion("tushkanchiki_new")
-
-  elseif level.name()=="l11_pripyat" and has_alife_info("mathon_naem_done") and not has_alife_info("tushkanchiki_midle") then db.actor:give_info_portion("tushkanchiki_midle")
-
-  elseif level.name()=="l11_pripyat" and has_alife_info("actor_poslednii_put") and not has_alife_info("tushkanchiki_last") then db.actor:give_info_portion("tushkanchiki_last")
-
-  elseif level.name()=="l11_pripyat" and not has_alife_info("mervin_anim") then db.actor:give_info_portion("mervin_anim")
-  end
+		if has_alife_info("doctor_one_start") and not has_alife_info("klychara_delete") then
+			db.actor:give_info_portion("klychara_delete")
+		end
+	end
 end
 
 function enemy_skit(community1, community2)
@@ -152,7 +352,7 @@ end
 
 local action = false
 
-function distance_check()
+local function distance_check()
   if has_alife_info("skit_start_dialog_done") and not has_alife_info("skit_prishli") then
     local postovoy = level_object_by_sid(30162) 
     if distance_between(postovoy, db.actor) > 10 and postovoy and action == false then
@@ -671,7 +871,7 @@ function spider_kostolom_spawn()
   local obj = alife():create("spider_kostolom",vector():set(-118.073,5.575,-66.173),888830,3000)
 end
 
-function spider_kostolom_dead()
+local function spider_kostolom_dead()
 	if db.actor:dont_has_info("doctor_kostolom_dead") then return end
 	if db.actor:has_info("doctor_kostolom_done") then return end
   for id, obj in alife():objects() do
@@ -1600,29 +1800,8 @@ function spawn_rad_soldaty()
   local obj = alife():create("rad_soldat9",vector():set(600.120,-50.793,-16.097),214628,1899)
 end
 
-function del_yaschichek1()
-  local obj = alife():object( "pri_surprise_box_0002" )
-	if obj then
-		alife():release(obj , true)
-	end
-end
-
-function del_yaschichek2()
-  local obj = alife():object( "pri_surprise_box_0003" )
-	if obj then
-		alife():release(obj , true)
-	end
-end
-
 function del_gluk()
   local obj = alife():object( "camp_fire_0011" )
-	if obj then
-		alife():release(obj , true)
-	end
-end
-
-function del_gluk2()
-  local obj = alife():object( "pri_surprise_box_0008" )
 	if obj then
 		alife():release(obj , true)
 	end
@@ -2363,16 +2542,6 @@ function set_metka_m() --ставим метку
   end
 end
 
-function remove_spot_m() --удаляем метку
-  local sim = alife()
-  for a, obj in alife():objects() do
-    if obj:section_name()=="mandra" then
-      level.map_remove_object_spot(obj.id,"crlc_big")
-      break
-    end
-  end
-end
-
 function del_saha()
   local obj = alife():story_object(9625)
   if obj then
@@ -2436,4 +2605,11 @@ end
 function karina_idem()
 local snd_obj = xr_sound.get_safe_sound_object([[new\moya_lyubov]])
 snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+end
+
+function attach( sm )
+  sm:subscribe({ signal = "on_update", 	     fun = distance_check })
+  sm:subscribe({ signal = "on_update", 	     fun = spider_kostolom_dead })
+  sm:subscribe({ signal = "on_first_update", fun = on_first_update 	})
+  sm:subscribe({ signal = "on_info", 	     fun = on_info 		})
 end
