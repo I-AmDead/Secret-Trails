@@ -1,0 +1,97 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+
+local top_lvid, top_gvid
+local top_game_vertex_ids
+
+local function gg_backward_scan(gg, lid, gvid)
+	while true do
+		gvid = gvid - 1
+		if gvid < 0 or gg:vertex(gvid):level_id() ~= lid then
+			return gvid + 1
+		end
+	end
+	abort("gg_backward_scan")
+end
+
+local function fill_top_game_vertex_ids(gg)
+	top_game_vertex_ids = {}
+	local sim = alife()
+	local lid, gvid = -1, 0
+	while gg:valid_vertex_id(gvid) == true do
+		if gg:vertex(gvid):level_id() ~= lid then
+			lid = gg:vertex(gvid):level_id()
+			top_game_vertex_ids[sim:level_name(lid)] = gg_backward_scan(gg, lid, gvid)
+		end
+		gvid = gvid + 10
+	end
+end
+
+function get_top_graph_ids(level_name)
+	if level_name ~= nil then
+		local gg = game_graph()
+		if top_game_vertex_ids == nil then
+			fill_top_game_vertex_ids(gg)
+		end
+		local gvid = top_game_vertex_ids[level_name]
+--log3("[get_top_graph_ids] top_game_vertex_ids = %s", top_game_vertex_ids)
+		return gg:vertex(gvid):level_vertex_id(), gvid
+	end
+	if top_gvid == nil then
+		local gg = game_graph()
+		local gvid = db.actor:game_vertex_id()
+		top_gvid = gg_backward_scan(gg, gg:vertex(gvid):level_id(), gvid)
+		top_lvid = gg:vertex(top_gvid):level_vertex_id()
+	end
+	return top_lvid, top_gvid
+end
+
+
+local index_for_community = {}
+local communities_relations = {}
+local community_for_index = {}
+local function load_communities_relations()
+	local index = 1
+
+	for comm, id in string.gmatch(get_string("game_relations", "communities"), "([%w_]+)%s*,%s*([%d%.%-]+)%,*") do
+		local t = {}
+		for rel in string.gmatch(get_string("communities_relations", comm), "([%d%.%-]+)%,*") do
+			table.insert(t, tonumber(rel))
+		end
+		communities_relations[comm] = t
+		index_for_community[comm] = index
+		community_for_index[index] = comm
+		index = index + 1
+	end
+end
+load_communities_relations() --Построение таблиц делаем при первом запуске скрипта
+
+function comm2idx(comm)
+	return index_for_community[comm]
+end
+
+function idx2comm(id)
+	return community_for_index[id]
+end
+
+function comm2comm_relation(community_from, community_to)
+	local relations = communities_relations[community_from]
+	ASSERT(relations, "")
+	return relations[index_for_community[community_to]]
+end
+
+function community_relation_safe(community, npc_id, char_comm)
+	local relations = communities_relations[community]
+	ASSERT(relations, "Can't find relation for community: [%s]", community or "nil")
+	return relations[index_for_community[char_comm]] +
+			relation_registry.community_goodwill(community, npc_id)
+end
+
+
+function show_coordinates()
+	local lvid, gvid = db.actor:level_vertex_id(), db.actor:game_vertex_id()
+	local pos, dir = db.actor:position(), db.actor:direction()
+	local valid = level.valid_vertex_id( level.vertex_id( pos ) )
+
+	log3( "- lvid: [%s]\ngvid: [%s]\npos: [%s, %s, %s]\ndir: [%s, %s, %s]\nvalid: [%s]", lvid, gvid, pos.x, pos.y, pos.z, dir.x, dir.y, dir.z, valid )
+end
