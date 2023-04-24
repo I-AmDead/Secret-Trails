@@ -327,6 +327,11 @@ local function on_info()
 	end
 end
 
+local function storyline_mix()
+	on_info()
+	on_first_update()
+end
+
 function enemy_skit(community1, community2)
   relation_registry.set_community_goodwill ("wanderer", "actor", -5000)
 end
@@ -2608,8 +2613,8 @@ snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 end
 
 function attach( sm )
-  sm:subscribe({ signal = "on_update", 	     fun = distance_check })
+  sm:subscribe({ signal = "on_update", 	     fun = distance_check 	})
   sm:subscribe({ signal = "on_update", 	     fun = spider_kostolom_dead })
-  sm:subscribe({ signal = "on_first_update", fun = on_first_update 	})
-  sm:subscribe({ signal = "on_info", 	     fun = on_info 		})
+  sm:subscribe({ signal = "on_first_update", fun = storyline_mix 	})
+  sm:subscribe({ signal = "on_info", 	     fun = storyline_mix 	})
 end

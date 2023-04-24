@@ -168,7 +168,7 @@ local function on_take(obj, sobj)
 	end
 end
 
-local function on_first()
+local function on_first_update()
 
 	if level.name()=="l01_escape" then
 		if not has_alife_info("actor_na_kordon") then
@@ -731,6 +731,11 @@ local function on_info(npc, info_id)
 	elseif has_alife_info("volk_novic1_have") and has_alife_info("volk_novic2_have") and has_alife_info("volk_novic4_have") and has_alife_info("volk_novic6_have") then
 		db.actor:give_info_portion("volk_can_speak")
 	end
+end
+
+local function storyline_mix()
+	on_info()
+	on_first_update()
 end
 
 local haronp={
@@ -3119,8 +3124,8 @@ function spawn_ai_location( spawn_obj, pos, lvid, gvid )
 end
 
 function attach(sm)
-	sm:subscribe({ signal = "on_first_update",   fun = on_first  }) 
-	sm:subscribe({ signal = "on_info",    fun = on_info   	     })
-	sm:subscribe({ signal = "on_take",    fun = on_take          })
-	sm:subscribe({ signal = "on_update",  fun = on_update        }) 
+	sm:subscribe({ signal = "on_first_update",   fun = storyline_mix  }) 
+	sm:subscribe({ signal = "on_info", 	     fun = storyline_mix  })
+	sm:subscribe({ signal = "on_take",    	     fun = on_take        })
+	sm:subscribe({ signal = "on_update",  	     fun = on_update      }) 
 end
