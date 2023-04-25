@@ -661,7 +661,6 @@ function get_af_transform_param(name, recept, recepti)
 		result = anom_recept_komp["default"][name]
 	else
 		-- нет информации!!!
-		news_manager.send_tip("нет информации для "..name.."!","варка артефактов",0,15,"gen_info")
 		result = nil
 	end
 	return result
@@ -917,7 +916,7 @@ function af_transform_universal_end( params )
 			af_sobj = amk.spawn_item(k, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.gv, params.lv)
 			level.map_add_object_spot(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 		end
-		news_manager.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+		news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
 	
 	-- даїм инфопорциі, если есть
@@ -947,7 +946,7 @@ function af_transform_end(params)
 	local sobj = alife():object( obj.id )
 	alife():use_ai_locations(sobj, false)
 	level.map_add_object_spot(obj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
-	news_manager.send_tip(game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
+	news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
 end
 
 
