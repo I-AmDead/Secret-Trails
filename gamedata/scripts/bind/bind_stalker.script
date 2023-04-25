@@ -26,7 +26,6 @@ class "actor_binder" ( object_binder )
 function actor_binder:__init( obj ) super( obj )
   sim = alife()
   self.bCheckStart = false
-  self.is_saved    = false
   self.am          = ogse_signals.get_mgr()
   self.am:call( "on_load_before_all" )
   self.am:call( "on_init", obj )
@@ -49,9 +48,10 @@ function actor_binder:net_spawn( data )
   self.bCheckStart = true
   self.weapon_hide = false -- спрятано или нет оружие при разговоре.
   weapon_hide = false -- устанавливаем глобальный дефолтовый флаг.
-  if object_binder.net_spawn(self,data) == false then
-    return false
-  end
+
+	if not db.storage[self.object:id()].pstor then	--KRodin: из xr_logic почему-то не срабатывает, поэтому создаём pstor здесь.
+		db.storage[self.object:id()].pstor = {}
+	end
 
   level.enable_input() --НЕ УДАЛЯТЬ!
 
@@ -118,14 +118,10 @@ function actor_binder:net_destroy()
   end
 
   self.am:call( "on_destroy" )
-
-  object_binder.net_destroy( self )
 end
 
 
 function actor_binder:reinit()
-  object_binder.reinit( self )
-  
   local npc_id = self.object:id()
   db.storage[ npc_id ] = {}
   self.st = db.storage[npc_id]
@@ -203,11 +199,9 @@ function actor_binder:take_item_from_box( box, item )
     return
   end
 
-  treasure_manager.take_item_from_box(box, story_id)
+  amk.on_item_take_from_box( box, item )
 
   self.am:call( "on_take_from_box", box, item, sim:object( item:id() ) )
-
-  amk.on_item_take_from_box( box, item )
 end
 
 
@@ -267,9 +261,6 @@ end
 
 function actor_binder:article_callback( npc, group, name, article_type )
   if device().precache_frame >1 then return end
-  
-  dmx_mod.encyclopedy_news(group,name) -- DMX MOD
-
   self.am:call( "on_article", npc, group, name, article_type )
 end
 
@@ -362,7 +353,6 @@ local update_was_never_called = true
 function actor_binder:update( delta )
 
   local time = time_global()
-  object_binder.update( self, delta )
 
   game_stats.update (delta, self.object)
    
@@ -542,66 +532,25 @@ end
 
 
 function actor_binder:save( packet )
-  self:save_old( packet )
-  ASSERT(
-    packet:w_tell() <= 7500,
-    "actor packet size is critical: %s", packet:w_tell()
-  )
+  ogse.save_var("game_difficulty", level.get_game_difficulty(), "u8") --Сохраняем уровень сложности
+
+  xr_logic.pstor_save_all( self.object, packet )
+
   log2( "~~Actor netpacket size %s", packet:w_tell() )
 
   if rx_ai then rx_ai.actor_save(packet) end
 
   self.am:call( "on_save", packet )
   self.am:call( "on_save_after_all" )
-  self.is_saved = true
-end
-
-
-function actor_binder:save_old( packet )
-  local save_treasure_manager = true
-  object_binder.save( self, packet )
-
-  --' Сохраняем уровень сложности
-  if save_treasure_manager == true then
-    packet:w_u8( level.get_game_difficulty() + 128 )
-  else
-    packet:w_u8( level.get_game_difficulty() )
-  end
-
-  --' Сохраняем данные об отключенном вводе
-  packet:w_bool( false )
-
-  xr_logic.pstor_save_all( self.object, packet )
 end
 
 
 function actor_binder:load( reader )
-  object_binder.load( self, reader )
-
-	--' Загружаем уровень сложности
-	local game_difficulty = reader:r_u8()
-	local load_treasure_manager = false      
-	if game_difficulty >= 128 then           
-		game_difficulty = game_difficulty - 128
-		load_treasure_manager = true           
-	end                                      
-
-	get_console():execute("g_game_difficulty "..game_difficulty_by_num[game_difficulty])
-	if reader:r_eof() then
-    abort( "Это сохранение необратимо повреждено - удалите его, и переиграйте с более раннего сохранения. Продолжать игру на этом сохранении категорически запрещено!" )
-    string.format( "%s" )
-	end
-
-	local stored_input_time = reader:r_u8()
-  -- оставлено для совместимости
-	if stored_input_time == true then
-    utils.r_CTime( reader )
-	end
+  local game_difficulty = ogse.load_var("game_difficulty", 3) --Загружаем уровень сложности
+  cmd("g_game_difficulty", game_difficulty_by_num[game_difficulty + 1]) --и устанавливаем его.
 
   xr_logic.pstor_load_all( self.object, reader )
-  if load_treasure_manager == true then
-    treasure_manager.load( reader )
-	end                                  
+                                 
   task_manager.load( reader )
 
   self.am:call( "on_load", reader )

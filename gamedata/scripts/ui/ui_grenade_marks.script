@@ -26,19 +26,18 @@ function add_new_marker(obj_id,color)
 	if not obj then
 		return
 	end
+
 	local dir = obj:position():sub(db.actor:position())
 	local dist = dir:magnitude()
-	if dist < 100 then
-		local mark_st = xml:InitStatic("mark",wnd)
-		local sdir = device().cam_dir
-		local angle = math.atan2(-sdir.x,sdir.z)
-		local c,s = math.cos(angle), math.sin(angle)
-		mark_st:SetHeading( - math.atan2(dir.x * c + dir.z * s,-dir.x * s + dir.z * c) )
-		local clr = colors[color] or colors.full
-		local a = (initial_spot_overdist or initial_spot and dist <= detect_distance) and 255 or 1
-		mark_st:SetColor(GetARGB(a,clr[1],clr[2],clr[3]))
-		table.insert(ui_grenade_marks,obj_id,{st=mark_st,a=a,ta=a,c=clr})
-	end
+
+	local mark_st = xml:InitStatic("mark",wnd)
+        local pos = get_screen_coords(obj:center())	
+        local rect = { x = pos.x - ( pos.x * 0.1 ), y = pos.y - ( pos.y * 0.1 ), w = device().width, h = device().height, } 
+        mark_st:SetWndPos( rect.x - 30, rect.y - 30 )
+        local clr = colors[color] or colors.full
+        local a = 255
+        mark_st:SetColor(GetARGB(a, 255, 255, 255))
+	table.insert(ui_grenade_marks, obj_id, {st = mark_st, a = a, ta = a})	
 end
 
 local speed_d = 8
@@ -47,32 +46,30 @@ local speed_rem_d = speed_d * 8
 -- обновление статиков
 function update_grenade_marks()
 	for id,t in pairs( ui_grenade_marks ) do
-		local s, c, apos
-		if not s then
-			local sdir = device().cam_dir
-			local angle = math.atan2( -sdir.x , sdir.z )
-			c = math.cos(angle)
-			s = math.sin(angle)
-			apos = db.actor:position()
-		end
+
 		if t.a > t.ta then
-			t.a = t.a - (t.rem and speed_rem_d or speed_d) > t.ta and t.a - (t.rem and speed_rem_d or speed_d) or t.ta
+			t.a = t.a-(t.rem and 4 or 2) > t.ta and t.a-(t.rem and 4 or 2) or t.ta
 		elseif t.a < t.ta then
-			t.a = t.a + speed_d < t.ta and t.a + speed_d or t.ta
+			t.a = t.a+3 < t.ta and t.a+3 or t.ta
 		end
-		t.st:SetColor(GetARGB(t.a,t.c[1],t.c[2],t.c[3]))
+		t.st:SetColor(GetARGB(t.a, 255, 255, 255))
 		local obj = level.object_by_id(id)
+
 		if not obj or t.rem and t.a < 5 then
+        		t.st:SetWndPos( 1000, 1000)
 			wnd:DetachChild(t.st)
 			ui_grenade_marks[id] = nil
-		else
+    		else
+			apos = db.actor:position()
 			local dir = obj:position():sub(apos)
-			t.st:SetHeading( - math.atan2(dir.x * c + dir.z * s, - dir.x * s + dir.z * c) )
 			if not t.rem then
-				local dist = dir:magnitude() - 3
-				t.ta = dist > detect_distance and 0 or dist < 0 and 255 or 255 - math.ceil(224 * dist / detect_distance)
+				local dist = dir:magnitude()-3
+				t.ta = dist > detect_distance and 0 or dist < 0 and 255 or 255-math.ceil(224*dist/detect_distance)
 			end
-		end
+        		local pos = get_screen_coords(obj:center())		
+        		local rect = { x = pos.x, y = pos.y, w = device().width, h = device().height, } 
+        		t.st:SetWndPos( rect.x - 30, rect.y - 30 )
+    		end
 	end
 end
 
@@ -87,4 +84,20 @@ function start_fading(obj_id)
 		ui_grenade_marks[obj_id].ta = 0
 		ui_grenade_marks[obj_id].rem = true
 	end
+end
+
+function get_screen_coords(point)
+    local dev = device()
+    local scr_w = dev.width
+    local scr_h = dev.height
+
+    local fov2 = (dev.fov/2) * (math.pi/180)
+    local scr_dist = 0.5 * scr_h / math.tan(fov2)
+
+    local ppp = vector():sub(point, dev.cam_pos)
+    local dp = dev.cam_dir:dotproduct(ppp)
+
+    local _x = 512 + dev.cam_right:dotproduct(ppp) * scr_dist / dp * (1024/scr_w)
+    local _y = 384 - dev.cam_top:dotproduct(ppp)   * scr_dist / dp * (768/scr_h)
+    return {x = _x, y = _y}
 end

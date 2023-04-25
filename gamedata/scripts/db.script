@@ -18,20 +18,12 @@ trader              = nil --TODO: Вынести в mob_trader
 creatures           = {}
 
 function add_obj( obj )
-	if ( obj:is_stalker() or obj:is_actor() ) then
-		creatures[obj:id()] = true
-	elseif obj:is_monster() then
-		creatures[obj:id()] = false
-	end
+	creatures[obj:id()] = obj
 end
 
 function del_obj( obj )
-	--ASSERT(obj:clsid() ~= -1, "obj:clsid() ~= -1 [%s]", obj:name())
-	storage[obj:id()] = nil
+	storage   [obj:id()] = nil
 	creatures[obj:id()] = nil
-	for id,npc in pairs(storage) do
-		if npc.enemy and npc.enemy:id() == obj:id() then npc.enemy = nil end
-	end
 end
 
 

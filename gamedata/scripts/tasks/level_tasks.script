@@ -88,6 +88,23 @@ function add_location( sid, location, hint )
   end
 end
 
+function add_location_by_id(id, location, hint)
+	local sim = alife()
+	if sim then
+		local obj = sim:object(id)
+		if obj then
+			add_location_internal(id, location, hint)
+		end
+	end
+end
+
+function add_location_internal(id, location, hint)
+	if hint then
+		level.map_add_object_spot_ser(id, location, hint)
+	else
+		level.map_add_object_spot_ser(id, location, "")
+	end
+end
 
 function remove_location( sid, location )
   local sim = alife()
@@ -99,19 +116,35 @@ function remove_location( sid, location )
   end
 end
 
-
-function remove_location_safe( sid, location )
-  local sim = alife()
-  if sim then
-    local obj = sim:story_object( sid )
-    if obj then
-      for a = 1, level.map_has_object_spot( obj.id, location ) do
-        level.map_remove_object_spot( obj.id, location )
-      end
-    end
-  end
+function remove_location_by_id(id, location, single)
+	local sim = alife()
+	if sim then
+		local obj = sim:object(id)
+		if obj then
+			level.map_remove_object_spot(id, location)
+			if not single then
+				for a = 1, level.map_has_object_spot(id, location), 1 do
+				   level.map_remove_object_spot(id, location)
+				end	
+			end
+		end
+	end
 end
 
+function remove_location_by_sid(sid, location, single)
+	local sim = alife()
+	if sim then
+		local obj = sim:story_object(sid)
+		if obj then
+			level.map_remove_object_spot(obj.id, location)
+			if not single then
+				for a = 1, level.map_has_object_spot(obj.id, location), 1 do
+				   level.map_remove_object_spot(obj.id, location)
+				end	
+			end
+		end
+	end
+end
 
 function is_map_spot_present( sid, location )
   local sim = alife()
