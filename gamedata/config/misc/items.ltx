@@ -662,6 +662,7 @@ cam_effect = itemuse_anm_effects\syringe_anim_s.anm
 
 boost_time			= 30
 boost_telepat_protection 	= 1
+boost_psy_health_restore	= 0.1
 
 
 [psy_inject_hud]:hud_base
@@ -724,6 +725,59 @@ item_visual             		 = dynamics\weapons\wpn_eat\injectors\inject_rad_hud.o
 
 anm_use					 = hand_morphine_use, item_morphine_use
 
+
+
+[rad_restore_inject]:identity_immunities
+GroupControlSection	= spawn_group
+class			= II_ANTIR
+cform           	= skeleton
+visual          	= huds\world\aptechka.ogf
+description		= rad_restore_desc
+
+inv_name			= rad_restore
+inv_name_short			= rad_restore
+inv_weight			= 0.01
+
+inv_grid_width     = 1
+inv_grid_height    = 1
+inv_grid_x         = 8
+inv_grid_y         = 41
+cost		   = 3000
+
+; eatable item
+eat_health 		= 0
+eat_satiety 		= 0
+eat_power 		= 0
+eat_radiation 		= 0
+wounds_heal_perc 	= 0
+eat_portions_num 	= 1
+eat_alcohol 		= 0
+
+; food item
+animation_slot		= 4
+
+item_used_timing = 1500
+snd_use = items_sounds\inv_food
+snd_use_anm = interface\item_usage\inject
+
+hud = rad_restore_inject_hud
+
+cam_effect = itemuse_anm_effects\syringe_anim_s.anm
+
+boost_time			= 60
+boost_radiation_restore 	= 0.1
+
+
+[rad_restore_inject_hud]:hud_base
+
+hud_fov = 0.52
+hands_position                           = -0.0055,0.02, 0.04
+hands_position_16x9                      = -0.0055,0.02, 0.04
+item_visual             		 = dynamics\weapons\wpn_eat\injectors\inject_rad_restore_hud.ogf
+
+anm_use					 = hand_morphine_use, item_morphine_use
+
+
 [weight_inject]:identity_immunities
 GroupControlSection	= spawn_group
 discovery_dependency =
@@ -766,6 +820,7 @@ cam_effect = itemuse_anm_effects\syringe_anim_s.anm
 
 boost_time			= 60
 boost_max_weight 		= 20
+boost_power_restore		= 0.1
 
 
 [weight_inject_hud]:hud_base
@@ -776,6 +831,62 @@ hands_position_16x9                      = -0.0055,0.02, 0.04
 item_visual             		 = dynamics\weapons\wpn_eat\injectors\inject_weight_hud.ogf
 
 anm_use					 = hand_morphine_use, item_morphine_use
+
+
+[health_inject]:identity_immunities
+GroupControlSection	= spawn_group
+discovery_dependency =
+$spawn 				= "food and drugs\psy_block"
+$prefetch 			= 32
+class				= II_ANTIR
+cform           	= skeleton
+visual          	= huds\world\aptechka.ogf
+description		= health_boost_desc
+
+inv_name			= health_boost
+inv_name_short			= health_boost
+inv_weight			= 0.01
+
+inv_grid_width     = 1
+inv_grid_height    = 1
+inv_grid_x         = 7
+inv_grid_y         = 41
+cost		   = 4000
+
+; eatable item
+eat_health 		= 0
+eat_satiety 		= 0
+eat_power 		= 0
+eat_radiation 		= 0
+wounds_heal_perc 	= 0
+eat_portions_num 	= 1
+eat_alcohol 		= 0
+
+; food item
+animation_slot		= 4
+
+item_used_timing = 1500
+snd_use = items_sounds\inv_food
+snd_use_anm = interface\item_usage\inject
+
+hud = health_inject_hud
+
+cam_effect = itemuse_anm_effects\syringe_anim_s.anm
+
+boost_time			= 60
+boost_health_restore 		= 0.1
+boost_bleeding_restore 		= 0.1
+
+
+[health_inject_hud]:hud_base
+
+hud_fov = 0.52
+hands_position                           = -0.0055,0.02, 0.04
+hands_position_16x9                      = -0.0055,0.02, 0.04
+item_visual             		 = dynamics\weapons\wpn_eat\injectors\inject_health_hud.ogf
+
+anm_use					 = hand_morphine_use, item_morphine_use
+
 
 [antizombin]:identity_immunities
 GroupControlSection	= spawn_group
@@ -1592,6 +1703,12 @@ r_pnv_color     = 0.1, 0.6, 0.3
 r_pnv_mode      = 1
 r_pnv_noise     = 0.15
 r_pnv_scanlines = 0.15
+r_pnv_radius 	= 0.4
+r_pnv_scintillation = 0.998
+r_pnv_generation_and_vignete_mode = 10.2
+r_pnv_brightness_and_alfa_vignete = 10.1
+r_pnv_brightness_and_blur_alfa = 15.4
+r_pnv_size_vignet_and_glitch = 1.0
 
 [nv_bad_absorbation];коэффициенты иммунитета 
 burn_immunity = 1.0				
@@ -1631,6 +1748,12 @@ r_pnv_color     = 0.3, 0.6, 0.8
 r_pnv_mode      = 1
 r_pnv_noise     = 0.1
 r_pnv_scanlines = 0.1
+r_pnv_radius 	= 0.5
+r_pnv_scintillation = 0.998
+r_pnv_generation_and_vignete_mode = 10.2
+r_pnv_brightness_and_alfa_vignete = 15.1
+r_pnv_brightness_and_blur_alfa = 15.4
+r_pnv_size_vignet_and_glitch = 1.0
 
 [nv_bast]:nv_bad
 description		= nv_bast_descr
@@ -1648,6 +1771,12 @@ r_pnv_color     = 0.2, 0.8, 0.6
 r_pnv_mode      = 1
 r_pnv_noise     = 0.05
 r_pnv_scanlines = 0.05
+r_pnv_radius 	= 0.5
+r_pnv_scintillation = 0.998
+r_pnv_generation_and_vignete_mode = 10.4
+r_pnv_brightness_and_alfa_vignete = 15.1
+r_pnv_brightness_and_blur_alfa = 20.4
+r_pnv_size_vignet_and_glitch = 1.0
 
 [device_pda_npc]:identity_immunities
 GroupControlSection	= spawn_group

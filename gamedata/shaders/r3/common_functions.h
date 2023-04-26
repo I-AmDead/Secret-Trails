@@ -6,14 +6,6 @@
 uniform float4 m_actor_params;
 uniform float4 L_hotness;
 
-float3 vibrance(float3 img, half val)
-{
-    float luminance = dot(float3(img.rgb), LUMINANCE_VECTOR);
-    return float3(lerp(luminance, float3(img.rgb), val));
-}
-
-float noise(float2 tc) { return frac(sin(dot(tc, float2(12.0, 78.0) + (timers.x))) * 43758.0) * 0.25f; }
-
 //	contrast function
 float Contrast(float Input, float ContrastPower)
 {
@@ -23,6 +15,12 @@ float Contrast(float Input, float ContrastPower)
     float Output = 0.5 * pow(ToRaise, ContrastPower);
     Output = IsAboveHalf ? 1 - Output : Output;
     return Output;
+}
+
+float3 vibrance( float3 img, half val )
+{
+    float luminance = dot( float3( img.rgb ), LUMINANCE_VECTOR );
+    return float3( lerp( luminance, float3( img.rgb ), val ));
 }
 
 void tonemap(out float4 low, out float4 high, float3 rgb, float scale)
@@ -215,7 +213,7 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, uint imask, const boo
 #endif
 
     if (L_hotness.x > 0.0)
-        res.H = float4(L_hotness.x, 0.0, 0.0, 1.0);
+        res.H = float4(L_hotness.x, L_hotness.y, 0.0, 1.0);
     else
         res.H = float4(0.0, 0.0, 0.0, 0.0);
 
@@ -479,6 +477,14 @@ inline bool isSecondVPActive() { return (m_blender_mode.z == 1.f); }
 // Рендерится ли в данный момент кадр для прицела?
 inline bool IsSVPFrame() { return (m_blender_mode.y == 1.f); }
 //////////////////////////////////////////////////////////////////////////////////////////
+
+float2 aspect_ratio_correction (float2 tc)
+{
+    tc.x -= 0.5f;
+    tc.x *= (screen_res.x / screen_res.y);
+    tc.x += 0.5f;
+	return tc;
+}
 
 //#define SKY_WITH_DEPTH // sky renders with
 // depth to avoid some problems with reflections

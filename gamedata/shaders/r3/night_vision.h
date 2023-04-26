@@ -1,10 +1,10 @@
 #include "common.h"
 
 uniform float4 pnv_color;
-uniform float4 pnv_param_3;
 
-uniform float4  pnv_param_2;
-uniform float4  pnv_param_1;
+uniform float4 pnv_param_1;
+uniform float4 pnv_param_2;
+uniform float4 pnv_param_3;
 
 float rand(float n)
 {
@@ -33,35 +33,46 @@ float rand(float n)
 ///////////////////////////////////////////////////////
 
 #define sky_brightness_factor float (1.0f)
-										
+
 // Constants
-#define tube_radius float (frac(pnv_param_1.y))
-		
-#define single_tube_centered float2(0.5f, -0.5f + (floor(pnv_param_1.x) / 100))
-#define single_tube_offset_left float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
-#define single_tube_offset_right float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
-		
-#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube left eye
-#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube right eye
-		
-#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left outer tube
-#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left inner tube
-#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right inner tube
-#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right outer tube
-	
 #define luma_conversion_coeff float3 (0.299, 0.587, 0.114)// When we convert to YUV, these are the coefficients for Y (since we discard UV)
 #define farthest_depth float (25.0f) 						// The farthest far place that we can reach in regards to DOF effects
 
-	
+//#define single_tube_centered float2(0.5f, -0.5f + (floor(pnv_param_1.x) / 100))
+//#define single_tube_offset_left float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
+//#define single_tube_offset_right float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
+//
+//#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube left eye
+//#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube right eye
+//
+//#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left outer tube
+//#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left inner tube
+//#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right inner tube
+//#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right outer tube
+
 ///////////////////////////////////////////////////////
 // DEFINE NVG MASK (Credit to LVutner for huge assistance in designing the functions)
 ///////////////////////////////////////////////////////
 float compute_lens_mask(float2 masktc, float num_tubes)
 {
-	float lua_param_flip_down = floor(pnv_param_1.x);
+    float tube_radius = (pnv_param_1.y);
+
+    float2 single_tube_centered = float2(0.5f, -0.5f + ((pnv_param_1.x) / 100));
+    float2 single_tube_offset_left = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));		// Single tube screen position (0.5, 0.5 is centered)
+    float2 single_tube_offset_right = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));	// Single tube screen position (0.5, 0.5 is centered)
+
+    float2 dual_tube_offset_1 = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube left eye
+    float2 dual_tube_offset_2 = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube right eye
+
+    float2 quad_tube_offset_1 = float2(0.05f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left outer tube
+    float2 quad_tube_offset_2 = float2(0.3f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left inner tube
+    float2 quad_tube_offset_3 = float2(0.7f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right inner tube
+    float2 quad_tube_offset_4 = float2(0.95f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right outer tube
+
+	float lua_param_flip_down = (pnv_param_1.x);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
 	masktc.y = masktc.y * lua_param_flip_down;
-	
+
 	if (num_tubes > 0.99f && num_tubes < 1.01f) // One tube centered
 		{
 			return step(distance(masktc,single_tube_centered), tube_radius);
@@ -103,24 +114,12 @@ float compute_lens_mask(float2 masktc, float num_tubes)
 }
 
 ///////////////////////////////////////////////////////
-// ASPECT RATIO CORRECTION (Credit LVutner)
-///////////////////////////////////////////////////////
-float2 aspect_ratio_correction (float2 tc)
-	{
-	tc.x -= 0.5f;
-    tc.x *= (screen_res.x / screen_res.y);
-    tc.x += 0.5f;
-	return tc;
-	}
-
-
-///////////////////////////////////////////////////////
 // CRT EFFECT (adapted from MattiasCRT on ShaderToy, credit Mattias)
 ///////////////////////////////////////////////////////
 float2 curve_texturecoords(float2 curved_tc)
 {
 	curved_tc = (curved_tc - 0.5) * 2.0;
-	curved_tc *= 1.1;	
+	curved_tc *= 1.1;
 	curved_tc.x *= 1.0 + pow((abs(curved_tc.y) / 5.0), 2.0);
 	curved_tc.y *= 1.0 + pow((abs(curved_tc.x) / 4.0), 2.0);
 	curved_tc  = (curved_tc / 2.0) + 0.5;
@@ -138,7 +137,7 @@ float3 make_crt_ified(float3 fragColor, float2 tc )
 	col.r = fragColor.r;
 	col.g = fragColor.g;
 	col.b = fragColor.b;
-	
+
 	col.r += 0.08f * fragColor.r;
 	col.g += 0.05f * fragColor.g;
    	col.b += 0.08f * fragColor.b;
@@ -150,9 +149,9 @@ float3 make_crt_ified(float3 fragColor, float2 tc )
 
     col *= float3(0.95,1.05,0.95);
 	col *= 2.8;
-	
+
 	float scans = clamp( 0.35+0.35*sin(uv.y*screen_res.y*2.0), 0.0, 1.0);
-	
+
 	float s = pow(scans,1.7);
 	col = col*float( 0.4+0.7*s) ;
 
@@ -161,11 +160,11 @@ float3 make_crt_ified(float3 fragColor, float2 tc )
 		col *= 0.0;
 	if (uv.y < 0.0 || uv.y > 1.0)
 		col *= 0.0;
-	
+
 	col*=1.0-0.65*float(clamp(((tc.x % 2.0)-1.0)*2.0,0.0f,1.0f));
-	
+
     float comp = smoothstep( 0.1, 0.9, sin(timers.x) );
- 
+
     fragColor = col;
 	return fragColor;
 }
@@ -175,14 +174,29 @@ float3 make_crt_ified(float3 fragColor, float2 tc )
 ///////////////////////////////////////////////////////
 float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 {
+    float tube_radius = ((pnv_param_1.y));
+
+    float2 single_tube_centered = float2(0.5f, -0.5f + ((pnv_param_1.x) / 100));
+    float2 single_tube_offset_left = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));		// Single tube screen position (0.5, 0.5 is centered)
+    float2 single_tube_offset_right = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));	// Single tube screen position (0.5, 0.5 is centered)
+
+    float2 dual_tube_offset_1 = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube left eye
+    float2 dual_tube_offset_2 = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube right eye
+
+    float2 quad_tube_offset_1 = float2(0.05f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left outer tube
+    float2 quad_tube_offset_2 = float2(0.3f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left inner tube
+    float2 quad_tube_offset_3 = float2(0.7f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right inner tube
+    float2 quad_tube_offset_4 = float2(0.95f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right outer tube
+
+
 	float vignette;
 	float2 corrected_texturecoords = aspect_ratio_correction(tc);
-	
-	float lua_param_flip_down = floor(pnv_param_1.x);
+
+	float lua_param_flip_down = (pnv_param_1.x);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
-	
+
 	corrected_texturecoords.y = corrected_texturecoords.y * lua_param_flip_down;
-	
+
 	if (num_tubes > 0.99f && num_tubes < 1.01f)
 	{
 		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_centered)),3);
@@ -193,7 +207,7 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_offset_left)),3);
 		vignette = 1.0 - (1.0 - gen1_vignette); // apply vignette
 	}
-	
+
 	else if (num_tubes > 1.19f && num_tubes < 1.21f)
 	{
 		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_offset_right)),3);
@@ -214,7 +228,7 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 		vignette = 1.0 - ((1.0 - gen3_vignette_1) * (1.0 - gen3_vignette_2) * (1.0 - gen3_vignette_3) * (1.0 - gen3_vignette_4)); // apply vignette
 	}
 	return vignette;
-}			
+}
 
 
 
@@ -261,27 +275,27 @@ float extractLuma(float3 c)
 float3 luma_sharpen(float3 image, float2 uv)
 {
     float3 yuv = YUVFromRGB(image);
-    
+
     float2 imgSize = screen_res.xy;
-    
-    float accumY = 0.0; 
+
+    float accumY = 0.0;
     for(int i = -1; i <= 1; ++i) {
         for(int j = -1; j <= 1; ++j) {
             float2 offset = float2(i,j) / imgSize;
-            
+
             float s = extractLuma(s_blur_2.SampleLevel(smp_rtlinear,uv + offset,0).rrr);
             float notCentre = min(float(i*i + j*j),1.0);
             accumY += s * (9.0 - notCentre*10.0);
         }
     }
-    
+
     accumY /= 9.0;
-    
+
     float gain = 0.9;
     accumY = (accumY + yuv.x)*gain;
-    
+
 		image = RGBFromYUV (float3(accumY,yuv.y,yuv.z)); // sharpened
-		return image;   
+		return image;
 }
 
 
@@ -292,7 +306,7 @@ float3 luma_sharpen(float3 image, float2 uv)
 float blurred_depth (float2 tc)
 {
     float Pi = 6.28318530718; // Pi*2
-    
+
     float Directions = 12.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
     float Quality = 4.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
 	float Size = 6;
@@ -311,7 +325,7 @@ float blurred_depth (float2 tc)
 	float weight = 0.0;
 	// where we store the total weighted
 	float total_weight = 0.0;
-	
+
 	// Blur calculations
 	for(float i=1.0; i<=Quality; i++) // how far away are we
     {
@@ -319,12 +333,12 @@ float blurred_depth (float2 tc)
 		{
 			// pull depth at our sample point
 			depth_sample = s_position.Load( int3( ((tc+float2(cos(d),sin(d))*Radius*i) * screen_res.xy), 0 ), 0 ).z;
-			
+
 			// if we hit the sky, give it a depth of 10k
 			if (depth_sample == 0) {depth_sample = 10000.0f; }
-			
+
 			// if the point we hit is closer than our (center? average), then that point should add blurring to our centerpoint
-			if (depth_sample <= center_depth ) 
+			if (depth_sample <= center_depth )
 			{
 				weight = Quality - pow((i - 1),0.5);
 				depth_average += depth_sample * weight;
@@ -345,7 +359,7 @@ float blurred_depth (float2 tc)
 float3 glitchEffect( float3 image, float2 tc, float power)
 {
     //tc.y = 1.0 - tc.y;
-	
+
 	float time = fmod(timers.x, 32.0); // + modelmat[0].x + modelmat[0].z;
 
 	float GLITCH = saturate(power);
@@ -367,7 +381,7 @@ float3 glitchEffect( float3 image, float2 tc, float power)
 	{ test_result = 1.0f; }
 	else
 	{test_result = -1.0f; }
-	
+
 	float ofs = 0.05 * r2 * GLITCH * test_result;
 	ofs += 0.5 * pxrnd * ofs;
 
@@ -375,11 +389,11 @@ float3 glitchEffect( float3 image, float2 tc, float power)
 
     int NUM_SAMPLES = 10;
     float RCP_NUM_SAMPLES_F = 1.0 / (float)NUM_SAMPLES;
-    
+
 	float3 sum = 0.0f;
 	float3 wsum = 0.0f;
 	float t0 = 0.0f;
-	
+
 	for( int i=0; i<NUM_SAMPLES; ++i )
 	{
 		float t = (float)i * RCP_NUM_SAMPLES_F;
