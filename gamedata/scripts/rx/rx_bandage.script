@@ -10,7 +10,7 @@ drink = { {a = "idle_0_to_sit_2",t = 2350},{a = "vodka_3",t = 3650},{a = "sit_2_
 }
 
 local bg_ini = ini_file([[misc\ai_additions\bandage.ltx]])
-ASSERTX(bg_ini:section_exist("default"),"no bg_ini")
+ASSERT(bg_ini:section_exist("default"),"no bg_ini")
 bandage_sets = {}
 bandage_sets.spawn_mt = rx_utils.read_from_ini(bg_ini,"main","spawn_medkits_time",120)*1000
 bandage_sets.spawn_bt = rx_utils.read_from_ini(bg_ini,"main","spawn_bandages_time",60)*1000
@@ -65,7 +65,7 @@ function evaluator_bandage:evaluate()
 		self.hitt = time_global()+5000
 		return false
 	end
---	ASSERTX(self.st.pr,"evaluator_bandage[%s:%s]: no pr, profile %s",npc:name(),npc:character_name(),self.st.current_profile)
+--	ASSERT(self.st.pr,"evaluator_bandage[%s:%s]: no pr, profile %s",npc:name(),npc:character_name(),self.st.current_profile)
 	if self.st.pr.disabled then				-- текущий профиль запрещает лечиться
 		self.hitt = time_global()+7000
 		return false

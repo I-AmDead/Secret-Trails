@@ -26,7 +26,7 @@ local ammo_params = {}
 local wms = {} -- запоминаем id
 local update_time = time_global()
 local wm_ini = ini_file([[misc\ai_additions\weapon_manager.ltx]])
-ASSERTX(wm_ini:section_exist("main"),"no wm_ini")
+ASSERT(wm_ini:section_exist("main"),"no wm_ini")
 local defsec = "default"
 --local do_process
 
@@ -56,7 +56,7 @@ function init() -- вычитывание конфига
 			local dt,vt = {},{}
 			local tmp = rx_utils.parse_list(wm_ini,ts,"dist_"..i)
 			if #tmp < 2 then
-				ABORTX("weapon_manager: incorrect value dist_%s",i)
+				abort("weapon_manager: incorrect value dist_%s",i)
 			end
 --			table.sort(tmp,function(a,b) return tonumber(string.sub(a,1,string.find(a,":",1,true)-1)) < tonumber(string.sub(b,1,string.find(b,":",1,true)-1)) end)
 			local m = 0
@@ -64,9 +64,9 @@ function init() -- вычитывание конфига
 				local p = string.find(s,":",1,true)
 				local d,v = tonumber(string.sub(s,1,p-1)),tonumber(string.sub(s,p+1,-1))
 				if not (d and v) then
-					ABORTX("weapon_manager: non-number in dist_%s",i)
+					abort("weapon_manager: non-number in dist_%s",i)
 				elseif d < m then
-					ABORTX("weapon_manager: incorrect order in dist_%s",i)
+					abort("weapon_manager: incorrect order in dist_%s",i)
 				end
 				m = d
 				table.insert(dt,d)
@@ -78,7 +78,7 @@ function init() -- вычитывание конфига
 		if wm_ini:line_exist(ts,"minmaxr_"..i) then
 			local tmp = rx_utils.parse_list(wm_ini,ts,"minmaxr_"..i,false,true)
 			if #tmp ~= 2 then
-				ABORTX("weapon_manager: incorrect value minmaxr_%s",i)
+				abort("weapon_manager: incorrect value minmaxr_%s",i)
 			end
 			wm_modes.types.minr[i] = tmp[1]
 			wm_modes.types.maxr[i] = tmp[2]
@@ -89,11 +89,11 @@ function init() -- вычитывание конфига
 			for k,v in ipairs(tmp) do
 				local p = string.find(v,":",1,true)
 				if not p then
-					ABORTX("weapon_manager: incorrect value enemy_%s",i)
+					abort("weapon_manager: incorrect value enemy_%s",i)
 				end
 				local cls = string.sub(v,1,p-1)
 				if not clslist[cls] then
-					ABORTX("weapon_manager: not registered enemy class %s in enemy_%s",cls,i)
+					abort("weapon_manager: not registered enemy class %s in enemy_%s",cls,i)
 				end
 				t[clslist[cls]] = tonumber(string.sub(v,p+1,-1))
 			end
@@ -1201,7 +1201,7 @@ local function read_priors_section(cm,section)
 	end
 	if cm.priority_mode == 2 and not wm_modes.koeffs[cm.koeffs] then
 		if not wm_ini:section_exist(cm.koeffs) then
-			ABORTX("!weapon_manager: can`t find koeffs section [%s]",cm.koeffs)
+			abort("!weapon_manager: can`t find koeffs section [%s]",cm.koeffs)
 		end
 		local kf = {}
 		kf.dmg = wm_ini:r_float(cm.koeffs,"damage")
@@ -1211,7 +1211,7 @@ local function read_priors_section(cm,section)
 		wm_modes.koeffs[cm.koeffs] = kf
 	elseif cm.priority_mode == 3 and not wm_modes.priors[cm.priors] then	-- wm_modes.sect.default.priors
 		if not wm_ini:section_exist(cm.priors) then
-			ABORTX("!weapon_manager: can`t find priors section [%s]",cm.priors)
+			abort("!weapon_manager: can`t find priors section [%s]",cm.priors)
 		end
 		local pst = {cm.priors}
 		if section ~= defsec then	-- ищем инклуды
@@ -1324,7 +1324,7 @@ function read_mode_section(section)
 	if cm.types then
 		local tps = rx_utils.str_explode(",",cm.types)
 		if #tps ~= #wm_modes.types.list then
-			ABORTX("!weapon_manager: incorrect announce [%s] types = %s",sect,cm.types)
+			abort("!weapon_manager: incorrect announce [%s] types = %s",sect,cm.types)
 		end
 		cm.types = {}
 		for k,v in ipairs(wm_modes.types.list) do
@@ -1349,14 +1349,14 @@ end
 
 function read_wpn_params(sect)
 	if weapon_params[sect] == nil then
-		ASSERTX(sect,"!weapon_manager: read_wpn_params no sect '%s'",sect)
+		ASSERT(sect,"!weapon_manager: read_wpn_params no sect '%s'",sect)
 		local typ = read_if_exist_integer(sect,wm_modes.types.line,-1)
 		local c,t,k = true,false
 		while(typ ~= t and t ~= nil) do
 			k,t = next(wm_modes.types.list,k)
 			c = typ ~= t
 		end
---		ASSERTX(not c,"!weapon_manager: not registered weapon type '%s' in [%s]",typ,sect)
+--		ASSERT(not c,"!weapon_manager: not registered weapon type '%s' in [%s]",typ,sect)
 		local ammos,ammot = rx_utils.parse_list(nil,sect,"ammo_class",-1)
 		local dmg, blast = get_dmg(sect)
 		local rpm = get_rpm(sect)
@@ -1458,11 +1458,11 @@ function get_enemyt(section)
 		for _,v in ipairs(tmp) do
 			local p = string.find(v,":",1,true)
 			if not p then
-				ABORTX("weapon_manager: incorrect value enemy for %s",section)
+				abort("weapon_manager: incorrect value enemy for %s",section)
 			end
 			local cls = string.sub(v,1,p-1)
 			if not clslist[cls] then
-				ABORTX("weapon_manager: not registered enemy class %s in enemy for %s",cls,section)
+				abort("weapon_manager: not registered enemy class %s in enemy for %s",cls,section)
 			end
 			enemyt[clslist[cls]] = tonumber(string.sub(v,p+1,-1))
 		end
@@ -1475,7 +1475,7 @@ function get_rsect(section)
 	if rsect then
 		rsect = rx_utils.str_explode(",",rsect)
 		if #rsect < 3 then
-			ABORTX("number of values in rsec(%s) '%s' < 3!",section,#rsect)
+			abort("number of values in rsec(%s) '%s' < 3!",section,#rsect)
 		end
 	end
 	return rsect

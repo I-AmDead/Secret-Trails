@@ -1619,110 +1619,8 @@ function is_object_online(obj_id)
 	return level.object_by_id(obj_id) ~= nil
 end
 
-
 function get_clsid( obj )
   if obj then return obj:clsid() end
-end
-
-
-function isWeaponGrenade( object, class_id )
-  local id = class_id or get_clsid( object )
-  return IAmAGrenade[ id ] == true
-end
-function isWeaponFireOnly(object)
-local clsid_weapon_fireonly = {
-    [clsid.wpn_ak74_s]              = true,
-    [clsid.wpn_bm16_s]              = true,
-    [clsid.wpn_fn2000]              = true,
-    [clsid.wpn_fort]                = true,
-    [clsid.wpn_groza_s]             = true,
-    [clsid.wpn_hpsa_s]              = true,
-    [clsid.wpn_lr300_s]             = true,
-    [clsid.wpn_pm_s]                = true,
-    [clsid.wpn_rg6_s]               = true,
-    [clsid.wpn_rpg7_s]              = true,
-    [clsid.wpn_shotgun_s]           = true,
-    [clsid.wpn_svd_s]               = true,
-    [clsid.wpn_svu_s]               = true,
-    [clsid.wpn_usp45_s]             = true,
-    [clsid.wpn_val_s]               = true,
-    [clsid.wpn_vintorez_s]          = true,
-    [clsid.wpn_walther_s]           = true,
-}
-    return (object and clsid_weapon_fireonly[object:clsid()])
-end
-IAmAWeapon  = {}
-IAmAGrenade = {}
-function IAmAWeaponInit()
-    IAmAWeapon = {
-		[clsid.wpn_ak74_s]              = true,
-		[clsid.wpn_bm16_s]              = true,
-		[clsid.wpn_grenade_f1]          = true,
-		[clsid.wpn_grenade_fake]        = true,
-		[clsid.wpn_grenade_launcher]    = true,
-		[clsid.wpn_grenade_rgd5]        = true,
-		[clsid.wpn_grenade_rpg7]        = true,
-		[clsid.wpn_groza_s]             = true,
-		[clsid.wpn_hpsa_s]              = true,
-		[clsid.wpn_knife_s]             = true,
-		[clsid.wpn_lr300_s]             = true,
-		[clsid.wpn_pm_s]                = true,
-		[clsid.wpn_rpg7_s]              = true,
-		[clsid.wpn_shotgun_s]           = true,
-		[clsid.wpn_svd_s]               = true,
-		[clsid.wpn_svu_s]               = true,
-		[clsid.wpn_usp45_s]             = true,
-		[clsid.wpn_val_s]               = true,
-		[clsid.wpn_vintorez_s]          = true,
-		[clsid.wpn_walther_s]           = true
-    }
-  IAmAGrenade = {
-    [ clsid.wpn_grenade_f1   ] = true,
-    [ clsid.wpn_grenade_rgd5 ] = true,
-  }
-end
-IAmAWeaponFireOnly = {}
-function IAmAWeaponFireOnlyInit()
-    IAmAWeaponFireOnly = {
-		[clsid.wpn_ak74_s]              = true,
-		[clsid.wpn_bm16_s]              = true,
-		[clsid.wpn_fn2000]              = true,
-		[clsid.wpn_fort]                = true,
-		[clsid.wpn_groza_s]             = true,
-		[clsid.wpn_hpsa_s]              = true,
-		[clsid.wpn_lr300_s]             = true,
-		[clsid.wpn_pm_s]                = true,
-		[clsid.wpn_rg6_s]               = true,
-		[clsid.wpn_rpg7_s]              = true,
-		[clsid.wpn_shotgun_s]           = true,
-		[clsid.wpn_svd_s]               = true,
-		[clsid.wpn_svu_s]               = true,
-		[clsid.wpn_usp45_s]             = true,
-		[clsid.wpn_val_s]               = true,
-		[clsid.wpn_vintorez_s]          = true,
-		[clsid.wpn_walther_s]           = true
-    }
-end
-function isMagazinedWeapon(object)
-local clsid_magazined_weapon = {
-    [clsid.wpn_ak74_s]              = true,
-    [clsid.wpn_bm16_s]              = true,
-    [clsid.wpn_groza_s]             = true,
-    [clsid.wpn_hpsa_s]              = true,
-    [clsid.wpn_lr300_s]             = true,
-    [clsid.wpn_pm_s]                = true,
---    [clsid.wpn_rpg7_s]              = true,
-    [clsid.wpn_shotgun_s]           = true,
-    [clsid.wpn_svd_s]               = true,
-    [clsid.wpn_svu_s]               = true,
-    [clsid.wpn_usp45_s]             = true,
-    [clsid.wpn_val_s]               = true,
-    [clsid.wpn_vintorez_s]          = true,
-    [clsid.wpn_walther_s]           = true,
-    [clsid.wpn_binocular_s]         = true,
-    [clsid.wpn_rg6_s]               = true,
-}
-    return (object and clsid_magazined_weapon[object:clsid()])
 end
 
 --Tvчисляет yaw в радианах
@@ -2484,22 +2382,18 @@ function start_game_callback()
 		[clsid.equ_stalker] 			= true,
 		[clsid.equ_stalker_s] 			= true	
 	}
-  task_manager.clear_task_manager()
-  dialog_manager.fill_phrase_table() 
 
-  --AMK UTILS--
-  amk.on_game_start()
-  --AMK UTILS--
+	task_manager.clear_task_manager()
+	dialog_manager.fill_phrase_table() 
 
-  m_netpk.attach() -- инициализация модуля m_netpk
+	amk.on_game_start()
 
+	m_netpk.attach() -- инициализация модуля m_netpk
 end
-
 
 function ammo_section( section )
   return get_string( section, "class" ) == "AMMO"
 end
-
 
 function ASSERT( cond, ... )
   if not cond then
@@ -2507,27 +2401,6 @@ function ASSERT( cond, ... )
   end
 end
 
-quest_section = {}
-quest_section["gunslinger_flash"] = true
-quest_section["af_blood_tutorial"]  = true
-quest_section["esc_wounded_flash"]  = true
-quest_section["quest_case_02"]    = true
-quest_section["dar_document1"]    = true
-quest_section["dar_document2"]    = true
-quest_section["dar_document3"]    = true
-quest_section["dar_document4"]    = true
-quest_section["dar_document5"]    = true
-quest_section["kruglov_flash"]    = true
-quest_section["lab_x16_documents"]  = true
-quest_section["good_psy_helmet"]  = true
-quest_section["bad_psy_helmet"]   = true
-quest_section["decoder"]      = true
-quest_section["dynamite"]     = true
-quest_section["quest_case_01"]    = true
-quest_section["hunters_toz"]    = true
-quest_section["bar_ecolog_flash"] = true
-quest_section["bar_tiran_pda"]    = true
-quest_section["bar_lucky_pda"]    = true
 -- служебные функции для чтения параметров из секций объектов
 function get_string( section, param, def_val, ini_file )
   ASSERT(
@@ -3364,29 +3237,16 @@ function normal_triangle( element ) -- нормаль треугольника
   return n:normalize()
 end
 
-
 -- возвращает имя кости по ее индексу
 -- http://xray-engine.org/index.php?title=X-Ray_extensions
 function get_bone_name_by_id( obj, bone_id )
   return obj:get_bone_name( bone_id )
 end
 
-
 -- возвращает level_vertex_id по позиции на уровне
 function level.vertex_id_by_pos( ... )
   return level.vertex_id( ... )
 end
-
-
--- запускает эффектор шатания камеры с заданными параметрами
-function level.add_cam_effector3( total_time, amplitude, period_number, power )
-  level.set_ce_time( total_time )
-  level.set_ce_amplitude( amplitude )
-  level.set_ce_period_number( period_number )
-  level.set_ce_power( power )
-  level.add_ce()
-end
-
 
 -- Взято отсюда: https://github.com/davidm/lua-bit-numberlua
 function bit_rshift( a, disp )
@@ -3398,6 +3258,3 @@ function bit_lshift( a, disp )
   if disp < 0 then return rshift( a, -disp ) end
   return ( a * 2^disp ) % 2^32
 end
-
-ABORTX = abort
-ASSERTX = ASSERT

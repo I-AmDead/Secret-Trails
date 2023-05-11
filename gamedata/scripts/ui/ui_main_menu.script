@@ -29,7 +29,7 @@ function main_menu:InitControls()
 	self.message_box = CUIMessageBoxEx()
 	self:Register(self.message_box, "msg_box")	
 
-	self.xml:InitStatic("ogsm_version",   self):SetText("Mod version: " .. "[" .. sys_ini:r_string_wq("mod_ver", "mod_version") .. "]")
+	self.xml:InitStatic("ogsm_version", self):SetText("Mod version: " .. "[" .. sys_ini:r_string_wq("mod_ver", "mod_ver") .. " " .. sys_ini:r_string_wq("mod_ver", "mod_version") .. "]")
 	self.xml:InitStatic("static_version", self):SetText("Engine version: " .. _G.main_menu.get_main_menu():GetGSVer())	
 end
 
@@ -171,7 +171,7 @@ function main_menu:OnKeyboard(dik, keyboard_action)
 			xpcall(function() dofile(getFS():update_path("$game_scripts$", "personal_test.lua")) end, log1)
 		elseif dik == DIK_keys.DIK_F3 then --Показать текущие координаты
 			if ogse.check_game() then
-				utils2.show_coordinates()
+				table_treasure_l.treasure()
 			end
 		elseif dik == DIK_keys.DIK_P then --SDATA
 			if ogse.check_game() then

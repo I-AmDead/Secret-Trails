@@ -30,7 +30,7 @@ local get_grenade = level.object_by_id
 local grenade_slot = 3
 
 local gr_ini = ini_file([[misc\ai_additions\grenadier.ltx]])
-ASSERTX(gr_ini:section_exist('default'),"no gr_ini")
+ASSERT(gr_ini:section_exist('default'),"no gr_ini")
 local forbidden_factions = rx_utils.parse_list(gr_ini,"main","forbidden_factions",true)
 local forbidden_npcs = rx_utils.collect_sections(gr_ini,{"forbidden_npcs"},nil,true)
 local attack_classes = rx_utils.collect_sections(gr_ini,{"attack_classes"},nil,true)
@@ -79,13 +79,13 @@ local function read_profile(section)
 		local tmp,t,rnd = rx_utils.str_explode(",",profiles[section].spawn_grenades),{},0
 		for _,v in ipairs(tmp) do
 			local p = string.find(v,":",1,true)
-			ASSERTX(p,"xrs_grenade: incorrect value spawn_grenades in %s",section)
+			ASSERT(p,"xrs_grenade: incorrect value spawn_grenades in %s",section)
 			local gr = string.sub(v,1,p-1)
-			ASSERTX(grenade_params[gr],"xrs_grenade: not registered grenade %s in %s",gr,section)
+			ASSERT(grenade_params[gr],"xrs_grenade: not registered grenade %s in %s",gr,section)
 			t[gr] = tonumber(string.sub(v,p+1,-1))/100
 			rnd = rnd + t[gr]
 		end
-		ASSERTX(rnd <= 100,"xrs_grenade: spawn chance sum > 100 in %s",section)
+		ASSERT(rnd <= 100,"xrs_grenade: spawn chance sum > 100 in %s",section)
 		profiles[section].spawn_grenades = t
 	end
 	return profiles[section]

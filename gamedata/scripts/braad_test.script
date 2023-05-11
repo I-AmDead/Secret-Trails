@@ -733,11 +733,6 @@ local function on_info(npc, info_id)
 	end
 end
 
-local function storyline_mix()
-	on_info()
-	on_first_update()
-end
-
 local haronp={
     { position={ x=23.153, y=-4.680, z=3.578 },  gv=2424, lv=4684 },
     { position={ x=18.936, y=-0.405, z=13.346 }, gv=2424, lv=4699 },
@@ -3124,8 +3119,9 @@ function spawn_ai_location( spawn_obj, pos, lvid, gvid )
 end
 
 function attach(sm)
-	sm:subscribe({ signal = "on_first_update",   fun = storyline_mix  }) 
-	sm:subscribe({ signal = "on_info", 	     fun = storyline_mix  })
-	sm:subscribe({ signal = "on_take",    	     fun = on_take        })
-	sm:subscribe({ signal = "on_update",  	     fun = on_update      }) 
+	sm:subscribe({ signal = "on_first_update",   fun = on_first_update  })
+	sm:subscribe({ signal = "on_first_update",   fun = on_info  	    })
+	sm:subscribe({ signal = "on_info", 	     fun = on_info  	    })
+	sm:subscribe({ signal = "on_take",    	     fun = on_take          })
+	sm:subscribe({ signal = "on_update",  	     fun = on_update        })
 end
