@@ -1,4 +1,4 @@
-<h1 align="center">Secret Trails Boomstick and Sharpstick</h>
+<h1 align="center">Secret Trails</h>
  
 <h1 align="center">Репозиторий одноименной модификации</h>
  
