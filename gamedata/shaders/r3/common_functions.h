@@ -56,12 +56,12 @@ float3 unpack_D3DCOLOR(float3 c) { return c.bgr; }
 float3 p_hemi(float2 tc)
 {
     float4 t_lmh = s_hemi.Sample(smp_rtlinear, tc);
-    return dot(t_lmh.rgb, 1.h / 3.h);
+    return t_lmh.a;
 }
 
-float get_hemi(float4 lmh) { return dot(lmh.rgb, 1.h / 3.h); }
+float get_hemi(float4 lmh) { return lmh.a; }
 
-float get_sun(float4 lmh) { return lmh.a; }
+float get_sun(float4 lmh) { return lmh.g; }
 
 float3 v_hemi(float3 n) { return L_hemi_color * (.5f + .5f * n.y); }
 

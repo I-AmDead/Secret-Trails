@@ -79,7 +79,7 @@ void ssfx_il(float2 tc, float2 pos2d, float3 P, float3 N, inout float3 color, ui
 
 	// Discard IL when using NV
 #ifdef SSFX_BEEFS_NVG
-	if (pnv_param_2.x > 0)
+	if (pnv_param_1.z > 0.f)
 		return;
 #endif
 

@@ -10,6 +10,7 @@ float4 main(p_screen I) : SV_Target
 	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
 
 	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;            // 1, 2, 4, 1.1, or 1.2
+	float lua_param_vignette_current = floor(pnv_param_2.z) / 100.0f;
 
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{
@@ -33,7 +34,6 @@ float4 main(p_screen I) : SV_Target
 		}
 
 		// APPLY VIGNETTE
-		float lua_param_vignette_current = floor(pnv_param_2.z) / 100.0f;
 		float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
 		image = clamp(image,0.0,1.0);
 		image *= vignette;

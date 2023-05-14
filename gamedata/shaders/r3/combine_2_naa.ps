@@ -99,18 +99,6 @@ c2_out main(v2p_aa_AA I)
         img = ssfx_debanding(img, I.Tex0.xy);
 #endif
 
-#ifdef SSFX_BEEFS_NVG
-	// NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
-	float lua_param_nvg_generation = floor(pnv_param_2.x);			// 1, 2, or 3
-	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;		// 1, 2, 4, 1.1, or 1.2
-	if (pnv_param_1.z == 0.f)
-	{
-		img = blend_soft(img, bloom.xyz*bloom.w);
-	}
-#else
-	img = blend_soft(img, bloom.xyz*bloom.w);
-#endif
-
     bloom = BrokeBloom(bloom);
 
     if (pnv_param_1.z == 0.f && addon_VControl.w == 1)

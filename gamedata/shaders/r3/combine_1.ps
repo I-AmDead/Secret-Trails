@@ -142,14 +142,13 @@ _out main(_input I, uint iSample : SV_SAMPLEINDEX)
 
 #else
 		/////////// BEEFS NVGS CHANGES ///////////
-		float lua_param_nvg_generation = floor(pnv_param_2.x);             		// 1, 2, or 3
 		float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;            // 1, 2, 4, 1.1, or 1.2
-		float lua_param_nvg_gain_current = floor(pnv_param_2.y) / 10.0f; 
+		float lua_param_nvg_gain_current = floor(pnv_param_2.y) / 10.0f;
 		float lua_param_vignette_current = floor(pnv_param_2.z) / 100.0f;
-		
-		if (pnv_param_1.z == 1.f && lua_param_nvg_generation > 0.0f) // && compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes) == 1.0f
+		float lua_param_nvg_gain_offset = floor(pnv_param_2.w) / 10.0f;
+
+		if (pnv_param_1.z == 1.f) // && compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes) == 1.0f
 		{
-			float lua_param_nvg_gain_offset = floor(pnv_param_2.w) / 10.0f;
 	        tonemap(o.low, o.high, color, 10.0f * lua_param_nvg_gain_offset);
 		
 			// Turn split tonemapping data to YUV and discard UV
