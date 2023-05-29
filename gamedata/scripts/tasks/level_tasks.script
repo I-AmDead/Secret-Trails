@@ -12,6 +12,18 @@ local level_scripts = {
   "pripyat_tasks",
 }
 
+function preload_script( filename )
+  local module = _G[ filename ]
+  ASSERT(
+    module, "[preload_script]: Failed to load '%s'", filename
+  )
+  ASSERT(
+    type( module ) == "table",
+    "[preload_script]: Failed to load '%s', must be a table",
+    filename
+  )
+  return module
+end
 
 function attach( sm )
   for _, module_name in ipairs( level_scripts ) do

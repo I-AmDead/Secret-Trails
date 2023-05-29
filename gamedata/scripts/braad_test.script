@@ -2285,12 +2285,16 @@ function levsha_bioradar()
 	spawn_ai_location("bioradar",vector():set(-260.860,0.015,26.480),6331,1395)
 end
 
+local mina_band_particle = particles_object("explosions\\explosion_fuelcan")
+local mina_band_sound = sound_object([[weapons\t_rgd5_explosion]])
 function mina_band(obj)
-	for a=1,65534 do
+	for a = 1, 65534 do
 		local obj = level.object_by_id(a)
 		if obj then
-			if obj:section()=="prov_ruk" then
-				amk_particle.amk_particle({particle="explosions\\explosion_fuelcan", pos=obj:position(), sound=[[weapons\t_rgd5_explosion]]})
+			if obj:section() == "prov_ruk" then
+				local posit = obj:position()
+				mina_band_particle:play_at_pos(posit)
+				mina_band_sound:play_at_pos(obj, posit, 0)
 				local dist = db.actor:position():distance_to(obj:position())
 				if dist < 30 then	
 					local h = hit()
@@ -2301,12 +2305,13 @@ function mina_band(obj)
 					h.power = 0.6
 					h.impulse = 500
 					db.actor:hit(h)
+					level.add_pp_effector("amk_shoot.ppe", 2011, false)
 				end
-				level.add_pp_effector("amk_shoot.ppe", 2011, false)
 				alife():release(alife():object(obj:id()))
 				return
 			end
 		end
+		break
 	end
 end
 
@@ -2364,8 +2369,11 @@ function mina_sclad()
 	h.type = hit.explosion
 	h.power = 0.6
 	h.impulse = 500
-	db.actor:hit(h)          
-	amk_particle.amk_particle({particle="explosions\\explosion_fuelcan", pos = apos, sound = [[weapons\t_rgd5_explosion]]})
+	db.actor:hit(h)
+	local mina_sclad_particle = particles_object("explosions\\explosion_fuelcan")
+	local mina_sclad_sound = sound_object([[weapons\t_rgd5_explosion]])
+	chimera_particle:play_at_pos(apos)
+	chimera_sound:play_at_pos(obj, apos, 0)    
 	level.add_pp_effector("amk_shoot.ppe", 2011, false)
 end
 

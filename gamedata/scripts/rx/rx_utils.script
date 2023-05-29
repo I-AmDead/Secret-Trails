@@ -588,54 +588,6 @@ function give_game_news(str,time,...)
 	end
 end
 
-function ABORT(s,...)
-	sys_ini:r_bool("___aborting","a")
-end
-
-
-function ASSERT(o,s,...)
-	if not o then
-		ABORT(s,...)
-	end
-end
-
-
-function print_table(t,name)
-	local print_r_cache={}
-	local function sub_print_r(t,indent)
-		if (type(t)~="userdata" and print_r_cache[tostring(t)]) then
-			prints(indent.."*"..tostring(t))
-		else
-			if type(t)~="userdata" then
-				print_r_cache[tostring(t)]=true
-			end
-			if (type(t)=="table") then
-				for pos,val in pairs(t) do
-					if (type(val)=="table") then
-						prints(indent.."["..pos.."] => "..tostring(t).." {")
-						sub_print_r(val,indent..string.rep(" ",string.len(pos)+8))
-						prints(indent..string.rep(" ",string.len(pos)+6).."}")
-					elseif (type(val)=="string") then
-						prints(indent.."["..pos..'] => "'..val..'"')
-					elseif(type(val)=="userdata") then
-						prints(indent.."["..pos..'] => "userdata"')
-					else
-						prints(indent.."["..pos.."] => "..tostring(val))
-					end
-				end
-			elseif(type(t)=="userdata") then
-				prints(indent.."userdata")
-			else
-				prints(indent..tostring(t))
-			end
-		end
-	end
-	if (type(t)=="table") then
-		sub_print_r(t,"  ")
-		prints("}")
-	end
-end
-
 --------------------------------------spy------------------------------------------
 
 class "prof_spy"

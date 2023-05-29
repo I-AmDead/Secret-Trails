@@ -1,0 +1,625 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+-----------------------------------------------------------------------
+--- ui_ogse_random_reward_choose_item.script
+--- Модуль отображения выбора предметов в качестве награды (основано на нароботках KamikaZze "Багажник для машин")
+--- Mixser (c) OGS Evolution Team
+--- version 1.1 (18/11/2011)
+-----------------------------------------------------------------------
+
+local money_x = 215
+local money_y = 67
+
+class "select_actor_items" (CUIListItemEx)
+
+function select_actor_items:__init() super()
+
+	self.item_name		= "itemname"
+	self:SetWndRect		(0,0,320,22)
+	
+	local ca = 255
+	local cr = 216
+	local cg = 186
+	local cb = 140
+	
+	self.itmnum				= CUIStatic	()
+	self.itmnum:SetAutoDelete	(true)
+	self:AttachChild		(self.itmnum)
+	self.itmnum:SetWndRect	(0,0,20,22)
+	self.itmnum:SetText		("itemnum")
+	self.itmnum:SetFont		(GetFontLetterica16Russian())
+	self.itmnum:SetTextColor	(ca,cr,cg,cb)
+
+	self.itmn					= CUIStatic	()
+	self.itmn:SetAutoDelete	(true)
+	self:AttachChild		(self.itmn)
+	self.itmn:SetWndRect		(25,0,205,22)
+	self.itmn:SetText			("itemname")
+	self.itmn:SetFont			(GetFontLetterica16Russian())
+	self.itmn:SetTextColor	(ca,cr,cg,cb)
+	
+	self.itmcost				= CUIStatic	()
+	self.itmcost:SetAutoDelete	(true)
+	self:AttachChild		(self.itmcost)
+	self.itmcost:SetWndRect		(210,0,40,22)
+	self.itmcost:SetText			("itemcost")
+	self.itmcost:SetFont			(GetFontLetterica16Russian())
+	self.itmcost:SetTextColor	(ca,cr,cg,cb)
+	
+	self.itmcount				= CUIStatic	()
+	self.itmcount:SetAutoDelete	(true)
+	self:AttachChild		(self.itmcount)
+	self.itmcount:SetWndRect	(270,0,40,22)
+	self.itmcount:SetText		("itemcount")
+	self.itmcount:SetFont		(GetFontLetterica16Russian())
+	self.itmcount:SetTextColor	(ca,cr,cg,cb)
+end
+
+function select_actor_items:__finalize() end
+
+class "choose_item" (CUIScriptWnd)
+
+function choose_item:__init(_, npc, task_name) super()
+	self.npc = npc
+	self.task_name = task_name
+	self.trader_name = self:get_trader_name(self.task_name)
+	self:Get_Data()
+	self:InitControls()
+	self:InitCallBacks()
+	self:FillList1()
+end
+
+function choose_item:__finalize() end
+
+function random_reward_get_hud(npc, task_name)
+	local spwn = choose_item(nil, npc, task_name)
+	level.start_stop_menu(spwn,true)	
+end
+
+function choose_item:get_trader_name(task_name)
+	return sys_ini:r_string(task_name, "parent")
+end
+
+function choose_item:Get_Data()
+	local random_reward = ogse_random_task_reward.random_task_reward(self.trader_name, self.task_name)
+	--random_reward:set_reward_complect()
+	random_reward:generate_reward_list() -- генерим список + вещи
+	self.trader_items = random_reward.final_list -- таблица вещей, которые торговец выставит в качестве награды
+	self.reward_items = {} -- таблица для вещей, которые пойдут в качестве награды
+	self.current_money = random_reward.money_reward
+	self.money_old = self.current_money -- сохраняем первоначальную денежную награду, чтобы выдать её по кнопке "Взять деньги"
+	--random_reward:add_to_complect() -- дополняем комплект
+end
+
+function choose_item:InitControls()
+	
+	-- здесь определяем координаты левого верхнего угла и ширину-высоту
+	self:Init(100,100,900,700) --550,450
+
+	-- файл-описатель наших элементов
+	local xml = CScriptXmlInit()
+	xml:ParseFile("ui_ogse_random_reward_choose_item_wnd.xml")
+	
+	-- видео на заднем плане
+	xml:InitStatic("back_video", self)
+	-- рамка
+	xml:InitStatic("background", self)
+	
+	-- видео на заднем плане
+	xml:InitStatic("back_video2", self)
+	-- рамка
+	xml:InitStatic("background2", self)
+	
+	-- рамка предмета
+	xml:InitStatic("item_frame", self)
+	-- рамка предмета
+	xml:InitStatic("item_frame2", self)	
+	
+	-- изображение актора
+	xml:InitStatic("actor_frame", self)
+	
+	self.message_box = CUIMessageBoxEx()
+	self:Register(self.message_box,"message_box")
+	
+	-- список предметов
+	xml:InitFrame("list_frame", self)
+	xml:InitFrame("list2_frame", self)
+	
+	local ctrl = xml:InitList("list", self)
+	ctrl:ShowSelectedItem(true)
+	self:Register(ctrl, "list_window")
+	
+	ctrl = xml:InitList("list2", self)
+	ctrl:ShowSelectedItem(true)
+	self:Register(ctrl, "list2_window")
+	
+	-- Кнопки
+	self:Register(xml:Init3tButton("window_name", self),"window_name")
+	self:Register(xml:Init3tButton("window_name2", self),"window_name")
+
+	self.btn_take_item = xml:Init3tButton("btn_take_item", self)
+	self:Register(self.btn_take_item, "btn_take_item")
+	self.btn_take_item:Enable(false)
+	
+	self.btn_take_money = xml:Init3tButton("btn_take_money", self)
+	self:Register(self.btn_take_money, "btn_take_money")
+	self.btn_take_money:Enable(true)
+
+	
+	self:Register(xml:Init3tButton("caption1", self),"caption1")
+	self:Register(xml:Init3tButton("caption2", self),"caption2")
+	self:Register(xml:Init3tButton("caption3", self),"caption3")
+	
+	self:DrawMoney(tostring(self.current_money)..game.translate_string("rub_string"), money_x, money_y) -- отрисовка денег
+	self:DrawTaskName(game.translate_string(self.task_name), money_x - 10, money_y - 25) -- отрисовка названия задания
+	--self:DrawTraderIcon(self.trader_name, 0, 0)
+	
+end
+
+function choose_item:InitCallBacks()
+
+	self:AddCallback("btn_take_item", ui_events.BUTTON_CLICKED, self.call_task_manager, self)
+	self:AddCallback("btn_take_money", ui_events.BUTTON_CLICKED, self.take_money_as_reward, self)
+	self:AddCallback("list_window", ui_events.LIST_ITEM_CLICKED, 			  self.OnListItemClicked,		self)
+	self:AddCallback("list_window", ui_events.WINDOW_LBUTTON_DB_CLICK,		  self.OnListItemDbClicked,		self)
+
+	self:AddCallback("list2_window", ui_events.LIST_ITEM_CLICKED, 			  self.OnList2ItemClicked,		self)
+	self:AddCallback("list2_window", ui_events.WINDOW_LBUTTON_DB_CLICK,		  self.OnList2ItemDbClicked,		self)
+	
+	self:AddCallback("message_box",		ui_events.MESSAGE_BOX_OK_CLICKED,	  self.OnMsgYes,				self)
+	
+end
+
+function choose_item:call_task_manager()
+	if self.current_money ~= nil and table.getn(self.reward_items) == 0 then
+		dialogs.relocate_money(self.npc, self.current_money, "in")
+	else
+		for kk,vv in pairs(self.reward_items) do
+			for i=1, vv.count do dialogs.relocate_item_section(self.npc, vv.name, "in") end
+		end
+	end
+	self:on_quit()	
+end
+
+function choose_item:take_money_as_reward()
+	dialogs.relocate_money(self.npc, self.money_old, "in")
+	self:on_quit()
+end
+
+function choose_item:take_money_as_reward_no_quit()
+	dialogs.relocate_money(self.npc, self.money_old, "in")
+	self:ClearCallbacks()
+end
+
+function choose_item:on_quit()
+	self:GetHolder():start_stop_menu (self,true)
+	self:ClearCallbacks()
+end
+
+function choose_item:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		local bind = dik_to_bind(dik)
+		if bind == key_bindings.kQUIT then
+			self:take_money_as_reward_no_quit()
+		end
+	end
+end
+
+function choose_item:FillList1()
+	for k,v in pairs(self.trader_items) do
+		self:AddItemToList1(k, v.name, v.price, v.count)
+	end
+end
+
+function choose_item:AddItemToList1(item_num, item_name, item_price, item_count)
+	local itm = select_actor_items()
+	itm.itmnum:SetText (item_num)
+	itm.itmn:SetText (game.translate_string(get_inv_name(item_name)))
+	itm.itmcost:SetText (tostring(item_price)..game.translate_string("rub_string"))
+	if string.find(item_name, "ammo_") then itm.itmcount:SetText (item_count*sys_ini:r_u32(item_name, "box_size")) else itm.itmcount:SetText(item_count) end
+	local list_box = self:GetListWnd("list_window")
+	list_box:AddItem (itm)
+end
+
+function choose_item:FillList2()
+	if table.getn(self.reward_items) == 0 then self.btn_take_item:Enable(false) end -- если ничего игрок не выбрал из предметов, то лочим кнопку "Взять вещи"
+	for k,v in pairs(self.reward_items) do
+		self:AddItemToList2(k, v.name, v.price, v.count)
+	end
+end
+
+function choose_item:AddItemToList2(item_num, item_name, item_price, item_count)
+	if self.btn_take_item:IsEnabled() == false then self.btn_take_item:Enable(true) end -- делаем активной кнопку "Взять вещи", если игрок что-то выбрал
+	local itm = select_actor_items()
+	itm.itmnum:SetText (item_num)
+	itm.itmn:SetText (game.translate_string(get_inv_name(item_name)))
+	itm.itmcost:SetText (tostring(item_price)..game.translate_string("rub_string"))
+	if string.find(item_name, "ammo_") then itm.itmcount:SetText (item_count*sys_ini:r_u32(item_name, "box_size")) else itm.itmcount:SetText(item_count) end
+	local list_box = self:GetListWnd("list2_window")
+	list_box:AddItem (itm)
+end
+
+function get_inv_name(item_name)
+	return sys_ini:r_string(item_name, "inv_name")
+end
+
+function choose_item:OnListItemClicked()
+	local list_box = self:GetListWnd("list_window")
+	if list_box:GetSize() == 0 then return end
+	
+	local itm_index = list_box:GetSelectedItem()
+	local item = list_box:GetItem(itm_index)
+	
+	if item == nil then return end
+	
+	local destr_item_name = item.itmn:GetText()
+	local destr_item_index = tonumber(item.itmnum:GetText())
+	local destr_item_st = self.trader_items[destr_item_index].name 
+	
+	self:DrawCurItemName(destr_item_name, 300, 55)
+	self:DrawCurItem(destr_item_st, 300, 100)
+
+	if self.cur_rem_textur then self.cur_rem_textur:Show(true) end
+	if self.item_name_rem then self.item_name_rem:Show(true) end
+end
+
+function choose_item:OnListItemDbClicked()
+	self:take_item()
+end
+
+function choose_item:OnList2ItemClicked()
+	local list_box = self:GetListWnd("list2_window")
+	if list_box:GetSize() == 0 then return end
+	
+	local itm_index = list_box:GetSelectedItem()
+	local item = list_box:GetItem(itm_index)
+	
+	if item == nil then return end	
+	
+	local destr_item_name = item.itmn:GetText()
+	local destr_item_index = tonumber(item.itmnum:GetText())
+	local destr_item_st = self.reward_items[destr_item_index].name
+	
+	
+	self:DrawCurItemName2(destr_item_name, 700, 55)
+	self:DrawCurItem2(destr_item_st, 700, 100)
+	
+	if self.cur_rem_textur2 then self.cur_rem_textur2:Show(true) end
+	if self.item_name_rem2 then self.item_name_rem2:Show(true) end
+end
+
+function choose_item:OnList2ItemDbClicked()
+	self:return_item()
+end
+
+function choose_item:take_item()
+	local list = self:GetListWnd("list_window")	
+	local Max = list:GetSize()
+	local list2 = self:GetListWnd("list2_window")	
+	local Max2 = list2:GetSize()
+	if Max==0 then
+		return
+	end
+		
+	local index = list:GetSelectedItem()
+	if index == -1 or index > Max then
+	return
+	end
+	
+	local item = list:GetItem(index)
+	
+	if not item then return end
+	
+		-- Сперва посмотрим, если в self.reward_items предмет, который мы хотим передать
+	if self.current_money - self.trader_items[index+1].price >= 0 then -- sys_ini:r_s32(self.trader_items[index+1].name, "cost")
+		local already_have = false
+		local reward_items_index = 0
+		
+		for k,v in pairs(self.reward_items) do
+			if v.name == self.trader_items[index+1].name then 
+				already_have = true
+				reward_items_index = k
+			end
+		end
+	
+		-- Если есть, то просто увеличиваем счётчик в reward_items, иначе добавляем такую таблицу.
+	
+		if already_have == true then
+			self.reward_items[reward_items_index].count = self.reward_items[reward_items_index].count + 1
+			self:update_data(index)
+		else
+			if Max2 <= 2 then
+				local time_array =
+					{
+						name = self.trader_items[index+1].name,
+						count = 1,
+						price = self.trader_items[index+1].price
+					}
+				table.insert(self.reward_items, time_array)
+				self:update_data(index)
+			else
+				self.msgbox_id = 1
+				self.message_box:Init("message_box_rr_over_item_count")
+				self:GetHolder():start_stop_menu(self.message_box, true)
+			end
+		end
+	else
+		self.msgbox_id = 1
+		self.message_box:Init("message_box_rr_no_money")
+		self:GetHolder():start_stop_menu(self.message_box, true)
+	end		
+end
+
+function choose_item:update_data(index1)
+	-- Уменьшаем count предмета в self.trader_items, если count = 0, то удаляем всякое напоминание о предмете
+	
+	self.current_money = self.current_money - self.trader_items[index1+1].price --sys_ini:r_u32(self.trader_items[index1+1].name, "cost")
+	
+	self.trader_items[index1+1].count = self.trader_items[index1+1].count - 1
+	
+	if self.trader_items[index1+1].count == 0 then
+		table.remove(self.trader_items, index1+1)
+	end
+	
+	-- Обновляем списки
+	
+	local list_box = self:GetListWnd("list_window")
+	local list2_box = self:GetListWnd("list2_window")
+	
+	list_box:RemoveAll()
+	self:FillList1()
+	
+	if self.cur_rem_textur then	self.cur_rem_textur:Show(false) end
+	if self.item_name_rem then self.item_name_rem:Show(false) end
+	
+	list2_box:RemoveAll()
+	self:FillList2()
+	
+	self:DrawMoney(tostring(self.current_money)..game.translate_string("rub_string"), money_x, money_y)
+end
+
+function choose_item:return_item()
+	local list = self:GetListWnd("list2_window")	
+	local Max = list:GetSize()
+	if Max==0 then
+		return
+	end
+	
+	local index = list:GetSelectedItem()
+	if index == -1 or index > Max then
+		return
+	end
+	
+	local item = list:GetItem(index)
+	
+	if not item then return end
+	
+	self.current_money = self.current_money + self.reward_items[index+1].price --sys_ini:r_u32(self.reward_items[index+1].name, "cost")
+		
+	-- Сперва посмотрим, если в self.trader_items предмет, который мы хотим передать
+	
+	local already_have = false
+	local trader_items_index = 0
+	
+	
+	for k,v in pairs(self.trader_items) do
+		if v.name == self.reward_items[index+1].name then 
+			already_have = true
+			trader_items_index = k
+		end
+	end
+	
+	-- Если есть, то просто увеличиваем счётчик в self.trader_items, иначе добавляем такую таблицу.
+	
+	if already_have == true then
+		self.trader_items[trader_items_index].count = self.trader_items[trader_items_index].count + 1
+	else
+		local time_array =
+			{
+				name = self.reward_items[index+1].name,
+				count = 1,
+				price = self.reward_items[index+1].price
+			}
+		table.insert(self.trader_items, time_array)
+	end
+	
+	-- Уменьшаем count предмета в trader_items, если count = 0, то удаляем всякое напоминание о предмете
+	
+	self.reward_items[index+1].count = self.reward_items[index+1].count - 1
+	
+	if self.reward_items[index+1].count == 0 then
+		table.remove(self.reward_items, index+1)
+	end
+	
+	
+	
+	-- Обновляем списки
+	
+	local list_box = self:GetListWnd("list_window")
+	local list2_box = self:GetListWnd("list2_window")
+	
+	list_box:RemoveAll()
+	self:FillList1()
+	
+	if self.cur_rem_textur2 then self.cur_rem_textur2:Show(false) end
+	if self.item_name_rem2 then self.item_name_rem2:Show(false) end
+	
+	list2_box:RemoveAll()
+	self:FillList2()
+
+	self:DrawMoney(tostring(self.current_money)..game.translate_string("rub_string"), money_x, money_y)
+	
+end
+
+function choose_item:OnMsgYes()
+	if self.msgbox_id == 1 then return
+	end
+	
+	self.msgbox_id = 0
+end
+
+function get_x(item)
+	return sys_ini:r_u32(item, "inv_grid_x")
+end
+
+function get_y(item)
+	return sys_ini:r_u32(item, "inv_grid_y")
+end
+
+function get_w(item)
+	return sys_ini:r_u32(item, "inv_grid_width")
+end
+
+function get_h(item)
+	return sys_ini:r_u32(item, "inv_grid_height")
+end
+
+
+function choose_item:DrawCurItem(de_item, x, y)
+	if self.cur_rem_textur then
+		self.cur_rem_textur:DetachFromParent()
+	end
+	self.cur_rem_textur = CUIStatic()
+	self.cur_rem_textur:SetWindowName("cur_rem_textur")
+	self.cur_rem_textur:SetAutoDelete(true)	
+	CIconParams( de_item ):set_shader( self.cur_rem_textur )
+	self:AttachChild(self.cur_rem_textur)
+
+	local tx = get_x(de_item)
+	local ty = get_y(de_item)
+	local tw = get_w(de_item)
+	local th = get_h(de_item)
+		
+	tx=tx*50
+	ty=ty*50
+	tw=tw*50
+	th=th*50
+
+	x = x-(tw/4)
+	y = y-(th/4)
+
+	--self.cur_rem_textur:SetOriginalRect(tx,ty,tw,th)
+	self.cur_rem_textur:Init(x,y,tw/2,th/2)
+end
+
+
+function choose_item:DrawCurItemName(de_item, x, y)
+
+if x == nil then x = 0 end
+if y == nil then y = 0 end
+	local w = self.item_name_rem
+	if not w then
+	self.item_name_rem = CUI3tButton()
+    w = self.item_name_rem
+    w:SetWindowName("item_name_rem")
+	w:SetAutoDelete(true)
+	self:AttachChild(w) 
+	end
+	if de_item then
+	w:SetFont(GetFontLetterica16Russian())
+	w:SetTextColor (95,255,255,255)
+	w:SetText(de_item)
+	w:Init(x-100,y,200,10)
+	else
+	w:SetText("")
+	w:Init(0,0,0,0)
+	end
+end
+
+
+function choose_item:DrawCurItem2(de_item, x, y)
+	if self.cur_rem_textur2 then
+		self.cur_rem_textur2:DetachFromParent()
+	end
+	self.cur_rem_textur2 = CUIStatic()
+	self.cur_rem_textur2:SetWindowName("cur_rem_textur2")
+	self.cur_rem_textur2:SetAutoDelete(true)	
+	CIconParams( de_item ):set_shader( self.cur_rem_textur2 )
+	self:AttachChild(self.cur_rem_textur2)
+
+	local tx = get_x(de_item)
+	local ty = get_y(de_item)
+	local tw = get_w(de_item)
+	local th = get_h(de_item)
+		
+	tx=tx*50
+	ty=ty*50
+	tw=tw*50
+	th=th*50
+
+	x = x-(tw/4)
+	y = y-(th/4)
+
+	--self.cur_rem_textur2:SetOriginalRect(tx,ty,tw,th)
+	self.cur_rem_textur2:Init(x,y,tw/2,th/2)
+end
+
+--Название предмета, который разбираем
+function choose_item:DrawCurItemName2(de_item, x, y)
+if x == nil then x = 0 end
+if y == nil then y = 0 end
+	local w = self.item_name_rem2
+	if not w then
+	self.item_name_rem2 = CUI3tButton()
+    w = self.item_name_rem2
+    w:SetWindowName("item_name_rem2")
+    w:SetAutoDelete(true)
+    self:AttachChild(w) 
+	end
+	if de_item then
+	w:SetFont(GetFontLetterica16Russian())
+	w:SetTextColor (95,255,255,255)
+	w:SetText(de_item)
+	w:Init(x-100,y,200,10)
+	else
+	w:SetText("")
+	w:Init(0,0,0,0)
+	end
+end
+
+function choose_item:DrawMoney(insert_text, x, y)
+	if x == nil then x = 0 end
+	if y == nil then y = 0 end
+	local w = self.money
+	if not w then
+	self.money = CUI3tButton()
+    w = self.money
+    w:SetWindowName("money")
+    w:SetAutoDelete(true)
+    self:AttachChild(w) 
+	end
+	if insert_text then
+	w:SetFont(GetFontLetterica16Russian())
+	w:SetTextColor (255,255,255,255)
+	w:SetText(insert_text)
+	w:Init(x-100,y,200,10)
+	w:SetTextAlign(CGameFont.alLeft)
+	else
+	w:SetText("")
+	w:Init(0,0,0,0)
+	end
+end
+
+function choose_item:DrawTaskName(insert_text, x, y)
+	if x == nil then x = 0 end
+	if y == nil then y = 0 end
+	local w = self.tm
+	if not w then
+	self.tm = CUI3tButton()
+    w = self.tm
+    w:SetWindowName("tm")
+    w:SetAutoDelete(true)
+    self:AttachChild(w) 
+	end
+	if insert_text then
+	w:SetFont(GetFontLetterica18Russian())
+	w:SetTextColor (255,255,255,255)
+	w:SetText(insert_text)
+	w:Init(x-100,y,200,10)
+	w:SetTextAlign(CGameFont.alLeft)
+	else
+	w:SetText("")
+	w:Init(0,0,0,0)
+	end
+end

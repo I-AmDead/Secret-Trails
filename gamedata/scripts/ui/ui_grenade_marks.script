@@ -29,15 +29,16 @@ function add_new_marker(obj_id,color)
 
 	local dir = obj:position():sub(db.actor:position())
 	local dist = dir:magnitude()
-
-	local mark_st = xml:InitStatic("mark",wnd)
-        local pos = get_screen_coords(obj:center())	
-        local rect = { x = pos.x - ( pos.x * 0.1 ), y = pos.y - ( pos.y * 0.1 ), w = device().width, h = device().height, } 
-        mark_st:SetWndPos( rect.x - 30, rect.y - 30 )
-        local clr = colors[color] or colors.full
-        local a = 255
-        mark_st:SetColor(GetARGB(a, 255, 255, 255))
-	table.insert(ui_grenade_marks, obj_id, {st = mark_st, a = a, ta = a})	
+	if dist < 100 then
+		local mark_st = xml:InitStatic("mark",wnd)
+        	local pos = get_screen_coords(obj:center())	
+        	local rect = { x = pos.x - ( pos.x * 0.1 ), y = pos.y - ( pos.y * 0.1 ), w = device().width, h = device().height, } 
+        	mark_st:SetWndPos( rect.x - 30, rect.y - 30 )
+        	local clr = colors[color] or colors.full
+        	local a = 255
+        	mark_st:SetColor(GetARGB(a, 255, 255, 255))
+		table.insert(ui_grenade_marks, obj_id, {st = mark_st, a = a, ta = a})
+	end
 end
 
 local speed_d = 8

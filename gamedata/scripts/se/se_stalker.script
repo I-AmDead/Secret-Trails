@@ -26,14 +26,14 @@ function se_stalker:__init (section) super (section)
 end
 --------------------
 function se_stalker:get_ini()
-  if not self.ini_initialized then
-    self.ini             = self:spawn_ini ()
-    self.ini_initialized = true
+	if not self.ini_initialized then
+		self.ini             = self:spawn_ini ()
+		self.ini_initialized = true
 
-    if self.ini:section_exist("spawner") then
-      self.spawner = xr_logic.parse_condlist(db.actor, "spawner", "cond", self.ini:r_string("spawner", "cond"))
-    end
-  end
+		if self.ini:section_exist("spawner") then
+			self.spawner = xr_logic.parse_condlist(db.actor, "spawner", "cond", self.ini:r_string("spawner", "cond"))
+		end
+	end
 end
 --------------------
 function se_stalker:get_job_online()
@@ -72,15 +72,15 @@ function se_stalker:can_switch_online()
 		return cse_alife_human_stalker.can_switch_online(self)
 	end
     
-	if db.actor_proxy.online and not db.actor:alive() then
+	if db.actor_proxy.online and not db.actor:alive() then --?
 		return self.online
-    end    
+	end
     
-  if self.online == false then
-	    return (xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.spawner) ~= nil) and cse_alife_human_stalker.can_switch_online(self)
-  else
-        return xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.spawner) ~= nil
-    end    	    
+	if self.online == false then
+		return (xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.spawner) ~= nil) and cse_alife_human_stalker.can_switch_online(self)
+	else
+		return xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.spawner) ~= nil
+	end  
 end
 --------------------
 function se_stalker:STATE_Write (packet)
@@ -217,11 +217,11 @@ function se_stalker:fill_exclusives()
 	self:get_ini()
 	self.smart_terrain_conditions, self.has_none_true = smart_terrain.read_smart_terrain_conditions( self )
 
-  if self.smart_terrain_conditions then
-    for name, condlist in pairs(self.smart_terrain_conditions) do
-      smart_terrain.exclusives[name] = (smart_terrain.exclusives[name] or 0) + 1
-    end
-  end
+	if self.smart_terrain_conditions then
+		for name, condlist in pairs(self.smart_terrain_conditions) do
+			smart_terrain.exclusives[name] = (smart_terrain.exclusives[name] or 0) + 1
+		end
+	end
 end
 
 

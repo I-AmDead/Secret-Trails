@@ -39,7 +39,7 @@ end
 function timer_drop_item:action()
   local item = level.object_by_id( self.item_id )
   if item then
-    local anoms   = amk_anoms.get_anomaly_list( db.actor, radius )
+    local anoms   = ogse_anomaly.get_all_nearest_anomalies_by_point_in_radius( db.actor, radius )
     local timeout = 0
     for _, v in ipairs( anoms ) do
       timeout = timeout + 0.2
@@ -55,7 +55,7 @@ end
 
 function remove_anomaly( id )
   local sobj = alife():object( id )
-  if sobj and amk_anoms.is_generated_anomaly( sobj ) then
-    dsh_anomaly_detector.remove_restriction( nil, sobj.id )
+  if sobj then
+    dsh_anomaly_detector.remove_restriction( sobj.id )
   end
 end

@@ -170,7 +170,7 @@ function mob_walker:waypoint_callback(obj, action_type, index)
 		else
 			local patrol_walk_count = self.patrol_walk:count()
 			if patrol_walk_count == 1 and utils.stalker_at_waypoint(self.object, self.patrol_walk, 0) then
-				self.pt_wait_time = time_infinite
+				self.pt_wait_time = 100000000
 			else
 				self.pt_wait_time = default_wait_time
 			end
@@ -234,7 +234,7 @@ end
 function mob_walker:update_standing_state()
 	if self.scheduled_snd then
 		action(self.object, anim(self.cur_anim_set, 0),
-			sound(sound[self.scheduled_snd]), cond(cond.time_end, self.pt_wait_time))
+		sound(sound[self.scheduled_snd]), cond(cond.time_end, self.pt_wait_time))
 		self.scheduled_snd = nil
 	else
 		action(self.object, anim(self.cur_anim_set, 0), cond(cond.time_end, self.pt_wait_time))

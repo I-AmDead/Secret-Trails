@@ -26,7 +26,6 @@ actid_anomaly=evid_blowout+4
 local evaluate_blowout_until
 function on_after_blowout()
   -- что бы evaluator_blowout отпускал неписей только после того, как
-  -- ogse_anomaly_evader обновит для них ограничения.
   evaluate_blowout_until = time_global() + dsh_anomaly_detector.get_freq() * 3
 end
 
@@ -96,7 +95,7 @@ function evaluator_blowout:is_in_any_hide()
     if self.in_hide_lvid and self.in_hide_lvid == npc:level_vertex_id() then
       return true
     else
-      if not amk_anoms.check_hideouts( npc:position() ) then
+      if not ogse_anomaly.check_hideouts( npc:position() ) then
         self.in_hide_lvid = npc:level_vertex_id()
         return true
       end
@@ -151,7 +150,7 @@ function evaluator_preblowout:is_in_any_hide()
     if self.in_hide_lvid and self.in_hide_lvid == npc:level_vertex_id() then
       return true
     else
-      if not amk_anoms.check_hideouts( npc:position() ) then
+      if not ogse_anomaly.check_hideouts( npc:position() ) then
         self.in_hide_lvid = npc:level_vertex_id()
         return true
       end
@@ -251,7 +250,7 @@ function evaluator_outside:is_in_any_hide()
     if self.in_hide_lvid and self.in_hide_lvid == npc:level_vertex_id() then
       return true
     else
-      if not amk_anoms.check_hideouts( npc:position() ) then
+      if not ogse_anomaly.check_hideouts( npc:position() ) then
         self.in_hide_lvid = npc:level_vertex_id()
         return true
       end

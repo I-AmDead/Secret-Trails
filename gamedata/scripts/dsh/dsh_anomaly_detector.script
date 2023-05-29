@@ -1,168 +1,85 @@
--- -*- mode: lua; coding: windows-1251-dos -*-
+-- https://github.com/dsh2dsh/op2ogse/blob/master/gamedata/scripts/dsh/dsh_anomaly_detector.script
+-- РњРѕРґСѓР»СЊ РѕР±С…РѕРґР° Р°РЅРѕРјР°Р»РёР№ СЃС‚Р°Р»РєРµСЂР°РјРё. Р”Р»СЏ РјРѕРЅСЃС‚СЂРѕРІ РІРєР»СЋС‡Р°С‚СЊ РµРіРѕ СЃРјС‹СЃР»Р° РЅРµ РІРёР¶Сѓ.
+
+local ENABLE_AD = true --Р’РєР»СЋС‡РёС‚СЊ СЃРєСЂРёРїС‚?
 
 local excluded_npc = {
-  [ 29 ] = true,                -- учебная плоть блин
-  [ "peshera_plennyi" ] = true, -- Фима
-  [ "stalk_semetskiy" ] = true, -- Семецкий в Лиманске
+  [ "dik_the_drifter" ] = true,
 }
 
--- какие зоны можно не обходить именным персонажам
-local ignore_zones = {
-  -- что бы Дезертир мог до своего вагончика добраться
-  [ "agr_ratcatcher" ] = "zone_radioactive",
-}
-
-local invisible_for_anoms = {
-  -- у этого трупика документ, с которого начинаются поиски пропавшей
-  -- эспедиции
-  [ "dead_military_esc" ] = true,
-  -- На этот трупик ставится метка в задании
-  -- find_railroad_passage. Если его уничтожит какая-нибудь аномалия,
-  -- то будет вылет.
-  [ "esc_tutorial_dead_novice" ] = true,
-  -- этого гиганта нужно пометить на Агропроме для Холода
-  [ "gigant_red_strong1" ] = true,
-  [ "peshera_plennyi"   ] = true,
-  [ "sim_stalker_fraer" ] = true,
-  [ "tamaz_garbage"     ] = true, -- Тамаз на Свалке
-}
-
-local excluded_comms = {        -- запретные коммунити
+local excluded_comms = {
   [ "zombied" ] = true,
 }
 
 local excluded_locations = {
 }
 
-local monster_excluded_locations = {
-  [ "av_peshera" ] = true,
-  [ "jupiter"    ] = true,
-  [ "jupiter_underground" ] = true,
-  [ "labx8"      ] = true,
-  [ "peshera"    ] = true,
-  [ "pripyat"    ] = true,
-  [ "zaton"      ] = true,
-}
-
 
 function attach( sm )
-  sm:subscribe({ signal = "on_after_blowout",       fun = this.on_after_blowout })
-  sm:subscribe({ signal = "on_monster_death",       fun = this.on_death     })
-  sm:subscribe({ signal = "on_monster_net_destroy", fun = this.on_death     })
-  sm:subscribe({ signal = "on_monster_spawn",       fun = this.on_monster_spawn  })
-  sm:subscribe({ signal = "on_npc_death",           fun = this.on_death     })
-  sm:subscribe({ signal = "on_npc_net_destroy",     fun = this.on_death     })
-  sm:subscribe({ signal = "on_npc_spawn",           fun = this.on_npc_spawn })
+  sm:subscribe({ signal = "on_after_blowout",   fun = this.on_after_blowout })
+  sm:subscribe({ signal = "on_npc_spawn",       fun = this.on_npc_spawn     })
+  sm:subscribe({ signal = "on_npc_death",       fun = this.on_death         })
+  sm:subscribe({ signal = "on_npc_net_destroy", fun = this.on_death         })
 end
 
 
 local mobs = {}
 
-function on_monster_spawn( obj, binder )
-  if
-    get_bool( obj:section(), "ogse_anomaly_evader.disable", false )
-    or not obj:is_custom_monster()
-  then
-    return
-  end
-  local all_anoms = false
-  if
-    invisible_for_anoms[ obj:name() ]
-    or get_bool( obj:section(), "ogse_anomaly_evader.all_anoms", false )
-  then
-    all_anoms = true
-    set_anomaly_invisibility( obj, true )
-  end
+function on_npc_spawn( obj, binder )
   if not obj:alive() then return end
+
   local anomaly_detector = obj:get_custom_monster():anomaly_detector()
-  if all_anoms then
-    anomaly_detector.Anomaly_Detect_Probability = 1
-  elseif
-    excluded_npc[ obj:story_id() ]
-    or get_bool( obj:section(), "ogse_anomaly_evader.exclude", false )
+  if ( excluded_npc[ obj:profile_name() ]
+      or excluded_npc[ obj:name() ]
+      or excluded_npc[ obj:story_id() ]
+      or excluded_comms[ obj:character_community() ]
+      or excluded_locations[ level.name() ]
+    )
   then
     anomaly_detector:deactivate( true )
     return
-  elseif
-    excluded_locations[ level.name() ]
-    or monster_excluded_locations[ level.name() ]
-    or battle.is_battle_spawned( obj )
-  then
-    return
-  else
-    anomaly_detector.Anomaly_Detect_Probability = 0.9
   end
-  anomaly_detector:activate( true )
-  mobs[ obj:id() ] = true
-end
 
-
-function on_npc_spawn( obj, binder )
-  local all_anoms = false
   if
-    invisible_for_anoms[ obj:name() ]
-    or get_bool( obj:section(), "ogse_anomaly_evader.all_anoms", false )
+    --[=[( not obj:is_relation_enemy( db.actor ) and not get_anomaly_invisibility( obj ) )
+    or--]=] ( obj:character_community() == "kulg_band_2" or obj:character_community() == "ecolog" or obj:story_id() == story_ids.colonel_prohorov ) --KRodin: РєРІРµСЃС‚РѕРІР°СЏ С…СЂРµРЅСЊ, РЅРѕСЂРјР°Р»СЊРЅРѕ С„РёРєСЃРёС‚СЊ Р»РµРЅСЊ.
   then
-    all_anoms = true
-  end
-  if not obj:alive() then
-    if all_anoms then
-      set_anomaly_invisibility( obj, true )
-    end
-    return
-  end
-  local anomaly_detector = obj:get_custom_monster():anomaly_detector()
-  if not all_anoms then
-    if
-      excluded_npc[ obj:profile_name() ]
-      or excluded_npc[ obj:name() ]
-      or excluded_npc[ obj:story_id() ]
-    then
-      anomaly_detector:deactivate( true )
-      return
-    elseif
-      excluded_comms[ obj:character_community() ]
-      or excluded_locations[ level.name() ]
-    then
-      return
-    end
-  end
-  if all_anoms or obj:relation( db.actor ) ~= game_object.enemy then
+    --log3("--[%s] set_anomaly_invisibility for [%s] comm: [%s]", script_name(), obj:name(), obj:character_community())
     set_anomaly_invisibility( obj, true )
+    binder[ script_name()..".anomaly_invisibility" ] = true
   end
-  local ignore = ignore_zones[ obj:name() ]
-  if ignore then
-    anomaly_detector:set_ignore_zones( ignore )
-  end
+
+  if not ENABLE_AD then return end
+  --
+  anomaly_detector.Anomaly_Detect_Radius = 30
+  --
   anomaly_detector:activate( true )
   mobs[ obj:id() ] = true
 end
 
 
 function on_death( obj )
+  local binder = obj:binded_object()
+  if binder[ script_name()..".anomaly_invisibility" ] then
+    set_anomaly_invisibility( obj, false )
+    binder[ script_name()..".anomaly_invisibility" ] = nil
+  end
   if mobs[ obj:id() ] then
     local anomaly_detector = obj:get_custom_monster():anomaly_detector()
     anomaly_detector:deactivate( true )
-    if alife():object( obj:id() ) then
-      anomaly_detector:remove_all_restrictions()
-    end
+    anomaly_detector:remove_all_restrictions()
     mobs[ obj:id() ] = nil
   end
 end
 
 
-function remove_restriction( npc, anomid )
+function remove_restriction( anomid )
   for id, _ in pairs( mobs ) do
     local obj = level.object_by_id( id )
     if obj then
       local anomaly_detector = obj:get_custom_monster():anomaly_detector()
       anomaly_detector:remove_restriction( anomid )
     end
-  end
-  local sobj = alife():object( anomid )
-  if sobj then
-    amk_anoms.remove_anomaly( sobj.id )
-    alife():release( sobj )
   end
 end
 

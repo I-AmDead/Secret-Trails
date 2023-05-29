@@ -104,8 +104,6 @@ function first_run()
   	alife():create(6132)
   end
 
-  amk_anoms.pre_blow_off()
-  amk_anoms.after_blow_on()
   spawn_military_btr()	
   spawn_fuel()
 
@@ -126,7 +124,6 @@ end
 local weather_on_load
 
 function check_spawn()
-  amk_anoms.init()
   spawn_unspawned_respawners() 
 
   -- level_changers section
@@ -194,10 +191,6 @@ function freeplay()
 	local obj = alife():story_object(6001)
 	if not obj then
 		alife():create(6304)
-	end
-
-	for a=1,5 do
-		amk_anoms.after_blow_on()
 	end
 end
 
@@ -300,8 +293,7 @@ function check_for_af_drop(obj)
   local obj_sect = obj:section()
 	-- проверка не один ли это из компонентов
   if not is_komponent( obj_sect, obj:condition() ) then return end
-  local anom_id, anom_pos, anom_radius, dist =
-    amk_anoms.get_nearest_anomaly( db.actor )
+  local anom_id, anom_pos, anom_radius, dist = ogse_anomaly.get_nearest_anomaly_by_point( db.actor )
   if not ( anom_id and dist < 3 ) then return end
   local lv = level.object_by_id(anom_id):level_vertex_id()
   local gv = level.object_by_id(anom_id):game_vertex_id()
@@ -925,16 +917,16 @@ function af_transform_universal_end( params )
 	end
 	
 	-- удаляем аномалии, если нужно и она не в исклічениях
-	-- код взят из amk_anoms.turn_off_all()
+	-- код взят из turn_off_all()
 	if params.remove_anomaly then
-    local sobj = alife():object( params.remove_anomaly_id )
-    if sobj and game_graph():valid_vertex_id( sobj.m_game_vertex_id ) then
-      if is_generated_anomaly( sobj ) then
-        dsh_anomaly_detector.remove_restriction( nil, sobj.id )
-      end
-    end
-  end
-  return af_sobj
+		local sobj = alife():object( params.remove_anomaly_id )
+		if sobj and game_graph():valid_vertex_id( sobj.m_game_vertex_id ) then
+			if is_generated_anomaly( sobj ) then
+				dsh_anomaly_detector.remove_restriction( sobj.id )
+			end
+		end
+	end
+	return af_sobj
 end
 
 
@@ -1492,7 +1484,7 @@ end
 btrs_friends={}
 
 function build_btrs_table(obj)
-        if obj and (IAmAStalker[obj:clsid()] and obj:character_community()=="military" and obj:alive()) or obj:section()=="vehicle_btr" then
+        if obj and (obj:is_stalker() and obj:character_community()=="military" and obj:alive()) or obj:section()=="vehicle_btr" then
                         btrs_friends[obj:id()] = obj:section()
         end
 end

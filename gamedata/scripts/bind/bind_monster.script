@@ -195,23 +195,26 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 		obj:hit(h)    
 	end
 	
-	if obj:section()=="electro_chimera" and time_global()>(self.charge_time or 0)+3000 then
-		amk_particle.amk_particle({particle="anomaly2\\electra2_blast",pos=obj:bone_position("spine_1"),sound="anomaly\\electra_blast1"})
-		local dist = db.actor:position():distance_to(obj:bone_position("spine_1"))
-		if dist < 6 then
-			local h = hit()
-			h.impulse = 0
-			h.draftsman = db.actor
-			h.direction = vector():set(0,0,0)
-			h:bone("bip01_spine")
-			h.power = 1/dist
-			h.type = hit.strike 
-			db.actor:hit(h)
-			h.power = 6/dist
-			h.type = hit.shock
-			db.actor:hit(h)
+	if obj:section() == "electro_chimera" and time_global() > (self.charge_time or 0) + 3000 then
+		local chimera_particle = particles_object("anomaly2\\electra2_blast_00")
+		local chimera_sound = sound_object([[anomaly\electra_blast1]])
+		local posit = obj:position()
+		local enemy = obj:best_enemy()
+		if enemy and posit:distance_to(enemy:position()) < ( enemy:is_actor() and 13 or 5 ) and obj:see(enemy) then
+			if not chimera_sound:playing() and not chimera_particle:playing()then
+				chimera_particle:play_at_pos(posit)
+				chimera_sound:play_at_pos(obj, posit, 0)
+
+				local zh = hit()
+				zh.draftsman = obj
+				zh.type = hit.shock
+				zh.direction = posit:sub(enemy:position())
+				zh:bone( get_string( enemy:section(), "bone_torso", "bip01_spine" ) ) -- чтобы учитывалась броня
+				zh.power = 0.15
+				zh.impulse = 0.1
+				enemy:hit(zh)
+			end
 		end
-		self.charge_time=time_global()
 	end
 	
   self.am:call(

@@ -14,14 +14,14 @@ function timeout_timer:taction()
   self.fun( unpack( self.args ) )
 end
 
-function timeout( ... )
-  local t = timeout_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start()
-  return t
+function timeout( delay, fun, ... )
+  local tmout = timeout_timer( delay, fun, ... )
+  --
+  local d = debug.getinfo(2)
+  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+  --
+  tmout:start()
+  return tmout
 end
 
 
@@ -32,23 +32,23 @@ function condition_timer:__init( fun1, fun2, fun3 )
   self.fun3 = fun3
 end
 function condition_timer:condition()
-  return self.fun1( self )
+  return self.fun1()
 end
 function condition_timer:action()
-  self.fun2( self )
+  self.fun2()
 end
 function condition_timer:update()
   if self.fun3 then self.fun3( self ) end
 end
 
 function wait_condition( ... )
-  local t = condition_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start()
-  return t
+  local tmout = condition_timer( ... )
+  --
+  local d = debug.getinfo(2)
+  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+  --
+  tmout:start()
+  return tmout
 end
 
 
@@ -65,129 +65,49 @@ function exec_on_update_timer:action()
 end
 
 function exec_on_update( ... )
-  local t = exec_on_update_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start()
+  local tmout = exec_on_update_timer( ... )
+  --
+  local d = debug.getinfo(2)
+  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+  --
+  tmout:start()
+  return tmout
+end
+
+
+function exec_periodic( freq, f, ... )
+  local args = { ... }
+  local t = wait_condition(
+    function() return false end,
+    function() end,
+    function( timer )
+      if freq then timer:reschedule( freq ) end
+      f( timer, unpack( args ) )
+    end
+  )
+
+  local d = debug.getinfo(2)
+  t.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+
   return t
 end
 
 
-function set_condition( item, cond )
-  item:set_condition( cond )
+function remove_quotes( s ) --Вырезать все кавычки из строки
+  return string.gsub( s, "[«»\"\']", "" )
 end
 
-
--- http://www.amk-team.ru/forum/index.php?showtopic=6458&p=937442
---
--- local lname = level.name()
--- local lvtab = GetLevelVertexes( lname )
--- local lvx = math.max( unpack( lvtab ) )
--- local lv  = math_random( 1, lvx )
---
--- local gvtab  = GetGameVertexes( lname )
--- local gv_min = math.min( unpack( gvtab ) )
--- local gv_max = math.max( unpack( gvtab ) )
---
-function GetLevelVertexes( level )
-  local lvtab ={}
-  local i = 0
-  while game_graph():valid_vertex_id( i ) do
-    local lv = game_graph():vertex( i ):level_vertex_id()
-    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-    if not lvtab[ ln ] then
-      lvtab[ ln ] = {}
-    end
-    table.insert( lvtab[ ln ], lv )
-    i = i + 1
-  end
-  return lvtab[ level ]
-end
-
-function GetGameVertexes( level )
-  local gvtab ={}
-  local i = 0
-  while game_graph():valid_vertex_id( i ) do
-    local ln = alife():level_name( game_graph():vertex( i ):level_id() )
-    if not gvtab[ ln ] then
-      gvtab[ ln ] = {}
-    end
-    table.insert( gvtab[ ln ], i )
-    i = i + 1
-  end
-  return gvtab[ level ]
-end
-
-
-function is_enemy_around()
-  for id in pairs( db.creatures ) do
-    if id then
-      local obj = level.object_by_id( id )
-      if obj and obj:is_custom_monster() and obj:alive() then
-        local is_stalker = IsStalker(obj)
-        local dist = obj:position():distance_to( db.actor:position() )
-        local is_enemy_to_actor =
-          ogse.get_npc_relation( obj, db.actor ) == "enemy"
-        if
-          ( ( is_stalker and is_enemy_to_actor ) or IsMonster( obj ) )
-          and
-          ( dist < 5 or obj:see( db.actor ) )
-        then
-          return true
-        end
-      end
-    end
-  end
-  return false
-end
-
-
-function remove_quotes( s )
-  local  s2 = string.gsub( s, "[«»\"\']", "" )
-  return s2
-end
-
-
-function strip_quotes( s )
-  return string.gsub( s, "^%s*[«»\"\']+%s*(.+)%s*[«»\"\']+%s*$", "%1" )
-end
-
-
-function is_artefact( sect )
-  if sys_ini:line_exist( sect, "dsh_is_artefact" ) then
-    return get_bool( sect, "dsh_is_artefact" )
-  end
-  return string.find( sect, "af_", 1, true )
-end
-
-function get_inv_item_weight( obj )
-  return obj:get_inventory_item().inv_weight
-end
-
-function set_inv_item_weight( obj, weight )
-  obj:get_inventory_item().inv_weight = weight
-end
-
-function change_inv_item_weight( id, weight, abs_weight )
-  local obj = level.object_by_id( id )
-  if obj then
-    if abs_weight then
-      set_inv_item_weight( obj, weight )
-    else
-      local cur_weight = get_inv_item_weight( obj )
-      set_inv_item_weight( obj, cur_weight + weight )
-    end
-  end
+function strip_quotes( s ) --Срезать кавычки с начала и с конца строки
+  --return string.gsub( s, '^[«»\"\']*(.-)[«»\"\']*$', '%1') --Срезает ВСЕ кавычки слева и справа.
+  return string.gsub( s, '^[«»\"\'](.*)[«»\"\']$', '%1') --Срезает самую первую кавычку слева и самую последнюю кавычку справа.
 end
 
 
 local is_creating_free_mob = false
-function se_on_before_register( e )
+function se_on_before_register( sobj )
   if is_creating_free_mob then
-    set_none_smart_terrain( e.sobj )
     is_creating_free_mob = false
+    set_none_smart_terrain( sobj )
   end
 end
 
@@ -195,66 +115,16 @@ function set_none_smart_terrain( sobj )
   local ini = sobj:spawn_ini()
   if ini:section_exist( "smart_terrains" ) then return end
   ini.readonly = false
-  ini:w_bool( "smart_terrains", "none", true, "" )
+  ini:w_bool( "smart_terrains", "none", true )
   sobj:save_spawn_ini()
 end
 
 -- Создать свободного моба, которого не затянет в какой-нибудь гулаг.
 function create_free_mob( ... )
   is_creating_free_mob = true
-  local sobj = alife():create( ... )
-  ASSERT(
-    is_creating_free_mob == false,
-    "[%s]: found is_creating_free_mob after %s", script_name(), sobj:name()
-  )
-  return sobj
+  return alife():create( ... )
 end
 
-function create_free_monster( ... )
-  return create_free_mob( ... )
-end
-
-function create_free_npc( ... )
-  return create_free_mob( ... )
-end
-
--- Проверить расстояние от гулага до ГГ, если меньше.
-function gulag_distance_to_actor_lt( gulag_name, check_dist )
-  if db.zone_by_name[ gulag_name ] then
-    local sobj = alife():object( gulag_name )
-    if sobj then
-      local obj = level.object_by_id( sobj.id )
-      if obj then
-        local dist = obj:position():distance_to( db.actor:position() )
-        return dist < check_dist
-      end
-    end
-  end
-  return false
-end
-
-local mobs_smart_terrain = {}
-function remember_mobs_smart_terrain( id, sobj, remember )
-  if remember then
-    mobs_smart_terrain[ id ] = sobj.id
-  else
-    mobs_smart_terrain[ id ] = nil
-  end
-end
-
-
-function is_free_logic_mob( sobj )
-  local strn_id
-  if sobj.smart_terrain_id then
-    strn_id = sobj:smart_terrain_id()
-  else
-    strn_id = 65535
-  end
-  if strn_id == 65535 then
-    return mobs_smart_terrain[ sobj.id ]
-  end
-  return nil
-end
 
 local ini_file_cache = {}
 function cached_ini_file( fname )
@@ -265,282 +135,15 @@ function cached_ini_file( fname )
 end
 
 
-function start_gtimerDHMS( name, d, h, m, s, fname, ... )
-  return ogse_st_mgr.delayed_fun_start( name )
-    :set_gdelayDHMS( d, h, m, s )
-    :init( fname, ... )
-    :start()
-end
-
-function is_this_monster_section( sect, monster_classes )
-  local comm = get_string( sect, "community" )
-  if
-    comm
-    and ( monster_classes[ comm ] or comm == "zombied" or comm == "rat" )
-  then
-    return true
-  end
-  return false
-end
-
-function map_add_treasure( id, icon, text )
-  local sobj = alife():object( id )
-  if sobj then
-    local spot
-    if isIndoor( object_level_name( sobj ) ) then
-      spot = icon
-    else
-      spot = "crlc_big_treasure" .. math.random( 1, 4 )
-    end
-    level.map_add_object_spot_ser( id, spot, text )
-  end
-end
-
-
-function map_remove_treasure( id )
-  level.map_remove_object_spot( id, "treasure" )
-  for spot = 1, 4 do
-    level.map_remove_object_spot( id, "crlc_big_treasure" .. spot )
-  end
-end
-
-
-function map_has_treasure_spot( id )
-  if level.map_has_object_spot( id, "treasure" ) > 0 then
-    return true
-  end
-  for spot = 1, 4 do
-    if level.map_has_object_spot( id, "crlc_big_treasure" .. spot ) > 0 then
-      return true
-    end
-  end
-  return false
-end
-
-function create_and_map_treasure( name, descr, sect, pos, lvid, gvid )
-  local sobj = alife():create( sect, pos, lvid, gvid )
-  local text = "%c[255,238,155,23]" .. name .. "\\n"
-    .. "%c[default]" .. descr
-  map_add_treasure( sobj.id, "treasure", text )
-  return sobj
-end
-
-function get_next_random( vname, ... )
-  local args = { ... }
-  local min, max
-  if table.getn( args ) == 1 then
-    min, max = 1, args[ 1 ]
-  elseif table.getn( args ) > 1 then
-    min, max = unpack( args )
-  end
-  if min and max and min == max then return min end
-  local nums = ogse.load_var_safe( vname ) or {}
-  while table.getn( nums ) < 100 do
-    table.insert( nums, math.random() )
-  end
-  local cur_num = tonumber( table.remove( nums, 1 ) )
-  table.insert( nums, math.random() )
-  ogse.save_var( vname, nums, "array_template", { "float" } )
-  if table.getn( args ) > 0 then
-    cur_num = min + round( cur_num * ( max - min ) )
-  end
-  return cur_num
-end
-
-function change_next_random_delayed( vname ) end
-
-
--- СЃРґРµР»Р°С‚СЊ РІСЂР°РіР°РјРё РіСЂСѓРїРїСѓ Р§РµСЂРµРїР°, С‡С‚Рѕ Р±С‹ РґРѕР»РіРѕРІС†С‹ РІ Р‘Р°СЂРµ РЅРµ РєСЂР°СЃРЅРµР»Рё
--- РїРѕСЃР»Рµ РёС… СѓР±РёР№СЃС‚РІР°. Р•СЃР»Рё РѕРЅРё РІСЃРµ РІ РѕРЅР»Р°Р№РЅРµ, С‚Рѕ РјРѕР¶РЅРѕ РїРѕРјРµРЅСЏС‚СЊ РёРј
--- РіСЂСѓРїРїРёСЂРѕРІРєСѓ, РґР»СЏ РЅР°РґРµР¶РЅРѕСЃС‚Рё.
-function mil_dolg_enemy()
-  local strn = alife():object( "mil_dolg" )
-  if not strn then return end
-  local offline, online = {}, {}
-  for id, v in pairs( strn.npc_info ) do
-    local sobj = alife():object( id )
-    if sobj then
-      table.insert( offline, sobj )
-      local obj = level.object_by_id( sobj.id )
-      if obj then
-        table.insert( online,  obj  )
-      end
-    end
-  end
-  if table.getn( offline ) == table.getn( online ) then
-    for _, obj in ipairs( online ) do
-      obj:set_character_community( "killer", 0, 0 )
-      obj:set_relation( game_object.enemy, db.actor )
-    end
-  else
-    for _, sobj in ipairs( offline ) do
-      relation_registry.set_personal_goodwill( sobj.id, db.actor:id(), -9000 )
-    end
-  end
-end
-
-
-function say_blin()
-  local snd = xr_sound.get_safe_sound_object(
-    "scripts\\nlc6\\matches_no_light_" .. math.random( 3 )
-  )
-  snd:play( db.actor, 0, sound_object.s2d )
-end
-
-
-function scratch_match_sound()
-  local idx = math.random( 3 )
-  local snd = xr_sound.get_safe_sound_object( "scripts\\nlc6\\matches_" .. idx )
-  snd:play( db.actor, 0, sound_object.s2d )
-  local matches_delays = { 3500, 4000, 4600 }
-  return matches_delays[ idx ]
-end
-
-
-function actor_can_move( status )
-  ogse_actor_conditions_mgr.change_walk_accel(   )
-  ogse_actor_conditions_mgr.change_jump_speed(   )
-end
-function actor_cant_move()
-  ogse_actor_conditions_mgr.change_walk_accel( 0 )
-  ogse_actor_conditions_mgr.change_jump_speed( 0 )
-end
-
-
-local ammo_sections_cache = {}
-function get_ammo_sections( wpn )
-  local sect = wpn:section()
-  if not ammo_sections_cache[ sect ] then
-    local t = {}
-    ammo_sections_cache[ sect ] = t
-    for _, k in ipairs({ "ammo_class", "grenade_class" }) do
-      local s = get_string( sect, k )
-      if s then
-        t[ k ] = parse_names( s )
-      end
-    end
-  end
-  return ammo_sections_cache[ sect ]
-end
-
-function iterate_respawners( f )
-  for name, respawn in pairs( active ) do
-    f( respawn )
-  end
-end
-
-function get_this_level_difficulty()
-  local val = get_float(
-    level.name(), "dsh.this_level_difficulty", nil, game_ini()
-  )
-  ASSERT( val, "this_level_difficulty not defined for %s", level.name() )
-  return val
-end
-
-
-local knives = {}
-function is_knife( sect )
-  if knives[ sect ] == nil then
-    knives[ sect ] = get_bool( sect, "dsh.is_knife", false )
-  end
-  return knives[ sect ]
-end
-
-
-function set_inactivate_input_time( delta )
-  local tname = "dsh.disable_input_time"
-  if ogse_st_mgr.timer_exists( tname ) then
-    ogse_st_mgr.get_timer( tname ):stop()
-  end
-  level.disable_input()
-  ogse_st_mgr.delayed_fun_start( tname )
-    :set_gdelay( delta )
-    :init( "level.enable_input" )
-    :start( true )
-end
-
-function is_input_time_inactivated()
-  return ogse_st_mgr.timer_exists( "dsh.disable_input_time" )
-end
-
-
-function spawn_physic_sleep_bag( pos, lvid, gvid, vis, mass, fixed_bones )
-  local sobj = alife():create( "physic_object", pos, lvid, gvid )
+--Можно использовать эту функцию, если по каким-то причинам недоступен метод alife():use_ai_locations(sobj, false)
+function clear_used_ai_locations( sobj )
   local pk = get_netpk( sobj, 1 )
-  ASSERT( pk:isOk(), "can't read netpacket of %s", sobj:name() )
+  ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
   local data = pk:get()
-  data.visual_name = vis or "physics\\decor\\bag_01"
-  data.custom_data:setString(
-    "[logic]\ncfg = scripts\\esc_sleep.ltx\n[collide]\nignore_static\n"
-  )
-  data.physic_type = 3
-  data.mass        = mass or 1
-  data.fixed_bones = fixed_bones or "joint1, joint5"
+  data.object_flags = bit_and(
+    data.object_flags, bit_not( object_flags.UsedAI_Locations )
+  ) -- снять флаг flUsedAI_Locations
   pk:set( data )
-  return sobj
-end
-
-function shuffle( array )
-  local n, random, j, k = table.getn( array ), math.random
-  for i = 1, n do
-    j, k = random( n ), random( n )
-    array[ j ], array[ k ] = array[ k ], array[ j ]
-  end
-  return array
-end
-
-
-local cached_condlist_hit  = 0
-local cached_condlist_miss = 0
-
-class "cached_condlist"
-function cached_condlist:__init( parsed, ttl )
-  self.parsed = parsed
-  self.ttl    = ttl
-end
-
-function cached_condlist:pick_section_from_condlist( actor, npc )
-  if self.cached_time and self.cached_time > time_global() then
-    cached_condlist_hit = cached_condlist_hit + 1
-  else
-    self.cached_res = xr_logic.pick_section_from_condlist(
-      actor, npc, self.parsed
-    )
-    if db.actor_proxy.online then
-      self.cached_time = time_global() + self.ttl
-    end
-    cached_condlist_miss = cached_condlist_miss + 1
-  end
-  return self.cached_res
-end
-
-
-function on_destroy()
-  log2(
-    "[%s]: cached_condlist stats ( hit/miss ): %s / %s",
-    script_name(), cached_condlist_hit, cached_condlist_miss
-  )
-end
-
-function get_current_outfit_protection( hit )
-  if not db.actor:get_current_outfit() then return 0 end
-  return db.actor:get_current_outfit_protection( hit )
-end
-
-function alife_find_and_release( items )
-  local need = {}
-  for _, k in ipairs( items ) do
-    need[ k ] = true
-  end
-  local cnt = table.getn( items )
-  for id, sobj in alife():objects() do
-    if need[ sobj:section_name() ] then
-      need[ sobj:section_name() ] = nil
-      cnt = cnt - 1
-      dsh_alife.release( sobj )
-      if cnt == 0 then break end
-    end
-  end
 end
 
 
@@ -554,72 +157,29 @@ function clear_useful_for_ai( sobj )
   pk:set( data )
 end
 
-function backup_quicksave()
-  local cnt = ogse.load_var( "dsh.next_quicksave", 1 )
-  local f = getFS()
-  local quicksave = f:update_path(
-    "$game_saves$", user_name() .. "_quicksave.sav"
-  )
-  local next_save  = f:update_path(
-    "$game_saves$", string.format( "%s_quicksave_%u.sav", user_name(), cnt )
-  )
-  if f:exist( next_save ) then
-    f:file_delete( next_save )
-  end
-  f:file_copy( quicksave, next_save )
 
-  if f:exist("$game_saves$", user_name() .. "_quicksave.dds") then
-  f1 = f:update_path("$game_saves$", user_name() .. "_quicksave.dds")
-  f2 = f:update_path("$game_saves$", user_name() .. "_quicksave_" .. cnt .. ".dds")
-  f:file_copy( f1, f2 )
+class "cached_condlist"
+function cached_condlist:__init( parsed, ttl )
+  self.parsed = parsed
+  self.ttl    = ttl
 end
-
-  if f:exist( quicksave ) then
-    f:file_delete( quicksave )
+function cached_condlist:pick_section_from_condlist( actor, npc )
+  if ( not self.cached_time ) or self.cached_time < time_global() then
+    self.cached_res  = xr_logic.pick_section_from_condlist(
+      actor, npc, self.parsed
+    )
+    self.cached_time = time_global() + self.ttl
   end
-
-	if f:exist("$game_saves$", user_name() .. "_quicksave.dds") then
-		f:file_delete("$game_saves$", user_name() .. "_quicksave.dds")
-	end
-
-  if cnt == 9 then
-    cnt = 1
-  else
-    cnt = cnt + 1
-  end
-  ogse.save_var( "dsh.next_quicksave", cnt, "u8" )
-end
-
-function npc_has_quest_item( npc )
-  local found_quest_item = false
-  npc:iterate_inventory(
-    function( npc, item )
-      if not found_quest_item then
-        if watcher_act.do_not_touch( item ) then
-          found_quest_item = true
-        end
-      end
-    end,
-    npc
-  )
-  return found_quest_item
+  return self.cached_res
 end
 
 
-function release_alive_npc( actor, npc )
-  if npc:alive() then
-    local sobj = alife():object( npc:id() )
-    if sobj then
-      release_mob( sobj )
-    end
-  end
-end
-
-
--- СЃРѕР·РґР°С‚СЊ РєРѕСЃС‚РµСЂ РґР»СЏ Р»Р°РіРµСЂСЏ СЃС‚Р°Р»РєРµСЂРѕРІ
+-- создать костер для лагеря сталкеров
+-- Пример:
+-- local p = patrol( "yan_st_stalker3_kamp_1" )
+-- dsh.create_campfire( p:point( 0 ), p:level_vertex_id( 0 ), p:game_vertex_id( 0 ), "objects\\koster_palki_nastil", 0.7 )
 function create_campfire( pos, lvid, gvid, vis, lamp_height )
-  -- РєРѕСЃС‚СЂРёС‰Рµ
-  local vis_sobj
+  -- кострище
   if vis then
     local sobj = alife():create( "physic_object", pos, lvid, gvid )
     local pk   = get_netpk( sobj, 1 )
@@ -639,188 +199,63 @@ function create_campfire( pos, lvid, gvid, vis, lamp_height )
       ini:w_bool( "collide", kk, true )
     end
     sobj:save_spawn_ini()
-    vis_sobj = sobj
   end
 
-  -- Р°РЅРѕРјР°Р»РёСЏ
-  local sobj = amk_anoms.spawn_anomaly(
+  -- аномалия
+  local sobj = ogse_anomaly.spawn_anomaly(
     "zone_flame_small",
-     pos, lvid, gvid, { shtype = 0, radius = 1, center = { 0, 0, 0 } }
+     pos, lvid, gvid,
+     { shtype = 0, radius = 1, center = { 0, 0, 0 } }
   )
-  sobj     = alife():object( sobj.id )
   local sr = sobj:get_space_restrictor()
   sr.restrictor_type = global_flags.eRestrictorTypeNone
-  return vis_sobj
-end
 
-
-function safe_file_name( fname )
-  fname = string.gsub( fname, "[><|?*/\\,:\"%b]", "" )
-  return fname
-end
-
-
-function create_candle( pos, lvid, gvid, vis )
-  -- РіР°Р·РѕРІР°СЏ РіРѕСЂРµР»РєР°
-  if vis then
-    local sobj = alife():create( "physic_object", pos, lvid, gvid )
-    local pk   = get_netpk( sobj, 1 )
-    ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
-    local data = pk:get()
-    data.visual_name = vis
-    data.physic_type = 3
-    data.mass        = 10
-    data.fixed_bones = "link"
-    pk:set( data )
-    sobj = alife():object( sobj.id )
-    sobj:used_ai_locations( false )
-    local ini = sobj:spawn_ini()
-    ini.readonly = false
-    for _, k in ipairs({ "dynamic", "ragdoll", "static" }) do
-      local kk = "ignore_" .. k
-      ini:w_bool( "collide", kk, true )
-    end
-    sobj:save_spawn_ini()
-  end
-
-  -- Р°РЅРѕРјР°Р»РёСЏ
-  local sobj = amk_anoms.spawn_anomaly(
-    "zone_flame_candle",
-     vector():set( pos.x, pos.y + 0.15, pos.z ), lvid, gvid,
-     { shtype = 0, radius = 0.1, center = { 0, 0, 0 } }
+  -- лампочка
+  local sobj = alife():create(
+    "lights_hanging_lamp_campfire",
+     vector():set( pos.x, pos.y + ( lamp_height or 0 ), pos.z ), lvid, gvid
   )
-  sobj     = alife():object( sobj.id )
-  local sr = sobj:get_space_restrictor()
-  sr.restrictor_type = global_flags.eRestrictorTypeNone
-end
-
-function release_mob( sobj )
-  smart_terrain.unregister_npc( sobj )
-  ogse_signals.get_mgr():call( "on_release_npc", sobj.id )
-  dsh_alife.release( sobj )
-end
-
-
-function get_random_pos_in_radius( radius, min_radius, around_pos, dir )
-  if not around_pos then around_pos = db.actor:position() end
-  local ai_step     = 0.7 -- С€Р°Рі AI СЃРµС‚РєРё
-  local math_pi_180 = 180 / math.pi
-  local pi2         = math.pi * 2
-  -- РІС‹СЂР°РІРЅРёРІР°РµРј РІРµРєС‚РѕСЂР° РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё
-  if not dir then dir = device().cam_dir end
-  dir = vector():set( dir.x, 0, dir.z ):normalize()
-  dir = vector_rotate_y( dir, math.random( 360 ) )
-  local dist = min_radius and math.random( min_radius, radius ) or radius
-  if not min_radius then min_radius = ai_step end
-  while dist >= min_radius do
-    -- РёС‚РµСЂР°С‚РѕСЂ РІСЂР°С‰РµРЅРёСЏ РЅР°РїСЂР°РІР»РµРЅРёСЏ
-    local rotate_angle = math.asin( ai_step / dist )
-    local cur_angle, cur_dir = 0, dir
-    while math.abs( cur_angle ) < pi2 do
-      -- РїРѕРґС…РѕРґСЏС‰РёР№ СѓРіРѕР», РёС‰РµРј РІРµСЂС‚РµРєСЃ
-      -- РЅСѓР¶РЅР°СЏ РЅР°Рј РїРѕР·РёС†РёСЏ
-      local pos     = vector():mad( around_pos, cur_dir, dist )
-      local vert_ok = level.vertex_id_by_pos( pos )
-      if level.valid_vertex_id( vert_ok ) then
-        local vert_pos = level.vertex_position( vert_ok )
-        if battle.no_anomaly_in( vert_pos ) then
-          return vert_pos, vert_ok
-        end
-      end
-      -- РїРѕРІРѕСЂР°С‡РёРІР°РµРј РЅР°РїСЂР°РІР»РµРЅРёРµ РїРѕРёСЃРєР°
-      cur_angle = cur_angle + rotate_angle
-      cur_dir   = vector_rotate_y( cur_dir, rotate_angle * math_pi_180 )
-    end
-    dist = dist - ai_step
+  local pk = get_netpk( sobj, 1 )
+  ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
+  local data = pk:get()
+  local props = {
+    [ "main_color"          ] = tonumber( "fffab807", 16 ),
+    [ "main_brightness"     ] = 0.7,
+    [ "main_color_animator" ] = "koster",
+    [ "main_range"          ] = 6,
+    [ "light_flags"         ] = tonumber( "2a", 16 ),
+    [ "health"              ] = 100,
+    [ "main_virtual_size"   ] = 0.1,
+    [ "ambient_radius"      ] = 10,
+    [ "ambient_power"       ] = 0.40000001,
+    [ "main_cone_angle"     ] = 2.0943952,
+    [ "glow_radius"         ] = 0.69999999,
+  }
+  for k, v in pairs( props ) do
+    data[ k ] = v
   end
+  pk:set( data )
 end
 
 
-function create_dead_mob( ... )
-  local sobj = create_free_mob( ... )
-  sobj:on_death()
-  return sobj
-end
-
-
-function get_save_list()
-  local t    = {}
-  local path = getFS():update_path( "$game_saves$", "" )
-  stdfs.directory_iterator( path, function( file ) -- C++17 FS
-    if file.extension == ".sav" then
-      table.insert( t, {
-        [ "name"  ] = file.short_filename,
-        [ "modif" ] = file.last_write_time,
-      })
-    end
-  end )
-  table.sort( t, function( a, b ) return b.modif < a.modif end )
-  return t
-end
-
-
-function load_game_internal( name )
-  if alife() then
-    cmd( "load", name )
-  else
-    cmd( "disconnect" )
-    cmd( "start server(" .. name .. "/single/alife/load) client(localhost)" )
-  end
-end
-
-
-function exec_periodic( freq, f, ... )
-  local args = { ... }
-  local t = wait_condition(
-    function() return false end,
-    function() end,
-    function( timer )
-      if freq then timer:reschedule( freq ) end
-      f( timer, unpack( args ) )
-    end
-  )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
+function copy_hit_data( hd, t )
+  for _, k in ipairs({
+    "power", "dir", "who_id", "weapon_id", "bone_id", "impulse", "hit_type",
+  }) do
+    t[ k ] = hd[ k ]
   end
   return t
 end
 
 
--- Р’Р·СЏС‚Рѕ РѕС‚СЃСЋРґР° http://www.amk-team.ru/forum/topic/7450-spravochnik-po-funkciyam-i-klassam/?do=findComment&comment=272244
-function pos_to_screen_xy( pos )
-  local dev   = device()
-  local scr_w = dev.width
-  local scr_h = dev.height
-
-  local fov2     = ( dev.fov / 2 ) * ( math.pi / 180 )
-  local scr_dist = 0.5 * scr_h / math.tan( fov2 )
-
-  local ppp = vector():sub( pos, dev.cam_pos )
-  local dp  = dev.cam_dir:dotproduct( ppp )
-
-  local x = 512 + dev.cam_right:dotproduct( ppp ) * scr_dist / dp * ( 1024 / scr_w )
-  local y = 384 - dev.cam_top:dotproduct( ppp )   * scr_dist / dp * (  768 / scr_h )
-  return x, y
+function my_name_is_strelok() --Вызывается по инфопоршню esc_find_doctor_done
+  local new_name = game.translate_string("actor_name2")
+  db.actor:get_inventory_owner():SetName( new_name )
+  local sobj   = alife():object( db.actor:id() )
+  local trader = sobj:get_trader()
+  trader.character_name = new_name
 end
 
-
--- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127456
--- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127526
-function is_actor_looking_to_pos( pos, radius )
-  local k = vector():sub( pos, device().cam_pos )
-  local b = k:dotproduct( device().cam_dir )
-  local c = k:dotproduct( k ) - radius * radius
-  local d = b * b - c
-  return d >= 0
-end
-
-function unpack_time( v )
-  if not v then return end
-  local t = game.CTime()
-  t:set( unpack( v ) )
-  return t
-end
 
 function find_all_vertexes_in_radius( around_pos, radius )
   local vertexes = {}
@@ -834,61 +269,175 @@ function find_all_vertexes_in_radius( around_pos, radius )
 end
 
 
-function copy_hit_data( hd, t )
-  for _, k in ipairs({
-    "power", "dir", "who_id", "weapon_id", "bone_id", "impulse", "hit_type",
+function is_torch_enabled()
+  if db.actor:alive() then
+    local torch = db.actor:item_in_slot( 9 )
+    if torch and torch:is_torch() then
+      torch = get_torch_obj( torch )
+      return torch.on
+    end
+  end
+end
+
+
+function shuffle( array )
+  local n, random, j, k = table.getn( array ), math.random
+  for i = 1, n do
+    j, k = random( n ), random( n )
+    array[ j ], array[ k ] = array[ k ], array[ j ]
+  end
+  return array
+end
+
+
+function cleanup_pri_waves()
+  for _, name in ipairs({
+    "pri_wave1_monolith1_rsniper1",
+    "pri_wave1_monolith2_free1",
+    "pri_wave1_monolith3_free2",
+    "pri_wave2_monolith1_rsniper1",
+    "pri_wave2_monolith2_wsniper1",
+    "pri_wave2_monolith3_rsniper2",
+    "pri_wave2_monolith4_wsniper2",
+    "pri_wave4_monolith1_rsniper1",
+    "pri_wave4_monolith2_wsniper1",
+    "pri_wave4_monolith3_rsniper2",
+    "pri_wave4_monolith4_wsniper2",
+    "pri_wave4_monolith5_free1",
+    "pri_wave4_monolith5_free2",
+    "pri_wave4_monolith5_free3",
+    "pri_wave5_monolith1_free1",
+    "pri_wave5_monolith2_free2",
+    "pri_wave5_monolith3_free3",
+    "pri_wave5_monolith4_free4",
+    "pri_wave6_monolith1_rsniper1",
+    "pri_wave6_monolith2_wsniper1",
+    "pri_wave7_monolith1",
+    "pri_wave7_monolith2",
+    "pri_wave7_monolith3",
+    "pri_wave7_monolith4",
+    "pri_wave7_monolith5",
   }) do
-    t[ k ] = hd[ k ]
+    local sobj = alife():object( name )
+    if sobj and sobj:alive() then
+      log3( "~~[%s]: release [%s] (%s)", script_name(), sobj:name(), sobj.level_name )
+      alife():release( sobj )
+    end
   end
-  return t
 end
 
-function get_ui_icon_equipment_name( sect )
-  local icon_group = get_u32( sect, "icon_group", 0 )
-  if icon_group > 0 then
-    return string.format( "ui\\ui_icon_equipment_%d", icon_group )
+
+-------------------------------------------------------------
+function safe_file_name( fname ) --Вырезаем неподдерживаемые FS символы и пробелы по краям.
+  fname = fname:clear():gsub( '[%(%)]*', "" ):trim()
+  if fname:len() > 60 then
+    fname = fname:sub( 1, 58 ) .. "..."
   end
-  return "ui\\ui_icon_equipment"
+  return fname
 end
 
-function play_snd_queue( queue, k )
-  local snd = xr_sound.get_safe_sound_object( table.remove( queue, 1 ) )
-  snd:play_no_feedback(
-    db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0
+function on_level_changer_action( obj, wnd )
+  ogse.save_var( script_name()..".last_lc_id", obj:id(), "u16" )
+  wait_condition(
+	function() return not wnd:IsShown() end,
+	function() ogse.delete_var( script_name()..".last_lc_id" ) end,
+	function() ogse_signals.get_mgr():reschedule( 1000 ) end
   )
-  if table.getn( queue ) > 0 then
-    if not k then k = 1.1 end
-    timeout(
-      snd:length() * k,
-      this.play_snd_queue, queue
-    )
+end
+
+function backup_autosave()
+  local last_save_name = alife().loaded_save_name
+  if not last_save_name:find( "_autosave.sav" ) then return end
+
+  local last_lc_id = ogse.load_var_safe( script_name()..".last_lc_id" )
+  if not last_lc_id then return end
+
+  ogse.delete_var( script_name()..".last_lc_id" )
+
+  local lc_sobj = alife():object(last_lc_id)
+  if not lc_sobj then return end
+
+  local prev_lname = lc_sobj.level_name
+  local lc_save_name = safe_file_name( string.format( "%s %d. %s %s - %s.sav", game.translate_string( "ui_autosave_day" ), news_manager.game_days(), game.translate_string( "ui_autosave_trans" ), game.translate_string( prev_lname ), game.translate_string( level.name() ) ) )
+
+  local f = getFS()
+  local last_save = f:update_path( "$game_saves$", last_save_name )
+  local lc_save   = f:update_path( "$game_saves$", lc_save_name )
+  f:file_rename( last_save, lc_save, true )
+end
+-------------------------------------------------------------
+
+
+-- Удаление всех участников сцены на ДТ (Круглов и ко)
+function clean_bar_ecolog_professor()
+  if level.name() == "l06_rostok" then return end
+  if not has_alife_info("bar_rescue_research_done") or not has_alife_info("bar_rescue_research_fail") then return end
+
+  for _, name in ipairs({
+    "bar_freedom_attacker_1",
+    "bar_freedom_attacker_4",
+    "bar_freedom_attacker_6",
+    "bar_freedom_attacker_2",
+    "bar_freedom_attacker_3",
+    "bar_freedom_attacker_5",
+    "bar_ecolog_professor",
+    --Эти четверо теперь останутся на ДТ в смарте ros_smart_stalker_bandits1
+    --"bar_ecolog_crush_1",
+    --"bar_ecolog_crush_3",
+    --"bar_ecolog_crush_2",
+    --"bar_ecolog_crush_4",
+    "bar_freedom_attacker_commander",
+    "bar_freedom_attacker_7",
+    "bar_freedom_attacker_8",
+    "bar_ambush_killer_01",
+    "bar_ambush_killer_05",
+    "bar_ambush_killer_07",
+    "rostok_stalker_0001",
+    "rostok_stalker_0002",
+    "rostok_stalker_0003",
+    "rostok_stalker_0004",
+    "bar_ecolog_crush_dead_0002",
+    "bar_ecolog_crush_dead_0003",
+    "bar_ambush_killer_09",
+    "bar_freedom_attacker_10",
+    "bar_freedom_attacker_11",
+    "bar_freedom_attacker_12",
+    "bar_freedom_attacker_9",
+    "bar_freedom_attacker_0000",
+    "bar_freedom_attacker_0001",
+    "bar_freedom_attacker_0002",
+    "bar_freedom_attacker_0003",
+    "bar_ambush_killer_02",
+    "bar_ambush_killer_04",
+  }) do
+    local sobj = alife():object( name )
+    if sobj and sobj.level_name == "l06_rostok" then
+      log3( "~~[%s.clean_bar_ecolog_professor]: release [%s]", script_name(), sobj:name() )
+      alife():release( sobj )
+    end
   end
 end
 
-function npc_inside_zone( npc, zone )
-  return zone:inside( npc:position() )
-end
-
-function remove_dcity_to_zaton()
-  local sobj = alife():story_object( story_ids.dcity_to_zaton )
-  if sobj then
-    dsh_alife.release( sobj )
+function cleanup_bar_ecologs()
+  for _, name in ipairs({
+    "bar_ecolog_crush_1",
+    "bar_ecolog_crush_3",
+    "bar_ecolog_crush_2",
+    "bar_ecolog_crush_4",
+  }) do
+    local sobj = alife():object( name )
+    if sobj then
+      local pk = get_netpk( sobj )
+      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
+      local data = pk:get()
+      data.base_in_restrictors  = ""
+      data.base_out_restrictors = ""
+      pk:set( data )
+      log3( "~~[%s.cleanup_bar_ecologs]: cleanup [%s]", script_name(), sobj:name() )
+    end
   end
 end
 
-function HideCustomStatic( name )
-  local cs = get_hud():GetCustomStatic( name )
-  if cs then
-    cs:wnd():Show( false )
-  end
-  return cs
-end
-
-function ShowCustomStatic( name )
-  local cs = get_hud():AddCustomStatic( name, true )
-  cs:wnd():Show( true )
-  return cs
-end
 
 local free_logic_gulag = {}
 function is_free_logic_gulag( name )
@@ -907,78 +456,31 @@ function is_free_logic_gulag( name )
   return free_logic_gulag[ name ]
 end
 
-function preload_free_logic_gulag()
-  for _, name in ipairs( get_section_keys( "dsh.gulag.free_logic" ) ) do
-    is_free_logic_gulag( name )
-  end
-end
 
-function level_timeout(ms, func)
-    local t = level.add_call(
-            function() return true end,
-            function() func() end
-        )
-    t:set_pause(ms)
-    return t
-end
-
-function start_on_spawn_another_level( s, lname )
-  if lname then
-    ogse_st_mgr.start_on_signal( s, "on_spawn_another_level_" .. lname, s )
-  else
-    ogse_st_mgr.start_on_signal( s, "on_spawn_another_level", s )
-  end
+function clear_smart_terrain_conditions( sobj )
+  sobj.smart_terrain_conditions = nil
 end
 
 
-function on_before_script_gc()
-  ogse_signals.get_mgr():call( "on_update", 0 )
+function start_gtimerDHMS( name, d, h, m, s, fname, ... )
+  return ogse_st_mgr.delayed_fun_start( name )
+    :set_gdelayDHMS( d, h, m, s )
+    :init( fname, ... )
+    :start()
 end
 
-
-function rt_timeout( ... )
-  local t = timeout_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start( "on_actor_update" )
-  return t
-end
-
-function rt_wait_condition( ... )
-  local t = condition_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start( "on_actor_update" )
-  return t
-end
-
-function rt_exec_periodic( freq, f, ... )
-  local args = { ... }
-  local t = rt_wait_condition(
-    function() return false end,
-    function() end,
-    function( timer )
-      if freq then timer:reschedule( freq ) end
-      f( timer, unpack( args ) )
-    end
+function level_timeout( ms, func )
+  local t = level.add_call(
+    function() return true end,
+    function() func() end
   )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
+  t:set_pause( ms )
   return t
 end
 
-function rt_exec_on_update( ... )
-  local t = exec_on_update_timer( ... )
-  local d = debug.getinfo( 2, "S" )
-  if d then
-    t:set_script_name( d.source )
-  end
-  t:start( "on_actor_update" )
-  return t
+function unpack_time(v)
+    if not v then return end
+    local t = game.CTime()
+    t:set(unpack(v))
+    return t
 end

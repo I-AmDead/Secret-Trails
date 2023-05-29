@@ -1,6 +1,6 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
---РњРёРЅРёРјР°Р»СЊРЅРѕРµ Рё РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РІСЂРµРјСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ Р°СЃСЃРѕСЂС‚РёРјРµРЅС‚Р° РІ РёРіСЂРѕРІС‹С… С‡Р°СЃР°С….
+--����������� � ������������ ����� ���������� ������������ � ������� �����.
 local MIN_TRADE_UPD_TIME, MAX_TRADE_UPD_TIME = 3, 6
 
 
@@ -74,7 +74,7 @@ function trade_init( npc, cfg )
   tt.cfg_ltx     = cfg
   tt.config      = dsh.cached_ini_file( cfg )
 
-  -- РєРѕСЌС„РёС†РёРµРЅС‚С‹ РїРѕРєСѓРїРєРё
+  -- ����������� �������
   local str = get_string( "trader", "buy_condition", nil, tt.config )
   ASSERT(
     str,
@@ -85,7 +85,7 @@ function trade_init( npc, cfg )
     npc, "trade_manager", "buy_condition", str
   )
 
-  -- РєРѕСЌС„РёС†РёРµРЅС‚С‹ РїСЂРѕРґР°Р¶Рё
+  -- ����������� �������
   str = get_string( "trader", "sell_condition", nil, tt.config )
   ASSERT(
     str,
@@ -96,7 +96,7 @@ function trade_init( npc, cfg )
     npc, "trade_manager", "sell_condition", str
   )
 
-  -- СЃРїРёСЃРѕРє Р·Р°РєСѓРїРєРё
+  -- ������ �������
   str = get_string( "trader", "buy_supplies", nil, tt.config )
   if str then
     tt.buy_supplies = xr_logic.parse_condlist(
@@ -120,7 +120,7 @@ function trade_init( npc, cfg )
     tt.buy_supplies = nil
   end
   --
-  update( npc, true ) --Р’ РїРµСЂРІС‹Р№ СЂР°Р· Р°РїРґРµР№С‚РёРј СЃСЂР°Р·Сѓ.
+  update( npc, true ) --� ������ ��� �������� �����.
   --
   if npc:alive() then
     local sm = ogse_signals.get_mgr()
@@ -128,21 +128,21 @@ function trade_init( npc, cfg )
     local s_name = ( npc:clsid() == clsid.script_trader )
       and ( "on_monster_update." .. npc:id() )
       or  ( "on_npc_update."     .. npc:id() )
-    --buy_supplies РѕР±РЅРѕРІР»СЏРµРј РѕС‚РґРµР»СЊРЅРѕ, РІ СЃС‚СЂРѕРіРѕ РѕРїСЂРµРґРµР»С‘РЅРЅРѕРµ РІСЂРµРјСЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ С‚Р°Р№РјР°СѓС‚РѕРј.
+    --buy_supplies ��������� ��������, � ������ ����������� ����� � ������������ � ���������.
     if tt.buy_supplies and not binder[ script_name() .. ".subscribed" ] then
       local s = {
         [ "signal" ] = s_name,
         [ "fun"    ] = this.update_buy_supplies,
-        --[ "queued" ] = true, --РЅРµ РЅСѓР¶РЅРѕ.
+        --[ "queued" ] = true, --�� �����.
       }
-      if tt.resuply_time then --Р•РіРѕ РјРѕР¶РµС‚ РЅРµ Р±С‹С‚СЊ, РµСЃР»Рё РёРЅРёС‚РёРј С‚РѕСЂРіРѕРІР»СЋ РІРїРµСЂРІС‹Рµ.
+      if tt.resuply_time then --��� ����� �� ����, ���� ������ �������� �������.
         s.timeout = time_global() + ( ( tt.resuply_time:diffSec( game.get_game_time() )  * 1000 )  / ogse.game_time_factor )
       else
         tt.skip_updates = 10
       end
       binder[ script_name() .. ".subscribed" ] = s
       sm:subscribe( s )
-      --РЎРёРіРЅР°Р» РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ РїРѕСЃР»Рµ СЃРЅР°.
+      --������ ��� ����������� ���������� ����� ���.
       local s2 = {
         [ "signal" ] = "after_time_change",
 		[ "self"   ] = npc:id(),
@@ -151,7 +151,7 @@ function trade_init( npc, cfg )
       binder[ script_name() .. ".subscribed2" ] = s2
       sm:subscribe( s2 )
     end
-	--Р’СЃС‘ РѕСЃС‚Р°Р»СЊРЅРѕРµ РїСЂРѕСЃС‚Рѕ РїРµСЂРёРѕРґРёС‡РµСЃРєРё РѕР±РЅРѕРІР»СЏРµРј.
+	--�� ��������� ������ ������������ ���������.
     if not binder[ script_name() .. ".subscribed3" ] then
 	  --
 	  --log3("--[%s] Trade update subscribed on signal [%s] for NPC [%s]", script_name(), s_name, npc:name()) --Dbg
@@ -194,19 +194,19 @@ end
 local function change_new_update_time( slot, next_update, forced )
   local sm = ogse_signals.get_mgr()
   local current_time = game.get_game_time()
-  local next_upd_game_time = time2string(next_update, "%04d/%02d/%02d %02d:%02d:%02d.%03d", {'y','m','d','h','min','s','ms'}) --СѓР±СЂР°С‚СЊ РїРѕС‚РѕРј.
-  local game_time_delta = next_update:diffSec(current_time) --РџРѕСЃС‡РёС‚Р°РµРј, С‡РµСЂРµР· СЃРєРѕР»СЊРєРѕ РёРіСЂРѕРІС‹С… СЃРµРєСѓРЅРґ РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ С‚РѕСЂРіРѕРІР»СЋ
-  local game_time_delta_ms = game_time_delta * 1000 --РџРµСЂРµРІРѕРґРёРј РІ РёРіСЂРѕРІС‹Рµ РјРёР»Р»РёСЃРµРєСѓРЅРґС‹
-  local REAL_time_delta_ms = game_time_delta_ms / ogse.game_time_factor --РљРѕРЅРІРµСЂС‚РёСЂСѓРµРј РІ Р Р•РђР›Р¬РќРћР• РІСЂРµРјСЏ
+  local next_upd_game_time = time2string(next_update, "%04d/%02d/%02d %02d:%02d:%02d.%03d", {'y','m','d','h','min','s','ms'}) --������ �����.
+  local game_time_delta = next_update:diffSec(current_time) --���������, ����� ������� ������� ������ ����� �������� ��������
+  local game_time_delta_ms = game_time_delta * 1000 --��������� � ������� ������������
+  local REAL_time_delta_ms = game_time_delta_ms / ogse.game_time_factor --������������ � �������� �����
   --log3("##[%s] Next trade update game time: %s, \nDelta in game seconds: [%s], \nDelta in game ms: [%s] \nTime Factor: [%s] \nDelta in REAL ms: [%s] \nCurrent global time: [%s] \nNext update global time: [%s]", script_name(), next_upd_game_time, game_time_delta, game_time_delta_ms, ogse.game_time_factor, REAL_time_delta_ms, time_global(), time_global() + REAL_time_delta_ms)
-  if not forced then --Р•СЃР»Рё СЌС‚Рѕ РѕР±С‹С‡РЅС‹Р№ Р°РїРґРµР№С‚, РІС‹Р·РІР°РЅРЅС‹Р№ РјРµРЅРµРґР¶РµСЂРѕРј СЃРёРіРЅР°Р»РѕРІ
-    sm:reschedule( REAL_time_delta_ms ) --РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјР°СѓС‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ СЃР»РѕС‚Р°
-  else --Р•СЃР»Рё СЌС‚Рѕ РІС‹РЅСѓР¶РґРµРЅРЅС‹Р№ Р°РїРґРµР№С‚, РІС‹Р·РІР°РЅРЅС‹Р№ РќР• РёР· РјРµРЅРµРґР¶РµСЂР° СЃРёРіРЅР°Р»РѕРІ
-    sm:rechange_scheduled_time( slot, REAL_time_delta_ms ) --РџРµСЂРµСѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјР°СѓС‚ РґР»СЏ СЃР»РѕС‚Р° РѕР±РЅРѕРІР»РµРЅРёСЏ РґСЂСѓРіРёРј РјРµС‚РѕРґРѕРј, С‚.Рє. РјРµС‚РѕРґ reschedule РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ РЅРµ РїРѕРґС…РѕРґРёС‚.
+  if not forced then --���� ��� ������� ������, ��������� ���������� ��������
+    sm:reschedule( REAL_time_delta_ms ) --������������� ������� ��� �������� �����
+  else --���� ��� ����������� ������, ��������� �� �� ��������� ��������
+    sm:rechange_scheduled_time( slot, REAL_time_delta_ms ) --����������������� ������� ��� ����� ���������� ������ �������, �.�. ����� reschedule � ���� ������ �� ��������.
   end
 end
 
-function update_after_time_change( id ) --РћР±РЅРѕРІР»РµРЅРёРµ РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёСЏ РІСЂРµРјРµРЅРё (СЃРЅР°)
+function update_after_time_change( id ) --���������� ����� ��������� ������� (���)
   local obj = level.object_by_id( id )
   if not obj then return end
   local binder = obj:binded_object()
@@ -223,19 +223,19 @@ function update_buy_supplies( npc )
   local tt = trade_manager[ npc:id() ]
   ASSERT( tt, "trade_manager[ npc:id() ] npc found: %s", npc:name() )
   --
-  --РРЅРёС†РёР°Р»РёР·Р°С†РёСЋ С‚РѕСЂРіРѕРІР»Рё РїРµСЂРµРґРІРёРЅСѓР» РЅР° 10-Р№ Р°РїРґРµР№С‚. РРЅР°С‡Рµ РЅРµ РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ Р°СЃСЃРѕСЂС‚РёРјРµРЅ Сѓ С‚РѕСЂРіРѕРІС†РµРІ, РєРѕС‚РѕСЂС‹Рµ С‚РµР»РµРїРѕСЂС‚РёСЂСѓСЋС‚СЃСЏ РЅР° СЃРІРѕРµ РјРµСЃС‚Рѕ, С‚РёРїР° РЎР°С…Р°СЂРѕРІР°.
+  --������������� �������� ���������� �� 10-� ������. ����� �� ����������� ���������� � ���������, ������� ��������������� �� ���� �����, ���� ��������.
   if tt.skip_updates and tt.skip_updates > 0 then
     tt.skip_updates = tt.skip_updates - 1
     return
   end
   --
-  if tt.resuply_time and tt.resuply_time > game.get_game_time() then return end --KRodin: РєРѕСЃС‚С‹Р»СЊ РґР»СЏ СЃРІРѕРµРІСЂРµРјРµРЅРЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕСЂРіРѕРІР»Рё РїРѕСЃР»Рµ СЃРµР№РІ-Р»РѕР°РґР°, С‡С‚РѕР±С‹ РѕРїСЏС‚СЊ РјРµРЅРµРґР¶РµСЂ СЃРёРіРЅР°Р»РѕРІ РЅРµ РїСЂР°РІРёС‚СЊ, Р»СѓС‡С€Рµ РїСѓСЃС‚СЊ Р±СѓРґРµС‚ С‚Р°Рє.
+  if tt.resuply_time and tt.resuply_time > game.get_game_time() then return end --KRodin: ������� ��� �������������� ���������� �������� ����� ����-�����, ����� ����� �������� �������� �� �������, ����� ����� ����� ���.
   --
   local str = xr_logic.pick_section_from_condlist(db.actor, npc, tt.buy_supplies )
   if str then
     npc:buy_supplies( tt.config, str )
   end
-  --Р’РѕС‚ С‚СѓС‚ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІСЂРµРјСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕСЂРіРѕРІР»Рё.
+  --��� ��� ��������������� ����� ���������� ���������� ��������.
   tt.resuply_time = game.get_game_time() + seconds2ctime( math.random( MIN_TRADE_UPD_TIME, MAX_TRADE_UPD_TIME ) * 3600 )
   change_new_update_time( nil, tt.resuply_time, false )
   --

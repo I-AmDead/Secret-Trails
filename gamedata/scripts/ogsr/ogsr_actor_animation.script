@@ -78,7 +78,7 @@ function swipe_mask()
 		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\lower.anm"
-			anm_additional_length = 0.4
+			anm_additional_length = 0.75
 		end
 	end
 	
@@ -97,10 +97,10 @@ function swipe_mask()
 		level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
 		dsh.timeout( mc_anm_time_2 - 400, function()
 			if new_speed then
-				game.play_hud_anm(anm_name, 0, new_speed, 1, false, true)
+				game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
 			end
 			rain_drops_restart()
-			dsh.timeout( mc_anm_time_2, animation_off )
+			dsh.timeout( mc_anm_time_2 + anm_additional_length, animation_off )
 		end )
 	end )
 end
@@ -117,7 +117,7 @@ function torch_switcher()
 		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
 			anm_name = "script\\headlamp.anm"
-			anm_additional_length = 0.35
+			anm_additional_length = 0.75
 		end
 	end
 	
@@ -130,7 +130,11 @@ function torch_switcher()
 	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
 	dsh.timeout( torch_anm_time_1 - 800, function()
 		ogse_torch.on_switch()
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		dsh.timeout( torch_anm_time_1 - 750, function()
+			if new_speed then
+				game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
+			end
+		end )
 		dsh.timeout( torch_anm_time_1, animation_off )
 	end )
 end
@@ -146,8 +150,8 @@ function nv_switcher()
 		local kind = get_string(itm:section(),"kind")
 		local class = get_string(itm:section(),"class")
 		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-			anm_name = "script\\headlamp.anm"
-			anm_additional_length = 0.35
+			anm_name = "script\\lower.anm"
+			anm_additional_length = 0.7
 		end
 	end
 	
@@ -160,10 +164,13 @@ function nv_switcher()
 	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
 	dsh.timeout( torch_anm_time_1 - 800, function()
 		ogse_night_vision.call_pnv()
-		if (new_speed) then game.play_hud_anm(anm_name, 0, new_speed, 1, false, true) end
+		dsh.timeout( torch_anm_time_1 - 750, function()
+			if new_speed then
+				game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
+			end
+		end )
 		dsh.timeout( torch_anm_time_1, animation_off )
 	end )
-
 end
 
 -- EMULATION PICKUP
