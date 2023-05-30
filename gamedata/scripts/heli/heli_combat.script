@@ -1,3 +1,5 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
 --[[------------------------------------------------------------------------------------------------
 Универсальная боевая схема вертолёта
 Чугай Александр
@@ -192,7 +194,7 @@ function heli_combat:save( packet )
               self.change_dir_time = t
               self.change_pos_time = t
               self.center_pos = self.enemy_last_seen_pos
-              self.flight_direction = random_choice( true, false )
+              self.flight_direction = rx_utils.random_choice( true, false )
           end
 			packet:w_u32 ( self.change_dir_time - t )
 			packet:w_u32 ( self.change_pos_time - t )
@@ -360,7 +362,12 @@ function heli_combat:fastcall()
 		if self.vis_next_time < time_global() then
 			self.vis_next_time = time_global() + self.vis_time_quant
 
-			if self.heliObject:isVisible( self.enemy ) then
+			local enemy
+			if self.enemy_id then
+				enemy = level.object_by_id( self.enemy_id )
+			end
+
+			if enemy and self.heliObject:isVisible( enemy ) then
 				self.vis = self.vis + self.vis_inc
 
 				if self.vis > 100 then
@@ -450,7 +457,7 @@ function heli_combat:round_initialize()
 	self.change_dir_time            = 0
 	self.change_pos_time            = 0
 	self.center_pos                 = self.enemy_last_seen_pos
-	self.flight_direction           = random_choice( true, false )
+	self.flight_direction           = rx_utils.random_choice( true, false )
 	self.change_combat_type_allowed = true
 	self.round_begin_shoot_time    = 0
 
@@ -539,7 +546,7 @@ function heli_combat:search_initialize()
 	self.change_pos_time            = 0
 	self.center_pos                 = self.enemy_last_seen_pos
 
-	self.flight_direction           = random_choice( true, false )
+	self.flight_direction           = rx_utils.random_choice( true, false )
 	self.change_combat_type_allowed = true
 	self.search_begin_shoot_time    = 0
 
