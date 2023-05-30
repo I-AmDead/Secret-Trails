@@ -8,7 +8,10 @@
 function attach( sm )
   sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
   sm:subscribe({ signal = "on_use",          fun = this.treasure_create   })
+  sm:subscribe({ signal = "on_npc_use",      fun = this.check_usable_item })
   sm:subscribe({ signal = "on_spawn",        fun = this.on_actor_spawn    })
+  sm:subscribe({ signal = "on_npc_spawn",    fun = this.build_btrs_table  })
+  sm:subscribe({ signal = "on_ph_spawn",     fun = this.build_btrs_table  })
 end
 
 function on_actor_spawn()
@@ -17,7 +20,6 @@ function on_actor_spawn()
     blowout_phantoms()
   end
 end
-
 
 function treasure_create(obj)
 	local section = obj:section()
@@ -28,7 +30,6 @@ function treasure_create(obj)
 		sobj:used_ai_locations( false )
 	end
 end
-
 
 local afs = {}
 -- аномалия "узнаётся" по части названия!
@@ -42,16 +43,6 @@ local afs = {}
 -- remove_anomaly - удалить ли аномалию (можно комбинировать вместе с варкой/мутацией)
 -- not_for_mutator - рецепт никогда не попадёт в трансмутатор
 anom_recept_komp = {}
-
-
-local math_random = math.random
-local math_floor = math.floor
-local math_pi = math.pi
-local math_sin = math.sin
-local math_cos = math.cos
-local math_ceil = math.ceil
-local string_find = string.find
-local string_sub = string.sub
 
 local nrg,med,cnt,gv,lv,w
 in_hide=false
@@ -85,7 +76,7 @@ local weather_types={
 --'*******************************************************************************
 -- Эта функция вызывается первой. Онлайновые объекты недоступны! db.actor недоступен!
 function on_game_start()
-	math.randomseed (device ():time_global ())
+	math.randomseed (device():time_global ())
 end
 
 
@@ -95,8 +86,8 @@ function first_run()
   
   ogse.spawn_item_in_inv("matras")
 
-  amk.spawn_item("x18_zapiska_ruk",vector():set( 21.6, -3.94, -18.28 ), 1140, 5991 )
-  amk.spawn_item("x16_zapiska_ruk",vector():set( -128.0, 22.5, -30.0), 1543, 7083 )
+  alife():create("x18_zapiska_ruk",vector():set( 21.6, -3.94, -18.28 ), 1140, 5991 )
+  alife():create("x16_zapiska_ruk",vector():set( -128.0, 22.5, -30.0), 1543, 7083 )
 
   local obj = alife():story_object(830)
   if obj then
@@ -128,7 +119,7 @@ function check_spawn()
 
   -- level_changers section
   local lname = level.name()
-  local sname = amk.load_variable( "level_on_save", "" )
+  local sname = ogse.load_var( "level_on_save", "" )
   if lname == "l01_escape" and sname == "l04_darkvalley" then
     local obj = alife():story_object( 6002 )
     if not obj then
@@ -158,40 +149,13 @@ function check_spawn()
   if (amk_corpses) then
   	amk_corpses.update_all_corpses()
   end
+
   if lname ~= sname and amk_objects then 
   	amk_objects.update() 
-  end
-
-  if amk.load_variable("freeplay",0)==1 then
-  	amk.save_variable("freeplay",2)
-  elseif amk.load_variable("freeplay",0)==2 and (not has_alife_info("cit_fail_first_task")) then
-  	db.actor:give_info_portion("cit_fail_first_task")
   end
  
   braad_test.delete_new_lc(833,"info_way_pripyat")
   braad_test.delete_new_lc(1007,"info_way_radar")
-
-  restore_sun()
-end
-
-
-function restore_sun()
-  -- level.set_weather( weather_on_load, true )
-  local lname = level.name()
-  local sname = amk.load_variable( "level_on_save", "" )
-  amk.save_variable( "level_on_save", lname )
-end
-
---'*******************************************************************************
---'   **   **   **   **   **    **   **   **         FREEPLAY           **   **   **   **   **    **   **   **   **
---'*******************************************************************************
-function freeplay()
-	amk.save_variable("freeplay",1)
-	
-	local obj = alife():story_object(6001)
-	if not obj then
-		alife():create(6304)
-	end
 end
 
 
@@ -293,7 +257,7 @@ function check_for_af_drop(obj)
   local obj_sect = obj:section()
 	-- проверка не один ли это из компонентов
   if not is_komponent( obj_sect, obj:condition() ) then return end
-  local anom_id, anom_pos, anom_radius, dist = ogse_anomaly.get_nearest_anomaly_by_point( db.actor )
+  local hasanom, anom_id, anom_pos, cls, dist, anom_radius, sect_anom = ogse_anomaly.get_nearest_anomaly_by_point(db.actor:position())
   if not ( anom_id and dist < 3 ) then return end
   local lv = level.object_by_id(anom_id):level_vertex_id()
   local gv = level.object_by_id(anom_id):game_vertex_id()
@@ -303,19 +267,37 @@ function check_for_af_drop(obj)
 			
   -- предмет подходит - отправляем его на экспертизу
   -- узнаем не съели ли его или вvложили в нvчку
-  local tbl		= {}
-  tbl.obj_id		= obj:id()
-  tbl.anom_id		= anom_id
-  tbl.anom_radius	= anom_radius
-  tbl.lv			= lv
-  tbl.gv			= gv
-  amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
+  local tbl = {}
+  tbl.obj_id = obj:id()
+  tbl.anom_id = anom_id
+  tbl.anom_radius = anom_radius
+  tbl.lv = lv
+  tbl.gv = gv
+  dsh.start_timer("timer_drop_obj_varka", 0.2, "amk_mod.timer_drop_varka", tbl)
+  --amk.start_timer("timer_drop_obj_varka", 0.2, tbl)
 end
 
 -- проверка: является ли компонентом для варки
 -- параметр - название секции
 function is_komponent(sect)
      return afs[sect]
+end
+
+-- проверка: является ли компонентом для варки
+-- параметр - название секции
+function timer_drop_varka(tbl)
+	local sobj = alife():object(tbl.obj_id)
+	if sobj and sobj.parent_id == 65535 then
+		local obj = level.object_by_id(tbl.obj_id)
+		local anom = level.object_by_id(tbl.anom_id)
+		if obj and anom then
+			local obj_sect = obj:section()
+			local obj_pos = obj:position()
+			local anom_sect = anom:section()
+			local anom_pos = anom:position()
+			check_af_transform(obj, obj_sect, obj_pos, tbl.anom_id, anom_sect, anom_pos, tbl.anom_radius, tbl.lv, tbl.gv)
+		end
+	end
 end
 
 -- аномали "узнаітся" по части названия!
@@ -663,7 +645,7 @@ function fill_recepti_est(anom_sect)
 	local recepti_est = {} -- рецептv для заданной аномалии
 	local anom_name = nil
 	for anom, recepti in pairs(anom_recept_komp["anomalii"]) do
-		if string_find(anom_sect, anom) ~= nil then --нашли в списке аномалиі.
+		if string.find(anom_sect, anom) ~= nil then --нашли в списке аномалиі.
 			anom_name = anom_recept_komp["anomalii"][anom]["name"]
 			if anom_recept_komp["anomalii"][anom]["recepti"] then
 				for info, recept in pairs(recepti["recepti"]) do
@@ -696,7 +678,7 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 	--поиск по аномалиям
 	local finish = false -- флаг для вvхода из циклов
 	for anom, recepti in pairs(anom_recept_komp["anomalii"]) do
-		if string_find(anom_sect, anom) ~= nil then --нашли в списке аномалиі, возле которой стоим
+		if string.find(anom_sect, anom) ~= nil then --нашли в списке аномалиі, возле которой стоим
 			local recepti_est = {} -- рецептv в наличии у ++, в которvх участвует даннvй компонент
 			local recept_podhodit = false
 			
@@ -815,12 +797,12 @@ end
 
 function af_flash( obj )
   level.add_pp_effector( "teleport.ppe", 1524, false )
-  amk.remove_item( obj )
+  alife():release(alife():object(obj:id()), true)
 end
 
 -- случайно выбирает результат, возвращает таблицу с секциями результатов
 function af_select_result( v_udachi, v_virogd, virogd, cel, komp )
-  local rnd = math_random(0,100)
+  local rnd = math.random(0,100)
   if rnd > v_udachi then -- неудача
     if rnd > v_virogd + v_udachi then -- отторжение
       return komp, false
@@ -847,13 +829,14 @@ function as_start_universal_transform_timer(komp, result, pos, vremya, gv, lv, i
   t.komp   = komp -- можно сохранять сразу таблицv
   t.remove_anomaly    = remove_anomaly
   t.remove_anomaly_id = remove_anomaly_id
-  amk.g_start_timer("af_transform_universal", vremya[1], vremya[2], vremya[3], t)
+  dsh.start_gtimerDHMS("af_transform_universal", vremya[1], vremya[2], vremya[3], 0, "amk_mod.af_transform_universal_end", t)
+  --amk.g_start_timer("af_transform_universal", vremya[1], vremya[2], vremya[3], t) -- старый запуск таймера
 end
 
 
 -- старая фунция
 function af_start_transform(v1,v2,af_from,af_target)
-	local rnd=math_random(0,100)
+	local rnd=math.random(0,100)
 	if rnd>v1 then
 		if rnd>v2+v1 then
 			return af_from
@@ -866,17 +849,18 @@ function af_start_transform(v1,v2,af_from,af_target)
 end
 
 -- старая фунция
-function af_start_transform_timer(af,pos,delay_d,delay_h,delay_m,af_sect)
+function af_start_transform_timer(af, pos, delay_d, delay_h, delay_m, af_sect)
 	local t={}
 	t.section=af
 	t.pos={}
-		t.pos.x=pos.x
-		t.pos.y=pos.y
-		t.pos.z=pos.z
+	t.pos.x=pos.x
+	t.pos.y=pos.y
+	t.pos.z=pos.z
 	t.gv=gv
 	t.lv=lv
-	t.from_sect=af_sect
-	amk.g_start_timer("af_transform",delay_d,delay_h,delay_m,t)
+	t.from_sect = af_sect
+	dsh.start_gtimerDHMS("af_transform", delay_d, delay_h, delay_m, 0, "amk_mod.af_transform_end", t)
+	--amk.g_start_timer("af_transform",delay_d,delay_h,delay_m,t)
 end
 
 
@@ -901,12 +885,12 @@ function af_transform_universal_end( params )
 			end
 		end
 		-- отсекаем ", " в хвосте
-		from_komp = string_sub(from_komp, 1, -2)
+		from_komp = string.sub(from_komp, 1, -2)
 		
 		-- спавним результат(v)
 		for k,v in pairs(params.result) do
-			af_sobj = amk.spawn_item(k, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.gv, params.lv)
-			level.map_add_object_spot(af_sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+			local sobj = alife():create(k, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.lv, params.gv)
+			level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 		end
 		news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
@@ -934,7 +918,7 @@ end
 function af_transform_end(params)
 	local from_sect = "\""..params.from_sect.."\""
 	local obj
-        obj = amk.spawn_item(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
+        obj = alife():create(params.section,vector():set(params.pos.x,params.pos.y+10,params.pos.z),params.gv,params.lv)
 	local sobj = alife():object( obj.id )
 	alife():use_ai_locations(sobj, false)
 	level.map_add_object_spot(obj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_sect)
@@ -948,8 +932,8 @@ end
 local blowout_phantoms_subscribed
 
 function blowout_phantoms()
-  local blow = amk.load_variable( "blowout", -1 )
-  if blowout_type() < 2 and blow > 1 and blow < 4 then
+  local blow = ogse.load_var("blowout", -1)
+  if amk_hideouts.blowout_type() < 2 and blow > 1 and blow < 4 then
     local lname    = level.name()
     local phantoms = amk_hideouts.blowouts_phantoms[ lname ]
     if phantoms and phantoms.count > 0 then
@@ -958,7 +942,7 @@ function blowout_phantoms()
         if not in_hide then
           if math.random() < phantoms.probability then
             if phantom_manager:phantom_count() < phantoms.count then
-              local yaw = math_pi * 2.0 * math.random()
+              local yaw = math.pi * 2.0 * math.random()
               local radius = phantoms.radius * ( math.random() / 2.0 + 0.5 )
               local height = phantoms.height * math.random()
               local a_pos  = db.actor:position()
@@ -988,8 +972,8 @@ end
 local blowout_hit_subscribed
 
 function on_blowout_hit_actor()
-  local blow = amk.load_variable( "blowout", -1 )
-  if blowout_type() == 0 and blow > 1 and blow < 4 then
+  local blow = ogse.load_var("blowout", -1)
+  if amk_hideouts.blowout_type() == 0 and blow > 1 and blow < 4 then
     if blowout_hit_subscribed then
       ogse_signals.get_mgr():reschedule( 1000 )
       on_blowout_hit( db.actor )
@@ -1011,9 +995,9 @@ end
 
 
 function on_blowout_hit( npc, hide )
-	local bt=blowout_type()
-	if bt>0 or amk.load_variable("blowout",-1)~=3 then 
-    if npc:id()==db.actor:id() then in_hide = true end
+	local bt = amk_hideouts.blowout_type()
+	if bt>0 or ogse.load_var("blowout", -1) ~=3 then 
+    	if npc:id()==db.actor:id() then in_hide = true end
 		return false
 	end
 	
@@ -1038,9 +1022,9 @@ function on_blowout_hit( npc, hide )
 				if o.zone then
 					for j,v in ipairs(o.zone) do
 						if v.p3 then
-							tmp=amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
+							tmp = ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
 						else
-							tmp=amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
+							tmp = ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
 						end
 						need_hit = need_hit and not tmp
 						if tmp then
@@ -1068,7 +1052,7 @@ function on_blowout_hit( npc, hide )
                 end
                 in_hide = not need_hit
         end
-    if (need_hit or khit>0) and amk.load_variable("blowout",-1)==3 and not (hide and hide.hidden) then
+    if (need_hit or khit>0) and ogse.load_var("blowout", -1) == 3 and not (hide and hide.hidden) then
 		local h = hit()
     	h.power = (amk_hideouts.blowout_damages[lname] or 0.01)*khit
     	h.impulse = 0
@@ -1098,9 +1082,9 @@ function check_npc_in_hideout(npc,hide)
         if hide and hide.zone then
                 for k,v in pairs(hide.zone) do
                         if v.p3 then 
-                                not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
+                                not_in_zone = not_in_zone and not ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
                         else
-                                not_in_zone = not_in_zone and not amk.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
+                                not_in_zone = not_in_zone and not ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
                         end
                 end
         end
@@ -1120,110 +1104,23 @@ function initial_spawn(action)
 end
 
 --'*******************************************************************************
---'   **   **   **   **   **    **   **   **       ANOMS SPAWN        **   **   **   **   **    **   **   **   
---'*******************************************************************************
-anomalies_state={}
-
-function remove_anoms()
-        amk.save_variable("blowout_anoms",string.rep(string.char(128),math_ceil(amk_hideouts.anom_count/7)))
-	update_anoms()
-end
-
-function create_anoms()
-	anomalies_state={}
-	for i=amk_hideouts.anom_sid0,amk_hideouts.anom_sid0+amk_hideouts.anom_count-1,1 do
-                anomalies_state[i]=math_random(0,1)==1
-	end
-	local str=pack_anoms(anomalies_state)
-	amk.save_variable("blowout_anoms",str)
-	update_anoms()
-end
-
-function update_anoms()
-        local anoms=amk.load_variable("blowout_anoms",string.rep(string.char(128),math_ceil(amk_hideouts.anom_count/7)))
-	anomalies_state=unpack_anoms(anoms)
-	for i=amk_hideouts.anom_sid0,amk_hideouts.anom_sid0+amk_hideouts.anom_count-1,1 do
-		local sobj = alife():story_object(i)
-		if sobj then
-			local obj=level.object_by_id(sobj.id)
-			if obj then
-				if anomalies_state[i] then
-					obj:enable_anomaly()
-				else
-					obj:disable_anomaly()
-				end
-			end
-		end
-    end
-end
-
--- anom_state[sid]==true для активнvх аномалий
-function pack_anoms(anom_state)
-	local str=""
-	for i=0,amk_hideouts.anom_count-1,7 do
-		local cval=128
-		local mul=1
-		for j=0,6,1 do
-			if anom_state[i+j+amk_hideouts.anom_sid0] then
-				cval=cval+mul
-			end
-		mul=mul*2
-		end
-    str=str..string.char(cval)
-	end
-	return str
-end
-
-function unpack_anoms(str)
-	local anom={}
-	for i=1,string.len(str),1 do
-                local cval=string.byte(string_sub(str,i,i))
-		local mul=1
-		for j=0,6,1 do
-			anom[(i-1)*7+j+amk_hideouts.anom_sid0]=bit_and(mul,cval)~=0
-			mul=mul*2
-		end
-	end
-	return anom
-end
-
-function blowout_type()
-	local lname=level.name()
-local blow_type = amk_hideouts.blowout_types[lname]
-return blow_type or 0
-end
-
-
---'*******************************************************************************
 --'   **   **   **   **   **    **   **   **    **      RECEPTS       **   **   **   **   **    **   **   **   ** 
 --'*******************************************************************************
 function check_usable_item(obj)
-	local info=nil
-	if obj:section()=="vehicle_btr" then
-		db.actor:kill(db.actor)
-	end
 	if obj:name()=="mil_stalker0012" then
-		info="info_amk_recipt_stone_dikoobraz"
-	elseif level.name()=="l01_escape" and obj:section()=="amk_zapiska" then
-		info="info_amk_recipt_shkura"
-		amk.drop_item(db.actor,obj)
-		amk.remove_item(obj)
-	elseif level.name()=="l04u_labx18" and obj:section()=="amk_zapiska" then
-		info="info_amk_recipt_simbion"
-		amk.drop_item(db.actor,obj)
-		amk.remove_item(obj)
-	elseif level.name()=="l08u_brainlab" and obj:section()=="amk_zapiska" then
-		info="info_amk_recipt_dummy"
-		amk.drop_item(db.actor,obj)
-		amk.remove_item(obj)
-	else
-		local recipes=amk.load_table("amk_body_recipe")
-		info=recipes[obj:id()]
-	end  
-	if db.actor==nil or info==nil or db.actor:has_info(info) then
-		return
+		db.actor:give_info_portion("info_amk_recipt_stone_dikoobraz")
+	elseif obj:section()=="amk_zapiska" then
+		if level.name()=="l01_escape" then
+			db.actor:give_info_portion("info_amk_recipt_shkura")
+			ogse.remove_inv_items_by_section(obj)
+		elseif level.name()=="l04u_labx18" then
+			db.actor:give_info_portion("info_amk_recipt_simbion")
+			ogse.remove_inv_items_by_section(obj)
+		elseif level.name()=="l08u_brainlab" then
+			db.actor:give_info_portion("info_amk_recipt_dummy")
+			ogse.remove_inv_items_by_section(obj)
+		end
 	end
-	db.actor:give_info_portion(info)
 end
 
 --'*******************************************************************************
@@ -1231,46 +1128,49 @@ end
 --'*******************************************************************************
 function spawn_fuel()
 	local ballons = {
-	{108.16, -6.30, -18.17, 412158, 115},
-	{370.12, 15.06, -39.48, 594401, 0},
-	{58.30, 19.36, 156.50, 345136, 97},
-	{-92.21, -1.18, -212.66, 115177, 268},
-	{-74.17, 1.80, 8.45, 127766, 329},
-	{3.18, 1.24, 42.48, 243919, 490},
-	{15.35, -1.90, 2.40, 255433, 479},
-	{77.54, 0.30, -108.47, 312366, 427},
-	{-145.54, -0.00, -199.61, 92520, 650},
-	{-130.08, 10.00, -196.67, 109214, 629},
-	{-140.13, 10.00, -197.94, 98647, 629},
-	{37.28, 1.02, -49.90, 220638, 1084},
-	{476.68, -46.94, -0.23, 155714, 1919},
-	{76.80, -2.54, -23.93, 36304, 1970},
-	{94.78, 0.03, -6.88, 88986, 1514},
-	{-3.24, -11.75, -263.07, 33794, 1448}
+		{108.16, -6.30, -18.17, 412158, 115},
+		{370.12, 15.06, -39.48, 594401, 0},
+		{58.30, 19.36, 156.50, 345136, 97},
+		{-92.21, -1.18, -212.66, 115177, 268},
+		{-74.17, 1.80, 8.45, 127766, 329},
+		{3.18, 1.24, 42.48, 243919, 490},
+		{15.35, -1.90, 2.40, 255433, 479},
+		{77.54, 0.30, -108.47, 312366, 427},
+		{-145.54, -0.00, -199.61, 92520, 650},
+		{-130.08, 10.00, -196.67, 109214, 629},
+		{-140.13, 10.00, -197.94, 98647, 629},
+		{37.28, 1.02, -49.90, 220638, 1084},
+		{476.68, -46.94, -0.23, 155714, 1919},
+		{76.80, -2.54, -23.93, 36304, 1970},
+		{94.78, 0.03, -6.88, 88986, 1514},
+		{-3.24, -11.75, -263.07, 33794, 1448}
 	}
+
 	local kanisters = {
-	{-293.80, -14.18, -15.36, 15703, 67},
-	{-16.57, 2.48, 58.82, 260308, 88},
-	{-74.81, -1.30, 160.52, 196218, 163},
-	{-69.94, 0.97, 6.51, 131411, 329},
-	{64.01, 0.60, 148.46, 235341, 364},
-	{63.29, -0.20, 5.10, 299326, 461},
-	{-28.52, -1.04, -181.84, 211644, 676},
-	{2.93, -1.88, -13.30, 176553, 1047},
-	{41.71, 4.54, -86.36, 227110, 1100},
-	{7.90, 1.41, -71.93, 183138, 1041},
-	{158.71, -0.76, -259.73, 358950, 962},
-	{-342.92, -13.60, 390.01, 11235, 1847},
-	{305.22, -36.99, -24.40, 68330, 1930},
-	{55.02, 1.17, 40.35, 68094, 1511},
-	{-114.14, -0.00, 121.75, 43453, 1315},
-	{31.33, 5.60, -13.51, 4683, 1538}
+		{-293.80, -14.18, -15.36, 15703, 67},
+		{-16.57, 2.48, 58.82, 260308, 88},
+		{-74.81, -1.30, 160.52, 196218, 163},
+		{-69.94, 0.97, 6.51, 131411, 329},
+		{64.01, 0.60, 148.46, 235341, 364},
+		{63.29, -0.20, 5.10, 299326, 461},
+		{-28.52, -1.04, -181.84, 211644, 676},
+		{2.93, -1.88, -13.30, 176553, 1047},
+		{41.71, 4.54, -86.36, 227110, 1100},
+		{7.90, 1.41, -71.93, 183138, 1041},
+		{158.71, -0.76, -259.73, 358950, 962},
+		{-342.92, -13.60, 390.01, 11235, 1847},
+		{305.22, -36.99, -24.40, 68330, 1930},
+		{55.02, 1.17, 40.35, 68094, 1511},
+		{-114.14, -0.00, 121.75, 43453, 1315},
+		{31.33, 5.60, -13.51, 4683, 1538}
 	}
+
         for k,v in pairs(ballons) do
                 if #v == 5 then
                         local obj = alife():create("amk_ballon",vector():set(v[1], v[2], v[3]), v[4], v[5])
                 end
         end
+
         for k,v in pairs(kanisters) do
                 if #v == 5 then
                         local obj = alife():create("amk_kanistra",vector():set(v[1], v[2], v[3]), v[4], v[5])
@@ -1440,7 +1340,7 @@ function spawn_unspawned_respawners()
 				local t = xrs_utils.parse_ini_section_to_array(sini, v)
 				local xyzlg = xrs_utils.str_explode(",",t.xyzlg,true)
 				local pos = vector():set(tonumber(xyzlg[1]),tonumber(xyzlg[2]),tonumber(xyzlg[3]))
-				local respawner = amk.spawn_item("respawn",pos,tonumber(xyzlg[5]),tonumber(xyzlg[4]))
+				local respawner = alife():create("respawn",pos,tonumber(xyzlg[4]),tonumber(xyzlg[5]))
 				local tbl = xrs_utils.get_spawner_data(respawner)
 				t.xyzlg = nil
 				t.amk_name = v
@@ -1468,18 +1368,6 @@ end
 --'*******************************************************************************
 --'   **   **   **   **   **    **   **   **   **          OTHER        **   **   **   **   **    **   **   **   **   
 --'*******************************************************************************
-
-local last_armor_id=0
-local last_condition=0
-
-function repair_armor(val)
-	local armor = db.actor:item_in_slot(6)
-	if armor then
-		last_armor_id=armor:id()
-		last_condition=val
-		armor:set_condition(val)
-	end
-end
 
 btrs_friends={}
 

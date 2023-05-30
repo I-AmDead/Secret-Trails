@@ -1,14 +1,5 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
---/amk_rel_1/
--- автор: Диденко Руслан (Stohe)
--- порядок вызова методов биндера:
--- reload
--- reinit
--- load
--- net_spawn
-memtsg = {} --' временная таблица
-lasthealth = 0
-lastime = nil
+
 local particles={}
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -96,17 +87,13 @@ function motivator_binder:net_spawn(sobject)
   manager:add_evaluator(blowout_scheme.evid_preblowout, property_evaluator_const(false))
   xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_stalker, self.loaded )
 
-  -- added by xStream for AMK miniSDK
-  amk.on_net_spawn( self.object )
-  -- end of addition
-
   local particle_param = utils.cfg_get_string(
     sys_ini, self.object:section(), "bones_particles", nil, false, false, nil
   )
   if particle_param and sys_ini:section_exist( particle_param ) then
-    local tmp = amk.parse_ini_section_to_array( sys_ini, particle_param )
+    local tmp = xrs_utils.parse_ini_section_to_array( sys_ini, particle_param )
     for k, v in pairs( tmp ) do
-      local t = amk.parse_ini_section_to_array( sys_ini, v )
+      local t = xrs_utils.parse_ini_section_to_array( sys_ini, v )
       t.obj = self.object
       if not t.stop_on_death or self.object:alive() then
         play_particle( self.object, t )
@@ -228,10 +215,6 @@ function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_i
 
   xr_wounded.hit_callback(self.object:id())
 
-  -- added by xStream for AMK miniSDK
-  amk.on_npc_hit(obj, amount, local_direction, who, bone_index)
-  -- end of addition
-
   if rx_ai then rx_ai.npc_hit(obj,amount,local_direction,who,bone_index,self.object) end
 
   self.am:call( "on_npc_hit", self.object, amount, local_direction, who, bone_index )
@@ -282,10 +265,6 @@ function motivator_binder:use_callback(obj, who)
     end
   end
 
-  -- added by xStream for AMK miniSDK
-  amk.on_use(obj, who)
-  -- end of addition
-
   self.am:call("on_npc_use", self.object, who)
 end
 
@@ -311,10 +290,10 @@ function motivator_binder:update( delta )
     if rx_ai then rx_ai.npc_update(self.object,self.st) end
   end
 
-  if amk.get_npc_relation(self.object,db.actor)=="enemy" and self.object:alive() and db.actor:position():distance_to(self.object:position()) < 150 then
-    if self.object:see(db.actor) then
-     amk.enemy_see_actor(self.object,"npc")
-    end
+  if ogse.get_npc_relation(self.object,db.actor) == "enemy" 
+  and self.object:alive() and self.object:see(db.actor)
+  and db.actor:position():distance_to(self.object:position()) < 150 then
+    enemy_see_actor(self.object,"npc")
   end
   sr_light.check_light(self.object)
   self.object:info_clear()
@@ -523,4 +502,42 @@ function play_particle(obj,params)
                 particles[obj:id()]={}
         end
         table.insert(particles[obj:id()],params)
+end
+
+function enemy_see_actor(obj, typ)
+	if string.find(obj:name(),"fedya_razboinik") then
+		db.actor:give_info_portion("fedya_razboinik_see")
+	end
+
+	if string.find(obj:name(),"ucen_ohr1") then
+		db.actor:give_info_portion("ucen_ohr1_see")
+	end
+
+	if string.find(obj:name(),"ucen_ohr2") then
+		db.actor:give_info_portion("ucen_ohr2_see")
+	end
+
+	if string.find(obj:name(),"ucen_ohr3") then
+		db.actor:give_info_portion("ucen_ohr3_see")
+	end
+
+	if string.find(obj:name(),"razbor_ban1") then
+		db.actor:give_info_portion("razbor_ban1_see")
+	end
+
+	if string.find(obj:name(),"razbor_ban2") then
+		db.actor:give_info_portion("razbor_ban2_see")
+	end
+
+	if string.find(obj:name(),"razbor_ban3") then
+		db.actor:give_info_portion("razbor_ban3_see")
+	end
+
+	if string.find(obj:name(),"razbor_ban4") then
+		db.actor:give_info_portion("razbor_ban4_see")
+	end
+
+	if string.find(obj:name(),"razbor_ban5") then
+		db.actor:give_info_portion("razbor_ban5_see")
+	end
 end

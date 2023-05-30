@@ -17,8 +17,6 @@ local game_difficulty_by_num = {
   [3] = "gd_master"
   }
 
-lasthealth  = 0
-lasttime  = 0
 post_process = 0
 local weapon_hide = false
 
@@ -59,9 +57,8 @@ function actor_binder:net_spawn( data )
 
   if rx_ai then rx_ai.actor_net_spawn() end
 
-  -- added by xStream for AMK miniSDK
-  amk.on_game_load(obj)
-  -- end of addition
+  amk_mod.first_run()
+  amk_mod.check_spawn()
   
   self.am:call( "on_spawn", data )
   return true
@@ -193,13 +190,10 @@ end
 
 
 function actor_binder:take_item_from_box( box, item )
-
   local story_id = box:story_id()
   if story_id == nil then
     return
   end
-
-  amk.on_item_take_from_box( box, item )
 
   self.am:call( "on_take_from_box", box, item, sim:object( item:id() ) )
 end
@@ -275,9 +269,10 @@ function actor_binder:on_item_take( obj )
 	return
    end
 
-    if rx_ai then rx_ai.actor_item_take(obj) end
+   if rx_ai then rx_ai.actor_item_take(obj) end
 
-    amk.on_item_take( obj )
+   escape_dialog.have_a_art()
+   amk_mod.check_usable_item( obj )
 
    self.am:call("on_take", obj, sobj)
 end
@@ -533,8 +528,6 @@ function actor_binder:load( reader )
   self.am:call( "on_load", reader )
 
   if xr_logic.pstor_retrieve( self.object, "emerg", false ) then
-    -- нельзя использовать amk.load_varible(), так как db.actor ещё не
-    -- определён
     self:show_hud_save_warning( 2, 60000 )
   end
 end

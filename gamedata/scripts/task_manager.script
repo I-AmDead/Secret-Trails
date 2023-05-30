@@ -1267,20 +1267,20 @@ function clear_task_manager()
 end
 
 function amk_add_target_id_to_kill_targets(id,dialog,task_id)
-  local targets = amk.unpack_array_from_string(amk.load_variable("kill_targets",""))
-  table.insert(targets,{id=id,dialog=dialog,task_id=task_id})
-  amk.save_variable("kill_targets",amk.pack_array_to_string(targets))
+  local targets = ogse.load_var("kill_targets", {})
+  table.insert(targets,{id = id, dialog = dialog, task_id = task_id})
+  ogse.save_var("kill_targets", targets)
 end
 
 function amk_remove_target_id_from_kill_targets(id)
-  local targets=amk.unpack_array_from_string(amk.load_variable("kill_targets",""))
+  local targets = ogse.load_var("kill_targets", {})
   for n,v in pairs(targets) do
-    if v.id==id then
-      table.remove(targets,n)
+    if v.id == id then
+      table.remove(targets, n)
       break
     end
   end
-  amk.save_variable("kill_targets",amk.pack_array_to_string(targets))
+  ogse.save_var("kill_targets", targets)
 end
 
 function make_task_failed(task_id)

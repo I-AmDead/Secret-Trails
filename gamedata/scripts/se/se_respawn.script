@@ -260,7 +260,7 @@ function se_respawn:create( prob )
             parent_id)
     end
 
-	amk.on_REspawn(obj,self)
+    --on_REspawn(obj, self) -- пока что вырубило респавнер
     local tt = self.sectSpawnProps[spawn_section]
 
     if self.item_spawn == false then        
@@ -523,4 +523,17 @@ function get_respawner_by_name( name )
   if amk_named_respawner_control[ name ] then
     return alife():object( amk_named_respawner_control[ name ].id )
   end
+end
+
+function on_REspawn(obj, respawner)
+	if obj and respawner then
+		amk_mod.respawned(obj, respawner)
+		if IsMonster(obj) then
+			if respawner.spawned_goes_online then
+				amk_mod.switch_monster_online(obj)
+			else
+				amk_mod.switch_monster_offline(obj)
+			end
+		end
+	end
 end

@@ -51,13 +51,12 @@ function generic_object_binder:net_spawn(sobject)
 
 	if not self.object:alive() then if rx_ai then rx_ai.corpse_net_spawn(self.object, self.loaded) end end
 	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
-	amk.on_net_spawn(self.object)
 
 	local particle_param = utils.cfg_get_string(system_ini(), self.object:section(), "bones_particles", null, false, false, nil)
 	if particle_param and system_ini():section_exist(particle_param) then
-		local tmp=amk.parse_ini_section_to_array(system_ini(),particle_param)
+		local tmp = xrs_utils.parse_ini_section_to_array(system_ini(),particle_param)
 		for k,v in pairs(tmp) do
-			local t = amk.parse_ini_section_to_array(system_ini(), v)
+			local t = xrs_utils.parse_ini_section_to_array(system_ini(), v)
 			t.obj = self.object
 			if not t.stop_on_death or self.object:alive() then
 				play_particle(self.object, t)
@@ -96,8 +95,8 @@ function generic_object_binder:update(delta)
 	local act_scheme = db.storage[self.object:id()].active_section or ""
 	local is_fake = string.find(act_scheme, "mob_fake_death") or false
   
-	local blowout=amk.load_variable("blowout",0)
-	if blowout==3 and (not self.control_override) then
+	local blowout = ogse.load_var("blowout", 0)
+	if blowout == 3 and (not self.control_override) then
 		if not self.object:action() then
 			-- Захватываем зверушку
 			xr_logic.mob_capture(self.object,true)

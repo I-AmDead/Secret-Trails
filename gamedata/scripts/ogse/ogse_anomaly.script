@@ -925,7 +925,7 @@ function anomaly_position_choice(lname)
 	until not lvids_forbidden[new_lv] and not (
 		   bad_sector(pos, lname) --Скорее всего, места за пределами локаций
 		or bad_position(pos, lname) --Монстры, НПС, актор, точки переходов, квестовые аномалии и тп...
-		or bad_zone(pos, lname) --Укрытия
+		--or bad_zone(pos, lname) --Укрытия
 		or bad_circle(pos, lname) --Места, в которых по каким-то причинам нельзя спавнить аномалии (лагеря, квестовые сцены и тд.). Настраиваются вручную.
 	)
 
@@ -1097,14 +1097,14 @@ function check_hideouts( pos )
         for j, v in ipairs( o.zone ) do
           local tmp
           if v.p3 then
-            tmp = amk.check_npc_in_box(
+            tmp = ogse.check_npc_in_box(
               pos,
               vector():set( unpack( v.p1 ) ),
               vector():set( unpack( v.p2 ) ),
               vector():set( unpack( v.p3 ) )
             )
           else
-            tmp = amk.check_npc_in_box(
+            tmp = ogse.check_npc_in_box(
               pos,
               vector():set( unpack( v.p1 ) ),
               vector():set( unpack( v.p2 ) )

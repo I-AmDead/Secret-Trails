@@ -463,10 +463,46 @@ end
 
 
 function start_gtimerDHMS( name, d, h, m, s, fname, ... )
+  if ogse_st_mgr.timer_exists(name) then
+    local found = false
+    for i = 0, 65535 do
+      local id = name .. "." .. tostring( i )
+      if not ogse_st_mgr.timer_exists( id ) then
+        log2(
+          "[%s.g_start_timer]: found free id %s for %s",
+          script_name(), id, tn
+        )
+        found = true
+        name = id
+        break
+      end
+    end
+    ASSERT( found, "can't find free id for timer %s", tn )
+  end
   return ogse_st_mgr.delayed_fun_start( name )
     :set_gdelayDHMS( d, h, m, s )
     :init( fname, ... )
     :start()
+end
+
+function start_timer( name, delay, fname, ... )
+  if ogse_st_mgr.timer_exists(name) then
+    local found = false
+    for i = 0, 65535 do
+      local id = name .. "." .. tostring( i )
+      if not ogse_st_mgr.timer_exists( id ) then
+        log2(
+          "[%s.start_timer]: found free id %s for %s",
+          script_name(), id, name
+        )
+        found = true
+        name = id
+        break
+      end
+    end
+    ASSERT( found, "can't find free id for timer %s", name )
+  end
+  return ogse_st_mgr.start_timer(name, delay, fname, ...)
 end
 
 function level_timeout( ms, func )

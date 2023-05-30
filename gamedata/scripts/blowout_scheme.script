@@ -31,7 +31,7 @@ end
 
 
 function get_blowout_step()
-  local blowout = amk.load_variable( "blowout", 0 )
+  local blowout = ogse.load_var("blowout", 0)
   if evaluate_blowout_until and evaluate_blowout_until > time_global() then
     blowout = 5
   end
@@ -49,7 +49,7 @@ end
 
 function evaluator_blowout:evaluate()
   local npc = self.object
-  if amk_mod.blowout_type() > 0 or xr_wounded.is_wounded( npc ) then
+  if amk_hideouts.blowout_type() > 0 or xr_wounded.is_wounded( npc ) then
     return false
   end
   local blowout = get_blowout_step()
@@ -117,9 +117,9 @@ function evaluator_monolith_blowout:__init(st) super(nil,"evaluator_monolith_blo
 end
 
 function evaluator_monolith_blowout:evaluate()
-  if amk_mod.blowout_type()>0 then return false end
+  if amk_hideouts.blowout_type() > 0 then return false end
   local blowout = get_blowout_step()
-  return blowout==3
+  return blowout == 3
 end
 
 
@@ -130,9 +130,9 @@ function evaluator_preblowout:__init( st ) super( nil, "evaluator_preblowout" )
 end
 
 function evaluator_preblowout:evaluate()
-  if amk_mod.blowout_type()>0 then return false end
-  local npc=self.object
-  local blowout=get_blowout_step()
+  if amk_hideouts.blowout_type() > 0 then return false end
+  local npc = self.object
+  local blowout = get_blowout_step()
   if blowout == 1 then
     if self:is_in_any_hide() then
       return false
@@ -176,13 +176,13 @@ end
 
 function evaluator_outside:evaluate()
   local npc=self.object
-  if self.st.washitat and self.st.washitat>time_global() then
+  if self.st.washitat and self.st.washitat > time_global() then
     return false
   end
   self.st.washitat=nil
-  if amk_mod.blowout_type()>0 then return false end
+  if amk_hideouts.blowout_type() > 0 then return false end
   local blowout = get_blowout_step()
-  if blowout>=2 then
+  if blowout >= 2 then
     if self.st.nohide then
       -- Если укрытие невозможно найти, то игнорируем выброс
       return false

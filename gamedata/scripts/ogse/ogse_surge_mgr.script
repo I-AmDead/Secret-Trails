@@ -155,7 +155,7 @@ function surge_db_init()
 	surge_db.surge_process_stage_01 = {
 		on_info = {
 			call1 = function()
-				amk.save_variable( "blowout", 1 )
+				ogse.save_var("blowout", 1)
 				start_pda_distortion( 1, 100 )
 				set_info_preblow() --Инфо предвыброса
 				news_main_new.vubros_msg() --Новость о выбросе
@@ -198,7 +198,7 @@ function surge_db_init()
 		on_info = {
 			if_surface = {
 				call1 = function() 
-					amk.save_variable( "blowout", 2 )
+					ogse.save_var("blowout", 2)
 					set_info_blow()
 					amk_mod.on_blowout_hit_actor()
 					amk_mod.blowout_phantoms()
@@ -324,7 +324,7 @@ function surge_db_init()
 			call1 = function()
 				pda_off()
 				deadly_blowout() -- addon by KamikaZze
-				amk.save_variable( "blowout", 3 )
+				ogse.save_var("blowout", 3)
 			end,
 			if_surface = {
 				call2 = function()
@@ -495,7 +495,7 @@ function surge_db_init()
 		on_info = {
 			call1 = function()
 				pda_off()
-				amk.save_variable( "blowout", 4 )
+				ogse.save_var("blowout", 4)
 				amk_mod.blowout_phantoms()
 				amk_mod.on_blowout_hit_actor()
 			end,
@@ -578,7 +578,8 @@ end
 
 function on_surge_end()
 	actor_was_hit = false
-	amk.del_variable( "blowout" )
+	ogse.save_var("blowout", -1)
+	ogse.delete_var("blowout")
 	db.actor:disable_info_portion("blowout")
 	db.actor:disable_info_portion("pre_blowout2")
 	db.actor:give_info_portion("net_signal") -- связь восстановлена
@@ -710,7 +711,7 @@ function check_blowout_timer:__init() super()
 end
 
 function check_blowout_timer:condition()
-  return not ( deferred_actions or db.actor:has_info( "blowout" ) )
+  return not (deferred_actions or db.actor:has_info("blowout"))
 end
 
 function check_blowout_timer:action()

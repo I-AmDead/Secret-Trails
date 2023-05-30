@@ -102,9 +102,9 @@ function generic_physics_binder:net_spawn(data)
 	if self.object:spawn_ini() and self.object:spawn_ini():section_exist("drop_box") == true then
 		self.box_items = xr_box.ph_item_box(self.object)
 	end
-
-	amk.on_net_spawn(self.object)
 	
+	self.am:call( "on_ph_spawn", self.object, self )
+
 	return true
 end
 -- MARKER: net_destroy
@@ -114,9 +114,9 @@ function generic_physics_binder:net_destroy()
 		xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy")
 	end
 
-    if self.particle then
-        self.particle:stop()
-    end
+	if self.particle then
+		self.particle:stop()
+	end
 
 	db.storage[self.object:id()] = nil
 
@@ -145,10 +145,6 @@ function generic_physics_binder:use_callback(obj, who)
 	if self.st.active_section then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
 	end
-	
-	--AMK UTILS--
-	amk.on_use(obj, who)
-	--AMK UTILS--
 
 	self.am:call( "on_ph_obj_use", self.object, who )
 end

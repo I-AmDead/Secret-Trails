@@ -404,32 +404,32 @@ function random_task_reward:generate_reward_complect()
 		while table.getn(order_complect) <= 2 do
 			local index = tostring(table.getn(order_complect)+1)
 			self:generate_reward_list() -- генерируем комплект
-			ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_money"..index, self.money_reward)
+			ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_money"..index, self.money_reward)
 			self:code_list(index, self.final_list) -- так как нельзя сохранить в сейве таблицу, то закодируем её в понятный системе формат.
 			table.insert(order_complect, index)
 		end
 		self:code_complect(order_complect) -- сохраним таблицу в понятный системе вид
-		--ogse.save_variable("rr_"..self.trader.."_"..self.difficult.."_order", order_complect)
+		--ogse.save_var("rr_"..self.trader.."_"..self.difficult.."_order", order_complect)
 	end
 end
 
 -- Кодирование таблицы
 function random_task_reward:code_list(index, list)
 	for i=1, table.getn(list) do
-		ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_name"..tostring(i), list[i].name)
-		ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_count"..tostring(i), list[i].count)
-		ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_price"..tostring(i), list[i].price)
+		ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_name"..tostring(i), list[i].name)
+		ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_count"..tostring(i), list[i].count)
+		ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_price"..tostring(i), list[i].price)
 	end
 	--log1("length = "..tostring(table.getn(list)))
-	ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_length", table.getn(list))
+	ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_item"..index.."_length", table.getn(list))
 end
 
 -- Кодирование информации о комплектах (порядок очерёдности)
 function random_task_reward:code_complect(complect)
 	for i=1, table.getn(complect) do
-		ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_complect_item"..tostring(i), complect[i])
+		ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_complect_item"..tostring(i), complect[i])
 	end
-	ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_complect_length", table.getn(complect))
+	ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_complect_length", table.getn(complect))
 end
 
 -- Взятие комплекта награды
@@ -479,7 +479,7 @@ function random_task_reward:add_to_complect()
 	if order_complect then
 		local index = order_complect[1]
 		self:generate_reward_list() -- генерируем комплект
-		ogse.save_variable("rr_"..self.trader.."_"..self.task_info.difficult.."_money"..index, self.money_reward)
+		ogse.save_var("rr_"..self.trader.."_"..self.task_info.difficult.."_money"..index, self.money_reward)
 		self:code_list(index, self.final_list)
 		table.insert(order_complect, index)
 		table.remove(order_complect, 1)
