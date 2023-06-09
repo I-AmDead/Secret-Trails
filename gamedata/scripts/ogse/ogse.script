@@ -427,6 +427,46 @@ function check_npc_in_box(npc, p1,p2)
 		is_point_inside_interval(pos.y,p1.y,p2.y) and
 		is_point_inside_interval(pos.z,p1.z,p2.z)
 end
+
+--определяем находится ли ГГ в определенной зоне
+function check_npc_in_box_amk(npc, p1, p2, p3)
+	local pos
+	if npc.name then
+		pos = npc:position()
+	else 
+		pos = npc
+	end
+
+	if not p3 then
+		return is_point_inside_interval(pos.x, p1.x, p2.x) and
+		is_point_inside_interval(pos.y, p1.y, p2.y) and
+		is_point_inside_interval(pos.z, p1.z, p2.z)
+	else
+		local v1, v2, r, proj1, proj2, dv1, dv2
+		v1 = sub(p2, p1)
+		v2 = sub(p3, p2)
+		v1.y = 0 
+		v2.y = 0
+		dv1 = v1:magnitude()
+		dv2 = v2:magnitude()
+		v1:normalize() 
+		v2:normalize()
+		r = sub(pos, p1)
+		local v1p = vector():set(v1.z, 0, -v1.x)
+		proj2 = v1p:dotproduct(r) / v1p:dotproduct(v2)
+		proj1 = v1:dotproduct(r) - v1:dotproduct(v2) * proj2
+		return proj1 > 0 and proj1 < dv1 and proj2 > 0 and proj2 < dv2 and pos.y > p1.y and pos.y < p3.y
+	end
+end
+
+function sub(v1,v2)
+  local newvec = vector():set( 0, 0, 0 )
+  newvec.x = v1.x-v2.x
+  newvec.y = v1.y-v2.y
+  newvec.z = v1.z-v2.z
+  return newvec
+end
+
 function is_point_inside_interval(x,p1,p2)
 	if p1>p2 then
 		p1,p2 = p2,p1
@@ -434,7 +474,6 @@ function is_point_inside_interval(x,p1,p2)
 
 	return x>p1 and x<p2
 end
-
 
 function kill_offline_npc(obj)
 	if not obj then return end

@@ -151,52 +151,54 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 	local is_anomaly = get_bool(anom_sect, "is_anomaly", false)
 	if not is_anomaly then return end
 
-	local recept_podhodit = false
+	local recipe_fits = false
 
 	-- собираем рецептv, в которvх участвует даннvй компонент
-	local count = 0
-	local komponent_sect_string = nil
+	local component_sect_string = nil
 	local lucky_sect_string = nil
-	local lucky_num = nil
-	local bad_num = nil
+	local lucky_percent = nil
+	local bad_percent = nil
 	local bad_sect_string = nil
 	local time_vector = nil
 	local anomaly_remove_bool = nil
 	
-	for info, recept in pairs(split_comma_separated_list(get_string(anom_sect, "anomaly_recipes"))) do
-		komponent_sect_string = get_string("transform_"..recept, "components")
-		if actor:has_info(recept) and komponent_sect_string == af_sect then --есть рецепт и этот компонент в нїм участвует
-			recept_podhodit = true
-			lucky_sect_string = get_string("transform_"..recept, "lucky_sect")
-			lucky_num = get_u32("transform_"..recept, "lucky_percent")
-			bad_num = get_u32("transform_"..recept, "bad_percent")
-			bad_sect_string = get_string("transform_"..recept, "bad_sect")
-			time_vector = get_vector("transform_"..recept, "time")
-			anomaly_remove_bool = get_bool("transform_"..recept, "remove_anomaly")
-			count = count + 1
-			if recept_podhodit then
-				break
+	for info, recipe in pairs(split_comma_separated_list(get_string(anom_sect, "anomaly_recipes"))) do
+		for index, item_sect in pairs(split_comma_separated_list(get_string("transform_"..recipe, "components"))) do
+			component_sect_string = item_sect
+			if actor:has_info(recipe) and component_sect_string == af_sect then --есть рецепт и этот компонент в нём участвует
+				lucky_sect_string = get_string("transform_"..recipe, "lucky_sect")
+				lucky_percent = get_u32("transform_"..recipe, "lucky_percent")
+				bad_percent = get_u32("transform_"..recipe, "bad_percent")
+				bad_sect_string = get_string("transform_"..recipe, "bad_sect")
+				time_vector = get_vector("transform_"..recipe, "time")
+				anomaly_remove_bool = get_bool("transform_"..recipe, "remove_anomaly")
+				local count = 0
+				count = count + 1
+				recipe_fits = true
+				if recipe_fits then
+					break
+				end
 			end
 		end
 	end
 			
-	if recept_podhodit then
-		if af and not af:parent() and af:position():distance_to(anom_pos) < 3 then
+	if recipe_fits then
+		if af and not af:parent() and af:position():distance_to(anom_pos) < 4 then
 
 			-- если компонент есть в рецепте
-			if komponent_sect_string == af:section() then
+			if component_sect_string == af:section() then
 				-- уменьшаем количество компонентов в рецепте
 				count = count - 1
 
 				-- если рецепт пуст, то он сработал
 				if count == 0 then
 					-- устанавливаем все параметрv для рецепта, возможно из умолчаний
-					local result_sect, luck = af_select_result(lucky_num, bad_num, bad_sect_string, lucky_sect_string, komponent_sect_string)
+					local result_sect, luck = af_select_result(lucky_percent, bad_percent, bad_sect_string, lucky_sect_string, component_sect_string)
 							
-					if not lucky_sect_string or not lucky_num or not bad_num
+					if not lucky_sect_string or not lucky_percent or not bad_percent
 					or not bad_sect_string or not time_vector or anomaly_remove_bool == nil
 					or (not lucky_sect_string and not anomaly_remove_bool)
-					or lucky_num + bad_num > 100 then
+					or lucky_percent + bad_percent > 100 then
 						-- кривой рецепт  - выходим
 						return
 					end
@@ -208,7 +210,7 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 
 					-- запускаем варку/мутацию
 					local t = { } -- сохраняемые данные
-					t.komp   = komponent_sect_string
+					t.komp   = component_sect_string
 					t.result = result_sect
 					t.pos    = {}
 					t.pos.x  = obj_pos.x
@@ -268,15 +270,16 @@ function af_transform_universal_end( params )
 			end
 		end
 		
-		-- спавним результат(v)
+		-- спавним результат(ы)
 		for k,v in pairs(split_comma_separated_list(params.result)) do
 			local sobj = alife():create(v, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.lv, params.gv)
 			level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 		end
+
 		news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
 	
-	-- удаляем аномалии, если нужно и она не в исклічениях
+	-- удаляем аномалии, если нужно и она не в исключениях
 	-- код взят из turn_off_all()
 	if params.remove_anomaly then
 		local sobj = alife():object( params.remove_anomaly_id )
@@ -286,6 +289,7 @@ function af_transform_universal_end( params )
 			end
 		end
 	end
+
 	return af_sobj
 end
 
@@ -386,9 +390,9 @@ function on_blowout_hit( npc, hide )
 				if o.zone then
 					for j,v in ipairs(o.zone) do
 						if v.p3 then
-							tmp = ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
+							tmp = ogse.check_npc_in_box_amk(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
 						else
-							tmp = ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
+							tmp = ogse.check_npc_in_box_amk(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
 						end
 						need_hit = need_hit and not tmp
 						if tmp then
@@ -446,9 +450,9 @@ function check_npc_in_hideout(npc,hide)
         if hide and hide.zone then
                 for k,v in pairs(hide.zone) do
                         if v.p3 then 
-                                not_in_zone = not_in_zone and not ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
+                                not_in_zone = not_in_zone and not ogse.check_npc_in_box_amk(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)),vector():set(unpack(v.p3)))
                         else
-                                not_in_zone = not_in_zone and not ogse.check_npc_in_box(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
+                                not_in_zone = not_in_zone and not ogse.check_npc_in_box_amk(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
                         end
                 end
         end
@@ -457,7 +461,7 @@ end
 
 
 --'*******************************************************************************
---'   **   **   **   **   **    **   **   **    **      RECEPTS       **   **   **   **   **    **   **   **   ** 
+--'   **   **   **   **   **    **   **   **    **      recipeS       **   **   **   **   **    **   **   **   ** 
 --'*******************************************************************************
 function check_usable_item(obj)
 	if obj:name()=="mil_stalker0012" then

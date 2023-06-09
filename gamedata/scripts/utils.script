@@ -662,3 +662,10 @@ function parse_data_1v(npc,s)
 	end
     return t
 end
+
+function community_relation_safe(community, npc_id, char_comm)
+	local relations = communities_relations[community]
+	ASSERT(relations, "Can't find relation for community: [%s]", community or "nil")
+	return relations[index_for_community[char_comm]] +
+			relation_registry.community_goodwill(community, npc_id)
+end
