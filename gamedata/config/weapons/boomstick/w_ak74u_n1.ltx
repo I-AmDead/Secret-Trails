@@ -248,18 +248,84 @@ item_orientation  = 0, 0, 0
 lowered_hud_offset_pos  = 0.1,0,0
 lowered_hud_offset_rot  = 0.1,-0.8,0.1  
 
-anm_show				= ak105_sp_draw, draw
-anm_hide                		= ak105_sp_holster, holster
-anm_idle                		= ak105_sp_idle, idle
-anm_idle_sprint         		= ak105_sp_idle_sprint
-anm_idle_moving         		= ak105_sp_idle_walk
-anm_shots               		= ak105_sp_shoot, shoot
-anm_reload	        		= ak105_sp_reload, reload
-anm_reload_empty	        	= ak105_sp_reload_empty, reload_empty
-anm_idle_moving_crouch  		= ak105_sp_idle_crouch_walk, idle
-anm_idle_aim            		= ak105_sp_idle_aim
-anm_bore                		= ak105_sp_idle_bore
-anm_reload_jammed                       = ak105_sp_misfire
+;Доставание///////////////////////////////////////////////////
+anm_show                   = ak105_sp_draw, draw
+anm_show_empty             = ak105_sp_draw, draw
+anm_show_jammed            = ak105_sp_draw, draw
+
+;Убирание/////////////////////////////////////////////////////
+anm_hide                   = ak105_sp_holster, holster
+anm_hide_empty             = ak105_sp_holster, holster
+anm_hide_jammed            = ak105_sp_holster, holster
+
+;Бездействие//////////////////////////////////////////////////
+anm_idle                            = ak105_sp_idle
+anm_idle_empty                      = ak105_sp_idle
+anm_idle_jammed                     = ak105_sp_idle
+anm_idle_slow                       = ak105_sp_idle
+anm_idle_slow_empty                 = ak105_sp_idle
+anm_idle_slow_jammed                = ak105_sp_idle
+anm_idle_crouch                     = ak105_sp_idle
+anm_idle_crouch_empty               = ak105_sp_idle
+anm_idle_crouch_jammed              = ak105_sp_idle
+anm_idle_crouch_slow                = ak105_sp_idle
+anm_idle_crouch_slow_empty          = ak105_sp_idle
+anm_idle_crouch_slow_jammed         = ak105_sp_idle
+
+
+;Бездействие в прицеливании///////////////////////////////////
+anm_idle_aim                   = ak105_sp_idle_aim
+anm_idle_aim_empty             = ak105_sp_idle_aim
+anm_idle_aim_jammed            = ak105_sp_idle_aim
+anm_idle_aim_scope             = ak105_sp_idle_aim
+anm_idle_aim_scope_empty       = ak105_sp_idle_aim
+anm_idle_aim_scope_jammed      = ak105_sp_idle_aim
+
+;Ходьба ВПЕРЕД//////////////////////////////////////////////////////////////////////////
+anm_idle_moving 					= ak105_sp_idle_walk
+anm_idle_moving_jammed 					= ak105_sp_idle_walk
+anm_idle_moving_empty					= ak105_sp_idle_walk
+
+;Ходьба медленная (SHIFT) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
+anm_idle_moving_slow 					= ak105_sp_idle_walk
+anm_idle_moving_slow_jammed 				= ak105_sp_idle_walk
+anm_idle_moving_slow_empty				= ak105_sp_idle_walk
+
+;Ходьба в полуприсяди (CTRL) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
+anm_idle_moving_crouch 					= ak105_sp_idle_crouch_walk
+anm_idle_moving_crouch_jammed 				= ak105_sp_idle_crouch_walk
+anm_idle_moving_crouch_empty				= ak105_sp_idle_crouch_walk
+
+;Ходьба в присяде (CTRL+SHIFT) ВПЕРЕД/////////////////////////////////////////////////////////////////////////
+anm_idle_moving_crouch_slow 				= ak105_sp_idle_crouch_walk
+anm_idle_moving_crouch_slow_jammed 			= ak105_sp_idle_crouch_walk
+anm_idle_moving_crouch_slow_empty			= ak105_sp_idle_crouch_walk
+
+;Бег//////////////////////////////////////////////////////////////////
+anm_idle_sprint                   = ak105_sp_idle_sprint
+anm_idle_sprint_empty             = ak105_sp_idle_sprint
+anm_idle_sprint_jammed            = ak105_sp_idle_sprint
+
+;Скука////////////////////////////////////////////////////////////////////
+anm_bore                   = ak105_sp_idle_bore
+anm_bore_empty             = ak105_sp_idle_bore
+anm_bore_jammed            = ak105_sp_idle_bore
+
+;Выстрелы обычными патронами/////////////////////////////////////////////////////////////////////
+anm_shots		       = ak105_sp_shoot, shoot
+
+;Перезарядка/////////////////////////////////////////////////////////////////////
+anm_reload                           = ak105_sp_reload, reload
+anm_reload_empty                     = ak105_sp_reload_empty, reload_empty
+anm_reload_jammed                    = ak105_sp_misfire
+anm_reload_jammed_last               = ak105_sp_misfire
+
+anm_idle_moving_slow_speed_k         	    = 0.7
+anm_idle_moving_slow_empty_speed_k   	    = 0.7
+anm_idle_moving_slow_jammed_speed_k  	    = 0.7
+anm_idle_moving_crouch_slow_speed_k         = 0.7
+anm_idle_moving_crouch_slow_empty_speed_k   = 0.7
+anm_idle_moving_crouch_slow_jammed_speed_k  = 0.7
 
 fire_bone = wpn_body
 fire_bone2        = wpn_body
@@ -274,7 +340,7 @@ shell_bone = wpn_body
 freelook_z_offset_mul	  = 0.6
 
 ;-----------------------------------------------------------------------Addons--------------------------------------------------------------------------
-[wpn_ak74u_n1_kobra]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_kobra]:wpn_ak74u_n1
 scope_name       = kobra
 scope_x     = 67
 scope_y     = 0
@@ -285,14 +351,14 @@ hud       = wpn_ak74u_n1_kobra_hud
 
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_kobra_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_kobra_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_kobra_hud.ogf
 
 aim_hud_offset_pos_16x9  = -0.051325,0.008300,-0.050875
 aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_1p29]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_1p29]:wpn_ak74u_n1
 scope_name       = 1p29
 scope_x     = 56
 scope_y     = 2
@@ -302,7 +368,7 @@ inv_weight        = 3.28
 hud       = wpn_ak74u_n1_1p29_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_1p29_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_1p29_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_1p29_hud.ogf
 
@@ -312,7 +378,7 @@ aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 hands_position_16x9  = -0.010200,-0.029500,-0.019600
 hands_orientation_16x9	 = 1.652664,2.197510,-0.140000
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_pka]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_pka]:wpn_ak74u_n1
 scope_name       = pka
 scope_x     = 70
 scope_y     = -2
@@ -323,7 +389,7 @@ hud       = wpn_ak74u_n1_pka_hud
 
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_pka_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_pka_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_pka_hud.ogf
 
@@ -333,7 +399,7 @@ aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 hands_position_16x9  = -0.005000,-0.014900,-0.035600
 hands_orientation_16x9	 = 1.652664,2.197510,-0.140000
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_pso2]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_pso2]:wpn_ak74u_n1
 scope_name       = pso2
 scope_x     = 46
 scope_y     = 2
@@ -343,14 +409,14 @@ inv_weight        = 3.08
 hud       = wpn_ak74u_n1_pso2_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_pso2_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_pso2_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_pso2_hud.ogf
 
 aim_hud_offset_pos_16x9  = -0.039125,0.017025,-0.042775
 aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_ekp8_02]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_ekp8_02]:wpn_ak74u_n1
 scope_name       = ekp8_02
 scope_x     = 67
 scope_y     = 0
@@ -361,14 +427,14 @@ hud       = wpn_ak74u_n1_ekp8_02_hud
 
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_ekp8_02_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_ekp8_02_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_ekp_hud.ogf
 
 aim_hud_offset_pos_16x9  = -0.050325,0.004000,-0.040275
 aim_hud_offset_rot_16x9  = 0.051431,0.028949,-0.011500
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_okp]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_okp]:wpn_ak74u_n1
 scope_name       = okp
 scope_x     = 67
 scope_y     = -2
@@ -379,14 +445,14 @@ hud       = wpn_ak74u_n1_okp_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
 
-[wpn_ak74u_n1_okp_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_okp_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_okp_hud.ogf
 
 aim_hud_offset_pos_16x9  = -0.046125,0.017025,-0.022475
 aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_1pn93]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_1pn93]:wpn_ak74u_n1
 
 hud	 = wpn_ak74u_n1_1pn93_hud
 
@@ -402,7 +468,7 @@ scope_zoom_factor_alt      = 0
 
 use_alt_aim_hud    = true
 
-[wpn_ak74u_n1_1pn93_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_1pn93_hud]:wpn_ak74u_n1_hud
 
 item_visual  = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_1pn93_hud.ogf
 
@@ -415,7 +481,7 @@ hands_orientation_16x9	 = 1.652664,2.197510,-0.140000
 aim_hud_offset_alt_pos_16x9  = -0.068025,0.050325,-0.027175
 aim_hud_offset_alt_rot_16x9  = 0.040431,0.028849,-0.011500
 ;---------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_1p76]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_1p76]:wpn_ak74u_n1
 scope_name       = 1p76
 scope_x     = 67
 scope_y     = -6
@@ -425,7 +491,7 @@ inv_weight        = 2.98
 hud       = wpn_ak74u_n1_1p76_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 	
-[wpn_ak74u_n1_1p76_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_1p76_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_1p76_hud.ogf
 
@@ -435,7 +501,7 @@ aim_hud_offset_rot_16x9  = 0.021031,0.030999,-0.011500
 hands_position_16x9  = -0.008400,-0.019900,-0.037500
 hands_orientation_16x9	 = 1.652664,2.197510,-0.140000
 ;------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_1p78gs]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_1p78gs]:wpn_ak74u_n1
 scope_name       = 1p78gs
 scope_x     = 55
 scope_y     = -6
@@ -445,7 +511,7 @@ inv_weight        = 2.98
 hud       = wpn_ak74u_n1_1p78gs_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_1p78gs_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_1p78gs_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_1p78gs_hud.ogf
 
@@ -455,7 +521,7 @@ aim_hud_offset_rot_16x9  = 0.040431,0.028849,-0.011500
 hands_position_16x9  = 0.003800,-0.028800,-0.014100
 hands_orientation_16x9	 = 1.652664,2.197510,-0.100000
 ;-----------------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_1pn93n2_1gs]:can_spawner, wpn_ak74u_n1
+[wpn_ak74u_n1_1pn93n2_1gs]:wpn_ak74u_n1
 
 hud	 = wpn_ak74u_n1_1pn93n2_1gs_hud
 
@@ -471,7 +537,7 @@ scope_zoom_factor_alt      = 0
 
 use_alt_aim_hud    = true
 
-[wpn_ak74u_n1_1pn93n2_1gs_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_1pn93n2_1gs_hud]:wpn_ak74u_n1_hud
 
 item_visual  = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_1pn93n2_1gs_hud.ogf
 
@@ -484,7 +550,7 @@ hands_orientation_16x9	 = 1.652664,2.197510,-0.140000
 aim_hud_offset_alt_pos_16x9  = -0.070625,0.043025,-0.022475
 aim_hud_offset_alt_rot_16x9  = 0.040431,0.028849,-0.011500
 ;---------------------------------------------------------------------------------------------
-[wpn_ak74u_n1_usp1]:can_spawner, wpn_ak74u_n1  
+[wpn_ak74u_n1_usp1]:wpn_ak74u_n1  
 scope_name       = usp1
 scope_x     = 56
 scope_y     = 2
@@ -494,7 +560,7 @@ inv_weight        = 3.28
 hud       = wpn_ak74u_n1_usp1_hud
 visual    = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_world.ogf
 
-[wpn_ak74u_n1_usp1_hud]:can_spawner, wpn_ak74u_n1_hud
+[wpn_ak74u_n1_usp1_hud]:wpn_ak74u_n1_hud
 
 item_visual       = dynamics\weapons\wpn_ak74u_n1\wpn_ak74u_n1_usp1_hud.ogf
 
