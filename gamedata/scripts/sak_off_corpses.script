@@ -1,323 +1,280 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 --
--- �������� ������ � �.�.
+-- Удаление трупов и т.п.
 
 function attach( sm )
   sm:subscribe({ signal = "on_before_spawn", fun = this.off_corpses })
 end
 
---����� �������� ������ 
-local summ_corpses = 5 --����� ���������� ����� ������ �� ���� �������� (�� ������� ���)
-local dist_to_corpses = 200 --���������� �� ��, ����� �������� ��������� �����.
-local tabl_corpses={}
-local tabl_corpses_9510={}
 
---���� ����� �������� ���������� ������
-local summ_weapons = 10 --����� ���������� ����� ���������� ������ �� ���� ��������.
-local dist_to_weapons = 200 --���������� �� ��, ����� �������� ��������� ������.
-local dist_from_weapons_to_trup = 4 --���������� �� �����, ����� �������� ��������� ������.
-local tabl_weapons={}
+local tabl_corpses      = {}
+local tabl_corpses_9510 = {}
+local exceptions_9510   = {}
+local exceptions_9510_info = {}
+
+--схема удаления трупов монстров
+local tabl_monsters_dead = {} --все мёртвые монстры
+
+--плюс схема удаления бесхозного оружия (если в названии предмета нет
+--"grenade_" или "wpn_" - то это не считается оружием и убираться не
+--будет !!!)
+local tabl_weapons = {}
+
+local always_remove = {
+  [ "gl_fake_missile" ] = true,
+  [ "gl_fake_missile_ammo_m209"    ] = true,
+  [ "gl_fake_missile_ammo_vog-25"  ] = true,
+  [ "gl_fake_missile_ammo_vog-25p" ] = true,
+  [ "gl_test_shell"   ] = true,
+  [ "gl_test_shell_ammo_m209"    ] = true,
+  [ "gl_test_shell_ammo_vog-25"  ] = true,
+  [ "gl_test_shell_ammo_vog-25p" ] = true,
+  [ "grenade_f1_fake"    ] = true,
+  [ "grenade_f1_test"    ] = true,
+  [ "grenade_flash_fake" ] = true,
+  [ "grenade_flash_test" ] = true,
+  [ "grenade_rgd5_fake"  ] = true,
+  [ "grenade_rgd5_test"  ] = true,
+  [ "zone_flame_matches" ] = true,
+}
+
+-- кол-во левел вертексов на локации
+level_vertexes = {
+	aver                  = 1790762,
+	dead_city             =  551769,
+	swamp                 =  0,
+	predbannik	      =  0,
+	l01_escape            =  595499,
+	l02_garbage           =  382663,
+	l03_agroprom          =  437421,
+	l03u_agr_underground  =    4932,
+	l04_darkvalley        =  390125,
+	l04u_labx18           =    7581,
+	l05_bar               =   99539,
+	l06_rostok            =   67713,
+	l07_military          =  418268,
+	l08_yantar            =  141471,
+	l08u_brainlab         =    8008,
+	l10_radar             =  227189,
+	l10u_bunker           =    8821,
+	l11_pripyat           =  261219,
+	l12_stancia           =  477923,
+	l12_stancia_2         =  264577,
+	l12u_control_monolith =    3982,
+	l12u_sarcofag         =   10672,
+}
+
+function is_level_vertex_ok( sobj, obj_level )
+  local level_vertexes = level_vertexes[ obj_level ]
+  if level_vertexes > 0 and sobj.m_level_vertex_id >= level_vertexes then
+    log2(
+      "[%s]: found %s on %s: wrong level_vertex: %s >= %s",
+      script_name(), sobj:name(), obj_level,
+      sobj.m_level_vertex_id, level_vertexes
+    )
+    return false
+  end
+  return true
+end
+
+
+function fix_level_vertex( sobj )
+  local vert_ok = level.vertex_id_by_pos(
+    sobj.m_level_vertex_id, sobj.position
+  )
+  if level.valid_vertex_id( vert_ok ) then
+    sobj.m_level_vertex_id = vert_ok
+    sobj:set_position( level.vertex_position( vert_ok ) )
+    return vert_ok
+  end
+end
+
 
 function off_corpses()
-	for a=1,65535,1 do
-	local obj = alife():object(a)
-		if obj then
-			local posobj = obj.position
-			local actorpos = db.actor:position()
-			local npc_name = obj:name()
-			if ((IsStalker(obj) or IsMonster(obj)) and not obj:alive() and 
-				npc_name~="bloodsucker_strong_ucen" and 
-				npc_name~="electro_chimera_ucen" and 
-				npc_name~="friend_krovosos" and 
-				npc_name~="gigant_strong_ucen" and 
-				npc_name~="super_krovosos" and 
-				npc_name~="dolg_dead1" and 
-				npc_name~="dolg_dead2" and 
-				npc_name~="dolg_dead3" and 
-				npc_name~="spy_aes_dead1" and 
-				npc_name~="spy_aes_dead2" and 
-				npc_name~="esc_stalker_corpse" and 
-				npc_name~="esc_stalker_corps1" and 
-				npc_name~="esc_stalker_corps1_0000" and 
-				npc_name~="esc_stalker_corps1_0001" and 
-				npc_name~="esc_stalker" and 
-				npc_name~="esc_trup_bratka" and 
-				npc_name~="esc_stalker_0000" and 
-				npc_name~="esc_trup_scene" and 
-				npc_name~="aes_stalker_0000" and 
-				npc_name~="aes_stalker" and 
-				npc_name~="dar_stalker0001" and 
-				npc_name~="dar_stalker" and 
-				npc_name~="gar_stalker_0000" and 
-				npc_name~="gar_stalker_0001" and 
-				npc_name~="gar_stalker_0002" and 
-				npc_name~="gar_stalker_0003" and 
-				npc_name~="gar_stalker_0004" and 
-				npc_name~="gar_stalker_0005" and 
-				npc_name~="agr_stalker_0000" and 
-				npc_name~="agr_stalker_0001" and 
-				npc_name~="agr_stalker_0002" and 
-				npc_name~="agr_stalker_0003" and 
-				npc_name~="agr_stalker_0004" and 
-				npc_name~="agr_stalker_0005" and 
-				npc_name~="val_sos_dead1" and 
-				npc_name~="val_sos_dead2" and 
-				npc_name~="val_escort_bandit1_dead" and 
-				npc_name~="val_escort_bandit2_dead" and 
-				npc_name~="val_lager_bandit16_0000" and 
-				npc_name~="bar_stalker" and 
-				npc_name~="rostok_stalker" and 
-				npc_name~="rostok_dead_stalker_01" and 
-				npc_name~="rostok_dead_stalker_03" and 
-				npc_name~="rostok_dead_stalker_02" and 
-				npc_name~="bar_ecolog_crush_dead" and 
-				npc_name~="bar_ecolog_crush_dead_0000" and 
-				npc_name~="bar_ecolog_crush_dead_0001" and 
-				npc_name~="rostok_dead_stalker_0000" and 
-				npc_name~="bar_ecolog_crush_dead_0002" and 
-				npc_name~="bar_ecolog_crush_dead_0003" and 
-				npc_name~="yan_stalker" and 
-				npc_name~="mil_stalker_0004" and 
-				npc_name~="mil_stalker_0001" and 
-				npc_name~="mil_stalker_0002" and 
-				npc_name~="mil_stalker" and 
-				npc_name~="mil_stalker_0000" and 
-				npc_name~="rad_stalker_dead" and 
-				npc_name~="rad_stalker_0005_dead" and 
-				npc_name~="rad_stalker_0006_dead_scientist" and 
-				npc_name~="rad_stalker_0007_dead_scientist" and 
-				npc_name~="rad_stalker_0008_dead_scientist" and 
-				npc_name~="kat_bandit_0006" and 
-				npc_name~="esc_trupak" and 
-				npc_name~="esc_trupak1" and 
-				npc_name~="esc_trupak2" and 
-				npc_name~="esc_kuvalda" and 
-				npc_name~="esc_minitrup1" and 
-				npc_name~="esc_minitrup2" and 
-				npc_name~="esc_minitrup3" and 
-				npc_name~="esc_minitrup4" and 
-				npc_name~="esc_minitrup5" and 
-				npc_name~="esc_minitrup6" and 
-				npc_name~="fab_trup" and 
-				npc_name~="nebo_prov") then
-				if posobj:distance_to(actorpos) > dist_to_corpses then 
-					if obj.m_story_id > 30210 then 
-						table.insert(tabl_corpses, obj)
-					else
-						table.insert(tabl_corpses_9510, obj)
-					end
-				end
-			end
-			local wpn_name = obj:name()
-			if (obj.parent_id and obj.parent_id == 65535 and 
-			not string.find(wpn_name,"_m1") and 
-			not string.find(wpn_name,"_m2") and 
-			not string.find(wpn_name,"hunters_toz") and 
-			not string.find(wpn_name,"wpn_gungauss") and 
-			not string.find(wpn_name,"wpn_knife") and 
-			not string.find(wpn_name,"wpn_binoc") and 
-			not string.find(wpn_name,"wpn_flame") and 
-			not string.find(wpn_name,"wpn_ak47") and 
-			not string.find(wpn_name,"wpn_winchester_knyaz") and 
-			not string.find(wpn_name,"wpn_grozm") and 
-			wpn_name~="esc_wpn_pm_bas" and 
-			wpn_name~="esc_wpn_bm16" and 
-			wpn_name~="esc_wpn_walther_p99" and 
-			wpn_name~="aes_wpn_abakan_n" and 
-			wpn_name~="aes_grenade_f_0001" and 
-			wpn_name~="aes_grenade_f_0000" and 
-			wpn_name~="aes_grenade_f_0002" and 
-			wpn_name~="aes_grenade_f_0003" and 
-			wpn_name~="aes_wpn_rpg7" and 
-			wpn_name~="dar_wpn_ak74_n" and 
-			wpn_name~="dar_wpn_rpg7" and 
-			wpn_name~="gar_grenade_f_0000" and 
-			wpn_name~="gar_grenade_f_0001" and 
-			wpn_name~="val_wpn_ak74u_isg" and 
-			wpn_name~="val_wpn_ak74u_isg_0000" and 
-			wpn_name~="val_wpn_ak74u_isg_0001" and 
-			wpn_name~="val_wpn_mp5" and 
-			wpn_name~="val_wpn_mp5_0000" and 
-			wpn_name~="val_wpn_rpg_0000" and 
-			wpn_name~="val_wpn_abakan_n" and 
-			wpn_name~="yan_grenade_rgd5" and 
-			wpn_name~="mil_grenade_f_0016" and 
-			wpn_name~="mil_grenade_f_0017" and 
-			wpn_name~="mil_grenade_f_0018" and 
-			wpn_name~="mil_grenade_f_0019" and 
-			wpn_name~="mil_grenade_rgd5" and 
-			wpn_name~="mil_grenade_rgd_0000" and 
-			wpn_name~="mil_wpn_rg-6" and 
-			wpn_name~="mil_wpn_lr_0000" and 
-			wpn_name~="mil_wpn_pm_bas_0000" and 
-			wpn_name~="mil_wpn_ak74u_isg" and 
-			wpn_name~="mil_wpn_ak0001" and 
-			wpn_name~="mil_wpn_ak0002" and 
-			wpn_name~="mil_wpn_bm16" and 
-			wpn_name~="mil_wpn_abakan_n" and 
-			wpn_name~="mil_wpn_lr_0002" and 
-			wpn_name~="mil_wpn_lr_0003" and 
-			wpn_name~="mil_wpn_lr_0004" and 
-			wpn_name~="mil_wpn_vintorez_isg" and 
-			wpn_name~="kat_wpn_ak74u_isg" and 
-			wpn_name~="level_prefix_wpn_groza" and 
-			wpn_name~="bun_grenade_f1_0001" and 
-			wpn_name~="bun_grenade_f1_0005" and 
-			wpn_name~="bun_grenade_f1_0006" and 
-			wpn_name~="bun_grenade_f1_0007" and 
-			wpn_name~="bun_grenade_f1_0008") then
-				if string.find(obj:name(),"wpn_") or string.find(obj:name(),"grenade_") then 
-					if (posobj:distance_to(actorpos) > dist_to_weapons) then 
-						table.insert(tabl_weapons, obj)
-					end
-				end
-			end
-		end
-	end
-	if table.getn(tabl_corpses) > summ_corpses then
-		table.sort(tabl_corpses,max_comp)
-		if table.getn(tabl_corpses) > summ_corpses*2 then
-			local  b = table.getn(tabl_corpses)
-			while b > summ_corpses*2 do
-				local corps = tabl_corpses[b]
-				alife():release(corps,true)
-				table.remove(tabl_corpses,b)
-				b=b-1
-			end
-		end
-		if table.getn(tabl_corpses) > summ_corpses then
-			local  b = table.getn(tabl_corpses)
-			while b > summ_corpses do
-				local corps = tabl_corpses[b]
-				if item_found(corps) == false then
-					alife():release(corps,true)
-					table.remove(tabl_corpses,b)
-				end
-				b=b-1
-			end
-		end
-		if table.getn(tabl_corpses) > summ_corpses then
-			local  b = table.getn(tabl_corpses)
-			while b > summ_corpses do
-				local corps = tabl_corpses[b]
-				alife():release(corps,true)
-				table.remove(tabl_corpses,b)
-				b=b-1
-			end
-		end
-	end
-	if table.getn(tabl_weapons) > summ_weapons then
-		table.sort(tabl_weapons,max_comp)
-		local twa = table.getn(tabl_weapons)
-		while twa > summ_weapons do
-			local wpn = tabl_weapons[twa]
-			local wpn_name = wpn:name()
-			if (get_dist_to_trup_9510(wpn) == true and get_dist_to_trup(wpn) == true and 
-			not string.find(wpn_name,"wpn_gauss_bas") and 
-			not string.find(wpn_name,"wpn_svds") and 
-			not string.find(wpn_name,"wpn_vintorez_isg") and 
-			not string.find(wpn_name,"wpn_svu") and 
-			not string.find(wpn_name,"wpn_fn2000") and 
-			not string.find(wpn_name,"wpn_saiga12s_isg") and 
-			not string.find(wpn_name,"wpn_rpg7") and 
-			not string.find(wpn_name,"wpn_desert_eagle") and 
-			not string.find(wpn_name,"wpn_toz34") and 
-			not string.find(wpn_name,"wpn_rg-6")) then
-				local weapon = tabl_weapons[twa]
-				alife():release(weapon,true)
-				table.remove(tabl_weapons,twa)
-			end
-			twa=twa-1
-		end
-		if table.getn(tabl_weapons) > summ_weapons then 
-			local twb = table.getn(tabl_weapons)
-			while twb > summ_weapons do
-				local wpn = tabl_weapons[twb]
-				local wpn_name = wpn:name()
-				if (get_dist_to_trup_9510(wpn) == true and 
-				not string.find(wpn_name,"wpn_svds") and 
-				not string.find(wpn_name,"wpn_vintorez_isg") and 
-				not string.find(wpn_name,"wpn_svu") and 
-				not string.find(wpn_name,"wpn_rpg7") and 
-				not string.find(wpn_name,"wpn_rg-6")) then 
-					local weapon = tabl_weapons[twb]
-					alife():release(weapon,true)
-					table.remove(tabl_weapons,twb)
-				end
-				twb=twb-1
-			end
-			if table.getn(tabl_weapons) > summ_weapons then
-				local twc = table.getn(tabl_weapons)
-				while twc > summ_weapons do
-					local weapon = tabl_weapons[twc]
-					alife():release(weapon,true)
-					table.remove(tabl_weapons,twc)
-					twc=twc-1
-				end
-			end
-		end
-	end
-end 
+  local pt = profile_timer()
+  pt:start()
 
-function get_dist_to_trup(wpn)
-	for i=1,table.getn(tabl_corpses),1 do
-		local poswpn = wpn.position
-		local npc = tabl_corpses[i]
-		local posnpc = npc.position
-		if (poswpn:distance_to(posnpc) < dist_from_weapons_to_trup) then 
-			return false
-		end
-	end
-	return true
-end
-function get_dist_to_trup_9510(wpn)
-	for i=1,table.getn(tabl_corpses_9510),1 do
-		local poswpn = wpn.position
-		local npc = tabl_corpses_9510[i]
-		local posnpc = npc.position
-		if (poswpn:distance_to(posnpc) < dist_from_weapons_to_trup) then
-			return false
-		end
-	end
-	return true
-end
-function item_found(corps)
-	for i=1,65535,1 do
-		local item = alife():object(i)
-		if item then 
-			if item.parent_id and item.parent_id == corps.id then
-				local item_name = item:name()
-				if string.find(item_name,"ammo") or 
-				string.find(item_name,"outfit") or 
-				string.find(item_name,"exo") or 
-				string.find(item_name,"wpn_") or 
-				string.find(item_name,"bread") or 
-				string.find(item_name,"kolbasa") or 
-				string.find(item_name,"conserva") or 
-				string.find(item_name,"vodka") or 
-				string.find(item_name,"antirad") or 
-				string.find(item_name,"medkit") or 
-				string.find(item_name,"bandage") or 
-				string.find(item_name,"energy_drink") or 
-				string.find(item_name,"detector") or 
-				string.find(item_name,"dynamite") or 
-				string.find(item_name,"quest_") or 
-				string.find(item_name,"_m1") or 
-				string.find(item_name,"_m2") or 
-				string.find(item_name,"mutant_") or 
-				string.find(item_name,"af_") or 
-				string.find(item_name,"diplomat") or 
-				string.find(item_name,"sakbox") or 
-				string.find(item_name,"sak_") then
-					return true
-				end
-			end
-		end 
-	end
-	return false
+  -- главный цикл
+  local actor_level           = level.name()
+  local dead_monster_on_level = {}
+  dsh_alife.iterate_items(
+    function( obj )
+      local obj_level = object_level_name( obj )
+      local obj_name  = obj:name()
+      local obj_sect  = obj:section_name()
+
+      if always_remove[ obj_sect ] then
+        table.insert( tabl_monsters_dead, obj )
+
+      elseif obj_sect == "psy_dog_phantom" or obj_sect == "m_phantom" then
+        log2(
+          "[%s]: found %s on %s: m_game_vertex_id = %s",
+          script_name(), obj_name, tostring( obj_level ),
+          tostring( obj.m_game_vertex_id )
+        )
+        table.insert( tabl_monsters_dead, obj )
+
+      elseif IsInventoryBox( obj ) then
+        if obj_level == actor_level then
+          alife():set_switch_online(  obj.id, true  )
+          alife():set_switch_offline( obj.id, false )
+        end
+
+      -- сталкер
+      elseif IsStalker( obj ) then
+        if obj_level ~= actor_level and not obj:alive() then
+          -- проверка трупа сталкера, если не в исключениях - в
+          -- таблицу и бум удалять
+          protected_items.unprotect_tabl_corps_keep( obj )
+          --add_9510_exceptions( obj )
+          if
+            not protected_items.is_corps_keep_by_story_id( obj )
+            and not protected_items.obj_is_protected(obj, "tabl_corps_keep", "exactly")
+          then
+            if
+              obj.m_story_id > 30210 or exceptions_9510[ obj.m_story_id ]
+            then
+              table.insert( tabl_corpses, obj )
+            else
+              -- эти трупы пысовские - не удаляются
+              table.insert( tabl_corpses_9510, obj )
+            end
+          end
+        end
+
+      -- монстр
+      elseif IsMonster( obj ) then
+        if obj:alive() then
+          if not is_level_vertex_ok( obj, obj_level ) then
+            if obj_level == actor_level then
+              local vert_ok = fix_level_vertex( obj )
+              if vert_ok then
+                log2( "[%s]:   fixed vertex: %s", script_name(), vert_ok )
+              end
+            end
+          end
+        else
+          -- труп
+          if obj_level == actor_level then
+            dead_monster_on_level[ obj.id ] = obj
+          else
+            table.insert( tabl_monsters_dead, obj )
+          end
+        end
+
+        -- оружие и т.п.
+      elseif
+        (
+          obj:get_weapon()
+          or isWeapon( obj )
+          or isOutfit( obj )
+        )
+        and obj_level ~= actor_level
+        and obj:name() == ( obj:section_name() .. obj.id )
+        and not item_keep( obj )
+      then
+        table.insert( tabl_weapons, obj )
+
+        -- трупы ворон
+      elseif obj_sect == "mutant_crow" then
+        table.insert( tabl_monsters_dead, obj )
+
+      elseif string.find( obj_sect, "af_", 1, true ) then
+        if not is_level_vertex_ok( obj, obj_level ) then
+          table.insert( tabl_monsters_dead, obj )
+        end
+
+      elseif
+        get_bool( obj_sect, "monster_part", false )
+        and not item_keep( obj )
+      then
+        table.insert( tabl_monsters_dead, obj )
+      end
+    end,
+    65535                       -- находится на земле
+  )
+
+  -- зачистка мёртвых монстров
+  local cnt = 0
+  for _, corps in ipairs( tabl_monsters_dead ) do
+    local keep = dsh_alife.iterate_items(
+      function( sobj )
+        if item_keep( sobj ) then return true end
+      end,
+      corps.id
+    )
+    if not keep then
+      cnt = cnt + 1
+      dsh_alife.release( corps )
+    end
+  end
+
+  -- удаление мертвых мутантов с пустым инвентарем на текущей локации
+  for id, sobj in pairs( dead_monster_on_level ) do
+    local has_something = dsh_alife.iterate_items(
+      function( sobj ) return true end,
+      sobj.id
+    )
+    if not has_something then
+      cnt = cnt + 1
+      dsh_alife.release( sobj )
+    end
+  end
+
+  -- зачистка мёртвых человеков
+  for _, corps in ipairs( tabl_corpses ) do
+    local keep = dsh_alife.iterate_items(
+      function( sobj )
+        if item_keep( sobj ) then return true end
+      end,
+      corps.id
+    )
+    if not keep then
+      cnt = cnt + 1
+      dsh_alife.release( corps )
+    end
+  end
+
+  -- зачистка оружия
+  for _, wpn in ipairs( tabl_weapons ) do
+    cnt = cnt + 1
+    dsh_alife.release( wpn )
+  end
+
+  pt:stop()
+  log2( "[%s]: %s objects released: %s", script_name(), cnt, pt:time() )
 end
 
-function max_comp(i1,i2) -- ���������� true ���� i1 ������ i2
-	local actorpos = db.actor:position()
-	return i1.position:distance_to(actorpos) < i2.position:distance_to(actorpos)
+
+local cached_item = {}
+function item_keep( item )
+  -- проверка на предметы, тела с которыми нужно оставить
+  local sect = item:section_name()
+  local k
+  if item:name() == sect .. item.id then
+    k = sect
+  else
+    k = item:name()
+  end
+  if cached_item[ k ] == nil then
+    if get_bool( sect, "sak_off_corpses.ignore_item", false ) then
+      cached_item[ k ] = false
+    else
+      cached_item[ k ] =
+        get_bool( sect, "quest_item", false )
+        or protected_items.obj_is_protected( item, "tabl_items_keep", "like" )
+        or ( isWeapon( item ) and protected_items.is_unique_wpn_keep( sect ) )
+        or protected_items.obj_is_protected( item, "tabl_wpn_keep", "like" )
+        or false
+    end
+  end
+  return cached_item[ k ]
 end
+
+
+--function add_9510_exceptions( sobj )
+--  local by_info = exceptions_9510_info[ sobj.m_story_id ]
+--  if by_info and sak.has_all_info( by_info ) then
+--    exceptions_9510[ sobj.m_story_id ] = true
+--  end
+--end

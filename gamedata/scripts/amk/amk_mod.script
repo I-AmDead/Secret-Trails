@@ -6,16 +6,8 @@ function attach( sm )
   sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
   sm:subscribe({ signal = "on_use",          fun = this.treasure_create   })
   sm:subscribe({ signal = "on_npc_use",      fun = this.check_usable_item })
-  sm:subscribe({ signal = "on_spawn",        fun = this.on_actor_spawn    })
   sm:subscribe({ signal = "on_npc_spawn",    fun = this.build_btrs_table  })
   sm:subscribe({ signal = "on_ph_spawn",     fun = this.build_btrs_table  })
-end
-
-function on_actor_spawn()
-	if db.actor:has_info( "blowout" ) then
-		on_blowout_hit_actor()
-		blowout_phantoms()
-	end
 end
 
 function treasure_create(obj)
@@ -34,7 +26,7 @@ end
 --'*******************************************************************************
 function first_run() 
 	-- На момент вызова этой функции актор уже доступен - переделано на поршень.
-	if has_alife_info( "x_first_run" ) then return end
+	if has_alife_info("x_first_run") then return end
   
 	ogse.spawn_item_in_inv("matras")
 
@@ -167,8 +159,8 @@ function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, 
 			component_sect_string = item_sect
 			if actor:has_info(recipe) and component_sect_string == af_sect then --есть рецепт и этот компонент в нём участвует
 				lucky_sect_string = get_string("transform_"..recipe, "lucky_sect")
-				lucky_percent = get_u32("transform_"..recipe, "lucky_percent")
-				bad_percent = get_u32("transform_"..recipe, "bad_percent")
+				lucky_percent = get_u32("transform_"..recipe, "lucky_percent") + has_alife_info("acv_art") and 10 or 0
+				bad_percent = get_u32("transform_"..recipe, "bad_percent") - has_alife_info("acv_art") and 10 or 0
 				bad_sect_string = get_string("transform_"..recipe, "bad_sect")
 				time_vector = get_vector("transform_"..recipe, "time")
 				anomaly_remove_bool = get_bool("transform_"..recipe, "remove_anomaly")
@@ -273,7 +265,8 @@ function af_transform_universal_end( params )
 		-- спавним результат(ы)
 		for k,v in pairs(split_comma_separated_list(params.result)) do
 			local sobj = alife():create(v, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.lv, params.gv)
-			level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
+			level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[red]"..from_komp)
+			archievements.acv_count_event("acv_art", 100, game.translate_string("acv_art"))
 		end
 
 		news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
@@ -296,94 +289,29 @@ end
 
 --'****************************************************************************
 --'   **   **   **   **   **    **   **   **   **      BLOWOUT        **   **
---'****************************************************************************
-local blowout_phantoms_subscribed
-
-function blowout_phantoms()
-  local blow = ogse.load_var("blowout", -1)
-  if amk_hideouts.blowout_type() < 2 and blow > 1 and blow < 4 then
-    local lname    = level.name()
-    local phantoms = amk_hideouts.blowouts_phantoms[ lname ]
-    if phantoms and phantoms.count > 0 then
-      if blowout_phantoms_subscribed then
-        ogse_signals.get_mgr():reschedule( 1000 )
-        if not in_hide then
-          if math.random() < phantoms.probability then
-            if phantom_manager:phantom_count() < phantoms.count then
-              local yaw = math.pi * 2.0 * math.random()
-              local radius = phantoms.radius * ( math.random() / 2.0 + 0.5 )
-              local height = phantoms.height * math.random()
-              local a_pos  = db.actor:position()
-              local pos    = vector():set(
-                math.sin( yaw ) * radius + a_pos.x,
-                a_pos.y + height,
-                math.cos( yaw ) * radius + a_pos.z
-              )
-              phantom_manager.spawn_phantom( pos )
-            end
-          end
-        end
-      else
-        blowout_phantoms_subscribed = {
-          signal = "on_update", fun = this.blowout_phantoms,
-          script_name = script_name(),
-        }
-        ogse_signals.get_mgr():subscribe( blowout_phantoms_subscribed )
-      end
-    end
-  elseif blowout_phantoms_subscribed then
-    ogse_signals.get_mgr():unsubscribe( blowout_phantoms_subscribed )
-    blowout_phantoms_subscribed = nil
-  end
-end
-
-local blowout_hit_subscribed
-
-function on_blowout_hit_actor()
-  local blow = ogse.load_var("blowout", -1)
-  if amk_hideouts.blowout_type() == 0 and blow > 1 and blow < 4 then
-    if blowout_hit_subscribed then
-      ogse_signals.get_mgr():reschedule( 1000 )
-      on_blowout_hit( db.actor )
-    else
-      blowout_hit_subscribed = {
-        signal = "on_update", fun = this.on_blowout_hit_actor,
-        script_name = script_name(),
-      }
-      ogse_signals.get_mgr():subscribe( blowout_hit_subscribed )
-    end
-  else
-    in_hide = true
-    if blowout_hit_subscribed then
-      ogse_signals.get_mgr():unsubscribe( blowout_hit_subscribed )
-      blowout_hit_subscribed = nil
-    end
-  end
-end
+--'***************************************************************************
 
 
 function on_blowout_hit( npc, hide )
-	local bt = amk_hideouts.blowout_type()
-	if bt>0 or ogse.load_var("blowout", -1) ~=3 then 
-    	if npc:id()==db.actor:id() then in_hide = true end
+	if amk_hideouts.blowout_type() > 0 or not has_alife_info("surge_process_stage_7") then 
 		return false
 	end
 	
-	local lname=level.name()
-	local need_hit
-	need_hit=true
-	local khit=1
+	local lname = level.name()
+	local need_hit = true
+	local khit = 1
+
 	if hide and hide.zone then
 		need_hit = not check_npc_in_hideout(npc,hide)
 		if not need_hit then
 			if hide.defence then 
-				khit=hide.defence
+				khit = hide.defence
 			else
-				khit=0
+				khit = 0
 			end
 		end
 	else
-		local hides=amk_hideouts.hide[lname]
+		local hides = amk_hideouts.hide[lname]
 		local tmp
 		if hides then
 			for i,o in ipairs(hides) do
@@ -394,12 +322,14 @@ function on_blowout_hit( npc, hide )
 						else
 							tmp = ogse.check_npc_in_box_amk(npc,vector():set(unpack(v.p1)),vector():set(unpack(v.p2)))
 						end
+
 						need_hit = need_hit and not tmp
+
 						if tmp then
 							if o.defence then 
-								khit=o.defence
+								khit = o.defence
 							else
-								khit=0
+								khit = 0
 							end
 						end
 					end
@@ -408,33 +338,21 @@ function on_blowout_hit( npc, hide )
 		end
 	end
 
-    if npc:id()==db.actor:id() then
-                if not need_hit then
-                        db.actor.blowout_outside = nil
-                end
-                if outfit_hideout() then -- защита от выброса броником
-                        need_hit = false
-                        khit = 0
-                else
-                        khit = khit+khit*level.get_game_difficulty()/6  -- усиление хита для актора, чтобы вне укрытия не пережил
-                end
-                in_hide = not need_hit
-        end
-    if (need_hit or khit>0) and ogse.load_var("blowout", -1) == 3 and not (hide and hide.hidden) then
+	if (need_hit or khit > 0) and has_alife_info("surge_process_stage_7") and not (hide and hide.hidden) then
 		local h = hit()
-    	h.power = (amk_hideouts.blowout_damages[lname] or 0.01)*khit
-    	h.impulse = 0
+		h.power = (amk_hideouts.blowout_damages[lname] or 0.01)*khit
+		h.impulse = 0
 		h.draftsman = npc
 		h.direction = vector():set(0,0,0)
                 h:bone("bip01_spine") -- чтобv учитvвалась броня
-        h.type = hit.strike
+		h.type = hit.strike
                 npc:hit(h)
-        h.type = hit.telepatic
+		h.type = hit.telepatic
                 npc:hit(h)
-        h.type = hit.radiation
+		h.type = hit.radiation
                 npc:hit(h)
-    end
-    return need_hit or khit>0
+	end
+	return need_hit or khit > 0
 end
 
 

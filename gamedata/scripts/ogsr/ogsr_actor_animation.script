@@ -17,6 +17,7 @@ local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
 local hide_hand_speed = 1.5
 local anim_plays
+local speed_k = 1.0
 
 local lowered_anm_kinds = {
 	["w_sniper"] 	= true,
@@ -217,24 +218,28 @@ function harvest(on_take)
                 mc_anm_state = 2
                 toggle_force_crouch()
             elseif mc_anm_state == 2 and not db.actor:active_item() then
+		speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
                 level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
                 level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
                 level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false,"")
                 snd_harvest:play(db.actor, 0, sound_object.s2d)
+		snd_harvest.frequency = speed_k
                 anm_start = time_g
-                harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, 1.2)
+                harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
                 mc_anm_state = 3
             elseif mc_anm_state == 3 and time_g > anm_start + harvest_anm_time + 100 then -- Пусть немного затупит прежде чем бросать мясо
                 level.add_cam_effector("script\\harvest_loot.anm", 9000, false, "")
                 snd_loot:play(db.actor, 0, sound_object.s2d)
+		snd_loot.frequency = speed_k
                 anm_start = time_g
-                loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, 0.75)
+                loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
                 mc_anm_state = 4
             elseif mc_anm_state == 4 and time_g > anm_start + loot_anm_time - 500 then
                 toggle_force_crouch()
                 on_take()
                 level.enable_input()
                 mc_anm_state = 5
+		archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
             elseif mc_anm_state == 5 and time_g > anm_start + loot_anm_time then
                 db.actor:activate_slot(prev_active_slot)
                 anim_plays = false

@@ -95,8 +95,7 @@ function generic_object_binder:update(delta)
 	local act_scheme = db.storage[self.object:id()].active_section or ""
 	local is_fake = string.find(act_scheme, "mob_fake_death") or false
   
-	local blowout = ogse.load_var("blowout", 0)
-	if blowout == 3 and (not self.control_override) then
+	if has_alife_info("surge_process_stage_7") and (not self.control_override) then
 		if not self.object:action() then
 			-- Захватываем зверушку
 			xr_logic.mob_capture(self.object,true)
@@ -216,10 +215,7 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
 		end
 	end
 	
-  self.am:call(
-    "on_monster_hit", obj, amount, local_direction, who, bone_index
-  )	
-	
+	self.am:call("on_monster_hit", obj, amount, local_direction, who, bone_index)		
 end
 
 function generic_object_binder:use_callback(obj, who)
@@ -353,10 +349,20 @@ function play_particle(obj,params)
 	table.insert(particles[obj:id()],params)
 end
 
-function generic_object_binder:before_hit_callback( hit_data )
-  if not self.last_hit_data then
-    self.last_hit_data = {}
-  end
-  dsh.copy_hit_data( hit_data, self.last_hit_data )
-  self.am:call( "on_monster_before_hit", self.object, hit_data )
+function generic_object_binder:before_hit_callback(hit_data)
+	if hit_data.weapon_id then
+		local wpn = level.object_by_id(hit_data.weapon_id)
+		if hit_data.hit_type == hit.fire_wound and wpn and wpn:is_weapon_magazined() then
+			local koef = has_alife_info("acv_mons2") and 1.3 or (has_alife_info("acv_mons") and 1.2 or 1.0)
+			hit_data.power = hit_data.power * koef
+		end
+	end
+
+	if not self.last_hit_data then
+		self.last_hit_data = {}
+	end
+
+	dsh.copy_hit_data( hit_data, self.last_hit_data )
+
+	self.am:call( "on_monster_before_hit", self.object, hit_data )
 end

@@ -1,14 +1,14 @@
 local ANIMS_ENABLED = true
 
 local cfg = {
-	["eat_health"]		= function(v) db.actor.health = v end,
+	["eat_health"]		= function(v) db.actor.health = has_alife_info("acv_tera") and v + 0.05 or v end,
 	["eat_power"]		= function(v) db.actor.power = v end,
-	["eat_radiation"]	= function(v) db.actor.radiation = v end,
-	["eat_satiety"]		= function(v) db.actor.satiety = v end,
+	["eat_radiation"]	= function(v) db.actor.radiation = has_alife_info("acv_tera") and v + 0.05 or v end,
+	["eat_satiety"]		= function(v) db.actor.satiety = has_alife_info("acv_sat") and v + 0.1 or v end,
 	["eat_thirst"]		= function(v) db.actor.thirst = v end,
-	["eat_alcohol"]		= function(v) db.actor.alcohol = v end,
+	["eat_alcohol"]		= function(v) db.actor.alcohol = has_alife_info("acv_alk") and v - 0.1 or v end,
 	["eat_psy_health"]	= function(v) db.actor.psy_health = v end,
-	["wounds_heal_perc"]= function(v) db.actor:heal_wounds( v ) end,
+	["wounds_heal_perc"]	= function(v) db.actor:heal_wounds(has_alife_info("acv_tera") and v + 0.05 or v) end,
 }
 
 local function apply_item( sect )
@@ -22,7 +22,9 @@ local function apply_item( sect )
 	if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
 		arc_radiation.use_antirad()
 	end
-    apply_boost(sect)
+
+	apply_boost(sect)
+	archievements.on_use_item(sect)
 end
 
 function apply_boost(sect)

@@ -30,15 +30,6 @@ function on_after_blowout()
 end
 
 
-function get_blowout_step()
-  local blowout = ogse.load_var("blowout", 0)
-  if evaluate_blowout_until and evaluate_blowout_until > time_global() then
-    blowout = 5
-  end
-  return blowout
-end
-
-
 class "evaluator_blowout" ( property_evaluator )
 function evaluator_blowout:__init( st ) super( nil, "evaluator_blowout" )
   self.st = st
@@ -52,19 +43,18 @@ function evaluator_blowout:evaluate()
   if amk_hideouts.blowout_type() > 0 or xr_wounded.is_wounded( npc ) then
     return false
   end
-  local blowout = get_blowout_step()
-  if self.prevblow == 3 and blowout ~= 3 then
+  if self.prevblow == 3 and not has_alife_info("surge_process_stage_7") then
     self.prevblow = blowout
     npc.health    = 1
   end
-  if blowout == 0 then
+  if not has_alife_info("blowout") then
     if self.st.out_rest then
       npc:add_restrictions( self.st.out_rest, "" )
       self.st.out_rest = nil
       self.st.in_rest  = nil
     end
     self.st.need_run = false
-  elseif blowout == 3 then
+  elseif has_alife_info("surge_process_stage_7") then
     if ( not self.hittime ) or self.hittime < time_global() then
       self.hittime = time_global() + 1000
       if amk_mod.on_blowout_hit( npc ) then
@@ -78,7 +68,7 @@ function evaluator_blowout:evaluate()
   if self.st.washitat and self.st.washitat > time_global() then
     return false
   end
-  if blowout >= 2 and ( not self.st.nohide ) then
+  if has_alife_info("surge_process_stage_3") and ( not self.st.nohide ) then
     if self:is_in_any_hide() then
       return false
     end
@@ -118,8 +108,7 @@ end
 
 function evaluator_monolith_blowout:evaluate()
   if amk_hideouts.blowout_type() > 0 then return false end
-  local blowout = get_blowout_step()
-  return blowout == 3
+  return has_alife_info("surge_process_stage_7")
 end
 
 
@@ -132,8 +121,7 @@ end
 function evaluator_preblowout:evaluate()
   if amk_hideouts.blowout_type() > 0 then return false end
   local npc = self.object
-  local blowout = get_blowout_step()
-  if blowout == 1 then
+  if has_alife_info("surge_process_stage_1") then
     if self:is_in_any_hide() then
       return false
     end
@@ -181,8 +169,7 @@ function evaluator_outside:evaluate()
   end
   self.st.washitat=nil
   if amk_hideouts.blowout_type() > 0 then return false end
-  local blowout = get_blowout_step()
-  if blowout >= 2 then
+  if has_alife_info("surge_process_stage_3") then
     if self.st.nohide then
       -- Если укрытие невозможно найти, то игнорируем выброс
       return false

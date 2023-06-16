@@ -1,0 +1,106 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+local medicals = {
+	"antirad",
+	"medkit",
+	"medkit_army",
+	"medkit_scientic",
+	"bandage",
+}
+
+function acv_kill()
+	local value = ogse.load_var("acv_kill", 0) + 1
+	ogse.save_var("acv_kill", value)
+	
+	if not has_alife_info("acv_kill") and value >= 100 then
+		db.actor:give_info_portion("acv_kill")
+		send_archievement(game.translate_string("acv_kill"))
+	end
+	if not has_alife_info("acv_kill2") and value >= 300 then
+		db.actor:give_info_portion("acv_kill2")
+		send_archievement(game.translate_string("acv_kill2"))
+	end
+end
+
+function acv_mons()
+	local value = ogse.load_var("acv_mons", 0) + 1
+	ogse.save_var("acv_mons", value)
+	
+	if not has_alife_info("acv_mons") and value >= 100 then
+		db.actor:give_info_portion("acv_mons")
+		send_archievement(game.translate_string("acv_mons"))
+	end
+	if not has_alife_info("acv_mons2") and value >= 300 then
+		db.actor:give_info_portion("acv_mons2")
+		send_archievement(game.translate_string("acv_mons2"))
+	end
+end
+
+-- единая функция обработки и выдачи подсчитываемого достижения
+function acv_count_event(acv, count, name, qty)
+	if has_alife_info(acv) then return end
+	
+	if not qty then
+		qty = 1
+	end
+	
+	local value = ogse.load_var(acv, 0) + qty
+	
+	if value >= count then
+		ogse.delete_var(acv)
+		db.actor:give_info_portion(acv)
+		send_archievement(name)
+		return
+	end
+
+	ogse.save_var(acv, value) 
+end
+
+-- универсальный механизм проверки, что обработан каждый объект из списка
+function has_all(tbl, info, section)
+	for i, s in ipairs(tbl) do
+		if s == section and not has_alife_info(info..i) then
+			db.actor:give_info_portion(info..i)
+			return has_all_info(tbl, info)
+		end
+	end
+	return false
+end
+
+function has_all_info(tbl, info)
+	for i=1, #tbl do
+		if not has_alife_info(info..i) then
+			return false
+		end
+	end
+	return true
+end
+
+function on_use_item(section)
+	if not has_alife_info("acv_tera") and has_all(medicals, "acv_tera", section) then
+		db.actor:give_info_portion("acv_tera")
+		send_archievement(game.translate_string("acv_tera"))
+	end
+
+	if section == "psy_inject" 
+	or section == "rad_inject" 
+	or section == "rad_restore_inject"
+	or section == "weight_inject"
+	or section == "health_inject" then
+		acv_count_event("acv_nar", 20, game.translate_string("acv_nar"))
+	elseif section == "vodka" then
+		acv_count_event("acv_alk", 40, game.translate_string("acv_alk"))
+	elseif section == "bread" or section == "kolbasa" or section == "conserva" then
+		acv_count_event("acv_sat", 100, game.translate_string("acv_sat"))
+	end
+end
+
+function send_archievement(text)
+	achievement_text = game.translate_string("%c[255,160,160,160]"..game.translate_string("new_acv").."%c[default]"..text)
+	local hud = get_hud()
+	hud:AddCustomStatic("achievement_static", true)
+	hud:GetCustomStatic("achievement_static"):wnd():SetTextST(achievement_text)
+	hud:GetCustomStatic("achievement_static").m_endTime = time_global()/1000 + 10
+	xr_sound.get_safe_sound_object([[achievement]])
+	:play(db.actor, 0, sound_object.s2d)
+end

@@ -68,8 +68,8 @@ function on_save()
 end
 
 function on_item_use(section)
-    local boost_time = get_float(section, "boost_time", 0)
-    if boost_time == 0 then -- not a booster
+    local boost_time = has_alife_info("acv_nar") and get_float(section, "boost_time", 0) - 5.0 or get_float(section, "boost_time", 0)
+    if boost_time <= 0 then -- not a booster
         return
     end
 

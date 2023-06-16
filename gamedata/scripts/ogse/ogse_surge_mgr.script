@@ -155,7 +155,6 @@ function surge_db_init()
 	surge_db.surge_process_stage_01 = {
 		on_info = {
 			call1 = function()
-				ogse.save_var("blowout", 1)
 				start_pda_distortion( 1, 100 )
 				set_info_preblow() --Инфо предвыброса
 				news_main_new.vubros_msg() --Новость о выбросе
@@ -196,12 +195,9 @@ function surge_db_init()
 	}
 	surge_db.surge_process_stage_03 = {
 		on_info = {
+			call1 = this.set_info_blow,
 			if_surface = {
 				call1 = function() 
-					ogse.save_var("blowout", 2)
-					set_info_blow()
-					amk_mod.on_blowout_hit_actor()
-					amk_mod.blowout_phantoms()
 					start_pda_distortion( 150, 200 )
 					is_surge_started = true 
 				end
@@ -324,7 +320,6 @@ function surge_db_init()
 			call1 = function()
 				pda_off()
 				deadly_blowout() -- addon by KamikaZze
-				ogse.save_var("blowout", 3)
 			end,
 			if_surface = {
 				call2 = function()
@@ -493,12 +488,7 @@ function surge_db_init()
 	surge_db.surge_process_stage_12 = surge_db.surge_process_stage_09
 	surge_db.surge_process_stage_13 = {-- 6. Выброс близится к концу
 		on_info = {
-			call1 = function()
-				pda_off()
-				ogse.save_var("blowout", 4)
-				amk_mod.blowout_phantoms()
-				amk_mod.on_blowout_hit_actor()
-			end,
+			call1 = pda_off,
 			if_surface = {
 				call1 = function()
 					is_surge_started = true
@@ -578,8 +568,6 @@ end
 
 function on_surge_end()
 	actor_was_hit = false
-	ogse.save_var("blowout", -1)
-	ogse.delete_var("blowout")
 	db.actor:disable_info_portion("blowout")
 	db.actor:disable_info_portion("pre_blowout2")
 	db.actor:give_info_portion("net_signal") -- связь восстановлена
@@ -624,6 +612,7 @@ function surge_final()
 	dsh_cop_weather.get_weather_mgr():prepare_new_surge() -- тут вставляем перезапуск выброса в погодном менеджере
 	dsh.timeout( 10000, function() autosave_blowout() end )
 	set_pda_params(vector():set(0,0,0))
+	archievements.acv_count_event("acv_blow", 5, game.translate_string("acv_blow"))
 end
 
 --------------------------------- Парсер единичного действия ---------------------------------------
@@ -828,7 +817,7 @@ local surge_hit_db = {
 	predbannik     = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
 	swamp          = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
 }
--- РќР°РЅРµСЃРµРЅРёРµ С…РёС‚Р° Р°РєС‚РѕСЂСѓ РІ СЃРјРµСЂС‚РµР»СЊРЅРѕР№ СЃС‚Р°РґРёРё РІС‹Р±СЂРѕСЃР°
+-- Нанесение хита актору в смертельной стадии выброса
 function hit_actor()
 	local hit_data = surge_hit_db[lname]
 	if hit_data then
@@ -928,10 +917,9 @@ end
 function level_blow_damage()
 	local level_name = level.name()
 
-	return
-		   ( level_name == "l01_escape" ) and 0.02
+	return  (( level_name == "l01_escape" ) and 0.02
 		or ( level_name == "l03_agroprom" or level_name == "l02_garbage" or level_name == "l04_darkvalley" ) and 0.04
 		or ( level_name == "l05_bar" or level_name == "l06_rostok" ) and 0.06
 		or ( level_name == "l07_military" or level_name == "l08_yantar" or level_name == "l11_pripyat" ) and 0.08
-		or 0.06
+		or 0.06) / has_alife_info("acv_tera") and 0.9 or 1.0
 end
