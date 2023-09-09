@@ -1149,10 +1149,10 @@ function switch_online(id)
 end
 
 function mervin_vzyal(actor,npc)
-	local sobj = alife():story_object(9608)
-	switch_online(sobj.id)
-	dsh.wait_condition(function() return level_object_by_sid(9608) end, function()
-		local inv_box_1 = level_object_by_sid(9608)
+	local sobj = alife():create("mervin_taynik", vector():set(-33.040302, -1.204450, -131.940445), 29504, 2258)
+	alife():assign_story_id(sobj.id, 32666)
+	dsh.wait_condition(function() return level_object_by_sid(32666) end, function()
+		local inv_box_1 = level_object_by_sid(32666)
 		out_object = db.actor
 		in_object = inv_box_1
 		db.actor:inventory_for_each(transfer_object_items)
@@ -1169,13 +1169,6 @@ function money_out(t1, t2)
 		npc = t2
 	end
 	dialogs.relocate_money(npc,db.actor:money(),"out")
-end
-
-function mervin_otdal(actor, npc)
-	local inv_box_1 = level_object_by_sid(9608)
-	in_object = db.actor
-	out_object = inv_box_1
-	out_object:inventory_for_each(transfer_object_item)
 end
 
 function maroder_grab(actor, npc)
