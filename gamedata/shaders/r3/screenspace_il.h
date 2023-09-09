@@ -6,7 +6,6 @@
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
-#include "ogse_functions.h"
 #include "settings_screenspace_IL.h"
 
 #ifndef SSFX_READY
@@ -18,7 +17,7 @@ static const int il_quality[4] = { 8, 16, 24, 32 };
 
 // Some vars to fix incompatibilities for the moment...
 uniform float4 ssfx_wpn_dof_1;
-uniform float4 fakescope_params3;
+float4 fakescope_params3 = {0,0,0,0}; //uniform float4 fakescope_params3; //xrSimpodin: На данный момент в OGSR нет fake_scope, если появится - поменять обратно.
 
 float3 ssfx_il_bounce(float3 P, float3 N, float Range, int count, uint iSample) 
 {

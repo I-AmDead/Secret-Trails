@@ -765,7 +765,7 @@ float4 sun_shafts_intensity;
 float sunmask(float4 P)
 {
     float2 tc = mul(m_sunmask, P);
-    float sunmask = s_lmap.Sample(smp_linear, tc).w;
+    float sunmask = s_lmap.SampleLevel(smp_linear, tc, 0).w;
     float sunmask_correction;
 
     const float intensity = 0.6, ss_bebuff = 10;
