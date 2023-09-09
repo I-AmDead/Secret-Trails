@@ -1,9 +1,13 @@
 -- -*- mode: lua; encoding: windows-1251 -*-
 health_threshold = 1
 
-psy_threshold = 1
+function attach(sm)
+  sm:subscribe({ signal = "on_update", fun = this.on_actor_update })
+end
 
-power_penalty = 0
+local psy_threshold = 1
+
+local power_penalty = 0
 
 local prev_power
 local prev_health = 0
@@ -13,19 +17,19 @@ function set_health_threshold(new_ht)
 end
 
 function set_power_penalty(new_pp)
-	power_penalty = new_pp --(new_pp<1) and new_pp or 1
+	power_penalty = new_pp --(new_pp < 1) and new_pp or 1
 end
 
 function set_psy_threshold(new_pt)
-	psy_threshold = (new_pt>0.67) and new_pt or 0.67
+	psy_threshold = (new_pt > 0.67) and new_pt or 0.67
 end
 
 function on_actor_update(delta)
 	local h = db.actor.health
 	local dh = h - health_threshold
 	
-	if dh>0 then
-		db.actor.health = -dh*(1-math.pow(0.998, delta/100))
+	if dh > 0 then
+		db.actor.health = -dh * (1-math.pow(0.998, delta / 100))
 	end
 	
 	prev_health = h
@@ -34,7 +38,7 @@ function on_actor_update(delta)
 	local dph = ph - psy_threshold
 	
 	if dph>0 then
-		db.actor.psy_health = -dph*(1-math.pow(0.987, delta/100))
+		db.actor.psy_health = -dph * (1 - math.pow(0.987, delta / 100))
 	end
 	
 	local p = db.actor.power
@@ -44,14 +48,14 @@ function on_actor_update(delta)
 	else
 		local dp = p - prev_power
 				
-		if power_penalty>0 then
+		if power_penalty > 0 then
 			local k = 1 + power_penalty
 			local tmp = 0
 			
-			if dp>0 then
-				tmp = -dp*power_penalty/(power_penalty+1)
-			elseif dp<0 then
-				tmp = dp*power_penalty
+			if dp > 0 then
+				tmp = -dp * power_penalty / (power_penalty + 1)
+			elseif dp < 0 then
+				tmp = dp * power_penalty
 			end
 			
 			db.actor.power = tmp

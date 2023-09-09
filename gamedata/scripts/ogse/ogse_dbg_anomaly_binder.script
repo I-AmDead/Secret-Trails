@@ -79,6 +79,9 @@ function anomaly_binder:net_spawn(data)
 		end
 	end
 
+	self.object:set_callback(callback.zone_enter, self.on_enter, self)
+	self.object:set_callback(callback.zone_exit,  self.on_exit,  self)
+
 	self.sm:call( "on_anomaly_spawn", self.object, self )
 	return true
 end
@@ -164,7 +167,62 @@ function anomaly_binder:net_destroy()
 		subscribed_anoms[self.object:id()] = nil
 	end
 
+	self.object:set_callback(callback.zone_enter, nil)
+	self.object:set_callback(callback.zone_exit,  nil)
+
 	self.sm:call( "on_anomaly_net_destroy", self.object, self )
 
 	object_binder.net_destroy( self )
+end
+
+local hud = get_hud()
+
+function anomaly_binder:on_enter(zone, obj)
+	if obj:is_actor() and obj:alive() then
+
+		if string.find(zone:section(), "zone_radioactive") then
+			hud:RemoveCustomStatic("indicator_rad")
+			hud:AddCustomStatic("indicator_rad", true)
+		end
+
+		if string.find(zone:section(), "zone_field_acidic") then
+			hud:RemoveCustomStatic("indicator_acid")
+			hud:AddCustomStatic("indicator_acid", true)
+		end
+
+		if string.find(zone:section(), "zone_field_psychic") then
+			hud:RemoveCustomStatic("indicator_psi")
+			hud:AddCustomStatic("indicator_psi", true)
+		end
+
+		if string.find(zone:section(), "zone_field_thermal") then
+			hud:RemoveCustomStatic("indicator_thermal")
+			hud:AddCustomStatic("indicator_thermal", true)
+		end
+	end
+
+	if obj:is_artefact() then
+		amk_mod.af_on_enter_zone(obj)
+	end
+end
+
+
+function anomaly_binder:on_exit(zone, obj)
+	if not obj:is_actor() and obj:alive() then return end
+
+	if string.find(zone:section(), "zone_radioactive") then
+		hud:RemoveCustomStatic("indicator_rad")
+	end
+
+	if string.find(zone:section(), "zone_field_acidic") then
+		hud:RemoveCustomStatic("indicator_acid")
+	end
+
+	if string.find(zone:section(), "zone_field_psychic") then
+		hud:RemoveCustomStatic("indicator_psi")
+	end
+
+	if string.find(zone:section(), "zone_field_thermal") then
+		hud:RemoveCustomStatic("indicator_thermal")
+	end
 end

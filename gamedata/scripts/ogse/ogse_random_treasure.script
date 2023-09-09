@@ -275,14 +275,8 @@ function random_treasure:get_item(item)
 		if item ~= "ammo" then
 			if time_array["section"] == nil then time_array["section"] = "medkit" end
 			time_array["prob"] = self:get_prob(time_array["section"])
-		else
-
-			local num_in_box = sys_ini:r_u32(time_array["section"], "box_size")
-
-			local h = 0
-									
-			if self.order[1] == "weapons" then h = math.random(1, 3) else h = math.random(2, 4) end
-			if self.order[1] == "weapons" then time_array["prob"] = math.random(1,h) * num_in_box else time_array["prob"] = math.random(2,h) * num_in_box end
+		else		
+			time_array["prob"] = self.order[1] == "weapons" and math.random(1, math.random(1, 3)) or math.random(2, math.random(2, 4))
 		end
 	
 	return time_array
@@ -290,7 +284,6 @@ end
 
 function random_treasure:get_prob(section)
 	if section then
-		log3("section %s", section)
 		local number = get_bool(section, "treasure_manager_number")
 		if number then
 			return 1

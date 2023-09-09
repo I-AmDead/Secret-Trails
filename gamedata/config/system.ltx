@@ -14,7 +14,6 @@
 #include "creatures\actor.ltx"
 
 #include "zones\zones.ltx"
-#include "scripts\amk\anoms\anoms.ltx"
 #include "misc\postprocess.ltx"
 
 #include "misc\artefacts.ltx"
@@ -56,12 +55,6 @@
 #include "misc\hud_items\anm_other.ltx"
 #include "misc\hud_items\pda.ltx"
 
-; Ai Additions
-#include "misc\ai_additions\system.ltx"
-
-[zone_pick_dof]
-near    = -50 ;-1500
-far     = 100 ;10
 [sound]
 occlusion_scale			= 0.4
 snd_collide_min_volume		= 0.1
@@ -105,7 +98,6 @@ script_func = ;trader_job.artefacts_task_list_text
 
 [game_tasks]
 files = game_tasks
-
 
 
 [lights_hanging_lamp]
@@ -182,6 +174,7 @@ disp_scale			= 0.08					;масштаб прицела (относительно радиан)
 
 [hud_hitmark]
 hit_mark_texture = ui\ui_hud_hit_mark
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inventory items
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -214,12 +207,8 @@ cost        = 0
 class                   = SPECT
 
       
-[??tg_event]
-class        = EVENT
-      
-
 [tg_event]
-class        = EVENT
+class 			 = EVENT
 
 [m_car]
 GroupControlSection = spawn_group
@@ -235,6 +224,7 @@ inv_grid_height     = 1
 
 script_binding      = bind_physic_object.init
 
+ph_heavy = true; Чтоб псевдогигант бтры не раскидывал от удара ногой
 
 [actor_firsteye_cam]
 lim_pitch                = -1.5, 1.5
@@ -275,7 +265,7 @@ rot_speed                = 3.14, 1.0, 0
 
 [car_firsteye_cam]
 lim_pitch                = -0.5, 0.3
-lim_yaw                  = -2.0, 2.0
+lim_yaw                  = -2.9, 2.5
 rot_speed                = 3.14, 1.0, 0
  
 [car_free_cam]
@@ -350,7 +340,6 @@ GroupControlSection =
 $spawn      = "ai\level changer"
 ;$prefetch    = 4
 class     = LVL_CHNG
-script_binding  = amk.bind_lc
 
 [script_zone]
 GroupControlSection = 
@@ -550,13 +539,6 @@ remove_time       = 120
 [script]
 current_server_entity_version = 7
 
-[space_restrictor]
-GroupControlSection   = spawn_group_restrictor
-$spawn          = "ai\space_restrictor"
-;$prefetch        = 64
-class         = SPC_RS_S
-script_binding          = bind_restrictor.bind
-
 [collision_damage]
 bonce_damage_factor_for_objects = 1.
 
@@ -579,6 +561,7 @@ swing_fast_speed		= 0.5	;1
 anomaly_weapons\hands = models\model,models\model_pn, models\weapons,models\model_pn
 actors   = models\model,models\model_pn, models\weapons,models\model_pn, models\artefact,models\model_pn, models\artefact2,models\model_pn
 monsters = models\model,models\model_pn
+gwr = models\model,models\model_pn, models\weapons,models\model_pn
 
 [shader_params_export]
 pnv_color
@@ -593,7 +576,8 @@ mod_ver = "Secret Trails"
 mod_version = "27.03.23"
 
 
-#include "weapons\grenadier.ltx"
+#include "medic.ltx"
+#include "weapons\gl.ltx"
 
 #include "scripts\amk\amk_respawns.ltx"
 

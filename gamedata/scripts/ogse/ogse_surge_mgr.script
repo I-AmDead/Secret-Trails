@@ -772,7 +772,7 @@ function deadly_blowout()
 		blow.direction = vector():set(0,0,0)
 		blow.impulse = 0
 		blow.draftsman = db.actor
-		blow.power = level_blow_damage(lname)*ogse.armor_class(db.actor)
+		blow.power = level_blow_damage(lname) * 5
 		blow.type = hit.explosion
 		db.actor:hit(blow)
 		
@@ -916,10 +916,11 @@ end
 --- Возвращает величину урона ударной волной в зависимости от локации
 function level_blow_damage()
 	local level_name = level.name()
-
-	return  (( level_name == "l01_escape" ) and 0.02
+	local damage = ( level_name == "l01_escape" ) and 0.02
 		or ( level_name == "l03_agroprom" or level_name == "l02_garbage" or level_name == "l04_darkvalley" ) and 0.04
 		or ( level_name == "l05_bar" or level_name == "l06_rostok" ) and 0.06
 		or ( level_name == "l07_military" or level_name == "l08_yantar" or level_name == "l11_pripyat" ) and 0.08
-		or 0.06) / has_alife_info("acv_tera") and 0.9 or 1.0
+		or 0.06
+
+	return has_alife_info("acv_tera") and damage * 0.9 or damage
 end

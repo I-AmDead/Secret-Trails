@@ -49,6 +49,8 @@ function generic_object_binder:net_spawn(sobject)
 
 	db.add_obj(self.object)
 
+	self.am:call( "on_monster_net_spawn", self.object, self )
+
 	if not self.object:alive() then if rx_ai then rx_ai.corpse_net_spawn(self.object, self.loaded) end end
 	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
 
@@ -171,6 +173,10 @@ function generic_object_binder:death_callback(victim, who)
 	  for kk,vv in pairs(self.particles) do
 	    vv:on_death()
 	  end
+	end
+
+	if who and who:id() == db.actor:id() then
+		archievements.acv_mons()
 	end
 
 	self.am:call( "on_monster_death", self.object, who )

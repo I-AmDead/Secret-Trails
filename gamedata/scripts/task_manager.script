@@ -1,4 +1,4 @@
--- -*- mode: lua; coding: windows-1251-dos -*-
+
 
 -----------------------------------------------------------------------
 --- task_manager.script
@@ -8,9 +8,9 @@
 -----------------------------------------------------------------------
 
 function attach( sm )
-	sm:subscribe({ signal = "on_task",   fun = this.on_task })
-	sm:subscribe({ signal = "on_save",   fun = this.save })
-	sm:subscribe({ signal = "on_load",   fun = this.load })
+	sm:subscribe({ signal = "on_task", fun = this.on_task })
+	sm:subscribe({ signal = "on_save", fun = this.save })
+	sm:subscribe({ signal = "on_load", fun = this.load })
 end
 
 function on_task(_task, _objective, _state)
@@ -34,42 +34,28 @@ end
 local random_task = nil
 
 local parent_by_story = {
-  [003] = "trader",
-  [500] = "barman",
-  [902] = "ecolog",
-  [507] = "dolg",
-  [707] = "freedom",
-  [006] = "wolf",
-  [004] = "shustriy",
-  [510] = "drunk_dolg",
-  [504] = "hunter",
-  [518] = "zastava_commander",
-  [506] = "petrenko",
-  [607] = "lisiy",
-  [515] = "mercenary",
-  [9626] = "nebo",
-  [30148] = "aver_ecolog",
-  [30159] = "lesnik",
-  [30160] = "lesnik2"
+	[003] = "trader",
+	[500] = "barman",
+	[902] = "ecolog",
+	[507] = "dolg",
+	[707] = "freedom",
+	[006] = "wolf",
+	[004] = "shustriy",
+	[510] = "drunk_dolg",
+	[504] = "hunter",
+	[518] = "zastava_commander",
+	[506] = "petrenko",
+	[607] = "lisiy",
+	[515] = "mercenary",
+	[9626] = "nebo",
+	[30148] = "aver_ecolog",
+	[30159] = "lesnik",
+	[30160] = "lesnik2"
 }
 
 local story_by_parent = {}
 for k,v in pairs(parent_by_story) do
 	story_by_parent[v] = k
-end
-
-local num_to_status = {
-  [ 0 ] = "normal",
-  [ 1 ] = "selected",
-  [ 2 ] = "completed",
-  [ 3 ] = "refused",
-  [ 4 ] = "failed",
-  [ 5 ] = "rewarded",
-}
-
-local status_to_num = {}
-for k,v in pairs(num_to_status) do
-	status_to_num[v] = k
 end
 
 local return_task_by_type = {
@@ -81,846 +67,634 @@ local return_task_by_type = {
 	find_item = "return_for_reward_bring"
 }
 
--- типы циклических заданий для статистики
-local cycle_task = {
-  [ "artefact"        ] = true,
-  [ "defend_lager"    ] = true,
-  [ "eliminate_lager" ] = true,
-  [ "find_item"       ] = true,
-  [ "kill_stalker"    ] = true,
-  [ "monster_part"    ] = true,
-}
-
-local map_locations = {
-  [ "defend_lager"    ] = "defend_lager_location",
-  [ "eliminate_lager" ] = "eliminate_lager_location",
-  [ "find_item"       ] = "find_item_location",
-  [ "kill_stalker"    ] = "kill_stalker_location",
-}
-
-local pda_task = xr_sound.get_safe_sound_object( "device\\pda\\pda_objective" )
-
-
-local hash_to_id = {}
-local id_to_hash = {}
-local ct_to_hash = {}
-local hash_to_ct = {}
-
--- хэш функция для строки (посмотреть литературу, на предмет оптимальной)
-function stringhash( str )
-	local mpl  = 1
-	local hash = 0
-	for i = 1, string.len( str ) do
-		local val = string.byte( string.sub( str, i, i ) )
-		hash = hash + mpl * val
-		mpl  = mpl * 2
-		if mpl == 512 then 
-			mpl = 1
-		end
-	end
-	return bit_and( hash, 65535 )
-end
-
 class "CRandomTask"
 function CRandomTask:__init()
-  -- На конструкторе вычитываем LTX и создаем заготовки квестов.
-  self.task_ini = ini_file("misc\\task_manager.ltx")
-  self.task_phrase_id = 100
+	self.sm = ogse_signals.get_mgr()
+	self.sm:subscribe({ signal = "on_first_update", self = self, fun = self.on_first_update })
+	--' На конструкторе вычитываем LTX и создаем заготовки квестов.
+	self.task_phrase_id = 100
 
-  -- Итерируемся по всем настройкам фраз
-  if not self.task_ini:section_exist("list") then
-    abort("There is no section [list] in task_manager.ltx")
-  end
-  local n = self.task_ini:line_count("list")
-  local id, value = "",""
-  local category = ""
+	--' Итерируемся по всем настройкам фраз
+	if not sys_ini:section_exist("list") then
+		abort("There is no section [list] in task_manager.ltx")
+	end
+	local n = sys_ini:line_count("list")
+	local id, value = "",""
+	local category = ""
 
-  -- начальная установка
-  self.task_info = {}  
-  for i=0,n-1 do
-    result, id, value = self.task_ini:r_line("list",i,"","")
-    local hash=stringhash(id)
-    if hash_to_id[hash] then
-      abort("Collision! Hash:%d id1:%s id2:%s",hash,hash_to_id[hash],id)
-    end
-    hash_to_id[hash]=id
-    id_to_hash[id]=hash
-    
-    if not self.task_ini:section_exist(id) then
-      abort("There is no section [%s] in task_manager.ltx", id)
-    end   
+	--' начальная установка
+	self.task_info = {}
+	
+	for i=0,n-1 do
+		result, id, value	= sys_ini:r_line("list",i)
+		
+		if not sys_ini:section_exist(id) then
+			abort("There is no section [%s] in task_manager.ltx", id)
+		end		
 
 		self.task_info[tostring(id)]			= {}
 		local curr_task_info					= self.task_info[tostring(id)]
-		if not self.task_ini:line_exist(id, "type") then
+		
+		if not sys_ini:line_exist(id, "type") then
 			abort("Task manager error: no type in section [%s]", id)
 		end
 
-		curr_task_info.type			= self.task_ini:r_string(id, "type")			
+		curr_task_info.type			= sys_ini:r_string(id, "type")			
 
 		curr_task_info.name			= id
-		if self.task_ini:line_exist(id, "parent") then
-			curr_task_info.parent		= self.task_ini:r_string(id, "parent")
+		if sys_ini:line_exist(id, "story") then
+			curr_task_info.story = sys_ini:r_string(id, "story")
+		else
+			curr_task_info.story = "nil"
+		end
+		if sys_ini:line_exist(id, "parent") then
+			curr_task_info.parent		= sys_ini:r_string(id, "parent")
 			curr_task_info.complex_type = curr_task_info.type .. "_" .. self.task_info[id].parent
 		else
 			curr_task_info.parent		= "nil"
 			curr_task_info.complex_type = curr_task_info.type
-    end
-    local ct=curr_task_info.complex_type
-    local cthash=stringhash(ct)
-    if hash_to_ct[cthash] and hash_to_ct[cthash]~=ct then
-      abort("Collision! Hash:%d ct1:%s ct2:%s",hash,hash_to_id[hash],id)
-    end
-    hash_to_ct[cthash]=ct
-    ct_to_hash[ct]=cthash
-    
-    if self.task_ini:line_exist(id, "target") then
-        curr_task_info.target = self.task_ini:r_string(id, "target")
-    end
-    if self.task_ini:line_exist(id, "text") then
-        curr_task_info.text = self.task_ini:r_string(id, "text")
-    end
-    if self.task_ini:line_exist(id, "description") then
-        curr_task_info.description = self.task_ini:r_string(id, "description")				
-    end
-    curr_task_info.time	= utils.cfg_get_number(self.task_ini, id, "time", nil, false)
+		end
+		if sys_ini:line_exist(id, "target") then
+			curr_task_info.target		= sys_ini:r_string(id, "target")
+		end
+		if sys_ini:line_exist(id, "info") then
+			curr_task_info.info			= sys_ini:r_string(id, "info")
+		end
+		if sys_ini:line_exist(id, "text") then
+			curr_task_info.text			= sys_ini:r_string(id, "text")
+		end
+		if sys_ini:line_exist(id, "description") then
+			curr_task_info.description	= sys_ini:r_string(id, "description")				
+		end
+		curr_task_info.time				= utils.cfg_get_number(sys_ini, id, "time", nil, false)
 
-    curr_task_info.idle_time = utils.cfg_get_number(self.task_ini, id, "idle_time", nil, false, 24*60*60) --' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
-    curr_task_info.prior = utils.cfg_get_number(self.task_ini, id, "prior", nil, false, 0) --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		curr_task_info.idle_time		= utils.cfg_get_number(sys_ini, id, "idle_time", nil, false, 24*60*60) --' Время между выдачами задания (в игровых секундах)
 	
-    if self.task_ini:line_exist(id, "init_condition") then
-        curr_task_info.init_condition = xr_logic.parse_condlist(db.actor, "task_manager", "init_condition", self.task_ini:r_string(id, "init_condition"))
-    end
+		if sys_ini:line_exist(id, "init_condition") then
+			curr_task_info.init_condition = xr_logic.parse_condlist(db.actor_proxy, "task_manager", "init_condition", sys_ini:r_string(id, "init_condition"))
+		end
 
-    local sss = utils.cfg_get_string(self.task_ini, id, "reward_item", nil, false, "")
-    if sss ~= nil then
-        curr_task_info.reward_item = parse_names(sss) 
-    else
-        curr_task_info.reward_item = sss
-    end
-    curr_task_info.reward_money = utils.cfg_get_number(self.task_ini, id, "reward_money", nil, false)		
-    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    local reward_info = utils.cfg_get_string(self.task_ini, id, "reward_info", nil, false,"")   
-    if reward_info == "" then reward_info=nil end
-    curr_task_info.reward_info = reward_info
-    if reward_info then
-       self:read_info_reward_section(self.task_ini,reward_info,curr_task_info)
-    end
+		local sss = utils.cfg_get_string(sys_ini, id, "reward_item", nil, false, "")
+		if sss ~= nil then
+			curr_task_info.reward_item = parse_names(sss) 
+		end
+		curr_task_info.reward_money = utils.cfg_get_number(sys_ini, id, "reward_money", nil, false)		
+	
+		if sys_ini:line_exist(id, "community") then
+			curr_task_info.community = sys_ini:r_string(id, "community")
+		end		
 
-    -- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-    curr_task_info.target_dialog = utils.cfg_get_string(self.task_ini, id, "target_dialog", nil, false,"")
-    ----------------------
-  
-    if self.task_ini:line_exist(id, "community") then
-        curr_task_info.community = self.task_ini:r_string(id, "community")
-    end		
-
-    curr_task_info.reward_rank = utils.cfg_get_number(self.task_ini, id, "reward_rank", nil, false, 0)
-    curr_task_info.reward_reputation = utils.cfg_get_number(self.task_ini, id, "reward_reputation", nil, false)
-    curr_task_info.reward_relation = parse_key_value(utils.cfg_get_string(self.task_ini, id, "reward_relation", nil, false, ""))
+		curr_task_info.reward_rank			= utils.cfg_get_number(sys_ini, id, "reward_rank", nil, false, 0)
+		curr_task_info.reward_reputation	= utils.cfg_get_number(sys_ini, id, "reward_reputation", nil, false)
+		curr_task_info.reward_relation		= parse_key_value(utils.cfg_get_string(sys_ini, id, "reward_relation", nil, false, ""))
 		
-    if self.task_ini:line_exist(id, "condlist") then
-        curr_task_info.condlist	= xr_logic.parse_condlist(db.actor, "task_manager", "condlist", self.task_ini:r_string(id, "condlist"))
-    else
-        curr_task_info.condlist	= xr_logic.parse_condlist(db.actor, "task_manager", "condlist", "true")
-    end		
+		if sys_ini:line_exist(id, "condlist") then
+			curr_task_info.condlist			= xr_logic.parse_condlist(db.actor_proxy, "task_manager", "condlist", sys_ini:r_string(id, "condlist"))
+		else
+			curr_task_info.condlist			= xr_logic.parse_condlist(db.actor_proxy, "task_manager", "condlist", "true")
+		end		
 	
-    curr_task_info.need_return = utils.cfg_get_bool(self.task_ini, id, "need_return", nil, false, true)
+		curr_task_info.need_return			= utils.cfg_get_bool(sys_ini, id, "need_return", nil, false, true)
 
-    curr_task_info.init_phrase_id		= self:gen_phrase_id()
-    curr_task_info.desc_phrase_id		= self:gen_phrase_id()
-    curr_task_info.yes_phrase_id		= self:gen_phrase_id()
-    curr_task_info.no_phrase_id			= self:gen_phrase_id()
-    curr_task_info.completed_phrase_id = self:gen_phrase_id()
-	
-    --' По умолчанию квест доступен для выдачи
-    curr_task_info.enabled       = true
-    --' Доступен ли квест по своим свойствам. По умолчанию всегда недоступен.
-    --' Этот параметр зависит от наличия целей для квестов и того срабатывает ли прекондишн квеста
-    curr_task_info.enabled_props = false
-    --' Статус квеста, может быть: "normal", "selected", "completed", "refused", "failed", "rewarded"
-    curr_task_info.status				= "normal"
-  end
+		curr_task_info.init_phrase_id		= self:gen_phrase_id()
+		curr_task_info.desc_phrase_id		= self:gen_phrase_id()
+		curr_task_info.yes_phrase_id		= self:gen_phrase_id()
+		curr_task_info.no_phrase_id			= self:gen_phrase_id()
+		--' По умолчанию квест доступен для выдачи
+		curr_task_info.enabled				= true
+		--' Доступен ли квест по своим свойствам. По умолчанию всегда недоступен.
+		--' Этот параметр зависит от наличия целей для квестов и того срабатывает ли прекондишн квеста
+		curr_task_info.enabled_props		= false
 
- --' Создание дополнительных ассоциативных таблиц для облегчения поиска
-  self.task_id_by_type = {}
-  self.task_id_by_completed_phrase_id = {}
-  self.task_id_by_parent = {}
-  self.task_id_by_yes_phrase_id = {}
-  self.task_id_by_desc_phrase_id = {}
-  self.task_id_by_init_phrase_id = {}
-  self.active_task_by_type = {}
-  self.task_id_self_inited = {}
-  for k, v in pairs(self.task_info) do
-    --' По типу квеста
-    if self.task_id_by_type[v.type] == nil then
-      self.task_id_by_type[v.type] = {}
-    end
-    table.insert(self.task_id_by_type[v.type], k)
-    --' По типу вендора
-    if self.task_id_by_parent[v.parent] == nil then
-      self.task_id_by_parent[v.parent] = {}
-    end
-    table.insert(self.task_id_by_parent[v.parent], k)
+		--' Статус квеста, может быть: "normal", "selected", "completed", "refused", "failed", "rewarded"
+		curr_task_info.status				= "normal"
+	end
 
-    --' По id фразы согласия на квест
-    self.task_id_by_yes_phrase_id[tostring(v.yes_phrase_id)] = k
+	--' Создание дополнительных ассоциативных таблиц для облегчения поиска
+	self.task_id_by_type = {}
+	self.task_id_by_parent = {}
+	self.task_id_by_yes_phrase_id = {}
+	self.task_id_by_desc_phrase_id = {}
+	self.task_id_by_init_phrase_id = {}
+	self.active_task_by_type = {}
+	self.task_id_self_inited = {}
+	for k,v in pairs(self.task_info) do
+		--' По типу квеста
+		if self.task_id_by_type[v.type] == nil then
+			self.task_id_by_type[v.type] = {}
+		end
+		table.insert(self.task_id_by_type[v.type], k)
 
-    self.task_id_by_desc_phrase_id[v.desc_phrase_id] = k
+		--' По типу вендора
+		if self.task_id_by_parent[v.parent] == nil then
+			self.task_id_by_parent[v.parent] = {}
+		end
+		table.insert(self.task_id_by_parent[v.parent], k)
 
-    --' По id фразы выдачи квеста.
-    self.task_id_by_init_phrase_id[tostring(v.init_phrase_id)] = k
-    --' По самовыдаваемости
-
-    if v.init_condition ~= nil then
-      table.insert(self.task_id_self_inited, k)
-      if not self.subscribed then
-        self.subscribed = {
-          signal = "on_update", self = self, fun = self.actor_update,
-          queued = true
-        }
-        self.sm:subscribe( self.subscribed )
-      end
-    end
-  end
+		--' По id фразы согласия на квест
+		self.task_id_by_yes_phrase_id[tostring(v.yes_phrase_id)] = k
+		self.task_id_by_desc_phrase_id[v.desc_phrase_id] = k
+		--' По id фразы выдачи квеста.
+		self.task_id_by_init_phrase_id[tostring(v.init_phrase_id)] = k
+		--' По самовыдаваемости
+		if v.init_condition ~= nil then
+			table.insert(self.task_id_self_inited, k)
+			if not self.subscribed then
+				self.subscribed = {
+					signal = "on_update", self = self, fun = self.actor_update,
+					queued = true
+				}
+				self.sm:subscribe( self.subscribed )
+			end
+		end
+	end
 end
-
---------- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ --------
-function CRandomTask:read_info_reward_section( ini, sect, container )
-  container.reward_info_portion=utils.cfg_get_string(ini,sect,"info_portion",nil,true,"")
-  container.reward_info_dialog = {}
-  local phr = 1
-  while true do
-    local phrase_id = utils.cfg_get_string(
-      ini, sect, "phrase_" .. phr, nil, false, ""
-    )
-    phr = phr + 1
-    if phrase_id == nil or phrase_id == "" then break end
-    table.insert( container.reward_info_dialog, phrase_id )
-  end  
-end
---------------------------------------
-
-
--- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ: "normal", "selected", "completed",
--- "refused", "failed", "rewarded". пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
--- пїЅпїЅпїЅпїЅпїЅпїЅ. - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-local status_to_num = {
-  normal    = 0,
-  selected  = 1,
-  completed = 2,
-  refused   = 3,
-  failed    = 4,
-  rewarded  = 5,
-}
-
-local num_to_status = {
-  [ 0 ] = "normal",
-  [ 1 ] = "selected",
-  [ 2 ] = "completed",
-  [ 3 ] = "refused",
-  [ 4 ] = "failed",
-  [ 5 ] = "rewarded",
-}
-
-
+--' Сохранение
 function CRandomTask:save()
-  local tasks = {}
-  for k, v in pairs( self.task_info ) do
-    ASSERT( id_to_hash[ k ], "Cannot find hash for id %s!", k )
-    ASSERT(
-      status_to_num[ v.status ],
-      "Wrong status '%s' for task %s!", v.status, k
-    )
-    local last_task_time = v.last_task_time or game.CTime()
-    table.insert(
-      tasks,
-      {
-        id_to_hash[ k ],
-        v.enabled,
-        v.enabled_props,
-        status_to_num[ v.status ],
-        ( v.selected_target or 4294967295   ),
-        ( v.defend_target   or 4294967295   ),
-        { last_task_time:get() },
-      }
-    )
-  end
-  ogse.save_var(
-    "task_manager.tasks", tasks, "array_template",
-    { "u16", "bool", "bool", "u8", "u32", "u32", "time" }
-  )
+	local tasks = {}
+	for k,v in pairs(self.task_info) do
+		local last_task_time = v.last_task_time or game.CTime()
+		ogse.save_var("task_manager.last_time", { last_task_time:get() }, "time")
+		table.insert(
+			tasks,
+			{
+				k,
+				v.enabled,
+				v.enabled_props,
+				v.status,
+				v.selected_target or 4294967295,
+			}
+		)
+	end
+	--log3("[%s] Saving tasks: %s", script_name(), tasks)
+	ogse.save_var(
+	"task_manager.tasks", tasks, "array_template",
+		{ "string", "bool", "bool", "string", "u32" }
 
-  -- пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-  local active = {}
-  for k, v in pairs( self.active_task_by_type ) do
-    ASSERT( ct_to_hash[ k ], "Cannot find hash for complex type %s!", k )
-    ASSERT( id_to_hash[ v ], "Cannot find hash for task id %s!", v )
-    table.insert(
-      active,
-      {
-        ct_to_hash[ k ],
-        id_to_hash[ v ],
-      }
-    )
-  end
-  ogse.save_var(
-    "task_manager.active", active, "array_template",
-    { "u16", "u16" }
-  )
-  log2(
-    "[%s]: %s tasks saved: %s active",
-    script_name(), table.getn( tasks ), table.getn( active )
-  )
+	)
+
+
+	local active = {}
+	for k,v in pairs(self.active_task_by_type) do
+		table.insert( active, { k, v } )
+	end
+	--log3("[%s] Saving active tasks: %s", script_name(), active)
+	ogse.save_var(
+		script_name() .. ".active", active, "array_template",
+		{ "string", "string" }
+	)
 end
-
-
--- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:load( p )
-  local tasks = ogse.load_var_safe( "task_manager.tasks" )
-  if not tasks then return end
-  for _, t in ipairs( tasks ) do
-    local hash, enabled, enabled_props, status, selected_target, defend_target, last_task_time = unpack( t )
-    local id   = hash_to_id[ hash ]
-    ASSERT( id, "Cannot find id for hash %d!", hash )
-    local info = self.task_info[ id ]
-    info.enabled       = enabled
-    info.enabled_props = enabled_props
-    info.status        = num_to_status[ status ]
-    if selected_target ~= 4294967295 then
-      info.selected_target = selected_target
-    end
-    if defend_target ~= 4294967295 then
-      info.defend_target = defend_target
-    end
-    info.last_task_time = dsh.unpack_time( last_task_time )
-  end
-  -- пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-  local active = ogse.load_var_safe( "task_manager.active" )
-  for _, t in ipairs( active ) do
-    local cthash, hash = unpack( t )
-    local id     = hash_to_ct[ cthash ]
-    ASSERT( id, "Cannot find complex type for hash %d", cthash )
-    self.active_task_by_type[ id ] = hash_to_id[ hash ]
-    ASSERT(
-      self.active_task_by_type[ id ], "Cannot find task id for hash %d!", hash
-    )
-  end
-  log2(
-    "[%s]: %s tasks loaded: %s active",
-    script_name(), table.getn( tasks ), table.getn( active )
-  )
+--' Загрузка
+function CRandomTask:load()
+	local tasks = ogse.load_var_safe("task_manager.tasks")
+	--log3("[%s] Loaded tasks: %s", script_name(), tasks)
+	for _, t in ipairs( tasks ) do
+		local id = table.remove( t, 1 )
+		local info = self.task_info[id]
+		info.enabled = table.remove( t, 1 )
+		info.enabled_props = table.remove( t, 1 )
+		info.status = table.remove( t, 1 )
+		local selected_target = table.remove( t, 1 )
+		if selected_target ~= 4294967295 then
+			info.selected_target = selected_target
+		end
+		info.last_task_time = dsh.unpack_time(ogse.load_var_safe("task_manager.last_time"))
+		-- здесь адский баг. Активный selected_target может быть _только_ у выданных квестов, в остальном случае там -1.
+		-- Тут проверяем активность таска. Параллельно правим еще в функции проверки завершенности таска на всякий случай.
+		if info.type == "defend_lager" and info.selected_target then     
+			local defend_object = alife():object(info.selected_target)                                  
+			local sm_ini = defend_object:spawn_ini()                                                                  
+			info.defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
+		end                                                                                                         
+	end
+	--
+	local active = ogse.load_var( script_name() .. ".active" )
+	--log3("[%s] Looaded active tasks: %s", script_name(), active)
+	for _, t in ipairs( active ) do
+		local id = table.remove( t, 1 )
+		self.active_task_by_type[id] = table.remove( t, 1 )
+	end
 end
-
-
--- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+--' Генератор уникальных ID для фраз
 function CRandomTask:gen_phrase_id()
-  self.task_phrase_id = self.task_phrase_id + 1
-  return tostring( self.task_phrase_id )
+	self.task_phrase_id = self.task_phrase_id + 1
+	return tostring(self.task_phrase_id)
+end
+--' Возвращает идентификатор вендора, с которым мы говорим
+function CRandomTask:get_parent(npc)
+	return parent_by_story[npc:story_id()] or abort("Task manager error: wrong parent story_id: [%s]", npc:story_id())
+end
+--' Может ли вендор выдать квест
+function CRandomTask:parent_can_task(actor, npc, p1, p2, p3)
+	local parent = self:get_parent(npc)
+	local avail = false
+	self:task_avail(actor, npc, nil, nil, nil, "reset")
+
+	if self.task_id_by_parent[parent] ~= nil then -- вставлено с целью отладки KamikaZze 18/02/2009
+		for k,v in pairs(self.task_id_by_parent[parent]) do
+			if self:task_avail(actor, npc, nil, nil, self.task_info[v].init_phrase_id, true) then
+				avail = true
+			end
+		end
+	elseif self.task_id_by_parent[parent] == nil then
+		avail = false
+	end
+
+	return avail
+end
+--' Есть ли у игрока хоть одно задание от данного вендора
+function CRandomTask:active_parent_task(actor, npc)
+	local parent = self:get_parent(npc)
+	for k,v in pairs(self.active_task_by_type) do
+
+		if self.task_info[v].parent == parent and
+		  (self.task_info[v].status == "selected" or
+		   self.task_info[v].status == "completed")
+		then
+			return true
+		end				
+	end
+	return false
+end
+--' Есть ли игрока завершенные задания (которые осталось только сдать)
+function has_item_to_bring(task_desc)
+	if task_desc.type == "find_item" or task_desc.type == "artefact" or task_desc.type == "monster_part" then
+		if db.actor:object(task_desc.target) then
+			return true
+		else
+			return false
+		end
+	else
+		return true
+	end	
 end
 
+function CRandomTask:have_completed_job(actor, npc)
+	local parent = self:get_parent(npc)
+	for k,v in pairs(self.active_task_by_type) do
 
--- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:get_parent( npc )
-  local story_id = npc:story_id()
-  if parent_by_story[ story_id ] == nil then
-    abort( "Task manager error: wrong parent story_id[%s]", story_id )
-  end
-  return parent_by_story[ story_id ]
+		--if self.task_info[v].parent == parent and
+--self.task_info[v].status == "completed"
+		local task_desc = self.task_info[v]
+		if task_desc.parent == parent and task_desc.status == "completed" then
+			return has_item_to_bring(task_desc)
+		end		
+	end
+	return false
 end
+--' Выдача квеста игроку
+function CRandomTask:action_give_task(actor, npc, p1, p2)
+	local task = CGameTask()
+	
 
+	local task_desc = self.task_info[self.task_id_by_yes_phrase_id[p2]]
+	task:load(task_desc.complex_type)
+	task:set_title(task_desc.type)
 
--- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:parent_can_task( actor, npc )
-  local parent = self:get_parent( npc )
-  self:task_avail( actor, npc, nil, nil, nil, "reset" )
-  local can_task = false
-  for k, v in pairs( self.task_id_by_parent[ parent ] ) do
-    if
-      self:task_avail(
-        actor, npc, nil, nil, self.task_info[ v ].init_phrase_id, true
-      )
-    then
-      -- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ.пїЅ. пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ task_avail()
-      -- c пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ true пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-      -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-      can_task = true
-    end
-  end
-  return can_task
+	local oo = task:get_objective(0)
+	oo:set_article_id(task_desc.description)
+	
+	local objective = SGameTaskObjective(task,1)
+	objective:set_description(task_desc.name)
+	--' Выбираем текущую цель квеста
+	if task_desc.target_objects ~= nil then
+		self.task_info[self.task_id_by_yes_phrase_id[p2]].selected_target = task_desc.target_objects[math.random(table.getn(task_desc.target_objects))]
+	end
+	--
+	if task_desc.selected_target then
+		ASSERT( alife():object(task_desc.selected_target), "object with id [%s] not found!", task_desc.selected_target)
+	end
+	--
+	if task_desc.type == "eliminate_lager" then
+		objective:set_map_hint(task_desc.text)
+		objective:set_map_location("eliminate_lager_location")
+		objective:set_object_id(task_desc.selected_target) -- вроде как id целевого объекта, определяет координаты метки.
+	elseif task_desc.type == "defend_lager" then
+		objective:set_map_hint(task_desc.text)
+		objective:set_map_location("defend_lager_location")
+		objective:set_object_id(task_desc.selected_target)
+
+		local defend_object = alife():object(task_desc.selected_target)
+		local sm_ini = defend_object:spawn_ini()
+		self.task_info[self.task_id_by_yes_phrase_id[p2]].defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
+	elseif task_desc.type == "kill_stalker" then
+		objective:set_map_hint(task_desc.text)
+		objective:set_map_location("kill_stalker_location")
+		objective:set_object_id(task_desc.selected_target)
+	elseif task_desc.type == "find_item" then
+		objective:set_map_hint(task_desc.text)
+		objective:set_map_location("find_item_location")
+		objective:set_object_id(task_desc.selected_target)
+	end
+	objective:add_complete_func("task_manager.task_complete")
+	task:add_objective(objective)
+
+	if task_desc.need_return then
+		objective = SGameTaskObjective(task,2)
+		objective:set_description(return_task_by_type[task_desc.type])
+
+		objective:set_map_hint(return_task_by_type[task_desc.type])
+		objective:set_map_location("blue_location")
+		objective:set_object_id(alife():story_object(story_by_parent[task_desc.parent]).id)
+		task:add_objective(objective)
+	end
+
+	local time = 0
+	if task_desc.time ~= nil then
+		time = task_desc.time * 1000
+	end
+	db.actor:give_task(task,time,false)
+
+	self.task_info[self.task_id_by_yes_phrase_id[p2]].status = "selected"
+	self.active_task_by_type[task_desc.complex_type] = self.task_id_by_yes_phrase_id[p2]
+	--
+	--' дизаблим все остальные задания данного типа, так как игрок не может одновременно обладать двумя заданиями одного типа.
+	for k,v in pairs(self.task_info) do
+		if v.complex_type == task_desc.complex_type then
+			v.enabled = false
+		end
+	end
+-- Мирное получение Форта-15 у майора Кузнецова по заданию Сидоровича
+-- проверяем, является ли предмет фортом-15, и если да, выдаём инфопоршень
+	if task_desc.target == "wpn_fort_unic" then
+		db.actor:give_info_portion("find_fort_m1")
+	end
+-- проверяем, является ли предмет фортом-15, и если да, выдаём инфопоршень
+-- Мирное получение Форта-15 у майора Кузнецова по заданию Сидоровича
 end
-
-
--- пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:active_parent_task( actor, npc )
-  local parent = self:get_parent( npc )
-  for k, v in pairs( self.active_task_by_type ) do
-    local t = self.task_info[ v ]
-    if
-      t.parent == parent
-      and ( t.status == "selected" or t.status == "completed" )
-    then
-      return true
-    end
-  end
-  return false
-end
-
-
--- пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ( пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ )
-function CRandomTask:have_completed_job( actor, npc )
-  local parent = self:get_parent( npc )
-  for k, v in pairs( self.active_task_by_type ) do
-    local t = self.task_info[ v ]
-    if t.parent == parent and t.status == "completed" then
-      return true
-    end
-  end
-  return false
-end
-
-
--- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:action_give_task( actor, npc, p1, p2 )
-  local task = CGameTask()
-  local task_id   = self.task_id_by_yes_phrase_id[ p2 ]
-  local task_desc = self.task_info[ task_id ]  
-  task:load(task_desc.complex_type)
-  task:set_title(task_desc.type)
-  local oo = task:get_objective(0)
-  oo:set_article_id(task_desc.description)
-  
-  local objective = SGameTaskObjective(task,1)
-  objective:set_description(task_desc.name)
-
-  --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-  if task_desc.target_objects ~= nil then
-    self.task_info[task_id].selected_target = task_desc.target_objects[math.random(table.getn(task_desc.target_objects))]
-  end
-
-  if task_desc.type == "eliminate_lager" then
-    objective:set_map_hint(task_desc.text)
-    objective:set_map_location("eliminate_lager_location")
-    objective:set_object_id(task_desc.selected_target)
-  elseif task_desc.type == "defend_lager" then
-    objective:set_map_hint(task_desc.text)
-    objective:set_map_location("defend_lager_location")
-    objective:set_object_id(task_desc.selected_target)
-
-    local defend_object = alife():object(task_desc.selected_target)
-    local sm_ini = defend_object:spawn_ini()
-    self.task_info[task_id].defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
-  elseif task_desc.type == "kill_stalker" then
-    objective:set_map_hint(task_desc.text)
-    objective:set_map_location("kill_stalker_location")
-    objective:set_object_id(task_desc.selected_target)
-    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ id пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-    if task_desc.target_dialog then
-      amk_add_target_id_to_kill_targets(
-        task_desc.selected_target, task_desc.target_dialog, task_id
-      )
-    end
-  elseif task_desc.type == "find_item" then
-    objective:set_map_hint( task_desc.text )
-    objective:set_map_location("find_item_location")
-    objective:set_object_id( task_desc.selected_target )
-  end
-  objective:add_complete_func( "task_manager.task_complete" )
-  task:add_objective (objective )
-
-  if task_desc.need_return then
-    objective = SGameTaskObjective( task, 2 )
-    objective:set_description( return_task_by_type[ task_desc.type ] )
-    objective:set_map_hint( return_task_by_type[ task_desc.type ] )
-    objective:set_map_location( "blue_location" )
-    local sobj = alife():story_object( story_by_parent[ task_desc.parent ] )
-    if not sobj then
-      -- Квестодателя прибили.
-      return
-    end
-    objective:set_object_id( sobj.id )
-    task:add_objective( objective )
-  end
-
-  local time = 0
-  if task_desc.time ~= nil then
-    time = task_desc.time * 1000
-  end
-  db.actor:give_task( task, time, false )
-
-  -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ
-  -- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
-  self.task_info[self.task_id_by_yes_phrase_id[p2]].status = "selected"
-  self.active_task_by_type[task_desc.complex_type] = self.task_id_by_yes_phrase_id[p2]
-  for k,v in pairs(self.task_info) do
-    if v.complex_type == task_desc.complex_type then
-      v.enabled = false
-    end
-  end
-end
-
-
---' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+--' Отказ игроком от квеста
 function CRandomTask:action_refuse_task(actor, npc, p1, p2)
-  local task_desc = self.task_info[self.task_id_by_yes_phrase_id[p2]]
+	local task_desc = self.task_info[self.task_id_by_yes_phrase_id[p2]]
 
-  --' пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-  self.task_info[self.task_id_by_yes_phrase_id[p2]].status = "refused"
-  -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 
-  amk_remove_target_id_from_kill_targets(self.task_info[self.active_task_by_type[task_desc.complex_type]].selected_target)
-  -------------------------
-  self.task_info[self.active_task_by_type[task_desc.complex_type]].selected_target = nil
-  for k,v in pairs(self.task_info) do
-    if v.complex_type == task_desc.complex_type then
-      v.enabled = true
-    end
-  end
+	self.task_info[self.task_id_by_yes_phrase_id[p2]].status = "refused"
+	self.task_info[self.active_task_by_type[task_desc.complex_type]].selected_target = nil
+	--
+	--' Делаем доступными все задания данного типа
+	for k,v in pairs(self.task_info) do
+		if v.complex_type == task_desc.complex_type then
+			v.enabled = true
+		end
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
+--' Проверяем, не выполнен ли таск
 function CRandomTask:task_complete(p1, p2)
-  if db.actor == nil then
-    return false
-  end
+	if db.actor == nil then
+		return false
+	end
 
-  local sel_task = self.task_info[self.active_task_by_type[p1]]
-  if sel_task == nil then
---    abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
-    return false
-  end
+	local sel_task = self.task_info[self.active_task_by_type[p1]]
+	if sel_task == nil then
+		abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
+	end
 
-  if p2 == 0 then
-    if not sel_task.need_return and sel_task.status == "completed" then
-      self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
-      return true
-    end
-    if sel_task.status == "rewarded" then
-      self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
-      return true
-    end
-  end
+	if p2 == 0 then
+		if not sel_task.need_return and sel_task.status == "completed" then
+			self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
+			return true
+		end
+		if sel_task.status == "rewarded" then
+			self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
+			return true
+		end
+	end
 
-  if p2 == 1 then
-    if string.find(p1, "eliminate_lager") ~= nil then
-      local oo = alife():object(sel_task.selected_target)
-      if oo and oo.gulag:get_population_comed() == 0 then
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    elseif string.find(p1, "defend_lager") ~= nil then
-      --' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-      if xr_gulag.getGulagState(sel_task.defend_target) == 0 then
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    elseif string.find(p1, "kill_stalker") ~= nil then
-      local oo = alife():object(sel_task.selected_target)
-
-      --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-      if oo == nil then
-        abort("OBJ = nil for task %s", tostring(self.active_task_by_type[p1]))
-      elseif oo.alive == nil then 
-        abort("OBJ.NAME = %s", obj:name())        
-      end   
-
-      if oo and oo:alive() == false then
-        -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ  пїЅпїЅпїЅпїЅпїЅ
-        amk_remove_target_id_from_kill_targets(sel_task.selected_target)
-        -------------------------------------------------
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    elseif string.find(p1, "artefact") ~= nil then
-      if db.actor:object(sel_task.target) ~= nil then
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    elseif string.find(p1, "monster_part") ~= nil then
-      if db.actor:object(sel_task.target) ~= nil then
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    elseif string.find(p1, "find_item") ~= nil then
-      if db.actor:object(sel_task.target) ~= nil then
-        self.task_info[self.active_task_by_type[p1]].status = "completed"
-        return true
-      end
-    end
-  end
-  
-  return false
+	if p2 == 1 then
+		if string.find(p1, "eliminate_lager") ~= nil then
+			local oo = alife():object(sel_task.selected_target)
+			-- KD (26.12.2016): неправильно по сути считать общее население смарта. Надо проверять тех, кто был назначен на работу и пришел на нее
+			if oo and oo.gulag:get_population_comed() == 0 then
+				self.task_info[self.active_task_by_type[p1]].status = "completed"
+				if self.task_info[self.active_task_by_type[p1]].info then
+					db.actor:give_info_portion(self.task_info[self.active_task_by_type[p1]].info)
+				end
+				return true
+			end
+		elseif string.find(p1, "defend_lager") ~= nil then
+			--' Квест выполнен потому что рейд прекратился
+			if sel_task.defend_target and xr_gulag.getGulagState(sel_task.defend_target) == 0 then
+				self.task_info[self.active_task_by_type[p1]].status = "completed"
+				return true
+			end
+		elseif string.find(p1, "kill_stalker") ~= nil then
+			local oo = alife():object(sel_task.selected_target)
+			if oo and oo:alive() == false then
+				self.task_info[self.active_task_by_type[p1]].status = "completed"
+				return true
+			elseif not oo then	
+				self.task_info[self.active_task_by_type[p1]].status = "refused"
+				return true						
+			end
+		elseif string.find(p1, "artefact") or string.find(p1, "monster_part") or string.find(p1, "find_item") then
+			if db.actor:object(sel_task.target) ~= nil then
+				self.task_info[self.active_task_by_type[p1]].status = "completed"
+				return true
+			end
+		end
+	end
+	
+	return false
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
+--' Проверяем, не профейлен ли таск
 function CRandomTask:task_fail(p1, p2)
-  if p2 == 0 then
-    local sel_task = self.task_info[self.active_task_by_type[p1]]
-    
-    if sel_task == nil then
---      abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
-      return false
-    end
+	if p2 == 0 then
+		local sel_task = self.task_info[self.active_task_by_type[p1]]
+		
+		if sel_task == nil then
+			abort("WRONG RANDOM TASK %s %s", tostring(p1), tostring(p2))
+		end
 
-    --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
-    local parent = alife():story_object(story_by_parent[sel_task.parent])
-    if parent == nil or (parent.alive ~= nil and not parent:alive()) then
-      self.task_info[self.active_task_by_type[p1]].status = "failed"
-      self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
-      return true   
-    end
+		--' Проверяем что жив, выдавший квест.
+		local parent = alife():story_object(story_by_parent[sel_task.parent])
+		if parent == nil or (parent.alive ~= nil and not parent:alive()) then
+			self.task_info[self.active_task_by_type[p1]].status = "failed"
+			self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
+			return true		
+		end
 
-    if sel_task.status == "refused" or sel_task.status == "failed" then
-      self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
-      return true
-    end
-    if string.find(p1, "defend_lager") ~= nil then
-      if alife():object(sel_task.selected_target).gulag:get_population_comed() == 0 then
-        self.task_info[self.active_task_by_type[p1]].status = "failed"
-        self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
-        return true
-      end
-    end
-  end
-  return false
+		if sel_task.status == "refused" or sel_task.status == "failed" then
+			self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
+			return true
+		end
+		if string.find(p1, "defend_lager") ~= nil then
+			if alife():object(sel_task.selected_target).gulag:get_population_comed() == 0 then
+				self.task_info[self.active_task_by_type[p1]].status = "failed"
+				self.task_info[self.active_task_by_type[p1]].last_task_time = game.get_game_time()
+				return true
+			end
+		end
+	end
+	return false
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+--' Обнуление переменных при завершении или провале таска
 function CRandomTask:task_callback(p1, p2, state)
-  if p2 ~= 0 then
-    return
-  end
+	if p2 ~= 0 then
+		return
+	end
 
-  if self.active_task_by_type[p1] == nil then
-    return
-  end
+	if self.active_task_by_type[p1] == nil then
+		return
+	end
 
-  -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-  local task_info = self.task_info[ self.active_task_by_type[ p1 ] ]
-  if task_info and task_info.selected_target then
-    amk_remove_target_id_from_kill_targets( task_info.selected_target )
-  end
-  if state == task.completed then
-    self.task_info[self.active_task_by_type[p1]].status = "normal"
-    --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-    for k,v in pairs(self.task_info) do
-      if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
-        v.enabled = true
-      end
-    end
-    self.active_task_by_type[p1] = nil  
+	if state == task.completed or state == task.fail then
+		self.task_info[self.active_task_by_type[p1]].status = "normal"
 
-  elseif state == task.fail then
-    self.task_info[self.active_task_by_type[p1]].status = "normal"
-
-    --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
-    for k,v in pairs(self.task_info) do
-      if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
-        v.enabled = true
-      end
-    end
-    self.active_task_by_type[p1] = nil  
-  end
+		--' восстановление других заданий данного типа
+		for k,v in pairs(self.task_info) do
+			if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
+				v.enabled = true
+			end
+		end
+		self.active_task_by_type[p1] = nil	
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+--' Выводит список доступных квестов
 function CRandomTask:action_task_show(npc, actor)
-  local parent = self:get_parent(npc) 
-  for k,v in pairs(self.task_id_by_parent[parent]) do   
-    if self:task_avail(actor, npc, nil, nil, self.task_info[v].init_phrase_id, false) then
-      local task_texture, task_rect = get_texture_info("ui_icons_task_"..self.task_info[v].type, "ui_iconsTotal_locations")
-      db.actor:give_talk_message(game.translate_string(self.task_info[v].name), task_texture, task_rect,"other_iconed_answer_item")
-    end
-  end
+	local parent = self:get_parent(npc)	
+	for k,v in pairs(self.task_id_by_parent[parent]) do		
+		if self:task_avail(actor, npc, nil, nil, self.task_info[v].init_phrase_id, false) then
+			local task_texture, task_rect = get_texture_info("ui_icons_task_"..self.task_info[v].type, "ui_iconsTotal_locations")
+			db.actor:give_talk_message(game.translate_string(self.task_info[v].name), task_texture, task_rect,"other_iconed_answer_item")
+		end
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+--' Проверка доступен ли текущий таск для выдачи
 function CRandomTask:task_avail(actor, npc, p1, p2, p3, calculate)
-  local task_desc = self.task_info[self.task_id_by_init_phrase_id[p3]]
-  --' пїЅпїЅпїЅпїЅ calculate == true пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ check_task_props, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-  if calculate == "reset" then    
-    self.current_parent_type_prior = {}
-    return
-  elseif calculate == true then
-    self:check_task_props(self.task_id_by_init_phrase_id[p3])
+	local task_desc = self.task_info[self.task_id_by_init_phrase_id[p3]]
 
-    local t = task_desc.enabled and task_desc.enabled_props and task_desc.init_condition == nil
+	if calculate == "reset" then		
+		return
+	elseif calculate == true then --Если calculate == true то нужно проверять check_task_props, инача просто вернуть значения.
+		self:check_task_props(self.task_id_by_init_phrase_id[p3])
+	end
 
-    --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ.
-    if t == true and (self.current_parent_type_prior[task_desc.complex_type] == nil or
-       self.current_parent_type_prior[task_desc.complex_type] > task_desc.prior )
-    then
-      self.current_parent_type_prior[task_desc.complex_type] = task_desc.prior
-    end
-
-    return t
-  end
-
-  if self.current_parent_type_prior[task_desc.complex_type] ~= nil and
-     self.current_parent_type_prior[task_desc.complex_type] < task_desc.prior then
-    return false
-  end
-  
-  return task_desc.enabled and 
-       task_desc.enabled_props and
-       task_desc.init_condition == nil
+	return task_desc.enabled and task_desc.enabled_props and task_desc.init_condition == nil
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+--' Проверка свойств таска
 function CRandomTask:check_task_props(task_id)
-  --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-  if self.active_task_by_type[self.task_info[task_id].complex_type] ~= nil then
-    self.task_info[task_id].enabled_props = false
-    return
-  end
+	--' Проверка по активным заданиям данного типа у вендора.
+	if self.active_task_by_type[self.task_info[task_id].complex_type] ~= nil then
+		self.task_info[task_id].enabled_props = false
+		return
+	end
 
-  --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-  if xr_logic.pick_section_from_condlist(db.actor, db.actor, self.task_info[task_id].condlist) == nil then
-    self.task_info[task_id].enabled_props = false
-    return
-  end
-  
-  --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-  if self.task_info[task_id].last_task_time ~= nil and
-    game.get_game_time():diffSec(self.task_info[task_id].last_task_time) < self.task_info[task_id].idle_time
-  then
-    self.task_info[task_id].enabled_props = false
-    return
-  end
+	--' Проверка по кондлисту
+	if xr_logic.pick_section_from_condlist(db.actor, db.actor, self.task_info[task_id].condlist) == nil then
+		self.task_info[task_id].enabled_props = false
+		return
+	end
 
-  --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-  if self.task_info[task_id].type == "eliminate_lager" then
-    if self.task_info[task_id].target_objects == nil then
-      self.task_info[task_id].enabled_props = false
-      return
-    end
-    for k,v in pairs(self.task_info[task_id].target_objects) do
-      local gulag = alife():object(v).gulag
-      if gulag:get_population_comed() > 0 then
-        self.task_info[task_id].enabled_props = true
-        return 
-      end
-    end
-    self.task_info[task_id].enabled_props = false
-  elseif self.task_info[task_id].type == "defend_lager" then
-    if self.task_info[task_id].target_objects == nil then
-      self.task_info[task_id].enabled_props = false
-      return
-    end
-    for k,v in pairs(self.task_info[task_id].target_objects) do
-      local defend_object = alife():object(v)
-      local sm_ini = defend_object:spawn_ini()
-      local defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
-      if xr_gulag.getGulagState(defend_target) == 1 then
-        self.task_info[task_id].enabled_props = true
-        return
-      end
-    end
-    self.task_info[task_id].enabled_props = false
-  elseif self.task_info[task_id].type == "kill_stalker" then
-    local sim = alife()
-    for id, sobj in alife():objects() do --KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
-      if sobj:clsid() == clsid.script_stalker and sobj:alive() and sobj:profile_name() == self.task_info[task_id].target then
-        if not self.task_info[task_id].target_objects then self.task_info[task_id].target_objects = {} end
-          table.insert(self.task_info[task_id].target_objects, id)
-          self.task_info[task_id].enabled_props = true
-          return
-        end
-      end
-      self.task_info[task_id].enabled_props = false
-  elseif self.task_info[task_id].type == "find_item" then
-    local sim = alife()
-    for id, sobj in alife():objects() do --KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
-      if sobj:section_name() == self.task_info[task_id].target then
-        --Нужно игнорировать предметы, которые находяться у вендоров.
-        local ignore = false
-        if sobj.parent_id then
-          for kk,vv in pairs(parent_by_story) do
-            local parent = sim:story_object(kk)
-            if parent and sobj.parent_id == parent.id then
-              ignore = true
-            end
-          end
-        end
-        if not ignore then
-          if not self.task_info[task_id].target_objects then self.task_info[task_id].target_objects = {} end
-            table.insert(self.task_info[task_id].target_objects, id)
-            self.task_info[task_id].enabled_props = true
-            return
-          end
-        end
-      end
-      self.task_info[task_id].enabled_props = false
-    else
-      self.task_info[task_id].enabled_props = true
-  end
+	--' Проверка по таймауту
+	if self.task_info[task_id].last_task_time ~= nil and
+		game.get_game_time():diffSec(self.task_info[task_id].last_task_time) < self.task_info[task_id].idle_time
+	then
+		self.task_info[task_id].enabled_props = false
+		return
+	end
+
+	--' проверка по таргету
+	if self.task_info[task_id].type == "eliminate_lager" then
+		if self.task_info[task_id].target_objects == nil then
+			self.task_info[task_id].enabled_props = false
+			return
+		end
+		for k,v in pairs(self.task_info[task_id].target_objects) do
+			local gulag = alife():object(v).gulag
+			if gulag:get_population_comed() > 0 then
+				self.task_info[task_id].enabled_props = true
+				return 
+			end
+		end
+		self.task_info[task_id].enabled_props = false
+	elseif self.task_info[task_id].type == "defend_lager" then
+		if self.task_info[task_id].target_objects == nil then
+			self.task_info[task_id].enabled_props = false
+			return
+		end
+		for k,v in pairs(self.task_info[task_id].target_objects) do
+			local defend_object = alife():object(v)
+			local sm_ini = defend_object:spawn_ini()
+			local defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
+			if xr_gulag.getGulagState(defend_target) == 1 then
+				self.task_info[task_id].enabled_props = true
+				return
+			end
+		end
+		self.task_info[task_id].enabled_props = false
+	elseif self.task_info[task_id].type == "kill_stalker" then
+		local sim = alife()
+		for id, sobj in alife():objects() do --KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
+			if sobj:clsid() == clsid.script_stalker and sobj:alive() and sobj:profile_name() == self.task_info[task_id].target then
+				if not self.task_info[task_id].target_objects then self.task_info[task_id].target_objects = {} end
+				table.insert(self.task_info[task_id].target_objects, id)
+				self.task_info[task_id].enabled_props = true
+				return
+			end
+		end
+		self.task_info[task_id].enabled_props = false
+	elseif self.task_info[task_id].type == "find_item" then
+		local sim = alife()
+		for id, sobj in alife():objects() do --KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
+			if sobj:section_name() == self.task_info[task_id].target then
+				--Нужно игнорировать предметы, которые находяться у вендоров.
+				local ignore = false
+				if sobj.parent_id then
+					for kk,vv in pairs(parent_by_story) do
+						local parent = sim:story_object(kk)
+						if parent and sobj.parent_id == parent.id then
+							ignore = true
+						end
+					end
+				end
+				--
+				if not ignore then
+					if not self.task_info[task_id].target_objects then self.task_info[task_id].target_objects = {} end
+					table.insert(self.task_info[task_id].target_objects, id)
+					self.task_info[task_id].enabled_props = true
+					return
+				end
+			end
+		end
+		self.task_info[task_id].enabled_props = false
+	else
+		self.task_info[task_id].enabled_props = true
+	end
 end
 --' Проверяем можем ли мы сейчас выдать какой либо самоинициализующийся таск
 function CRandomTask:actor_update()
-  self.sm:reschedule( math.random(1000, 1500) )
-  for k,v in pairs(self.task_id_self_inited) do
-    if self.task_info[v].status == "normal" then
-      self:check_task_props(v)
-      if self.task_info[v].enabled_props == true and
-         self.task_info[v].enabled == true and
-         xr_logic.pick_section_from_condlist(db.actor, db.actor, self.task_info[v].init_condition) ~= nil
-      then
-        --' Нужно автоматически выдать квест
-        self:action_give_task(db.actor, nil, nil, self.task_info[v].yes_phrase_id)
-      end
-    end
-  end
+	self.sm:reschedule( math.random(1000, 1500) )
+	for k,v in pairs(self.task_id_self_inited) do
+		if self.task_info[v].status == "normal" then
+			self:check_task_props(v)
+			if self.task_info[v].enabled_props == true and
+			   self.task_info[v].enabled == true and
+			   xr_logic.pick_section_from_condlist(db.actor, db.actor, self.task_info[v].init_condition) ~= nil
+			then
+				--' Нужно автоматически выдать квест
+				self:action_give_task(db.actor, nil, nil, self.task_info[v].yes_phrase_id)
+			end
+		end
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+--' Проверяется является ли текущий таск выданным игроку
 function CRandomTask:active_task(actor, npc, p1, p2, p3)
-  return self.task_info[self.task_id_by_init_phrase_id[p3]].status == "selected" or
-          self.task_info[self.task_id_by_init_phrase_id[p3]].status == "completed"
+	return (self.task_info[self.task_id_by_init_phrase_id[p3]].status == "selected"
+		or (self.task_info[self.task_id_by_init_phrase_id[p3]].status == "completed" and not has_item_to_bring(self.task_info[self.task_id_by_init_phrase_id[p3]])))
 end
-
-function CRandomTask:make_task_failed(task_id)
-  if self.task_info and self.task_info[task_id] then
-    self.task_info[task_id].status="failed"
-  end
-end
-
--- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-function CRandomTask:completed_task(actor, npc, p1, p2, p3)
-  if not p3 then return false end
-
-  local tid=self.task_id_by_desc_phrase_id[p2]
-
-  if not tid then return false end
-
-  local task_desc=self.task_info[tid]
-
-  if task_desc.status~="completed" then return false end
-
-  local can_finish = true
-  if task_desc.type == "artefact" then
-    if db.actor:object(task_desc.target) == nil then
-      can_finish = false
-    end
-  elseif task_desc.type == "monster_part" then
-    if db.actor:object(task_desc.target) == nil then
-      can_finish = false
-    end
-  elseif task_desc.type == "find_item" then
-    if db.actor:object(task_desc.target) == nil then
-      can_finish = false
-    end
-  end
-
-  return can_finish
-end
-
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+--' Создается диалог актера, в котором будут выдаваться задания.
 function CRandomTask:init_task_dialog(dlg, parent)
 	local phr = dlg:AddPhrase("tm_seek_new_job","0","",-10000)
-  local phrase_script = phr:GetPhraseScript()
+	local phrase_script = phr:GetPhraseScript()
 
 	phr = dlg:AddPhrase("tm_"..parent.."_list_job","1","0",-10000)
-  phrase_script = phr:GetPhraseScript()
-  phrase_script:AddAction("task_manager.action_task_show")
-  phrase_script:AddPrecondition("task_manager.precondition_vendor_can_task")
-    
+	phrase_script = phr:GetPhraseScript()
+	phrase_script:AddAction("task_manager.action_task_show")
+	phrase_script:AddPrecondition("task_manager.precondition_vendor_can_task")
+		
 	phr = dlg:AddPhrase("tm_"..parent.."_has_no_job","2","0",-10000)
-  phrase_script = phr:GetPhraseScript()
-  phrase_script:AddPrecondition("task_manager.precondition_vendor_cannot_task")
-  
-  for k,v in pairs(self.task_id_by_parent[parent]) do
+	phrase_script = phr:GetPhraseScript()
+	phrase_script:AddPrecondition("task_manager.precondition_vendor_cannot_task")
+	
+	for k,v in pairs(self.task_id_by_parent[parent]) do
 		phr = dlg:AddPhrase(self.task_info[v].name, tostring(self.task_info[v].init_phrase_id), "1", -10000)		
 		phrase_script = phr:GetPhraseScript()
 		phrase_script:AddPrecondition("task_manager.precondition_task_avail")
@@ -938,407 +712,326 @@ function CRandomTask:init_task_dialog(dlg, parent)
 
 	dlg:AddPhrase("tm_seek_job_abandon","3","1",-10000)
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+
+
+--' Функция, в которой будет выдаваться вещевая награда за выполненные квесты
 function CRandomTask:task_reward(npc, actor, p1, p2)
-
-  local parent = self:get_parent(npc) 
-  local v=self.task_id_by_completed_phrase_id[p2]
-
---  for k,v in pairs(self.active_task_by_type) do 
-  if true then
-    local task_desc = self.task_info[v]
-    if task_desc.status == "completed" and task_desc.parent == parent then
-      --' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-      local can_finish = true
-      if task_desc.type == "artefact" then
-        if db.actor:object(task_desc.target) == nil then
-          can_finish = false
-        else
-          dialogs.relocate_item_section(npc, task_desc.target, "out")
-        end
-      elseif task_desc.type == "monster_part" then
-        if db.actor:object(task_desc.target) == nil then
-          can_finish = false
-        else
-          dialogs.relocate_item_section(npc, task_desc.target, "out")
-        end
-      elseif task_desc.type == "find_item" then
-        if db.actor:object(task_desc.target) == nil then
-          can_finish = false
-        else
-          dialogs.relocate_item_section(npc, task_desc.target, "out")
-        end
-      end
-  
-      if can_finish == true then
-        self.task_info[v].status = "rewarded"
+	local parent = self:get_parent(npc)
+	for k,v in pairs(self.active_task_by_type) do	
+		local task_desc = self.task_info[v]
+		if task_desc.status == "completed" and task_desc.parent == parent then
+			--' Забираем у игрока квестовый предмет.
+			local can_finish = true
+			if task_desc.type == "artefact" then
+				if db.actor:object(task_desc.target) == nil then
+					can_finish = false
+				else
+					dialogs.relocate_item_section(npc, task_desc.target, "out")
+				end
+			elseif task_desc.type == "monster_part" then
+				if db.actor:object(task_desc.target) == nil then
+					can_finish = false
+				else
+					dialogs.relocate_item_section(npc, task_desc.target, "out")
+				end
+			elseif task_desc.type == "find_item" then
+				if db.actor:object(task_desc.target) == nil then
+					can_finish = false
+				else
+					dialogs.relocate_item_section(npc, task_desc.target, "out")
+				end
+			end
+	
+			if can_finish == true then
+				self.task_info[v].status = "rewarded"
         
-        if task_desc.reward_money ~= nil then
-          dialogs.relocate_money(npc, task_desc.reward_money, "in")
-        end
-        
-        if task_desc.reward_item ~= nil then
-          for kk,vv in pairs(task_desc.reward_item) do
-            dialogs.relocate_item_section(npc, vv, "in")
-          end
-        end
+				if task_desc.reward_money ~= nil then
+					dialogs.relocate_money(npc, task_desc.reward_money, "in")
+				end
+				
+				if task_desc.reward_item ~= nil then
+					for kk,vv in pairs(task_desc.reward_item) do
+						dialogs.relocate_item_section(npc, vv, "in")
+					end
+				end
 
-        if task_desc.reward_reputation ~= nil then
-          db.actor:change_character_reputation(task_desc.reward_reputation)
-        end
+				if task_desc.reward_reputation ~= nil then
+					db.actor:change_character_reputation(task_desc.reward_reputation)
+				end
 
-        if task_desc.reward_relation ~= nil then
-          for kk,vv in pairs(task_desc.reward_relation) do
-            relation_registry.change_community_goodwill (kk, db.actor:id(), tonumber(vv))
-          end
-        end
+				if task_desc.reward_relation ~= nil then
+					for kk,vv in pairs(task_desc.reward_relation) do
+						relation_registry.change_community_goodwill (kk, db.actor:id(), tonumber(vv))
+					end
+				end
 
-        if task_desc.reward_rank ~= nil then
-          actor_stats.add_points("quests", task_desc.name, 1, task_desc.reward_rank)
-          db.actor:set_character_rank(db.actor:character_rank() + task_desc.reward_rank)
-        end
-      end
-    end 
-  end
+				if task_desc.reward_rank ~= nil then
+					actor_stats.add_points("quests", task_desc.name, 1, task_desc.reward_rank)
+					db.actor:set_character_rank(db.actor:character_rank() + task_desc.reward_rank)
+				end
+			end
+		end	
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+--' Функция, в которой будет выдаваться вещевая награда за выполненные сторилайновые квесты
 function CRandomTask:task_reward_storyline(task)
-  local task_desc = self.task_info[task:get_id()]
-  if task_desc == nil or task_desc.type ~= "storyline" then
-    return
-  end
+	local task_desc = self.task_info[task:get_id()]
+	if task_desc == nil or task_desc.type ~= "storyline" then
+		return
+	end
 
-  if task_desc.reward_reputation ~= nil then
-		db.actor:change_character_reputation(db.actor:character_reputation() + task_desc.reward_reputation)
-  end
+	if task_desc.reward_reputation ~= nil then
+		db.actor:change_character_reputation(task_desc.reward_reputation)
+	end
 
-  if task_desc.reward_relation ~= nil then
-    for kk,vv in pairs(task_desc.reward_relation) do
-      relation_registry.change_community_goodwill (kk, db.actor:id(), tonumber(vv))
-    end
-  end
+	if task_desc.reward_relation ~= nil then
+		for kk,vv in pairs(task_desc.reward_relation) do
+			relation_registry.change_community_goodwill(kk, db.actor:id(), tonumber(vv))
+		end
+	end
 
-  if task_desc.reward_rank ~= nil then
-    actor_stats.add_points("quests", task_desc.name, 1, task_desc.reward_rank)
-    db.actor:set_character_rank(db.actor:character_rank() + task_desc.reward_rank)
-  end
+	if task_desc.reward_rank ~= nil then
+		actor_stats.add_points("quests", task_desc.name, 1, task_desc.reward_rank)
+		db.actor:set_character_rank(db.actor:character_rank() + task_desc.reward_rank)
+	end
 end
---' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+--' Создается диалог актера, в котором будут приниматься задания
 function CRandomTask:init_reward_dialog(dlg, parent)
 	local phr = dlg:AddPhrase("tm_reward_job","0","",-10000)
-  local phrase_script = phr:GetPhraseScript()
+	local phrase_script = phr:GetPhraseScript()
 
---[[
 	phr = dlg:AddPhrase("tm_"..parent.."_job_complete", "1", "0", -10000)
-  phrase_script = phr:GetPhraseScript()
-  phrase_script:AddAction("task_manager.action_task_reward")
-  phrase_script:AddPrecondition("task_manager.precondition_have_completed_job")
-]]
-      
-  phr = dlg:AddPhrase("tm_"..parent.."_job_ask", "2", "0", -10000)
-  phrase_script = phr:GetPhraseScript()
---  phrase_script:AddPrecondition("task_manager.precondition_dont_have_completed_job")
+	phrase_script = phr:GetPhraseScript()
+	phrase_script:AddAction("task_manager.action_task_reward")
+	phrase_script:AddPrecondition("task_manager.precondition_have_completed_job")
+			
+	phr = dlg:AddPhrase("tm_"..parent.."_job_ask", "2", "0", -10000)
+	phrase_script = phr:GetPhraseScript()
+	phrase_script:AddPrecondition("task_manager.precondition_dont_have_completed_job")
 
-  
-  -- пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-  for k,v in pairs(self.task_id_by_parent[parent]) do
+
+	-- Список возможных квестов трейдера.
+	for k,v in pairs(self.task_id_by_parent[parent]) do
 		phr = dlg:AddPhrase(self.task_info[v].name, tostring(self.task_info[v].init_phrase_id), "2", -10000)
-    phrase_script = phr:GetPhraseScript()   
-    phrase_script:AddPrecondition("task_manager.precondition_active_task")
-    
+		phrase_script = phr:GetPhraseScript()		
+		phrase_script:AddPrecondition("task_manager.precondition_active_task")
+		
 		phr = dlg:AddPhrase("tm_"..parent.."_job_what", tostring(self.task_info[v].desc_phrase_id), tostring(self.task_info[v].init_phrase_id), -10000)
-    
+		
 		phr = dlg:AddPhrase("tm_job_refuse", tostring(self.task_info[v].yes_phrase_id), tostring(self.task_info[v].desc_phrase_id), -10000)
-    phrase_script = phr:GetPhraseScript()
-    phrase_script:AddAction("task_manager.action_refuse_task")
-    phrase_script:AddPrecondition("task_manager.precondition_notcompleted_task")
-      
-	phr = dlg:AddPhrase("tm_job_nothing", tostring(self.task_info[v].no_phrase_id), tostring(self.task_info[v].desc_phrase_id),-10000)
-    phrase_script = phr:GetPhraseScript()
-    phrase_script:AddPrecondition("task_manager.precondition_notcompleted_task")
+		phrase_script = phr:GetPhraseScript()
+		phrase_script:AddAction("task_manager.action_refuse_task")
+			
+		phr = dlg:AddPhrase("tm_job_nothing", tostring(self.task_info[v].no_phrase_id), tostring(self.task_info[v].desc_phrase_id),-10000)
+	end
 
-    phr = dlg:AddPhrase("tm_job_completed", tostring(self.task_info[v].completed_phrase_id), tostring(self.task_info[v].desc_phrase_id),-10000)
-    phrase_script = phr:GetPhraseScript()
-    phrase_script:AddAction("task_manager.action_task_reward")
-    phrase_script:AddPrecondition("task_manager.precondition_completed_task")
+end
 
-    if self.task_info[v].reward_info then
-      local phrcnt=table.getn(self.task_info[v].reward_info_dialog)
-      if phrcnt==0 then
-        phrase_script:AddGiveInfo(self.task_info[v].reward_info_portion)
-      else
-      -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-        phr = dlg:AddPhrase("...",self:gen_phrase_id(),tostring(self.task_info[v].completed_phrase_id),-10000)
-        phrase_script = phr:GetPhraseScript()
-        phrase_script:AddHasInfo(self.task_info[v].reward_info_portion)        
-        
-        local prid=tostring(self.task_info[v].completed_phrase_id)
-        local first=true
-      -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-        for i,p in ipairs(self.task_info[v].reward_info_dialog) do
-          local cid=self:gen_phrase_id()
-          phr=dlg:AddPhrase(p,cid,prid,-10000)
-          prid=cid
-          if first then
-            first=false
-            phrase_script = phr:GetPhraseScript()
-            phrase_script:AddGiveInfo(self.task_info[v].reward_info_portion)
-            phrase_script:AddDontHasInfo(self.task_info[v].reward_info_portion)        
-          end
-        end
-      end
-    end
-  end
+function CRandomTask:on_first_update()
+	for _, type in ipairs({"eliminate_lager", "defend_lager"}) do
+		for k,v in pairs(self.task_id_by_type[type]) do
+			local name = self.task_info[v].target
+			local sobj = name and alife():object(name)
+			if sobj and sobj:clsid() == clsid.smart_terrain then
+				if type == "defend_lager" then
+					local sm_ini = sobj:spawn_ini()
+					self.task_info[v].defend_target = utils.cfg_get_number(sm_ini, "random_task", "defend_target", nil, true)
+					if not self.task_info[v].defend_target then
+						goto CONTINUE
+					end
+				end
+				if not self.task_info[v].target_objects then self.task_info[v].target_objects = {} end
+				table.insert(self.task_info[v].target_objects, sobj.id)
+				::CONTINUE::
+			end
+		end
+	end
 end
 
 function get_random_task()
-  if random_task == nil then
-    random_task = CRandomTask()
-  end
-  return random_task
+	if not random_task then
+		random_task = CRandomTask()
+	end
+	return random_task
 end
 
 
-function init_trader_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "trader")
+function init_trader_task_dialog(...)
+	get_random_task():init_task_dialog(..., "trader")
 end
-function init_barman_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "barman")
+function init_barman_task_dialog(...)
+	get_random_task():init_task_dialog(..., "barman")
 end
-function init_ecolog_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "ecolog")
+function init_ecolog_task_dialog(...)
+	get_random_task():init_task_dialog(..., "ecolog")
 end
-function init_dolg_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "dolg")
+function init_dolg_task_dialog(...)
+	get_random_task():init_task_dialog(..., "dolg")
 end
-function init_freedom_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "freedom")
-end
-
-
-function init_shustriy_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "shustriy")
-end
-function init_lisiy_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "lisiy")
-end
-function init_hunter_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "hunter")
-end
-function init_drunk_dolg_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "drunk_dolg")
-end
-function init_petrenko_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "petrenko")
-end
-function init_wolf_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "wolf")
-end
-function init_zastava_commander_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "zastava_commander")
-end
-function init_mercenary_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "mercenary")
-end
-
-function init_nebo_task_dialog(dlg)
-  get_random_task():init_task_dialog(dlg, "nebo")
+function init_freedom_task_dialog(...)
+	get_random_task():init_task_dialog(..., "freedom")
 end
 
 
-
-function init_trader_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "trader")
+function init_shustriy_task_dialog(...)
+	get_random_task():init_task_dialog(..., "shustriy")
 end
-function init_barman_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "barman")
+function init_lisiy_task_dialog(...)
+	get_random_task():init_task_dialog(..., "lisiy")
 end
-function init_ecolog_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "ecolog")
+function init_hunter_task_dialog(...)
+	get_random_task():init_task_dialog(..., "hunter")
 end
-function init_dolg_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "dolg")
+function init_drunk_dolg_task_dialog(...)
+	get_random_task():init_task_dialog(..., "drunk_dolg")
 end
-function init_freedom_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "freedom")
+function init_petrenko_task_dialog(...)
+	get_random_task():init_task_dialog(..., "petrenko")
 end
-
-
-
-function init_shustriy_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "shustriy")
+function init_wolf_task_dialog(...)
+	get_random_task():init_task_dialog(..., "wolf")
 end
-function init_lisiy_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "lisiy")
+function init_zastava_commander_task_dialog(...)
+	get_random_task():init_task_dialog(..., "zastava_commander")
 end
-function init_hunter_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "hunter")
+function init_mercenary_task_dialog(...)
+	get_random_task():init_task_dialog(..., "mercenary")
 end
-function init_drunk_dolg_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "drunk_dolg")
-end
-function init_petrenko_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "petrenko")
-end
-function init_wolf_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "wolf")
-end
-function init_zastava_commander_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "zastava_commander")
-end
-function init_mercenary_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "mercenary")
-end
-
-function init_nebo_reward_dialog(dlg)
-  get_random_task():init_reward_dialog(dlg, "nebo")
+function init_nebo_task_dialog(...)
+  get_random_task():init_task_dialog(..., "nebo")
 end
 
 
-function has_active_vendor_task(actor, npc)
-  return get_random_task():active_parent_task(actor, npc)
+function init_trader_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "trader")
 end
-function precondition_task_avail(actor, npc, p1, p2, p3)
-  return get_random_task():task_avail(actor, npc, p1, p2, p3, false)
+function init_barman_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "barman")
 end
-function precondition_active_task(actor, npc, p1, p2, p3)
-  return get_random_task():active_task(actor, npc, p1, p2, p3)
+function init_ecolog_reward_dialog(...)
+	log3("ecolog dialog")
+	get_random_task():init_reward_dialog(..., "ecolog")
 end
-function precondition_completed_task(actor, npc, p1, p2, p3)
-  return get_random_task():completed_task(actor, npc, p1, p2, p3)
+function init_dolg_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "dolg")
 end
-function precondition_notcompleted_task(actor, npc, p1, p2, p3)
-  return not get_random_task():completed_task(actor, npc, p1, p2, p3)
-end
-
-function precondition_vendor_can_task(npc, actor, p1, p2, p3)
-  return get_random_task():parent_can_task(actor, npc, p1, p2, p3)
-end
-function precondition_vendor_cannot_task(npc, actor, p1, p2, p3)
-  return not get_random_task():parent_can_task(actor, npc, p1, p2, p3)
-end
-function precondition_have_completed_job(npc, actor, p1, p2, p3)
-  return get_random_task():have_completed_job(actor, npc)
-end
-function precondition_dont_have_completed_job(npc, actor, p1, p2, p3)
-  return not get_random_task():have_completed_job(actor, npc)
+function init_freedom_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "freedom")
 end
 
-function action_task_show(npc, actor)
-  get_random_task():action_task_show(npc, actor)
+
+function init_shustriy_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "shustriy")
 end
-function action_give_task(actor, npc, p1, p2)
-  get_random_task():action_give_task(actor, npc, p1, p2)
+function init_lisiy_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "lisiy")
 end
-function action_refuse_task(npc, actor, p1, p2)
-  get_random_task():action_refuse_task(npc, actor, p1, p2)
+function init_hunter_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "hunter")
 end
-function action_task_reward(actor, npc, p1, p2)
-  get_random_task():task_reward(npc, actor, p1, p2)
+function init_drunk_dolg_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "drunk_dolg")
 end
-function reward_by_task(task) 
-  get_random_task():task_reward_storyline(task)
+function init_petrenko_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "petrenko")
+end
+function init_wolf_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "wolf")
+end
+function init_zastava_commander_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "zastava_commander")
+end
+function init_mercenary_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "mercenary")
+end
+function init_nebo_reward_dialog(...)
+	get_random_task():init_reward_dialog(..., "nebo")
 end
 
-function task_complete(p1, p2)
-  return get_random_task():task_complete(p1, p2)
+function has_active_vendor_task(...)
+	return get_random_task():active_parent_task(...)
 end
-function task_fail(p1, p2)
-  return get_random_task():task_fail(p1, p2)
+function precondition_task_avail(...)
+	return get_random_task():task_avail(...)
 end
-function task_callback(p1, p2, state)
-  return get_random_task():task_callback(p1, p2, state)
+function precondition_active_task(...)
+	return get_random_task():active_task(...)
 end
 
-function actor_update()
-  get_random_task():actor_update()
+function precondition_vendor_can_task(npc, actor, ...)
+	return get_random_task():parent_can_task(actor, npc, ...)
+end
+function precondition_vendor_cannot_task(...)
+	return not precondition_vendor_can_task(...)
+end
+function precondition_have_completed_job(npc, actor)
+	return get_random_task():have_completed_job(actor, npc)
+end
+function precondition_dont_have_completed_job(...)
+	return not precondition_have_completed_job(...)
+end
+
+function action_task_show(...)
+	get_random_task():action_task_show(...)
+end
+function action_give_task(...)
+	get_random_task():action_give_task(...)
+end
+function action_refuse_task(...)
+	get_random_task():action_refuse_task(...)
+end
+function action_task_reward(...)
+	get_random_task():task_reward(...)
+end
+function reward_by_task(...)	
+	get_random_task():task_reward_storyline(...)
+end
+
+function task_complete(...)
+	return get_random_task():task_complete(...)
+end
+function task_fail(...)
+	return get_random_task():task_fail(...)
+end
+function task_callback(...)
+	return get_random_task():task_callback(...)
 end
 
 function save()
-  get_random_task():save()
+	get_random_task():save()
+end
+function load()
+	get_random_task():load()
 end
 
-function load( p )
-  get_random_task():load( p )
-end
-
-function clear_task_manager()
-  random_task  = nil
-end
-
-function amk_add_target_id_to_kill_targets(id,dialog,task_id)
-  local targets = ogse.load_var("kill_targets", {})
-  table.insert(targets,{id = id, dialog = dialog, task_id = task_id})
-  ogse.save_var("kill_targets", targets)
-end
-
-function amk_remove_target_id_from_kill_targets(id)
-  local targets = ogse.load_var("kill_targets", {})
-  for n,v in pairs(targets) do
-    if v.id == id then
-      table.remove(targets, n)
-      break
-    end
-  end
-  ogse.save_var("kill_targets", targets)
-end
-
-function make_task_failed(task_id)
-  get_random_task():make_task_failed(task_id)  
-end
-
-function show_reward(actor,npc,p1,p2)
-	local reward_text, reward_money, task_details
-	
-	if random_task == nil then
-		random_task = task_manager.CRandomTask()
-	end
-	
-	task_details = random_task.task_info[random_task.task_id_by_init_phrase_id[p2-1]]
-	
+function show_reward(actor, npc, p1, p2)
+	local item_texture, item_rect = get_texture_info("ui_iconsTotal_find_item")
+	local task_details = get_random_task().task_info[get_random_task().task_id_by_desc_phrase_id[p2]]
 	if task_details == nil then return end
-	
-	reward_text = format_reward_text(task_details.reward_item)
-	reward_money = task_details.reward_money
-	
-	local task_texture, task_rect = get_texture_info("ui_iconsTotal_find_item")
-	if reward_text ~= nil and reward_text ~= "" then
-		db.actor:give_talk_message("пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ:", "ui\\ui_iconstotal", Frect():set(0,0,10,10), "simple_answer_item")
-		db.actor:give_talk_message(reward_text, task_texture, task_rect,"other_iconed_answer_item")
+	if not task_details.reward_item and not task_details.reward_money then return end
+	--
+	local rt = ogse_random_task_reward.random_task_reward( task_details.parent, get_random_task().task_id_by_desc_phrase_id[p2] )
+	if rt.random_task_reward_accept == 1 and rt.difficult_list[get_random_task().task_id_by_desc_phrase_id[p2]] then
+		return
 	end
-	
-	if reward_money ~= nil then 
-		task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
-		if task_details.need_return and reward_text == "" then
-			db.actor:give_talk_message(reward_money .. " RU (" .. game.translate_string("return_for_reward") .. ")", task_texture, task_rect, "other_iconed_answer_item")
-		else
-			db.actor:give_talk_message(reward_money .. " RU", task_texture, task_rect,"other_iconed_answer_item")
+	--
+	db.actor:give_talk_message(game.translate_string("show_reward"), item_texture, item_rect, "other_iconed_answer_item")
+	--
+	if task_details.reward_item then
+		local rwd = {}
+		for _, sect in ipairs(task_details.reward_item) do
+			rwd[sect] = not rwd[sect] and 1 or rwd[sect] + 1
+		end
+		for sect, num in pairs(rwd) do
+			db.actor:give_talk_message(
+				( num > 1 and num .. " x " or "" ) .. dsh.strip_quotes( game.translate_string( get_string( sect, "inv_name" ) ) )
+				, item_texture, item_rect, "other_iconed_answer_item"
+			)
 		end
 	end
-	
-end
-
-function format_reward_text(reward_list)
-	local i,v, ii, vv
-	local rwd = {}
-	local reward_text = ""
-	if reward_list == nil then return "" end
-	for i,v in pairs(reward_list) do
-		if rwd[v] == nil then
-			rwd[v] = 1
-		else
-			rwd[v] = rwd[v] + 1
-		end
+	--
+	if task_details.reward_money then 
+		local money_texture, money_rect = get_texture_info("ui_iconsTotal_found_money")
+		db.actor:give_talk_message(task_details.reward_money .. " RU", money_texture, money_rect, "other_iconed_answer_item")
 	end
-	for i,v in pairs(rwd) do
-		if v == 1 then
-			reward_text = reward_text .. game.translate_string(news_manager.get_inv_name(i)) .. ", "
-		else
-			reward_text = reward_text .. string.format("%s",v) .. "x " .. game.translate_string(news_manager.get_inv_name(i)) .. ", "
-		end
-	end
-	if string.len(reward_text) >=2 then
-		reward_text = string.sub (reward_text, 1, string.len(reward_text)-2)
-	end
-	return reward_text
 end

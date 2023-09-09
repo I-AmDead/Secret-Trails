@@ -3,7 +3,6 @@
 in_hide = false
 
 function attach( sm )
-  sm:subscribe({ signal = "on_drop",         fun = this.check_for_af_drop })
   sm:subscribe({ signal = "on_use",          fun = this.treasure_create   })
   sm:subscribe({ signal = "on_npc_use",      fun = this.check_usable_item })
   sm:subscribe({ signal = "on_npc_spawn",    fun = this.build_btrs_table  })
@@ -30,8 +29,8 @@ function first_run()
   
 	ogse.spawn_item_in_inv("matras")
 
-	alife():create("x18_zapiska_ruk",vector():set( 21.6, -3.94, -18.28 ), 1140, 5991 )
-	alife():create("x16_zapiska_ruk",vector():set( -128.0, 22.5, -30.0), 1543, 7083 )
+	alife():create("x18_zapiska_ruk",vector():set(21.6, -5.64, -18.28 ), 5991, 1140)
+	alife():create("x16_zapiska_ruk",vector():set(-128.0, 22.5, -30.0), 35, 1529)
 
 	local obj = alife():story_object(830)
 	if obj then
@@ -85,20 +84,24 @@ end
 --'   **   **   **   **   **    **   **   **      AF_TRANSFORM         **   **   **   **   **    **   **   **
 --'*******************************************************************************
 
--- проверка на упавший предмет/артефакт
-function check_for_af_drop(obj)
+-- проверка на артефакт вошедший в зону
+function af_on_enter_zone(obj)
 	local is_komponent = get_bool(obj:section(), "is_komponent", false)
+
 	-- проверка не один ли это из компонентов
 	if not is_komponent then return end
-	local hasanom, anom_id, anom_pos, cls, dist, anom_radius, sect_anom = ogse_anomaly.get_nearest_anomaly_by_point(db.actor:position())
-	if not ( anom_id and dist < 3 ) then return end
+
+	local hasanom, anom_id, anom_pos, cls, dist, anom_radius, sect_anom = ogse_anomaly.get_nearest_anomaly_by_point(obj:position())
+
+	if not ( anom_id and dist < 5 ) then return end
+
 	local lv = level.object_by_id(anom_id):level_vertex_id()
 	local gv = level.object_by_id(anom_id):game_vertex_id()
 	
 	if gv == 65535 then
 		gv = obj:game_vertex_id()
 	end
-	
+
 	if gv == 65535 then
 		gv = db.actor:game_vertex_id()
 	end
@@ -107,12 +110,13 @@ function check_for_af_drop(obj)
 
 	-- предмет подходит - отправляем его на экспертизу
 	-- узнаем не съели ли его или вvложили в нvчку
-	local tbl = {}
-	tbl.obj_id = obj:id()
-	tbl.anom_id = anom_id
-	tbl.anom_radius = anom_radius
-	tbl.lv = lv
-	tbl.gv = gv
+	local tbl = 
+	{
+		anom_id = anom_id,
+		obj_id = obj:id(),
+		lv = lv,
+		gv = gv
+	}
 	dsh.start_timer("timer_drop_obj_varka", 0.2, "amk_mod.timer_drop_varka", tbl)
 end
 
@@ -124,11 +128,7 @@ function timer_drop_varka(tbl)
 		local obj = level.object_by_id(tbl.obj_id)
 		local anom = level.object_by_id(tbl.anom_id)
 		if obj and anom then
-			local obj_sect = obj:section()
-			local obj_pos = obj:position()
-			local anom_sect = anom:section()
-			local anom_pos = anom:position()
-			check_af_transform(obj, obj_sect, obj_pos, tbl.anom_id, anom_sect, anom_pos, tbl.anom_radius, tbl.lv, tbl.gv)
+			check_af_transform(obj, anom, tbl.lv, tbl.gv)
 		end
 	end
 end
@@ -136,152 +136,140 @@ end
 
 -- проверяет рецептv и компонетv
 -- если всї в порядке - запускает варку/мутациі
-function check_af_transform(af, af_sect, obj_pos, anom_id, anom_sect, anom_pos, anom_radius, lv, gv)
-	local actor = db.actor
-	
+function check_af_transform(obj, anom, lv, gv)
 	--поиск по аномалиям
-	local is_anomaly = get_bool(anom_sect, "is_anomaly", false)
+	local is_anomaly = get_bool(anom:section(), "is_anomaly", false)
+log3("anom:section() %s is_anomaly %s", anom:section(), is_anomaly)
 	if not is_anomaly then return end
-
 	local recipe_fits = false
-
 	-- собираем рецептv, в которvх участвует даннvй компонент
-	local component_sect_string = nil
-	local lucky_sect_string = nil
-	local lucky_percent = nil
-	local bad_percent = nil
-	local bad_sect_string = nil
-	local time_vector = nil
-	local anomaly_remove_bool = nil
+	local component_sect_string, lucky_sect_string, bad_sect_string
+	local lucky_percent, bad_percent, time_vector, anomaly_remove_bool
 	
-	for info, recipe in pairs(split_comma_separated_list(get_string(anom_sect, "anomaly_recipes"))) do
-		for index, item_sect in pairs(split_comma_separated_list(get_string("transform_"..recipe, "components"))) do
-			component_sect_string = item_sect
-			if actor:has_info(recipe) and component_sect_string == af_sect then --есть рецепт и этот компонент в нём участвует
-				lucky_sect_string = get_string("transform_"..recipe, "lucky_sect")
-				lucky_percent = get_u32("transform_"..recipe, "lucky_percent") + has_alife_info("acv_art") and 10 or 0
-				bad_percent = get_u32("transform_"..recipe, "bad_percent") - has_alife_info("acv_art") and 10 or 0
-				bad_sect_string = get_string("transform_"..recipe, "bad_sect")
-				time_vector = get_vector("transform_"..recipe, "time")
-				anomaly_remove_bool = get_bool("transform_"..recipe, "remove_anomaly")
-				local count = 0
-				count = count + 1
-				recipe_fits = true
-				if recipe_fits then
-					break
-				end
+	for info, recipe in pairs(split_comma_separated_list(get_string(anom:section(), "anomaly_recipes"))) do
+		component_sect_string = get_string("transform_"..recipe, "components")
+		if db.actor:has_info(recipe) and component_sect_string == obj:section() then --есть рецепт и этот компонент в нём участвует
+			lucky_sect_string = get_string("transform_"..recipe, "lucky_sect")
+			lucky_percent = get_u32("transform_"..recipe, "lucky_percent")
+			bad_percent = get_u32("transform_"..recipe, "bad_percent")
+			bad_sect_string = get_string("transform_"..recipe, "bad_sect")
+			time_vector = get_vector("transform_"..recipe, "time")
+			anomaly_remove_bool = get_bool("transform_"..recipe, "remove_anomaly")
+			if has_alife_info("acv_art") then
+				lucky_percent = lucky_percent + 10
+				bad_percent = bad_percent - 10
 			end
+			recipe_fits = true
+			break
 		end
 	end
 			
-	if recipe_fits then
-		if af and not af:parent() and af:position():distance_to(anom_pos) < 4 then
+	if not recipe_fits then return end
 
-			-- если компонент есть в рецепте
-			if component_sect_string == af:section() then
-				-- уменьшаем количество компонентов в рецепте
-				count = count - 1
+	if obj and not obj:parent() then
+		-- если компонент есть в рецепте
+		if component_sect_string == obj:section() then
+			-- устанавливаем все параметры для рецепта, возможно из умолчаний
+			local result_sect, luck = af_select_result(lucky_percent, bad_percent, bad_sect_string, lucky_sect_string, component_sect_string)
+		
+			if not lucky_sect_string or not lucky_percent or not bad_percent
+			or not bad_sect_string or not time_vector or anomaly_remove_bool == nil
+			or (not lucky_sect_string and not anomaly_remove_bool)
+			or lucky_percent + bad_percent > 100 then
+				-- кривой рецепт  - выходим
+				return
+			end
+log3("stage 7")			
+			-- неудача
+			if not luck then
+				anomaly_remove_bool = false
+			end
 
-				-- если рецепт пуст, то он сработал
-				if count == 0 then
-					-- устанавливаем все параметрv для рецепта, возможно из умолчаний
-					local result_sect, luck = af_select_result(lucky_percent, bad_percent, bad_sect_string, lucky_sect_string, component_sect_string)
-							
-					if not lucky_sect_string or not lucky_percent or not bad_percent
-					or not bad_sect_string or not time_vector or anomaly_remove_bool == nil
-					or (not lucky_sect_string and not anomaly_remove_bool)
-					or lucky_percent + bad_percent > 100 then
-						-- кривой рецепт  - выходим
-						return
-					end
-							
-					-- неудача
-					if luck == false then
-						anomaly_remove_bool = false
-					end
+			-- запускаем варку/мутацию
+			local t = { -- сохраняемые данные
+				comp   = component_sect_string,
+				result = result_sect,
+				pos_x = obj:position().x,
+				pos_y = obj:position().y,
+				pos_z = obj:position().z,
+				gv = gv,
+				lv = lv,
+				remove_anomaly    = anomaly_remove_bool,
+				remove_anomaly_id = anom:id()
+			}
 
-					-- запускаем варку/мутацию
-					local t = { } -- сохраняемые данные
-					t.komp   = component_sect_string
-					t.result = result_sect
-					t.pos    = {}
-					t.pos.x  = obj_pos.x
-					t.pos.y  = obj_pos.y
-					t.pos.z  = obj_pos.z
-					t.gv     = gv
-					t.lv     = lv
-					t.remove_anomaly    = anomaly_remove_bool
-					t.remove_anomaly_id = anom_id
-					dsh.start_gtimerDHMS("af_transform", time_vector.x, time_vector.y, time_vector.z, 0, "amk_mod.af_transform_universal_end", t)
-
-					-- удаляем из игры компоненты рецепта
-					alife():release(alife():object(af:id()))
-
+			if dsh.is_actor_looking_to_pos(obj:position(), obj:radius() * 2) or db.actor:position():distance_to(anom:position()) < 5 then
+				t.actor_signal = db.actor:position():distance_to(anom:position()) < 30
+				if db.actor:position():distance_to(anom:position()) < 5 then
 					level.add_pp_effector("teleport.ppe", 1524, false)
 				end
 			end
+			dsh.start_gtimerDHMS("af_transform", time_vector.x, time_vector.y, time_vector.z, 0, "amk_mod.af_transform_universal_end", t)
+
+			-- удаляем из игры компоненты рецепта
+			alife():release(alife():object(obj:id()))
 		end
 	end
 end
 
 -- случайно выбирает результат, возвращает таблицу с секциями результатов
 function af_select_result(v_udachi, v_virogd, virogd, cel, komp)
-	local rnd = math.random(0,100)
-	if rnd > v_udachi then -- неудача
-		if rnd > v_virogd + v_udachi then -- отторжение
-			return komp, false
-		else -- вырождение
-			return virogd, false
-		end
-	else -- удача
-		return cel, true
+	local rnd = math.random(0, 100)
+	local success = rnd <= v_udachi
+
+	if not success then
+		return rnd > v_virogd + v_udachi and komp or virogd, false
 	end
+
+	return cel, true
 end
 
 -- завершаем варку/мутации
 -- может быть много результатов
 function af_transform_universal_end( params )
 
-	-- для совместимости со старыми варками
-	local count = 0
-	for k, v in pairs(split_comma_separated_list(params.result)) do
-		count = count + 1
-	end
-	
+	local comp = split_comma_separated_list(params.comp)
+	local result = split_comma_separated_list(params.result)
+	local count = #result
+
 	if count > 0 then
-		local anom_pos = vector():set(params.pos.x, params.pos.y, params.pos.z)
-		if db.actor:position():distance_to(anom_pos) < 15 then
+		local anom_pos
+		if type(params.pos) == "table" then
+			params.pos = vector():set(unpack(params.pos))
+			anom_pos = vector():set(params.pos.x, params.pos.y, params.pos.z)
+		else
+			anom_pos = vector():set(params.pos_x, params.pos_y, params.pos_z)
+		end
+
+		if anom_pos and db.actor:position():distance_to(anom_pos) < 5 and dsh.is_actor_looking_to_pos(anom_pos, 0.5) then
 			level.add_pp_effector("teleport.ppe", 1524, false)
 		end
 		
 		-- формируем строку с названиями компонентов
-		local from_komp = ""
-		for k,v in pairs(split_comma_separated_list(params.komp)) do
-			if k then
-				from_komp = from_komp..game.translate_string(news_manager.get_inv_name(v))
-			end
+		local from_comp = ""
+		for k,v in pairs(comp) do
+			from_comp = from_comp .. game.translate_string(news_manager.get_inv_name(v))
 		end
 		
 		-- спавним результат(ы)
-		for k,v in pairs(split_comma_separated_list(params.result)) do
-			local sobj = alife():create(v, vector():set( params.pos.x, params.pos.y + 1, params.pos.z ), params.lv, params.gv)
-			level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title").."%c[red]"..from_komp)
+		for k,v in pairs(result) do
+			local sobj = alife():create(v, vector():set(anom_pos.x, anom_pos.y + 1, anom_pos.z), params.lv, params.gv)
+			alife():use_ai_locations(sobj, false)
+			if params.actor_signal then
+				level.map_add_object_spot(sobj.id, "red_location", game.translate_string("trans_finished_title") .. "%c[red]" .. from_comp)
+				news_manager.send_tip(db.actor, game.translate_string("trans_finished_title") .. "%c[255,255,0,0]" .. from_comp)
+			end
 			archievements.acv_count_event("acv_art", 100, game.translate_string("acv_art"))
 		end
-
-		news_manager.send_tip(db.actor, game.translate_string("trans_finished_title").."%c[255,255,0,0]"..from_komp)
 	end
 	
 	-- удаляем аномалии, если нужно и она не в исключениях
-	-- код взят из turn_off_all()
 	if params.remove_anomaly then
-		local sobj = alife():object( params.remove_anomaly_id )
-		if sobj and game_graph():valid_vertex_id( sobj.m_game_vertex_id ) then
-			if is_generated_anomaly( sobj ) then
-				dsh_anomaly_detector.remove_restriction( sobj.id )
-			end
+		local sobj = alife():object(params.remove_anomaly_id)
+		if sobj and game_graph():valid_vertex_id(sobj.m_game_vertex_id) and is_generated_anomaly(sobj) then
+			dsh_anomaly_detector.remove_restriction(sobj.id)
 		end
-	end
+ 	end
 
 	return af_sobj
 end
@@ -387,14 +375,20 @@ function check_usable_item(obj)
 	elseif obj:section()=="amk_zapiska" then
 		if level.name()=="l01_escape" then
 			db.actor:give_info_portion("info_amk_recipt_shkura")
-			ogse.remove_inv_items_by_section(obj)
+			ogse.remove_inv_items_by_section(obj:section())
 		elseif level.name()=="l04u_labx18" then
 			db.actor:give_info_portion("info_amk_recipt_simbion")
-			ogse.remove_inv_items_by_section(obj)
+			ogse.remove_inv_items_by_section(obj:section())
 		elseif level.name()=="l08u_brainlab" then
 			db.actor:give_info_portion("info_amk_recipt_dummy")
-			ogse.remove_inv_items_by_section(obj)
+			ogse.remove_inv_items_by_section(obj:section())
 		end
+	elseif obj:section()=="amk_zapiska_tears_electra" then
+		db.actor:give_info_portion("info_amk_recipt_tears_electra")
+		ogse.remove_inv_items_by_section(obj:section())
+	elseif obj:section()=="amk_zapiska_tears_chimaera" then
+		db.actor:give_info_portion("info_amk_recipt_tears_chimaera")
+		ogse.remove_inv_items_by_section(obj:section())
 	end
 	level.map_remove_object_spot(obj:id(), "red_location")
 end
@@ -487,88 +481,84 @@ function switch_monster_offline(obj)
 end
 
 function respawned(obj,respawner)
-	if IsMonster(obj) then
+	if IsMonster(obj) or IsStalker(obj) then
 		local sini = respawner:spawn_ini()
-		if sini:line_exist ("respawn", "creature_binded_logic") == true then
+		if sini:line_exist("respawn", "creature_binded_logic") then
 			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
-			obj.custom_data = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
-		end
-	elseif IsStalker(obj) then
-		local sini = respawner:spawn_ini()
-		if sini:line_exist ("respawn", "creature_binded_logic") == true then
-			local cfg_name = utils.cfg_get_string(sini, "respawn", "creature_binded_logic", false, false, false, "")
-			obj.custom_data = "[logic]\ncfg = scripts\\amk\\"..cfg_name..".ltx"
+			obj.custom_data = "[logic]\ncfg = scripts\\amk\\" .. cfg_name .. ".ltx"
 		end
 	end	
 end
 
-local respawners={}
+local respawners = {}
 
 function spawn_unspawned_respawners()
+    for a = 1, 65534 do
+        local obj = alife():object(a)
+        if obj then
+            local oini = obj:spawn_ini()
+            if oini:line_exist("respawn", "amk_name") then
+                local amk_name = utils.cfg_get_string(oini, "respawn", "amk_name", false, false, false, false)
+                if amk_name then
+                    respawners[amk_name] = true
+                end
+            end
+        end
+    end
 
-	for a=1,65534 do
-		local obj = alife():object(a)
-		if obj then
-			local oini = obj:spawn_ini()
-			if oini:line_exist ("respawn", "amk_name") == true then
-				local amk_name = utils.cfg_get_string(oini, "respawn", "amk_name", false, false, false, false)
-				if amk_name then respawners[amk_name]=true end
-			end
-		end
-	end
+    local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
+    local dv = {}
 
-	local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
-	
-	local dv={}
-	if sini:section_exist("default_values") then
-		local result, id, value = nil, nil, nil
-		for a=0,sini:line_count("default_values")-1 do
-			result, id, value = sini:r_line("default_values",a,"","")
-			if id~=nil and xrs_utils.trim(id)~="" and xrs_utils.trim(id)~=nil then
-				dv[xrs_utils.trim(id)]=xrs_utils.trim(value)
-			end
-		end
-	end
+    if sini:section_exist("default_values") then
+        for a = 0, sini:line_count("default_values") - 1 do
+            local result, id, value = sini:r_line("default_values", a, "", "")
+            if id and id ~= "" then
+                dv[xrs_utils.trim(id)] = xrs_utils.trim(value)
+            end
+        end
+    end
 
-	if sini:section_exist("amk_respawns") then
-		local tmp={}
-		local result, id, value = nil, nil, nil
-		for a=0,sini:line_count("amk_respawns")-1 do
-			result, id, value = sini:r_line("amk_respawns",a,"","")
-			if id~=nil and xrs_utils.trim(id)~="" and xrs_utils.trim(id)~=nil then
-				table.insert(tmp, xrs_utils.trim(id))
-			end
-		end
-		
-		for k,v in pairs(tmp) do
-			local flag = utils.cfg_get_bool(sini, "amk_respawns", v, true, false, false)
-			if not respawners[v] and flag==true then
-				local t = xrs_utils.parse_ini_section_to_array(sini, v)
-				local xyzlg = xrs_utils.str_explode(",",t.xyzlg,true)
-				local pos = vector():set(tonumber(xyzlg[1]),tonumber(xyzlg[2]),tonumber(xyzlg[3]))
-				local respawner = alife():create("respawn",pos,tonumber(xyzlg[4]),tonumber(xyzlg[5]))
-				local tbl = xrs_utils.get_spawner_data(respawner)
-				t.xyzlg = nil
-				t.amk_name = v
+    if sini:section_exist("amk_respawns") then
+        local tmp = {}
 
-				for kkk,vvv in pairs(dv) do
-					if t[kkk]==nil then
-						t[kkk]=vvv
-					end
-				end
+        for a = 0, sini:line_count("amk_respawns") - 1 do
+            local result, id, value = sini:r_line("amk_respawns", a, "", "")
+            if id and id ~= "" then
+                table.insert(tmp, xrs_utils.trim(id))
+            end
+        end
 
-				tbl.custom = xrs_utils.gen_custom_data({respawn=t})
-				xrs_utils.set_spawner_data(tbl, respawner)
-				se_respawn.reinit_spawner_params(respawner:name())
-			end
-			if flag==false then
-				local o = se_respawn.get_respawner_by_name(v)
-				if o then
-					alife():release(o)
-				end
-			end
-		end
-	end
+        for _, v in ipairs(tmp) do
+            local flag = utils.cfg_get_bool(sini, "amk_respawns", v, true, false, false)
+            
+            if not respawners[v] and flag then
+                local t = xrs_utils.parse_ini_section_to_array(sini, v)
+                local xyzlg = xrs_utils.str_explode(",", t.xyzlg, true)
+                local pos = vector():set(tonumber(xyzlg[1]), tonumber(xyzlg[2]), tonumber(xyzlg[3]))
+                local respawner = alife():create("respawn", pos, tonumber(xyzlg[4]), tonumber(xyzlg[5]))
+                local tbl = xrs_utils.get_spawner_data(respawner)
+                t.xyzlg = nil
+                t.amk_name = v
+
+                for k, v in pairs(dv) do
+                    if t[k] == nil then
+                        t[k] = v
+                    end
+                end
+
+                tbl.custom = xrs_utils.gen_custom_data({ respawn = t })
+                xrs_utils.set_spawner_data(tbl, respawner)
+                se_respawn.reinit_spawner_params(respawner:name())
+            end
+            
+            if not flag then
+                local o = se_respawn.get_respawner_by_name(v)
+                if o then
+                    alife():release(o)
+                end
+            end
+        end
+    end
 end
 
 --'*******************************************************************************

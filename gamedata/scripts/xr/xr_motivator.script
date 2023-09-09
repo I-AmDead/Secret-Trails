@@ -70,7 +70,7 @@ function motivator_binder:net_spawn(sobject)
   self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self )
   self.object:set_callback(callback.on_item_drop, self.on_item_drop, self)	
   self.object:set_callback(callback.on_item_take, self.on_item_take, self)
-  self.object:set_callback(callback.on_foot_step, self.on_foot_step, self )
+  self.object:set_callback(callback.on_footstep, self.on_footstep, self )
   self.object:set_enemy_callback( self.enemy_callback, self )
   self.am:call( "on_npc_before_spawn", self.object, self )
   if not self.object:alive() then
@@ -183,7 +183,7 @@ function motivator_binder:clear_callbacks()
   self.object:set_callback(callback.on_item_drop, nil)
   self.object:set_callback(callback.on_item_take, nil)
   self.object:set_callback(callback.entity_alive_before_hit, nil)
-  self.object:set_callback(callback.on_foot_step, nil)
+  self.object:set_callback(callback.on_footstep, nil)
   self.object:set_enemy_callback()
 end
 
@@ -256,6 +256,10 @@ function motivator_binder:death_callback(victim, who)
           for kk,vv in pairs(self.particles) do
               vv:on_death()
           end
+  end
+
+  if who and who:id() == db.actor:id() then
+    archievements.acv_kill()
   end
 
   actor_stats.remove_from_ranking( self.object:id() )
@@ -437,7 +441,7 @@ function motivator_binder:on_item_take(obj)
   )
 end
 
-function motivator_binder:on_foot_step(obj, power)
+function motivator_binder:on_footstep(obj, power)
   if not obj then return end
   local sobj = alife():object(obj:id())
   if not sobj then return end

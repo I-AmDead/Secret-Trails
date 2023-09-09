@@ -158,8 +158,6 @@ local function on_take(obj, sobj)
 			db.actor:give_info_portion("info_amk_recipt_almaz_kolobok") 
 			alife():release(sobj)
 		end
-	elseif obj:section()=="almaz" and not has_alife_info("amulet_kat") then 
-		db.actor:give_info_portion("amulet_kat")
 	elseif obj:section()=="flash_ban" and db.actor:has_info("voronin_nychka_jila") then 
 		remove_spot_ban() 
 		alife():release(sobj)
@@ -216,6 +214,11 @@ local function on_first_update()
 
 		if has_alife_info("sledopyt_first_dialog_done") and not has_alife_info("doctor_und_del") then
 			db.actor:give_info_portion("doctor_und_del")
+		end
+
+		if has_alife_info("bes_patron_start") and not has_alife_info("bes_patron_spawn") then
+			ogse_st_mgr.start_timer("bes_zasada",math.random(500,600), "braad_test.bes_zasada")
+			db.actor:give_info_portion("bes_patron_spawn")
 		end
 	end
 
@@ -461,10 +464,6 @@ local function on_first_update()
 			db.actor:give_info_portion("mervin1_delete")
 		end
 
-		if has_alife_info("haron_naem_done") and not has_alife_info("mervin3_spawn") then
-			db.actor:give_info_portion("mervin3_spawn")
-		end
-
 		if not db.actor:has_info("esc_serious_talk") then
 			local obj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
 			local obj = alife():create("add_military",vector():set(-22.787176132202,-7.3171,-28.85),284068,1593)
@@ -592,6 +591,12 @@ local function on_info(npc, info_id)
 	if level.name()=="l12_stancia_2" then
 		if has_alife_info("control_monolit_have") and not has_alife_info("keys_sms") then
 			db.actor:give_info_portion("keys_sms")
+		end
+	end
+
+	if level.name()=="l12u_sarcofag" then
+		if has_alife_info("haron_naem_done") and not has_alife_info("mervin3_spawn") then
+			db.actor:give_info_portion("mervin3_spawn")
 		end
 	end
 
@@ -1662,8 +1667,8 @@ function krugfour_spawn()
 end
 
 function aptec_spawn()
-	spawn_ai_location("medkit_army",vector():set(-102.13842773438,-4.4736680984497,-143.7165),1368,808)
-	spawn_ai_location("bandage",vector():set(-102.13842773438,-4.4736680984497,-143.7165),1368,808)
+	spawn_ai_location("medkit_army",vector():set(-102.1484,-4.4490,-143.855),1368,808)
+	spawn_ai_location("bandage",vector():set(-102.1384,-4.4736,-143.7165),1368,808)
 end
 
 function bes_zasada()
@@ -2373,8 +2378,8 @@ function mina_sclad()
 	db.actor:hit(h)
 	local mina_sclad_particle = particles_object("explosions\\explosion_fuelcan")
 	local mina_sclad_sound = sound_object([[weapons\t_rgd5_explosion]])
-	chimera_particle:play_at_pos(apos)
-	chimera_sound:play_at_pos(obj, apos, 0)    
+	mina_sclad_particle:play_at_pos(apos)
+	mina_sclad_sound:play_at_pos(db.actor, apos, 0)    
 	level.add_pp_effector("amk_shoot.ppe", 2011, false)
 end
 

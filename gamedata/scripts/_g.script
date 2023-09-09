@@ -667,7 +667,6 @@ function start_game_callback()
 
 	m_netpk.attach()
 
-	task_manager.clear_task_manager()
 	dialog_manager.fill_phrase_table() 
 end
 
@@ -740,6 +739,20 @@ function get_class(section)
 	ASSERT(sys_ini:section_exist(section), "get_class: section '"..section.."' doesn't exist")
 	ASSERT(sys_ini:line_exist(section, "class"), "get_class: there is no 'class' parameter in the section '"..section.."'")
 	return sys_ini:r_clsid(section, "class")
+end
+
+function get_rect(section, param, def_val, ini_file)
+	local ini = ini_file or sys_ini
+
+	if ini:line_exist(section, param) then
+		local pos = get_names(section, param, ini)
+		log3("pos %f %f %f %f", pos[1], pos[2], pos[3], pos[4])
+		return Frect():set(tonumber(pos[1]), tonumber(pos[2]), tonumber(pos[3]), tonumber(pos[4]))
+
+	else
+		return def_val
+	end
+	return nil
 end
 
 -- делит строку в виде "aaa,bbb,ccc" на строки "aaa", "bbb", "ccc" и возвращает их в виде массива

@@ -3,6 +3,7 @@
 function attach( sm )
   sm:subscribe({ signal = "on_first_update",          fun = this.animation_off         })
   sm:subscribe({ signal = "on_key_down",              fun = this.on_key_down           })
+  sm:subscribe({ signal = "on_key_up",                fun = this.on_key_up             })
   sm:subscribe({ signal = "on_item_before_pickup",    fun = this.on_item_before_pickup })
 end
 
@@ -18,6 +19,7 @@ local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
 local hide_hand_speed = 1.5
 local anim_plays
 local speed_k = 1.0
+local key_release = false
 
 local lowered_anm_kinds = {
 	["w_sniper"] 	= true,
@@ -64,6 +66,18 @@ function on_key_down(key, bind)
         torch_switcher()
     elseif pnv and bind == key_bindings.kNIGHT_VISION then
         nv_switcher()
+    elseif bind == key_bindings.kWATCH then
+        key_release = false
+        watch_wide()
+    end
+end
+
+function on_key_up(key, bind)
+    if level.main_input_receiver()
+    or not db.actor:alive() then return end
+
+    if bind == key_bindings.kWATCH then
+        key_release = true
     end
 end
 
@@ -320,4 +334,71 @@ function toggle_force_crouch()
         ogse_signals.get_mgr():subscribe( force_crouch_subscribed )
 
     end
+end
+
+-- EMULATION SWIPE RAIN DROPS
+function watch_wide()
+	local anm_name = "script\\gasmask.anm"
+	local anm_additional_length = 0.45
+	local itm = db.actor:active_item()
+				
+	if itm then
+		local kind = get_string(itm:section(),"kind")
+		local class = get_string(itm:section(),"class")
+		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
+			anm_name = "script\\gasmask.anm"
+			anm_additional_length = 0.75
+		end
+	end
+
+	if not anim_plays and allow_animation() then
+		local anm_start = 0
+		local anm_subscribed = false
+		local watch_anm_sec = "anim_watch"
+		local outfit = db.actor:item_in_slot(6)
+		if outfit then
+			exo = get_string(outfit:section(), "exo")
+			if exo then
+				watch_anm_sec = "anim_exo_watch"
+			end
+		end
+		local watch_anm_time
+		local watch2_anm_time
+		anim_plays = true
+		animation_on()
+		local function play_anim()
+			local time_g = time_global()
+			if mc_anm_state == 1 then
+				anm_start = time_g
+				watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
+				game.play_hud_anm(anm_name, 0, 0.5, 1, false)
+				mc_anm_state = 2
+			elseif mc_anm_state == 2 and time_g > anm_start + watch_anm_time then
+				if not key_release then
+					anm_start = time_g
+					game.set_hud_anm_time(anm_name, 10000000)
+					game.play_hud_motion(1, watch_anm_sec, "anm_idle", true, 1)
+				else
+					anm_start = time_g
+					watch2_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_fake_idle", true, 30)
+					mc_anm_state = 3
+				end
+			elseif mc_anm_state == 3 and time_g > anm_start + watch2_anm_time then
+				watch3_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_out", true, 1)
+				game.set_hud_anm_time(anm_name, (watch3_anm_time + 200) / 1000)
+				mc_anm_state = 4
+			elseif mc_anm_state == 4 and time_g > anm_start + watch3_anm_time then
+				anim_plays = false
+				if anm_subscribed then
+					ogse_signals.get_mgr():unsubscribe( anm_subscribed )
+					anm_subscribed = nil
+				end
+				mc_anm_state = 1
+				animation_off()
+			end
+		end
+
+		anm_subscribed = {signal = "on_update", fun = function() play_anim() end}
+		ogse_signals.get_mgr():subscribe( anm_subscribed )
+	end
 end

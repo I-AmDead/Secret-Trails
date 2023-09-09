@@ -1,0 +1,468 @@
+-- -*- mode: lua; coding: windows-1251-dos -*-
+
+------------- БИОРАДАР -------------
+-- Dетектор живых форм, будь он неладен.
+-- Автор Charsi
+-- Data 29.11.2012
+-- переработка для OGSE KamikaZze 2012-2014
+-- Оптимизация, исправление ошибок: KRodin (c) 2016
+
+-- Волна, затухание точек и звук выключены, потому что 1.)это глючно 2.)некрасиво
+
+------------- Настройки ------------
+local max_dist = 60 --Макс. расстояние до цели в игровых метрах
+local d = 128 --KRodin: Пусть так и будет, не трогать!
+local screen_max_dist = 85 --Ширина именно радара (Не текстуры!) в пикселях
+local dot_size = 3 --Размер точки (чем больше - тем точка крупнее)
+-------------------------------------
+local biomap_sweep_enabled = true -- I am dead: Включение и выключение волны.
+local biomap_sweep_dots_enabled = false -- I am dead: Включение и выключение угасание точек.
+local step_angle = 3 / 180 -- шаг за апдейт (скорость поворота)
+local angle = 0
+local lim_angle = 1000 * 2 * math.pi
+local biomap
+local biomap_sweep
+-------------------------------------
+local dots = {}
+
+local bio_showing = false
+
+UI_BASE_WIDTH = 1024.0
+UI_BASE_HEIGHT = 768.0
+
+local s, c, xa = 0, 1, 0
+
+local biomap_x_offset = 1024 / 2
+local biomap_y_offset = 768 / 2
+
+local sweep_add_x = -50
+local sweep_add_y = -50
+
+local xml = CScriptXmlInit()
+xml:ParseFile("zone_map.xml")
+
+local minimap_static, back_static, frame_static, compass_static
+
+local map_dlg = nil
+
+function get_current_kx()
+    local dev = device()
+    return (dev.height / dev.width) / (UI_BASE_HEIGHT / UI_BASE_WIDTH)
+end
+
+function attach(sm)
+	sm:subscribe({signal = "on_first_update", 	fun = this.on_first_update})
+	sm:subscribe({signal = "on_item_to_slot",	fun = this.on_item_to_slot})
+	sm:subscribe({signal = "on_item_to_ruck",	fun = this.on_item_to_ruck})
+	sm:subscribe({signal = "on_drop",		fun = this.on_item_to_ruck})
+	sm:subscribe({signal = "on_spawn", 		fun = this.on_spawn})
+	sm:subscribe({signal = "on_destroy", 		fun = this.on_destroy})
+	sm:subscribe({signal = "on_key_down", 		fun = this.on_key_down})
+	sm:subscribe({signal = "on_update", 		fun = this.on_update})
+	--sm:subscribe({signal = "on_talk_hide", 		fun = this.on_spawn})
+	--sm:subscribe({signal = "on_talk_open", 		fun = this.on_destroy})
+end
+
+local subscribed
+
+function subscribe()
+	if not subscribed then
+		subscribed = true
+	end
+end
+
+function unsubscribe()
+	if subscribed then
+		subscribed = nil
+		bioradar_hide()
+	end
+end
+
+function on_item_to_slot(obj)
+	if obj:section() == "bioradar" then
+		subscribe()
+	end
+end
+
+function on_item_to_ruck(obj)
+	if obj:section() == "bioradar" then --биорадар в Зоне есть в единственном экземпляре, поэтому проверку по id не делал.
+		unsubscribe()
+	end
+end
+
+function on_spawn()
+	local wnd      = get_main_window()
+
+	minimap_static = wnd:GetStatic("minimap")
+	back_static    = wnd:GetStatic("minimap:background")
+	frame_static   = wnd:GetStatic("minimap:level_frame")
+	compass_static = wnd:GetStatic("minimap:compass")
+
+	frame_static:Show(false)
+	minimap_static:Show(false)
+	compass_static:Show(false)
+	back_static:Show(false)
+
+	map_dlg = ui_map_viewer("ui_minimap_viewer.xml", obj)
+	on_minimap_show()
+end
+
+function on_destroy()
+	if not map_dlg then return end
+	level.remove_dialog_to_render(map_dlg)
+end
+
+function on_minimap_show()
+	if not map_dlg then return end
+	level.add_dialog_to_render(map_dlg)
+end
+
+function on_key_down(key, bind)
+	if bind == key_bindings.kBIOMAP_SWITCH and subscribed then
+		bio_showing = not bio_showing
+		if not bio_showing then
+			bioradar_hide()
+		end
+		ogse.save_var("biomap_show", bio_showing)
+	end
+end
+
+function on_update()
+	if map_dlg then
+		map_dlg:UpdateMap()
+	end
+end
+
+function set_position_offset(x, y)
+	biomap_x_offset = x
+	biomap_y_offset = y
+end
+
+
+local firmware_item = { --[Секция прошивки] = { [инфопоршен] = { [класс существ, которых инфопоршен разрешает отображать на биорадаре] = {цвет в формате таблицы r,g,b} } }
+  ['firmware_krovosos'] = {
+    ['bioradar_krovosos'] = {
+      [clsid.bloodsucker_s] = {255,0,120},
+    },
+  },
+  ['firmware_chimera'] = {
+    ['bioradar_chimera'] = {
+      [clsid.chimera_s] = {255,0,0},
+    },
+  },
+  ['firmware_burer'] = {
+    ['bioradar_burer'] = {
+      [clsid.burer_s] = {0,238,255},
+    },
+  },
+  ['firmware_psevdogigant'] = {
+    ['bioradar_psevdogigant'] = {
+      [clsid.gigant_s] = {255,0,0},
+    },
+  },
+  ['firmware_poltergeist'] = {
+    ['bioradar_poltergeist'] = {
+      [clsid.poltergeist_s] = {0,238,255},
+    },
+  },
+  ['firmware_tushkano'] = {
+    ['bioradar_tushkano'] = {
+      [clsid.tushkano_s] = {64,255,255},
+    },
+  },
+  ['firmware_flesh'] = {
+    ['bioradar_flesh'] = {
+      [clsid.flesh_s] = {64,153,79},
+    },
+  },
+  ['firmware_kontroler'] = {
+    ['bioradar_kontroler'] = {
+      [clsid.controller_s] = {0,238,255},
+    },
+  },
+  ['firmware_psevdodog'] = {
+    ['bioradar_psevdodog'] = {
+      [clsid.pseudodog_s] = {171,94,23},
+	  [clsid.psy_dog_s] = {171,94,23},
+    },
+  },
+  ['firmware_dog'] = {
+    ['bioradar_dog'] = {
+      [clsid.dog_s] = {252,158,66},
+    },
+  },
+  ['firmware_snork'] = {
+    ['bioradar_snork'] = {
+      [clsid.snork_s] = {145,71,214},
+    },
+  },
+  ['firmware_zombie'] = {
+    ['bioradar_zombie'] = {
+      [clsid.zombie_s] = {127,127,127},
+	  [clsid.fracture_s] = {127,255,127},
+    },
+  },
+  ['firmware_cat'] = {
+    ['bioradar_cat'] = {
+      [clsid.cat_s] = {252,158,66},
+    },
+  },
+  ['firmware_boar'] = {
+    ['bioradar_boar'] = {
+      [clsid.boar_s] = {64,153,79},
+    },
+  },
+  ['firmware_stalker'] = {
+    ['bioradar_stalker'] = {
+       [clsid.script_stalker] = {255,255,255},
+	   [clsid.actor] = {0,255,0},
+    },
+  },
+}
+
+local need_show_by_sect = {} --Для быстрого доступа по ключу
+
+function on_first_update()
+	local bio_marked = { --Кого показывать по умолчанию. I am dead: Включил по умолчанию показ всех существ.
+		["bioradar_krovosos"] = true,
+		["bioradar_chimera"] = true,
+		["bioradar_burer"] = true,
+		["bioradar_psevdogigant"] = true,
+		["bioradar_poltergeist"] = true,
+		["bioradar_tushkano"] = true,
+		["bioradar_flesh"] = true,
+		["bioradar_kontroler"] = true,
+		["bioradar_psevdodog"] = true,
+		["bioradar_dog"] = true,
+		["bioradar_snork"] = true,
+		["bioradar_zombie"] = true,
+		["bioradar_cat"] = true,
+		["bioradar_boar"] = true,
+		["bioradar_stalker"] = true
+	}
+	for k, v in pairs(bio_marked) do
+		if not has_alife_info(k) then
+			db.actor:give_info_portion(k)
+		end
+	end
+	--
+	for k, v in pairs(firmware_item) do
+		for p, t in pairs(v) do
+			if has_alife_info(p) then
+				for class, color in pairs(t) do
+					need_show_by_sect[class] = color
+				end
+			end
+		end
+	end
+
+	bio_showing = ogse.load_var("biomap_show", false)
+	if not subscribed then
+		hide()
+	end
+end
+
+class "dot" --Класс точки объекта
+function dot:__init(o, clsid, color)
+	self.o_id = o:id()
+	--log3("[%s] Adding dot with id [%s] for [%s]", script_name(), self.o_id, o:name())
+	dots[self.o_id] = self
+	self.alive = o:alive()
+	self.color = self.alive and color or {127,127,127}
+	self.a = biomap_sweep_dots_enabled and (self.o_id == 0 and 255 or 0) or 255
+	self.st = CUIStatic()
+	self.st:Init(1024, 0, dot_size * get_current_kx(), dot_size)
+	self.st:SetStretchTexture(true)
+	--self.st:EnableHeading(true)  -- так не работает, точки начинают сдвигаться
+
+	if self.alive then
+		self.st:InitTexture("biomap\\white_dot")
+	else
+		self.st:InitTexture("biomap\\white_cross")
+	end
+
+	self.st:SetAutoDelete(true)
+	self.st:SetColor(GetARGB(self.a, unpack(self.color)))
+
+	biomap:AttachChild(self.st)
+end
+
+function dot:draw(dir, obj_alive) --Нарисовать точку	
+        if self.alive and not obj_alive then
+            self.alive = false
+            self.st:InitTexture("biomap\\white_cross")
+            self.st:SetColor(GetARGB(self.a,127,127,127))
+	end
+	local vx,vz = dir.x/max_dist * screen_max_dist, -dir.z/max_dist * screen_max_dist
+        local x, y = (vx * c - vz * s) * get_current_kx() , vx * s + vz * c
+	self.st:SetWndPos(((x + d) + sweep_add_x) - 1, (y + d) + sweep_add_y - 1) -- -1 тут спецом, иначе точки сдвинуты вниз и вправо на 1 пискель
+        -------- угасание точек -------
+	if biomap_sweep_dots_enabled then
+		local u = math.atan2(y, x) * (180 / math.pi) + 180
+		if (xa > u and xa-u or u-xa) < 1.5 then
+			self.a = 255
+		elseif self.a > 2 then
+			self.a = self.a - 2
+		end
+		self.st:SetColor(GetARGB(self.a, unpack(self.color)))
+        end
+        ---------------------------------
+end
+
+function dot:hide() --Скрыть точку
+	local parent = biomap
+	if parent then
+		parent:DetachChild(self.st)
+	end
+	self.st = nil
+	dots[self.o_id] = nil
+end
+-- обновление положения точек и/или волны
+function update(parent)
+	if not biomap then
+		biomap = CUIStatic()
+		biomap:SetAutoDelete(false)
+
+		xml:InitExStatic("biomap", biomap)
+
+		local biomap_width = biomap:GetWidth()
+		local biomap_heigth = biomap:GetHeight()
+
+		local biomap_x = biomap_x_offset - biomap_width / 2
+		local biomap_y = biomap_y_offset - biomap_heigth / 2
+
+		biomap:SetWndPos(biomap_x, biomap_y)
+
+		parent:AttachChild(biomap)
+
+		biomap:InitTexture("biomap\\biomap_texture")
+
+		if not biomap_sweep then
+			biomap_sweep = CUIStatic()
+			biomap_sweep:SetAutoDelete(false)
+
+			xml:InitExStatic("biomap_sweep", biomap_sweep)
+
+			local biomap_sweep_width = biomap_sweep:GetWidth()
+			local biomap_sweep_heigth = biomap_sweep:GetHeight()
+
+			sweep_add_x = -(biomap_sweep_width - biomap_width) / 2
+			sweep_add_y = -(biomap_sweep_heigth - biomap_heigth) / 2
+
+			biomap_sweep:SetColor(GetARGB(100, 199, 2, 28)) -- устанавливаем цвет
+			biomap_sweep:SetWndPos(biomap_x + sweep_add_x, biomap_y + sweep_add_y)
+
+			if biomap_sweep_enabled then
+				parent:AttachChild(biomap_sweep)
+			end
+		end
+	end
+
+	local dev = device()
+	local sdir = dev.cam_dir
+	a = math.atan2(-sdir.x,sdir.z)
+	s,c = math.sin(a), math.cos(a)
+
+	if biomap_sweep_enabled or biomap_sweep_dots_enabled then
+		angle = angle - step_angle
+		if angle < -lim_angle then angle = angle + lim_angle end
+	end
+
+	if biomap_sweep_enabled then
+		biomap_sweep:SetHeading(angle) -- поворачиваем статик
+	end
+
+	if biomap_sweep_dots_enabled then
+		xa = -math.fmod(angle * (180 / math.pi), 360)
+	end
+
+	local visible_objects = {}
+	for id, v in pairs(db.creatures) do
+		local o = level.object_by_id(id)
+		if o then
+			local clsid = o:clsid()
+			local color = need_show_by_sect[clsid] --Если в таблице есть цвет для этого класса - можно показать объект на биорадаре.
+			if dots[id] or color then
+				local dir = o:position():sub(device().cam_pos)
+				if ( dir:magnitude() / max_dist ) <= 1 then
+					local d = dots[id] or dot(o, clsid, color)
+					visible_objects[id] = true
+					d:draw(dir, o:alive())
+				end
+			end
+		end
+	end
+	for id, dot in pairs(dots) do
+		if not visible_objects[id] then
+			--log3("~~[%s] hide dot for object with id: [%s]", script_name(), id)
+			dots[id]:hide()
+		end
+	end
+end
+
+function bioradar_hide()
+    if biomap then
+        biomap:DetachFromParent()
+        biomap = nil
+    end
+
+    if biomap_sweep then
+        biomap_sweep:DetachFromParent()
+        biomap_sweep = nil
+    end
+
+    dots = {}
+end
+
+class "ui_map_viewer" (CUIScriptWnd)
+function ui_map_viewer:__init() super()
+	local xml = CScriptXmlInit()
+	self.xml  = xml
+
+	xml:ParseFile("zone_map.xml")
+	xml:InitWindow("main", 0, self)
+
+	local back = xml:InitStatic("level_frame", self)
+
+	local map = CUIMiniMap()
+
+	back:AttachChild(map)
+
+	map:SetAutoDelete(true)
+	map:EnableHeading(true)
+	map:SetRounded(true)
+	--map:SetLocked(true)
+	map:Init()
+	map:SetColor(GetARGB(255, 255, 255, 255))
+
+	map:Zoom(0.82) -- подобранный зум что б совпадал с радаром. наверно можно расщитать но лень думать )
+
+	self.map = map
+
+	local center = xml:InitStatic("center", back);
+
+	local frame_width = back:GetWidth()
+	local frame_heigth = back:GetHeight()
+
+	center:SetWndPos(frame_width / 2, frame_heigth / 2)
+
+	local frame_pos = back:GetWndPos()
+	local frame_size = back:GetWndSize()
+
+	set_position_offset(frame_pos.x + frame_size.x / 2, frame_pos.y + frame_size.y / 2)
+
+	self.compass = xml:InitStatic("compass", self)
+end
+
+function ui_map_viewer:UpdateMap()
+	self.map:SetActivePoint(device().cam_pos)
+	local dir = device().cam_dir
+	local h = dir:getH()
+	self.map:SetHeading(-h)
+	self.compass:SetHeading(-h)
+	map_self = self
+
+	if bio_showing and subscribed then
+		update(self)
+	end
+end

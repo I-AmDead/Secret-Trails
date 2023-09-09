@@ -635,10 +635,6 @@ function see_actor(npc)
   return npc:alive() and npc:see(db.actor)
 end
 
-function cond_name(cond, etalon)
-  return string.find( cond, "^"..etalon.."%d*$" ) ~= nil
-end
-
 function try_switch_to_another_section(npc, st, actor)
 	if not actor then return end
 
@@ -1246,12 +1242,12 @@ function get_customdata_or_ini_file(npc, filename)
   end
   --
 	if filename == "<customdata>" then
-		return npc:spawn_ini() or ini_file([[scripts\dummy.ltx]])
+		return npc:spawn_ini() or dsh.cached_ini_file("scripts\\dummy.ltx")
 	elseif string.find( filename, "*" ) == 1 then --динамический ltx
 		local p = string.find( filename, "*", 2 )
 		return gulag_tasks.loadLtx( string.sub(filename, 2, p-1), string.sub(filename, p+1) )
 	else
-		return ini_file(filename)
+		return dsh.cached_ini_file(filename)
 	end
 end
 

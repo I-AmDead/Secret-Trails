@@ -25,6 +25,26 @@ local boosters =
     ["boost_time_factor"]           = false,
 }
 
+booster_type = nil
+booster_state = false
+
+booster_type1 = nil
+booster_type2 = nil
+booster_type3 = nil
+booster_type4 = nil
+booster_type5 = nil
+booster_type6 = nil
+booster_type7 = nil
+booster_type8 = nil
+booster_state1 = false
+booster_state2 = false
+booster_state3 = false
+booster_state4 = false
+booster_state5 = false
+booster_state6 = false
+booster_state7 = false
+booster_state8 = false
+
 function on_first_update()
     cmd("time_factor", 1)
 
@@ -174,12 +194,15 @@ function set_boost(type, value, state)
         end
     else
         update_inventory_window()
-        local hud = get_hud()
-        if state then
-            hud:AddCustomStatic(booster_hud[type], true)
-        else
-            hud:RemoveCustomStatic(booster_hud[type])
-        end
+
+	for idx = 1, 8 do
+		local b_type = this["booster_type"..idx]
+		if not b_type or b_type == booster_hud[type] then
+			this["booster_type"..idx] = booster_hud[type]
+			this["booster_state"..idx] = state
+			break
+		end
+	end
     end
 end
 

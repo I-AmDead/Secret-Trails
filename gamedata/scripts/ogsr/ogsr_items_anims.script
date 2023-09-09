@@ -131,9 +131,13 @@ local function animation_off()
 	level.only_allow_movekeys(false)
 	level.set_actor_allow_ladder(true)
 	game.stop_hud_motion()
+	if snd_in_use then
+		snd_in_use:stop()
+	end
 end
 
 function attach( sm )
 	sm:subscribe({ signal = "on_actor_before_use", fun = on_actor_before_use })
 	sm:subscribe({ signal = "on_first_update",     fun = animation_off })
+	sm:subscribe({ signal = "on_death",	       fun = animation_off })
 end

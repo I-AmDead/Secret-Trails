@@ -663,6 +663,39 @@ function parse_data_1v(npc,s)
     return t
 end
 
+local index_for_community = {}
+local communities_relations = {}
+local community_for_index = {}
+local function load_communities_relations()
+	local index = 1
+
+	for comm, id in string.gmatch(get_string("game_relations", "communities"), "([%w_]+)%s*,%s*([%d%.%-]+)%,*") do
+		local t = {}
+		for rel in string.gmatch(get_string("communities_relations", comm), "([%d%.%-]+)%,*") do
+			table.insert(t, tonumber(rel))
+		end
+		communities_relations[comm] = t
+		index_for_community[comm] = index
+		community_for_index[index] = comm
+		index = index + 1
+	end
+end
+load_communities_relations() --Построение таблиц делаем при первом запуске скрипта
+
+function comm2idx(comm)
+	return index_for_community[comm]
+end
+
+function idx2comm(id)
+	return community_for_index[id]
+end
+
+function comm2comm_relation(community_from, community_to)
+	local relations = communities_relations[community_from]
+	ASSERT(relations, "")
+	return relations[index_for_community[community_to]]
+end
+
 function community_relation_safe(community, npc_id, char_comm)
 	local relations = communities_relations[community]
 	ASSERT(relations, "Can't find relation for community: [%s]", community or "nil")

@@ -75,6 +75,22 @@ local excluded_anoms = { --Секции и имена аномалий, которые запрещено удалять по
 	--для квеста "Вопрос бессмертия - часть 1", аномалии под артефакт Светляк
 	["noartf_witches_galantine_green"] = true,
 	["firefly_anom_common"] = true,
+	["fireball_zone"] = true,
+	["fireball_electric_zone"] = true,
+	["fireball_acidic_zone"] = true,
+
+	["zone_field_acidic"] = true,
+	["zone_field_acidic_weak"] = true,
+	["zone_field_acidic_average"] = true,
+	["zone_field_acidic_strong"] = true,
+	["zone_field_psychic"] = true,
+	["zone_field_psychic_weak"] = true,
+	["zone_field_psychic_average"] = true,
+	["zone_field_psychic_strong"] = true,
+	["zone_field_thermal"] = true,
+	["zone_field_thermal_weak"] = true,
+	["zone_field_thermal_average"] = true,
+	["zone_field_thermal_strong"] = true,
 --===========================================================
 --=======================[Далее имена]=======================
 	["esc_tutorial_mincer_01"] = true,
@@ -497,7 +513,7 @@ function bad_zone(p_vector) --Проверяем, попадает ли аномалия в зоны укрытий
 	for _, id in pairs(ogse_hideouts.restrictor_list) do
 		local sobj = alife():object(id)
 		if sobj then
-			local _, radius = ogse_hideouts.get_community_hide(sobj)
+			local _, radius = sobj:get_shape_radius()
 			if radius then
 				if p_vector:distance_to(sobj.position) <= (tonumber(radius) + 10) then --Запрещено спавнить аномалии рядом с укрытиями
 					return true

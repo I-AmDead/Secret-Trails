@@ -126,6 +126,7 @@ function CUIDescriptionWnd:subscribe()
       { signal = "on_cell_item_focus", fun = self.OnItemFocus, self = self },
       { signal = "on_cell_item_focus_lost", fun = self.OnItemFocusLost, self = self },
       { signal = "on_key_down", fun = self.OnKeyPress, self = self },
+      --{ signal = "on_wheel", fun = self.OnMouseWheel, self = self },
       { signal = "on_update",  fun = self.OnUpdate, self = self },
     }
     local sm = ogse_signals.get_mgr()
@@ -579,7 +580,7 @@ function CUIDescriptionWnd:OnUpdate( delta ) --≈сли сюда передали аргументом пер
 		if self.itemInFocus and ( self.itemInFocus > 65535 or alife():object( self.itemInFocus ) ) then
 			self:ShowDescription( level.object_by_id(self.itemInFocus) )
 		end
-		self.shift_tmr = self.itemInFocus and 1 or nil --ј может обновл€ть всегда когда есть фокус?
+		self.shift_tmr = nil --ј может обновл€ть всегда когда есть фокус?
 	end
 end
 
@@ -593,6 +594,19 @@ function CUIDescriptionWnd:OnKeyPress(key, bind)
 		self.keypressed = nil
 		self:HideDescription()
 	end
+end
+
+function CUIDescriptionWnd:OnMouseWheel(mode)
+	log3("OnMouseWheel 0")
+    if not self.frame:IsShown() then return end
+	log3("OnMouseWheel 1")
+    if self.frame:GetHeight() < 768 then return end
+	log3("OnMouseWheel 2")
+    local n = mode and -40 or 40 
+    local mx = self.scroll_v:GetMaxScrollPos()
+    if mx > self.scroll_height then mx = mx - self.scroll_height end
+    self.scrollPos = math.clamp(self.scrollPos + n, 0, mx)
+    self.scroll_v:SetScrollPos(self.scrollPos)
 end
 
 function need_show_condition(item)

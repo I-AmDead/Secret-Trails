@@ -57,6 +57,12 @@ function actor_binder:net_spawn( data )
 
   if rx_ai then rx_ai.actor_net_spawn() end
 
+  cmd("r_SunShafts_Radius 2.0")
+  cmd("r_SunShafts_Blend 0.01")
+  cmd("cam_inert 0") --сбрасываем инерцию камеры в 0
+  cmd("r2_exp_donttest_shad off") --Это экономит фпс.
+  cmd("r_terrain_parallax_enable off") --не все текстуры земли у нас адаптированы под параллакс
+
   amk_mod.first_run()
   amk_mod.check_spawn()
   
@@ -108,7 +114,7 @@ function actor_binder:net_destroy()
   self.object:set_callback( callback.on_cell_item_focus, nil )
   self.object:set_callback( callback.on_cell_item_focus_lost, nil )
   self.object:set_callback( callback.on_cell_item_mouse, nil )
-  self.object:set_callback( callback.on_foot_step, nil )
+  self.object:set_callback( callback.on_footstep, nil )
 
   if ui_grenade_marks then
     ui_grenade_marks.remove_grenade_marks()
@@ -172,7 +178,7 @@ function actor_binder:reinit()
   self.object:set_callback( callback.on_cell_item_focus, self.on_cell_item_focus, self )
   self.object:set_callback( callback.on_cell_item_focus_lost, self.on_cell_item_focus_lost, self )
   self.object:set_callback( callback.on_cell_item_mouse, self.on_cell_item_mouse, self )
-  self.object:set_callback( callback.on_foot_step, self.on_foot_step, self )
+  self.object:set_callback( callback.on_footstep, self.on_footstep, self )
 
   self.am:call( "on_reinit" )
 end
@@ -616,7 +622,7 @@ function actor_binder:on_cell_item_mouse( obj, x, y, action )
 end
 
 
-function actor_binder:on_foot_step( obj, power )
+function actor_binder:on_footstep( obj, power )
   self.am:call( "on_foot_step", obj, power )
 end
 

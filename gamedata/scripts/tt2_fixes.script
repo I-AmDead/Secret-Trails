@@ -74,14 +74,14 @@ local function on_drag_drop( obj )
 	if not (db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "nano_outfit") then return end
 	if not (section and (section == "af_buliz" or section == "af_spirit_4")) then return end
 
-	if section == "af_buliz" and new_dialog.item_much("af_buliz",5) then
+	if section == "af_buliz" and new_dialog.count_item("af_buliz",5) then
 		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_w"))
 		ogse.remove_inv_items_by_section(section, 5)
 		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
 		ogse.spawn_item_in_inv("nano_outfit_addw")
 		local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
 		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	elseif section == "af_spirit_4" and new_dialog.item_much("af_spirit_4",5) then
+	elseif section == "af_spirit_4" and new_dialog.count_item("af_spirit_4",5) then
 		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_h"))
 		ogse.remove_inv_items_by_section(section, 5)
 		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
@@ -91,7 +91,32 @@ local function on_drag_drop( obj )
 	end
 end
 
+--Фикс Радара - Склады, чтобы dest_position была не в геометрии
+function fix_radar_level_changer_to_ac()
+	if ogse.var_exists("fix_exit_to_military_01") then return end
+	local sobj = alife():object("exit_to_military_01")
+	if sobj and sobj.level_name == "l05_bar" then
+		log3( "~~[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name )
+		alife():release(sobj)
+		return
+	end
+	if not sobj then return end
+	log3( "~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name )
+	local lc = sobj:get_level_changer()
+	lc.dest_game_vertex_id  = 1812
+	lc.dest_level_vertex_id = 411164
+	lc.dest_position        = vector():set(129.848160, -8.843687, 432.651672)
+	lc.dest_direction       = vector():set(-0.981792, -0.138918, -0.129563)
+
+	ogse.save_var("fix_exit_to_military_01", true)
+end
+
+function on_spawn()
+	fix_radar_level_changer_to_ac()
+end
+
 function attach( sm )
+  sm:subscribe({ signal = "on_spawn", 		fun = on_spawn       	   })
   sm:subscribe({ signal = "on_first_update", 	fun = fix_first       	   })
   sm:subscribe({ signal = "on_update", 		fun = spawn_sverhprovodnik })
   sm:subscribe({ signal = "on_fake_drag_drop", 	fun = on_drag_drop         })
