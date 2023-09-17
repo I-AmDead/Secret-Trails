@@ -60,7 +60,9 @@ function attach(sm)
 	sm:subscribe({signal = "on_key_down", 		fun = this.on_key_down})
 	sm:subscribe({signal = "on_update", 		fun = this.on_update})
 	--sm:subscribe({signal = "on_talk_hide", 		fun = this.on_spawn})
-	--sm:subscribe({signal = "on_talk_open", 		fun = this.on_destroy})
+	--sm:subscribe({signal = "on_talk_open", 	fun = this.on_destroy})
+	--sm:subscribe({signal = "on_inventory_hide", 	fun = this.on_spawn})
+	--sm:subscribe({signal = "on_inventory_open", 	fun = this.on_destroy})
 end
 
 local subscribed
@@ -109,6 +111,8 @@ end
 
 function on_destroy()
 	if not map_dlg then return end
+	bio_showing = false
+	bioradar_hide()
 	level.remove_dialog_to_render(map_dlg)
 end
 
@@ -131,6 +135,13 @@ function on_update()
 	if map_dlg then
 		map_dlg:UpdateMap()
 	end
+end
+
+local function cleanup_dots()
+	for _, dot in pairs(dots) do
+		dot:hide()
+	end
+	dots = {}
 end
 
 function set_position_offset(x, y)
@@ -240,12 +251,13 @@ function on_first_update()
 		["bioradar_boar"] = true,
 		["bioradar_stalker"] = true
 	}
+
 	for k, v in pairs(bio_marked) do
 		if not has_alife_info(k) then
 			db.actor:give_info_portion(k)
 		end
 	end
-	--
+
 	for k, v in pairs(firmware_item) do
 		for p, t in pairs(v) do
 			if has_alife_info(p) then
@@ -258,7 +270,7 @@ function on_first_update()
 
 	bio_showing = ogse.load_var("biomap_show", false)
 	if not subscribed then
-		hide()
+		bioradar_hide()
 	end
 end
 
@@ -320,6 +332,8 @@ end
 -- обновление положения точек и/или волны
 function update(parent)
 	if not biomap then
+		cleanup_dots()
+
 		biomap = CUIStatic()
 		biomap:SetAutoDelete(false)
 
@@ -339,7 +353,7 @@ function update(parent)
 
 		if not biomap_sweep then
 			biomap_sweep = CUIStatic()
-			biomap_sweep:SetAutoDelete(false)
+			biomap_sweep:SetAutoDelete(true)
 
 			xml:InitExStatic("biomap_sweep", biomap_sweep)
 
@@ -411,7 +425,7 @@ function bioradar_hide()
         biomap_sweep = nil
     end
 
-    dots = {}
+    cleanup_dots()
 end
 
 class "ui_map_viewer" (CUIScriptWnd)

@@ -1009,14 +1009,9 @@ function show_reward(actor, npc, p1, p2)
 	local task_details = get_random_task().task_info[get_random_task().task_id_by_desc_phrase_id[p2]]
 	if task_details == nil then return end
 	if not task_details.reward_item and not task_details.reward_money then return end
-	--
-	local rt = ogse_random_task_reward.random_task_reward( task_details.parent, get_random_task().task_id_by_desc_phrase_id[p2] )
-	if rt.random_task_reward_accept == 1 and rt.difficult_list[get_random_task().task_id_by_desc_phrase_id[p2]] then
-		return
-	end
-	--
+
 	db.actor:give_talk_message(game.translate_string("show_reward"), item_texture, item_rect, "other_iconed_answer_item")
-	--
+
 	if task_details.reward_item then
 		local rwd = {}
 		for _, sect in ipairs(task_details.reward_item) do
@@ -1029,7 +1024,7 @@ function show_reward(actor, npc, p1, p2)
 			)
 		end
 	end
-	--
+
 	if task_details.reward_money then 
 		local money_texture, money_rect = get_texture_info("ui_iconsTotal_found_money")
 		db.actor:give_talk_message(task_details.reward_money .. " RU", money_texture, money_rect, "other_iconed_answer_item")

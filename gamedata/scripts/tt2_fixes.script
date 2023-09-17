@@ -55,17 +55,17 @@ function quest_fail()
 end
 
 local function hemi_level()
-  if not isIndoor( level.name() ) then
-    cmd("r2_sun_lumscale_hemi 0.8")
-  else
-    cmd("r2_sun_lumscale_hemi 0")
-  end
+	if not isIndoor( level.name() ) then
+		cmd("r2_sun_lumscale_hemi 0.8")
+	else
+		cmd("r2_sun_lumscale_hemi 0")
+	end
 end
 
 local function fix_first()
-  fix_recept()
-  del_lampa()
-  hemi_level()
+	fix_recept()
+	del_lampa()
+	hemi_level()
 end
 
 local function on_drag_drop( obj )
@@ -111,8 +111,35 @@ function fix_radar_level_changer_to_ac()
 	ogse.save_var("fix_exit_to_military_01", true)
 end
 
+function fix_ac_level_changer_to_mg()
+	local sobj = alife():story_object(story_ids.ac_mg)
+	if sobj and not ogse.var_exists("fix_ac_level_changer_to_mg") then
+		ogse.save_var("fix_ac_level_changer_to_mg", true)
+		log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
+		sobj.position = vector():set(-427.113692, -13.161615, 378.632111)
+		local lc = sobj:get_level_changer()
+		lc.dest_game_vertex_id = 3025
+		lc.dest_level_vertex_id = 81916
+		lc.dest_position = vector():set(-261.535095, 5.432425, -142.20872)
+		lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
+	end
+
+	local sobj = alife():story_object(story_ids.mg_ac)
+	if sobj and not ogse.var_exists("fix_mg_level_changer_to_ac") then
+		ogse.save_var("fix_mg_level_changer_to_ac", true)
+		log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
+		sobj.position = vector():set(-261.535095, 5.432425, -142.20872)
+		local lc = sobj:get_level_changer()
+		lc.dest_game_vertex_id = 1657
+		lc.dest_level_vertex_id = 124966
+		lc.dest_position = vector():set(-427.113692, -13.161615, 378.632111)
+		lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
+	end
+end
+
 function on_spawn()
 	fix_radar_level_changer_to_ac()
+	fix_ac_level_changer_to_mg()
 end
 
 function attach( sm )
