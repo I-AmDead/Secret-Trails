@@ -6,7 +6,7 @@
 */
 
 #include "common.h"
-#include "gasmask_common.h"
+#include "ogsr_gasmask_common.h"
 
 #include "visor.h"
 
@@ -14,53 +14,61 @@ float4 main(p_screen I) : SV_Target
 {
     //Sample gasmask texture
     float4 gasmask_tex;
+    float2 uv = I.tc0;
+    uv = applyInertia(uv);
 
     if (m_actor_params.y > 0.9)
     {    
-        gasmask_tex = s_mask_nm_1.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_1.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.8)
     {
-        gasmask_tex = s_mask_nm_2.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_2.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.7)    
     {
-        gasmask_tex = s_mask_nm_3.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_3.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.6)    
     {
-        gasmask_tex = s_mask_nm_4.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_4.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.5)    
     {
-        gasmask_tex = s_mask_nm_5.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_5.Sample(smp_nofilter,uv);
     }    
     else if (m_actor_params.y > 0.4)    
     {
-        gasmask_tex = s_mask_nm_6.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_6.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.3)    
     {
-        gasmask_tex = s_mask_nm_7.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_7.Sample(smp_nofilter,uv);
     }
     else if (m_actor_params.y > 0.2)    
     {
-        gasmask_tex = s_mask_nm_8.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_8.Sample(smp_nofilter,uv);
     }    
     else if (m_actor_params.y > 0.1)    
     {
-        gasmask_tex = s_mask_nm_9.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_9.Sample(smp_nofilter,uv);
     }
     else
     {
-        gasmask_tex = s_mask_nm_10.Sample(smp_nofilter,I.tc0);
+        gasmask_tex = s_mask_nm_10.Sample(smp_nofilter,uv);
     }
 
-	//Prepare refracted texcoord	
+    //Prepare refracted texcoord	
     float2 refr_tc = I.tc0.xy + (gasmask_tex.xy * 2.0 - 1.0) * GM_DIST_INT;
 	
     //Sample scene with refracted texcoord
     float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
+    float3 blurredImage = s_blur_2.Sample(smp_nofilter, refr_tc.xy).xyz;
+
+    float2 center = float2(0.5, 0.5);
+    float distFromCenter = length(refr_tc.xy - center);
+    image = lerp(image, blurredImage, (m_actor_params.y / 10) * abs(distFromCenter * 1.5));
+
 
     //Mix gasmask cracks with image
     image += (gasmask_tex.w * image) * GM_DIFF_INT;
