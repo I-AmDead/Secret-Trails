@@ -1,0 +1,157 @@
+
+
+--[[-------------------------------------------------------------------------
+-|ogse_night_vision.script
+-|Модуль приборов ночного видения
+-|version 2.5 : OGS Evolution Team © 2010
+-|version 3.0 : KRodin, Dsh © 2015 - 2016
+-|version for Secret Trails : I am dead
+---------------------------------------------------------------------------]]
+
+function attach(sm)
+	sm:subscribe({ signal = "on_first_update",	fun = this.try_to_restart_nv_fx 	})
+	sm:subscribe({ signal = "on_drop",		fun = this.chek_drop_pnv 		})
+	sm:subscribe({ signal = "on_item_to_ruck",	fun = this.chek_drop_pnv 		})
+	sm:subscribe({ signal = "on_save",		fun = this.on_save 			})
+	sm:subscribe({ signal = "on_info",		fun = this.on_info 			})
+end
+
+--==========================================================Настройки=================================================================
+--Флаги
+local night_vision_fx_on = false		-- флаг работающего ПНВ
+local night_vision_surge_block = false		-- флаг запрета работы ПНВ во время выброса
+
+--Звуки
+local snd_nv_start = xr_sound.get_safe_sound_object("weapons\\nv_start")	-- звук включения ПНВ
+local snd_nv_work = xr_sound.get_safe_sound_object("weapons\\nv_loop")		-- звук работающего ПНВ
+local snd_nv_stop = xr_sound.get_safe_sound_object("weapons\\nv_off")		-- звук выключения ПНВ
+
+--Уровень громкости звуков
+local snd_nv_fx_volume = 0.5		-- общий уровень громкости звуков
+local snd_nv_start_subvolume = 1	-- громкость звука включения ПНВ
+local snd_nv_work_subvolume = 0.3	-- громкость звука работающего ПНВ
+local snd_nv_stop_subvolume = 1		-- громкость звука выключения ПНВ
+--====================================================================================================================================
+
+function is_nv_working() --Проверка, включен ли ПНВ.
+	return night_vision_fx_on
+end
+
+function turn_pnv_off() --Выключение пнв по квестам. Вызывается из ogse_quests.script, не удалять!
+	if night_vision_fx_on then --если включен обычный ПНВ, выключим его
+		turn_off_nv_fx()
+	end
+end
+
+function on_save() --Сохраняем состояние работы пнв
+	ogse.save_var("pnv", is_nv_working())
+end
+
+function on_info(npc, info_id) --Выключение ПНВ в выброс
+	if info_id == "no_net_signal" then
+		night_vision_surge_block = true
+		turn_pnv_off()
+	elseif info_id == "net_signal" then
+		night_vision_surge_block = false
+	end
+end
+
+function try_to_restart_nv_fx() --Попытаемся восстановить работу ПНВ после загрузки сейва
+--------------------Выключение ПНВ в выброс-------------------------
+	if db.actor:has_info("no_net_signal") then
+		night_vision_surge_block = true
+	end
+--------------------------------------------------------------------
+	if ogse.load_var("pnv", false) and not night_vision_surge_block then
+		nv_fx_on() --включаем обычный ПНВ
+	end
+end
+
+function call_pnv()
+	if not night_vision_fx_on then
+		nv_fx_on()
+	else
+		turn_off_nv_fx()
+	end
+end
+
+--******************************************************************Девайс ПНВ*************************************************************************
+function chek_drop_pnv(obj) --Проверка выкладывания работающего ПНВ
+	local pnv_slot =  db.actor:item_in_slot(11) --предмет в слоте ПНВ
+	
+	if not pnv_slot and night_vision_fx_on then --если выбросили/переместили в рюкзак действительно ПНВ, то отключаем пнв:
+		turn_off_nv_fx()
+	end
+end
+
+function get_nightvision_section_for_nv_fx()
+	local nightvision_section
+
+	local nv_in_slot = db.actor:item_in_slot(11)
+	if nv_in_slot then
+		nightvision_section = nv_in_slot:section()
+	end
+
+	return nightvision_section
+end
+
+function nv_fx_on() --Старт/остановка работы прибора ПНВ
+	local nightvision_section = get_nightvision_section_for_nv_fx()
+		
+	if nightvision_section then
+		turn_on_nv_fx(nightvision_section)
+	end
+end
+
+function turn_on_nv_fx(nightvision_section) --Старт ПНВ
+	if night_vision_fx_on then return end
+
+	local r_pnv_mode = get_u32(nightvision_section, "r_pnv_mode", 0)
+	if r_pnv_mode > 0 then
+		local color = 				 get_vector(nightvision_section, "r_pnv_color")
+		cmd("pnv_color",			 string.format("%f,%f,%f", color.x, color.y, color.z))
+		cmd("r_pnv_noise", 			 get_float(nightvision_section, "r_pnv_noise"))
+		cmd("r_pnv_scanlines", 			 get_float(nightvision_section, "r_pnv_scanlines"))
+		cmd("r_pnv_scintillation", 		 get_float(nightvision_section, "r_pnv_scintillation"))
+		cmd("r_pnv_generation_and_vignete_mode", get_float(nightvision_section, "r_pnv_generation_and_vignete_mode"))
+		cmd("r_pnv_brightness_and_alfa_vignete", get_float(nightvision_section, "r_pnv_brightness_and_alfa_vignete"))
+		cmd("r_pnv_brightness_and_blur_alfa",	 get_float(nightvision_section, "r_pnv_brightness_and_blur_alfa"))
+		cmd("r_pnv_size_vignet_and_glitch", 	 get_float(nightvision_section, "r_pnv_size_vignet_and_glitch"))
+		cmd("r_pnv_radius", 			 get_float(nightvision_section, "r_pnv_radius"))
+		cmd("r_pnv_mode", 			 r_pnv_mode)
+	end
+
+	night_vision_fx_on = true
+	snd_fx_start()
+end
+
+function turn_off_nv_fx() --Остановка ПНВ
+	if not night_vision_fx_on then return end
+	cmd("r_pnv_mode", 0)
+	night_vision_fx_on = false
+	snd_fx_stop() --звук выключения.
+end
+
+function snd_fx_start() --Старт звукового сопровождения работы ПНВ
+	if snd_nv_start then
+		snd_nv_start:play_at_pos (db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
+		snd_nv_start.volume = snd_nv_fx_volume*snd_nv_start_subvolume
+	end
+	if snd_nv_work then
+		snd_nv_work:play_at_pos (db.actor, vector():set(0, 0, 0), 0, sound_object.s2d + sound_object.looped)
+		snd_nv_work.volume = snd_nv_fx_volume*snd_nv_work_subvolume
+	end
+end
+
+function snd_fx_stop() --Остановка звукового сопровождения работы ПНВ
+	if snd_nv_start:playing() then 
+		snd_nv_start:stop() 
+	end
+	if snd_nv_work:playing() then 
+		snd_nv_work:stop() 
+	end
+	if snd_nv_stop then
+		snd_nv_stop:play_at_pos (db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
+		snd_nv_stop.volume = snd_nv_fx_volume*snd_nv_stop_subvolume
+	end
+end

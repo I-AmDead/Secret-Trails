@@ -107,7 +107,7 @@ function swipe_mask()
 	animation_on()
 
 	dsh.timeout( mc_anm_time_1, function()
-		game.play_hud_motion(1, mc_anm_sec, "anm_wipe", false, 1)
+		game.play_hud_motion(db.actor:active_item() and 1 or 2, mc_anm_sec, "anm_wipe", false, 1)
 		snd_gasmask:play(db.actor, 0, sound_object.s2d)
 		level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
 		dsh.timeout( mc_anm_time_2 - 400, function()
@@ -140,7 +140,7 @@ function torch_switcher()
 	animation_on()
 	game.play_hud_anm(anm_name, 0, 1, 1, false)	
 	local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-	game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
+	game.play_hud_motion(db.actor:active_item() and 1 or 2, torch_anm_sec, "anm_switch", false, 1.1)
 	snd_torch:play(db.actor,0,sound_object.s2d)
 	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
 	dsh.timeout( torch_anm_time_1 - 800, function()
@@ -174,11 +174,11 @@ function nv_switcher()
 	animation_on()
 	game.play_hud_anm(anm_name, 0, 1, 1, false)	
 	local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-	game.play_hud_motion(1, torch_anm_sec, "anm_switch", false, 1.1)
+	game.play_hud_motion(db.actor:active_item() and 1 or 2, torch_anm_sec, "anm_switch", false, 1.1)
 	snd_torch:play(db.actor,0,sound_object.s2d)
 	level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
 	dsh.timeout( torch_anm_time_1 - 800, function()
-		ogse_night_vision.call_pnv()
+		ogsr_night_vision.call_pnv()
 		dsh.timeout( torch_anm_time_1 - 750, function()
 			if new_speed then
 				game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
@@ -197,7 +197,7 @@ function on_item_before_pickup(obj)
 	local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
 	if not anim_plays and allow_animation() then
 		animation_on()
-		local pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
+		local pickup_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, pickup_anm_sec, "anm_take", true, 1.4)
 		game.play_hud_anm(anm_name, 0, 1.4, 1, false)
 		if obj_pos.y <= cam_pos_y then
 			toggle_force_crouch()
@@ -377,14 +377,14 @@ function watch_wide()
 				if not key_release then
 					anm_start = time_g
 					game.set_hud_anm_time(anm_name, 10000000)
-					game.play_hud_motion(1, watch_anm_sec, "anm_idle", true, 1)
+					game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
 				else
 					anm_start = time_g
-					watch2_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_fake_idle", true, 30)
+					watch2_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_fake_idle", true, 30)
 					mc_anm_state = 3
 				end
 			elseif mc_anm_state == 3 and time_g > anm_start + watch2_anm_time then
-				watch3_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_out", true, 1)
+				watch3_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
 				game.set_hud_anm_time(anm_name, (watch3_anm_time + 200) / 1000)
 				mc_anm_state = 4
 			elseif mc_anm_state == 4 and time_g > anm_start + watch3_anm_time then
