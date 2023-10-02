@@ -16,11 +16,11 @@
 function some_global_function(arg1, arg2)
 end
 local slot_desc = {signal = "signal_name", fun = some_global_function, queued = true}
-ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в низкоприоритетную очередь
+ogsr_signals.get_mgr():subscribe(slot_desc) -- подписали в низкоприоритетную очередь
 --...
-ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+ogsr_signals.get_mgr():unsubscribe(slot_desc) -- отписали
 вызвали сигнал
-local sm = ogse_signals.get_mgr()
+local sm = ogsr_signals.get_mgr()
 --...
 sm.call("signal_name", arg1, arg2)
 
@@ -35,9 +35,9 @@ function some_luabind_class:method_to_call()
 end
 
 local slot_desc = {signal = "signal_name", fun = some_luabind_class()}
-ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
+ogsr_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
 --...
-ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+ogsr_signals.get_mgr():unsubscribe(slot_desc) -- отписали
 
 Функциональный класс на таблице строится немного сложнее
 local t = {}
@@ -58,9 +58,9 @@ end
 
 class obj = some_luabind_class()
 local slot_desc = {signal = "signal_name", self = obj, fun = obj.method_to_call}
-ogse_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
+ogsr_signals.get_mgr():subscribe(slot_desc) -- подписали в высокоприоритетную очередь
 --...
-ogse_signals.get_mgr():unsubscribe(slot_desc) -- отписали
+ogsr_signals.get_mgr():unsubscribe(slot_desc) -- отписали
 slot_desc = nil --Вот это важно! Отпускаем объект self (находящийся в таблице slot_desc) для сборщика мусора.
 
 -----===< Менеджер сигналов поддерживает постановку обработчика на паузу: >===-----
@@ -70,14 +70,14 @@ slot_desc = nil --Вот это важно! Отпускаем объект self
 обработчик, который еще рано выполнять.
 Что бы поставить себя на паузу, нужно выполнить ИЗНУТРИ ОБРАБОТЧИКА:
 
-ogse_signals.get_mgr():reschedule( 1000 )
+ogsr_signals.get_mgr():reschedule( 1000 )
 
 В данном случае, текущий обработчик будет выполнен не ранее, чем через секунду.
 --
 Если нужно поставить обработчик на паузу, но сделать это изнутри обработчика
 по каким-то причинам невозможно, то можно использовать метод:
 
-ogse_signals.get_mgr():rechange_scheduled_time( { signal = "on_update", fun = this.aux_cond } , 1000 )
+ogsr_signals.get_mgr():rechange_scheduled_time( { signal = "on_update", fun = this.aux_cond } , 1000 )
 --]=]
 
 
@@ -85,7 +85,7 @@ local _SIGNALS_MGR = false
 function get_mgr()
   if not _SIGNALS_MGR then
     -- _SIGNALS_MGR инициализируется внутри конструтора. См. комментарии там.
-    signals_mgr( "global", ogse_signals_addons_list.addons, false )
+    signals_mgr( "global", ogsr_signals_list.addons, false )
   end
   return _SIGNALS_MGR
 end

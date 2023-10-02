@@ -9,7 +9,7 @@ function motivator_binder:__init (obj) super(obj)
   self.loaded = false
   self.first_update = false
   self.particles = {}
-  self.am = ogse_signals.get_mgr()
+  self.am = ogsr_signals.get_mgr()
   self.am:call( "on_npc_init", obj, self )
 end
 function motivator_binder:__finalize()
@@ -276,6 +276,9 @@ function motivator_binder:use_callback(obj, who)
     if self.st.active_section then
       xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", self.object, who)
     end
+  else
+    self.object:set_nonscript_usable(false)
+    ogsr_actor_animation.open_inventory_owner(self.object)
   end
 
   self.am:call("on_npc_use", self.object, who)

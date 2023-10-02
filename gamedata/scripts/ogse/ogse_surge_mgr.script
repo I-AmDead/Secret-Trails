@@ -124,7 +124,7 @@ local function start_pda_distortion( min, max )
 			return min == max
 		end,
 		function() pda_distortion_timer = nil end,
-		function() ogse_signals.get_mgr():reschedule( 100 ) end
+		function() ogsr_signals.get_mgr():reschedule( 100 ) end
 	)
 end
 
@@ -573,7 +573,7 @@ function on_surge_end()
 	db.actor:give_info_portion("net_signal") -- связь восстановлена
 	set_pda_params(vector():set(0.1,0.0,1))
 	anim = nil
-	ogse_signals.get_mgr():call( "on_after_blowout" )
+	ogsr_signals.get_mgr():call( "on_after_blowout" )
 end
 
 function autosave_blowout()
@@ -709,7 +709,7 @@ function check_blowout_timer:action()
 end
 
 function check_blowout_timer:update()
-	ogse_signals.get_mgr():reschedule( 1000 )
+	ogsr_signals.get_mgr():reschedule( 1000 )
 
 	if deferred_actions then
 		local info_action = deferred_actions.on_info_deferred

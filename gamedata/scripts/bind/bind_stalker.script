@@ -24,7 +24,7 @@ class "actor_binder" ( object_binder )
 function actor_binder:__init( obj ) super( obj )
   sim = alife()
   self.bCheckStart = false
-  self.am          = ogse_signals.get_mgr()
+  self.am          = ogsr_signals.get_mgr()
   self.am:call( "on_load_before_all" )
   self.am:call( "on_init", obj )
 end
@@ -410,41 +410,6 @@ function actor_binder:update( delta )
   self.am:call( "on_update", delta )
 end
 
-
-function actor_binder:show_hud_save_warning( crit, timeout, low, argb )
-  if self.hud_save_warning_t then
-    if low then
-      return
-    else
-      self.hud_save_warning_t:stop()
-    end
-  end
-  if not argb then
-    argb = { 255, 155, 0, 0 }
-  end
-  self.hud_save_warning_t = dsh.exec_on_update( function()
-    if not get_hud():GetCustomStatic( "hud_save_warning" ) then
-      get_hud():AddCustomStatic( "hud_save_warning" )
-    end
-    local wnd = get_hud():GetCustomStatic( "hud_save_warning" ):wnd()
-    wnd:SetTextColor( unpack( argb ) )
-    if crit == 1 then
-      wnd:SetTextST( game.translate_string( "amk_warn_trans" ) )
-    elseif crit == 2 then
-      wnd:SetTextST( game.translate_string( "amk_warn_trans_critical" ) )
-    else
-      -- wnd:SetTextST( game.translate_string( "amk_warn_attention" ) )
-      wnd:SetTextST( game.translate_string( crit ) )
-    end
-    self.hud_save_warning_t = dsh.timeout( timeout, function()
-      if get_hud():GetCustomStatic( "hud_save_warning" ) then
-        get_hud():RemoveCustomStatic( "hud_save_warning" )
-      end
-      self.hud_save_warning_t = nil
-    end )
-  end )
-end
-
 function actor_binder:on_key(key, bind)
   self.am:call("on_key_down", key, bind)
 end
@@ -530,10 +495,6 @@ function actor_binder:load( reader )
   xr_logic.pstor_load_all( self.object, reader )
 
   self.am:call( "on_load", reader )
-
-  if xr_logic.pstor_retrieve( self.object, "emerg", false ) then
-    self:show_hud_save_warning( 2, 60000 )
-  end
 end
 
 

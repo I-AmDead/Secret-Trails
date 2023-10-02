@@ -113,7 +113,7 @@ end
 function request_last_signal( signal_name )
   local schedule_data = registry[ signal_name ]
   local switch_item   = schedule_data.schedule[ schedule_data.last_index ]
-  ogse_signals.get_mgr():call( signal_name, switch_item.turn_on )
+  ogsr_signals.get_mgr():call( signal_name, switch_item.turn_on )
 end
 
 
@@ -145,7 +145,7 @@ end
 
 
 function on_update()
-  local sm = ogse_signals.get_mgr()
+  local sm = ogsr_signals.get_mgr()
   sm:reschedule( 10000 )
   local current_time = get_game_day_time_h()
   for signal_name, schedule_data in pairs( registry ) do
@@ -155,7 +155,7 @@ function on_update()
     for _, switch_item in pairs( switchers ) do
       dsh.exec_on_update(
         function()
-          ogse_signals.get_mgr():call( signal_name, switch_item.turn_on )
+          ogsr_signals.get_mgr():call( signal_name, switch_item.turn_on )
         end
       )
     end

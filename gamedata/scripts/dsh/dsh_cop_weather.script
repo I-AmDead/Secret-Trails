@@ -1090,7 +1090,7 @@ function WeatherManager:__init()
     -- (not self.indoor_weather) но для ясности пусть будет
   end
   -- подписываем менеджер на сигналы
-  local sm = ogse_signals.get_mgr()
+  local sm = ogsr_signals.get_mgr()
   self.upd_ev_desc   = { signal = "on_update",  self = self, fun = self.on_update  }
   sm:subscribe( self.upd_ev_desc )
   self.sv_ev_desc    = { signal = "on_save",    self = self, fun = self.on_save }
@@ -1108,7 +1108,7 @@ end
 function WeatherManager:on_destroy()
   ogse_surge_mgr.surge_log( "WeatherManager:on_destroy" )
   -- отписываем менеджер от сигналов
-  local sm = ogse_signals.get_mgr()
+  local sm = ogsr_signals.get_mgr()
   sm:unsubscribe( self.upd_ev_desc   )
   self.upd_ev_desc   = nil
   sm:unsubscribe( self.sv_ev_desc    )
@@ -1499,7 +1499,7 @@ function WeatherManager:on_update()
   local dt    = self.next_update:diffSec( game.get_game_time() )
   local sleep = math.floor( dt / level.get_time_factor() * 1000 )
   if sleep > 0 then
-    ogse_signals.get_mgr():reschedule( sleep )
+    ogsr_signals.get_mgr():reschedule( sleep )
   end
 end
 
@@ -1524,7 +1524,7 @@ end
 
 
 function WeatherManager:weakup_update()
-  ogse_signals.get_mgr():weakup( self.upd_ev_desc )
+  ogsr_signals.get_mgr():weakup( self.upd_ev_desc )
 end
 
 

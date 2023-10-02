@@ -12,7 +12,7 @@ end
 
 function on_first_update()
   rescan_belt()
-  local sm = ogse_signals.get_mgr()
+  local sm = ogsr_signals.get_mgr()
   sm:subscribe({ signal = "on_drop",         fun = this.on_belt_drop    })
   sm:subscribe({ signal = "on_item_to_belt", fun = this.on_item_to_belt })
   sm:subscribe({ signal = "on_item_to_ruck", fun = this.on_belt_drop    })
@@ -22,7 +22,7 @@ end
 
 function on_item_to_belt( obj )
   rescan_belt()
-  ogse_signals.get_mgr():call( "on_belt_change" )
+  ogsr_signals.get_mgr():call( "on_belt_change" )
 end
 
 
@@ -118,7 +118,7 @@ end
 function on_belt_drop( item )
   if belt_id[ item:id() ] then
     rescan_belt()
-    ogse_signals.get_mgr():call( "on_belt_change" )
+    ogsr_signals.get_mgr():call( "on_belt_change" )
   end
 end
 

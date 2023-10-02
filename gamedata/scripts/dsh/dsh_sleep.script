@@ -18,7 +18,7 @@ function on_first_update()
   dsh.timeout(
     math.random( 3 ) * 1000,
     function()
-      ogse_signals.get_mgr():subscribe(
+      ogsr_signals.get_mgr():subscribe(
         { signal = "on_update", fun = this.on_update }
       )
     end
@@ -30,7 +30,7 @@ local time_factor = get_float( "alife", "time_factor" )
 local sleep_step  = math.floor( 360 / time_factor ) * 1000
 
 function on_update()
-  ogse_signals.get_mgr():reschedule( sleep_step )
+  ogsr_signals.get_mgr():reschedule( sleep_step )
   if db.actor:alive() and not ogse_sleep_mgr.is_sleep_active() then
     test_for_need_sleep()
   end

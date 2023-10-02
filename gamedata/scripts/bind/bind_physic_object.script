@@ -46,7 +46,7 @@ function generic_physics_binder:__init(obj) super(obj)
 	self.initialized = false
 	self.loaded = false
 
-	self.am = ogse_signals.get_mgr()
+	self.am = ogsr_signals.get_mgr()
 end 
 -- MARKER: reload
 function generic_physics_binder:reload(section)
@@ -68,25 +68,22 @@ function generic_physics_binder:update(delta)
 		self.initialized = true
 		xr_logic.initialize_obj(self.object, self.st, self.loaded, db.actor, modules.stype_item)        
 
-        --' Запускаем ассоциированный с объектом партикл.
-        local particle = utils.cfg_get_string(self.st.ini, self.st.section_logic, "particle", self.object, false, "", nil)
-        if particle then
-            self.particle = particles_object(particle)
-            self.particle:play_at_pos(self.object:position())
-        end
+		--' Запускаем ассоциированный с объектом партикл.
+		local particle = utils.cfg_get_string(self.st.ini, self.st.section_logic, "particle", self.object, false, "", nil)
+		if particle then
+            		self.particle = particles_object(particle)
+            		self.particle:play_at_pos(self.object:position())
+		end
 
-        --' Дизаблим ассоциированный с объектом граф
-        local graph_point_marker = utils.cfg_get_string(self.st.ini, self.st.section_logic, "graph_point_marker", self.object, false, "", nil)
-        if graph_point_marker then
-            self.disable_graph_point = patrol(graph_point_marker):game_vertex_id(0)
-            game_graph():accessible(self.disable_graph_point, false)
-        end
-        
-      
-		 
+        	--' Дизаблим ассоциированный с объектом граф
+        	local graph_point_marker = utils.cfg_get_string(self.st.ini, self.st.section_logic, "graph_point_marker", self.object, false, "", nil)
+		if graph_point_marker then
+			self.disable_graph_point = patrol(graph_point_marker):game_vertex_id(0)
+			game_graph():accessible(self.disable_graph_point, false)
+		end 
 	end
 
-	if self.st.active_section or (self.object:spawn_ini() and self.object:spawn_ini():section_exist("drop_box") == true) then
+	if self.st.active_section or (self.object:spawn_ini() and self.object:spawn_ini():section_exist("drop_box")) or self.object:clsid() == clsid.inventory_box then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
 		self.object:set_callback(callback.hit, generic_physics_binder.hit_callback, self)
 		self.object:set_callback(callback.death, generic_physics_binder.death_callback, self)
@@ -142,6 +139,11 @@ function generic_physics_binder:load(reader)
 end
 -- MARKER: use_callback
 function generic_physics_binder:use_callback(obj, who)
+	if obj:clsid() == clsid.inventory_box then
+		obj:set_nonscript_usable(false)
+		ogsr_actor_animation.open_inventory_box(obj)
+	end
+
 	if self.st.active_section then
 		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", obj, who)
 	end

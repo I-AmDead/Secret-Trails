@@ -2,6 +2,7 @@
 
 function attach( sm )
   sm:subscribe({ signal = "on_first_update",          fun = this.animation_off         })
+  --sm:subscribe({ signal = "on_update",		      fun = this.sprint_no_item        })
   sm:subscribe({ signal = "on_key_down",              fun = this.on_key_down           })
   sm:subscribe({ signal = "on_key_up",                fun = this.on_key_up             })
   sm:subscribe({ signal = "on_item_before_pickup",    fun = this.on_item_before_pickup })
@@ -14,6 +15,8 @@ local mc_anm_state = 1
 local snd_gasmask = sound_object('interface\\item_usage\\gasmask_swipe')
 local snd_torch = sound_object('interface\\item_usage\\headflash_switch')
 local snd_pickup = sound_object('interface\\item_usage\\pickup')
+local snd_case = sound_object('interface\\item_usage\\container_case_open')
+local snd_inventory = sound_object('interface\\item_usage\\container_pouch_open')
 local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
 local hide_hand_speed = 1.5
@@ -80,6 +83,24 @@ function on_key_up(key, bind)
         key_release = true
     end
 end
+
+local is_sprinting
+function sprint_no_item()
+	if db.actor:active_item() then return end
+
+	local body_sprint = get_actor_obj():is_actor_sprinting()
+	if body_sprint then
+		is_sprinting = true
+        	--game.play_hud_motion(2, "anim_sprint", "anm_sprint_start", true, 0.5)
+        	game.play_hud_motion(2, "anim_sprint", "anm_sprint", true, 1.0)
+	else
+		if is_sprinting then
+			is_sprinting = nil
+			game.play_hud_motion(2, "anim_sprint", "anm_sprint_end", true, 1.0)
+		end
+	end
+end
+
 
 -- EMULATION SWIPE RAIN DROPS
 function swipe_mask()
@@ -197,7 +218,7 @@ function on_item_before_pickup(obj)
 	local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
 	if not anim_plays and allow_animation() then
 		animation_on()
-		local pickup_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, pickup_anm_sec, "anm_take", true, 1.4)
+		local pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
 		game.play_hud_anm(anm_name, 0, 1.4, 1, false)
 		if obj_pos.y <= cam_pos_y then
 			toggle_force_crouch()
@@ -258,7 +279,7 @@ function harvest(on_take)
                 db.actor:activate_slot(prev_active_slot)
                 anim_plays = false
                 if anm_subscribed then
-                    ogse_signals.get_mgr():unsubscribe( anm_subscribed )
+                    ogsr_signals.get_mgr():unsubscribe( anm_subscribed )
                     anm_subscribed = nil
                 end
 
@@ -269,7 +290,7 @@ function harvest(on_take)
         anm_subscribed = {
             signal = "on_update", fun = function() play_anim() end
         }
-    	ogse_signals.get_mgr():subscribe( anm_subscribed )
+    	ogsr_signals.get_mgr():subscribe( anm_subscribed )
     end
 end
 
@@ -319,7 +340,7 @@ local force_crouch_subscribed = nil
 function toggle_force_crouch()
     if force_crouch then
 
-        ogse_signals.get_mgr():unsubscribe( force_crouch_subscribed )
+        ogsr_signals.get_mgr():unsubscribe( force_crouch_subscribed )
         force_crouch_subscribed = nil
         get_actor_obj():release_action(key_bindings.kCROUCH)
 
@@ -331,7 +352,7 @@ function toggle_force_crouch()
         force_crouch_subscribed = {
             signal = "on_update", fun = function() if force_crouch then get_actor_obj():hold_action(key_bindings.kCROUCH) end end
         }
-        ogse_signals.get_mgr():subscribe( force_crouch_subscribed )
+        ogsr_signals.get_mgr():subscribe( force_crouch_subscribed )
 
     end
 end
@@ -390,7 +411,7 @@ function watch_wide()
 			elseif mc_anm_state == 4 and time_g > anm_start + watch3_anm_time then
 				anim_plays = false
 				if anm_subscribed then
-					ogse_signals.get_mgr():unsubscribe( anm_subscribed )
+					ogsr_signals.get_mgr():unsubscribe( anm_subscribed )
 					anm_subscribed = nil
 				end
 				mc_anm_state = 1
@@ -399,6 +420,68 @@ function watch_wide()
 		end
 
 		anm_subscribed = {signal = "on_update", fun = function() play_anim() end}
-		ogse_signals.get_mgr():subscribe( anm_subscribed )
+		ogsr_signals.get_mgr():subscribe( anm_subscribed )
+	end
+end
+
+function open_inventory_box(obj)
+	open_inv(obj, "open_inventory_box")
+end
+
+function open_inventory_owner(obj)
+	open_inv(obj, "open_inventory_owner")
+end
+
+function open_inv(obj, method)
+	local anm_name = "script\\gasmask.anm"
+	local anm_additional_length = 0.45
+	local itm = db.actor:active_item()
+	local carbody_anm_sec = "anim_box"
+				
+	if itm then
+		local kind = get_string(itm:section(),"kind")
+		local class = get_string(itm:section(),"class")
+		if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
+			anm_name = "script\\gasmask.anm"
+			anm_additional_length = 0.75
+		end
+	end
+	
+	local carbody_anm_time_1 = game.get_motion_length("anim_mask_clean", "anm_hide_hand", 3.05)
+	local carbody_anm_time_2 = game.get_motion_length(carbody_anm_sec, "anm_box", 1.0)
+	if db.actor:active_item() then
+		game.play_hud_motion(1, "anim_mask_clean", "anm_hide_hand", true, 3.0)
+	end
+	game.play_hud_anm(anm_name, 0, 0.5, 1, false)
+	--local new_speed = game.set_hud_anm_time(anm_name, ((carbody_anm_time_1 + carbody_anm_time_2) / 1000) + anm_additional_length)
+	animation_on()
+
+	dsh.timeout(carbody_anm_time_1, function()
+		game.play_hud_motion(db.actor:active_item() and 1 or 2, carbody_anm_sec, "anm_box", false, 1.0)
+		dsh.timeout(carbody_anm_time_2 - 200, function()
+			game.play_hud_motion(db.actor:active_item() and 1 or 2, "anim_fake", "anm_fake", false, 0.0000001)
+		end)
+		dsh.timeout(carbody_anm_time_2 - 400, function()
+			dsh.timeout(carbody_anm_time_2 - 400, function()
+				game.play_hud_motion(db.actor:active_item() and 1 or 2, "anim_fake", "anm_fake", false, 0.0000001)
+				dsh.wait_condition(function() return not level.get_car_body_wnd():IsShown() end, function()
+					game.set_hud_anm_time(anm_name, (carbody_anm_time_1 + 200) / 1000)
+					game.stop_hud_motion()
+				end)
+			end)
+			open_box(obj, method)
+			game.set_hud_anm_time(anm_name, 10000000)
+			dsh.timeout(carbody_anm_time_2 + anm_additional_length, animation_off)
+		end)
+	end)
+end
+
+function open_box(obj, method)
+	if method == "open_inventory_box" then
+		db.actor:open_inventory_box(obj, true)
+		snd_case:play(db.actor,0,sound_object.s2d)
+	else
+		db.actor:open_inventory_owner(obj, true)
+		snd_inventory:play(db.actor,0,sound_object.s2d)
 	end
 end

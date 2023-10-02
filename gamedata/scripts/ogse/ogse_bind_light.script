@@ -77,7 +77,7 @@ function light_binder:update(delta)
 			if self.signal_name then -- если есть сигнал (свой или внешний, неважно)
 				-- то подписываемся на него
 				self.switch_signal_desc = {signal = self.signal_name, self = self, fun = self.on_switch}
-				ogse_signals.get_mgr():subscribe(self.switch_signal_desc) -- регистрируем себя в менеджере сигналов
+				ogsr_signals.get_mgr():subscribe(self.switch_signal_desc) -- регистрируем себя в менеджере сигналов
 			end
 			--
 			self.particle_name = get_string("light_config", "particle", nil, self.light_config)
@@ -289,7 +289,7 @@ function light_binder:net_destroy()
         self.particle:stop()
     end
 	if self.switch_signal_desc then -- если были подписаны на сигнал
-		ogse_signals.get_mgr():unsubscribe(self.switch_signal_desc) -- отписаться от сигнала
+		ogsr_signals.get_mgr():unsubscribe(self.switch_signal_desc) -- отписаться от сигнала
 		self.switch_signal_desc = nil
 	end
 	if self.has_own_schedule then -- если работал по собственному расписанию

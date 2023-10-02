@@ -59,10 +59,10 @@ function attach(sm)
 	sm:subscribe({signal = "on_destroy", 		fun = this.on_destroy})
 	sm:subscribe({signal = "on_key_down", 		fun = this.on_key_down})
 	sm:subscribe({signal = "on_update", 		fun = this.on_update})
-	--sm:subscribe({signal = "on_talk_hide", 		fun = this.on_spawn})
-	--sm:subscribe({signal = "on_talk_open", 	fun = this.on_destroy})
-	--sm:subscribe({signal = "on_inventory_hide", 	fun = this.on_spawn})
-	--sm:subscribe({signal = "on_inventory_open", 	fun = this.on_destroy})
+	sm:subscribe({signal = "on_talk_hide", 		fun = this.hud_show})
+	sm:subscribe({signal = "on_talk_open", 		fun = this.hud_hide})
+	sm:subscribe({signal = "on_inventory_hide", 	fun = this.hud_show})
+	sm:subscribe({signal = "on_inventory_open", 	fun = this.hud_hide})
 end
 
 local subscribed
@@ -90,6 +90,20 @@ function on_item_to_ruck(obj)
 	if obj:section() == "bioradar" then --биорадар в Зоне есть в единственном экземпляре, поэтому проверку по id не делал.
 		unsubscribe()
 	end
+end
+
+function hud_show()
+	if biomap then
+		biomap:Show(true)
+	end
+	map_dlg:Show(true)
+end
+
+function hud_hide()
+	if biomap then
+		biomap:Show(false)
+	end
+	map_dlg:Show(false)
 end
 
 function on_spawn()
@@ -128,6 +142,14 @@ function on_key_down(key, bind)
 			bioradar_hide()
 		end
 		ogse.save_var("biomap_show", bio_showing)
+	end
+
+	if bind == key_bindings.kHIDEHUD then
+		hud_hide()
+	end
+
+	if bind == key_bindings.kSHOWHUD then
+		hud_show()
 	end
 end
 
