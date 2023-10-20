@@ -43,6 +43,7 @@ float3 drops_control;
 uniform float breath_size;
 uniform float breath_idx;
 uniform float3 gasmask_inertia;
+uniform float3 device_inertia;
 
 uniform float3 eye_direction;
 float4 m_cam_inertia_smooth;
@@ -115,11 +116,24 @@ float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZR
 
 float2 applyInertia(float2 texcoord)
 {
-	float2 uv = (-1.0 + 2.0 * texcoord);
-	float3 pivotPoint = float3(0.0, 0.0, 0.0);
+    float2 uv = (-1.0 + 2.0 * texcoord);
+    float3 pivotPoint = float3(0.0, 0.0, 0.0);
     float R_X = m_cam_inertia_smooth.y * gasmask_inertia.y;
     float R_Y = m_cam_inertia_smooth.x * gasmask_inertia.x;
     float R_Z = m_cam_inertia_smooth.z * gasmask_inertia.z; // Adjust the value for Z-axis rotation
+    float3 MyCoords = float3(TransformPlane(uv, pivotPoint, R_X, R_Y, R_Z), 0.0);
+    float2 MyTexCoord = (MyCoords.xy + float2(1.0, 1.0)) / 2.0;
+    texcoord = MyTexCoord;
+    return texcoord;
+}
+
+float2 applyInertiaDev(float2 texcoord)
+{
+    float2 uv = (-1.0 + 2.0 * texcoord);
+    float3 pivotPoint = float3(0.0, 0.0, 0.0);
+    float R_X = m_cam_inertia_smooth.y * device_inertia.y;
+    float R_Y = m_cam_inertia_smooth.x * device_inertia.x;
+    float R_Z = m_cam_inertia_smooth.z * device_inertia.z; // Adjust the value for Z-axis rotation
     float3 MyCoords = float3(TransformPlane(uv, pivotPoint, R_X, R_Y, R_Z), 0.0);
     float2 MyTexCoord = (MyCoords.xy + float2(1.0, 1.0)) / 2.0;
     texcoord = MyTexCoord;

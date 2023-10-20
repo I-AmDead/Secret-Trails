@@ -74,35 +74,11 @@ float3 greyscale(float3 img)
 float3 infrared(gbuffer_data gbd, float3 original, float depth, float2 HPos, float2 Tex0)
 {
 
-    //r_pnv_mode = 0 - disable
-    //r_pnv_mode = 1 - normal pnv
-    //r_pnv_mode = 2 - color heatvision
-    //r_pnv_mode = 3 - b/w heatvision
-
     float heat_mode = pnv_param_1.z - 2.f;
 
     float3 hotness = s_heat.Load(int3(Tex0 * screen_res.xy, 0 ), 0);
     float3 mixed;
 
-    if (hotness.y > 0.0)
-    {
-        float3 blur_2 = s_blur_2.Sample(smp_base, Tex0).rgb;
-        float luminance = dot(blur_2, float3(0.299f, 0.587f, 0.114f));
-
-        luminance *= hotness.y;
-
-        if (luminance >= 0.4) {
-            mixed = color_gradient_hot;
-        } else if (luminance >= 0.3 && luminance < 0.4) {
-            mixed = color_gradient_warm;
-        } else if (luminance >= 0.1 && luminance < 0.3) {
-            mixed = color_gradient_low;
-        } else {
-            float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
-            mixed = lerp(color_background_min, color_background_max, projection);
-        }
-    }
-    else
     if (hotness.x > 0.0)
     {
         int samples = lerp(heat_vision_blurring.x, heat_vision_blurring.y, smoothstep(0.0, heat_vision_blurring.z, depth));
@@ -120,44 +96,44 @@ float3 infrared(gbuffer_data gbd, float3 original, float depth, float2 HPos, flo
             float step2 = heat_vision_steps.y;
             float step3 = heat_vision_steps.z;
 
-            if (projection > 0.0 && projection < step1) {
+            if (projection > 0.0 && projection < step1) 
+            {
      	        mixed = color_gradient_very_low;
-            } else if (projection >= step1 && projection < step2) {
+            }
+            else if (projection >= step1 && projection < step2) 
+            {
                 mixed = lerp(color_gradient_very_low, color_gradient_low, smoothstep(step1, step2, projection));
-            } else if (projection >= step2 && projection < step3) {
+            }
+            else if (projection >= step2 && projection < step3) 
+            {
                 mixed = lerp(color_gradient_low, color_gradient_warm, smoothstep(step2, step3, projection));
-            } else if (projection >= step3 && projection <= 1.0) {
+            }
+            else if (projection >= step3 && projection <= 1.0) 
+            {
                 mixed = lerp(color_gradient_warm, color_gradient_hot, smoothstep(step3, 1.0, projection));
             }
         }
 
         mixed = lerp(color_background_max, mixed, hotness.x);
     }
-    //else
-    //if (hotness.y > 0.0)
-    //{
-    //
-    //    float3 blur_2 = s_blur_2.Sample(smp_base, Tex0).rgb;
-    //    float luminance = dot(blur_2, float3(0.299f, 0.587f, 0.114f));
-    //
-    //    luminance *= hotness.y;
-    //
-    //    if (luminance >= 0.4) {
-    //        mixed = color_gradient_hot;
-    //    } else if (luminance >= 0.3 && luminance < 0.4) {
-    //        mixed = color_gradient_warm;
-    //    } else if (luminance >= 0.1 && luminance < 0.3) {
-    //        mixed = color_gradient_low;
-    //    } else {
-    //        float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
-    //        mixed = lerp(color_background_min, color_background_max, projection);
-    //    }
-    //}
-    //else // does not work at all?
-    //if (hotness.z > 0.0)
-    //{
-    //    mixed = lerp(color_background_min, color_gradient_low, hotness.z);
-    //}
+    else if (hotness.y > 0.0)
+    {
+        float3 blur_2 = s_blur_2.Sample(smp_base, Tex0).rgb;
+        float luminance = dot(blur_2, float3(0.299f, 0.587f, 0.114f));
+
+        luminance *= hotness.y;
+
+        if (luminance >= 0.4) {
+            mixed = color_gradient_hot;
+        } else if (luminance >= 0.3 && luminance < 0.4) {
+            mixed = color_gradient_warm;
+        } else if (luminance >= 0.1 && luminance < 0.3) {
+            mixed = color_gradient_low;
+        } else {
+            float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
+            mixed = lerp(color_background_min, color_background_max, projection);
+        }
+    }
     else
     {
         float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));

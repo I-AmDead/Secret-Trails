@@ -478,9 +478,9 @@ struct v2p_screen
 {
     float2 tc0 : TEXCOORD0;
 #ifdef SM_2_0
-    float4 HPos : POSITION; // Clip-space position (for rasterization)
+    float4 HPos : POSITION; // Clip-space position 	(for rasterization)
 #else
-    float4 HPos : POSITIONT; // Clip-space position (for rasterization)
+    float4 HPos : POSITIONT; // Clip-space position 	(for rasterization)
 #endif
 };
 ////////////////////////////////////////////////////////////////

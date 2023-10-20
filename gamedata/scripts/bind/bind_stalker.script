@@ -57,11 +57,15 @@ function actor_binder:net_spawn( data )
 
   if rx_ai then rx_ai.actor_net_spawn() end
 
-  cmd("r_SunShafts_Radius 2.0")
-  cmd("r_SunShafts_Blend 0.01")
   cmd("cam_inert 0") --сбрасываем инерцию камеры в 0
   cmd("r2_exp_donttest_shad off") --Это экономит фпс.
   cmd("r_terrain_parallax_enable off") --не все текстуры земли у нас адаптированы под параллакс
+
+  if isIndoor(level.name()) then --SSS18
+    cmd("ssfx_is_underground 1")
+  else
+    cmd("ssfx_is_underground 0")
+  end
 
   amk_mod.first_run()
   amk_mod.check_spawn()

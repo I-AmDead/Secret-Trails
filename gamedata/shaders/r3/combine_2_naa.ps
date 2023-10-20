@@ -1,6 +1,8 @@
 #include "common.h"
 #include "mblur.h"
 #include "visor.h"
+#include "img_corrections.h"
+#include "tonemapping.h"
 
 // Check Screen Space Shaders modules
 #include "check_screenspace.h"
@@ -29,12 +31,6 @@ Texture2D s_distort;
 #else
 TEXTURE2DMS(float4, MSAA_SAMPLES) s_distort;
 #endif
-
-float3 blend_soft(float3 a, float3 b)
-{
-	return 1.0 - (1.0 - a) * (1.0 - b);
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
 
@@ -84,7 +80,8 @@ c2_out main(v2p_aa_AA I)
 #endif
 
     float3 img = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
-    float4 bloom = s_bloom.Sample(smp_rtlinear,center);
+
+    float4 bloom = s_bloom.Sample(smp_rtlinear, center);
 
     img = mblur(center, gbd.P, img.rgb);
 
@@ -99,18 +96,29 @@ c2_out main(v2p_aa_AA I)
         img = ssfx_debanding(img, I.Tex0.xy);
 #endif
 
-    bloom = BrokeBloom(bloom);
+#ifdef SSFX_BEEFS_NVG
+	// NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
+	if (pnv_param_1.z < 1.f)
+	{
+		img = blend_soft(img, bloom.xyz*bloom.w);
+	}
+#else
+	img = blend_soft(img, bloom.xyz*bloom.w);
+#endif
 
-    if (pnv_param_1.z == 0.f && addon_VControl.w == 1)
-        img = visor_reflection(img, center);
+    if (tnmp_onoff == 1.0)
+    {		
+        img = Uncharted2ToneMapping(img);
+    }
 
+    img = img_corrections(img);
 
 #ifdef USE_DISTORT
     float3 blurred = bloom * def_hdr;
     img = lerp(img, blurred, distort.z);
 #endif
 
-    res.Color = float4(img,1.0);
+    res.Color = float4(img, 1.0);
 
 #ifdef USE_MSAA
     float4 ptp = mul(m_P, float4(gbd.P, 1));

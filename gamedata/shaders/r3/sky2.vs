@@ -19,15 +19,23 @@ struct v2p
 v2p main(vi v)
 {
     v2p o;
+    // v.c.rgb = v.c.bgr; // fix skybox color
 
-    float4 tpos = mul(1000, v.p);
-    o.hpos = mul(m_WVP, tpos); // xform, input in world coords, 1000 - magic number
+    float4 tpos = float4(2000 * v.p.x, 2000 * v.p.y, 2000 * v.p.z, 2000 * v.p.w);
+    o.hpos = mul(m_WVP, tpos);
     o.hpos.z = o.hpos.w;
-
+    o.tc0.xyz = v.tc0; // copy tc
+    o.tc1.xyz = v.tc1; // copy tc
     float scale = s_tonemap.Load(int3(0, 0, 0)).x;
-    o.tc0 = float4(v.tc0.xyz, scale); // copy tc
-    o.tc1 = v.tc1; // copy tc
-    o.c = v.c; // copy color, pre-scale by tonemap //float4 (v.c.rgb * scale * 3.5, v.c.a);
+
+    float3 tint = v.c.rgb * 1.7;
+
+    // float3 tint = 1.0;
+    // float3 tint = env_color.rgb;
+    // float3 tint = fog_color.rgb * 2.0;
+
+    o.c = float4(tint, v.c.a); // copy color, pre-scale by tonemap //float4 (v.c.rgb*scale*2, v.c.a );
+    o.tc0.w = scale;
 
     return o;
 }

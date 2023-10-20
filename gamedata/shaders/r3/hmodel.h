@@ -1,71 +1,135 @@
+/**
+ * @ Description: Enhanced Shaders and Color Grading 1.10
+ * @ Author: https://www.moddb.com/members/kennshade
+ * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/enhanced-shaders-and-color-grading-for-151
+ */
+
 #ifndef HMODEL_H
 #define HMODEL_H
+#define CUBE_MIPS 6 // mipmaps for ambient shading and specular
 
-#include "common.h"
+#include "pbr_cubemap_check.h"
+// gamma correction is set up to be semi gamma correct
 
 TextureCube env_s0;
 TextureCube env_s1;
 
-uniform float4 env_color; // color.w  = lerp factor
-uniform float3x4 m_v2w;
+uniform float4 env_color; // color.w = lerp factor
 
-float3 SmallSkyCompute(float3 uv)
+void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 alb_gloss, float3 Pnt, float3 normal)
 {
-    float3 color = float3(0.0, 0.0, 0.0);
+    // [ SSS Test ]. Overwrite terrain material
+    bool m_terrain = abs(m - 0.95) <= 0.04f;
+    bool m_flora = abs(m - 0.15) <= 0.04f;
+    if (m_terrain)
+        m = 0;
 
-    static const int3 o[8] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {1, 1, 1}, {0, 0, 0}};
+    // PBR style
+    float3 albedo = calc_albedo(alb_gloss, m);
+    float3 specular = calc_specular(alb_gloss, m);
+    float rough = calc_rough(alb_gloss, m);
+    // calc_rain(albedo, specular, rough, alb_gloss, m, h);
+    // calc_foliage(albedo, specular, rough, float4(0.05,0.05,0.05,0.05), m);
 
-    static const int num = 8;
+    float roughCube = rough;
+    // float roughCube = sqrt(rough); //cubemap mipmaps (brdf too?)
 
-    for (int i = 0; i < num; i++)
-    {
-        float3 tap = normalize(uv + o[i] * SMALLSKY_BLUR_INTENSITY);
-        float3 env0 = env_s0.SampleLevel(smp_rtlinear, tap, 0);
-        float3 env1 = env_s1.SampleLevel(smp_rtlinear, tap, 0);
-        color += lerp(env0, env1, env_color.w) / num;
-    }
+    // float RoughMip = roughCube * CUBE_MIPS;
+    float RoughMip = CUBE_MIPS - ((1 - roughCube) * CUBE_MIPS);
 
-    float top_to_down_vec = saturate(uv.y);
-    top_to_down_vec *= top_to_down_vec;
+    // normal vector
+    normal = normalize(normal);
+    float3 nw = mul(m_inv_V, normal);
+    // nw = normalize(nw);
 
-    static const float factor = SMALLSKY_TOP_VECTOR_POWER;
-    color *= saturate(factor + (1.0 - factor) * top_to_down_vec) + (1.0 - factor) / 2;
+    // view vector
+    Pnt = normalize(Pnt);
+    float3 v2Pnt = mul(m_inv_V, Pnt);
+    // v2Pnt = normalize(v2Pnt);
 
-    return color;
-
-    // float3 s0 = env_s0.SampleLevel(smp_rtlinear, uv, 0);
-    // float3 s1 = env_s1.SampleLevel(smp_rtlinear, uv, 0);
-    // return lerp(s0, s1, env_color.w);
-}
-
-void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float s, float3 Pnt, float3 normal)
-{
-    // hscale - something like diffuse reflection
-    float3 nw = mul(m_v2w, normal);
-    float hscale = h;
+    // normal remap
+    float3 nwRemap = nw;
+    float3 vnormabs = abs(nwRemap);
+    float vnormmax = max(vnormabs.x, max(vnormabs.y, vnormabs.z));
+    nwRemap /= vnormmax;
+    if (nwRemap.y < 0.999)
+        nwRemap.y = nwRemap.y * 2 - 1; // fake remapping
 
     // reflection vector
-    float3 v2PntL = normalize(Pnt);
-    float3 v2Pnt = mul(m_v2w, v2PntL);
     float3 vreflect = reflect(v2Pnt, nw);
-    float hspec = .5h + .5h * dot(vreflect, v2Pnt);
 
-    // material	// sample material
-    float4 light = s_material.SampleLevel(smp_material, float3(hscale, hspec, m), 0).xxxy;
+    // reflect remap
+    float3 vreflectRemap = vreflect;
+    float3 vreflectabs = abs(vreflectRemap);
+    float vreflectmax = max(vreflectabs.x, max(vreflectabs.y, vreflectabs.z));
+    vreflectRemap /= vreflectmax;
+    if (vreflectRemap.y < 0.999)
+        vreflectRemap.y = vreflectRemap.y * 2 - 1; // fake remapping
 
-    // diffuse color
-    float3 env_d = SmallSkyCompute(nw) * env_color.xyz;
-    env_d *= env_d; // contrast
+    // normalize
+    nwRemap = normalize(nwRemap);
+    vreflectRemap = normalize(vreflectRemap);
 
-    hdiffuse = env_d * light.xyz + L_ambient.rgb;
+    // DICE reflection vector roughness
+    vreflectRemap = getSpecularDominantDir(nwRemap, vreflectRemap, rough);
+
+    // Valve style ambient cube to prevent seams
+    const float Epsilon = 0.001;
+    float3 nSquared = nw * nw;
+
+    float3 e0d = 0;
+    e0d += nSquared.x * (env_s0.SampleLevel(smp_base, float3(nwRemap.x, Epsilon, Epsilon), CUBE_MIPS).rgb);
+    e0d += nSquared.y * (env_s0.SampleLevel(smp_base, float3(Epsilon, nwRemap.y, Epsilon), CUBE_MIPS).rgb);
+    e0d += nSquared.z * (env_s0.SampleLevel(smp_base, float3(Epsilon, Epsilon, nwRemap.z), CUBE_MIPS).rgb);
+    // e0d = LinearTosRGB(e0d);
+
+    // e0d = env_s0.SampleLevel(smp_base, nwRemap, CUBE_MIPS);
+
+    float3 e1d = 0;
+    e1d += nSquared.x * (env_s1.SampleLevel(smp_base, float3(nwRemap.x, Epsilon, Epsilon), CUBE_MIPS).rgb);
+    e1d += nSquared.y * (env_s1.SampleLevel(smp_base, float3(Epsilon, nwRemap.y, Epsilon), CUBE_MIPS).rgb);
+    e1d += nSquared.z * (env_s1.SampleLevel(smp_base, float3(Epsilon, Epsilon, nwRemap.z), CUBE_MIPS).rgb);
+    // e1d = LinearTosRGB(e1d);
+
+    // e1d = env_s1.SampleLevel(smp_base, nwRemap, CUBE_MIPS);
 
     // specular color
-    vreflect.y = vreflect.y * 2 - 1; // fake remapping
+    float3 e0s = env_s0.SampleLevel(smp_base, vreflectRemap, RoughMip);
+    float3 e1s = env_s1.SampleLevel(smp_base, vreflectRemap, RoughMip);
 
-    float3 env_s = SmallSkyCompute(vreflect) * env_color.xyz;
-    env_s *= env_s; // contrast
+    // lerp
+    float3 env_d = lerp(e0d, e1d, env_color.w);
+    float3 env_s = lerp(e0s, e1s, env_color.w);
 
-    hspecular = env_s * light.w * s;
+    // hscale - something like diffuse reflection
+    float hscale = h; //. * (.5h + .5h*nw.y);
+    float hspec = .5h + .5h * dot(vreflect, v2Pnt);
+
+    // TODO - make hscale normal mapped
+    float4 light = float4(hscale, hscale, hscale, hscale);
+    // float4	light	= s_material.SampleLevel( smp_material, float3( hscale, hspec, m ), 0 ).xxxy;
+
+    // tint color
+    // float3 env_col = 1.0;
+    float3 env_col = env_color.rgb;
+    // float3 env_col = fog_color.rgb * 2.0;
+
+    env_d *= env_col;
+    env_s *= env_col;
+
+    // lightmap ambient
+    env_d *= light.xxx;
+    env_s *= light.www;
+
+    // ambient color
+    float3 amb_col = L_ambient.rgb;
+    env_d += amb_col;
+    env_s += amb_col; //*(env_s/env_d);
+
+    env_d = SRGBToLinear(env_d);
+    env_s = SRGBToLinear(env_s); // gamma correct
+
+    hdiffuse = Amb_BRDF(rough, albedo, specular, env_d, env_s * !m_flora, -v2Pnt, nw).rgb;
+    hspecular = 0; // do not use hspec at all
 }
-
 #endif

@@ -1,10 +1,25 @@
 #ifndef common_functions_h_included
 #define common_functions_h_included
 
-#include "cgim.h"
+#include "srgb.h"
 
 uniform float4 m_actor_params;
 uniform float4 L_hotness;
+
+float3 vibrance(float3 img, float val)
+{
+    float luminance = dot(float3(img.rgb), LUMINANCE_VECTOR);
+    return float3(lerp(luminance, float3(img.rgb), val));
+}
+
+float2 hash22(float2 p)
+{
+    float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx + 19.19);
+    return frac((p3.xx + p3.yz) * p3.zy);
+}
+
+float noise(float2 tc) { return frac(sin(dot(tc, float2(12.0, 78.0) + (timers.x))) * 43758.0) * 0.25f; }
 
 //	contrast function
 float Contrast(float Input, float ContrastPower)
@@ -17,20 +32,46 @@ float Contrast(float Input, float ContrastPower)
     return Output;
 }
 
-float3 vibrance( float3 img, half val )
-{
-    float luminance = dot( float3( img.rgb ), LUMINANCE_VECTOR );
-    return float3( lerp( luminance, float3( img.rgb ), val ));
-}
-
 void tonemap(out float4 low, out float4 high, float3 rgb, float scale)
 {
+    rgb = SRGBToLinear(rgb);
+    scale = SRGBToLinear(scale);
     rgb = rgb * scale;
-    low = TonemapFunctionGet(rgb).xyzz;
-    high = rgb.xyzz / def_hdr; // 8x dynamic range
+    rgb = LinearTosRGB(rgb);
+
+    const float fWhiteIntensity = 11.2;
+
+    low = float4(tonemap_sRGB(rgb, fWhiteIntensity), 0);
+    high = float4(rgb / def_hdr, 0);
 }
 
-float4 combine_bloom(float3 low, float4 high) { return float4(low + high * high.a, 1.h); }
+void tonemap_hipri(out float4 low, out float4 high, float3 rgb, float scale) { tonemap(low, high, rgb, scale); }
+
+// CUSTOM
+float3 blend_soft(float3 a, float3 b)
+{
+    // return 1.0 - (1.0 - a) * (1.0 - b);
+
+    // gamma correct and inverse tonemap to add bloom
+    a = SRGBToLinear(a); // post tonemap render
+    a = a / max(0.004, 1 - a); // inverse tonemap
+    // a = a / max(0.001, 1-a); //inverse tonemap
+    b = SRGBToLinear(b); // bloom
+
+    a += b; // bloom add
+
+    a = a / (1 + a); // tonemap
+
+    a = LinearTosRGB(a);
+    return a;
+}
+
+/*float4 combine_bloom(float3 low, float4 high)
+{
+    // return	float4(low + high*high.a, 1); //add
+    high.rgb *= high.a;
+    return float4(blend_soft(low.rgb, high.rgb), 1); // screen
+}*/
 
 float calc_fogging(float4 w_pos) { return dot(w_pos, fog_plane); }
 
