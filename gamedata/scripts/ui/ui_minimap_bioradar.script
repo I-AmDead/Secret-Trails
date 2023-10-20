@@ -63,6 +63,8 @@ function attach(sm)
 	sm:subscribe({signal = "on_talk_open", 		fun = this.hud_hide})
 	sm:subscribe({signal = "on_inventory_hide", 	fun = this.hud_show})
 	sm:subscribe({signal = "on_inventory_open", 	fun = this.hud_hide})
+	sm:subscribe({signal = "on_pda_hide", 		fun = this.hud_show})
+	sm:subscribe({signal = "on_pda_open", 		fun = this.hud_hide})
 end
 
 local subscribed
@@ -93,6 +95,8 @@ function on_item_to_ruck(obj)
 end
 
 function hud_show()
+	local show = ogse.load_var("hud_show", false)
+	if show then return end
 	if biomap then
 		biomap:Show(true)
 	end
@@ -145,10 +149,12 @@ function on_key_down(key, bind)
 	end
 
 	if bind == key_bindings.kHIDEHUD then
+		ogse.save_var("hud_show", true)
 		hud_hide()
 	end
 
 	if bind == key_bindings.kSHOWHUD then
+		ogse.save_var("hud_show", false)
 		hud_show()
 	end
 end

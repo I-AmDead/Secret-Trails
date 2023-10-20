@@ -1,6 +1,6 @@
 -- -*- mode: lua; encoding: windows-1251 -*-
 
-local kScreen = math.min( (1024/768) / (device().width/device().height), 1 )
+local kScreen = math.min((1024 / 768) / (device().width / device().height), 1)
 local cell_size = 25		-- размер иконки в описании свойств предмета
 local vert_interval = 1		-- параметр vert_interval в скролле
 
@@ -98,7 +98,7 @@ function CUIDescriptionWnd:__init(owner) super()
 	self.owner = owner
 
 	self.scrollPos = 0
-	self.k_icon = cell_size*kScreen/50
+	self.k_icon = cell_size * kScreen / 50
 	
 	self:Init(0, 0, 1024, 768)
 	self:SetAutoDelete(true)
@@ -168,17 +168,24 @@ function CUIDescriptionWnd:ShowProps(tbl)
 	local st
 	for i, t in ipairs(tbl) do
 		st = self.xml:InitStatic("props", self.scroll_v)
+
 		st.icon = self.xml:InitStatic("props:prop_texture", st)
 		st.icon:InitTexture("ui_inv_icon_"..t[1])
+
 		st.text = self.xml:InitStatic("props:prop_text", st)
 		st.text:SetText(t[2])
 		self.addH = self.addH + st:GetHeight() + vert_interval
 	end
 end
 
-function CUIDescriptionWnd:ShowPropFromIni(sect, icon, text)
+function CUIDescriptionWnd:ShowPropFromIni(sect, text, sect2, text2)
     local st = self.xml:InitStatic("props_ini", self.scroll_v)
     st:SetHeight(cell_size)
+
+    local icon = CIconParams(sect)
+
+    local has_second_col = sect2 ~= nil
+    local left = 0
 
     local w = math.min(icon.grid_width, 2) * 50
     local ww = w * self.k_icon
@@ -186,18 +193,67 @@ function CUIDescriptionWnd:ShowPropFromIni(sect, icon, text)
 
     st.icon = CUIStatic()
     st:AttachChild(st.icon)
-    CIconParams( sect ):set_shader( st.icon )
+    icon:set_shader(st.icon)
 
-    st.icon:Init((www - ww) / 2, 0, ww, cell_size)
+    st.icon:Init(left + (www - ww) / 2, 0, ww, cell_size)
 
-    if text then
-        www = www + 1
-        st.text = CUIStatic()
-        st:AttachChild(st.text)
-        st.text:Init(www, 0, st:GetWidth()-ww, cell_size)
-        st.text:SetTextY((cell_size/2)-8)
-        st.text:SetTextST(text)
-        st.text:SetTextColor(255, 160, 160 ,160)
+    if not text then
+        text = game.translate_string(news_manager.get_inv_name(sect))
+    end
+
+    if has_second_col and string.len(text) > 17 then
+        text = string.sub(text, 1, 17)
+        text = text.."..."
+    end
+
+    www = www + 2
+    st.text = CUIStatic()
+    st:AttachChild(st.text)
+    st.text:Init(left + www, 0, st:GetWidth() / (has_second_col and 1.5 or 1) - www, cell_size + 10)
+    st.text:SetTextY((cell_size / 2) - 8)
+    st.text:SetText(text)
+    st.text:SetTextColor(255, 160, 160, 160)
+
+    local static = st.text:GetCUIStatic()
+    if static then
+        static:SetTextComplexMode(true)
+    end
+
+    if has_second_col then
+        left = st:GetWidth() / 2
+
+        local icon2 = CIconParams(sect2)
+
+        w = math.min(icon2.grid_width, 2) * 50
+        ww = w * self.k_icon
+
+        st.icon2 = CUIStatic()
+        st:AttachChild(st.icon2)
+        icon2:set_shader(st.icon2)
+
+        st.icon2:Init(left + (www - ww) / 2, 0, ww, cell_size)
+
+        if not text2 then
+            text2 = game.translate_string(news_manager.get_inv_name(sect2))
+        end
+
+        if has_second_col and string.len(text2) > 17 then
+            text2 = string.sub(text2, 1, 17)
+            text2 = text2.."..."
+        end
+
+        www = www + 2
+        st.text2 = CUIStatic()
+        st:AttachChild(st.text2)
+        st.text2:Init(left + www, 0, st:GetWidth() / (has_second_col and 1.5 or 1) - www, cell_size + 10)
+        st.text2:SetTextY((cell_size / 2) - 8)
+        st.text2:SetText(text2)
+        st.text2:SetTextColor(255, 160, 160, 160)
+
+        local static = st.text2:GetCUIStatic()
+        if static then
+            static:SetTextComplexMode(true)
+        end
     end
 
     self.addH = self.addH + cell_size + vert_interval
@@ -222,7 +278,7 @@ function CUIDescriptionWnd:ShowDescription(item)
 
 	tx = icon.grid_x * 40
 	ty = icon.grid_y * 40
-	tw = icon.grid_width * 40
+	tw = icon.grid_width * 35
 	th = icon.grid_height * 40
 
 	local px = 150 - (tw / 2)
@@ -370,7 +426,17 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	for i,t in ipairs(weapons_params) do
 		val = get_float(self.section, t.prop, 0)
 		if val ~= 0 then
-			txt = t.text.." "..string.format("%d",val)
+			if t.prop == "ammo_mag_size" then
+				txt = t.text.." "..string.format("%d / %d", self.item:get_ammo_in_magazine(), val)
+			elseif t.prop == "hit_power" then
+				txt = t.text.." "..string.format("%.1f", val)
+			elseif t.prop == "fire_distance" then
+				txt = t.text.." "..string.format("%d %s", val, game.translate_string("descr_meters"))
+			elseif t.prop == "rpm" then
+				txt = t.text.." "..string.format("%d %s", val, game.translate_string("descr_speed"))
+			else
+				txt = t.text.." "..string.format("%d", val)
+			end
 			table.insert( params, {t.prop, txt} )
 		end
 	end
@@ -389,8 +455,35 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	st:SetTextColor(255, 0, 255, 110)
 	-- Боеприпасы
 	local s = sys_ini:r_string(self.section, 'ammo_class')
-	for a in string.gfind(s, "[%w_%-%.]+") do
-	    self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+
+	local t = split_comma_separated_list(s)
+	table.sort(t)
+
+	for i = 1, #t, 2 do
+		local a = t[i]
+		local b = t[i + 1]
+		if b then
+			local txt1 = game.translate_string(news_manager.get_inv_name(a))
+			local txt2 = game.translate_string(news_manager.get_inv_name(b))
+
+			if a == get_cur_wpn_ammo_section(self.item) then
+				txt1 = "*" .. txt1
+			end
+
+			if b == get_cur_wpn_ammo_section(self.item) then
+				txt2 = "*" .. txt2
+			end
+
+			self:ShowPropFromIni(a, txt1, b, txt2)
+		else
+			local txt1 = game.translate_string(news_manager.get_inv_name(a))
+
+			if a == get_cur_wpn_ammo_section(self.item) then
+				txt1 = "*" .. txt1
+			end
+
+			self:ShowPropFromIni(a, txt1)
+		end
 	end
 
 	self:AddIndent(5)
@@ -405,8 +498,40 @@ function CUIDescriptionWnd:ShowWeaponParams()
 		st:SetTextColor(255, 0, 255, 110)
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
-		for a in string.gfind(s1, "[%w_%-%.]+") do
-			self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+		local t = split_comma_separated_list(sys_ini:r_string(self.section, 'scope_names'))
+		table.sort(t)
+
+		for i = 1, #t, 2 do
+			local a = t[i]
+			local b = t[i + 1]
+			if b then
+				local txt1 = game.translate_string(news_manager.get_inv_name(a))
+				local txt2 = game.translate_string(news_manager.get_inv_name(b))
+				
+				local scope_name = get_string(self.section, "scope_name")
+
+				if news_manager.get_inv_name(a) == news_manager.get_inv_name(scope_name) then
+					txt1 = "*" .. txt1
+				end
+
+				if news_manager.get_inv_name(b) == news_manager.get_inv_name(scope_name) then
+					txt2 = "*" .. txt2
+				end
+
+				self:ShowPropFromIni(a, txt1, b, txt2)
+			else
+				local txt1 = game.translate_string(news_manager.get_inv_name(a))
+
+				local scope_name = get_string(self.section, "scope_name")
+
+				if news_manager.get_inv_name(a) == news_manager.get_inv_name(scope_name) then
+					if a == get_cur_wpn_ammo_section(self.item) then
+						txt1 = "*" .. txt1
+					end
+				end
+
+				self:ShowPropFromIni(a, txt1)
+			end
 		end
 	end
 
@@ -421,7 +546,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
 		for a in string.gfind(s2, "[%w_%-%.]+") do
-			self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+			self:ShowPropFromIni(a, game.translate_string(news_manager.get_inv_name(a)))
 		end
 	end
 
@@ -436,7 +561,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
 		for a in string.gfind(s3, "[%w_%-%.]+") do
-			self:ShowPropFromIni( a, CIconParams(a), news_manager.get_inv_name(a) )
+			self:ShowPropFromIni(a, game.translate_string(news_manager.get_inv_name(a)))
 		end
 	end
 end
@@ -488,23 +613,38 @@ function CUIDescriptionWnd:ShowAfParams()
 end
 -- Показываем параметры костмов
 function CUIDescriptionWnd:ShowOutfitParams()
+	local outfit = db.actor:item_in_slot(6)
 	local params = {}
 	local val, txt = 0, ""
 	for i,t in ipairs(hit_types) do
 		val = get_float(self.section, t.prop.."_protection")
-		if val~=0 then
-			val = math.floor(val * self.condition * 100 + 0.5)
-			txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%",val)
-			table.insert( params, {t.prop, txt} )
+		val = math.floor(val * self.condition * 100 + 0.5)
+		if outfit and outfit:id() ~= self.item:id() then
+			local val2 = math.floor(get_float(outfit:section(), t.prop.."_protection") * outfit:condition() * 100 + 0.5)
+			val2 = val - val2
+			txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val).."%c[gray2] / "..(val2 < 0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val2)
+		else
+			if val > 0.0 then
+				txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val)
+			end
 		end
+		table.insert( params, {t.prop, txt} )
 	end
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
 		val = get_float(self.section, "additional_inventory_weight2")
-		if val~=0 then
-			txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
-			table.insert( params, {"additional_weight", txt} )
+		if outfit and outfit:id() ~= self.item:id() then
+			local val2 = get_float(outfit:section(), "additional_inventory_weight2")
+			if val > 0.0 or val2 > 0.0 then
+				val2 = val - val2
+				txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val > 0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg")).."%c[gray2] / "..(val2 > 0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val2, game.translate_string("descr_kg"))
+			end
+		else
+			if val > 0.0 then
+				txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
+			end
 		end
+		table.insert( params, {"additional_weight", txt} )
 	end
 
 	if #params > 0 then
@@ -540,7 +680,7 @@ function CUIDescriptionWnd:OnUpdate( delta ) --Если сюда передали аргументом пер
 		if self.itemInFocus and ( self.itemInFocus > 65535 or alife():object( self.itemInFocus ) ) then
 			self:ShowDescription( level.object_by_id(self.itemInFocus) )
 		end
-		self.shift_tmr = nil --А может обновлять всегда когда есть фокус?
+		self.shift_tmr = 1 --А может обновлять всегда когда есть фокус?
 	end
 end
 
@@ -572,6 +712,15 @@ end
 function need_show_condition(item)
 	local b = sys_ini:r_bool(item:section(), "show_condition", nil)
 	return ( ( item:is_weapon() or item:is_outfit() ) and b ~= false ) or b == true
+end
+
+function get_cur_wpn_ammo_section(wpn)
+    local ammo_sect
+    if wpn:is_weapon() then
+        local ammo = dsh.get_ammo_sections(wpn)
+        ammo_sect = ammo.ammo_class[wpn:get_ammo_type() + 1]
+    end
+    return ammo_sect
 end
 
 function get_actual_cost(obj) -- костыль для расчета реально цеты айтема в окне торговли. не лутшее решение но в целом пойдет

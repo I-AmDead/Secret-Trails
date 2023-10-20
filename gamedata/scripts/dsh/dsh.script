@@ -532,3 +532,19 @@ function unpack_time(v)
     t:set(unpack(v))
     return t
 end
+
+local ammo_sections_cache = {}
+function get_ammo_sections(wpn)
+    local sect = wpn:section()
+    if not ammo_sections_cache[sect] then
+        local t = {}
+        ammo_sections_cache[sect] = t
+        for _, k in ipairs({ "ammo_class", "grenade_class" }) do
+            local s = get_string(sect, k)
+            if s then
+                t[k] = string.explode(",", s, true)
+            end
+        end
+    end
+    return ammo_sections_cache[sect]
+end
