@@ -40,20 +40,19 @@ float4 main(p_screen I) : SV_Target
 	// STEP 0 - LOCAL DEFINITIONS
 	///////////////////////////////////////////////////////
 
-	float2 uv = I.tc0;
-	uv = applyInertiaDev(uv);
+	I.tc0 = applyInertiaDev(I.tc0);
 
 	// TC vars
-	float2 corrected_texturecoords = aspect_ratio_correction(uv);
+	float2 corrected_texturecoords = aspect_ratio_correction(I.tc0);
 
 	///////////////////////////////////////////////////////
 	// STEP 0 - MAIN SAMPLES
 	///////////////////////////////////////////////////////
-	float3 image = s_image.Sample(smp_rtlinear, uv).xyz;
+	float3 image = s_image.Sample(smp_rtlinear, I.tc0).xyz;
 	///////////////////////////////////////////////////////
 	// STEP 0 - MAIN FUNCTION
 	///////////////////////////////////////////////////////
-	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, uv).rgb;
+	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
 
 	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;
 	float lua_param_glitch_power = fmod(pnv_param_2.z, 1.0f);
@@ -64,18 +63,18 @@ float4 main(p_screen I) : SV_Target
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{
 			// GRAB SAMPLES FOR NVG SHADER
-			float3 eighth_res_bloom = s_blur_8.Sample(smp_rtlinear, uv).rgb;
-			float3 quarter_res_bloom = s_blur_4.Sample(smp_rtlinear, uv).rgb;
+			float3 eighth_res_bloom = s_blur_8.Sample(smp_rtlinear, I.tc0).rgb;
+			float3 quarter_res_bloom = s_blur_4.Sample(smp_rtlinear, I.tc0).rgb;
 
 			float4 jitter = float4(
-				frac(sin(dot(uv, float2(12.0, 78.0) + (timers.x) )) * 12345.0),
-				frac(sin(dot(uv-fmod(I.tc0,float2(3.0,3.0)/screen_res.xy), float2(12.0, 78.0) + (timers.x) )) * 22738.0),
-				frac(sin(dot(uv-fmod(I.tc0,float2(3.0,3.0)/screen_res.xy), float2(12.0, 78.0) + (timers.x) )) * 78372.0),
-				frac(sin(dot(uv, float2(12.0, 78.0) + (timers.x) )) * 37857.0));
+				frac(sin(dot(I.tc0, float2(12.0, 78.0) + (timers.x) )) * 12345.0),
+				frac(sin(dot(I.tc0-fmod(I.tc0,float2(3.0,3.0)/screen_res.xy), float2(12.0, 78.0) + (timers.x) )) * 22738.0),
+				frac(sin(dot(I.tc0-fmod(I.tc0,float2(3.0,3.0)/screen_res.xy), float2(12.0, 78.0) + (timers.x) )) * 78372.0),
+				frac(sin(dot(I.tc0, float2(12.0, 78.0) + (timers.x) )) * 37857.0));
 
-			//float depth = s_position.Load(int3(uv * screen_res.xy,0),0).z; // Sample the depth buffer in a better way
-			//float depth = pow(blurred_depth(uv),2)*1000;
-			float depth = blurred_depth(uv);
+			//float depth = s_position.Load(int3(I.tc0 * screen_res.xy,0),0).z; // Sample the depth buffer in a better way
+			//float depth = pow(blurred_depth(I.tc0),2)*1000;
+			float depth = blurred_depth(I.tc0);
 
 			//image.r = lerp(half_res_blur.r,image.r,0.6f);
 			image = pow(image,0.85);
@@ -94,11 +93,11 @@ float4 main(p_screen I) : SV_Target
 			// GLITCH EFFECT -- TO DO
 			if (lua_param_glitch_power > 0.0f)
 			{
-				image = lerp(image, glitchEffect(image, uv, lua_param_glitch_power),0.9);
+				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.9);
 			}
 
 			// APPLY BLOOM / WASHOUT
-			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),uv);
+			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),I.tc0);
 			float addon_hard = max(addon - 0.7,0.0) * 2.0f;
 			float addon_soft = (max(half_res_blur.g - 0.6,0.0f) / 0.6) / 1.0f;
 //			addon = max(addon - 0.01,0) * 3;
@@ -108,7 +107,7 @@ float4 main(p_screen I) : SV_Target
 
 
 			// APPLY CRT EFFECT
-			image = lerp(image,make_crt_ified(half_res_blur, uv),pnv_param_3.y); // Adds a CRT effect that I think looks better than draw_scanlines
+			image = lerp(image,make_crt_ified(half_res_blur, I.tc0),pnv_param_3.y); // Adds a CRT effect that I think looks better than draw_scanlines
 
 			// APPLY NOISE
 			image.r += jitter.y * (pnv_param_3.x * (pow(lua_param_nvg_gain_current,0.5) )); // Add the noise to the image
@@ -126,7 +125,7 @@ float4 main(p_screen I) : SV_Target
 			}
 
 			// APPLY VIGNETTE
-			float vignette = calc_vignette(lua_param_nvg_num_tubes, uv, lua_param_vignette_current);
+			float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
 			image = clamp(image,0.0,1.0);
 			image *= vignette;
 
