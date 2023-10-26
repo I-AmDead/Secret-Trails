@@ -47,19 +47,23 @@ float4 main(p_filter I) : SV_Target
 
     result = SRGBToLinear(result);
 
+    float AvgLum = result;
+    AvgLum *= 8;
+    float LogLum = log2(AvgLum);
+
     // OK
     //   _full.set(ps_r2_tonemap_middlegray, 1.f, ps_r2_tonemap_low_lum);
     //   RCache.set_c("MiddleGray", _result.x, _result.y, _result.z, f_luminance_adapt);
     float scale = MiddleGray.x / (result * MiddleGray.y + MiddleGray.z); // final
 
+    // scale = 1 / (9.6 * AvgLum);
+    // scale = MiddleGray.x / max(9.6 * AvgLum, MiddleGray.z);	// final
+
     float scale_prev = s_tonemap.Sample(smp_nofilter, I.Tex0).x;
-    // scale = SRGBToLinear(scale_prev);
-    scale_prev = SRGBToLinear(scale_prev);
     float rvalue = lerp(scale_prev, scale, MiddleGray.w);
-    rvalue = LinearTosRGB(rvalue);
 
     // clamp(rvalue, 1.0/128.0, 20.0);
-    clamp(rvalue, 1.0 / 128.0, 128.0);
+    clamp(rvalue, 1.0 / 128.0, 64.0);
 
     return rvalue;
 }

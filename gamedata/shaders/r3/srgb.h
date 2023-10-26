@@ -24,12 +24,7 @@ float3 LinearTosRGB(float3 gammaPre)
     float3 gammaPost = float3(LinearTosRGB(gammaPre.r), LinearTosRGB(gammaPre.g), LinearTosRGB(gammaPre.b));
     return gammaPost;
 }
-/*
-float4 LinearTosRGB(float4 gammaPre)
-{
-    return float4(LinearTosRGB(gammaPre.rgb), gammaPre.a);
-}
-*/
+
 float SRGBToLinear(float gammaPre)
 {
     /*
@@ -50,10 +45,5 @@ float3 SRGBToLinear(float3 gammaPre)
     float3 gammaPost = float3(SRGBToLinear(gammaPre.r), SRGBToLinear(gammaPre.g), SRGBToLinear(gammaPre.b));
     return gammaPost;
 }
-/*
-float4 SRGBToLinear(float4 gammaPre)
-{
-    return float4(SRGBToLinear(gammaPre.rgb), gammaPre.a);
-}
-*/
+
 #include "tonemap_srgb.h"

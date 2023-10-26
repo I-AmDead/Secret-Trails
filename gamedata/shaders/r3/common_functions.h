@@ -35,7 +35,6 @@ float Contrast(float Input, float ContrastPower)
 void tonemap(out float4 low, out float4 high, float3 rgb, float scale)
 {
     rgb = SRGBToLinear(rgb);
-    scale = SRGBToLinear(scale);
     rgb = rgb * scale;
     rgb = LinearTosRGB(rgb);
 
@@ -58,7 +57,17 @@ float3 blend_soft(float3 a, float3 b)
     // a = a / max(0.001, 1-a); //inverse tonemap
     b = SRGBToLinear(b); // bloom
 
+    // constrast reduction of ACES output
+    float Contrast_Amount = 0.7;
+    const float mid = 0.18;
+    a = pow(a, Contrast_Amount) * mid / pow(mid, Contrast_Amount);
+
+    ACES_LMT(b); // color grading bloom
     a += b; // bloom add
+
+    // Boost the contrast to match ACES RRT
+    float Contrast_Boost = 1.42857;
+    a = pow(a, Contrast_Boost) * mid / pow(mid, Contrast_Boost);
 
     a = a / (1 + a); // tonemap
 

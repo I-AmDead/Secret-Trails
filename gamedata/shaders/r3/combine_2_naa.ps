@@ -79,8 +79,6 @@ c2_out main(v2p_aa_AA I)
 
     float3 img = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
 
-    float4 bloom = s_bloom.Sample(smp_rtlinear, center);
-
     img = mblur(center, gbd.P, img.rgb);
 
 // Indirect light - SCREEN SPACE SHADERS - UPDATE 14
@@ -94,14 +92,16 @@ c2_out main(v2p_aa_AA I)
         img = ssfx_debanding(img, I.Tex0.xy);
 #endif
 
+    float4 bloom = s_bloom.Sample(smp_rtlinear, center);
+
 #ifdef SSFX_BEEFS_NVG
-	// NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
-	if (pnv_param_1.z < 1.f)
-	{
-		img = blend_soft(img, bloom.xyz*bloom.w);
-	}
+    // NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
+    if (pnv_param_1.z < 1.f)
+    {
+        img = blend_soft(img, bloom.xyz * bloom.w);
+    }
 #else
-	img = blend_soft(img, bloom.xyz*bloom.w);
+    img = blend_soft(img, bloom.xyz * bloom.w);
 #endif
 
     img = img_corrections(img);
