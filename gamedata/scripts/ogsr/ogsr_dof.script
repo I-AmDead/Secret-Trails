@@ -1,24 +1,24 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
 function attach( sm )
-  sm:subscribe({ signal = "on_first_update",              fun = this.on_first_update              })
-  sm:subscribe({ signal = "ui_on_dialog_show",            fun = this.dof_enable                   })
-  sm:subscribe({ signal = "ui_on_dialog_hide",            fun = this.dof_disable                  })
-end
+    sm:subscribe({ signal = "on_first_update",              fun = this.on_first_update              })
+    sm:subscribe({ signal = "ui_on_dialog_show",            fun = this.dof_enable                   })
+    sm:subscribe({ signal = "ui_on_dialog_hide",            fun = this.dof_disable                  })
+  end
 
 function dof_enable()
-  if db.actor:dont_has_info("ui_pda") then
-    set_dof_params( 1.0, 1.0, 1.0, 1.1 )
-  else
-    set_dof_params( 0.0, 0.0, 0.0, 0.0 )
-  end
+    if db.actor:dont_has_info("ui_pda") then
+        set_dof_params(1.0, 1.0, 1.0, 1.1)
+    else
+        set_dof_params(0.0, 0.0, 0.0, 0.0)
+    end
 end
 
 function dof_disable()
-  set_dof_params( 0.0, 0.0, 0.0, 0.0 )
+    set_dof_params(0.0, 0.0, 0.0, 0.0)
 end
 
 function on_first_update()
-  cmd("ssfx_wpn_dof_2 0.5")
-  set_dof_params( 0.0, 0.0, 0.0, 0.0 )
+    cmd("ssfx_wpn_dof_2 0.5")
+    set_dof_params(0.0, 0.0, 0.0, 0.0)
 end

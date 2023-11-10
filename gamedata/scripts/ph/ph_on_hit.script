@@ -1,16 +1,14 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 ----------------------------------------------------------------------------------------------------
 -- Physics hit checker
 ----------------------------------------------------------------------------------------------------
--- Ðàçðàáîò÷èê: Andrey Fidrya (Zmey) af@svitonline.com
+-- Ð Ð°Ð·Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸Ðº: Andrey Fidrya (Zmey) af@svitonline.com
 ----------------------------------------------------------------------------------------------------
-
 class "ph_on_hit"
 
 function ph_on_hit:__init(obj, storage)
-	self.object = obj
-	self.st = storage
+    self.object = obj
+    self.st = storage
 end
 
 function ph_on_hit:reset_scheme()
@@ -20,39 +18,38 @@ function ph_on_hit:update(delta)
 end
 
 function ph_on_hit:hit_callback(obj, amount, local_direction, who, bone_index)
-	local who_name
-	if who then
-		who_name = who:name()
-	else
-		who_name = "nil"
-	end
+    local who_name
+    if who then
+        who_name = who:name()
+    else
+        who_name = "nil"
+    end
 
-	
-	if db.storage[self.object:id()].active_scheme then
-		if xr_logic.try_switch_to_another_section(obj, self.st, db.actor) then
-			return
-		end
-	end
+    if db.storage[self.object:id()].active_scheme then
+        if xr_logic.try_switch_to_another_section(obj, self.st, db.actor) then
+            return
+        end
+    end
 end
 function ph_on_hit:deactivate()
 end
 
 ---------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
- 	local action = ph_on_hit(npc, storage)
-	storage.action = action
+    local action = ph_on_hit(npc, storage)
+    storage.action = action
 end
 
 function set_scheme(npc, ini, scheme, section, gulag_name)
 
-	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
-	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
-	xr_logic.subscribe_action_for_events(npc, st, st.action)	
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+    xr_logic.subscribe_action_for_events(npc, st, st.action)
 end
 
 function disable_scheme(npc, scheme)
-	local st = db.storage[npc:id()][scheme]
-	if st then
-		xr_logic.unsubscribe_action_from_events(npc, st, st.action)
-	end	
+    local st = db.storage[npc:id()][scheme]
+    if st then
+        xr_logic.unsubscribe_action_from_events(npc, st, st.action)
+    end
 end

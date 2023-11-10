@@ -1,1411 +1,1353 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-
- level_name = {}
- community_name = {}
- rate_name = {}
- monster_classes = {}
- anomaly_classes = {}
- rate_prefix = {}
- rate_postfix = {}
- monster_prefix = {}
- monster_suffix = {}
- weapon_classes = {}
- common = {}
- seen_prefix = {}
- spawn_prefix = {}
- anomaly_prefix = {}
- anomaly_postfix = {}
+level_name = {}
+community_name = {}
+rate_name = {}
+monster_classes = {}
+anomaly_classes = {}
+rate_prefix = {}
+rate_postfix = {}
+monster_prefix = {}
+monster_suffix = {}
+weapon_classes = {}
+common = {}
+seen_prefix = {}
+spawn_prefix = {}
+anomaly_prefix = {}
+anomaly_postfix = {}
 
 function Init()
---
+    --
 end
 
--- ƒÓ·‡‚ËÚ¸ ÒÔËÒÓÍ ‚‡Ë‡ÌÚÓ‚ ‰Îˇ text, text0
--- ƒÓ·‡‚ËÚ¸ ‡‰ËÛÒ ‰Îˇ text0
+-- –î–æ–±–∞–≤–∏—Ç—å —Å–ø–∏—Å–æ–∫ –≤–∞—Ä–∏–∞–Ω—Ç–æ–≤ –¥–ª—è text, text0
+-- –î–æ–±–∞–≤–∏—Ç—å —Ä–∞–¥–∏—É—Å –¥–ª—è text0
 base_points = {
-     ["l01_escape"] = {
-          { name = game.translate_string( "bp_l01_escape_1_0" ), text = game.translate_string( "bp_l01_escape_1_1" ), text0 = game.translate_string( "bp_l01_escape_1_2" ), p = {-6.99, 5.19, 86.94 } },
-          { name = game.translate_string( "bp_l01_escape_2_0" ), text = game.translate_string( "bp_l01_escape_2_1" ), text0 = game.translate_string( "bp_l01_escape_2_2" ), p = {5.17, 2.31, 274.39 } },
-          { name = game.translate_string( "bp_l01_escape_3_0" ), text = game.translate_string( "bp_l01_escape_3_1" ), text0 = game.translate_string( "bp_l01_escape_3_2" ), p = {112.56, -5.81, -16.56} },
-          { name = game.translate_string( "bp_l01_escape_4_0" ), text = game.translate_string( "bp_l01_escape_4_1" ), text0 = game.translate_string( "bp_l01_escape_4_2" ), p = {56.13, 3.29, 157.36} },
-          { name = game.translate_string( "bp_l01_escape_5_0" ), text = game.translate_string( "bp_l01_escape_5_1" ), text0 = game.translate_string( "bp_l01_escape_5_2" ), p = {-155.74, -28.49, -352.21} },
-          { name = game.translate_string( "bp_l01_escape_6_0" ), text = game.translate_string( "bp_l01_escape_6_1" ), text0 = game.translate_string( "bp_l01_escape_6_2" ), p = {14.08, 17.45, 669.28}, r0 = 10 },
-          { name = game.translate_string( "bp_l01_escape_7_0" ), text = game.translate_string( "bp_l01_escape_7_1" ), text0 = game.translate_string( "bp_l01_escape_7_2" ), p = {-193.57, -18.49, -145.71} },
-     },
-     ["l02_garbage"] = {
-          { name = game.translate_string( "bp_l02_garbage_1_0" ), text = game.translate_string( "bp_l02_garbage_1_1" ), text0 = game.translate_string( "bp_l02_garbage_1_2" ), p = {-89.43, 1.78, 9.83} },
-          { name = game.translate_string( "bp_l02_garbage_2_0" ), text = game.translate_string( "bp_l02_garbage_2_1" ), text0 = game.translate_string( "bp_l02_garbage_2_2" ), p = {-99.32, -1.21, -205.70}, r0 = 40 },
-          { name = game.translate_string( "bp_l02_garbage_3_0" ), text = game.translate_string( "bp_l02_garbage_3_1" ), text0 = game.translate_string( "bp_l02_garbage_3_2" ), p = {186.81, 1.74, -135.74}, r0 = 40 },
-          { name = game.translate_string( "bp_l02_garbage_4_0" ), text = game.translate_string( "bp_l02_garbage_4_1" ), text0 = game.translate_string( "bp_l02_garbage_4_2" ), p = {-203.86, -4.75, -153.29} },
-          { name = game.translate_string( "bp_l02_garbage_5_0" ), text = game.translate_string( "bp_l02_garbage_5_1" ), text0 = game.translate_string( "bp_l02_garbage_5_2" ), p = {39.58, 1.84, 222.29} },
-          { name = game.translate_string( "bp_l02_garbage_6_0" ), text = game.translate_string( "bp_l02_garbage_6_1" ), text0 = game.translate_string( "bp_l02_garbage_6_2" ), p = {168.68, -3.29, 95.92 } },
-     },
-     ["l03_agroprom"] = {
-          { name = game.translate_string( "bp_l03_agroprom_1_0" ), text = game.translate_string( "bp_l03_agroprom_1_1" ), text0 = game.translate_string( "bp_l03_agroprom_1_2" ), p = {5.16, 0.00, 9.80}, r0 = 40 },
-          { name = game.translate_string( "bp_l03_agroprom_2_0" ), text = game.translate_string( "bp_l03_agroprom_2_1" ), text0 = game.translate_string( "bp_l03_agroprom_2_2" ), p = {-181.84, 2.99, 70.09}, r0 = 30 },
-          { name = game.translate_string( "bp_l03_agroprom_3_0" ), text = game.translate_string( "bp_l03_agroprom_3_1" ), text0 = game.translate_string( "bp_l03_agroprom_3_2" ), p = {-138.95, -0.21, -182.71}, r0 = 30 },
-          { name = game.translate_string( "bp_l03_agroprom_4_0" ), text = game.translate_string( "bp_l03_agroprom_4_1" ), text0 = game.translate_string( "bp_l03_agroprom_4_2" ), p = {183.79, 0.26, -236.51}, r0 = 10 },
-          { name = game.translate_string( "bp_l03_agroprom_5_0" ), text = game.translate_string( "bp_l03_agroprom_5_1" ), text0 = game.translate_string( "bp_l03_agroprom_5_2" ), p = {187.12, -0.20, 45.23}, r0 = 10 },
-     },
-     ["l04_darkvalley"] = {
-          { name = game.translate_string( "bp_l04_darkvalley_1_0" ), text = game.translate_string( "bp_l04_darkvalley_1_1" ), text0 = game.translate_string( "bp_l04_darkvalley_1_2" ), p = {116.69, 2.80, -259.05} },
-          { name = game.translate_string( "bp_l04_darkvalley_2_0" ), text = game.translate_string( "bp_l04_darkvalley_2_1" ), text0 = game.translate_string( "bp_l04_darkvalley_2_2" ), p = {34.09, 17.05, -45.35}, r0 = 40 },
-          { name = game.translate_string( "bp_l04_darkvalley_3_0" ), text = game.translate_string( "bp_l04_darkvalley_3_1" ), text0 = game.translate_string( "bp_l04_darkvalley_3_2" ), p = {18.19, 4.41, -332.89} },
-          { name = game.translate_string( "bp_l04_darkvalley_4_0" ), text = game.translate_string( "bp_l04_darkvalley_4_1" ), text0 = game.translate_string( "bp_l04_darkvalley_4_2" ), p = {-118.22, 3.61, -506.06} },
-          { name = game.translate_string( "bp_l04_darkvalley_5_0" ), text = game.translate_string( "bp_l04_darkvalley_5_1" ), text0 = game.translate_string( "bp_l04_darkvalley_5_2" ), p = {-136.91, 2.34, -188.37} },
-          { name = game.translate_string( "bp_l04_darkvalley_6_0" ), text = game.translate_string( "bp_l04_darkvalley_6_1" ), text0 = game.translate_string( "bp_l04_darkvalley_6_2" ), p = {135.87, 16.94, -394.07} },
-     },                
-     ["l05_bar"] = {
-          { name = game.translate_string( "bp_l05_bar_1_0" ), text = game.translate_string( "bp_l05_bar_1_1" ), text0 = game.translate_string( "bp_l05_bar_1_2" ), p = {223.99, 1.32, -2.64} },
-          { name = game.translate_string( "bp_l05_bar_2_0" ), text = game.translate_string( "bp_l05_bar_2_1" ), text0 = game.translate_string( "bp_l05_bar_2_2" ), p = {84.84, 1.94, 140.97} },
-          { name = game.translate_string( "bp_l05_bar_3_0" ), text = game.translate_string( "bp_l05_bar_3_1" ), text0 = game.translate_string( "bp_l05_bar_3_2" ), p = {203.36, 1.76, 98.96} },
-          { name = game.translate_string( "bp_l05_bar_4_0" ), text = game.translate_string( "bp_l05_bar_4_1" ), text0 = game.translate_string( "bp_l05_bar_4_2" ), p = {157.53, 1.88, 84.77} },
-          { name = game.translate_string( "bp_l05_bar_5_0" ), text = game.translate_string( "bp_l05_bar_5_1" ), text0 = game.translate_string( "bp_l05_bar_5_2" ), p = {129.90, 1.29, 49.26} },
-     },
-     ["l06_rostok"] = {
-          { name = game.translate_string( "bp_l06_rostok_1_0" ), text = game.translate_string( "bp_l06_rostok_1_1" ), text0 = game.translate_string( "bp_l06_rostok_1_2" ), p = {-256.68, -0.00, 157.16} },
-          { name = game.translate_string( "bp_l06_rostok_2_0" ), text = game.translate_string( "bp_l06_rostok_2_1" ), text0 = game.translate_string( "bp_l06_rostok_2_2" ), p = {-14.60, 0.94, 140.47} },
-          { name = game.translate_string( "bp_l06_rostok_3_0" ), text = game.translate_string( "bp_l06_rostok_3_1" ), text0 = game.translate_string( "bp_l06_rostok_3_2" ), p = {-233.71, 10.61, 50.33} },
-          { name = game.translate_string( "bp_l06_rostok_4_0" ), text = game.translate_string( "bp_l06_rostok_4_1" ), text0 = game.translate_string( "bp_l06_rostok_4_2" ), p = {-167.79, -5.80, -86.10} },
-     },
-	 ["l07_military"] = {         
-          { name = game.translate_string( "bp_l07_military_1_0" ), text = game.translate_string( "bp_l07_military_1_1" ), text0 = game.translate_string( "bp_l07_military_1_2" ), p = {-235.53, -11.48, 44.28} },
-          { name = game.translate_string( "bp_l07_military_2_0" ), text = game.translate_string( "bp_l07_military_2_1" ), text0 = game.translate_string( "bp_l07_military_2_2" ), p = {-7.72, -6.94, 2.05}, r0 = 50 },
-          { name = game.translate_string( "bp_l07_military_3_0" ), text = game.translate_string( "bp_l07_military_3_1" ), text0 = game.translate_string( "bp_l07_military_3_2" ), p = {-287.41, -21.61, 238.97}, r0 = 50 },
-          { name = game.translate_string( "bp_l07_military_4_0" ), text = game.translate_string( "bp_l07_military_4_1" ), text0 = game.translate_string( "bp_l07_military_4_2" ), p = {-344.72, -11.02, 389.12}, r0 = 10 },
-          { name = game.translate_string( "bp_l07_military_5_0" ), text = game.translate_string( "bp_l07_military_5_1" ), text0 = game.translate_string( "bp_l07_military_5_2" ), p = {53.84, -16.50, 365.99} },
-          { name = game.translate_string( "bp_l07_military_6_0" ), text = game.translate_string( "bp_l07_military_6_1" ), text0 = game.translate_string( "bp_l07_military_6_2" ), p = {102.94, -10.33, 165.34} },
-          { name = game.translate_string( "bp_l07_military_7_0" ), text = game.translate_string( "bp_l07_military_7_1" ), text0 = game.translate_string( "bp_l07_military_7_2" ), p = {-93.25, -19.23, 221.38} },
-     },
-	["l08_yantar"] = {
-          { name = game.translate_string( "bp_l08_yantar_1_0" ), text = game.translate_string( "bp_l08_yantar_1_1" ), text0 = game.translate_string( "bp_l08_yantar_1_2" ), p = {30.01, -4.18, -272.08}, r0 = 10 },
-          { name = game.translate_string( "bp_l08_yantar_2_0" ), text = game.translate_string( "bp_l08_yantar_2_1" ), text0 = game.translate_string( "bp_l08_yantar_2_2" ), p = {-54.12, -10.45, -257.11}, r0 = 40 },
-          { name = game.translate_string( "bp_l08_yantar_3_0" ), text = game.translate_string( "bp_l08_yantar_3_1" ), text0 = game.translate_string( "bp_l08_yantar_3_2" ), p = {20.80, 0.86, -11.20}, r0 = 50 },
-	},
-	["l10_radar"] = {
-		{ name = game.translate_string( "bp_l10_radar_0" ), text = game.translate_string( "bp_l10_radar_1" ), text0 = game.translate_string( "bp_l10_radar_2" ), p = {629.12,-43.82,187.78}, r0 = 10 },  
-		{ name = game.translate_string( "bp_l10_radar_3" ), text = game.translate_string( "bp_l10_radar_4" ), text0 = game.translate_string( "bp_l10_radar_5" ), p = {382.51,-33.93,140.64}, r0 = 8 },
-		{ name = game.translate_string( "bp_l10_radar_6" ), text = game.translate_string( "bp_l10_radar_7" ), text0 = game.translate_string( "bp_l10_radar_8" ), p = {605.76,-52.16,-312.95}, r0 = 7},
-		{ name = game.translate_string( "bp_l10_radar_9" ), text = game.translate_string( "bp_l10_radar_10" ), text0 = game.translate_string( "bp_l10_radar_11" ), p = {370.30,-48.71,-188.73} },
-		{ name = game.translate_string( "bp_l10_radar_12" ), text = game.translate_string( "bp_l10_radar_13" ), text0 = game.translate_string( "bp_l10_radar_14" ), p = {-7.28,-1.09,18.43}, r0 = 60 }
-	},
-	["l11_pripyat"] = {
-		{ name = game.translate_string( "bp_l11_pripyat_0" ), text = game.translate_string( "bp_l11_pripyat_1" ), text0 = game.translate_string( "bp_l11_pripyat_2" ), p = {11.91,1.00,337.65}, r0 = 50 },
-		{ name = game.translate_string( "bp_l11_pripyat_3" ), text = game.translate_string( "bp_l11_pripyat_3" ), text0 = game.translate_string( "bp_l11_pripyat_4" ), p = {7.11,-0.39,187.08}, r0 = 30 },
-		{ name = game.translate_string( "bp_l11_pripyat_5" ), text = game.translate_string( "bp_l11_pripyat_6" ), text0 = game.translate_string( "bp_l11_pripyat_7" ), p = {115.02,-0.01,123.16} },
-		{ name = game.translate_string( "bp_l11_pripyat_8" ), text = game.translate_string( "bp_l11_pripyat_9" ), text0 = game.translate_string( "bp_l11_pripyat_10" ), p = {119.50,3.66,-20.05} },
-		{ name = game.translate_string( "bp_l11_pripyat_11" ), text = game.translate_string( "bp_l11_pripyat_12" ), text0 = game.translate_string( "bp_l11_pripyat_13" ), p = {9.39,-1.22,-270.19}, r0 = 10 },
-		{ name = game.translate_string( "bp_l11_pripyat_14" ), text = game.translate_string( "bp_l11_pripyat_15" ), text0 = game.translate_string( "bp_l11_pripyat_16" ), p = {-110.91,-1.92,13.53} },
-		{ name = game.translate_string( "bp_l11_pripyat_17" ), text = game.translate_string( "bp_l11_pripyat_18" ), text0 = game.translate_string( "bp_l11_pripyat_19" ), p = {9.52,-2.22,28.85}, r0 = 30 },
-		{ name = game.translate_string( "bp_l11_pripyat_20" ), text = game.translate_string( "bp_l11_pripyat_21" ), text0 = game.translate_string( "bp_l11_pripyat_22" ), p = {111.71,-0.62,212.69} }
-	}
+    ["l01_escape"] = {
+         { name = game.translate_string( "bp_l01_escape_1_0" ), text = game.translate_string( "bp_l01_escape_1_1" ), text0 = game.translate_string( "bp_l01_escape_1_2" ), p = {-6.99, 5.19, 86.94 } },
+         { name = game.translate_string( "bp_l01_escape_2_0" ), text = game.translate_string( "bp_l01_escape_2_1" ), text0 = game.translate_string( "bp_l01_escape_2_2" ), p = {5.17, 2.31, 274.39 } },
+         { name = game.translate_string( "bp_l01_escape_3_0" ), text = game.translate_string( "bp_l01_escape_3_1" ), text0 = game.translate_string( "bp_l01_escape_3_2" ), p = {112.56, -5.81, -16.56} },
+         { name = game.translate_string( "bp_l01_escape_4_0" ), text = game.translate_string( "bp_l01_escape_4_1" ), text0 = game.translate_string( "bp_l01_escape_4_2" ), p = {56.13, 3.29, 157.36} },
+         { name = game.translate_string( "bp_l01_escape_5_0" ), text = game.translate_string( "bp_l01_escape_5_1" ), text0 = game.translate_string( "bp_l01_escape_5_2" ), p = {-155.74, -28.49, -352.21} },
+         { name = game.translate_string( "bp_l01_escape_6_0" ), text = game.translate_string( "bp_l01_escape_6_1" ), text0 = game.translate_string( "bp_l01_escape_6_2" ), p = {14.08, 17.45, 669.28}, r0 = 10 },
+         { name = game.translate_string( "bp_l01_escape_7_0" ), text = game.translate_string( "bp_l01_escape_7_1" ), text0 = game.translate_string( "bp_l01_escape_7_2" ), p = {-193.57, -18.49, -145.71} },
+    },
+    ["l02_garbage"] = {
+         { name = game.translate_string( "bp_l02_garbage_1_0" ), text = game.translate_string( "bp_l02_garbage_1_1" ), text0 = game.translate_string( "bp_l02_garbage_1_2" ), p = {-89.43, 1.78, 9.83} },
+         { name = game.translate_string( "bp_l02_garbage_2_0" ), text = game.translate_string( "bp_l02_garbage_2_1" ), text0 = game.translate_string( "bp_l02_garbage_2_2" ), p = {-99.32, -1.21, -205.70}, r0 = 40 },
+         { name = game.translate_string( "bp_l02_garbage_3_0" ), text = game.translate_string( "bp_l02_garbage_3_1" ), text0 = game.translate_string( "bp_l02_garbage_3_2" ), p = {186.81, 1.74, -135.74}, r0 = 40 },
+         { name = game.translate_string( "bp_l02_garbage_4_0" ), text = game.translate_string( "bp_l02_garbage_4_1" ), text0 = game.translate_string( "bp_l02_garbage_4_2" ), p = {-203.86, -4.75, -153.29} },
+         { name = game.translate_string( "bp_l02_garbage_5_0" ), text = game.translate_string( "bp_l02_garbage_5_1" ), text0 = game.translate_string( "bp_l02_garbage_5_2" ), p = {39.58, 1.84, 222.29} },
+         { name = game.translate_string( "bp_l02_garbage_6_0" ), text = game.translate_string( "bp_l02_garbage_6_1" ), text0 = game.translate_string( "bp_l02_garbage_6_2" ), p = {168.68, -3.29, 95.92 } },
+    },
+    ["l03_agroprom"] = {
+         { name = game.translate_string( "bp_l03_agroprom_1_0" ), text = game.translate_string( "bp_l03_agroprom_1_1" ), text0 = game.translate_string( "bp_l03_agroprom_1_2" ), p = {5.16, 0.00, 9.80}, r0 = 40 },
+         { name = game.translate_string( "bp_l03_agroprom_2_0" ), text = game.translate_string( "bp_l03_agroprom_2_1" ), text0 = game.translate_string( "bp_l03_agroprom_2_2" ), p = {-181.84, 2.99, 70.09}, r0 = 30 },
+         { name = game.translate_string( "bp_l03_agroprom_3_0" ), text = game.translate_string( "bp_l03_agroprom_3_1" ), text0 = game.translate_string( "bp_l03_agroprom_3_2" ), p = {-138.95, -0.21, -182.71}, r0 = 30 },
+         { name = game.translate_string( "bp_l03_agroprom_4_0" ), text = game.translate_string( "bp_l03_agroprom_4_1" ), text0 = game.translate_string( "bp_l03_agroprom_4_2" ), p = {183.79, 0.26, -236.51}, r0 = 10 },
+         { name = game.translate_string( "bp_l03_agroprom_5_0" ), text = game.translate_string( "bp_l03_agroprom_5_1" ), text0 = game.translate_string( "bp_l03_agroprom_5_2" ), p = {187.12, -0.20, 45.23}, r0 = 10 },
+    },
+    ["l04_darkvalley"] = {
+         { name = game.translate_string( "bp_l04_darkvalley_1_0" ), text = game.translate_string( "bp_l04_darkvalley_1_1" ), text0 = game.translate_string( "bp_l04_darkvalley_1_2" ), p = {116.69, 2.80, -259.05} },
+         { name = game.translate_string( "bp_l04_darkvalley_2_0" ), text = game.translate_string( "bp_l04_darkvalley_2_1" ), text0 = game.translate_string( "bp_l04_darkvalley_2_2" ), p = {34.09, 17.05, -45.35}, r0 = 40 },
+         { name = game.translate_string( "bp_l04_darkvalley_3_0" ), text = game.translate_string( "bp_l04_darkvalley_3_1" ), text0 = game.translate_string( "bp_l04_darkvalley_3_2" ), p = {18.19, 4.41, -332.89} },
+         { name = game.translate_string( "bp_l04_darkvalley_4_0" ), text = game.translate_string( "bp_l04_darkvalley_4_1" ), text0 = game.translate_string( "bp_l04_darkvalley_4_2" ), p = {-118.22, 3.61, -506.06} },
+         { name = game.translate_string( "bp_l04_darkvalley_5_0" ), text = game.translate_string( "bp_l04_darkvalley_5_1" ), text0 = game.translate_string( "bp_l04_darkvalley_5_2" ), p = {-136.91, 2.34, -188.37} },
+         { name = game.translate_string( "bp_l04_darkvalley_6_0" ), text = game.translate_string( "bp_l04_darkvalley_6_1" ), text0 = game.translate_string( "bp_l04_darkvalley_6_2" ), p = {135.87, 16.94, -394.07} },
+    },                
+    ["l05_bar"] = {
+         { name = game.translate_string( "bp_l05_bar_1_0" ), text = game.translate_string( "bp_l05_bar_1_1" ), text0 = game.translate_string( "bp_l05_bar_1_2" ), p = {223.99, 1.32, -2.64} },
+         { name = game.translate_string( "bp_l05_bar_2_0" ), text = game.translate_string( "bp_l05_bar_2_1" ), text0 = game.translate_string( "bp_l05_bar_2_2" ), p = {84.84, 1.94, 140.97} },
+         { name = game.translate_string( "bp_l05_bar_3_0" ), text = game.translate_string( "bp_l05_bar_3_1" ), text0 = game.translate_string( "bp_l05_bar_3_2" ), p = {203.36, 1.76, 98.96} },
+         { name = game.translate_string( "bp_l05_bar_4_0" ), text = game.translate_string( "bp_l05_bar_4_1" ), text0 = game.translate_string( "bp_l05_bar_4_2" ), p = {157.53, 1.88, 84.77} },
+         { name = game.translate_string( "bp_l05_bar_5_0" ), text = game.translate_string( "bp_l05_bar_5_1" ), text0 = game.translate_string( "bp_l05_bar_5_2" ), p = {129.90, 1.29, 49.26} },
+    },
+    ["l06_rostok"] = {
+         { name = game.translate_string( "bp_l06_rostok_1_0" ), text = game.translate_string( "bp_l06_rostok_1_1" ), text0 = game.translate_string( "bp_l06_rostok_1_2" ), p = {-256.68, -0.00, 157.16} },
+         { name = game.translate_string( "bp_l06_rostok_2_0" ), text = game.translate_string( "bp_l06_rostok_2_1" ), text0 = game.translate_string( "bp_l06_rostok_2_2" ), p = {-14.60, 0.94, 140.47} },
+         { name = game.translate_string( "bp_l06_rostok_3_0" ), text = game.translate_string( "bp_l06_rostok_3_1" ), text0 = game.translate_string( "bp_l06_rostok_3_2" ), p = {-233.71, 10.61, 50.33} },
+         { name = game.translate_string( "bp_l06_rostok_4_0" ), text = game.translate_string( "bp_l06_rostok_4_1" ), text0 = game.translate_string( "bp_l06_rostok_4_2" ), p = {-167.79, -5.80, -86.10} },
+    },
+    ["l07_military"] = {         
+         { name = game.translate_string( "bp_l07_military_1_0" ), text = game.translate_string( "bp_l07_military_1_1" ), text0 = game.translate_string( "bp_l07_military_1_2" ), p = {-235.53, -11.48, 44.28} },
+         { name = game.translate_string( "bp_l07_military_2_0" ), text = game.translate_string( "bp_l07_military_2_1" ), text0 = game.translate_string( "bp_l07_military_2_2" ), p = {-7.72, -6.94, 2.05}, r0 = 50 },
+         { name = game.translate_string( "bp_l07_military_3_0" ), text = game.translate_string( "bp_l07_military_3_1" ), text0 = game.translate_string( "bp_l07_military_3_2" ), p = {-287.41, -21.61, 238.97}, r0 = 50 },
+         { name = game.translate_string( "bp_l07_military_4_0" ), text = game.translate_string( "bp_l07_military_4_1" ), text0 = game.translate_string( "bp_l07_military_4_2" ), p = {-344.72, -11.02, 389.12}, r0 = 10 },
+         { name = game.translate_string( "bp_l07_military_5_0" ), text = game.translate_string( "bp_l07_military_5_1" ), text0 = game.translate_string( "bp_l07_military_5_2" ), p = {53.84, -16.50, 365.99} },
+         { name = game.translate_string( "bp_l07_military_6_0" ), text = game.translate_string( "bp_l07_military_6_1" ), text0 = game.translate_string( "bp_l07_military_6_2" ), p = {102.94, -10.33, 165.34} },
+         { name = game.translate_string( "bp_l07_military_7_0" ), text = game.translate_string( "bp_l07_military_7_1" ), text0 = game.translate_string( "bp_l07_military_7_2" ), p = {-93.25, -19.23, 221.38} },
+    },
+   ["l08_yantar"] = {
+         { name = game.translate_string( "bp_l08_yantar_1_0" ), text = game.translate_string( "bp_l08_yantar_1_1" ), text0 = game.translate_string( "bp_l08_yantar_1_2" ), p = {30.01, -4.18, -272.08}, r0 = 10 },
+         { name = game.translate_string( "bp_l08_yantar_2_0" ), text = game.translate_string( "bp_l08_yantar_2_1" ), text0 = game.translate_string( "bp_l08_yantar_2_2" ), p = {-54.12, -10.45, -257.11}, r0 = 40 },
+         { name = game.translate_string( "bp_l08_yantar_3_0" ), text = game.translate_string( "bp_l08_yantar_3_1" ), text0 = game.translate_string( "bp_l08_yantar_3_2" ), p = {20.80, 0.86, -11.20}, r0 = 50 },
+   },
+   ["l10_radar"] = {
+       { name = game.translate_string( "bp_l10_radar_0" ), text = game.translate_string( "bp_l10_radar_1" ), text0 = game.translate_string( "bp_l10_radar_2" ), p = {629.12,-43.82,187.78}, r0 = 10 },  
+       { name = game.translate_string( "bp_l10_radar_3" ), text = game.translate_string( "bp_l10_radar_4" ), text0 = game.translate_string( "bp_l10_radar_5" ), p = {382.51,-33.93,140.64}, r0 = 8 },
+       { name = game.translate_string( "bp_l10_radar_6" ), text = game.translate_string( "bp_l10_radar_7" ), text0 = game.translate_string( "bp_l10_radar_8" ), p = {605.76,-52.16,-312.95}, r0 = 7},
+       { name = game.translate_string( "bp_l10_radar_9" ), text = game.translate_string( "bp_l10_radar_10" ), text0 = game.translate_string( "bp_l10_radar_11" ), p = {370.30,-48.71,-188.73} },
+       { name = game.translate_string( "bp_l10_radar_12" ), text = game.translate_string( "bp_l10_radar_13" ), text0 = game.translate_string( "bp_l10_radar_14" ), p = {-7.28,-1.09,18.43}, r0 = 60 }
+   },
+   ["l11_pripyat"] = {
+       { name = game.translate_string( "bp_l11_pripyat_0" ), text = game.translate_string( "bp_l11_pripyat_1" ), text0 = game.translate_string( "bp_l11_pripyat_2" ), p = {11.91,1.00,337.65}, r0 = 50 },
+       { name = game.translate_string( "bp_l11_pripyat_3" ), text = game.translate_string( "bp_l11_pripyat_3" ), text0 = game.translate_string( "bp_l11_pripyat_4" ), p = {7.11,-0.39,187.08}, r0 = 30 },
+       { name = game.translate_string( "bp_l11_pripyat_5" ), text = game.translate_string( "bp_l11_pripyat_6" ), text0 = game.translate_string( "bp_l11_pripyat_7" ), p = {115.02,-0.01,123.16} },
+       { name = game.translate_string( "bp_l11_pripyat_8" ), text = game.translate_string( "bp_l11_pripyat_9" ), text0 = game.translate_string( "bp_l11_pripyat_10" ), p = {119.50,3.66,-20.05} },
+       { name = game.translate_string( "bp_l11_pripyat_11" ), text = game.translate_string( "bp_l11_pripyat_12" ), text0 = game.translate_string( "bp_l11_pripyat_13" ), p = {9.39,-1.22,-270.19}, r0 = 10 },
+       { name = game.translate_string( "bp_l11_pripyat_14" ), text = game.translate_string( "bp_l11_pripyat_15" ), text0 = game.translate_string( "bp_l11_pripyat_16" ), p = {-110.91,-1.92,13.53} },
+       { name = game.translate_string( "bp_l11_pripyat_17" ), text = game.translate_string( "bp_l11_pripyat_18" ), text0 = game.translate_string( "bp_l11_pripyat_19" ), p = {9.52,-2.22,28.85}, r0 = 30 },
+       { name = game.translate_string( "bp_l11_pripyat_20" ), text = game.translate_string( "bp_l11_pripyat_21" ), text0 = game.translate_string( "bp_l11_pripyat_22" ), p = {111.71,-0.62,212.69} }
+   }
 }
 
-levels = {"l01_escape", "l02_garbage", "l03_agroprom", "l03u_agr_underground", "l04_darkvalley", "l04u_labx18", "l05_bar", "l06_rostok", "l07_military", "l08_yantar", "l08u_brainlab", "l10_radar", "l10u_bunker", "l11_pripyat", "l12_stancia", "l12_stancia_2", "l12u_control_monolith", "l12u_sarcofag", "aver", "dead_city"}
-levels_types={
-     aver=0,
-     dead_city=0,
-	l01_escape=0,
-	l02_garbage=0,
-	l03_agroprom=0,
-	l03u_agr_underground=1,
-	l04_darkvalley=0,
-	l04u_labx18=1,
-	l05_bar=0,
-	l06_rostok=0,
-	l07_military=0,
-	l08_yantar=0,
-	l08u_brainlab=1,
-	l10_radar=0,
-	l10u_bunker=1,
-	l11_pripyat=0,
-	l12_stancia=0,
-	l12_stancia_2=0,
-	l12u_control_monolith=1,
-	l12u_sarcofag=1
+levels = {"l01_escape", "l02_garbage", "l03_agroprom", "l03u_agr_underground", "l04_darkvalley", "l04u_labx18",
+          "l05_bar", "l06_rostok", "l07_military", "l08_yantar", "l08u_brainlab", "l10_radar", "l10u_bunker",
+          "l11_pripyat", "l12_stancia", "l12_stancia_2", "l12u_control_monolith", "l12u_sarcofag", "aver", "dead_city"}
+levels_types = {
+    aver = 0,
+    dead_city = 0,
+    l01_escape = 0,
+    l02_garbage = 0,
+    l03_agroprom = 0,
+    l03u_agr_underground = 1,
+    l04_darkvalley = 0,
+    l04u_labx18 = 1,
+    l05_bar = 0,
+    l06_rostok = 0,
+    l07_military = 0,
+    l08_yantar = 0,
+    l08u_brainlab = 1,
+    l10_radar = 0,
+    l10u_bunker = 1,
+    l11_pripyat = 0,
+    l12_stancia = 0,
+    l12_stancia_2 = 0,
+    l12u_control_monolith = 1,
+    l12u_sarcofag = 1
 }
 
 level_name = {
-	["aver"] = {game.translate_string( "ln_aver_0" ), game.translate_string( "ln_aver_1" )},
-	["dead_city"] = {game.translate_string( "ln_dead_city_0" ), game.translate_string( "ln_dead_city_1" )},
-	["l01_escape1"] = {game.translate_string( "ln_l01_escape1_0" ), game.translate_string( "ln_l01_escape1_1" )},
-	["l01_escape"] = {game.translate_string( "ln_l01_escape_0" ), game.translate_string( "ln_l01_escape_1" )},
-	["l02_garbage1"] = {game.translate_string( "ln_l02_garbage1_0" ), game.translate_string( "ln_l02_garbage1_1" )},
-	["l02_garbage"] = {game.translate_string( "ln_l02_garbage_0" ), game.translate_string( "ln_l02_garbage_1" )},
-	["l03_agroprom1"] = {game.translate_string( "ln_l03_agroprom1_0" ), game.translate_string( "ln_l03_agroprom1_1" )},
-	["l03_agroprom"] = {game.translate_string( "ln_l03_agroprom_0" ), game.translate_string( "ln_l03_agroprom_1" )},
-	["l03u_agr_underground"] = {game.translate_string( "ln_l03u_agr_underground_0" ), game.translate_string( "ln_l03u_agr_underground_1" )},
-	["l04_darkvalley"] = {game.translate_string( "ln_l04_darkvalley_0" ), game.translate_string( "ln_l04_darkvalley_1" )},
-	["l04u_labx18"] = {game.translate_string( "ln_l04u_labx18_0" ), game.translate_string( "ln_l04u_labx18_1" )},
-	["l05_bar"] = {game.translate_string( "ln_l05_bar_0" ), game.translate_string( "ln_l05_bar_1" )},
-	["l06_rostok"] = {game.translate_string( "ln_l06_rostok_0" ), game.translate_string( "ln_l06_rostok_1" )},
-	["l07_military1"] = {game.translate_string( "ln_l07_military1_0" ), game.translate_string( "ln_l07_military1_1" )},
-	["l07_military"] = {game.translate_string( "ln_l07_military_0" ), game.translate_string( "ln_l07_military_1" )},
-	["l08_yantar1"] = {game.translate_string( "ln_l08_yantar1_0" ), game.translate_string( "ln_l08_yantar1_1" )},
-	["l08_yantar"] = {game.translate_string( "ln_l08_yantar_0" ), game.translate_string( "ln_l08_yantar_1" )},
-	["l08u_brainlab"] = {game.translate_string( "ln_l08u_brainlab_0" ), game.translate_string( "ln_l08u_brainlab_1" )},
-	["l10_radar"] = {game.translate_string( "ln_l10_radar_0" ), game.translate_string( "ln_l10_radar_1" )},
-	["l10u_bunker"] = {game.translate_string( "ln_l10u_bunker_0" ), game.translate_string( "ln_l10u_bunker_1" )},
-	["l11_pripyat"] = {game.translate_string( "ln_l11_pripyat_0" ), game.translate_string( "ln_l11_pripyat_1" )},
-	["l12_stancia"] = {game.translate_string( "ln_l12_stancia_0" ), game.translate_string( "ln_l12_stancia_1" )},
-	["l12_stancia_2"] = {game.translate_string( "ln_l12_stancia_2_0" ), game.translate_string( "ln_l12_stancia_2_1" )},
-	["l12u_control_monolith"] = {game.translate_string( "ln_l12u_control_monolith_0" ), game.translate_string( "ln_l12u_control_monolith_1" )},
-	["l12u_sarcofag"] = {game.translate_string( "ln_l12u_sarcofag_0" ), game.translate_string( "ln_l12u_sarcofag_1" )}
+    ["aver"] = {game.translate_string("ln_aver_0"), game.translate_string("ln_aver_1")},
+    ["dead_city"] = {game.translate_string("ln_dead_city_0"), game.translate_string("ln_dead_city_1")},
+    ["l01_escape1"] = {game.translate_string("ln_l01_escape1_0"), game.translate_string("ln_l01_escape1_1")},
+    ["l01_escape"] = {game.translate_string("ln_l01_escape_0"), game.translate_string("ln_l01_escape_1")},
+    ["l02_garbage1"] = {game.translate_string("ln_l02_garbage1_0"), game.translate_string("ln_l02_garbage1_1")},
+    ["l02_garbage"] = {game.translate_string("ln_l02_garbage_0"), game.translate_string("ln_l02_garbage_1")},
+    ["l03_agroprom1"] = {game.translate_string("ln_l03_agroprom1_0"), game.translate_string("ln_l03_agroprom1_1")},
+    ["l03_agroprom"] = {game.translate_string("ln_l03_agroprom_0"), game.translate_string("ln_l03_agroprom_1")},
+    ["l03u_agr_underground"] = {game.translate_string("ln_l03u_agr_underground_0"),
+                                game.translate_string("ln_l03u_agr_underground_1")},
+    ["l04_darkvalley"] = {game.translate_string("ln_l04_darkvalley_0"), game.translate_string("ln_l04_darkvalley_1")},
+    ["l04u_labx18"] = {game.translate_string("ln_l04u_labx18_0"), game.translate_string("ln_l04u_labx18_1")},
+    ["l05_bar"] = {game.translate_string("ln_l05_bar_0"), game.translate_string("ln_l05_bar_1")},
+    ["l06_rostok"] = {game.translate_string("ln_l06_rostok_0"), game.translate_string("ln_l06_rostok_1")},
+    ["l07_military1"] = {game.translate_string("ln_l07_military1_0"), game.translate_string("ln_l07_military1_1")},
+    ["l07_military"] = {game.translate_string("ln_l07_military_0"), game.translate_string("ln_l07_military_1")},
+    ["l08_yantar1"] = {game.translate_string("ln_l08_yantar1_0"), game.translate_string("ln_l08_yantar1_1")},
+    ["l08_yantar"] = {game.translate_string("ln_l08_yantar_0"), game.translate_string("ln_l08_yantar_1")},
+    ["l08u_brainlab"] = {game.translate_string("ln_l08u_brainlab_0"), game.translate_string("ln_l08u_brainlab_1")},
+    ["l10_radar"] = {game.translate_string("ln_l10_radar_0"), game.translate_string("ln_l10_radar_1")},
+    ["l10u_bunker"] = {game.translate_string("ln_l10u_bunker_0"), game.translate_string("ln_l10u_bunker_1")},
+    ["l11_pripyat"] = {game.translate_string("ln_l11_pripyat_0"), game.translate_string("ln_l11_pripyat_1")},
+    ["l12_stancia"] = {game.translate_string("ln_l12_stancia_0"), game.translate_string("ln_l12_stancia_1")},
+    ["l12_stancia_2"] = {game.translate_string("ln_l12_stancia_2_0"), game.translate_string("ln_l12_stancia_2_1")},
+    ["l12u_control_monolith"] = {game.translate_string("ln_l12u_control_monolith_0"),
+                                 game.translate_string("ln_l12u_control_monolith_1")},
+    ["l12u_sarcofag"] = {game.translate_string("ln_l12u_sarcofag_0"), game.translate_string("ln_l12u_sarcofag_1")}
 }
 
-community_name["stalker"] 	= {game.translate_string( "cn_stalker_0" ),game.translate_string( "cn_stalker_1" ),game.translate_string( "cn_stalker_2" ), game.translate_string( "cn_stalker_3" )}
-community_name["monolith"] 	={game.translate_string( "cn_monolith_0" ),game.translate_string( "cn_monolith_1" ),game.translate_string( "cn_monolith_2" ), game.translate_string( "cn_monolith_3" )}
-community_name["military"] 	= {game.translate_string( "cn_military_0" ),game.translate_string( "cn_military_1" ),game.translate_string( "cn_military_2" ), game.translate_string( "cn_military_3" )}
-community_name["killer"] 	= {game.translate_string( "cn_killer_0" ),game.translate_string( "cn_killer_1" ),game.translate_string( "cn_killer_2" ), game.translate_string( "cn_killer_3" )}
-community_name["ecolog"] 	= {game.translate_string( "cn_ecolog_0" ),game.translate_string( "cn_ecolog_1" ),game.translate_string( "cn_ecolog_2" ), game.translate_string( "cn_ecolog_3" )}
-community_name["dolg"] 		= {game.translate_string( "cn_dolg_0" ),game.translate_string( "cn_dolg_1" ),game.translate_string( "cn_dolg_2" ), game.translate_string( "cn_dolg_3" )}
-community_name["freedom"] 	= {game.translate_string( "cn_freedom_0" ),game.translate_string( "cn_freedom_1" ),game.translate_string( "cn_freedom_2" ), game.translate_string( "cn_freedom_3" )}
-community_name["bandit"] 	= {game.translate_string( "cn_bandit_0" ),game.translate_string( "cn_bandit_1" ),game.translate_string( "cn_bandit_2" ), game.translate_string( "cn_bandit_3" )}
-community_name["nebo"] 	    = {game.translate_string( "cn_nebo_0" ),game.translate_string( "cn_nebo_1" ),game.translate_string( "cn_nebo_2" ), game.translate_string( "cn_nebo_3" )}
-community_name["bratok"] 	= {game.translate_string( "cn_bandit_0" ),game.translate_string( "cn_bandit_1" ),game.translate_string( "cn_bandit_2" ), game.translate_string( "cn_bandit_3" )}
-community_name["zombied"] 	= {game.translate_string( "cn_zombied_0" ),game.translate_string( "cn_zombied_1" ),game.translate_string( "cn_zombied_2" ), game.translate_string( "cn_zombied_3" )}
+community_name["stalker"] = {game.translate_string("cn_stalker_0"), game.translate_string("cn_stalker_1"),
+                             game.translate_string("cn_stalker_2"), game.translate_string("cn_stalker_3")}
+community_name["monolith"] = {game.translate_string("cn_monolith_0"), game.translate_string("cn_monolith_1"),
+                              game.translate_string("cn_monolith_2"), game.translate_string("cn_monolith_3")}
+community_name["military"] = {game.translate_string("cn_military_0"), game.translate_string("cn_military_1"),
+                              game.translate_string("cn_military_2"), game.translate_string("cn_military_3")}
+community_name["killer"] = {game.translate_string("cn_killer_0"), game.translate_string("cn_killer_1"),
+                            game.translate_string("cn_killer_2"), game.translate_string("cn_killer_3")}
+community_name["ecolog"] = {game.translate_string("cn_ecolog_0"), game.translate_string("cn_ecolog_1"),
+                            game.translate_string("cn_ecolog_2"), game.translate_string("cn_ecolog_3")}
+community_name["dolg"] = {game.translate_string("cn_dolg_0"), game.translate_string("cn_dolg_1"),
+                          game.translate_string("cn_dolg_2"), game.translate_string("cn_dolg_3")}
+community_name["freedom"] = {game.translate_string("cn_freedom_0"), game.translate_string("cn_freedom_1"),
+                             game.translate_string("cn_freedom_2"), game.translate_string("cn_freedom_3")}
+community_name["bandit"] = {game.translate_string("cn_bandit_0"), game.translate_string("cn_bandit_1"),
+                            game.translate_string("cn_bandit_2"), game.translate_string("cn_bandit_3")}
+community_name["nebo"] = {game.translate_string("cn_nebo_0"), game.translate_string("cn_nebo_1"),
+                          game.translate_string("cn_nebo_2"), game.translate_string("cn_nebo_3")}
+community_name["bratok"] = {game.translate_string("cn_bandit_0"), game.translate_string("cn_bandit_1"),
+                            game.translate_string("cn_bandit_2"), game.translate_string("cn_bandit_3")}
+community_name["zombied"] = {game.translate_string("cn_zombied_0"), game.translate_string("cn_zombied_1"),
+                             game.translate_string("cn_zombied_2"), game.translate_string("cn_zombied_3")}
 
+rate_name["novice"] = {game.translate_string("rn_novice_0"), game.translate_string("rn_novice_1"),
+                       game.translate_string("rn_novice_2"), game.translate_string("rn_novice_3"),
+                       game.translate_string("rn_novice_4")}
+rate_name["experienced"] = {game.translate_string("rn_experienced_0"), game.translate_string("rn_experienced_1"),
+                            game.translate_string("rn_experienced_2"), game.translate_string("rn_experienced_3")}
+rate_name["veteran"] = {game.translate_string("rn_veteran_0"), game.translate_string("rn_veteran_1"),
+                        game.translate_string("rn_veteran_2")}
+rate_name["master"] = {game.translate_string("rn_master_0"), game.translate_string("rn_master_1"),
+                       game.translate_string("rn_master_2"), game.translate_string("rn_master_3")}
+rate_prefix = {game.translate_string("rn_pre_0"), game.translate_string("rn_pre_1"), game.translate_string("rn_pre_2"),
+               game.translate_string("rn_pre_3"), game.translate_string("rn_pre_4"), game.translate_string("rn_pre_5"),
+               game.translate_string("rn_pre_6")}
+rate_postfix = {"", "...", game.translate_string("rn_post_0"), game.translate_string("rn_post_1"),
+                game.translate_string("rn_post_2")}
 
+common["sad_a"] = {game.translate_string("co_sad_a_0"), game.translate_string("co_sad_a_1"),
+                   game.translate_string("co_sad_a_2"), game.translate_string("co_sad_a_3"),
+                   game.translate_string("co_sad_a_4"), game.translate_string("co_sad_a_5"),
+                   game.translate_string("co_sad_a_6"), game.translate_string("co_sad_a_7"),
+                   game.translate_string("co_sad_a_8"), game.translate_string("co_sad_a_9")}
+common["sad_z"] = {game.translate_string("co_sad_z_0"), game.translate_string("co_sad_z_1"),
+                   game.translate_string("co_sad_z_2"), game.translate_string("co_sad_z_3"),
+                   game.translate_string("co_sad_z_4"), game.translate_string("co_sad_z_5"),
+                   game.translate_string("co_sad_z_6"), game.translate_string("co_sad_z_7"),
+                   game.translate_string("co_sad_z_8"), game.translate_string("co_sad_z_9")}
+common["fun_a"] = {game.translate_string("co_fun_a_0"), game.translate_string("co_fun_a_1"),
+                   game.translate_string("co_fun_a_2"), game.translate_string("co_fun_a_3")}
+common["fun_z"] = {game.translate_string("co_fun_z_0"), game.translate_string("co_fun_z_1"),
+                   game.translate_string("co_fun_z_2"), game.translate_string("co_fun_z_3"),
+                   game.translate_string("co_fun_z_4")}
+common["prob_a"] = {game.translate_string("co_prob_a_0"), game.translate_string("co_prob_a_1"),
+                    game.translate_string("co_prob_a_2"), game.translate_string("co_prob_a_3"),
+                    game.translate_string("co_prob_a_4"), game.translate_string("co_prob_a_5"),
+                    game.translate_string("co_prob_a_6"), game.translate_string("co_prob_a_7"),
+                    game.translate_string("co_prob_a_8")}
+common["prob_z"] = {game.translate_string("co_prob_z_0"), game.translate_string("co_prob_z_1"),
+                    game.translate_string("co_prob_z_2")}
+common["kill_a"] = {game.translate_string("co_kill_a_0"), game.translate_string("co_kill_a_1"),
+                    game.translate_string("co_kill_a_2"), game.translate_string("co_kill_a_3"),
+                    game.translate_string("co_kill_a_4"), game.translate_string("co_kill_a_5")}
+common["kill_z"] = {game.translate_string("co_kill_z_0"), game.translate_string("co_kill_z_1"),
+                    game.translate_string("co_kill_z_2"), game.translate_string("co_kill_z_3"),
+                    game.translate_string("co_kill_z_4"), game.translate_string("co_kill_z_5")}
+common["spawn_seen_a"] = {game.translate_string("co_spawn_seen_a_0"), game.translate_string("co_spawn_seen_a_1"),
+                          game.translate_string("co_spawn_seen_a_2"), game.translate_string("co_spawn_seen_a_3"),
+                          game.translate_string("co_spawn_seen_a_4"), game.translate_string("co_spawn_seen_a_5"),
+                          game.translate_string("co_spawn_seen_a_6")}
+common["spawn_seen_z"] = {game.translate_string("co_spawn_seen_z_0"), game.translate_string("co_spawn_seen_z_1"),
+                          game.translate_string("co_spawn_seen_z_2"), game.translate_string("co_spawn_seen_z_3"),
+                          game.translate_string("co_spawn_seen_z_4"), game.translate_string("co_spawn_seen_z_5"),
+                          game.translate_string("co_spawn_seen_z_6")}
+common["seen_a"] = {game.translate_string("co_seen_a_0"), game.translate_string("co_seen_a_1"),
+                    game.translate_string("co_seen_a_2"), game.translate_string("co_seen_a_3")}
+common["seen_z"] = {game.translate_string("co_seen_z_0"), game.translate_string("co_seen_z_1"),
+                    game.translate_string("co_seen_z_2"), game.translate_string("co_seen_z_3")}
+common["corpse_a"] = {game.translate_string("co_corpse_a_0"), game.translate_string("co_corpse_a_1"),
+                      game.translate_string("co_corpse_a_2"), game.translate_string("co_corpse_a_3")}
+common["corpse_z"] = {game.translate_string("co_corpse_z_0"), game.translate_string("co_corpse_z_1"),
+                      game.translate_string("co_corpse_z_2"), game.translate_string("co_corpse_z_3")}
+common["corpse_name_a"] = {game.translate_string("co_corpse_name_a_0"), game.translate_string("co_corpse_name_a_1"),
+                           game.translate_string("co_corpse_name_a_2")}
+common["corpse_name_z"] = {game.translate_string("co_corpse_name_z_0"), game.translate_string("co_corpse_name_z_1"),
+                           game.translate_string("co_corpse_name_z_2")}
+common["carefull_a"] = {game.translate_string("co_carefull_a_0"), game.translate_string("co_carefull_a_1"),
+                        game.translate_string("co_carefull_a_2"), game.translate_string("co_carefull_a_3"),
+                        game.translate_string("co_carefull_a_4")}
+common["carefull_z"] = {game.translate_string("co_carefull_z_0"), game.translate_string("co_carefull_z_1"),
+                        game.translate_string("co_carefull_z_2"), game.translate_string("co_carefull_z_3"),
+                        game.translate_string("co_carefull_z_4")}
+common["when_a"] = {game.translate_string("co_when_a_0"), game.translate_string("co_when_a_1"),
+                    game.translate_string("co_when_a_2"), game.translate_string("co_when_a_3"),
+                    game.translate_string("co_when_a_4")}
+common["when_z"] = {game.translate_string("co_when_z_0"), game.translate_string("co_when_z_1"),
+                    game.translate_string("co_when_z_2"), game.translate_string("co_when_z_3"),
+                    game.translate_string("co_when_z_4")}
+common["kill_seen_a"] = {game.translate_string("co_kill_seen_a_0"), game.translate_string("co_kill_seen_a_1"),
+                         game.translate_string("co_kill_seen_a_2"), game.translate_string("co_kill_seen_a_3"),
+                         game.translate_string("co_kill_seen_a_4"), game.translate_string("co_kill_seen_a_5")}
+common["kill_seen_z"] = {game.translate_string("co_kill_seen_z_0"), game.translate_string("co_kill_seen_z_1"),
+                         game.translate_string("co_kill_seen_z_2"), game.translate_string("co_kill_seen_z_3"),
+                         game.translate_string("co_kill_seen_z_4"), game.translate_string("co_kill_seen_z_5")}
+common["killed_a"] = {game.translate_string("co_killed_a_0"), game.translate_string("co_killed_a_1"),
+                      game.translate_string("co_killed_a_2"), game.translate_string("co_killed_a_3"),
+                      game.translate_string("co_killed_a_4"), game.translate_string("co_killed_a_5")}
+common["killed_z"] = {game.translate_string("co_killed_z_0"), game.translate_string("co_killed_z_1"),
+                      game.translate_string("co_killed_z_2"), game.translate_string("co_killed_z_3"),
+                      game.translate_string("co_killed_z_4"), game.translate_string("co_killed_z_5")}
+common["cool_a"] = {game.translate_string("co_cool_a_0"), game.translate_string("co_cool_a_1"),
+                    game.translate_string("co_cool_a_2"), game.translate_string("co_cool_a_3")}
+common["cool_z"] = {game.translate_string("co_cool_z_0"), game.translate_string("co_cool_z_1"),
+                    game.translate_string("co_cool_z_2"), game.translate_string("co_cool_z_3")}
+common["meet_a"] = {game.translate_string("co_meet_a_0"), game.translate_string("co_meet_a_1"),
+                    game.translate_string("co_meet_a_2"), game.translate_string("co_meet_a_3"),
+                    game.translate_string("co_meet_a_4")}
+common["meet_z"] = {game.translate_string("co_meet_z_0"), game.translate_string("co_meet_z_1"),
+                    game.translate_string("co_meet_z_2"), game.translate_string("co_meet_z_3"),
+                    game.translate_string("co_meet_z_4")}
+common["hard_a"] = {game.translate_string("co_hard_a_0"), game.translate_string("co_hard_a_1"),
+                    game.translate_string("co_hard_a_2"), game.translate_string("co_hard_a_3"),
+                    game.translate_string("co_hard_a_4"), game.translate_string("co_hard_a_5"),
+                    game.translate_string("co_hard_a_6"), game.translate_string("co_hard_a_7"),
+                    game.translate_string("co_hard_a_8")}
+common["hard_z"] = {game.translate_string("co_hard_z_0"), game.translate_string("co_hard_z_1"),
+                    game.translate_string("co_hard_z_2"), game.translate_string("co_hard_z_3"),
+                    game.translate_string("co_hard_z_4"), game.translate_string("co_hard_z_5"),
+                    game.translate_string("co_hard_z_6"), game.translate_string("co_hard_z_7"),
+                    game.translate_string("co_hard_z_8")}
 
-rate_name["novice"] 		= {game.translate_string( "rn_novice_0" ), game.translate_string( "rn_novice_1" ), game.translate_string( "rn_novice_2" ), game.translate_string( "rn_novice_3" ), game.translate_string( "rn_novice_4" )}
-rate_name["experienced"] 	= {game.translate_string( "rn_experienced_0" ), game.translate_string( "rn_experienced_1" ), game.translate_string( "rn_experienced_2" ), game.translate_string( "rn_experienced_3" )}
-rate_name["veteran"] 		= {game.translate_string( "rn_veteran_0" ), game.translate_string( "rn_veteran_1" ), game.translate_string( "rn_veteran_2" )}
-rate_name["master"] 		= {game.translate_string( "rn_master_0" ), game.translate_string( "rn_master_1" ), game.translate_string( "rn_master_2" ), game.translate_string( "rn_master_3" )}
-rate_prefix 				= {game.translate_string( "rn_pre_0" ), game.translate_string( "rn_pre_1" ),game.translate_string( "rn_pre_2" ), game.translate_string( "rn_pre_3" ), game.translate_string( "rn_pre_4" ), game.translate_string( "rn_pre_5" ), game.translate_string( "rn_pre_6" )}
-rate_postfix 				= {"", "...", game.translate_string( "rn_post_0" ), game.translate_string( "rn_post_1" ), game.translate_string( "rn_post_2" )}
+monsters = {game.translate_string("mo_0"), game.translate_string("mo_1"), game.translate_string("mo_2"),
+            game.translate_string("mo_3"), game.translate_string("mo_4"), game.translate_string("mo_5"),
+            game.translate_string("mo_6"), game.translate_string("mo_7"), game.translate_string("mo_8"),
+            game.translate_string("mo_9"), game.translate_string("mo_10"), game.translate_string("mo_11"),
+            game.translate_string("mo_12"), game.translate_string("mo_13")}
 
-common["sad_a"] 			= {game.translate_string( "co_sad_a_0" ), game.translate_string( "co_sad_a_1" ), game.translate_string( "co_sad_a_2" ), game.translate_string( "co_sad_a_3" ), game.translate_string( "co_sad_a_4" ), game.translate_string( "co_sad_a_5" ), game.translate_string( "co_sad_a_6" ), game.translate_string( "co_sad_a_7" ), game.translate_string( "co_sad_a_8" ), game.translate_string( "co_sad_a_9" )}
-common["sad_z"] 			= {game.translate_string( "co_sad_z_0" ), game.translate_string( "co_sad_z_1" ), game.translate_string( "co_sad_z_2" ), game.translate_string( "co_sad_z_3" ), game.translate_string( "co_sad_z_4" ), game.translate_string( "co_sad_z_5" ), game.translate_string( "co_sad_z_6" ), game.translate_string( "co_sad_z_7" ), game.translate_string( "co_sad_z_8" ), game.translate_string( "co_sad_z_9" )}
-common["fun_a"] 			= {game.translate_string( "co_fun_a_0" ), game.translate_string( "co_fun_a_1" ), game.translate_string( "co_fun_a_2" ), game.translate_string( "co_fun_a_3" )}
-common["fun_z"] 			= {game.translate_string( "co_fun_z_0" ), game.translate_string( "co_fun_z_1" ), game.translate_string( "co_fun_z_2" ), game.translate_string( "co_fun_z_3" ), game.translate_string( "co_fun_z_4" )}
-common["prob_a"] 			= {game.translate_string( "co_prob_a_0" ), game.translate_string( "co_prob_a_1" ), game.translate_string( "co_prob_a_2" ), game.translate_string( "co_prob_a_3" ), game.translate_string( "co_prob_a_4" ), game.translate_string( "co_prob_a_5" ), game.translate_string( "co_prob_a_6" ), game.translate_string( "co_prob_a_7" ), game.translate_string( "co_prob_a_8" )}
-common["prob_z"] 			= {game.translate_string( "co_prob_z_0" ), game.translate_string( "co_prob_z_1" ), game.translate_string( "co_prob_z_2" )}
-common["kill_a"] 			= {game.translate_string( "co_kill_a_0" ), game.translate_string( "co_kill_a_1" ), game.translate_string( "co_kill_a_2" ), game.translate_string( "co_kill_a_3" ), game.translate_string( "co_kill_a_4" ), game.translate_string( "co_kill_a_5" )}
-common["kill_z"] 			= {game.translate_string( "co_kill_z_0" ), game.translate_string( "co_kill_z_1" ), game.translate_string( "co_kill_z_2" ), game.translate_string( "co_kill_z_3" ), game.translate_string( "co_kill_z_4" ), game.translate_string( "co_kill_z_5" )}
-common["spawn_seen_a"] 		= {game.translate_string( "co_spawn_seen_a_0" ), game.translate_string( "co_spawn_seen_a_1" ), game.translate_string( "co_spawn_seen_a_2" ), game.translate_string( "co_spawn_seen_a_3" ), game.translate_string( "co_spawn_seen_a_4" ), game.translate_string( "co_spawn_seen_a_5" ), game.translate_string( "co_spawn_seen_a_6" )}
-common["spawn_seen_z"] 		= {game.translate_string( "co_spawn_seen_z_0" ), game.translate_string( "co_spawn_seen_z_1" ), game.translate_string( "co_spawn_seen_z_2" ), game.translate_string( "co_spawn_seen_z_3" ), game.translate_string( "co_spawn_seen_z_4" ), game.translate_string( "co_spawn_seen_z_5" ), game.translate_string( "co_spawn_seen_z_6" )}
-common["seen_a"] 			= {game.translate_string( "co_seen_a_0" ), game.translate_string( "co_seen_a_1" ), game.translate_string( "co_seen_a_2" ), game.translate_string( "co_seen_a_3" )}
-common["seen_z"] 			= {game.translate_string( "co_seen_z_0" ), game.translate_string( "co_seen_z_1" ), game.translate_string( "co_seen_z_2" ), game.translate_string( "co_seen_z_3" )}
-common["corpse_a"] 			= {game.translate_string( "co_corpse_a_0" ), game.translate_string( "co_corpse_a_1" ), game.translate_string( "co_corpse_a_2" ), game.translate_string( "co_corpse_a_3" )}
-common["corpse_z"] 			= {game.translate_string( "co_corpse_z_0" ), game.translate_string( "co_corpse_z_1" ), game.translate_string( "co_corpse_z_2" ), game.translate_string( "co_corpse_z_3" )}
-common["corpse_name_a"] 	= {game.translate_string( "co_corpse_name_a_0" ), game.translate_string( "co_corpse_name_a_1" ), game.translate_string( "co_corpse_name_a_2" )}
-common["corpse_name_z"] 	= {game.translate_string( "co_corpse_name_z_0" ), game.translate_string( "co_corpse_name_z_1" ), game.translate_string( "co_corpse_name_z_2" )}
-common["carefull_a"] 		= {game.translate_string( "co_carefull_a_0" ), game.translate_string( "co_carefull_a_1" ), game.translate_string( "co_carefull_a_2" ), game.translate_string( "co_carefull_a_3" ), game.translate_string( "co_carefull_a_4" )}
-common["carefull_z"] 		= {game.translate_string( "co_carefull_z_0" ), game.translate_string( "co_carefull_z_1" ), game.translate_string( "co_carefull_z_2" ), game.translate_string( "co_carefull_z_3" ), game.translate_string( "co_carefull_z_4" )}
-common["when_a"] 			= {game.translate_string( "co_when_a_0" ), game.translate_string( "co_when_a_1" ), game.translate_string( "co_when_a_2" ), game.translate_string( "co_when_a_3" ), game.translate_string( "co_when_a_4" )}
-common["when_z"] 			= {game.translate_string( "co_when_z_0" ), game.translate_string( "co_when_z_1" ), game.translate_string( "co_when_z_2" ), game.translate_string( "co_when_z_3" ), game.translate_string( "co_when_z_4" )}
-common["kill_seen_a"] 		= {game.translate_string( "co_kill_seen_a_0" ), game.translate_string( "co_kill_seen_a_1" ), game.translate_string( "co_kill_seen_a_2" ), game.translate_string( "co_kill_seen_a_3" ), game.translate_string( "co_kill_seen_a_4" ), game.translate_string( "co_kill_seen_a_5" )}
-common["kill_seen_z"] 		= {game.translate_string( "co_kill_seen_z_0" ), game.translate_string( "co_kill_seen_z_1" ), game.translate_string( "co_kill_seen_z_2" ), game.translate_string( "co_kill_seen_z_3" ), game.translate_string( "co_kill_seen_z_4" ), game.translate_string( "co_kill_seen_z_5" )}
-common["killed_a"] 			= {game.translate_string( "co_killed_a_0" ), game.translate_string( "co_killed_a_1" ), game.translate_string( "co_killed_a_2" ), game.translate_string( "co_killed_a_3" ), game.translate_string( "co_killed_a_4" ), game.translate_string( "co_killed_a_5" )}
-common["killed_z"] 			= {game.translate_string( "co_killed_z_0" ), game.translate_string( "co_killed_z_1" ), game.translate_string( "co_killed_z_2" ), game.translate_string( "co_killed_z_3" ), game.translate_string( "co_killed_z_4" ), game.translate_string( "co_killed_z_5" )}
-common["cool_a"] 			= {game.translate_string( "co_cool_a_0" ), game.translate_string( "co_cool_a_1" ), game.translate_string( "co_cool_a_2" ), game.translate_string( "co_cool_a_3" )}
-common["cool_z"] 			= {game.translate_string( "co_cool_z_0" ), game.translate_string( "co_cool_z_1" ), game.translate_string( "co_cool_z_2" ), game.translate_string( "co_cool_z_3" )}
-common["meet_a"] 			= {game.translate_string( "co_meet_a_0" ), game.translate_string( "co_meet_a_1" ), game.translate_string( "co_meet_a_2" ), game.translate_string( "co_meet_a_3" ), game.translate_string( "co_meet_a_4" )}
-common["meet_z"] 			= {game.translate_string( "co_meet_z_0" ), game.translate_string( "co_meet_z_1" ), game.translate_string( "co_meet_z_2" ), game.translate_string( "co_meet_z_3" ), game.translate_string( "co_meet_z_4" )}
-common["hard_a"] 			= {game.translate_string( "co_hard_a_0" ), game.translate_string( "co_hard_a_1" ), game.translate_string( "co_hard_a_2" ), game.translate_string( "co_hard_a_3" ), game.translate_string( "co_hard_a_4" ), game.translate_string( "co_hard_a_5" ), game.translate_string( "co_hard_a_6" ), game.translate_string( "co_hard_a_7" ), game.translate_string( "co_hard_a_8" )}
-common["hard_z"] 			= {game.translate_string( "co_hard_z_0" ), game.translate_string( "co_hard_z_1" ), game.translate_string( "co_hard_z_2" ), game.translate_string( "co_hard_z_3" ), game.translate_string( "co_hard_z_4" ), game.translate_string( "co_hard_z_5" ), game.translate_string( "co_hard_z_6" ), game.translate_string( "co_hard_z_7" ), game.translate_string( "co_hard_z_8" )}
+monster_classes[clsid.controller_s] = {"controller", game.translate_string("mc_controller_0"),
+                                       game.translate_string("mc_controller_1"),
+                                       game.translate_string("mc_controller_2"),
+                                       game.translate_string("mc_controller_3"),
+                                       game.translate_string("mc_controller_4")}
+monster_classes[clsid.chimera_s] = {"chimera", game.translate_string("mc_chimera_0"),
+                                    game.translate_string("mc_chimera_1"), game.translate_string("mc_chimera_2"),
+                                    game.translate_string("mc_chimera_3"), game.translate_string("mc_chimera_4")}
+monster_classes[clsid.poltergeist_s] = {"poltergeist", game.translate_string("mc_poltergeist_0"),
+                                        game.translate_string("mc_poltergeist_1"),
+                                        game.translate_string("mc_poltergeist_2"),
+                                        game.translate_string("mc_poltergeist_3"),
+                                        game.translate_string("mc_poltergeist_4")}
+monster_classes[clsid.snork_s] = {"snork", game.translate_string("mc_snork_0"), game.translate_string("mc_snork_1"),
+                                  game.translate_string("mc_snork_2"), game.translate_string("mc_snork_3"),
+                                  game.translate_string("mc_snork_4")}
+monster_classes[clsid.gigant_s] = {"pseudo_gigant", game.translate_string("mc_gigant_0"),
+                                   game.translate_string("mc_gigant_1"), game.translate_string("mc_gigant_2"),
+                                   game.translate_string("mc_gigant_3"), game.translate_string("mc_gigant_4")}
+monster_classes[clsid.burer_s] = {"burer", game.translate_string("mc_burer_0"), game.translate_string("mc_burer_1"),
+                                  game.translate_string("mc_burer_2"), game.translate_string("mc_burer_3"),
+                                  game.translate_string("mc_burer_4")}
+monster_classes[clsid.bloodsucker_s] = {"bloodsucker", game.translate_string("mc_bloodsucker_0"),
+                                        game.translate_string("mc_bloodsucker_1"),
+                                        game.translate_string("mc_bloodsucker_2"),
+                                        game.translate_string("mc_bloodsucker_3"),
+                                        game.translate_string("mc_bloodsucker_4")}
+monster_classes[clsid.zombie_s] = {"zombie", game.translate_string("mc_zombie_0"), game.translate_string("mc_zombie_1"),
+                                   game.translate_string("mc_zombie_2"), game.translate_string("mc_zombie_3"),
+                                   game.translate_string("mc_zombie_4")}
+monster_classes[clsid.boar_s] = {"boar", game.translate_string("mc_boar_0"), game.translate_string("mc_boar_1"),
+                                 game.translate_string("mc_boar_2"), game.translate_string("mc_boar_3"),
+                                 game.translate_string("mc_boar_4")}
+monster_classes[clsid.cat_s] = {"cat", game.translate_string("mc_cat_0"), game.translate_string("mc_cat_1"),
+                                game.translate_string("mc_cat_2"), game.translate_string("mc_cat_3"),
+                                game.translate_string("mc_cat_4")}
+monster_classes[clsid.pseudodog_s] = {"pseudodog", game.translate_string("mc_pseudodog_0"),
+                                      game.translate_string("mc_pseudodog_1"), game.translate_string("mc_pseudodog_2"),
+                                      game.translate_string("mc_pseudodog_3"), game.translate_string("mc_pseudodog_4")}
+monster_classes[clsid.psy_dog_s] = {"psy_dog", game.translate_string("mc_psy_dog_0"),
+                                    game.translate_string("mc_psy_dog_1"), game.translate_string("mc_psy_dog_2"),
+                                    game.translate_string("mc_psy_dog_3"), game.translate_string("mc_psy_dog_4")}
+monster_classes[clsid.dog_s] = {"dog", game.translate_string("mc_dog_0"), game.translate_string("mc_dog_1"),
+                                game.translate_string("mc_dog_2"), game.translate_string("mc_dog_3"),
+                                game.translate_string("mc_dog_4")}
+monster_classes[clsid.flesh_s] = {"flesh", game.translate_string("mc_flesh_0"), game.translate_string("mc_flesh_1"),
+                                  game.translate_string("mc_flesh_2"), game.translate_string("mc_flesh_3"),
+                                  game.translate_string("mc_flesh_4")}
+monster_classes[clsid.tushkano_s] = {"tushkano", game.translate_string("mc_tushkano_0"),
+                                     game.translate_string("mc_tushkano_1"), game.translate_string("mc_tushkano_2"),
+                                     game.translate_string("mc_tushkano_3"), game.translate_string("mc_tushkano_4")}
+monster_classes[clsid.fracture_s] = {"fracture", game.translate_string("mc_fracture_0"),
+                                     game.translate_string("mc_fracture_1"), game.translate_string("mc_fracture_2"),
+                                     game.translate_string("mc_fracture_3"), game.translate_string("mc_fracture_4")}
+monster_classes["spider"] = {"spider", game.translate_string("mc_spider_0"), game.translate_string("mc_spider_1"),
+                             game.translate_string("mc_spider_2"), game.translate_string("mc_spider_3"),
+                             game.translate_string("mc_spider_4")}
 
-monsters = { game.translate_string( "mo_0" ), game.translate_string( "mo_1" ), game.translate_string( "mo_2" ), game.translate_string( "mo_3" ), game.translate_string( "mo_4" ), game.translate_string( "mo_5" ), game.translate_string( "mo_6" ), game.translate_string( "mo_7" ), game.translate_string( "mo_8" ), game.translate_string( "mo_9" ), game.translate_string( "mo_10" ), game.translate_string( "mo_11" ), game.translate_string( "mo_12" ), game.translate_string( "mo_13" )}
+monster_prefix = {"", game.translate_string("mp_0"), game.translate_string("mp_1"), game.translate_string("mp_2"),
+                  game.translate_string("mp_3")}
+monster_suffix[1] = {game.translate_string("ms_1_0"), game.translate_string("ms_1_1"), game.translate_string("ms_1_2"),
+                     game.translate_string("ms_1_3"), game.translate_string("ms_1_4")}
+monster_suffix[2] = {game.translate_string("ms_2_0"), game.translate_string("ms_2_1")}
+monster_suffix[3] = {game.translate_string("ms_3_0"), game.translate_string("ms_3_1")}
+monster_suffix[4] = {game.translate_string("ms_4_0"), game.translate_string("ms_4_1")}
 
-monster_classes[ clsid.controller_s  ] = {
-  "controller", game.translate_string( "mc_controller_0" ), game.translate_string( "mc_controller_1" ), game.translate_string( "mc_controller_2" ), game.translate_string( "mc_controller_3" ), game.translate_string( "mc_controller_4" )
-}
-monster_classes[ clsid.chimera_s     ] = {
-  "chimera", game.translate_string( "mc_chimera_0" ), game.translate_string( "mc_chimera_1" ), game.translate_string( "mc_chimera_2" ), game.translate_string( "mc_chimera_3" ), game.translate_string( "mc_chimera_4" )
-}
-monster_classes[ clsid.poltergeist_s ] = {
-  "poltergeist", game.translate_string( "mc_poltergeist_0" ), game.translate_string( "mc_poltergeist_1" ), game.translate_string( "mc_poltergeist_2" ), game.translate_string( "mc_poltergeist_3" ),
-  game.translate_string( "mc_poltergeist_4" )
-}
-monster_classes[ clsid.snork_s       ] = {
-  "snork", game.translate_string( "mc_snork_0" ), game.translate_string( "mc_snork_1" ), game.translate_string( "mc_snork_2" ), game.translate_string( "mc_snork_3" ), game.translate_string( "mc_snork_4" )
-}
-monster_classes[ clsid.gigant_s      ] = {
-  "pseudo_gigant", game.translate_string( "mc_gigant_0" ), game.translate_string( "mc_gigant_1" ), game.translate_string( "mc_gigant_2" ),
-  game.translate_string( "mc_gigant_3" ), game.translate_string( "mc_gigant_4" )
-}
-monster_classes[ clsid.burer_s       ] = {
-  "burer", game.translate_string( "mc_burer_0" ), game.translate_string( "mc_burer_1" ), game.translate_string( "mc_burer_2" ), game.translate_string( "mc_burer_3" ), game.translate_string( "mc_burer_4" )
-}
-monster_classes[ clsid.bloodsucker_s ] = {
-  "bloodsucker", game.translate_string( "mc_bloodsucker_0" ), game.translate_string( "mc_bloodsucker_1" ), game.translate_string( "mc_bloodsucker_2" ), game.translate_string( "mc_bloodsucker_3" ), game.translate_string( "mc_bloodsucker_4" )
-}
-monster_classes[ clsid.zombie_s      ] = {
-  "zombie", game.translate_string( "mc_zombie_0" ), game.translate_string( "mc_zombie_1" ), game.translate_string( "mc_zombie_2" ), game.translate_string( "mc_zombie_3" ), game.translate_string( "mc_zombie_4" )
-}
-monster_classes[ clsid.boar_s        ] = {
-  "boar", game.translate_string( "mc_boar_0" ), game.translate_string( "mc_boar_1" ), game.translate_string( "mc_boar_2" ), game.translate_string( "mc_boar_3" ), game.translate_string( "mc_boar_4" )
-}
-monster_classes[ clsid.cat_s         ] = {
-  "cat", game.translate_string( "mc_cat_0" ), game.translate_string( "mc_cat_1" ), game.translate_string( "mc_cat_2" ), game.translate_string( "mc_cat_3" ), game.translate_string( "mc_cat_4" )
-}
-monster_classes[ clsid.pseudodog_s   ] = {
-  "pseudodog", game.translate_string( "mc_pseudodog_0" ), game.translate_string( "mc_pseudodog_1" ), game.translate_string( "mc_pseudodog_2" ), game.translate_string( "mc_pseudodog_3" ),
-  game.translate_string( "mc_pseudodog_4" )
-}
-monster_classes[ clsid.psy_dog_s     ] = {
-  "psy_dog", game.translate_string( "mc_psy_dog_0" ), game.translate_string( "mc_psy_dog_1" ), game.translate_string( "mc_psy_dog_2" ), game.translate_string( "mc_psy_dog_3" ), game.translate_string( "mc_psy_dog_4" )
-}
-monster_classes[ clsid.dog_s         ] = {
-  "dog", game.translate_string( "mc_dog_0" ), game.translate_string( "mc_dog_1" ), game.translate_string( "mc_dog_2" ), game.translate_string( "mc_dog_3" ), game.translate_string( "mc_dog_4" )
-}
-monster_classes[ clsid.flesh_s       ] = {
-  "flesh", game.translate_string( "mc_flesh_0" ), game.translate_string( "mc_flesh_1" ), game.translate_string( "mc_flesh_2" ), game.translate_string( "mc_flesh_3" ), game.translate_string( "mc_flesh_4" )
-}
-monster_classes[ clsid.tushkano_s    ] = {
-  "tushkano", game.translate_string( "mc_tushkano_0" ), game.translate_string( "mc_tushkano_1" ), game.translate_string( "mc_tushkano_2" ), game.translate_string( "mc_tushkano_3" ), game.translate_string( "mc_tushkano_4" )
-}
-monster_classes[ clsid.fracture_s    ] = {
-  "fracture", game.translate_string( "mc_fracture_0" ), game.translate_string( "mc_fracture_1" ), game.translate_string( "mc_fracture_2" ), game.translate_string( "mc_fracture_3" ), game.translate_string( "mc_fracture_4" )
-}
-monster_classes[ "spider"            ] = {
-  "spider", game.translate_string( "mc_spider_0" ), game.translate_string( "mc_spider_1" ), game.translate_string( "mc_spider_2" ), game.translate_string( "mc_spider_3" ), game.translate_string( "mc_spider_4" )
-}
+anomalies = {game.translate_string("an_0"), game.translate_string("an_1"), game.translate_string("an_2"),
+             game.translate_string("an_3"), game.translate_string("an_4"), game.translate_string("an_5"),
+             game.translate_string("an_6")}
 
-monster_prefix 		= {"",game.translate_string( "mp_0" ), game.translate_string( "mp_1" ), game.translate_string( "mp_2" ), game.translate_string( "mp_3" )}
-monster_suffix[1] 	= {game.translate_string( "ms_1_0" ), game.translate_string( "ms_1_1" ), game.translate_string( "ms_1_2" ), game.translate_string( "ms_1_3" ), game.translate_string( "ms_1_4" )}
-monster_suffix[2] 	= {game.translate_string( "ms_2_0" ), game.translate_string( "ms_2_1" )}
-monster_suffix[3] 	= {game.translate_string( "ms_3_0" ), game.translate_string( "ms_3_1" )}
-monster_suffix[4] 	= {game.translate_string( "ms_4_0" ), game.translate_string( "ms_4_1" )}
+anomaly_classes["burning_fuzz"] = {game.translate_string("ac_burning_fuzz_0"),
+                                   game.translate_string("ac_burning_fuzz_1"),
+                                   game.translate_string("ac_burning_fuzz_2"),
+                                   game.translate_string("ac_burning_fuzz_3")}
+anomaly_classes["buzz"] = {game.translate_string("ac_buzz_0"), game.translate_string("ac_buzz_1"),
+                           game.translate_string("ac_buzz_2"), game.translate_string("ac_buzz_3"),
+                           game.translate_string("ac_buzz_4")}
+anomaly_classes["gravi"] = {game.translate_string("ac_gravi_0"), game.translate_string("ac_gravi_1"),
+                            game.translate_string("ac_gravi_2"), game.translate_string("ac_gravi_3"),
+                            game.translate_string("ac_gravi_4")}
+anomaly_classes["mincer"] = {game.translate_string("ac_mincer_0"), game.translate_string("ac_mincer_1"),
+                             game.translate_string("ac_mincer_2"), game.translate_string("ac_mincer_3"),
+                             game.translate_string("ac_mincer_4")}
+anomaly_classes["witches"] = {game.translate_string("ac_witches_0"), game.translate_string("ac_witches_1"),
+                              game.translate_string("ac_witches_2"), game.translate_string("ac_witches_3"),
+                              game.translate_string("ac_witches_4")}
+anomaly_classes["mosquito"] = {game.translate_string("ac_mosquito_0"), game.translate_string("ac_mosquito_1"),
+                               game.translate_string("ac_mosquito_2"), game.translate_string("ac_mosquito_3"),
+                               game.translate_string("ac_mosquito_4")}
+anomaly_classes["zharka"] = {game.translate_string("ac_zharka_0"), game.translate_string("ac_zharka_1"),
+                             game.translate_string("ac_zharka_2"), game.translate_string("ac_zharka_3")}
+anomaly_classes["radioactive"] = {game.translate_string("ac_radioactive_0"), game.translate_string("ac_radioactive_1"),
+                                  game.translate_string("ac_radioactive_2"), game.translate_string("ac_radioactive_3")}
+anomaly_classes["ice"] = {game.translate_string("ac_ice_0"), game.translate_string("ac_ice_1"),
+                          game.translate_string("ac_ice_2"), game.translate_string("ac_ice_3"),
+                          game.translate_string("ac_ice_4")}
 
-anomalies = { game.translate_string( "an_0" ), game.translate_string( "an_1" ), game.translate_string( "an_2" ), game.translate_string( "an_3" ), game.translate_string( "an_4" ), game.translate_string( "an_5" ), game.translate_string( "an_6" ) }
+anomaly_prefix = {game.translate_string("apr_0"), game.translate_string("apr_1"), game.translate_string("apr_2"),
+                  game.translate_string("apr_3")}
+anomaly_postfix = {"", game.translate_string("apo_0"), game.translate_string("apo_1"), game.translate_string("apo_2"),
+                   game.translate_string("apo_3")}
 
-anomaly_classes["burning_fuzz"] 			= {game.translate_string( "ac_burning_fuzz_0" ), game.translate_string( "ac_burning_fuzz_1" ), game.translate_string( "ac_burning_fuzz_2" ), game.translate_string( "ac_burning_fuzz_3" )}
-anomaly_classes["buzz"] 					= {game.translate_string( "ac_buzz_0" ), game.translate_string( "ac_buzz_1" ), game.translate_string( "ac_buzz_2" ), game.translate_string( "ac_buzz_3" ), game.translate_string( "ac_buzz_4" )}
-anomaly_classes["gravi"] 					= {game.translate_string( "ac_gravi_0" ), game.translate_string( "ac_gravi_1" ), game.translate_string( "ac_gravi_2" ), game.translate_string( "ac_gravi_3" ), game.translate_string( "ac_gravi_4" )}
-anomaly_classes["mincer"] 					= {game.translate_string( "ac_mincer_0" ), game.translate_string( "ac_mincer_1" ), game.translate_string( "ac_mincer_2" ), game.translate_string( "ac_mincer_3" ), game.translate_string( "ac_mincer_4" )}
-anomaly_classes["witches"] 					= {game.translate_string( "ac_witches_0" ), game.translate_string( "ac_witches_1" ), game.translate_string( "ac_witches_2" ), game.translate_string( "ac_witches_3" ), game.translate_string( "ac_witches_4" )}
-anomaly_classes["mosquito"] 				= {game.translate_string( "ac_mosquito_0" ), game.translate_string( "ac_mosquito_1" ), game.translate_string( "ac_mosquito_2" ), game.translate_string( "ac_mosquito_3" ), game.translate_string( "ac_mosquito_4" )}
-anomaly_classes["zharka"] 					= {game.translate_string( "ac_zharka_0" ), game.translate_string( "ac_zharka_1" ), game.translate_string( "ac_zharka_2" ), game.translate_string( "ac_zharka_3" )}
-anomaly_classes["radioactive"] 				= {game.translate_string( "ac_radioactive_0" ), game.translate_string( "ac_radioactive_1" ), game.translate_string( "ac_radioactive_2" ), game.translate_string( "ac_radioactive_3" )}
-anomaly_classes["ice"] 						= {game.translate_string( "ac_ice_0" ), game.translate_string( "ac_ice_1" ), game.translate_string( "ac_ice_2" ), game.translate_string( "ac_ice_3" ), game.translate_string( "ac_ice_4" )}
-
-
-anomaly_prefix						= {game.translate_string( "apr_0" ), game.translate_string( "apr_1" ), game.translate_string( "apr_2" ), game.translate_string( "apr_3" )}
-anomaly_postfix						= {"", game.translate_string( "apo_0" ), game.translate_string( "apo_1" ), game.translate_string( "apo_2" ), game.translate_string( "apo_3" )}
-
-spawn_prefix = {game.translate_string( "sp_0" ), game.translate_string( "sp_1" )}
+spawn_prefix = {game.translate_string("sp_0"), game.translate_string("sp_1")}
 
 weapon_classes = {
-	[1] = {
-			["name"]   = {game.translate_string( "wc_1_name_0" ), game.translate_string( "wc_1_name_1" ), game.translate_string( "wc_1_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_1_hit_a_0" ), game.translate_string( "wc_1_hit_a_1" ), game.translate_string( "wc_1_hit_a_2" ), game.translate_string( "wc_1_hit_a_3" ), game.translate_string( "wc_1_hit_a_4" ), game.translate_string( "wc_1_hit_a_5" )},
-			["hit_z"]  = {game.translate_string( "wc_1_hit_z_0" ), game.translate_string( "wc_1_hit_z_1" ), game.translate_string( "wc_1_hit_z_2" ), game.translate_string( "wc_1_hit_z_3" ), game.translate_string( "wc_1_hit_z_4" ), game.translate_string( "wc_1_hit_z_5" )},
-			["hear_a"] = {game.translate_string( "wc_1_hear_a_0" ), game.translate_string( "wc_1_hear_a_1" ), game.translate_string( "wc_1_hear_a_2" )},
-			["hear_z"] = {game.translate_string( "wc_1_hear_z_0" ), game.translate_string( "wc_1_hear_z_1" ), game.translate_string( "wc_1_hear_z_2" )},
-			["hear_p"] = 0.4
-	},
-	[2] = {
-			["name"]   = {game.translate_string( "wc_2_name_0" ), game.translate_string( "wc_2_name_1" ), game.translate_string( "wc_2_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_2_hit_a_0" ), game.translate_string( "wc_2_hit_a_1" ), game.translate_string( "wc_2_hit_a_2" ), game.translate_string( "wc_2_hit_a_3" )},
-			["hit_z"]  = {game.translate_string( "wc_2_hit_z_0" ), game.translate_string( "wc_2_hit_z_1" ), game.translate_string( "wc_2_hit_z_2" ), game.translate_string( "wc_2_hit_z_3" )},
-			["hear_a"] = {game.translate_string( "wc_2_hear_a_0" ), game.translate_string( "wc_2_hear_a_1" ), game.translate_string( "wc_2_hear_a_2" )},
-			["hear_z"] = {game.translate_string( "wc_2_hear_z_0" ), game.translate_string( "wc_2_hear_z_1" ), game.translate_string( "wc_2_hear_z_2" )},
-			["hear_p"] = 0.3
-	},
-	[3] = {
-			["name"]   = {game.translate_string( "wc_3_name_0" ), game.translate_string( "wc_3_name_1" ), game.translate_string( "wc_3_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_3_hit_a_0" ), game.translate_string( "wc_3_hit_a_1" ), game.translate_string( "wc_3_hit_a_2" ), game.translate_string( "wc_3_hit_a_3" ), game.translate_string( "wc_3_hit_a_4" )},
-			["hit_z"]  = {game.translate_string( "wc_3_hit_z_0" ), game.translate_string( "wc_3_hit_z_1" ), game.translate_string( "wc_3_hit_z_2" ), game.translate_string( "wc_3_hit_z_3" ), game.translate_string( "wc_3_hit_z_4" )},
-			["hear_a"] = {game.translate_string( "wc_3_hear_a_0" ), game.translate_string( "wc_3_hear_a_1" ), game.translate_string( "wc_3_hear_a_2" )},
-			["hear_z"] = {game.translate_string( "wc_3_hear_z_0" ), game.translate_string( "wc_3_hear_z_1" ), game.translate_string( "wc_3_hear_z_2" )},
-			["hear_p"] = 0.6
-	},
-	[4] = {
-			["name"]   = {game.translate_string( "wc_4_name_0" ), game.translate_string( "wc_4_name_1" ), game.translate_string( "wc_4_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_4_hit_a_0" ), game.translate_string( "wc_4_hit_a_1" ), game.translate_string( "wc_4_hit_a_2" )},
-			["hit_z"]  = {game.translate_string( "wc_4_hit_z_0" ), game.translate_string( "wc_4_hit_z_1" ), game.translate_string( "wc_4_hit_z_2" )},
-			["hear_a"] = {game.translate_string( "wc_4_hear_a_0" ), game.translate_string( "wc_4_hear_a_1" )},
-			["hear_z"] = {game.translate_string( "wc_4_hear_z_0" ), game.translate_string( "wc_4_hear_z_1" )},
-			["hear_p"] = 0.8
-	},
-	[5] = {
-			["name"]   = {game.translate_string( "wc_5_name_0" ), game.translate_string( "wc_5_name_1" ), game.translate_string( "wc_5_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_5_hit_a_0" ), game.translate_string( "wc_5_hit_a_1" ), game.translate_string( "wc_5_hit_a_2" )},
-			["hit_z"]  = {game.translate_string( "wc_5_hit_z_0" ), game.translate_string( "wc_5_hit_z_1" ), game.translate_string( "wc_5_hit_z_2" )},
-			["hear_a"] = {game.translate_string( "wc_5_hear_a_0" ), game.translate_string( "wc_5_hear_a_1" ), game.translate_string( "wc_5_hear_a_2" )},
-			["hear_z"] = {game.translate_string( "wc_5_hear_z_0" ), game.translate_string( "wc_5_hear_z_1" ), game.translate_string( "wc_5_hear_z_2" )},
-			["hear_p"] = 0.9
-	},
-	[6] = {
-			["name"]   = {game.translate_string( "wc_6_name_0" ), game.translate_string( "wc_6_name_1" ), game.translate_string( "wc_6_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_6_hit_a_0" ), game.translate_string( "wc_6_hit_a_1" ), game.translate_string( "wc_6_hit_a_2" ), game.translate_string( "wc_6_hit_a_3" )},
-			["hit_z"]  = {game.translate_string( "wc_6_hit_z_0" ), game.translate_string( "wc_6_hit_z_1" ), game.translate_string( "wc_6_hit_z_2" ), game.translate_string( "wc_6_hit_z_3" )},
-			["hear_a"] = {""}, -- ÕÛ ÌÂ ÒÎ˚¯‡ÎË Ï˚ ÌÓÊËÍ :)
-			["hear_z"] = {""}, -- ÕÛ ÌÂ ÒÎ˚¯‡ÎË Ï˚ ÌÓÊËÍ :)
-			["hear_p"] = 0.0
-	},
-	[7] = {
-			["name"]   = {game.translate_string( "wc_7_name_0" ), game.translate_string( "wc_7_name_1" ), game.translate_string( "wc_7_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_7_hit_a_0" ), game.translate_string( "wc_7_hit_a_1" ), game.translate_string( "wc_7_hit_a_2" ), game.translate_string( "wc_7_hit_a_3" )},
-			["hit_z"]  = {game.translate_string( "wc_7_hit_z_0" ), game.translate_string( "wc_7_hit_z_1" ), game.translate_string( "wc_7_hit_z_2" ), game.translate_string( "wc_7_hit_z_3" )},
-			["hear_a"] = {game.translate_string( "wc_7_hear_a_0" ), game.translate_string( "wc_7_hear_a_1" ), game.translate_string( "wc_7_hear_a_2" )},
-			["hear_z"] = {game.translate_string( "wc_7_hear_z_0" ), game.translate_string( "wc_7_hear_z_1" ), game.translate_string( "wc_7_hear_z_2" )},
-			["hear_p"] = 0.9
-	},
-	[8] = {
-			["name"]   = {game.translate_string( "wc_8_name_0" ), game.translate_string( "wc_8_name_1" ), game.translate_string( "wc_8_name_2" )},
-			["hit_a"]  = {game.translate_string( "wc_8_hit_a_0" ), game.translate_string( "wc_8_hit_a_1" ), game.translate_string( "wc_8_hit_a_2" )},
-			["hit_z"]  = {game.translate_string( "wc_8_hit_z_0" ), game.translate_string( "wc_8_hit_z_1" ), game.translate_string( "wc_8_hit_z_2" )},
-			["hear_a"] = {""},
-			["hear_z"] = {""},
-			["hear_p"] = 0.0
-	}
+    [1] = {
+        ["name"] = {game.translate_string("wc_1_name_0"), game.translate_string("wc_1_name_1"),
+                    game.translate_string("wc_1_name_2")},
+        ["hit_a"] = {game.translate_string("wc_1_hit_a_0"), game.translate_string("wc_1_hit_a_1"),
+                     game.translate_string("wc_1_hit_a_2"), game.translate_string("wc_1_hit_a_3"),
+                     game.translate_string("wc_1_hit_a_4"), game.translate_string("wc_1_hit_a_5")},
+        ["hit_z"] = {game.translate_string("wc_1_hit_z_0"), game.translate_string("wc_1_hit_z_1"),
+                     game.translate_string("wc_1_hit_z_2"), game.translate_string("wc_1_hit_z_3"),
+                     game.translate_string("wc_1_hit_z_4"), game.translate_string("wc_1_hit_z_5")},
+        ["hear_a"] = {game.translate_string("wc_1_hear_a_0"), game.translate_string("wc_1_hear_a_1"),
+                      game.translate_string("wc_1_hear_a_2")},
+        ["hear_z"] = {game.translate_string("wc_1_hear_z_0"), game.translate_string("wc_1_hear_z_1"),
+                      game.translate_string("wc_1_hear_z_2")},
+        ["hear_p"] = 0.4
+    },
+    [2] = {
+        ["name"] = {game.translate_string("wc_2_name_0"), game.translate_string("wc_2_name_1"),
+                    game.translate_string("wc_2_name_2")},
+        ["hit_a"] = {game.translate_string("wc_2_hit_a_0"), game.translate_string("wc_2_hit_a_1"),
+                     game.translate_string("wc_2_hit_a_2"), game.translate_string("wc_2_hit_a_3")},
+        ["hit_z"] = {game.translate_string("wc_2_hit_z_0"), game.translate_string("wc_2_hit_z_1"),
+                     game.translate_string("wc_2_hit_z_2"), game.translate_string("wc_2_hit_z_3")},
+        ["hear_a"] = {game.translate_string("wc_2_hear_a_0"), game.translate_string("wc_2_hear_a_1"),
+                      game.translate_string("wc_2_hear_a_2")},
+        ["hear_z"] = {game.translate_string("wc_2_hear_z_0"), game.translate_string("wc_2_hear_z_1"),
+                      game.translate_string("wc_2_hear_z_2")},
+        ["hear_p"] = 0.3
+    },
+    [3] = {
+        ["name"] = {game.translate_string("wc_3_name_0"), game.translate_string("wc_3_name_1"),
+                    game.translate_string("wc_3_name_2")},
+        ["hit_a"] = {game.translate_string("wc_3_hit_a_0"), game.translate_string("wc_3_hit_a_1"),
+                     game.translate_string("wc_3_hit_a_2"), game.translate_string("wc_3_hit_a_3"),
+                     game.translate_string("wc_3_hit_a_4")},
+        ["hit_z"] = {game.translate_string("wc_3_hit_z_0"), game.translate_string("wc_3_hit_z_1"),
+                     game.translate_string("wc_3_hit_z_2"), game.translate_string("wc_3_hit_z_3"),
+                     game.translate_string("wc_3_hit_z_4")},
+        ["hear_a"] = {game.translate_string("wc_3_hear_a_0"), game.translate_string("wc_3_hear_a_1"),
+                      game.translate_string("wc_3_hear_a_2")},
+        ["hear_z"] = {game.translate_string("wc_3_hear_z_0"), game.translate_string("wc_3_hear_z_1"),
+                      game.translate_string("wc_3_hear_z_2")},
+        ["hear_p"] = 0.6
+    },
+    [4] = {
+        ["name"] = {game.translate_string("wc_4_name_0"), game.translate_string("wc_4_name_1"),
+                    game.translate_string("wc_4_name_2")},
+        ["hit_a"] = {game.translate_string("wc_4_hit_a_0"), game.translate_string("wc_4_hit_a_1"),
+                     game.translate_string("wc_4_hit_a_2")},
+        ["hit_z"] = {game.translate_string("wc_4_hit_z_0"), game.translate_string("wc_4_hit_z_1"),
+                     game.translate_string("wc_4_hit_z_2")},
+        ["hear_a"] = {game.translate_string("wc_4_hear_a_0"), game.translate_string("wc_4_hear_a_1")},
+        ["hear_z"] = {game.translate_string("wc_4_hear_z_0"), game.translate_string("wc_4_hear_z_1")},
+        ["hear_p"] = 0.8
+    },
+    [5] = {
+        ["name"] = {game.translate_string("wc_5_name_0"), game.translate_string("wc_5_name_1"),
+                    game.translate_string("wc_5_name_2")},
+        ["hit_a"] = {game.translate_string("wc_5_hit_a_0"), game.translate_string("wc_5_hit_a_1"),
+                     game.translate_string("wc_5_hit_a_2")},
+        ["hit_z"] = {game.translate_string("wc_5_hit_z_0"), game.translate_string("wc_5_hit_z_1"),
+                     game.translate_string("wc_5_hit_z_2")},
+        ["hear_a"] = {game.translate_string("wc_5_hear_a_0"), game.translate_string("wc_5_hear_a_1"),
+                      game.translate_string("wc_5_hear_a_2")},
+        ["hear_z"] = {game.translate_string("wc_5_hear_z_0"), game.translate_string("wc_5_hear_z_1"),
+                      game.translate_string("wc_5_hear_z_2")},
+        ["hear_p"] = 0.9
+    },
+    [6] = {
+        ["name"] = {game.translate_string("wc_6_name_0"), game.translate_string("wc_6_name_1"),
+                    game.translate_string("wc_6_name_2")},
+        ["hit_a"] = {game.translate_string("wc_6_hit_a_0"), game.translate_string("wc_6_hit_a_1"),
+                     game.translate_string("wc_6_hit_a_2"), game.translate_string("wc_6_hit_a_3")},
+        ["hit_z"] = {game.translate_string("wc_6_hit_z_0"), game.translate_string("wc_6_hit_z_1"),
+                     game.translate_string("wc_6_hit_z_2"), game.translate_string("wc_6_hit_z_3")},
+        ["hear_a"] = {""}, -- –ù—É –Ω–µ —Å–ª—ã—à–∞–ª–∏ –º—ã –Ω–æ–∂–∏–∫ :)
+        ["hear_z"] = {""}, -- –ù—É –Ω–µ —Å–ª—ã—à–∞–ª–∏ –º—ã –Ω–æ–∂–∏–∫ :)
+        ["hear_p"] = 0.0
+    },
+    [7] = {
+        ["name"] = {game.translate_string("wc_7_name_0"), game.translate_string("wc_7_name_1"),
+                    game.translate_string("wc_7_name_2")},
+        ["hit_a"] = {game.translate_string("wc_7_hit_a_0"), game.translate_string("wc_7_hit_a_1"),
+                     game.translate_string("wc_7_hit_a_2"), game.translate_string("wc_7_hit_a_3")},
+        ["hit_z"] = {game.translate_string("wc_7_hit_z_0"), game.translate_string("wc_7_hit_z_1"),
+                     game.translate_string("wc_7_hit_z_2"), game.translate_string("wc_7_hit_z_3")},
+        ["hear_a"] = {game.translate_string("wc_7_hear_a_0"), game.translate_string("wc_7_hear_a_1"),
+                      game.translate_string("wc_7_hear_a_2")},
+        ["hear_z"] = {game.translate_string("wc_7_hear_z_0"), game.translate_string("wc_7_hear_z_1"),
+                      game.translate_string("wc_7_hear_z_2")},
+        ["hear_p"] = 0.9
+    },
+    [8] = {
+        ["name"] = {game.translate_string("wc_8_name_0"), game.translate_string("wc_8_name_1"),
+                    game.translate_string("wc_8_name_2")},
+        ["hit_a"] = {game.translate_string("wc_8_hit_a_0"), game.translate_string("wc_8_hit_a_1"),
+                     game.translate_string("wc_8_hit_a_2")},
+        ["hit_z"] = {game.translate_string("wc_8_hit_z_0"), game.translate_string("wc_8_hit_z_1"),
+                     game.translate_string("wc_8_hit_z_2")},
+        ["hear_a"] = {""},
+        ["hear_z"] = {""},
+        ["hear_p"] = 0.0
+    }
 }
 
- weapon_templates = {
-"$weapon_name_3 $kill_z.",
-"$weapon_name_3 $kill_z, $prob_z.",
-"$weapon_name_3 $kill_z, $sad_z.",
-"$weapon_name_3 $kill_z, $weapon_hit_z.",
-"$weapon_name_3 $kill_z. $weapon_hit_a.",
-"$kill_a $weapon_name_2.",
-"$kill_a $weapon_name_2, $prob_z.",
-"$kill_a $weapon_name_2, $sad_z.",
-"$kill_a $weapon_name_2, $weapon_hit_z.",
-"$kill_a $weapon_name_2. $weapon_hit_a.",
-"$prob_a $weapon_name_2 $kill_z.",
-"$prob_a $weapon_name_2 $kill_z, $weapon_hit_z.",
-"$prob_a $weapon_name_2 $kill_z. $weapon_hit_a.",
-"$prob_a $weapon_name_2 $kill_z.",
-"$prob_a $kill_z $weapon_name_2, $weapon_hit_z.",
-"$prob_a $kill_z $weapon_name_2. $weapon_hit_a."
-}
+weapon_templates = {"$weapon_name_3 $kill_z.", "$weapon_name_3 $kill_z, $prob_z.", "$weapon_name_3 $kill_z, $sad_z.",
+                    "$weapon_name_3 $kill_z, $weapon_hit_z.", "$weapon_name_3 $kill_z. $weapon_hit_a.",
+                    "$kill_a $weapon_name_2.", "$kill_a $weapon_name_2, $prob_z.", "$kill_a $weapon_name_2, $sad_z.",
+                    "$kill_a $weapon_name_2, $weapon_hit_z.", "$kill_a $weapon_name_2. $weapon_hit_a.",
+                    "$prob_a $weapon_name_2 $kill_z.", "$prob_a $weapon_name_2 $kill_z, $weapon_hit_z.",
+                    "$prob_a $weapon_name_2 $kill_z. $weapon_hit_a.", "$prob_a $weapon_name_2 $kill_z.",
+                    "$prob_a $kill_z $weapon_name_2, $weapon_hit_z.", "$prob_a $kill_z $weapon_name_2. $weapon_hit_a."}
 
- stalker_corpse_templates = {
-game.translate_string( "sct_0" ),
-game.translate_string( "sct_1" ),
-game.translate_string( "sct_2" ),
-game.translate_string( "sct_3" ),
-game.translate_string( "sct_4" ),
-game.translate_string( "sct_5" ),
-game.translate_string( "sct_6" ),
-game.translate_string( "sct_7" ),
-game.translate_string( "sct_8" ),
-game.translate_string( "sct_9" ),
-game.translate_string( "sct_10" ),
-game.translate_string( "sct_11" ),
-game.translate_string( "sct_12" ),
-game.translate_string( "sct_13" ),
-game.translate_string( "sct_14" ),
-game.translate_string( "sct_15" ),
-game.translate_string( "sct_16" ),
-game.translate_string( "sct_17" ),
-game.translate_string( "sct_18" ),
-game.translate_string( "sct_19" ),
-game.translate_string( "sct_20" ),
-game.translate_string( "sct_21" ),
-game.translate_string( "sct_22" ),
-game.translate_string( "sct_23" ),
-game.translate_string( "sct_24" ),
-game.translate_string( "sct_25" )
-}
+stalker_corpse_templates = {game.translate_string("sct_0"), game.translate_string("sct_1"),
+                            game.translate_string("sct_2"), game.translate_string("sct_3"),
+                            game.translate_string("sct_4"), game.translate_string("sct_5"),
+                            game.translate_string("sct_6"), game.translate_string("sct_7"),
+                            game.translate_string("sct_8"), game.translate_string("sct_9"),
+                            game.translate_string("sct_10"), game.translate_string("sct_11"),
+                            game.translate_string("sct_12"), game.translate_string("sct_13"),
+                            game.translate_string("sct_14"), game.translate_string("sct_15"),
+                            game.translate_string("sct_16"), game.translate_string("sct_17"),
+                            game.translate_string("sct_18"), game.translate_string("sct_19"),
+                            game.translate_string("sct_20"), game.translate_string("sct_21"),
+                            game.translate_string("sct_22"), game.translate_string("sct_23"),
+                            game.translate_string("sct_24"), game.translate_string("sct_25")}
 
- npc_corpse_templates = {
-"$level $seen_z $corpse_z $class.",
-"$level $when_z $seen_z $corpse_z $class.",
-"$level $kill_z $class.",
-"$seen_a $corpse_z $class. $level.",
-"$seen_a $when_z $corpse_z $class. $level.",
-"$when_a $seen_z $corpse_z $class. $level.",
-"$kill_a $class. $level.",
-"$fun_a, $seen_z $corpse_z $class. $level.",
-"$fun_a, $kill_z $class. $level.",
-"$fun_a, $when_z $seen_z $corpse_z $class. $level.",
-"$fun_a, $when_z $seen_z $corpse_z $class. $corpse_name_a $name. $level.",
-"$fun_a, $when_z $seen_z $corpse_z $class. $name, $corpse_name_z. $level.",
-"$fun_a, $seen_z $when_z $corpse_z $class. $level."
-}
+npc_corpse_templates = {"$level $seen_z $corpse_z $class.", "$level $when_z $seen_z $corpse_z $class.",
+                        "$level $kill_z $class.", "$seen_a $corpse_z $class. $level.",
+                        "$seen_a $when_z $corpse_z $class. $level.", "$when_a $seen_z $corpse_z $class. $level.",
+                        "$kill_a $class. $level.", "$fun_a, $seen_z $corpse_z $class. $level.",
+                        "$fun_a, $kill_z $class. $level.", "$fun_a, $when_z $seen_z $corpse_z $class. $level.",
+                        "$fun_a, $when_z $seen_z $corpse_z $class. $corpse_name_a $name. $level.",
+                        "$fun_a, $when_z $seen_z $corpse_z $class. $name, $corpse_name_z. $level.",
+                        "$fun_a, $seen_z $when_z $corpse_z $class. $level."}
 
- monster_corpse_templates = {
-"$level $seen_z $corpse_z $c_corpse.",
-"$level $seen_z $corpse_z $c_corpse. $fun_a.",
-"$level $seen_z $corpse_z $c_corpse, $fun_z.",
-"$level $when_z $seen_z $corpse_z $c_corpse.",
-"$level $when_z $seen_z $corpse_z $c_corpse. $fun_a.",
-"$level $when_z $seen_z $corpse_z $c_corpse, $fun_z.",
-"$level $seen_z $when_z $corpse_z $c_corpse.",
-"$level $seen_z $when_z $corpse_z $c_corpse. $fun_a.",
-"$level $seen_z $when_z $corpse_z $c_corpse, $fun_z.",
-"$level $kill_z $class.",
-"$level $kill_z $class. $fun_a.",
-"$level $kill_z $class, $fun_z.",
-"$seen_a $corpse_z $c_corpse. $level.",
-"$seen_a $corpse_z $c_corpse. $level. $fun_a.",
-"$seen_a $when_z $corpse_z $c_corpse. $level.",
-"$seen_a $when_z $corpse_z $c_corpse. $level. $fun_a.",
-"$seen_a $corpse_z $c_corpse $when_z. $level.",
-"$seen_a $corpse_z $c_corpse $when_z. $level. $fun_a.",
-"$when_a $seen_z $corpse_z $c_corpse. $level.",
-"$when_a $seen_z $corpse_z $c_corpse. $level. $fun_a.",
-"$kill_a $class. $level.",
-"$kill_a $class. $level. $fun_a.",
-"$fun_a, $seen_z $corpse_z $c_corpse. $level.",
-"$fun_a, $when_z $seen_z $corpse_z $c_corpse. $level.",
-"$fun_a, $seen_z $when_z $corpse_z $c_corpse. $level.",
-"$fun_a, $kill_z $class. $level."
-}
+monster_corpse_templates = {"$level $seen_z $corpse_z $c_corpse.", "$level $seen_z $corpse_z $c_corpse. $fun_a.",
+                            "$level $seen_z $corpse_z $c_corpse, $fun_z.",
+                            "$level $when_z $seen_z $corpse_z $c_corpse.",
+                            "$level $when_z $seen_z $corpse_z $c_corpse. $fun_a.",
+                            "$level $when_z $seen_z $corpse_z $c_corpse, $fun_z.",
+                            "$level $seen_z $when_z $corpse_z $c_corpse.",
+                            "$level $seen_z $when_z $corpse_z $c_corpse. $fun_a.",
+                            "$level $seen_z $when_z $corpse_z $c_corpse, $fun_z.", "$level $kill_z $class.",
+                            "$level $kill_z $class. $fun_a.", "$level $kill_z $class, $fun_z.",
+                            "$seen_a $corpse_z $c_corpse. $level.", "$seen_a $corpse_z $c_corpse. $level. $fun_a.",
+                            "$seen_a $when_z $corpse_z $c_corpse. $level.",
+                            "$seen_a $when_z $corpse_z $c_corpse. $level. $fun_a.",
+                            "$seen_a $corpse_z $c_corpse $when_z. $level.",
+                            "$seen_a $corpse_z $c_corpse $when_z. $level. $fun_a.",
+                            "$when_a $seen_z $corpse_z $c_corpse. $level.",
+                            "$when_a $seen_z $corpse_z $c_corpse. $level. $fun_a.", "$kill_a $class. $level.",
+                            "$kill_a $class. $level. $fun_a.", "$fun_a, $seen_z $corpse_z $c_corpse. $level.",
+                            "$fun_a, $when_z $seen_z $corpse_z $c_corpse. $level.",
+                            "$fun_a, $seen_z $when_z $corpse_z $c_corpse. $level.", "$fun_a, $kill_z $class. $level."}
 
-killer_act_templates = {
-"$level $meet_z $class. $hard_a $killed_z.",
-"$level $meet_z $class $when_z. $hard_a $killed_z.",
-"$level $when_z $meet_z $class. $hard_a $killed_z.",
-"$level $when_z $killed_z $class.",
-game.translate_string( "kat_0" ),
-"$meet_a $class $when_z. $level. $hard_a $killed_z.",
-"$meet_a $when_z $class. $level. $hard_a $killed_z.",
-"$meet_a $when_z $class. $hard_a $killed_z.",
-game.translate_string( "kat_1" ),
-game.translate_string( "kat_2" )
-}
+killer_act_templates = {"$level $meet_z $class. $hard_a $killed_z.",
+                        "$level $meet_z $class $when_z. $hard_a $killed_z.",
+                        "$level $when_z $meet_z $class. $hard_a $killed_z.", "$level $when_z $killed_z $class.",
+                        game.translate_string("kat_0"), "$meet_a $class $when_z. $level. $hard_a $killed_z.",
+                        "$meet_a $when_z $class. $level. $hard_a $killed_z.",
+                        "$meet_a $when_z $class. $hard_a $killed_z.", game.translate_string("kat_1"),
+                        game.translate_string("kat_2")}
 
- hear_sounds_tempates = {
-"$level $hear_z.",
-"$level $hear_z, $carefull_z.",
-"$hear_a. $level.",
-"$carefull_a! $level $hear_z.",
-"$carefull_a, $hear_z. $level.",
-"$level $when_z $hear_z.",
-"$level $when_z $hear_z, $carefull_z.",
-"$hear_a $when_z. $level.",
-"$when_a $hear_z. $level.",
-"$carefull_a! $level $when_z $hear_z.",
-"$carefull_a, $when_z $hear_z. $level.",
-"$level $when_z $hear_z.",
-"$level $when_z $hear_z, $carefull_z.",
-"$hear_a $when_z. $level.",
-"$when_a $hear_z. $level.",
-"$carefull_a! $level $when_z $hear_z.",
-"$carefull_a, $when_z $hear_z. $level.",
-"$carefull_a! $level $when_z $hear_z.",
-"$carefull_a, $when_z $hear_z. $level."
-}
+hear_sounds_tempates = {"$level $hear_z.", "$level $hear_z, $carefull_z.", "$hear_a. $level.",
+                        "$carefull_a! $level $hear_z.", "$carefull_a, $hear_z. $level.", "$level $when_z $hear_z.",
+                        "$level $when_z $hear_z, $carefull_z.", "$hear_a $when_z. $level.", "$when_a $hear_z. $level.",
+                        "$carefull_a! $level $when_z $hear_z.", "$carefull_a, $when_z $hear_z. $level.",
+                        "$level $when_z $hear_z.", "$level $when_z $hear_z, $carefull_z.", "$hear_a $when_z. $level.",
+                        "$when_a $hear_z. $level.", "$carefull_a! $level $when_z $hear_z.",
+                        "$carefull_a, $when_z $hear_z. $level.", "$carefull_a! $level $when_z $hear_z.",
+                        "$carefull_a, $when_z $hear_z. $level."}
 
- spawn_templates = {
-"$level $seen_z $class.",
-"$level $when_z $seen_z $class.",
-"$level $seen_z $class, $carefull_z.",
-"$level $when_z $seen_z $class, $carefull_z.",
-"$carefull_a! $level $seen_z $class.",
-"$carefull_a! $level $when_z $seen_z $class.",
-"$seen_a $class. $level.",
-"$seen_a $when_z $class. $level.",
-"$when_a $seen_z $class. $level.",
-"$carefull_a! $seen_a $class. $level.",
-"$carefull_a! $seen_a $when_z $class. $level.",
-"$carefull_a! $when_a $seen_z $class. $level.",
-"$carefull_a, $seen_z $class. $level.",
-"$carefull_a, $seen_z $when_z $class. $level.",
-"$carefull_a, $when_z $seen_z $class. $level.",
-"$seen_a $class. $level. $carefull_a.",
-"$seen_a $when_z $class. $level. $carefull_a.",
-"$when_a $seen_z $class. $level. $carefull_a."
-}
+spawn_templates = {"$level $seen_z $class.", "$level $when_z $seen_z $class.", "$level $seen_z $class, $carefull_z.",
+                   "$level $when_z $seen_z $class, $carefull_z.", "$carefull_a! $level $seen_z $class.",
+                   "$carefull_a! $level $when_z $seen_z $class.", "$seen_a $class. $level.",
+                   "$seen_a $when_z $class. $level.", "$when_a $seen_z $class. $level.",
+                   "$carefull_a! $seen_a $class. $level.", "$carefull_a! $seen_a $when_z $class. $level.",
+                   "$carefull_a! $when_a $seen_z $class. $level.", "$carefull_a, $seen_z $class. $level.",
+                   "$carefull_a, $seen_z $when_z $class. $level.", "$carefull_a, $when_z $seen_z $class. $level.",
+                   "$seen_a $class. $level. $carefull_a.", "$seen_a $when_z $class. $level. $carefull_a.",
+                   "$when_a $seen_z $class. $level. $carefull_a."}
 
-spawn_templates_group = {
-"$level $seen_z $count $class.",
-"$level $when_z $seen_z $count $class.",
-"$level $seen_z $count $class, $carefull_z.",
-"$level $when_z $seen_z $count $class, $carefull_z.",
-"$carefull_a! $level $seen_z $count $class.",
-"$carefull_a! $level $when_z $seen_z $count $class.",
-"$seen_a $count $class. $level.",
-"$seen_a $when_z $count $class. $level.",
-"$when_a $seen_z $count $class. $level.",
-"$carefull_a! $seen_a $count $class. $level.",
-"$carefull_a! $seen_a $count $class $when_z. $level.",
-"$carefull_a! $when_a $seen_z $count $class. $level.",
-"$carefull_a, $seen_z $count $class. $level.",
-"$carefull_a, $seen_z $when_z $count $class. $level.",
-"$carefull_a, $when_z $seen_z $count $class. $level.",
-"$seen_a $count $class. $level. $carefull_a.",
-"$seen_a $when_z $count $class. $level. $carefull_a.",
-"$when_a $seen_z $count $class. $level. $carefull_a."
-}
+spawn_templates_group = {"$level $seen_z $count $class.", "$level $when_z $seen_z $count $class.",
+                         "$level $seen_z $count $class, $carefull_z.",
+                         "$level $when_z $seen_z $count $class, $carefull_z.",
+                         "$carefull_a! $level $seen_z $count $class.",
+                         "$carefull_a! $level $when_z $seen_z $count $class.", "$seen_a $count $class. $level.",
+                         "$seen_a $when_z $count $class. $level.", "$when_a $seen_z $count $class. $level.",
+                         "$carefull_a! $seen_a $count $class. $level.",
+                         "$carefull_a! $seen_a $count $class $when_z. $level.",
+                         "$carefull_a! $when_a $seen_z $count $class. $level.",
+                         "$carefull_a, $seen_z $count $class. $level.",
+                         "$carefull_a, $seen_z $when_z $count $class. $level.",
+                         "$carefull_a, $when_z $seen_z $count $class. $level.",
+                         "$seen_a $count $class. $level. $carefull_a.",
+                         "$seen_a $when_z $count $class. $level. $carefull_a.",
+                         "$when_a $seen_z $count $class. $level. $carefull_a."}
 
-abuse_templates = {
-	game.translate_string( "at_0" ),
-	game.translate_string( "at_1" ),
-	game.translate_string( "at_2" )
-}
+abuse_templates = {game.translate_string("at_0"), game.translate_string("at_1"), game.translate_string("at_2")}
 
 weather_templates_day = {
-	["clear_clear"] = {game.translate_string( "wtd_clear_clear_0" ), game.translate_string( "wtd_clear_clear_1" ), game.translate_string( "wtd_clear_clear_2" )},
-	["clear_pasmurno"] = {game.translate_string( "wtd_clear_pasmurno_0" ), game.translate_string( "wtd_clear_pasmurno_1" ), game.translate_string( "wtd_clear_pasmurno_2" )},
-	["clear_rain"] = {game.translate_string( "wtd_clear_rain_0" ), game.translate_string( "wtd_clear_rain_1" ), game.translate_string( "wtd_clear_rain_2" )},
-	["clear_groza"] = {game.translate_string( "wtd_clear_groza_0" ), game.translate_string( "wtd_clear_groza_1" ), game.translate_string( "wtd_clear_groza_2" )},
-	["pasmurno_clear"] = {game.translate_string( "wtd_pasmurno_clear_0" ), game.translate_string( "wtd_pasmurno_clear_1" ), game.translate_string( "wtd_pasmurno_clear_2" )},
-	["pasmurno_pasmurno"] = {game.translate_string( "wtd_pasmurno_pasmurno_0" ), game.translate_string( "wtd_pasmurno_pasmurno_1" )},
-	["pasmurno_rain"] = {game.translate_string( "wtd_pasmurno_rain_0" ), game.translate_string( "wtd_pasmurno_rain_1" ),game.translate_string( "wtd_pasmurno_rain_2" )},
-	["pasmurno_groza"] = {game.translate_string( "wtd_pasmurno_groza_0" ), game.translate_string( "wtd_pasmurno_groza_1" ), game.translate_string( "wtd_pasmurno_groza_2" )},
-	["rain_clear"] = {game.translate_string( "wtd_rain_clear_0" ), game.translate_string( "wtd_rain_clear_1" ), game.translate_string( "wtd_rain_clear_2" )},
-	["rain_pasmurno"] = {game.translate_string( "wtd_rain_pasmurno_0" ), game.translate_string( "wtd_rain_pasmurno_1" ), game.translate_string( "wtd_rain_pasmurno_2" ), game.translate_string( "wtd_rain_pasmurno_3" )},
-	["rain_rain"] = {game.translate_string( "wtd_rain_rain_0" ), game.translate_string( "wtd_rain_rain_1" ), game.translate_string( "wtd_rain_rain_2" )},
-	["rain_groza"] = {game.translate_string( "wtd_rain_groza_0" ), game.translate_string( "wtd_rain_groza_1" )},
-	["groza_clear"] = {game.translate_string( "wtd_groza_clear_0" ), game.translate_string( "wtd_groza_clear_1" ), game.translate_string( "wtd_groza_clear_2" )},
-	["groza_pasmurno"] = {game.translate_string( "wtd_groza_pasmurno_0" ), game.translate_string( "wtd_groza_pasmurno_1" ), game.translate_string( "wtd_groza_pasmurno_2" )},
-	["groza_rain"] = {game.translate_string( "wtd_groza_rain_0" ), game.translate_string( "wtd_groza_rain_1" ), game.translate_string( "wtd_groza_rain_2" )},
-	["groza_groza"] = {game.translate_string( "wtd_groza_groza_0" ), game.translate_string( "wtd_groza_groza_1" ), game.translate_string( "wtd_groza_groza_2" )}
+    ["clear_clear"] = {game.translate_string("wtd_clear_clear_0"), game.translate_string("wtd_clear_clear_1"),
+                       game.translate_string("wtd_clear_clear_2")},
+    ["clear_pasmurno"] = {game.translate_string("wtd_clear_pasmurno_0"), game.translate_string("wtd_clear_pasmurno_1"),
+                          game.translate_string("wtd_clear_pasmurno_2")},
+    ["clear_rain"] = {game.translate_string("wtd_clear_rain_0"), game.translate_string("wtd_clear_rain_1"),
+                      game.translate_string("wtd_clear_rain_2")},
+    ["clear_groza"] = {game.translate_string("wtd_clear_groza_0"), game.translate_string("wtd_clear_groza_1"),
+                       game.translate_string("wtd_clear_groza_2")},
+    ["pasmurno_clear"] = {game.translate_string("wtd_pasmurno_clear_0"), game.translate_string("wtd_pasmurno_clear_1"),
+                          game.translate_string("wtd_pasmurno_clear_2")},
+    ["pasmurno_pasmurno"] = {game.translate_string("wtd_pasmurno_pasmurno_0"),
+                             game.translate_string("wtd_pasmurno_pasmurno_1")},
+    ["pasmurno_rain"] = {game.translate_string("wtd_pasmurno_rain_0"), game.translate_string("wtd_pasmurno_rain_1"),
+                         game.translate_string("wtd_pasmurno_rain_2")},
+    ["pasmurno_groza"] = {game.translate_string("wtd_pasmurno_groza_0"), game.translate_string("wtd_pasmurno_groza_1"),
+                          game.translate_string("wtd_pasmurno_groza_2")},
+    ["rain_clear"] = {game.translate_string("wtd_rain_clear_0"), game.translate_string("wtd_rain_clear_1"),
+                      game.translate_string("wtd_rain_clear_2")},
+    ["rain_pasmurno"] = {game.translate_string("wtd_rain_pasmurno_0"), game.translate_string("wtd_rain_pasmurno_1"),
+                         game.translate_string("wtd_rain_pasmurno_2"), game.translate_string("wtd_rain_pasmurno_3")},
+    ["rain_rain"] = {game.translate_string("wtd_rain_rain_0"), game.translate_string("wtd_rain_rain_1"),
+                     game.translate_string("wtd_rain_rain_2")},
+    ["rain_groza"] = {game.translate_string("wtd_rain_groza_0"), game.translate_string("wtd_rain_groza_1")},
+    ["groza_clear"] = {game.translate_string("wtd_groza_clear_0"), game.translate_string("wtd_groza_clear_1"),
+                       game.translate_string("wtd_groza_clear_2")},
+    ["groza_pasmurno"] = {game.translate_string("wtd_groza_pasmurno_0"), game.translate_string("wtd_groza_pasmurno_1"),
+                          game.translate_string("wtd_groza_pasmurno_2")},
+    ["groza_rain"] = {game.translate_string("wtd_groza_rain_0"), game.translate_string("wtd_groza_rain_1"),
+                      game.translate_string("wtd_groza_rain_2")},
+    ["groza_groza"] = {game.translate_string("wtd_groza_groza_0"), game.translate_string("wtd_groza_groza_1"),
+                       game.translate_string("wtd_groza_groza_2")}
 }
 
 weather_templates_night = {
-	["clear_clear"] = {game.translate_string( "wtn_clear_clear_0" ), game.translate_string( "wtn_clear_clear_1" )},
-	["clear_pasmurno"] = {game.translate_string( "wtn_clear_pasmurno_0" ), game.translate_string( "wtn_clear_pasmurno_1" ), game.translate_string( "wtn_clear_pasmurno_2" )},
-	["clear_rain"] = {game.translate_string( "wtn_clear_rain_0" ), game.translate_string( "wtn_clear_rain_1" ), game.translate_string( "wtn_clear_rain_2" )},
-	["clear_groza"] = {game.translate_string( "wtn_clear_groza_0" ), game.translate_string( "wtn_clear_groza_1" ), game.translate_string( "wtn_clear_groza_2" )},
-	["pasmurno_clear"] = {game.translate_string( "wtn_pasmurno_clear_0" ), game.translate_string( "wtn_pasmurno_clear_1" )},
-	["pasmurno_pasmurno"] = {game.translate_string( "wtn_pasmurno_pasmurno_0" ), game.translate_string( "wtn_pasmurno_pasmurno_1" )},
-	["pasmurno_rain"] = {game.translate_string( "wtn_pasmurno_rain_0" ), game.translate_string( "wtn_pasmurno_rain_1" ),game.translate_string( "wtn_pasmurno_rain_2" )},
-	["pasmurno_groza"] = {game.translate_string( "wtn_pasmurno_groza_0" ), game.translate_string( "wtn_pasmurno_groza_1" ), game.translate_string( "wtn_pasmurno_groza_2" )},
-	["rain_clear"] = {game.translate_string( "wtn_rain_clear_0" ), game.translate_string( "wtn_rain_clear_1" ), game.translate_string( "wtn_rain_clear_2" )},
-	["rain_pasmurno"] = {game.translate_string( "wtn_rain_pasmurno_0" ), game.translate_string( "wtn_rain_pasmurno_1" ), game.translate_string( "wtn_rain_pasmurno_2" ), game.translate_string( "wtn_rain_pasmurno_3" )},
-	["rain_rain"] = {game.translate_string( "wtn_rain_rain_0" ), game.translate_string( "wtn_rain_rain_1" ), game.translate_string( "wtn_rain_rain_2" )},
-	["rain_groza"] = {game.translate_string( "wtn_rain_groza_0" ), game.translate_string( "wtn_rain_groza_1" )},
-	["groza_clear"] = {game.translate_string( "wtn_groza_clear_0" ), game.translate_string( "wtn_groza_clear_1" )},
-	["groza_pasmurno"] = {game.translate_string( "wtn_groza_pasmurno_0" ), game.translate_string( "wtn_groza_pasmurno_1" ), game.translate_string( "wtn_groza_pasmurno_2" )},
-	["groza_rain"] = {game.translate_string( "wtn_groza_rain_0" ), game.translate_string( "wtn_groza_rain_1" ), game.translate_string( "wtn_groza_rain_2" )},
-	["groza_groza"] = {game.translate_string( "wtn_groza_groza_0" ), game.translate_string( "wtn_groza_groza_1" ), game.translate_string( "wtn_groza_groza_2" )}
+    ["clear_clear"] = {game.translate_string("wtn_clear_clear_0"), game.translate_string("wtn_clear_clear_1")},
+    ["clear_pasmurno"] = {game.translate_string("wtn_clear_pasmurno_0"), game.translate_string("wtn_clear_pasmurno_1"),
+                          game.translate_string("wtn_clear_pasmurno_2")},
+    ["clear_rain"] = {game.translate_string("wtn_clear_rain_0"), game.translate_string("wtn_clear_rain_1"),
+                      game.translate_string("wtn_clear_rain_2")},
+    ["clear_groza"] = {game.translate_string("wtn_clear_groza_0"), game.translate_string("wtn_clear_groza_1"),
+                       game.translate_string("wtn_clear_groza_2")},
+    ["pasmurno_clear"] = {game.translate_string("wtn_pasmurno_clear_0"), game.translate_string("wtn_pasmurno_clear_1")},
+    ["pasmurno_pasmurno"] = {game.translate_string("wtn_pasmurno_pasmurno_0"),
+                             game.translate_string("wtn_pasmurno_pasmurno_1")},
+    ["pasmurno_rain"] = {game.translate_string("wtn_pasmurno_rain_0"), game.translate_string("wtn_pasmurno_rain_1"),
+                         game.translate_string("wtn_pasmurno_rain_2")},
+    ["pasmurno_groza"] = {game.translate_string("wtn_pasmurno_groza_0"), game.translate_string("wtn_pasmurno_groza_1"),
+                          game.translate_string("wtn_pasmurno_groza_2")},
+    ["rain_clear"] = {game.translate_string("wtn_rain_clear_0"), game.translate_string("wtn_rain_clear_1"),
+                      game.translate_string("wtn_rain_clear_2")},
+    ["rain_pasmurno"] = {game.translate_string("wtn_rain_pasmurno_0"), game.translate_string("wtn_rain_pasmurno_1"),
+                         game.translate_string("wtn_rain_pasmurno_2"), game.translate_string("wtn_rain_pasmurno_3")},
+    ["rain_rain"] = {game.translate_string("wtn_rain_rain_0"), game.translate_string("wtn_rain_rain_1"),
+                     game.translate_string("wtn_rain_rain_2")},
+    ["rain_groza"] = {game.translate_string("wtn_rain_groza_0"), game.translate_string("wtn_rain_groza_1")},
+    ["groza_clear"] = {game.translate_string("wtn_groza_clear_0"), game.translate_string("wtn_groza_clear_1")},
+    ["groza_pasmurno"] = {game.translate_string("wtn_groza_pasmurno_0"), game.translate_string("wtn_groza_pasmurno_1"),
+                          game.translate_string("wtn_groza_pasmurno_2")},
+    ["groza_rain"] = {game.translate_string("wtn_groza_rain_0"), game.translate_string("wtn_groza_rain_1"),
+                      game.translate_string("wtn_groza_rain_2")},
+    ["groza_groza"] = {game.translate_string("wtn_groza_groza_0"), game.translate_string("wtn_groza_groza_1"),
+                       game.translate_string("wtn_groza_groza_2")}
 }
 
+actor_seen_public_templates = {game.translate_string("aspt_0"), game.translate_string("aspt_1"),
+                               game.translate_string("aspt_2"), game.translate_string("aspt_3"),
+                               game.translate_string("aspt_4"), game.translate_string("aspt_5"),
+                               game.translate_string("aspt_6"), game.translate_string("aspt_7"),
+                               game.translate_string("aspt_8"), game.translate_string("aspt_9")}
 
-actor_seen_public_templates = {
-game.translate_string( "aspt_0" ),
-game.translate_string( "aspt_1" ),
-game.translate_string( "aspt_2" ),
-game.translate_string( "aspt_3" ),
-game.translate_string( "aspt_4" ),
-game.translate_string( "aspt_5" ),
-game.translate_string( "aspt_6" ),
-game.translate_string( "aspt_7" ),
-game.translate_string( "aspt_8" ),
-game.translate_string( "aspt_9" )
-}
-
-actor_seen_public_templates_group = {
-game.translate_string( "asptg_0" ),
-game.translate_string( "asptg_1" ),
-game.translate_string( "asptg_2" ),
-game.translate_string( "asptg_3" ),
-game.translate_string( "asptg_4" ),
-game.translate_string( "asptg_5" ),
-game.translate_string( "asptg_6" ),
-game.translate_string( "asptg_7" ),
-game.translate_string( "asptg_8" ),
-game.translate_string( "asptg_9" )
-}
+actor_seen_public_templates_group = {game.translate_string("asptg_0"), game.translate_string("asptg_1"),
+                                     game.translate_string("asptg_2"), game.translate_string("asptg_3"),
+                                     game.translate_string("asptg_4"), game.translate_string("asptg_5"),
+                                     game.translate_string("asptg_6"), game.translate_string("asptg_7"),
+                                     game.translate_string("asptg_8"), game.translate_string("asptg_9")}
 
 heli_templates = {
-	["seen"] = {
-		game.translate_string( "ht_seen_0" ),
-		game.translate_string( "ht_seen_1" ),
-		game.translate_string( "ht_seen_2" ),
-		game.translate_string( "ht_seen_3" ),
-		game.translate_string( "ht_seen_4" )
-	},
-	["combat"] = {
-		game.translate_string( "ht_combat_0" ),
-		game.translate_string( "ht_combat_1" ),
-		game.translate_string( "ht_combat_2" ),
-		game.translate_string( "ht_combat_3" ),
-		game.translate_string( "ht_combat_4" ),
-		game.translate_string( "ht_combat_5" ),
-		game.translate_string( "ht_combat_6" )
-	},
-	["flame"] = {
-		game.translate_string( "ht_flame_0" ),
-		game.translate_string( "ht_flame_1" ),
-		game.translate_string( "ht_flame_2" ),
-		game.translate_string( "ht_flame_3" ),
-		game.translate_string( "ht_flame_4" ),
-		game.translate_string( "ht_flame_5" ),
-		game.translate_string( "ht_flame_6" )
-	},
-	["die"] = {
-		game.translate_string( "ht_die_0" ), 
-		game.translate_string( "ht_die_1" ), 
-		game.translate_string( "ht_die_2" ), 
-		game.translate_string( "ht_die_3" ),
-		game.translate_string( "ht_die_4" ),
-		game.translate_string( "ht_die_5" ),
-		game.translate_string( "ht_die_6" ),
-		game.translate_string( "ht_die_7" )
-	},
-	["retreat"] = {
-		game.translate_string( "ht_retreat_0" ), 
-		game.translate_string( "ht_retreat_1" ),
-		game.translate_string( "ht_retreat_2" )
-	}
+    ["seen"] = {game.translate_string("ht_seen_0"), game.translate_string("ht_seen_1"),
+                game.translate_string("ht_seen_2"), game.translate_string("ht_seen_3"),
+                game.translate_string("ht_seen_4")},
+    ["combat"] = {game.translate_string("ht_combat_0"), game.translate_string("ht_combat_1"),
+                  game.translate_string("ht_combat_2"), game.translate_string("ht_combat_3"),
+                  game.translate_string("ht_combat_4"), game.translate_string("ht_combat_5"),
+                  game.translate_string("ht_combat_6")},
+    ["flame"] = {game.translate_string("ht_flame_0"), game.translate_string("ht_flame_1"),
+                 game.translate_string("ht_flame_2"), game.translate_string("ht_flame_3"),
+                 game.translate_string("ht_flame_4"), game.translate_string("ht_flame_5"),
+                 game.translate_string("ht_flame_6")},
+    ["die"] = {game.translate_string("ht_die_0"), game.translate_string("ht_die_1"), game.translate_string("ht_die_2"),
+               game.translate_string("ht_die_3"), game.translate_string("ht_die_4"), game.translate_string("ht_die_5"),
+               game.translate_string("ht_die_6"), game.translate_string("ht_die_7")},
+    ["retreat"] = {game.translate_string("ht_retreat_0"), game.translate_string("ht_retreat_1"),
+                   game.translate_string("ht_retreat_2")}
 }
 
 wound_templates = {
-	["single"] = {game.translate_string( "wt_single_0" ), game.translate_string( "wt_single_1" ), game.translate_string( "wt_single_2" ), game.translate_string( "wt_single_3" ), game.translate_string( "wt_single_4" ), game.translate_string( "wt_single_5" ), game.translate_string( "wt_single_6" ), game.translate_string( "wt_single_7" ), game.translate_string( "wt_single_8" ), game.translate_string( "wt_single_9" ) },
-	["group"] = {game.translate_string( "wt_group_0" ), game.translate_string( "wt_group_1" ), game.translate_string( "wt_group_2" ), game.translate_string( "wt_group_3" ), game.translate_string( "wt_group_4" ), game.translate_string( "wt_group_5" ), game.translate_string( "wt_group_6" ), game.translate_string( "wt_group_7" ), game.translate_string( "wt_group_8" ), game.translate_string( "wt_group_9" ) }
+    ["single"] = {game.translate_string("wt_single_0"), game.translate_string("wt_single_1"),
+                  game.translate_string("wt_single_2"), game.translate_string("wt_single_3"),
+                  game.translate_string("wt_single_4"), game.translate_string("wt_single_5"),
+                  game.translate_string("wt_single_6"), game.translate_string("wt_single_7"),
+                  game.translate_string("wt_single_8"), game.translate_string("wt_single_9")},
+    ["group"] = {game.translate_string("wt_group_0"), game.translate_string("wt_group_1"),
+                 game.translate_string("wt_group_2"), game.translate_string("wt_group_3"),
+                 game.translate_string("wt_group_4"), game.translate_string("wt_group_5"),
+                 game.translate_string("wt_group_6"), game.translate_string("wt_group_7"),
+                 game.translate_string("wt_group_8"), game.translate_string("wt_group_9")}
 }
 
-blowout_templates = { 
-	{text = game.translate_string( "bt_0_0" )},
-	{text = game.translate_string( "bt_1_0" )},
-	{text = game.translate_string( "bt_2_0" ), alive=902},	
-	{text = game.translate_string( "bt_3_0" ), alive=900},	
-	{text = game.translate_string( "bt_4_0" )},
-	{text = game.translate_string( "bt_5_0" )},
-	{text = game.translate_string( "bt_6_0" )},
-	{text = game.translate_string( "bt_7_0" ), alive=902},
-	{text = game.translate_string( "bt_8_0" ), alive=902},
-	{text = game.translate_string( "bt_9_0" )},
-	{text = game.translate_string( "bt_10_0" )}
-}
+blowout_templates = {{
+    text = game.translate_string("bt_0_0")
+}, {
+    text = game.translate_string("bt_1_0")
+}, {
+    text = game.translate_string("bt_2_0"),
+    alive = 902
+}, {
+    text = game.translate_string("bt_3_0"),
+    alive = 900
+}, {
+    text = game.translate_string("bt_4_0")
+}, {
+    text = game.translate_string("bt_5_0")
+}, {
+    text = game.translate_string("bt_6_0")
+}, {
+    text = game.translate_string("bt_7_0"),
+    alive = 902
+}, {
+    text = game.translate_string("bt_8_0"),
+    alive = 902
+}, {
+    text = game.translate_string("bt_9_0")
+}, {
+    text = game.translate_string("bt_10_0")
+}}
 
 reward_phrases_authors = {
-	["trader"] = game.translate_string( "rpa_trader" ),
-	["barman"] = game.translate_string( "rpa_barman" )
+    ["trader"] = game.translate_string("rpa_trader"),
+    ["barman"] = game.translate_string("rpa_barman")
 }
 
 reward_phrases_templates = {
-	["trader"] = {game.translate_string( "rpt_trader_0" ), game.translate_string( "rpt_trader_1" ), game.translate_string( "rpt_trader_2" ), game.translate_string( "rpt_trader_3" ), game.translate_string( "rpt_trader_4" ), game.translate_string( "rpt_trader_5" )},
-	["barman"] = {game.translate_string( "rpt_barman_0" ), game.translate_string( "rpt_barman_1" ), game.translate_string( "rpt_barman_2" ), game.translate_string( "rpt_barman_3" ), game.translate_string( "rpt_barman_4" ) }
+    ["trader"] = {game.translate_string("rpt_trader_0"), game.translate_string("rpt_trader_1"),
+                  game.translate_string("rpt_trader_2"), game.translate_string("rpt_trader_3"),
+                  game.translate_string("rpt_trader_4"), game.translate_string("rpt_trader_5")},
+    ["barman"] = {game.translate_string("rpt_barman_0"), game.translate_string("rpt_barman_1"),
+                  game.translate_string("rpt_barman_2"), game.translate_string("rpt_barman_3"),
+                  game.translate_string("rpt_barman_4")}
 }
 
-trade_templates = {
-game.translate_string( "tt_0" ),
-game.translate_string( "tt_1" ),
-game.translate_string( "tt_2" ),
-game.translate_string( "tt_3" ),
-game.translate_string( "tt_4" ),
-game.translate_string( "tt_5" ),
-game.translate_string( "tt_6" ),
-game.translate_string( "tt_7" ),
-game.translate_string( "tt_8" ),
-game.translate_string( "tt_9" ),
-game.translate_string( "tt_10" ),
-game.translate_string( "tt_11" ),
-game.translate_string( "tt_12" ),
-game.translate_string( "tt_13" ),
-game.translate_string( "tt_14" ),
-game.translate_string( "tt_15" ),
-game.translate_string( "tt_16" ),
-game.translate_string( "tt_17" )
-}
+trade_templates = {game.translate_string("tt_0"), game.translate_string("tt_1"), game.translate_string("tt_2"),
+                   game.translate_string("tt_3"), game.translate_string("tt_4"), game.translate_string("tt_5"),
+                   game.translate_string("tt_6"), game.translate_string("tt_7"), game.translate_string("tt_8"),
+                   game.translate_string("tt_9"), game.translate_string("tt_10"), game.translate_string("tt_11"),
+                   game.translate_string("tt_12"), game.translate_string("tt_13"), game.translate_string("tt_14"),
+                   game.translate_string("tt_15"), game.translate_string("tt_16"), game.translate_string("tt_17")}
 
---"—Ú‡ÚÛÒ ÒÓÂ‰ËÌÂÌËˇ:"
-connect_templates = {
-	game.translate_string( "co_te_0" ),
-	game.translate_string( "co_te_1" ),
-	game.translate_string( "co_te_2" ),
-	game.translate_string( "co_te_3" ),
-	game.translate_string( "co_te_4" )
-}
+-- "–°—Ç–∞—Ç—É—Å —Å–æ–µ–¥–∏–Ω–µ–Ω–∏—è:"
+connect_templates = {game.translate_string("co_te_0"), game.translate_string("co_te_1"),
+                     game.translate_string("co_te_2"), game.translate_string("co_te_3"),
+                     game.translate_string("co_te_4")}
 
-disconnect_templates = {
-	game.translate_string( "di_te_0" ),
-	game.translate_string( "di_te_1" ),
-	game.translate_string( "di_te_2" ),
-	game.translate_string( "di_te_3" ),
-	game.translate_string( "di_te_4" )
-}
+disconnect_templates = {game.translate_string("di_te_0"), game.translate_string("di_te_1"),
+                        game.translate_string("di_te_2"), game.translate_string("di_te_3"),
+                        game.translate_string("di_te_4")}
 
 -- 23:00 - 04:00
-night_templates = {
-	{	texts = {
-		game.translate_string( "nt_0_0" ),
-		game.translate_string( "nt_0_1" ),
-		game.translate_string( "nt_0_2" )
-		}
-	}, 
-	{	texts = {
-		game.translate_string( "nt_1_0" ),
-		game.translate_string( "nt_1_1" ),
-		game.translate_string( "nt_1_2" )
-		}, comments = "strange", prob=0.5
-	},
-	{	texts = {
-		game.translate_string( "nt_2_0" ),
-		game.translate_string( "nt_2_1" ),
-		game.translate_string( "nt_2_2" )
-		}, comments = "strange", prob=0.5
-	},
-	{	texts = {
-		game.translate_string( "nt_3_0" )
-		}, comments = "strange", prob=0.3
-	},
-	{	texts = {
-		game.translate_string( "nt_4_0" ),
-		game.translate_string( "nt_4_1" )
-		}, comments = "strange", prob=0.8
-	},
-	{	texts = {
-		game.translate_string( "nt_5_0" ),
-		game.translate_string( "nt_5_1" )
-		}, comments = "strange", prob=0.5
-	},
-	{	texts = {
-		game.translate_string( "nt_6_0" ),
-		game.translate_string( "nt_6_1" )
-		}, comments = "strange", prob=0.8
-	},
-	{	texts = {
-		game.translate_string( "nt_7_0" )
-		}, comments = "strange", prob=0.5
-	},
-	{	texts = {
-		game.translate_string( "nt_8_0" ),
-		game.translate_string( "nt_8_1" )
-		}, comments = "strange", prob=0.8
-	}
-}
+night_templates = {{
+    texts = {game.translate_string("nt_0_0"), game.translate_string("nt_0_1"), game.translate_string("nt_0_2")}
+}, {
+    texts = {game.translate_string("nt_1_0"), game.translate_string("nt_1_1"), game.translate_string("nt_1_2")},
+    comments = "strange",
+    prob = 0.5
+}, {
+    texts = {game.translate_string("nt_2_0"), game.translate_string("nt_2_1"), game.translate_string("nt_2_2")},
+    comments = "strange",
+    prob = 0.5
+}, {
+    texts = {game.translate_string("nt_3_0")},
+    comments = "strange",
+    prob = 0.3
+}, {
+    texts = {game.translate_string("nt_4_0"), game.translate_string("nt_4_1")},
+    comments = "strange",
+    prob = 0.8
+}, {
+    texts = {game.translate_string("nt_5_0"), game.translate_string("nt_5_1")},
+    comments = "strange",
+    prob = 0.5
+}, {
+    texts = {game.translate_string("nt_6_0"), game.translate_string("nt_6_1")},
+    comments = "strange",
+    prob = 0.8
+}, {
+    texts = {game.translate_string("nt_7_0")},
+    comments = "strange",
+    prob = 0.5
+}, {
+    texts = {game.translate_string("nt_8_0"), game.translate_string("nt_8_1")},
+    comments = "strange",
+    prob = 0.8
+}}
 
 -- 04:30 - 07:00
-morning_templates = {
-	game.translate_string( "mt_0" ),
-	game.translate_string( "mt_1" ),
-	game.translate_string( "mt_2" ),
-	game.translate_string( "mt_3" ),
-	game.translate_string( "mt_4" ),
-	game.translate_string( "mt_5" ),
-	game.translate_string( "mt_6" ),
-	game.translate_string( "mt_7" ),
-	game.translate_string( "mt_8" )
-}
+morning_templates = {game.translate_string("mt_0"), game.translate_string("mt_1"), game.translate_string("mt_2"),
+                     game.translate_string("mt_3"), game.translate_string("mt_4"), game.translate_string("mt_5"),
+                     game.translate_string("mt_6"), game.translate_string("mt_7"), game.translate_string("mt_8")}
 
 -- 20:30 - 22:00
-evening_templates = {
-	game.translate_string( "et_0" ),
-	game.translate_string( "et_1" ),
-	game.translate_string( "et_2" ),
-	game.translate_string( "et_3" ),
-	game.translate_string( "et_4" ),
-	game.translate_string( "et_5" ),
-	game.translate_string( "et_6" )
-}
+evening_templates = {game.translate_string("et_0"), game.translate_string("et_1"), game.translate_string("et_2"),
+                     game.translate_string("et_3"), game.translate_string("et_4"), game.translate_string("et_5"),
+                     game.translate_string("et_6")}
 
 comments_templates = {
-	["strange"] = {
-		game.translate_string( "ct_strange_0" ),
-		game.translate_string( "ct_strange_1" ),
-		game.translate_string( "ct_strange_2" ),
-		game.translate_string( "ct_strange_3" ),
-		game.translate_string( "ct_strange_4" ),
-		game.translate_string( "ct_strange_5" ),
-		game.translate_string( "ct_strange_6" ),
-		game.translate_string( "ct_strange_7" ),
-		game.translate_string( "ct_strange_8" ),
-		game.translate_string( "ct_strange_9" ),
-		game.translate_string( "ct_strange_10" ),
-		game.translate_string( "ct_strange_11" ),
-		game.translate_string( "ct_strange_12" ),
-		game.translate_string( "ct_strange_13" )
-	}
+    ["strange"] = {game.translate_string("ct_strange_0"), game.translate_string("ct_strange_1"),
+                   game.translate_string("ct_strange_2"), game.translate_string("ct_strange_3"),
+                   game.translate_string("ct_strange_4"), game.translate_string("ct_strange_5"),
+                   game.translate_string("ct_strange_6"), game.translate_string("ct_strange_7"),
+                   game.translate_string("ct_strange_8"), game.translate_string("ct_strange_9"),
+                   game.translate_string("ct_strange_10"), game.translate_string("ct_strange_11"),
+                   game.translate_string("ct_strange_12"), game.translate_string("ct_strange_13")}
 }
-
 
 smart_filters = {
-  [ "military"     ] = {
-    "esc_bridge", "esc_blokpost", "amk_embankment",
-  },
-  [ "bandit"       ] = {
-    "atp_fabrika_bandit", "gar_bandit_agr", "val_lager_bandits",
-    "val_smart_bandit_2",
-  },
-  [ "killer"       ] = { "mil_mercs" },
-  [ "zombied"      ] = {
-    "yantar_zombies", "yan_st_zombie1", "yan_st_zombie2", "yan_st_zombie3",
-    "yan_st_zombie4", "rad_zombied1", "rad_zombied2",
-    "rad_before_tramplin_ambush",
-  },
-  [ "zombie"       ] = { "yantar_zombies" },
-  [ "dog"          ] = { "esc_boars_dogs" },
-  [ "boar"         ] = { "esc_boars_dogs" },
-  [ "flesh"        ] = { "esc_flesh_1", "esc_flesh_2" },
-  [ "arena_enemy"  ] = { "bar_arena_monstr" },
-  [ "arena_monstr" ] = { "bar_arena_monstr" },
+    ["military"] = {"esc_bridge", "esc_blokpost", "amk_embankment"},
+    ["bandit"] = {"atp_fabrika_bandit", "gar_bandit_agr", "val_lager_bandits", "val_smart_bandit_2"},
+    ["killer"] = {"mil_mercs"},
+    ["zombied"] = {"yantar_zombies", "yan_st_zombie1", "yan_st_zombie2", "yan_st_zombie3", "yan_st_zombie4",
+                   "rad_zombied1", "rad_zombied2", "rad_before_tramplin_ambush"},
+    ["zombie"] = {"yantar_zombies"},
+    ["dog"] = {"esc_boars_dogs"},
+    ["boar"] = {"esc_boars_dogs"},
+    ["flesh"] = {"esc_flesh_1", "esc_flesh_2"},
+    ["arena_enemy"] = {"bar_arena_monstr"},
+    ["arena_monstr"] = {"bar_arena_monstr"}
 }
 
-
 miniquest_rewards = {
-	["novice"] = {
-		"ammo_9x18_fmj","ammo_9x18_pmm","ammo_12x70_buck","ammo_9x19_fmj","ammo_9x19_pbp","ammo_11.43x23_hydro","ammo_12x76_zhekan","ammo_11.43x23_fmj",
-		"af_vyvert","af_medusa","af_gravi","af_blood","af_fireball","af_ameba_mica","af_cristall_flower", "af_soul", "wpn_mp5","wpn_ak74u_isg", 
-		"treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item"
-	},
-	["experienced"] = {
-		"ammo_7.62x54_7h1", "ammo_7.62x54_ap", "ammo_7.62x54_7h14","ammo_5.45x39_fmj","ammo_5.45x39_ap","ammo_5.56x45_ss190","ammo_5.56x45_ap","ammo_vog-25p","ammo_vog-25","ammo_m209",
-		"af_cry_1", "af_ameba_slime","af_ameba_slug","af_drops","af_mincer_meat","af_fuzz_kolobok","af_electra_sparkler","af_rusty_thorn","af_rusty_kristall","af_dummy_glassbeads",
-		"wpn_mp5","wpn_addon_silencer","pso2","wpn_addon_grenade_launcher", 
-		"treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item"
-	},
-	["veteran"] = {
-		"susat","wpn_addon_grenade_launcher_m203",
-		"ammo_12x76_dart","ammo_9x39_pab9","ammo_9x39_ap","ammo_9x39_sp5","ammo_og-7b","ammo_vog-25p",
-		"af_babka_1", "af_pudd_1", "af_dik_1", "af_kol_1", "af_armor_1", "af_dummy_pellicle","af_rusty_sea-urchin","af_electra_flash","af_soul","af_dummy_spring","af_gold_fish","af_dummy_battery","af_dummy_dummy", 
-		"treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item"
-	},
-	["master"] = {
-		"af_spirit_2", "af_cry_2", "af_babka_2", "af_pudd_2", "af_dik_2", "af_kol_2", "af_armor_2", "af_cristall","af_dummy_glassbeads","af_night_star","af_electra_moonlight", "af_dummy_pellicle","af_dummy_battery", "af_dummy_dummy", "af_ameba_mica", "af_dummy_spring","af_spirit_1",
-		"ammo_7.62x54_7h1","ammo_7.62x54_ap","ammo_7.62x54_7h14","ammo_gauss",
-		"treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item"		
-	}
+    ["novice"] = {"ammo_9x18_fmj", "ammo_9x18_pmm", "ammo_12x70_buck", "ammo_9x19_fmj", "ammo_9x19_pbp",
+                  "ammo_11.43x23_hydro", "ammo_12x76_zhekan", "ammo_11.43x23_fmj", "af_vyvert", "af_medusa", "af_gravi",
+                  "af_blood", "af_fireball", "af_ameba_mica", "af_cristall_flower", "af_soul", "wpn_mp5",
+                  "wpn_ak74u_isg", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item",
+                  "treasure_item", "treasure_item", "treasure_item"},
+    ["experienced"] = {"ammo_7.62x54_7h1", "ammo_7.62x54_ap", "ammo_7.62x54_7h14", "ammo_5.45x39_fmj",
+                       "ammo_5.45x39_ap", "ammo_5.56x45_ss190", "ammo_5.56x45_ap", "ammo_vog-25p", "ammo_vog-25",
+                       "ammo_m209", "af_cry_1", "af_ameba_slime", "af_ameba_slug", "af_drops", "af_mincer_meat",
+                       "af_fuzz_kolobok", "af_electra_sparkler", "af_rusty_thorn", "af_rusty_kristall",
+                       "af_dummy_glassbeads", "wpn_mp5", "wpn_addon_silencer", "pso2", "wpn_addon_grenade_launcher",
+                       "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item",
+                       "treasure_item", "treasure_item", "treasure_item"},
+    ["veteran"] = {"susat", "wpn_addon_grenade_launcher_m203", "ammo_12x76_dart", "ammo_9x39_pab9", "ammo_9x39_ap",
+                   "ammo_9x39_sp5", "ammo_og-7b", "ammo_vog-25p", "af_babka_1", "af_pudd_1", "af_dik_1", "af_kol_1",
+                   "af_armor_1", "af_dummy_pellicle", "af_rusty_sea-urchin", "af_electra_flash", "af_soul",
+                   "af_dummy_spring", "af_gold_fish", "af_dummy_battery", "af_dummy_dummy", "treasure_item",
+                   "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item",
+                   "treasure_item"},
+    ["master"] = {"af_spirit_2", "af_cry_2", "af_babka_2", "af_pudd_2", "af_dik_2", "af_kol_2", "af_armor_2",
+                  "af_cristall", "af_dummy_glassbeads", "af_night_star", "af_electra_moonlight", "af_dummy_pellicle",
+                  "af_dummy_battery", "af_dummy_dummy", "af_ameba_mica", "af_dummy_spring", "af_spirit_1",
+                  "ammo_7.62x54_7h1", "ammo_7.62x54_ap", "ammo_7.62x54_7h14", "ammo_gauss", "treasure_item",
+                  "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item", "treasure_item",
+                  "treasure_item"}
 }
 
 class_templates = {
-	["stalker_novice"] = {"gar_stalker_respawn_1", "esc_stalker_respawn_1", "ds_stalker_respawn_1", "bar_stalker_respawn_3"},
-	["stalker_experienced"] = {"agr_stalker_regular","mil_stalker_respawn_1", "gar_stalker_respawn_2", "esc_stalker_respawn_2", "ds_stalker_respawn_2", "bar_stalker_respawn_4"},
-	["stalker_veteran"] = {"agr_stalker_veteran", "mil_stalker_respawn_2", "bar_stalker_respawn_1"},
-	["stalker_master"] = {"mil_neutral_barier_respawn_1", "mil_stalker_respawn_3", "bar_stalker_respawn_2"},
-	["bandit_novice"] = {"agr_bandit_respawn_1", "gar_bandit_respawn_1", "esc_bandit_respawn_1", "ds_bandit_respawn_1", "val_bandit_respawn_1"},
-	["bandit_experienced"] = {"agr_bandit_respawn_2", "gar_bandit_respawn_2", "esc_bandit_respawn_2", "ds_bandit_respawn_2", "val_bandit_respawn_2"},
-	["bandit_veteran"] = {"ds_bandit_respawn_3", "val_bandit_respawn_3", "ros_bandit_respawn_3"},
-	["bandit_master"] = {"val_bandit_respawn_4", "ros_bandit_respawn_4"},
-	["military_novice"] = {""},
-	["military_experienced"] = {"agr_soldier_regular", "esc_soldier_respawn_1"},
-	["military_veteran"] = {"agr_soldier_veteran", "esc_soldier_respawn_specnaz", "rad_specnaz_respawn_specnaz", "val_soldier_respawn_1"},
-	["military_master"] = {"rad_soldier_master"},
-	["killer_novice"] = {""},
-	["killer_experienced"] = {"mil_killer_respawn_3", "ros_killer_respawn_3"},
-	["killer_veteran"] = {"mil_killer_respawn_1", "mil_killer_respawn_2", "ros_killer_respawn_1", "ros_killer_respawn_2"},
-	["killer_master"] = {"mil_killer_respawn_4", "ros_killer_respawn_4"},
-	["monolith_novice"] = {""},
-	["monolith_experienced"] = {"pri_monolith_respawn_1", "rad_monolith_respawn_1"},
-	["monolith_veteran"] = {"pri_monolith_respawn_2", "rad_monolith_respawn_2"},
-	["monolith_master"] = {"mil_monolit_rush_respawn_1", "pri_monolith_respawn_3", "rad_monolith_respawn_3"},
-	["zombied_novice"] = {"rad_zombied_respawn_1", "yan_zombied_respawn_1", "amk_zombied_1"},
-	["zombied_experienced"] = {""},
-	["zombied_veteran"] = {"rad_zombied_respawn_2", "yan_zombied_respawn_2", "amk_zombied_2"},
-	["zombied_master"] = {"rad_zombied_respawn_3", "yan_zombied_respawn_3", "amk_zombied_3"},
-	["dolg_novice"] = {""},
-	["dolg_experienced"] = {"gar_dolg_respawn_1", "gar_dolg_respawn_2", "bar_dolg_respawn_1"},
-	["dolg_veteran"] = {"bar_dolg_respawn_2"},
-	["dolg_master"] = {"bar_dolg_respawn_3"},
-	["freedom_novice"] = {""},
-	["freedom_experienced"] = {"mil_freedom_respawn_2", "rad_freedom_respawn_2"},
-	["freedom_veteran"] = {"mil_freedom_respawn_1", "rad_freedom_respawn_1"},
-	["freedom_master"] = {"mil_freedom_respawn_3", "mil_freedom_respawn_sniper", "mil_freedom_barier_respawn_1", "rad_freedom_respawn_3"}
+    ["stalker_novice"] = {"gar_stalker_respawn_1", "esc_stalker_respawn_1", "ds_stalker_respawn_1",
+                          "bar_stalker_respawn_3"},
+    ["stalker_experienced"] = {"agr_stalker_regular", "mil_stalker_respawn_1", "gar_stalker_respawn_2",
+                               "esc_stalker_respawn_2", "ds_stalker_respawn_2", "bar_stalker_respawn_4"},
+    ["stalker_veteran"] = {"agr_stalker_veteran", "mil_stalker_respawn_2", "bar_stalker_respawn_1"},
+    ["stalker_master"] = {"mil_neutral_barier_respawn_1", "mil_stalker_respawn_3", "bar_stalker_respawn_2"},
+    ["bandit_novice"] = {"agr_bandit_respawn_1", "gar_bandit_respawn_1", "esc_bandit_respawn_1", "ds_bandit_respawn_1",
+                         "val_bandit_respawn_1"},
+    ["bandit_experienced"] = {"agr_bandit_respawn_2", "gar_bandit_respawn_2", "esc_bandit_respawn_2",
+                              "ds_bandit_respawn_2", "val_bandit_respawn_2"},
+    ["bandit_veteran"] = {"ds_bandit_respawn_3", "val_bandit_respawn_3", "ros_bandit_respawn_3"},
+    ["bandit_master"] = {"val_bandit_respawn_4", "ros_bandit_respawn_4"},
+    ["military_novice"] = {""},
+    ["military_experienced"] = {"agr_soldier_regular", "esc_soldier_respawn_1"},
+    ["military_veteran"] = {"agr_soldier_veteran", "esc_soldier_respawn_specnaz", "rad_specnaz_respawn_specnaz",
+                            "val_soldier_respawn_1"},
+    ["military_master"] = {"rad_soldier_master"},
+    ["killer_novice"] = {""},
+    ["killer_experienced"] = {"mil_killer_respawn_3", "ros_killer_respawn_3"},
+    ["killer_veteran"] = {"mil_killer_respawn_1", "mil_killer_respawn_2", "ros_killer_respawn_1", "ros_killer_respawn_2"},
+    ["killer_master"] = {"mil_killer_respawn_4", "ros_killer_respawn_4"},
+    ["monolith_novice"] = {""},
+    ["monolith_experienced"] = {"pri_monolith_respawn_1", "rad_monolith_respawn_1"},
+    ["monolith_veteran"] = {"pri_monolith_respawn_2", "rad_monolith_respawn_2"},
+    ["monolith_master"] = {"mil_monolit_rush_respawn_1", "pri_monolith_respawn_3", "rad_monolith_respawn_3"},
+    ["zombied_novice"] = {"rad_zombied_respawn_1", "yan_zombied_respawn_1", "amk_zombied_1"},
+    ["zombied_experienced"] = {""},
+    ["zombied_veteran"] = {"rad_zombied_respawn_2", "yan_zombied_respawn_2", "amk_zombied_2"},
+    ["zombied_master"] = {"rad_zombied_respawn_3", "yan_zombied_respawn_3", "amk_zombied_3"},
+    ["dolg_novice"] = {""},
+    ["dolg_experienced"] = {"gar_dolg_respawn_1", "gar_dolg_respawn_2", "bar_dolg_respawn_1"},
+    ["dolg_veteran"] = {"bar_dolg_respawn_2"},
+    ["dolg_master"] = {"bar_dolg_respawn_3"},
+    ["freedom_novice"] = {""},
+    ["freedom_experienced"] = {"mil_freedom_respawn_2", "rad_freedom_respawn_2"},
+    ["freedom_veteran"] = {"mil_freedom_respawn_1", "rad_freedom_respawn_1"},
+    ["freedom_master"] = {"mil_freedom_respawn_3", "mil_freedom_respawn_sniper", "mil_freedom_barier_respawn_1",
+                          "rad_freedom_respawn_3"}
 }
 
-do_seen_monster_templates = {
-  {
+do_seen_monster_templates = {{
     enabled = true,
-    lname   = "l01_escape",
-    text    = game.translate_string( "dsmt_0" ),
-    spawn   = {
-      {
+    lname = "l01_escape",
+    text = game.translate_string("dsmt_0"),
+    spawn = {{
         class = "bloodsucker_weak",
         count = 1,
-        point = { -29.88076210022, 2.3805351257324, 83.740310668945 },
-        lv    = 246822,
-        gv    = 86,
-      },
-    },
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+        point = {-29.88076210022, 2.3805351257324, 83.740310668945},
+        lv = 246822,
+        gv = 86
+    }},
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = false,
-    lname   = "l01_escape",
-    text    = game.translate_string( "dsmt_1" ),
-    spawn   = {
-      {
+    lname = "l01_escape",
+    text = game.translate_string("dsmt_1"),
+    spawn = {{
         class = "tushkano_normal",
         count = 6,
-        point = { -221.00, -19.93, -158.54 },
-        lv    = 32809,
-        gv    = 47,
-      },
-    },
+        point = {-221.00, -19.93, -158.54},
+        lv = 32809,
+        gv = 47
+    }},
     has_info = "escape_lager_killers_die, escape_lager_complete, esc_fanat_die"
-  },
-  {
+}, {
     enabled = true,
-    lname   = "l01_escape",
-    text    = game.translate_string( "dsmt_2" ),
-    spawn   = {
-      {
+    lname = "l01_escape",
+    text = game.translate_string("dsmt_2"),
+    spawn = {{
         class = "pseudodog_strong",
         count = 1,
-        point = { -64.17, -9.84, -49.40 },
-        lv    = 210981,
-        gv    = 77,
-      },
-    },
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+        point = {-64.17, -9.84, -49.40},
+        lv = 210981,
+        gv = 77
+    }},
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l01_escape",
-    text    = game.translate_string( "dsmt_3" ),
-    spawn   = {
-      {
+    lname = "l01_escape",
+    text = game.translate_string("dsmt_3"),
+    spawn = {{
         class = "gigant_normal",
         count = 1,
-        point = { 65.17, 7.49, 605.40 },
-        lv    = 354789,
-        gv    = 214,
-      },
-    },
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
-    enabled  = true,
-    lname    = "l02_garbage",
-    text     = game.translate_string( "dsmt_4" ),
-    spawn    = {
-      {
+        point = {65.17, 7.49, 605.40},
+        lv = 354789,
+        gv = 214
+    }},
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
+    enabled = true,
+    lname = "l02_garbage",
+    text = game.translate_string("dsmt_4"),
+    spawn = {{
         class = "bloodsucker_weak",
         count = 1,
-        point = { -132.87, -1.90, -206.22 },
-        lv    = 83306,
-        gv    = 269,
-      },
-    },
+        point = {-132.87, -1.90, -206.22},
+        lv = 83306,
+        gv = 269
+    }},
     has_info = "gar_hellcar_help, gar_hellcar_reject",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_5" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_5"),
+    spawn = {{
         class = "flesh_normal",
         count = 5,
-        point = { -81.93, 2.40, 41.44 },
-        lv    = 158982,
-        gv    = 662,
-      },
-    },
-    has_info = "agr_krot_task_complete, agr_find_gunslinger_cache_found, agr_krot_secret_info",
-  },
-  {
+        point = {-81.93, 2.40, 41.44},
+        lv = 158982,
+        gv = 662
+    }},
+    has_info = "agr_krot_task_complete, agr_find_gunslinger_cache_found, agr_krot_secret_info"
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_6" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_6"),
+    spawn = {{
         class = "m_poltergeist_strong_flame",
         count = 1,
-        point = { -21.78, 5.23, 8.43 },
-        lv    = 218746,
-        gv    = 485,
-      },
-    },
+        point = {-21.78, 5.23, 8.43},
+        lv = 218746,
+        gv = 485
+    }},
     has_info = "agr_krot_task_complete, agr_find_gunslinger_cache_found, agr_krot_secret_info",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_7" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_7"),
+    spawn = {{
         class = "bloodsucker_strong",
         count = 1,
-        point = { -79.20, 12.04, -113.22 },
-        lv    = 160200,
-        gv    = 698,
-      }
-    },
+        point = {-79.20, 12.04, -113.22},
+        lv = 160200,
+        gv = 698
+    }},
     has_info = "agr_krot_task_complete, agr_find_gunslinger_cache_found, agr_krot_secret_info",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_8" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_8"),
+    spawn = {{
         class = "gigant_strong",
         count = 1,
-        point = { 159.31, 0.19, 28.29 },
-        lv    = 386144,
-        gv    = 584,
-      },
-    },
+        point = {159.31, 0.19, 28.29},
+        lv = 386144,
+        gv = 584
+    }},
     has_info = "agr_krot_task_complete, agr_find_gunslinger_cache_found, agr_krot_secret_info",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_9" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_9"),
+    spawn = {{
         class = "dog_normal",
         count = 6,
-        point = { -82.35, -1.02, -179.61 },
-        lv    = 157957,
-        gv    = 438,
-      },
-    },
-    has_info = "agroprom_military_case_done",
-  },
-  {
+        point = {-82.35, -1.02, -179.61},
+        lv = 157957,
+        gv = 438
+    }},
+    has_info = "agroprom_military_case_done"
+}, {
     enabled = true,
-    lname   = "l04_darkvalley",
-    text    = game.translate_string( "dsmt_10" ),
-    spawn   = {
-      {
+    lname = "l04_darkvalley",
+    text = game.translate_string("dsmt_10"),
+    spawn = {{
         class = "gigant_strong",
         count = 1,
-        point = { 83.91, -2.95, -272.86 },
-        lv    = 277256,
-        gv    = 930,
-      },
-    },
-    has_info = "bar_darklab_document_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
-    enabled = true,
-    lname   = "l07_military",
-    text    = game.translate_string( "dsmt_11" ),
-    spawn   = {
-      {
-        class = "pseudodog_strong",
-        count = 3,
-        point = { -194.27, -12.65, 65.62 },
-        lv    = 130834,
-        gv    = 1657,
-      },
-    },
-    has_info = "bar_deactivate_radar_done",
-  },
-  {
-    enabled = true,
-    lname   = "l07_military",
-    text    = game.translate_string( "dsmt_12" ),
-    spawn   = {
-      {
-        class = "gigant_strong",
-        count = 1,
-        point = { -144.18, -21.13, 117.02 },
-        lv    = 175287,
-        gv    = 1660,
-      },
-    },
-    has_info = "bar_deactivate_radar_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
-    enabled = true,
-    lname   = "l07_military",
-    text    = game.translate_string( "dsmt_13" ),
-    spawn   = {
-      {
-        class = "bloodsucker_normal",
-        count = 2,
-        point = { -216.25, -20.48, 245.60 },
-        lv    = 112657,
-        gv    = 1766,
-      },
-      {
-        class = "tushkano_normal",
-        count = 1,
-        point = { -239.43, -22.05, 258.71 },
-        lv    = 93353,
-        gv    = 1785,
-      },
-    },
-    has_info = "bar_deactivate_radar_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 2,
-      c_max  = 10,
-    },
-  },
-  {
-    enabled = true,
-    lname   = "l07_military",
-    text    = game.translate_string( "dsmt_14" ),
-    spawn   = {
-      {
-        class = "flesh_normal",
-        count = 4,
-        point = { 70.91, -10.59, 233.36 },
-        lv    = 368619,
-        gv    = 1739,
-      },
-    },
-    has_info = "bar_deactivate_radar_done",
-  },
-  {
-    enabled = true,
-    lname   = "l07_military",
-    text    = game.translate_string( "dsmt_15" ),
-    spawn   = {
-      {
-        class = "snork_strong",
-        count = 2,
-        point = { 117.43, -11.69, 162.30 },
-        lv    = 407556,
-        gv    = 1642,
-      },
-    },
-    has_info = "bar_deactivate_radar_done",
-  },
-  {
-    enabled = true,
-    lname   = "l04_darkvalley",
-    text    = game.translate_string( "dsmt_16" ),
-    spawn   = {
-      {
-        class = "chimera_normal",
-        count = 1,
-        point = { 2.56, 1.24, -41.24 },
-        lv    = 177375,
-        gv    = 1049,
-      },
-    },
+        point = {83.91, -2.95, -272.86},
+        lv = 277256,
+        gv = 930
+    }},
     has_info = "bar_darklab_document_done",
     reward = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
     enabled = true,
-    lname   = "l06_rostok",
-    text    = game.translate_string( "dsmt_17" ),
-    spawn   = {
-      {
+    lname = "l07_military",
+    text = game.translate_string("dsmt_11"),
+    spawn = {{
+        class = "pseudodog_strong",
+        count = 3,
+        point = {-194.27, -12.65, 65.62},
+        lv = 130834,
+        gv = 1657
+    }},
+    has_info = "bar_deactivate_radar_done"
+}, {
+    enabled = true,
+    lname = "l07_military",
+    text = game.translate_string("dsmt_12"),
+    spawn = {{
+        class = "gigant_strong",
+        count = 1,
+        point = {-144.18, -21.13, 117.02},
+        lv = 175287,
+        gv = 1660
+    }},
+    has_info = "bar_deactivate_radar_done",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
+    enabled = true,
+    lname = "l07_military",
+    text = game.translate_string("dsmt_13"),
+    spawn = {{
+        class = "bloodsucker_normal",
+        count = 2,
+        point = {-216.25, -20.48, 245.60},
+        lv = 112657,
+        gv = 1766
+    }, {
+        class = "tushkano_normal",
+        count = 1,
+        point = {-239.43, -22.05, 258.71},
+        lv = 93353,
+        gv = 1785
+    }},
+    has_info = "bar_deactivate_radar_done",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 2,
+        c_max = 10
+    }
+}, {
+    enabled = true,
+    lname = "l07_military",
+    text = game.translate_string("dsmt_14"),
+    spawn = {{
+        class = "flesh_normal",
+        count = 4,
+        point = {70.91, -10.59, 233.36},
+        lv = 368619,
+        gv = 1739
+    }},
+    has_info = "bar_deactivate_radar_done"
+}, {
+    enabled = true,
+    lname = "l07_military",
+    text = game.translate_string("dsmt_15"),
+    spawn = {{
+        class = "snork_strong",
+        count = 2,
+        point = {117.43, -11.69, 162.30},
+        lv = 407556,
+        gv = 1642
+    }},
+    has_info = "bar_deactivate_radar_done"
+}, {
+    enabled = true,
+    lname = "l04_darkvalley",
+    text = game.translate_string("dsmt_16"),
+    spawn = {{
+        class = "chimera_normal",
+        count = 1,
+        point = {2.56, 1.24, -41.24},
+        lv = 177375,
+        gv = 1049
+    }},
+    has_info = "bar_darklab_document_done",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
+    enabled = true,
+    lname = "l06_rostok",
+    text = game.translate_string("dsmt_17"),
+    spawn = {{
         class = "chimera_normal",
         count = 2,
-        point = { -175.68, -0.00, 172.21 },
-        lv    = 31609,
-        gv    = 1331,
-      },
-    },
+        point = {-175.68, -0.00, 172.21},
+        lv = 31609,
+        gv = 1331
+    }},
     has_info = "yan_kill_brain_done",
-    author  = game.translate_string( "dsmt_26" ),
-    icon    = "dolg",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    author = game.translate_string("dsmt_26"),
+    icon = "dolg",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l10_radar",
-    text    = game.translate_string( "dsmt_18" ),
-    spawn   = {
-      {
+    lname = "l10_radar",
+    text = game.translate_string("dsmt_18"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { 14.07, -3.63, 7.17 },
-        lv    = 15238,
-        gv    = 1877,
-      },
-    },
+        point = {14.07, -3.63, 7.17},
+        lv = 15238,
+        gv = 1877
+    }},
     has_info = "bar_deactivate_radar_done",
-    author  = game.translate_string( "dsmt_27" ),
-    icon    = "uniq",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    author = game.translate_string("dsmt_27"),
+    icon = "uniq",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_19" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_19"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { -164.50, -0.20, -201.21 },
-        lv    = 72576,
-        gv    = 554,
-      },
-    },
+        point = {-164.50, -0.20, -201.21},
+        lv = 72576,
+        gv = 554
+    }},
     has_info = "agroprom_military_case_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l08_yantar",
-    text    = game.translate_string( "dsmt_20" ),
-    spawn   = {
-      {
+    lname = "l08_yantar",
+    text = game.translate_string("dsmt_20"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { -58.47, -12.51, -256.30 },
-        lv    = 17990,
-        gv    = 1454,
-      },
-    },
+        point = {-58.47, -12.51, -256.30},
+        lv = 17990,
+        gv = 1454
+    }},
     has_info = "yan_kill_brain_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l03_agroprom",
-    text    = game.translate_string( "dsmt_21" ),
-    spawn   = {
-      {
+    lname = "l03_agroprom",
+    text = game.translate_string("dsmt_21"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { -16.08, -0.20, -1.09 },
-        lv    = 224157,
-        gv    = 466,
-      },
-    },
+        point = {-16.08, -0.20, -1.09},
+        lv = 224157,
+        gv = 466
+    }},
     has_info = "agroprom_military_case_done",
-    author  = game.translate_string( "dsmt_28" ),
-    icon    = "saharov",
-    alive   = 902,
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    author = game.translate_string("dsmt_28"),
+    icon = "saharov",
+    alive = 902,
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l10_radar",
-    text    = game.translate_string( "dsmt_22" ),
-    spawn   = {
-      {
+    lname = "l10_radar",
+    text = game.translate_string("dsmt_22"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { 491.89, -46.11, -226.66 },
-        lv    = 162873,
-        gv    = 2058,
-      },
-    },
+        point = {491.89, -46.11, -226.66},
+        lv = 162873,
+        gv = 2058
+    }},
     has_info = "bar_deactivate_radar_done",
-    author  = game.translate_string( "dsmt_27" ),
-    icon    = "uniq",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    author = game.translate_string("dsmt_27"),
+    icon = "uniq",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l11_pripyat",
-    text    = game.translate_string( "dsmt_23" ),
-    spawn   = {
-      {
+    lname = "l11_pripyat",
+    text = game.translate_string("dsmt_23"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { -97.14, -2.21, 119.78 },
-        lv    = 18685,
-        gv    = 2211,
-      },
-    },
+        point = {-97.14, -2.21, 119.78},
+        lv = 18685,
+        gv = 2211
+    }},
     has_info = "pri_stadium_scene_start",
-    author  = game.translate_string( "dsmt_26" ),
-    icon    = "dolg",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    author = game.translate_string("dsmt_26"),
+    icon = "dolg",
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l04_darkvalley",
-    text    = game.translate_string( "dsmt_24" ),
-    spawn   = {
-      {
+    lname = "l04_darkvalley",
+    text = game.translate_string("dsmt_24"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { 136.10, -0.34, 29.57 },
-        lv    = 333522,
-        gv    = 913,
-      },
-    },
+        point = {136.10, -0.34, 29.57},
+        lv = 333522,
+        gv = 913
+    }},
     has_info = "bar_darklab_document_done",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-  {
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}, {
     enabled = true,
-    lname   = "l11_pripyat",
-    text    = game.translate_string( "dsmt_25" ),
-    spawn   = {
-      {
+    lname = "l11_pripyat",
+    text = game.translate_string("dsmt_25"),
+    spawn = {{
         class = "chimera_normal",
         count = 1,
-        point = { 62.06, -1.73, 43.85 },
-        lv    = 174087,
-        gv    = 2223,
-      },
-    },
+        point = {62.06, -1.73, 43.85},
+        lv = 174087,
+        gv = 2223
+    }},
     has_info = "pri_stadium_scene_start",
-    reward  = {
-      from   = "author",
-      r_type = "money",
-      c_min  = 6,
-      c_max  = 14,
-    },
-  },
-}
+    reward = {
+        from = "author",
+        r_type = "money",
+        c_min = 6,
+        c_max = 14
+    }
+}}

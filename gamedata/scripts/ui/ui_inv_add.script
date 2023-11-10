@@ -7,43 +7,43 @@ end
 
 local wnd = nil
 
-
 function inventory_open()
-	if not wnd then	
-		wnd = InvWnd(level.get_inventory_wnd())
-	end
+    if not wnd then
+        wnd = InvWnd(level.get_inventory_wnd())
+    end
 end
 
 function inventory_close()
-	if wnd then
-		wnd:DetachWnd()
-		wnd = nil
-	end
+    if wnd then
+        wnd:DetachWnd()
+        wnd = nil
+    end
 end
 
-class "InvWnd" (CUIScriptWnd)
-function InvWnd:__init(owner) super()
-	self.owner = owner
-	self:Init(0, 0, 1024, 768)
-	self:InitControls()
+class "InvWnd"(CUIScriptWnd)
+function InvWnd:__init(owner)
+    super()
+    self.owner = owner
+    self:Init(0, 0, 1024, 768)
+    self:InitControls()
 end
 
-function InvWnd:__finalize() end
+function InvWnd:__finalize()
+end
 
 function InvWnd:InitControls()
-	self.stat = CUIStatic()
-	self.stat:Init(0, 0, 1024, 768)
-	self.owner:AttachChild(self.stat)
-	self.stat:Show(true)
+    self.stat = CUIStatic()
+    self.stat:Init(0, 0, 1024, 768)
+    self.owner:AttachChild(self.stat)
+    self.stat:Show(true)
 
-	self.stat:SetAutoDelete(true)
+    self.stat:SetAutoDelete(true)
 
-	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
+    self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
 end
 
-
-function InvWnd:DetachWnd() 
-	self.DescrWnd:Remove() 
-	self.DescrWnd = nil 
-	self:ClearCallbacks()
-end 
+function InvWnd:DetachWnd()
+    self.DescrWnd:Remove()
+    self.DescrWnd = nil
+    self:ClearCallbacks()
+end

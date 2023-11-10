@@ -5,42 +5,44 @@
 --	file path:	x:\gamedata\scripts
 --	file base:	xr_attendant
 --	file ext:	script
---	author:		������ �������� aka Sidorovich
+--	author:		пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ aka Sidorovich
 --	
---	purpose:	����� ���������������.
+--	purpose:	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 ----------------------------------------------------------------------
-
 -----------------------------------------------------------------------------------
--- ��������� �������� ������
-class "evaluator_leader" (property_evaluator)
+-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+class "evaluator_leader"(property_evaluator)
 --------
-function evaluator_leader:__init (name, storage) super (nil, name)
+function evaluator_leader:__init(name, storage)
+    super(nil, name)
     self.st = storage
     self.time = 0
 end
 --------
-function evaluator_leader:evaluate ()
-    -- ����� ��� ����
-    if self.st.leader_id ~= nil then return true end
+function evaluator_leader:evaluate()
+    -- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+    if self.st.leader_id ~= nil then
+        return true
+    end
 
-    -- ���� ����� story id ������, �� ����� ��� ������. 
-    -- � ���������� ������ �������� ��� id
-    if self.st.leader ~= nil then 
-       local sim = alife ()
-       if sim then
-          local se_obj = sim:story_object (tonumber(self.st.leader))
-          if se_obj then
-             if level.object_by_id(se_obj.id) ~= nil then
-                self.st.leader_id = se_obj.id
-                return true
-             end
-          end
-       end
-       return false
-    end         
-    abort ("Don't use followers as patrol soldier in gulag system. Use XR_PATROL scheme")
---[[    
-    -- � ��������� ������ ����� ��������� ������ �� ������
+    -- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ story id пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ. 
+    -- пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ id
+    if self.st.leader ~= nil then
+        local sim = alife()
+        if sim then
+            local se_obj = sim:story_object(tonumber(self.st.leader))
+            if se_obj then
+                if level.object_by_id(se_obj.id) ~= nil then
+                    self.st.leader_id = se_obj.id
+                    return true
+                end
+            end
+        end
+        return false
+    end
+    abort("Don't use followers as patrol soldier in gulag system. Use XR_PATROL scheme")
+    --[[    
+    -- пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     local gulag = xr_gulag.get_npc_gulag (self.object)
     if gulag == nil then return false end
     
@@ -54,374 +56,373 @@ function evaluator_leader:evaluate ()
     end
     
     if self.time == 0 then 
-       self.time = device ():time_global () 
+       self.time = time_global() 
     else
-       if device ():time_global () - self.time > 10000 then  
+       if time_global() - self.time > 10000 then
           abort ("!!! ERROR !!! Leader for object %s not defined from GULAG system", self.object:name ())
           self.time = 0
           xr_gulag.resetJob (gulag, self.object)
        end
     end      
     return false
-]]    
+]]
 end
 -----------------------------------------------------------------------------------
 
-
 -----------------------------------------------------------------------------------
--- ��������� ���������� �� �������
-class "evaluator_follow" (property_evaluator)
+-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+class "evaluator_follow"(property_evaluator)
 --------
-function evaluator_follow:__init (name, storage) super (nil, name)
+function evaluator_follow:__init(name, storage)
+    super(nil, name)
     self.st = storage
 end
 --------
-function evaluator_follow:evaluate ()
-    return xr_logic.is_active (self.object, self.st)
+function evaluator_follow:evaluate()
+    return xr_logic.is_active(self.object, self.st)
 end
 -----------------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------------
--- ����� �������� ������
-class "action_wait" (action_base)
+-- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+class "action_wait"(action_base)
 --------
-function action_wait:__init (name, storage) super (nil, name)
+function action_wait:__init(name, storage)
+    super(nil, name)
     self.st = storage
-    self.was_reset  = false
+    self.was_reset = false
     self:reset_scheme()
 end
 --------
-function action_wait:initialize ()
-    action_base.initialize (self)
+function action_wait:initialize()
+    action_base.initialize(self)
 end
 --------
-function action_wait:execute ()
-    action_base.execute (self)
+function action_wait:execute()
+    action_base.execute(self)
 
-    if xr_logic.try_switch_to_another_section (self.object, self.st, db.actor) then
-       return 
+    if xr_logic.try_switch_to_another_section(self.object, self.st, db.actor) then
+        return
     end
-    
+
     if not self.was_reset then
-       self:reset_scheme ()
+        self:reset_scheme()
     end
-    
+
 end
 --------
-function action_wait:finalize ()
-    action_base.finalize (self)
+function action_wait:finalize()
+    action_base.finalize(self)
 end
 --------
-function action_wait:reset_scheme ()
+function action_wait:reset_scheme()
     self.was_reset = true
 end
 --------
-function action_wait:activate_scheme ()
+function action_wait:activate_scheme()
     self.was_reset = false
 end
 -----------------------------------------------------------------------------------
 
-
 -----------------------------------------------------------------------------------
--- ����� �������� �� �������
-class "action_follow" (action_base)
+-- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+class "action_follow"(action_base)
 --------
-function action_follow:__init (name, storage) super (nil, name)
+function action_follow:__init(name, storage)
+    super(nil, name)
     self.st = storage
-    self.was_reset  = false
+    self.was_reset = false
 end
 --------
-function action_follow:initialize ()
-    action_base.initialize (self)
-    self:reset_scheme ()
+function action_follow:initialize()
+    action_base.initialize(self)
+    self:reset_scheme()
 end
 --------
-function action_follow:execute ()
-    action_base.execute (self)
-    
+function action_follow:execute()
+    action_base.execute(self)
+
     if not self.was_reset then
-       self:reset_scheme()
+        self:reset_scheme()
     end
-    
-    if xr_logic.try_switch_to_another_section (self.object, self.st, db.actor) then
-       self.st.leader_id = nil
-       return 
+
+    if xr_logic.try_switch_to_another_section(self.object, self.st, db.actor) then
+        self.st.leader_id = nil
+        return
     end
-    
+
     -- FIXME !!! 
-    --xr_sound.set_sound(self.object, self.st.sound_theme)
-    --local pos = self.object:position ()
-    -- ��������, � ��� �� ��� �������.
+    -- xr_sound.set_sound(self.object, self.st.sound_theme)
+    -- local pos = self.object:position ()
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
     local leader = level.object_by_id(self.st.leader_id)
     if leader == nil then
-       self:free ()
-       return 
+        self:free()
+        return
     end
-       
+
     if self.st.stub_for_corpse == false then
-       if leader == nil or leader:alive () == false then
-          self.st.signals["leader_dead"] = true
-          --self:free ()
-          return 
-       end 
-    end   
-    
-    -- �������� ���������� ��� � ������
-    self:check_list ()
-    
-    if self.st.leader_section == nil then
-       self.st.leader_section = db.storage[self.st.leader_id].active_section 
-    end
-           
-    if db.storage[self.st.leader_id].active_section ~= self.st.leader_section then
-       self.st.signals["leader_section_changed"] = true 
-       self:free ()
-       return
-    end    
-    
-    
-    --������� ������� �����, ��������� �� ��� � �������.
-    local vid, vdist, vpos = self:calculate_position ()
-    if self.state == 0 then
-       if vdist > 1 then 
-          self.object:set_dest_level_vertex_id (vid)
-          self.object:set_desired_position (vpos)
-          local dir
-          if self.st.stub_for_corpse == true then 
-             local pos = leader:position ()
-             local cen = leader:center ()
-             dir = cen:sub (pos)
-             dir:normalize ()
-          else
-             dir = leader:direction ()
-          end   
-          self.object:set_desired_direction (dir)
-          self.object:set_detail_path_type (move.line)
-          self.object:set_path_type (game_object.level_path)
-          if vdist > 20 then
-             state_mgr.set_state (self.object, self.st.animation_sprint)
-          elseif vdist < 3 then
-             state_mgr.set_state (self.object, self.st.animation_move)
-          elseif vdist > 5 then
-             state_mgr.set_state (self.object, self.st.animation_run)
-          end   
-       else
-          self.state = 1
-       end        
-    else
-       if vdist > 3 then 
-          self.state = 0
-       else
-          -- FIXME (remove stub for corpse)
-          if self.st.stub_for_corpse == true then
-             if leader == nil or leader:alive () == false then
-                self.st.signals["leader_dead"] = true
-                --self:free ()
-                return 
-             end 
-          end   
-       
-          if xr_meet.is_meet (leader) == true then
-             state_mgr.set_state (self.object, self.st.state_if_leader_in_meet, nil, nil, db.actor)
-          else   
-             state_mgr.set_state (self.object, "idle")
-          end  
-       end   
-    end    
-        
-end
---------
-function action_follow:finalize ()
-    action_base.finalize (self)
-    if self.index ~= nil then
-       --table.remove (db.storage[self.st.leader_id].followers, self.index)
-       self.index = nil
-    end   
-    --xr_sound.set_sound(self.object, nil)
-end
---------
-function action_follow:calculate_position ()
-    -- ������� �� ������ ���� � �����������
-    local leader = level.object_by_id(self.st.leader_id)
-    local l_vid = leader:level_vertex_id ()
-    local l_dir = leader:direction ()
-    -- � ����� ���������� ������.
-    local size = table.getn (db.storage[self.st.leader_id].followers)
-    
-    local dir = vector ():set (0, 0, 0)
-    local dist = self.st.distance
-    -- ���� ���� �����, �� ����, ���� ������� �������, �� ������
-    if self.st.formation == true then
-       dir = vector_rotate_y (l_dir, 90.0)
-       dir.y = 0
-       dir:normalize ()
-       local half = size / 2
-       if bit_and (self.index, 1) == 1 then
-          dir.x = -dir.x
-          dir.z = -dir.z
-       end
-       dist = self.st.distance * half
-    else 
-       if size == 1 then
-          dir = vector_rotate_y (l_dir, 179.0)
-       else
-          dir = vector_rotate_y (l_dir, 90.0 + (180 / (size + 1)) * self.index)
-       end
-    end
-    
-    if self.object:accessible (l_vid) == false then
-       l_vid = self.object:level_vertex_id ()
-       if self.object:accessible (l_vid) == false then
-          l_vid = self.object:nearest_accessible_position ()
-       else
-          l_dir = level.vertex_position (l_vid)
-          return l_vid, l_dir:distance_to (self.object:position ()), l_dir
-       end   
-    end    
-    
-    local need_id = self.object:vertex_in_direction (l_vid, dir, dist)
-    if need_id == -1 then
-       need_id = l_vid
-    else
-       if self.object:accessible (need_id) == false then
-          abort ("FOLLOWER %s, ACCESSIBLE VERTEX ID ERROR !!!", self.object:name ())
-       end 
-    end
-    
-    if self.object:accessible (need_id) == false then
-       need_id = leader:level_vertex_id ()
-       if self.object:accessible (need_id) == false then
-          need_id = self.object:nearest_accessible_position ()
-          --abort ("ERROR: can't find vertex id for object %s", self.object:name ())
-       end 
-    end
-    
-    l_dir = level.vertex_position (need_id)
-    return need_id, l_dir:distance_to (self.object:position ()), l_dir
-end
---------
-function action_follow:check_list ()
-    -- ������� ��������� ������
-    local storage = db.storage[self.st.leader_id]
-    -- � ��� ��������
-    local id = self.object:id ()
-    -- ���� � ������ ��� ������� ��������������, �� �������� �� 
-    -- � ������� ���� ���� �������� ��� ������� 1
-    if storage.followers == nil then
-       storage.followers = {}
-       table.insert (storage.followers, self.object:id ())
-       self.index = 1
-       return
-    end
-    -- ����� ������� � ������� � ���� ����
-    for a = 1, table.getn (storage.followers), 1 do
-        if storage.followers[a] == id then
-           self.index = a
-           return 
+        if leader == nil or leader:alive() == false then
+            self.st.signals["leader_dead"] = true
+            -- self:free ()
+            return
         end
     end
-    -- �� �����... �������.
-    table.insert (storage.followers, self.object:id ())
-    self.index = table.getn (storage.followers)
+
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    self:check_list()
+
+    if self.st.leader_section == nil then
+        self.st.leader_section = db.storage[self.st.leader_id].active_section
+    end
+
+    if db.storage[self.st.leader_id].active_section ~= self.st.leader_section then
+        self.st.signals["leader_section_changed"] = true
+        self:free()
+        return
+    end
+
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    local vid, vdist, vpos = self:calculate_position()
+    if self.state == 0 then
+        if vdist > 1 then
+            self.object:set_dest_level_vertex_id(vid)
+            self.object:set_desired_position(vpos)
+            local dir
+            if self.st.stub_for_corpse == true then
+                local pos = leader:position()
+                local cen = leader:center()
+                dir = cen:sub(pos)
+                dir:normalize()
+            else
+                dir = leader:direction()
+            end
+            self.object:set_desired_direction(dir)
+            self.object:set_detail_path_type(move.line)
+            self.object:set_path_type(game_object.level_path)
+            if vdist > 20 then
+                state_mgr.set_state(self.object, self.st.animation_sprint)
+            elseif vdist < 3 then
+                state_mgr.set_state(self.object, self.st.animation_move)
+            elseif vdist > 5 then
+                state_mgr.set_state(self.object, self.st.animation_run)
+            end
+        else
+            self.state = 1
+        end
+    else
+        if vdist > 3 then
+            self.state = 0
+        else
+            -- FIXME (remove stub for corpse)
+            if self.st.stub_for_corpse == true then
+                if leader == nil or leader:alive() == false then
+                    self.st.signals["leader_dead"] = true
+                    -- self:free ()
+                    return
+                end
+            end
+
+            if xr_meet.is_meet(leader) == true then
+                state_mgr.set_state(self.object, self.st.state_if_leader_in_meet, nil, nil, db.actor)
+            else
+                state_mgr.set_state(self.object, "idle")
+            end
+        end
+    end
+
 end
 --------
-function action_follow:free ()
-    -- ���� �� ��� �������, �� �������� ������ ������, ����� ������ ������ � logic
-    local gulag = xr_gulag.get_npc_gulag (self.object)
+function action_follow:finalize()
+    action_base.finalize(self)
+    if self.index ~= nil then
+        -- table.remove (db.storage[self.st.leader_id].followers, self.index)
+        self.index = nil
+    end
+    -- xr_sound.set_sound(self.object, nil)
+end
+--------
+function action_follow:calculate_position()
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    local leader = level.object_by_id(self.st.leader_id)
+    local l_vid = leader:level_vertex_id()
+    local l_dir = leader:direction()
+    -- пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+    local size = table.getn(db.storage[self.st.leader_id].followers)
+
+    local dir = vector():set(0, 0, 0)
+    local dist = self.st.distance
+    -- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    if self.st.formation == true then
+        dir = vector_rotate_y(l_dir, 90.0)
+        dir.y = 0
+        dir:normalize()
+        local half = size / 2
+        if bit_and(self.index, 1) == 1 then
+            dir.x = -dir.x
+            dir.z = -dir.z
+        end
+        dist = self.st.distance * half
+    else
+        if size == 1 then
+            dir = vector_rotate_y(l_dir, 179.0)
+        else
+            dir = vector_rotate_y(l_dir, 90.0 + (180 / (size + 1)) * self.index)
+        end
+    end
+
+    if self.object:accessible(l_vid) == false then
+        l_vid = self.object:level_vertex_id()
+        if self.object:accessible(l_vid) == false then
+            l_vid = self.object:nearest_accessible_position()
+        else
+            l_dir = level.vertex_position(l_vid)
+            return l_vid, l_dir:distance_to(self.object:position()), l_dir
+        end
+    end
+
+    local need_id = self.object:vertex_in_direction(l_vid, dir, dist)
+    if need_id == -1 then
+        need_id = l_vid
+    else
+        if self.object:accessible(need_id) == false then
+            abort("FOLLOWER %s, ACCESSIBLE VERTEX ID ERROR !!!", self.object:name())
+        end
+    end
+
+    if self.object:accessible(need_id) == false then
+        need_id = leader:level_vertex_id()
+        if self.object:accessible(need_id) == false then
+            need_id = self.object:nearest_accessible_position()
+            -- abort ("ERROR: can't find vertex id for object %s", self.object:name ())
+        end
+    end
+
+    l_dir = level.vertex_position(need_id)
+    return need_id, l_dir:distance_to(self.object:position()), l_dir
+end
+--------
+function action_follow:check_list()
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    local storage = db.storage[self.st.leader_id]
+    -- пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    local id = self.object:id()
+    -- пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 
+    -- пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1
+    if storage.followers == nil then
+        storage.followers = {}
+        table.insert(storage.followers, self.object:id())
+        self.index = 1
+        return
+    end
+    -- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+    for a = 1, table.getn(storage.followers), 1 do
+        if storage.followers[a] == id then
+            self.index = a
+            return
+        end
+    end
+    -- пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ... пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    table.insert(storage.followers, self.object:id())
+    self.index = table.getn(storage.followers)
+end
+--------
+function action_follow:free()
+    -- пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ logic
+    local gulag = xr_gulag.get_npc_gulag(self.object)
 
     if gulag ~= nil then
-       if self.st.dont_change_job == false then
-          xr_gulag.resetJob (self.object)
-       end   
+        if self.st.dont_change_job == false then
+            xr_gulag.resetJob(self.object)
+        end
     else
-       xr_logic.try_switch_to_another_section (self.object, self.st, db.actor)
+        xr_logic.try_switch_to_another_section(self.object, self.st, db.actor)
     end
 end
 --------
-function action_follow:reset_scheme ()
+function action_follow:reset_scheme()
     self.was_reset = true
     self.vertex_id = nil
     self.index = nil
-    self.state = 0 -- 0 - ����, 1 - �����
+    self.state = 0 -- 0 - пїЅпїЅпїЅпїЅ, 1 - пїЅпїЅпїЅпїЅпїЅ
     self.st.signals = {}
     self.st.signals["leader_section_changed"] = false
     self.st.signals["leader_dead"] = false
     self.st.signals["leader_section_changed"] = false
     self.st.signals["leader_dead"] = false
-    --xr_sound.set_sound(self.object, self.st.sound_theme)
+    -- xr_sound.set_sound(self.object, self.st.sound_theme)
 end
 --------
-function action_follow:activate_scheme ()
+function action_follow:activate_scheme()
     self.was_reset = false
 end
 -----------------------------------------------------------------------------------
 
+function add_to_binder(npc, ini, scheme, section, storage)
 
+    local operators = {}
+    local properties = {}
 
-function  add_to_binder(npc, ini, scheme, section, storage)
-    
-    
-	local operators		= {}
-	local properties	= {}
-	
-	local manager = npc:motivation_action_manager ()
-	
-	properties["attendant_leader"]      =   xr_evaluators_id.sidor_attendant_eva + 0
-	properties["attendant_follow"]      =   xr_evaluators_id.sidor_attendant_eva + 1
+    local manager = npc:motivation_action_manager()
 
-    operators["attendant_wait"] 	    =   xr_actions_id.sidor_attendant_act + 0
-    operators["attendant_follow"]       =   xr_actions_id.sidor_attendant_act + 1
-    
-    manager:add_evaluator (properties["attendant_leader"], this.evaluator_leader ("attendant_leader", storage))
-    manager:add_evaluator (properties["attendant_follow"], this.evaluator_follow ("attendant_follow", storage))
+    properties["attendant_leader"] = xr_evaluators_id.sidor_attendant_eva + 0
+    properties["attendant_follow"] = xr_evaluators_id.sidor_attendant_eva + 1
 
-    local action = this.action_wait ("attendant_wait", storage)
-    action:add_precondition     (world_property(stalker_ids.property_alive, true))
-	action:add_precondition     (world_property(stalker_ids.property_enemy, false))
-	action:add_precondition		(world_property(stalker_ids.property_danger,false))
-    action:add_precondition     (world_property(properties["attendant_leader"], false))
-    action:add_effect           (world_property(properties["attendant_leader"], true))
-    manager:add_action (operators["attendant_wait"], action)
-   	xr_logic.subscribe_action_for_events (npc, storage, action)
+    operators["attendant_wait"] = xr_actions_id.sidor_attendant_act + 0
+    operators["attendant_follow"] = xr_actions_id.sidor_attendant_act + 1
 
-    action = this.action_follow ("attendant_follow", storage)
-    action:add_precondition     (world_property(stalker_ids.property_alive,		true))
-    action:add_precondition     (world_property(stalker_ids.property_enemy,		false))
-    action:add_precondition		(world_property(stalker_ids.property_danger,	false))
-    action:add_precondition     (world_property(properties["attendant_leader"], true))
-    action:add_precondition     (world_property(properties["attendant_follow"], true))
-    action:add_effect           (world_property(properties["attendant_follow"], false))
-    manager:add_action (operators["attendant_follow"], action)
-   	xr_logic.subscribe_action_for_events (npc, storage, action)
-    
-    --xr_logic.subscribe_action_for_events (npc, storage, action)
-    
-    action = manager:action     (xr_actions_id.alife)
-    action:add_precondition     (world_property (properties["attendant_follow"], false))
-    
+    manager:add_evaluator(properties["attendant_leader"], this.evaluator_leader("attendant_leader", storage))
+    manager:add_evaluator(properties["attendant_follow"], this.evaluator_follow("attendant_follow", storage))
+
+    local action = this.action_wait("attendant_wait", storage)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(world_property(stalker_ids.property_enemy, false))
+    action:add_precondition(world_property(stalker_ids.property_danger, false))
+    action:add_precondition(world_property(properties["attendant_leader"], false))
+    action:add_effect(world_property(properties["attendant_leader"], true))
+    manager:add_action(operators["attendant_wait"], action)
+    xr_logic.subscribe_action_for_events(npc, storage, action)
+
+    action = this.action_follow("attendant_follow", storage)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(world_property(stalker_ids.property_enemy, false))
+    action:add_precondition(world_property(stalker_ids.property_danger, false))
+    action:add_precondition(world_property(properties["attendant_leader"], true))
+    action:add_precondition(world_property(properties["attendant_follow"], true))
+    action:add_effect(world_property(properties["attendant_follow"], false))
+    manager:add_action(operators["attendant_follow"], action)
+    xr_logic.subscribe_action_for_events(npc, storage, action)
+
+    -- xr_logic.subscribe_action_for_events (npc, storage, action)
+
+    action = manager:action(xr_actions_id.alife)
+    action:add_precondition(world_property(properties["attendant_follow"], false))
+
 end
 
-function set_scheme (npc, ini, scheme, section, gulag_name)
-	local st = xr_logic.assign_storage_and_bind (npc, ini, scheme, section)
-	st.logic = xr_logic.cfg_get_switch_conditions (ini, section, npc)
-	
-	st.leader = utils.cfg_get_string (ini, section, "leader",  npc, false, "")
-	st.leader_section = nil
-	st.animation_move = utils.cfg_get_string (ini, section, "anim_walk",  npc, false, "", "patrol")
-	st.animation_run = utils.cfg_get_string (ini, section, "anim_run",  npc, false, "", "run")
-	st.animation_sprint = utils.cfg_get_string (ini, section, "anim_sprint",  npc, false, "", "sprint")
-	st.formation = utils.cfg_get_bool (ini, section, "formation_line", npc, false, false)
-	st.distance = utils.cfg_get_number (ini, section, "distance", npc, false)
-	if st.distance == nil then
-	   if st.formation == false then
-          st.distance = 1.5
-	   else 
-          st.distance = 5
-	   end
-	end   
-	st.sound_theme = utils.cfg_get_string (ini, section, "snd",  npc, false, "", "state")
-	if st.sound_theme == "silent" then st.sound_theme = nil end
-    st.state_if_leader_in_meet = utils.cfg_get_string (ini, section, "state_if_leader_in_meet", npc, false, "", "idle")
-    st.stub_for_corpse = utils.cfg_get_bool (ini, section, "stub_for_corpse", npc, false, false)
-    st.dont_change_job = utils.cfg_get_bool (ini, section, "dont_change_job", npc, false, false)
+function set_scheme(npc, ini, scheme, section, gulag_name)
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+
+    st.leader = get_string(section, "leader", nil, ini)
+    st.leader_section = nil
+    st.animation_move = get_string(section, "anim_walk", "patrol", ini)
+    st.animation_run = get_string(section, "anim_run", "run", ini)
+    st.animation_sprint = get_string(section, "anim_sprint", "sprint", ini)
+    st.formation = get_bool(section, "formation_line", false, ini)
+    st.distance = get_u32(section, "distance", nil, ini)
+    if st.distance == nil then
+        if st.formation == false then
+            st.distance = 1.5
+        else
+            st.distance = 5
+        end
+    end
+    st.sound_theme = get_string(section, "snd", "state", ini)
+    if st.sound_theme == "silent" then
+        st.sound_theme = nil
+    end
+    st.state_if_leader_in_meet = get_string(section, "state_if_leader_in_meet", "idle", ini)
+    st.stub_for_corpse = get_bool(section, "stub_for_corpse", false, ini)
+    st.dont_change_job = get_bool(section, "dont_change_job", false, ini)
 end

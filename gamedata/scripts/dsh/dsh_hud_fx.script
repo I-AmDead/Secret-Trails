@@ -1,296 +1,304 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 local cur_wpn = {}
 
-local wpn_fx  = dsh_hud_fx_data.wpn_fx
-local stand_power = get_float( "actor_condition", "stand_power" )
-local time_factor = get_float( "alife", "time_factor" )
+local wpn_fx = dsh_hud_fx_data.wpn_fx
+local stand_power = get_float("actor_condition", "stand_power")
+local time_factor = get_float("alife", "time_factor")
 
 local nlc7_act_breath = {
-  [ "wht" ] = {
-    { "actor\\nlc7\\without_mask_1_",  2, 1.2 },
-    { "actor\\nlc7\\without_mask_2_",  2, 1.1 },
-    { "actor\\nlc7\\without_mask_3_",  6, 1   },
-  },
-  [ "gas" ] = {
-    { "actor\\nlc7\\gas_mask_1_",      6, 1.2 },
-    { "actor\\nlc7\\gas_mask_2_",      6, 1.0 },
-    { "actor\\nlc7\\gas_mask_3_",     10, 0.9 },
-    { "actor\\nlc7\\gas_mask_4_",     10, 0.8 },
-  },
-  [ "exo" ] = {
-    { "actor\\nlc7\\exo_mask_1_",      9, 1.7 },
-    { "actor\\nlc7\\exo_mask_2_",      9, 1.5 },
-    { "actor\\nlc7\\exo_mask_3_",      9, 1.3 },
-    { "actor\\nlc7\\exo_mask_4_",      8, 1.1 },
-  },
-  [ "scn" ] = {
-    { "actor\\nlc7\\scient_mask_1_",   2, 1.8 },
-    { "actor\\nlc7\\scient_mask_2_",   2, 1.6 },
-    { "actor\\nlc7\\scient_mask_3_",   2, 1.4 },
-    { "actor\\nlc7\\scient_mask_4_",   6, 1.2 },
-  },
-}
+    [ "wht" ] = {
+      { "actor\\nlc7\\without_mask_1_",  2, 1.2 },
+      { "actor\\nlc7\\without_mask_2_",  2, 1.1 },
+      { "actor\\nlc7\\without_mask_3_",  6, 1   },
+    },
+    [ "gas" ] = {
+      { "actor\\nlc7\\gas_mask_1_",      6, 1.2 },
+      { "actor\\nlc7\\gas_mask_2_",      6, 1.0 },
+      { "actor\\nlc7\\gas_mask_3_",     10, 0.9 },
+      { "actor\\nlc7\\gas_mask_4_",     10, 0.8 },
+    },
+    [ "exo" ] = {
+      { "actor\\nlc7\\exo_mask_1_",      9, 1.7 },
+      { "actor\\nlc7\\exo_mask_2_",      9, 1.5 },
+      { "actor\\nlc7\\exo_mask_3_",      9, 1.3 },
+      { "actor\\nlc7\\exo_mask_4_",      8, 1.1 },
+    },
+    [ "scn" ] = {
+      { "actor\\nlc7\\scient_mask_1_",   2, 1.8 },
+      { "actor\\nlc7\\scient_mask_2_",   2, 1.6 },
+      { "actor\\nlc7\\scient_mask_3_",   2, 1.4 },
+      { "actor\\nlc7\\scient_mask_4_",   6, 1.2 },
+    },
+  }
 
 local time_distortion = 0
 local breath_rnd = 1
 local breath_size = 0
 
-local function start_breath_distortion( min, max )
+local function start_breath_distortion(min, max)
 
-	if breath_distortion_timer then
-		breath_distortion_timer:stop()
-		breath_distortion_timer = nil
-	end
+    if breath_distortion_timer then
+        breath_distortion_timer:stop()
+        breath_distortion_timer = nil
+    end
 
-	breath_distortion_timer = dsh.wait_condition(
-		function()
-			local size = shader_get_custom_param("breath_size")
-			size = min / 10000
-			shader_set_custom_param("breath_size", size)
-			shader_set_custom_param("breath_idx", breath_rnd)
-			if min > max then
-				min = min - 100
-				breath_size = min
-			else
-				min = min + 100
-				breath_size = min
-			end
-			return min == max
-		end,
-		function() breath_distortion_timer = nil end,
-		function() ogsr_signals.get_mgr():reschedule(time_distortion) end
-	)
+    breath_distortion_timer = dsh.wait_condition(function()
+        local size = shader_get_custom_param("breath_size")
+        size = min / 10000
+        shader_set_custom_param("breath_size", size)
+        shader_set_custom_param("breath_idx", breath_rnd)
+        if min > max then
+            min = min - 100
+            breath_size = min
+        else
+            min = min + 100
+            breath_size = min
+        end
+        return min == max
+    end, function()
+        breath_distortion_timer = nil
+    end, function()
+        ogsr_signals.get_mgr():reschedule(time_distortion)
+    end)
 end
 
 function attach(sm)
-  sm:subscribe({ signal = "on_actor_weapon_fire", fun = this.on_actor_weapon_fire })
-  sm:subscribe({ signal = "on_update", fun = this.on_update_heart })
+    sm:subscribe({signal = "on_actor_weapon_fire",  fun = this.on_actor_weapon_fire})
+    sm:subscribe({signal = "on_update",             fun = this.on_update_heart})
 end
 
 local cur_wpn = {}
-function get_wpn_info( wpn )
-  local t = cur_wpn
-  if ( not t.name ) or t.name ~= wpn:name() then
-    t.const_dev_t      = 0
-    t.dispersion_start = get_u32( wpn:section(), "dispersion_start" )
-    t.fire_power_loss  = get_fire_power_loss( wpn )
-    t.hit_power        = get_float( wpn:section(), "hit_power"   )
-    t.hit_power_2      = get_float( wpn:section(), "hit_power_2" )
-    t.id               = wpn:id()
-    t.inv_weight       = get_float( wpn:section(), "inv_weight", 0 )
-    t.is_knife         = wpn:is_knife()
-    t.name             = wpn:name()
-    t.zoom_body_state  = "unknown"
-    t.zoom_enabled     = get_bool( wpn:section(), "zoom_enabled", true )
-  end
-  t.wpn = wpn
-  return cur_wpn
+function get_wpn_info(wpn)
+    local t = cur_wpn
+    if (not t.name) or t.name ~= wpn:name() then
+        t.const_dev_t = 0
+        t.dispersion_start = get_u32(wpn:section(), "dispersion_start")
+        t.fire_power_loss = get_fire_power_loss(wpn)
+        t.hit_power = get_float(wpn:section(), "hit_power")
+        t.hit_power_2 = get_float(wpn:section(), "hit_power_2")
+        t.id = wpn:id()
+        t.inv_weight = get_float(wpn:section(), "inv_weight", 0)
+        t.is_knife = wpn:is_knife()
+        t.name = wpn:name()
+        t.zoom_body_state = "unknown"
+        t.zoom_enabled = get_bool(wpn:section(), "zoom_enabled", true)
+    end
+    t.wpn = wpn
+    return cur_wpn
 end
 
-function get_fire_power_loss( wpn )
-  local sect = wpn:section()
-  local fire_power_loss_k = get_float( sect, "dsh_wpn.fire_power_loss_k", 1 )
-  return stand_power * time_factor * fire_power_loss_k
+function get_fire_power_loss(wpn)
+    local sect = wpn:section()
+    local fire_power_loss_k = get_float(sect, "dsh_wpn.fire_power_loss_k", 1)
+    return stand_power * time_factor * fire_power_loss_k
 end
 
 local cached_wpn = {}
-function get_wpn_params( sect )
-  if not cached_wpn[ sect ] then
-    local t = {}
-    t.wpn_fx = get_string( sect, "dsh_hud_fx.wpn_fx" )
-    t.wpn_fx_creep = get_string( sect, "dsh_hud_fx.wpn_fx_creep" )
-    cached_wpn[ sect ] = t
-  end
-  return cached_wpn[ sect ]
+function get_wpn_params(sect)
+    if not cached_wpn[sect] then
+        local t = {}
+        t.wpn_fx = get_string(sect, "dsh_hud_fx.wpn_fx")
+        t.wpn_fx_creep = get_string(sect, "dsh_hud_fx.wpn_fx_creep")
+        cached_wpn[sect] = t
+    end
+    return cached_wpn[sect]
 end
 
-
-function on_actor_weapon_fire( wpn )
-  local cur_wpn = get_wpn_info( wpn )
-  local shot_n  = wpn:is_weapon_magazined()
-    and wpn:get_weapon_m().shot_num or 1
-  if cur_wpn.dispersion_start then
-    local qs = ogse_wpn_utils.get_queue_size( wpn )
-    if qs < 0 or qs >= cur_wpn.dispersion_start then
-      if shot_n < cur_wpn.dispersion_start then return end
+function on_actor_weapon_fire(wpn)
+    local cur_wpn = get_wpn_info(wpn)
+    local shot_n = wpn:is_weapon_magazined() and wpn:get_weapon_m().shot_num or 1
+    if cur_wpn.dispersion_start then
+        local qs = ogse_wpn_utils.get_queue_size(wpn)
+        if qs < 0 or qs >= cur_wpn.dispersion_start then
+            if shot_n < cur_wpn.dispersion_start then
+                return
+            end
+        end
     end
-  end
-  local params
-  if cur_wpn.gl_mode then
-    if cur_wpn.gl_name then
-      params = get_wpn_params( cur_wpn.gl_name )
+    local params
+    if cur_wpn.gl_mode then
+        if cur_wpn.gl_name then
+            params = get_wpn_params(cur_wpn.gl_name)
+        else
+            return
+        end
     else
-      return
+        params = get_wpn_params(wpn:section())
     end
-  else
-    params = get_wpn_params( wpn:section() )
-  end
-  local aobj = get_actor_obj()
-  local sect
-  if aobj:is_actor_creep() then
-    sect = params.wpn_fx_creep or params.wpn_fx
-  else
-    sect = params.wpn_fx
-  end
-  if not wpn_fx[ sect ] then return end
-
-  local anims = {}
-  local s     = wpn_fx[ sect ].s
-  local sc    = table.getn( s )
-
-  if sc > 1 then
-    if wpn_fx[ sect ].r == 1 then
-      s = s[ math.random( table.getn( s ) ) ]
-    elseif wpn_fx[ sect ].r == 2 then
-      if shot_n == 1 then
-        s = s[ 1 ]
-      else
-        s = s[ math.random( 2, table.getn( s ) ) ]
-      end
+    local aobj = get_actor_obj()
+    local sect
+    if aobj:is_actor_creep() then
+        sect = params.wpn_fx_creep or params.wpn_fx
     else
-      sc = ( shot_n <= sc ) and shot_n
-        or ( sc > 2 and math.random( sc - 1, sc ) )
-        or sc
-      s  = s[ sc ]
+        sect = params.wpn_fx
     end
-  else
-    s = s[ 1 ]
-  end
+    if not wpn_fx[sect] then
+        return
+    end
 
-  local ammo_r = 1
-  local fov_r  = ammo_r * ( db.actor:zoom_mode() and 0.13 or 1 )
-  for i, v in ipairs( wpn_fx[ sect ].e ) do
-    cnt, r = math.modf( v[ 1 ] * fov_r )
-    if r ~= 0 and cnt > 4 then -- fmb
-      cnt = cnt - cnt * math.random( 0, r * 100 ) / 100 -- fmb
-      cnt, r = math.modf( cnt )
-    end
-    if r ~= 0 and math.random() < r then
-      cnt = cnt + 1
-    end
-    if cnt > 0 then
-      table.insert( anims, {
-        e = i, d = v[ 2 ] or math.random( 0, 1 ), c = cnt
-      })
-    end
-  end
+    local anims = {}
+    local s = wpn_fx[sect].s
+    local sc = table.getn(s)
 
-  for i, a in ipairs( anims ) do
-    local n = string.format( [[shoot\s%s_e%s_%s.anm]], s, a.e, a.d )
-    for ii = 1, a.c do
-      game.play_hud_anm(n, 2, 1, 1, false, true)
-      level.add_cam_effector( n, math.random( 5000, 8000 ), false, "" )
+    if sc > 1 then
+        if wpn_fx[sect].r == 1 then
+            s = s[math.random(table.getn(s))]
+        elseif wpn_fx[sect].r == 2 then
+            if shot_n == 1 then
+                s = s[1]
+            else
+                s = s[math.random(2, table.getn(s))]
+            end
+        else
+            sc = (shot_n <= sc) and shot_n or (sc > 2 and math.random(sc - 1, sc)) or sc
+            s = s[sc]
+        end
+    else
+        s = s[1]
     end
-  end
 
-  for k, v in pairs( wpn_fx[ sect ].p ) do
-    local n   = string.format( [[shoot\%s_s%s.ppe]], k, s )
-    local eid = math.random( 5000, 8000 )
-    level.add_pp_effector( n, eid, false )
-    if v > 0 then
-      level.set_pp_effector_factor( eid, v )
+    local ammo_r = 1
+    local fov_r = ammo_r * (db.actor:zoom_mode() and 0.13 or 1)
+    for i, v in ipairs(wpn_fx[sect].e) do
+        cnt, r = math.modf(v[1] * fov_r)
+        if r ~= 0 and cnt > 4 then -- fmb
+            cnt = cnt - cnt * math.random(0, r * 100) / 100 -- fmb
+            cnt, r = math.modf(cnt)
+        end
+        if r ~= 0 and math.random() < r then
+            cnt = cnt + 1
+        end
+        if cnt > 0 then
+            table.insert(anims, {
+                e = i,
+                d = v[2] or math.random(0, 1),
+                c = cnt
+            })
+        end
     end
-  end
+
+    for i, a in ipairs(anims) do
+        local n = string.format([[shoot\s%s_e%s_%s.anm]], s, a.e, a.d)
+        for ii = 1, a.c do
+            game.play_hud_anm(n, 2, 1, 1, false, true)
+            level.add_cam_effector(n, math.random(5000, 8000), false, "")
+        end
+    end
+
+    for k, v in pairs(wpn_fx[sect].p) do
+        local n = string.format([[shoot\%s_s%s.ppe]], k, s)
+        local eid = math.random(5000, 8000)
+        level.add_pp_effector(n, eid, false)
+        if v > 0 then
+            level.set_pp_effector_factor(eid, v)
+        end
+    end
 end
 
-
-local delt   = 0
+local delt = 0
 local deltsh = 0
 local delt_h = 0
 local breath_double
 
 function nlc7_actor_heart()
-	local npc = db.actor
-	if not npc then return end
-	local hb = npc.health
-	if hb <= 0 or not npc:alive() then return end
-	local time_curr = time_global()
-	local time_delt = 0
-	local step = 1
-	if hb < 0.3 then
-		time_delt = time_curr - delt_h
-		if time_delt >= math.log( hb * 200 ) * 200 then
-			if hb < 0.05 then
-				step = 3
-			elseif hb < 0.15 then
-				step = 2
-			else
-				step = 1
-			end
-			local snd_fname = "actor\\nlc7\\heartbeat_" .. step .. "_" .. math.random( 4 )
-			local snd = sound_object( snd_fname )
-			snd.volume = 1.5 - 5 * hb
-			snd:play( db.actor, 0, sound_object.s2d )
-			delt_h = time_curr
-		end
-	end
-	local r_h = npc.power
-	local tip = "wht"
-	local outfit = db.actor:item_in_slot(6)
-	if outfit then
-		local outfitname = outfit:section()
-		local intensity = get_string(outfitname, "intensity")
-		if intensity == "0.3" then
-			tip = "gas"
-		elseif intensity == "0.5" or intensity == "0.6" then
-			tip = "exo"
-		elseif intensity == "0.75" then
-			tip = "scn"
-		else
-			tip = "wht"
-		end
-	end
+    local npc = db.actor
+    if not npc then
+        return
+    end
+    local hb = npc.health
+    if hb <= 0 or not npc:alive() then
+        return
+    end
+    local time_curr = time_global()
+    local time_delt = 0
+    local step = 1
+    if hb < 0.3 then
+        time_delt = time_curr - delt_h
+        if time_delt >= math.log(hb * 200) * 200 then
+            if hb < 0.05 then
+                step = 3
+            elseif hb < 0.15 then
+                step = 2
+            else
+                step = 1
+            end
+            local snd_fname = "actor\\nlc7\\heartbeat_" .. step .. "_" .. math.random(4)
+            local snd = sound_object(snd_fname)
+            snd.volume = 1.5 - 5 * hb
+            snd:play(db.actor, 0, sound_object.s2d)
+            delt_h = time_curr
+        end
+    end
+    local r_h = npc.power
+    local tip = "wht"
+    local outfit = db.actor:item_in_slot(6)
+    if outfit then
+        local outfitname = outfit:section()
+        local intensity = get_string(outfitname, "intensity")
+        if intensity == "0.3" then
+            tip = "gas"
+        elseif intensity == "0.5" or intensity == "0.6" then
+            tip = "exo"
+        elseif intensity == "0.75" then
+            tip = "scn"
+        else
+            tip = "wht"
+        end
+    end
 
-	if r_h < 0.25 then
-		step = 3
-	elseif r_h < 0.5  then
-		step = 2
-	else
-		step = 1
-	end
-
-	if tip ~= "wht" then
-		if r_h < 0.25 then
-			step = 4
-		elseif r_h < 0.5 then
-			step = 3
-		elseif r_h < 0.85 then
-			step = 2
-		else
-			step = 1
-		end
-		time_delt = time_curr - delt
-		if time_delt >= r_h * 1500 + 800 then
-			delt = time_curr
-			time_distortion = (r_h * 1500 + 800) * 0.001
-			start_breath_distortion(breath_size, 6000 + (1000 - (1000 * r_h)))
-			breath_double = true
-			breath_rnd = math.random(0, 10)
-			local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
-			local snd = xr_sound.get_safe_sound_object( snd_fname )
-			snd.volume = 2.5 - nlc7_act_breath[ tip ][ step ][ 3 ] - r_h
-			snd:play( db.actor, 0, sound_object.s2d )
-			delt = time_curr
-		elseif time_delt >= (r_h * 1500 + 600) * (0.4 / step) + step * 90 and breath_double then
-			time_distortion = (1.5 * 1500 + 700) * 0.012
-			start_breath_distortion(breath_size, 0)
-			breath_double = false
-		end
-	else
-		if r_h < 0.79 then
-			local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
-			local snd = xr_sound.get_safe_sound_object( snd_fname )
-			snd.volume = 2.5 - nlc7_act_breath[ tip ][ step ][ 3 ] - r_h
-			snd:play( db.actor, 0, sound_object.s2d )
-			delt = time_curr
-			cmd("breath_size", 0)
-		end
-	end
+    if tip ~= "wht" then
+        if r_h < 0.25 then
+            step = 4
+        elseif r_h < 0.5 then
+            step = 3
+        elseif r_h < 0.85 then
+            step = 2
+        else
+            step = 1
+        end
+        time_delt = time_curr - delt
+        if time_delt >= r_h * 1500 + 800 then
+            delt = time_curr
+            time_distortion = (r_h * 1500 + 800) * 0.001
+            start_breath_distortion(breath_size, 6000 + (1000 - (1000 * r_h)))
+            breath_double = true
+            breath_rnd = math.random(0, 10)
+            local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
+            local snd = xr_sound.get_safe_sound_object(snd_fname)
+            snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
+            snd:play(db.actor, 0, sound_object.s2d)
+            delt = time_curr
+        elseif time_delt >= (r_h * 1500 + 600) * (0.4 / step) + step * 90 and breath_double then
+            time_distortion = (1.5 * 1500 + 700) * 0.012
+            start_breath_distortion(breath_size, 0)
+            breath_double = false
+        end
+    else
+        if r_h < 0.79 then
+            time_delt = time_curr - delt
+            if time_delt >= r_h * 1500 + 800 then
+                if r_h < 0.25 then
+                    step = 3
+                elseif r_h < 0.5 then
+                    step = 2
+                else
+                    step = 1
+                end
+                local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
+                local snd = xr_sound.get_safe_sound_object(snd_fname)
+                snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
+                snd:play(db.actor, 0, sound_object.s2d)
+                delt = time_curr
+                cmd("breath_size", 0)
+            end
+        end
+    end
 end
 
 function on_update_heart()
-  ogsr_signals.get_mgr():reschedule( 113 )
-  if not db.actor:alive() then return end
-  nlc7_actor_heart()
+    ogsr_signals.get_mgr():reschedule(113)
+    if not db.actor:alive() then
+        return
+    end
+    nlc7_actor_heart()
 end

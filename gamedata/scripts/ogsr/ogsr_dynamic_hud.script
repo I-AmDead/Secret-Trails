@@ -2,45 +2,45 @@
 -|ogsr_dynamic_hud.script
 -|Updated I AM DEAD, xrKrodin
 -|Last Update I AM DEAD
-------------------------------------------------------------------------]]
+------------------------------------------------------------------------]] 
 
 function attach(sm)
-	sm:subscribe({ signal = "on_spawn",           fun = this.off_shader_effects })
-	sm:subscribe({ signal = "on_death",           fun = this.off_shader_effects })
-	sm:subscribe({ signal = "on_first_update",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_item_to_slot",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_item_to_ruck",    fun = this.update_suit_hud })
-	sm:subscribe({ signal = "on_drop",            fun = this.update_suit_hud })
+	sm:subscribe({signal = "on_spawn",           fun = this.off_shader_effects})
+	sm:subscribe({signal = "on_death",           fun = this.off_shader_effects})
+	sm:subscribe({signal = "on_first_update",    fun = this.update_suit_hud})
+	sm:subscribe({signal = "on_item_to_slot",    fun = this.update_suit_hud})
+	sm:subscribe({signal = "on_item_to_ruck",    fun = this.update_suit_hud})
+	sm:subscribe({signal = "on_drop",            fun = this.update_suit_hud})
 end
 
-local suithud_enable = false --когда садимся/выходим из БТР, этот параметр убирает/возвращает худ
+local suithud_enable = false -- когда садимся/выходим из БТР, этот параметр убирает/возвращает худ
 local function check_my_suit_hud()
-	local outfit = db.actor:item_in_slot(6)
-	if outfit then
-		local outfitname = outfit:section()
-		local control = get_string(outfitname, "control" )
-		local intensity = get_string(outfitname, "intensity" )		
+    local outfit = db.actor:item_in_slot(6)
+    if outfit then
+        local outfitname = outfit:section()
+        local control = get_string(outfitname, "control")
+        local intensity = get_string(outfitname, "intensity")
 
-		cmd("r2_mask_control "..control)
-		cmd("r2_visor_refl_control "..control)
-		cmd("r2_visor_refl_intensity "..intensity)
-		cmd("r2_rain_drops_control "..control)
-		cmd("gasmask_inertia 0.6, 0.6, 0.6, 0.0")
-	else
-		cmd("r2_mask_control 0")
-		cmd("r2_visor_refl_control 0")
-		cmd("r2_visor_refl_intensity 0")
-		cmd("r2_rain_drops_control 0")
-	end
+        cmd("r2_mask_control " .. control)
+        cmd("r2_visor_refl_control " .. control)
+        cmd("r2_visor_refl_intensity " .. intensity)
+        cmd("r2_rain_drops_control " .. control)
+        cmd("gasmask_inertia 0.6, 0.6, 0.6, 0.0")
+    else
+        cmd("r2_mask_control 0")
+        cmd("r2_visor_refl_control 0")
+        cmd("r2_visor_refl_intensity 0")
+        cmd("r2_rain_drops_control 0")
+    end
 end
 
 function update_suit_hud()
-	check_my_suit_hud()
+    check_my_suit_hud()
 end
 
 function off_shader_effects()
-	cmd("r2_mask_control 0")
-	cmd("r2_visor_refl_control 0")
-	cmd("r2_visor_refl_intensity 0")
-	cmd("r2_rain_drops_control 0")
+    cmd("r2_mask_control 0")
+    cmd("r2_visor_refl_control 0")
+    cmd("r2_visor_refl_intensity 0")
+    cmd("r2_rain_drops_control 0")
 end

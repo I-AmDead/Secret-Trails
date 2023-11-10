@@ -1,23 +1,21 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-------------- ¡»Œ–¿ƒ¿– -------------
--- DÂÚÂÍÚÓ ÊË‚˚ı ÙÓÏ, ·Û‰¸ ÓÌ ÌÂÎ‡‰ÂÌ.
--- ¿‚ÚÓ Charsi
+------------- –ë–ò–û–†–ê–î–ê–† -------------
+-- D–µ—Ç–µ–∫—Ç–æ—Ä –∂–∏–≤—ã—Ö —Ñ–æ—Ä–º, –±—É–¥—å –æ–Ω –Ω–µ–ª–∞–¥–µ–Ω.
+-- –ê–≤—Ç–æ—Ä Charsi
 -- Data 29.11.2012
--- ÔÂÂ‡·ÓÚÍ‡ ‰Îˇ OGSE KamikaZze 2012-2014
--- ŒÔÚËÏËÁ‡ˆËˇ, ËÒÔ‡‚ÎÂÌËÂ Ó¯Ë·ÓÍ: KRodin (c) 2016
+-- –ø–µ—Ä–µ—Ä–∞–±–æ—Ç–∫–∞ –¥–ª—è OGSE KamikaZze 2012-2014
+-- –û–ø—Ç–∏–º–∏–∑–∞—Ü–∏—è, –∏—Å–ø—Ä–∞–≤–ª–µ–Ω–∏–µ –æ—à–∏–±–æ–∫: KRodin (c) 2016
+-- –í–æ–ª–Ω–∞, –∑–∞—Ç—É—Ö–∞–Ω–∏–µ —Ç–æ—á–µ–∫ –∏ –∑–≤—É–∫ –≤—ã–∫–ª—é—á–µ–Ω—ã, –ø–æ—Ç–æ–º—É —á—Ç–æ 1.)—ç—Ç–æ –≥–ª—é—á–Ω–æ 2.)–Ω–µ–∫—Ä–∞—Å–∏–≤–æ
 
--- ¬ÓÎÌ‡, Á‡ÚÛı‡ÌËÂ ÚÓ˜ÂÍ Ë Á‚ÛÍ ‚˚ÍÎ˛˜ÂÌ˚, ÔÓÚÓÏÛ ˜ÚÓ 1.)˝ÚÓ „Î˛˜ÌÓ 2.)ÌÂÍ‡ÒË‚Ó
-
-------------- Õ‡ÒÚÓÈÍË ------------
-local max_dist = 60 --Ã‡ÍÒ. ‡ÒÒÚÓˇÌËÂ ‰Ó ˆÂÎË ‚ Ë„Ó‚˚ı ÏÂÚ‡ı
-local d = 128 --KRodin: œÛÒÚ¸ Ú‡Í Ë ·Û‰ÂÚ, ÌÂ ÚÓ„‡Ú¸!
-local screen_max_dist = 85 --ÿËËÌ‡ ËÏÂÌÌÓ ‡‰‡‡ (ÕÂ ÚÂÍÒÚÛ˚!) ‚ ÔËÍÒÂÎˇı
-local dot_size = 3 --–‡ÁÏÂ ÚÓ˜ÍË (˜ÂÏ ·ÓÎ¸¯Â - ÚÂÏ ÚÓ˜Í‡ ÍÛÔÌÂÂ)
+------------- –ù–∞—Å—Ç—Ä–æ–π–∫–∏ ------------
+local max_dist = 60 -- –ú–∞–∫—Å. —Ä–∞—Å—Å—Ç–æ—è–Ω–∏–µ –¥–æ —Ü–µ–ª–∏ –≤ –∏–≥—Ä–æ–≤—ã—Ö –º–µ—Ç—Ä–∞—Ö
+local d = 128 -- KRodin: –ü—É—Å—Ç—å —Ç–∞–∫ –∏ –±—É–¥–µ—Ç, –Ω–µ —Ç—Ä–æ–≥–∞—Ç—å!
+local screen_max_dist = 85 -- –®–∏—Ä–∏–Ω–∞ –∏–º–µ–Ω–Ω–æ —Ä–∞–¥–∞—Ä–∞ (–ù–µ —Ç–µ–∫—Å—Ç—É—Ä—ã!) –≤ –ø–∏–∫—Å–µ–ª—è—Ö
+local dot_size = 3 -- –†–∞–∑–º–µ—Ä —Ç–æ—á–∫–∏ (—á–µ–º –±–æ–ª—å—à–µ - —Ç–µ–º —Ç–æ—á–∫–∞ –∫—Ä—É–ø–Ω–µ–µ)
 -------------------------------------
-local biomap_sweep_enabled = true -- I am dead: ¬ÍÎ˛˜ÂÌËÂ Ë ‚˚ÍÎ˛˜ÂÌËÂ ‚ÓÎÌ˚.
-local biomap_sweep_dots_enabled = false -- I am dead: ¬ÍÎ˛˜ÂÌËÂ Ë ‚˚ÍÎ˛˜ÂÌËÂ Û„‡Ò‡ÌËÂ ÚÓ˜ÂÍ.
-local step_angle = 3 / 180 -- ¯‡„ Á‡ ‡Ô‰ÂÈÚ (ÒÍÓÓÒÚ¸ ÔÓ‚ÓÓÚ‡)
+local biomap_sweep_enabled = true -- I am dead: –í–∫–ª—é—á–µ–Ω–∏–µ –∏ –≤—ã–∫–ª—é—á–µ–Ω–∏–µ –≤–æ–ª–Ω—ã.
+local biomap_sweep_dots_enabled = false -- I am dead: –í–∫–ª—é—á–µ–Ω–∏–µ –∏ –≤—ã–∫–ª—é—á–µ–Ω–∏–µ —É–≥–∞—Å–∞–Ω–∏–µ —Ç–æ—á–µ–∫.
+local step_angle = 3 / 180 -- —à–∞–≥ –∑–∞ –∞–ø–¥–µ–π—Ç (—Å–∫–æ—Ä–æ—Å—Ç—å –ø–æ–≤–æ—Ä–æ—Ç–∞)
 local angle = 0
 local lim_angle = 1000 * 2 * math.pi
 local biomap
@@ -65,381 +63,418 @@ function attach(sm)
 	sm:subscribe({signal = "on_inventory_open", 	fun = this.hud_hide})
 	sm:subscribe({signal = "on_pda_hide", 		fun = this.hud_show})
 	sm:subscribe({signal = "on_pda_open", 		fun = this.hud_hide})
+	sm:subscribe({signal = "on_actor_weapon_zoom_in", fun = this.on_zoom_in})
+	sm:subscribe({signal = "on_actor_weapon_zoom_out", fun = this.on_zoom_out})
 end
 
 local subscribed
 
 function subscribe()
-	if not subscribed then
-		subscribed = true
-	end
+    if not subscribed then
+        subscribed = true
+    end
 end
 
 function unsubscribe()
-	if subscribed then
-		subscribed = nil
-		bioradar_hide()
-	end
+    if subscribed then
+        subscribed = nil
+        bioradar_hide()
+    end
 end
 
 function on_item_to_slot(obj)
-	if obj:section() == "bioradar" then
-		subscribe()
-	end
+    if obj:section() == "bioradar" then
+        subscribe()
+    end
 end
 
 function on_item_to_ruck(obj)
-	if obj:section() == "bioradar" then --·ËÓ‡‰‡ ‚ «ÓÌÂ ÂÒÚ¸ ‚ Â‰ËÌÒÚ‚ÂÌÌÓÏ ˝ÍÁÂÏÔÎˇÂ, ÔÓ˝ÚÓÏÛ ÔÓ‚ÂÍÛ ÔÓ id ÌÂ ‰ÂÎ‡Î.
-		unsubscribe()
-	end
+    if obj:section() == "bioradar" then -- –±–∏–æ—Ä–∞–¥–∞—Ä –≤ –ó–æ–Ω–µ –µ—Å—Ç—å –≤ –µ–¥–∏–Ω—Å—Ç–≤–µ–Ω–Ω–æ–º —ç–∫–∑–µ–º–ø–ª—è—Ä–µ, –ø–æ—ç—Ç–æ–º—É –ø—Ä–æ–≤–µ—Ä–∫—É –ø–æ id –Ω–µ –¥–µ–ª–∞–ª.
+        unsubscribe()
+    end
 end
 
 function hud_show()
-	local show = ogse.load_var("hud_show", false)
-	if show then return end
-	if biomap then
-		biomap:Show(true)
-	end
-	map_dlg:Show(true)
+    local show = ogse.load_var("hud_show", false)
+    if show then
+        return
+    end
+    if biomap then
+        biomap:Show(true)
+    end
+    map_dlg:Show(true)
+    -- level.show_indicators()
 end
 
 function hud_hide()
-	if biomap then
-		biomap:Show(false)
-	end
-	map_dlg:Show(false)
+    if biomap then
+        biomap:Show(false)
+    end
+    map_dlg:Show(false)
+    -- level.hide_indicators()
+end
+
+function on_zoom_out()
+    local show = ogse.load_var("hud_show", true)
+    if show then
+        return
+    end
+    if biomap then
+        biomap:Show(true)
+    end
+    map_dlg:Show(true)
+    level.show_indicators()
+
+    -- game.play_hud_anm("script\\zoom_start.anm", 2, 0.5, 0.5, false, false)
+end
+
+function on_zoom_in()
+    if biomap then
+        biomap:Show(false)
+    end
+    map_dlg:Show(false)
+    -- level.hide_indicators()
+
+    -- game.play_hud_anm("script\\zoom_end.anm", 2, 0.5, 0.5, false, false)
 end
 
 function on_spawn()
-	local wnd      = get_main_window()
+    local wnd = get_main_window()
 
-	minimap_static = wnd:GetStatic("minimap")
-	back_static    = wnd:GetStatic("minimap:background")
-	frame_static   = wnd:GetStatic("minimap:level_frame")
-	compass_static = wnd:GetStatic("minimap:compass")
+    minimap_static = wnd:GetStatic("minimap")
+    back_static = wnd:GetStatic("minimap:background")
+    frame_static = wnd:GetStatic("minimap:level_frame")
+    compass_static = wnd:GetStatic("minimap:compass")
 
-	frame_static:Show(false)
-	minimap_static:Show(false)
-	compass_static:Show(false)
-	back_static:Show(false)
+    frame_static:Show(false)
+    minimap_static:Show(false)
+    compass_static:Show(false)
+    back_static:Show(false)
 
-	map_dlg = ui_map_viewer("ui_minimap_viewer.xml", obj)
-	on_minimap_show()
+    map_dlg = ui_map_viewer("ui_minimap_viewer.xml", obj)
+    on_minimap_show()
 end
 
 function on_destroy()
-	if not map_dlg then return end
-	bio_showing = false
-	bioradar_hide()
-	level.remove_dialog_to_render(map_dlg)
+    if not map_dlg then
+        return
+    end
+    bio_showing = false
+    bioradar_hide()
+    level.remove_dialog_to_render(map_dlg)
 end
 
 function on_minimap_show()
-	if not map_dlg then return end
-	level.add_dialog_to_render(map_dlg)
+    if not map_dlg then
+        return
+    end
+    level.add_dialog_to_render(map_dlg)
 end
 
 function on_key_down(key, bind)
-	if bind == key_bindings.kBIOMAP_SWITCH and subscribed then
-		bio_showing = not bio_showing
-		if not bio_showing then
-			bioradar_hide()
-		end
-		ogse.save_var("biomap_show", bio_showing)
-	end
+    if bind == key_bindings.kBIOMAP_SWITCH and subscribed then
+        bio_showing = not bio_showing
+        if not bio_showing then
+            bioradar_hide()
+        end
+        ogse.save_var("biomap_show", bio_showing)
+    end
 
-	if bind == key_bindings.kHIDEHUD then
-		ogse.save_var("hud_show", true)
-		hud_hide()
-	end
+    if bind == key_bindings.kHIDEHUD then
+        ogse.save_var("hud_show", true)
+        hud_hide()
+    end
 
-	if bind == key_bindings.kSHOWHUD then
-		ogse.save_var("hud_show", false)
-		hud_show()
-	end
+    if bind == key_bindings.kSHOWHUD then
+        ogse.save_var("hud_show", false)
+        hud_show()
+    end
 end
 
 function on_update()
-	if map_dlg then
-		map_dlg:UpdateMap()
-	end
+    if map_dlg then
+        map_dlg:UpdateMap()
+    end
 end
 
 local function cleanup_dots()
-	for _, dot in pairs(dots) do
-		dot:hide()
-	end
-	dots = {}
+    for _, dot in pairs(dots) do
+        dot:hide()
+    end
+    dots = {}
 end
 
 function set_position_offset(x, y)
-	biomap_x_offset = x
-	biomap_y_offset = y
+    biomap_x_offset = x
+    biomap_y_offset = y
 end
 
+local firmware_item =
+    { -- [–°–µ–∫—Ü–∏—è –ø—Ä–æ—à–∏–≤–∫–∏] = { [–∏–Ω—Ñ–æ–ø–æ—Ä—à–µ–Ω] = { [–∫–ª–∞—Å—Å —Å—É—â–µ—Å—Ç–≤, –∫–æ—Ç–æ—Ä—ã—Ö –∏–Ω—Ñ–æ–ø–æ—Ä—à–µ–Ω —Ä–∞–∑—Ä–µ—à–∞–µ—Ç –æ—Ç–æ–±—Ä–∞–∂–∞—Ç—å –Ω–∞ –±–∏–æ—Ä–∞–¥–∞—Ä–µ] = {—Ü–≤–µ—Ç –≤ —Ñ–æ—Ä–º–∞—Ç–µ —Ç–∞–±–ª–∏—Ü—ã r,g,b} } }
+        ['firmware_krovosos'] = {
+            ['bioradar_krovosos'] = {
+                [clsid.bloodsucker_s] = {255, 0, 120}
+            }
+        },
+        ['firmware_chimera'] = {
+            ['bioradar_chimera'] = {
+                [clsid.chimera_s] = {255, 0, 0}
+            }
+        },
+        ['firmware_burer'] = {
+            ['bioradar_burer'] = {
+                [clsid.burer_s] = {0, 238, 255}
+            }
+        },
+        ['firmware_psevdogigant'] = {
+            ['bioradar_psevdogigant'] = {
+                [clsid.gigant_s] = {255, 0, 0}
+            }
+        },
+        ['firmware_poltergeist'] = {
+            ['bioradar_poltergeist'] = {
+                [clsid.poltergeist_s] = {0, 238, 255}
+            }
+        },
+        ['firmware_tushkano'] = {
+            ['bioradar_tushkano'] = {
+                [clsid.tushkano_s] = {64, 255, 255}
+            }
+        },
+        ['firmware_flesh'] = {
+            ['bioradar_flesh'] = {
+                [clsid.flesh_s] = {64, 153, 79}
+            }
+        },
+        ['firmware_kontroler'] = {
+            ['bioradar_kontroler'] = {
+                [clsid.controller_s] = {0, 238, 255}
+            }
+        },
+        ['firmware_psevdodog'] = {
+            ['bioradar_psevdodog'] = {
+                [clsid.pseudodog_s] = {171, 94, 23},
+                [clsid.psy_dog_s] = {171, 94, 23}
+            }
+        },
+        ['firmware_dog'] = {
+            ['bioradar_dog'] = {
+                [clsid.dog_s] = {252, 158, 66}
+            }
+        },
+        ['firmware_snork'] = {
+            ['bioradar_snork'] = {
+                [clsid.snork_s] = {145, 71, 214}
+            }
+        },
+        ['firmware_zombie'] = {
+            ['bioradar_zombie'] = {
+                [clsid.zombie_s] = {127, 127, 127},
+                [clsid.fracture_s] = {127, 255, 127}
+            }
+        },
+        ['firmware_cat'] = {
+            ['bioradar_cat'] = {
+                [clsid.cat_s] = {252, 158, 66}
+            }
+        },
+        ['firmware_boar'] = {
+            ['bioradar_boar'] = {
+                [clsid.boar_s] = {64, 153, 79}
+            }
+        },
+        ['firmware_stalker'] = {
+            ['bioradar_stalker'] = {
+                [clsid.script_stalker] = {255, 255, 255},
+                [clsid.actor] = {0, 255, 0}
+            }
+        }
+    }
 
-local firmware_item = { --[—ÂÍˆËˇ ÔÓ¯Ë‚ÍË] = { [ËÌÙÓÔÓ¯ÂÌ] = { [ÍÎ‡ÒÒ ÒÛ˘ÂÒÚ‚, ÍÓÚÓ˚ı ËÌÙÓÔÓ¯ÂÌ ‡ÁÂ¯‡ÂÚ ÓÚÓ·‡Ê‡Ú¸ Ì‡ ·ËÓ‡‰‡Â] = {ˆ‚ÂÚ ‚ ÙÓÏ‡ÚÂ Ú‡·ÎËˆ˚ r,g,b} } }
-  ['firmware_krovosos'] = {
-    ['bioradar_krovosos'] = {
-      [clsid.bloodsucker_s] = {255,0,120},
-    },
-  },
-  ['firmware_chimera'] = {
-    ['bioradar_chimera'] = {
-      [clsid.chimera_s] = {255,0,0},
-    },
-  },
-  ['firmware_burer'] = {
-    ['bioradar_burer'] = {
-      [clsid.burer_s] = {0,238,255},
-    },
-  },
-  ['firmware_psevdogigant'] = {
-    ['bioradar_psevdogigant'] = {
-      [clsid.gigant_s] = {255,0,0},
-    },
-  },
-  ['firmware_poltergeist'] = {
-    ['bioradar_poltergeist'] = {
-      [clsid.poltergeist_s] = {0,238,255},
-    },
-  },
-  ['firmware_tushkano'] = {
-    ['bioradar_tushkano'] = {
-      [clsid.tushkano_s] = {64,255,255},
-    },
-  },
-  ['firmware_flesh'] = {
-    ['bioradar_flesh'] = {
-      [clsid.flesh_s] = {64,153,79},
-    },
-  },
-  ['firmware_kontroler'] = {
-    ['bioradar_kontroler'] = {
-      [clsid.controller_s] = {0,238,255},
-    },
-  },
-  ['firmware_psevdodog'] = {
-    ['bioradar_psevdodog'] = {
-      [clsid.pseudodog_s] = {171,94,23},
-	  [clsid.psy_dog_s] = {171,94,23},
-    },
-  },
-  ['firmware_dog'] = {
-    ['bioradar_dog'] = {
-      [clsid.dog_s] = {252,158,66},
-    },
-  },
-  ['firmware_snork'] = {
-    ['bioradar_snork'] = {
-      [clsid.snork_s] = {145,71,214},
-    },
-  },
-  ['firmware_zombie'] = {
-    ['bioradar_zombie'] = {
-      [clsid.zombie_s] = {127,127,127},
-	  [clsid.fracture_s] = {127,255,127},
-    },
-  },
-  ['firmware_cat'] = {
-    ['bioradar_cat'] = {
-      [clsid.cat_s] = {252,158,66},
-    },
-  },
-  ['firmware_boar'] = {
-    ['bioradar_boar'] = {
-      [clsid.boar_s] = {64,153,79},
-    },
-  },
-  ['firmware_stalker'] = {
-    ['bioradar_stalker'] = {
-       [clsid.script_stalker] = {255,255,255},
-	   [clsid.actor] = {0,255,0},
-    },
-  },
-}
-
-local need_show_by_sect = {} --ƒÎˇ ·˚ÒÚÓ„Ó ‰ÓÒÚÛÔ‡ ÔÓ ÍÎ˛˜Û
+local need_show_by_sect = {} -- –î–ª—è –±—ã—Å—Ç—Ä–æ–≥–æ –¥–æ—Å—Ç—É–ø–∞ –ø–æ –∫–ª—é—á—É
 
 function on_first_update()
-	local bio_marked = { -- Ó„Ó ÔÓÍ‡Á˚‚‡Ú¸ ÔÓ ÛÏÓÎ˜‡ÌË˛. I am dead: ¬ÍÎ˛˜ËÎ ÔÓ ÛÏÓÎ˜‡ÌË˛ ÔÓÍ‡Á ‚ÒÂı ÒÛ˘ÂÒÚ‚.
-		["bioradar_krovosos"] = true,
-		["bioradar_chimera"] = true,
-		["bioradar_burer"] = true,
-		["bioradar_psevdogigant"] = true,
-		["bioradar_poltergeist"] = true,
-		["bioradar_tushkano"] = true,
-		["bioradar_flesh"] = true,
-		["bioradar_kontroler"] = true,
-		["bioradar_psevdodog"] = true,
-		["bioradar_dog"] = true,
-		["bioradar_snork"] = true,
-		["bioradar_zombie"] = true,
-		["bioradar_cat"] = true,
-		["bioradar_boar"] = true,
-		["bioradar_stalker"] = true
-	}
+    local bio_marked =
+        { -- –ö–æ–≥–æ –ø–æ–∫–∞–∑—ã–≤–∞—Ç—å –ø–æ —É–º–æ–ª—á–∞–Ω–∏—é. I am dead: –í–∫–ª—é—á–∏–ª –ø–æ —É–º–æ–ª—á–∞–Ω–∏—é –ø–æ–∫–∞–∑ –≤—Å–µ—Ö —Å—É—â–µ—Å—Ç–≤.
+            ["bioradar_krovosos"] = true,
+            ["bioradar_chimera"] = true,
+            ["bioradar_burer"] = true,
+            ["bioradar_psevdogigant"] = true,
+            ["bioradar_poltergeist"] = true,
+            ["bioradar_tushkano"] = true,
+            ["bioradar_flesh"] = true,
+            ["bioradar_kontroler"] = true,
+            ["bioradar_psevdodog"] = true,
+            ["bioradar_dog"] = true,
+            ["bioradar_snork"] = true,
+            ["bioradar_zombie"] = true,
+            ["bioradar_cat"] = true,
+            ["bioradar_boar"] = true,
+            ["bioradar_stalker"] = true
+        }
 
-	for k, v in pairs(bio_marked) do
-		if not has_alife_info(k) then
-			db.actor:give_info_portion(k)
-		end
-	end
-
-	for k, v in pairs(firmware_item) do
-		for p, t in pairs(v) do
-			if has_alife_info(p) then
-				for class, color in pairs(t) do
-					need_show_by_sect[class] = color
-				end
-			end
-		end
-	end
-
-	bio_showing = ogse.load_var("biomap_show", false)
-	if not subscribed then
-		bioradar_hide()
-	end
-end
-
-class "dot" -- Î‡ÒÒ ÚÓ˜ÍË Ó·˙ÂÍÚ‡
-function dot:__init(o, clsid, color)
-	self.o_id = o:id()
-	--log3("[%s] Adding dot with id [%s] for [%s]", script_name(), self.o_id, o:name())
-	dots[self.o_id] = self
-	self.alive = o:alive()
-	self.color = self.alive and color or {127,127,127}
-	self.a = biomap_sweep_dots_enabled and (self.o_id == 0 and 255 or 0) or 255
-	self.st = CUIStatic()
-	self.st:Init(1024, 0, dot_size * get_current_kx(), dot_size)
-	self.st:SetStretchTexture(true)
-	--self.st:EnableHeading(true)  -- Ú‡Í ÌÂ ‡·ÓÚ‡ÂÚ, ÚÓ˜ÍË Ì‡˜ËÌ‡˛Ú Ò‰‚Ë„‡Ú¸Òˇ
-
-	if self.alive then
-		self.st:InitTexture("biomap\\white_dot")
-	else
-		self.st:InitTexture("biomap\\white_cross")
-	end
-
-	self.st:SetAutoDelete(true)
-	self.st:SetColor(GetARGB(self.a, unpack(self.color)))
-
-	biomap:AttachChild(self.st)
-end
-
-function dot:draw(dir, obj_alive) --Õ‡ËÒÓ‚‡Ú¸ ÚÓ˜ÍÛ	
-        if self.alive and not obj_alive then
-            self.alive = false
-            self.st:InitTexture("biomap\\white_cross")
-            self.st:SetColor(GetARGB(self.a,127,127,127))
-	end
-	local vx,vz = dir.x/max_dist * screen_max_dist, -dir.z/max_dist * screen_max_dist
-        local x, y = (vx * c - vz * s) * get_current_kx() , vx * s + vz * c
-	self.st:SetWndPos(((x + d) + sweep_add_x) - 1, (y + d) + sweep_add_y - 1) -- -1 ÚÛÚ ÒÔÂˆÓÏ, ËÌ‡˜Â ÚÓ˜ÍË Ò‰‚ËÌÛÚ˚ ‚ÌËÁ Ë ‚Ô‡‚Ó Ì‡ 1 ÔËÒÍÂÎ¸
-        -------- Û„‡Ò‡ÌËÂ ÚÓ˜ÂÍ -------
-	if biomap_sweep_dots_enabled then
-		local u = math.atan2(y, x) * (180 / math.pi) + 180
-		if (xa > u and xa-u or u-xa) < 1.5 then
-			self.a = 255
-		elseif self.a > 2 then
-			self.a = self.a - 2
-		end
-		self.st:SetColor(GetARGB(self.a, unpack(self.color)))
+    for k, v in pairs(bio_marked) do
+        if not has_alife_info(k) then
+            db.actor:give_info_portion(k)
         end
-        ---------------------------------
+    end
+
+    for k, v in pairs(firmware_item) do
+        for p, t in pairs(v) do
+            if has_alife_info(p) then
+                for class, color in pairs(t) do
+                    need_show_by_sect[class] = color
+                end
+            end
+        end
+    end
+
+    bio_showing = ogse.load_var("biomap_show", false)
+    if not subscribed then
+        bioradar_hide()
+    end
 end
 
-function dot:hide() --—Í˚Ú¸ ÚÓ˜ÍÛ
-	local parent = biomap
-	if parent then
-		parent:DetachChild(self.st)
-	end
-	self.st = nil
-	dots[self.o_id] = nil
+class "dot" -- –ö–ª–∞—Å—Å —Ç–æ—á–∫–∏ –æ–±—ä–µ–∫—Ç–∞
+function dot:__init(o, clsid, color)
+    self.o_id = o:id()
+    -- log3("[%s] Adding dot with id [%s] for [%s]", script_name(), self.o_id, o:name())
+    dots[self.o_id] = self
+    self.alive = o:alive()
+    self.color = self.alive and color or {127, 127, 127}
+    self.a = biomap_sweep_dots_enabled and (self.o_id == 0 and 255 or 0) or 255
+    self.st = CUIStatic()
+    self.st:Init(1024, 0, dot_size * get_current_kx(), dot_size)
+    self.st:SetStretchTexture(true)
+    -- self.st:EnableHeading(true)  -- —Ç–∞–∫ –Ω–µ —Ä–∞–±–æ—Ç–∞–µ—Ç, —Ç–æ—á–∫–∏ –Ω–∞—á–∏–Ω–∞—é—Ç —Å–¥–≤–∏–≥–∞—Ç—å—Å—è
+
+    if self.alive then
+        self.st:InitTexture("biomap\\white_dot")
+    else
+        self.st:InitTexture("biomap\\white_cross")
+    end
+
+    self.st:SetAutoDelete(true)
+    self.st:SetColor(GetARGB(self.a, unpack(self.color)))
+
+    biomap:AttachChild(self.st)
 end
--- Ó·ÌÓ‚ÎÂÌËÂ ÔÓÎÓÊÂÌËˇ ÚÓ˜ÂÍ Ë/ËÎË ‚ÓÎÌ˚
+
+function dot:draw(dir, obj_alive) -- –ù–∞—Ä–∏—Å–æ–≤–∞—Ç—å —Ç–æ—á–∫—É	
+    if self.alive and not obj_alive then
+        self.alive = false
+        self.st:InitTexture("biomap\\white_cross")
+        self.st:SetColor(GetARGB(self.a, 127, 127, 127))
+    end
+    local vx, vz = dir.x / max_dist * screen_max_dist, -dir.z / max_dist * screen_max_dist
+    local x, y = (vx * c - vz * s) * get_current_kx(), vx * s + vz * c
+    self.st:SetWndPos(((x + d) + sweep_add_x) - 1, (y + d) + sweep_add_y - 1) -- -1 —Ç—É—Ç —Å–ø–µ—Ü–æ–º, –∏–Ω–∞—á–µ —Ç–æ—á–∫–∏ —Å–¥–≤–∏–Ω—É—Ç—ã –≤–Ω–∏–∑ –∏ –≤–ø—Ä–∞–≤–æ –Ω–∞ 1 –ø–∏—Å–∫–µ–ª—å
+    -------- —É–≥–∞—Å–∞–Ω–∏–µ —Ç–æ—á–µ–∫ -------
+    if biomap_sweep_dots_enabled then
+        local u = math.atan2(y, x) * (180 / math.pi) + 180
+        if (xa > u and xa - u or u - xa) < 1.5 then
+            self.a = 255
+        elseif self.a > 2 then
+            self.a = self.a - 2
+        end
+        self.st:SetColor(GetARGB(self.a, unpack(self.color)))
+    end
+    ---------------------------------
+end
+
+function dot:hide() -- –°–∫—Ä—ã—Ç—å —Ç–æ—á–∫—É
+    local parent = biomap
+    if parent then
+        parent:DetachChild(self.st)
+    end
+    self.st = nil
+    dots[self.o_id] = nil
+end
+-- –æ–±–Ω–æ–≤–ª–µ–Ω–∏–µ –ø–æ–ª–æ–∂–µ–Ω–∏—è —Ç–æ—á–µ–∫ –∏/–∏–ª–∏ –≤–æ–ª–Ω—ã
 function update(parent)
-	if not biomap then
-		cleanup_dots()
+    if not biomap then
+        cleanup_dots()
 
-		biomap = CUIStatic()
-		biomap:SetAutoDelete(false)
+        biomap = CUIStatic()
+        biomap:SetAutoDelete(false)
 
-		xml:InitExStatic("biomap", biomap)
+        xml:InitExStatic("biomap", biomap)
 
-		local biomap_width = biomap:GetWidth()
-		local biomap_heigth = biomap:GetHeight()
+        local biomap_width = biomap:GetWidth()
+        local biomap_heigth = biomap:GetHeight()
 
-		local biomap_x = biomap_x_offset - biomap_width / 2
-		local biomap_y = biomap_y_offset - biomap_heigth / 2
+        local biomap_x = biomap_x_offset - biomap_width / 2
+        local biomap_y = biomap_y_offset - biomap_heigth / 2
 
-		biomap:SetWndPos(biomap_x, biomap_y)
+        biomap:SetWndPos(biomap_x, biomap_y)
 
-		parent:AttachChild(biomap)
+        parent:AttachChild(biomap)
 
-		biomap:InitTexture("biomap\\biomap_texture")
+        biomap:InitTexture("biomap\\biomap_texture")
 
-		if not biomap_sweep then
-			biomap_sweep = CUIStatic()
-			biomap_sweep:SetAutoDelete(true)
+        if not biomap_sweep then
+            biomap_sweep = CUIStatic()
+            biomap_sweep:SetAutoDelete(true)
 
-			xml:InitExStatic("biomap_sweep", biomap_sweep)
+            xml:InitExStatic("biomap_sweep", biomap_sweep)
 
-			local biomap_sweep_width = biomap_sweep:GetWidth()
-			local biomap_sweep_heigth = biomap_sweep:GetHeight()
+            local biomap_sweep_width = biomap_sweep:GetWidth()
+            local biomap_sweep_heigth = biomap_sweep:GetHeight()
 
-			sweep_add_x = -(biomap_sweep_width - biomap_width) / 2
-			sweep_add_y = -(biomap_sweep_heigth - biomap_heigth) / 2
+            sweep_add_x = -(biomap_sweep_width - biomap_width) / 2
+            sweep_add_y = -(biomap_sweep_heigth - biomap_heigth) / 2
 
-			biomap_sweep:SetColor(GetARGB(100, 199, 2, 28)) -- ÛÒÚ‡Ì‡‚ÎË‚‡ÂÏ ˆ‚ÂÚ
-			biomap_sweep:SetWndPos(biomap_x + sweep_add_x, biomap_y + sweep_add_y)
+            biomap_sweep:SetColor(GetARGB(100, 199, 2, 28)) -- —É—Å—Ç–∞–Ω–∞–≤–ª–∏–≤–∞–µ–º —Ü–≤–µ—Ç
+            biomap_sweep:SetWndPos(biomap_x + sweep_add_x, biomap_y + sweep_add_y)
 
-			if biomap_sweep_enabled then
-				parent:AttachChild(biomap_sweep)
-			end
-		end
-	end
+            if biomap_sweep_enabled then
+                parent:AttachChild(biomap_sweep)
+            end
+        end
+    end
 
-	local dev = device()
-	local sdir = dev.cam_dir
-	a = math.atan2(-sdir.x,sdir.z)
-	s,c = math.sin(a), math.cos(a)
+    local dev = device()
+    local sdir = dev.cam_dir
+    a = math.atan2(-sdir.x, sdir.z)
+    s, c = math.sin(a), math.cos(a)
 
-	if biomap_sweep_enabled or biomap_sweep_dots_enabled then
-		angle = angle - step_angle
-		if angle < -lim_angle then angle = angle + lim_angle end
-	end
+    if biomap_sweep_enabled or biomap_sweep_dots_enabled then
+        angle = angle - step_angle
+        if angle < -lim_angle then
+            angle = angle + lim_angle
+        end
+    end
 
-	if biomap_sweep_enabled then
-		biomap_sweep:SetHeading(angle) -- ÔÓ‚Ó‡˜Ë‚‡ÂÏ ÒÚ‡ÚËÍ
-	end
+    if biomap_sweep_enabled then
+        biomap_sweep:SetHeading(angle) -- –ø–æ–≤–æ—Ä–∞—á–∏–≤–∞–µ–º —Å—Ç–∞—Ç–∏–∫
+    end
 
-	if biomap_sweep_dots_enabled then
-		xa = -math.fmod(angle * (180 / math.pi), 360)
-	end
+    if biomap_sweep_dots_enabled then
+        xa = -math.fmod(angle * (180 / math.pi), 360)
+    end
 
-	local visible_objects = {}
-	for id, v in pairs(db.creatures) do
-		local o = level.object_by_id(id)
-		if o then
-			local clsid = o:clsid()
-			local color = need_show_by_sect[clsid] --≈ÒÎË ‚ Ú‡·ÎËˆÂ ÂÒÚ¸ ˆ‚ÂÚ ‰Îˇ ˝ÚÓ„Ó ÍÎ‡ÒÒ‡ - ÏÓÊÌÓ ÔÓÍ‡Á‡Ú¸ Ó·˙ÂÍÚ Ì‡ ·ËÓ‡‰‡Â.
-			if dots[id] or color then
-				local dir = o:position():sub(device().cam_pos)
-				if ( dir:magnitude() / max_dist ) <= 1 then
-					local d = dots[id] or dot(o, clsid, color)
-					visible_objects[id] = true
-					d:draw(dir, o:alive())
-				end
-			end
-		end
-	end
-	for id, dot in pairs(dots) do
-		if not visible_objects[id] then
-			--log3("~~[%s] hide dot for object with id: [%s]", script_name(), id)
-			dots[id]:hide()
-		end
-	end
+    local visible_objects = {}
+    for id, v in pairs(db.creatures) do
+        local o = level.object_by_id(id)
+        if o then
+            local clsid = o:clsid()
+            local color = need_show_by_sect[clsid] -- –ï—Å–ª–∏ –≤ —Ç–∞–±–ª–∏—Ü–µ –µ—Å—Ç—å —Ü–≤–µ—Ç –¥–ª—è —ç—Ç–æ–≥–æ –∫–ª–∞—Å—Å–∞ - –º–æ–∂–Ω–æ –ø–æ–∫–∞–∑–∞—Ç—å –æ–±—ä–µ–∫—Ç –Ω–∞ –±–∏–æ—Ä–∞–¥–∞—Ä–µ.
+            if dots[id] or color then
+                local dir = o:position():sub(device().cam_pos)
+                if (dir:magnitude() / max_dist) <= 1 then
+                    local d = dots[id] or dot(o, clsid, color)
+                    visible_objects[id] = true
+                    d:draw(dir, o:alive())
+                end
+            end
+        end
+    end
+    for id, dot in pairs(dots) do
+        if not visible_objects[id] then
+            -- log3("~~[%s] hide dot for object with id: [%s]", script_name(), id)
+            dots[id]:hide()
+        end
+    end
 end
 
 function bioradar_hide()
@@ -456,55 +491,56 @@ function bioradar_hide()
     cleanup_dots()
 end
 
-class "ui_map_viewer" (CUIScriptWnd)
-function ui_map_viewer:__init() super()
-	local xml = CScriptXmlInit()
-	self.xml  = xml
+class "ui_map_viewer"(CUIScriptWnd)
+function ui_map_viewer:__init()
+    super()
+    local xml = CScriptXmlInit()
+    self.xml = xml
 
-	xml:ParseFile("zone_map.xml")
-	xml:InitWindow("main", 0, self)
+    xml:ParseFile("zone_map.xml")
+    xml:InitWindow("main", 0, self)
 
-	local back = xml:InitStatic("level_frame", self)
+    local back = xml:InitStatic("level_frame", self)
 
-	local map = CUIMiniMap()
+    local map = CUIMiniMap()
 
-	back:AttachChild(map)
+    back:AttachChild(map)
 
-	map:SetAutoDelete(true)
-	map:EnableHeading(true)
-	map:SetRounded(true)
-	--map:SetLocked(true)
-	map:Init()
-	map:SetColor(GetARGB(255, 255, 255, 255))
+    map:SetAutoDelete(true)
+    map:EnableHeading(true)
+    map:SetRounded(true)
+    -- map:SetLocked(true)
+    map:Init()
+    map:SetColor(GetARGB(255, 255, 255, 255))
 
-	map:Zoom(0.82) -- ÔÓ‰Ó·‡ÌÌ˚È ÁÛÏ ˜ÚÓ · ÒÓ‚Ô‡‰‡Î Ò ‡‰‡ÓÏ. Ì‡‚ÂÌÓ ÏÓÊÌÓ ‡Ò˘ËÚ‡Ú¸ ÌÓ ÎÂÌ¸ ‰ÛÏ‡Ú¸ )
+    map:Zoom(0.82) -- –ø–æ–¥–æ–±—Ä–∞–Ω–Ω—ã–π –∑—É–º —á—Ç–æ –± —Å–æ–≤–ø–∞–¥–∞–ª —Å —Ä–∞–¥–∞—Ä–æ–º. –Ω–∞–≤–µ—Ä–Ω–æ –º–æ–∂–Ω–æ —Ä–∞—Å—â–∏—Ç–∞—Ç—å –Ω–æ –ª–µ–Ω—å –¥—É–º–∞—Ç—å )
 
-	self.map = map
+    self.map = map
 
-	local center = xml:InitStatic("center", back);
+    local center = xml:InitStatic("center", back);
 
-	local frame_width = back:GetWidth()
-	local frame_heigth = back:GetHeight()
+    local frame_width = back:GetWidth()
+    local frame_heigth = back:GetHeight()
 
-	center:SetWndPos(frame_width / 2, frame_heigth / 2)
+    center:SetWndPos(frame_width / 2, frame_heigth / 2)
 
-	local frame_pos = back:GetWndPos()
-	local frame_size = back:GetWndSize()
+    local frame_pos = back:GetWndPos()
+    local frame_size = back:GetWndSize()
 
-	set_position_offset(frame_pos.x + frame_size.x / 2, frame_pos.y + frame_size.y / 2)
+    set_position_offset(frame_pos.x + frame_size.x / 2, frame_pos.y + frame_size.y / 2)
 
-	self.compass = xml:InitStatic("compass", self)
+    self.compass = xml:InitStatic("compass", self)
 end
 
 function ui_map_viewer:UpdateMap()
-	self.map:SetActivePoint(device().cam_pos)
-	local dir = device().cam_dir
-	local h = dir:getH()
-	self.map:SetHeading(-h)
-	self.compass:SetHeading(-h)
-	map_self = self
+    self.map:SetActivePoint(device().cam_pos)
+    local dir = device().cam_dir
+    local h = dir:getH()
+    self.map:SetHeading(-h)
+    self.compass:SetHeading(-h)
+    map_self = self
 
-	if bio_showing and subscribed then
-		update(self)
-	end
+    if bio_showing and subscribed then
+        update(self)
+    end
 end

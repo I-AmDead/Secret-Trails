@@ -1,113 +1,105 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 -- https://github.com/dsh2dsh/op2ogse/blob/master/gamedata/scripts/sound_theme.script
-
-actor_theme   = sound_theme_data.actor_theme
-theme         = sound_theme_data.theme
-
+actor_theme = sound_theme_data.actor_theme
+theme = sound_theme_data.theme
 
 function attach( sm )
-  sm:subscribe({ signal = "on_init",             fun = this.on_actor_init }) --Нужно вызывать до начала спавна НПС.
-  sm:subscribe({ signal = "on_npc_before_spawn", fun = this.load_sound  }) --Вроде как должно вызываться до загрузки гулага
+    sm:subscribe({ signal = "on_init",             fun = this.on_actor_init }) --РќСѓР¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊ РґРѕ РЅР°С‡Р°Р»Р° СЃРїР°РІРЅР° РќРџРЎ.
+    sm:subscribe({ signal = "on_npc_before_spawn", fun = this.load_sound  }) --Р’СЂРѕРґРµ РєР°Рє РґРѕР»Р¶РЅРѕ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РґРѕ Р·Р°РіСЂСѓР·РєРё РіСѓР»Р°РіР°
 end
-
 
 local preloaded = {}
 
-local function preload_theme_sect( name )
-  for _, sf in ipairs({ "_rnd", "_spec", "_seq", "_single" }) do
-    local theme_name = name .. sf
-    ASSERT( not preloaded[ theme_name ], "[%s] already preloaded", theme_name )
-    if sys_ini:section_exist( theme_name ) then
-      preloaded[ theme_name ] = {}
-      local t = get_section_keys_and_values( theme_name )
-      for k, v in pairs( t ) do
-        local flag, path = unpack( parse_names( v ) )
-        ASSERT( path, "wrong path in %s: %s, flag = %s", theme_name, v, flag )
-        flag = flag == "0" or sf == "_spec"
-        preloaded[ theme_name ][ k ] = { path, flag }
-      end
+local function preload_theme_sect(name)
+    for _, sf in ipairs({"_rnd", "_spec", "_seq", "_single"}) do
+        local theme_name = name .. sf
+        ASSERT(not preloaded[theme_name], "[%s] already preloaded", theme_name)
+        if sys_ini:section_exist(theme_name) then
+            preloaded[theme_name] = {}
+            local t = get_section_keys_and_values(theme_name)
+            for k, v in pairs(t) do
+                local flag, path = unpack(parse_names(v))
+                ASSERT(path, "wrong path in %s: %s, flag = %s", theme_name, v, flag)
+                flag = flag == "0" or sf == "_spec"
+                preloaded[theme_name][k] = {path, flag}
+            end
+        end
     end
-  end
 end
 
-local function preload_themes( t )
-  for k, v in pairs( t ) do
-    if v.types then
-      preload_themes( v.types )
-    else
-      preload_theme_sect( k )
+local function preload_themes(t)
+    for k, v in pairs(t) do
+        if v.types then
+            preload_themes(v.types)
+        else
+            preload_theme_sect(k)
+        end
     end
-  end
 end
 
-local function select_sound_from_ltx( obj, section )
-  for _, k in ipairs({
-      tostring( obj:story_id() ),
-	  obj:profile_name(),
-	  obj:character_community(),
-      "stalker"
-    }) do
-    local t = preloaded[ section ][ k ]
-    if t then return unpack( t ) end
-  end
+local function select_sound_from_ltx(obj, section)
+    for _, k in ipairs({tostring(obj:story_id()), obj:profile_name(), obj:character_community(), "stalker"}) do
+        local t = preloaded[section][k]
+        if t then
+            return unpack(t)
+        end
+    end
 end
 
--- загрузка звуков на основе данных ltx
+-- Р·Р°РіСЂСѓР·РєР° Р·РІСѓРєРѕРІ РЅР° РѕСЃРЅРѕРІРµ РґР°РЅРЅС‹С… ltx
 local default_prefix = "characters_voice\\"
 
-function load_sound_from_ltx( obj, name, tbl )
-  local id = obj:id()
-  tbl.max_ids[ id ] = {}
-  table.insert( db.sound[ obj:id() ].known_max_ids, tbl.max_ids )
-  for _, sf in ipairs({ "_rnd", "_spec", "_seq", "_single" }) do
-    local n = name..sf
-    if preloaded[ n ] then
-      local path, use_def = select_sound_from_ltx( obj, n )
-      if path then
-        local t = {
-          [ "path" ] = path,
-        }
-        if use_def then
-          t.prefix = default_prefix
+function load_sound_from_ltx(obj, name, tbl)
+    local id = obj:id()
+    tbl.max_ids[id] = {}
+    table.insert(db.sound[obj:id()].known_max_ids, tbl.max_ids)
+    for _, sf in ipairs({"_rnd", "_spec", "_seq", "_single"}) do
+        local n = name .. sf
+        if preloaded[n] then
+            local path, use_def = select_sound_from_ltx(obj, n)
+            if path then
+                local t = {
+                    ["path"] = path
+                }
+                if use_def then
+                    t.prefix = default_prefix
+                end
+                local snd_key = (sf == "_rnd" or sf == "_spec") and "rnd" or "into"
+                if snd_key == "into" then
+                    tbl.max_ids[id].into_cycled = sf == "_seq"
+                end
+                tbl.max_ids[id][snd_key .. "_load"] = t
+            end
         end
-	    local snd_key = ( sf == "_rnd" or sf == "_spec" ) and "rnd" or "into"
-		if snd_key == "into" then
-		  tbl.max_ids[ id ].into_cycled = sf == "_seq"
-		end
-		tbl.max_ids[ id ][snd_key.."_load"] = t
-      end
     end
-  end
 end
 
-local function load_theme_sound( npc, tbl )
-  for k, v in pairs( tbl ) do
-    if v.types then
-      load_theme_sound( npc, v.types )
-    else
-      load_sound_from_ltx( npc, k, v )
+local function load_theme_sound(npc, tbl)
+    for k, v in pairs(tbl) do
+        if v.types then
+            load_theme_sound(npc, v.types)
+        else
+            load_sound_from_ltx(npc, k, v)
+        end
     end
-  end
 end
 
-local function cleanup_max_ids( obj )
-  local t = db.sound[ obj:id() ]
-  if t then
-    for _, max_ids in ipairs( t.known_max_ids ) do
-      max_ids[ obj:id() ] = nil
+local function cleanup_max_ids(obj)
+    local t = db.sound[obj:id()]
+    if t then
+        for _, max_ids in ipairs(t.known_max_ids) do
+            max_ids[obj:id()] = nil
+        end
     end
-  end
 end
 
-
-function load_sound( obj )
-  cleanup_max_ids( obj )
-  db.sound[ obj:id() ] = {
-    [ "known_max_ids" ] = {}
-  }
+function load_sound(obj)
+    cleanup_max_ids(obj)
+    db.sound[obj:id()] = {
+        ["known_max_ids"] = {}
+    }
 end
 
 function on_actor_init()
-  preload_themes( theme )
+    preload_themes(theme)
 end

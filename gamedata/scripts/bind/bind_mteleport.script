@@ -1,160 +1,149 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 -- ************************************************
 -- **                    Imp                     **
--- **       Биндер самодельных телепортов        **
--- ** Поддерживает работу самопальных телепортов **
+-- **       Р‘РёРЅРґРµСЂ СЃР°РјРѕРґРµР»СЊРЅС‹С… С‚РµР»РµРїРѕСЂС‚РѕРІ        **
+-- ** РџРѕРґРґРµСЂР¶РёРІР°РµС‚ СЂР°Р±РѕС‚Сѓ СЃР°РјРѕРїР°Р»СЊРЅС‹С… С‚РµР»РµРїРѕСЂС‚РѕРІ **
 -- ************************************************
-
-function abs_comp(a, b) --Служебная функция вычисления разности
-	return a < b and (b - a) or (a - b)
+function abs_comp(a, b) -- РЎР»СѓР¶РµР±РЅР°СЏ С„СѓРЅРєС†РёСЏ РІС‹С‡РёСЃР»РµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё
+    return a < b and (b - a) or (a - b)
 end
 
-function teleportate(x,y,z)
--- Функция телепортации
-	local a = vector()
-	-- Задаем координаты
-	a.x = x
-	a.y = y
-	a.z = z
+function teleportate(x, y, z)
+    -- Р¤СѓРЅРєС†РёСЏ С‚РµР»РµРїРѕСЂС‚Р°С†РёРё
+    local a = vector()
+    -- Р—Р°РґР°РµРј РєРѕРѕСЂРґРёРЅР°С‚С‹
+    a.x = x
+    a.y = y
+    a.z = z
 
-	-- Сама телепортация
-	db.actor:set_actor_position(a)
+    -- РЎР°РјР° С‚РµР»РµРїРѕСЂС‚Р°С†РёСЏ
+    db.actor:set_actor_position(a)
 
-	-- Звуковое сопровождение
-	local snd_obj = xr_sound.get_safe_sound_object([[affects\tinnitus3a]])
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+    -- Р—РІСѓРєРѕРІРѕРµ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёРµ
+    local snd_obj = xr_sound.get_safe_sound_object([[affects\tinnitus3a]])
+    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
 
 end
 
-local teleport_binders = {}	-- Список телепортов, нужнен для функции delete_teleports_with_section()
+local teleport_binders = {} -- РЎРїРёСЃРѕРє С‚РµР»РµРїРѕСЂС‚РѕРІ, РЅСѓР¶РЅРµРЅ РґР»СЏ С„СѓРЅРєС†РёРё delete_teleports_with_section()
 function delete_teleports_with_section(section)
-	for _, id in ipairs(teleport_binders) do
-		local sobj = alife():object(id)
-		if sobj and string.find(sobj:section_name(), section) then
-			alife():release(sobj, true)
-		end
-	end
+    for _, id in ipairs(teleport_binders) do
+        local sobj = alife():object(id)
+        if sobj and string.find(sobj:section_name(), section) then
+            alife():release(sobj, true)
+        end
+    end
 end
 
-function bind( obj )
-	obj:bind_object( restrictor_teleport( obj ) ) 
+function bind(obj)
+    obj:bind_object(restrictor_teleport(obj))
 end
 
 ----------------------------------------------------------------------------------------------------
-class "restrictor_teleport" ( object_binder )
+class "restrictor_teleport"(object_binder)
 
-function restrictor_teleport:__init(obj) super(obj)
-  self.sm = ogsr_signals.get_mgr()
+function restrictor_teleport:__init(obj)
+    super(obj)
+    self.sm = ogsr_signals.get_mgr()
 end
 
 function restrictor_teleport:net_spawn(data)
-	-- Если это телепорт то занесем его в специальный список телепортов
-	if self.teleport == true then
-		table.insert(teleport_binders, self.object:id())
+    -- Р•СЃР»Рё СЌС‚Рѕ С‚РµР»РµРїРѕСЂС‚ С‚Рѕ Р·Р°РЅРµСЃРµРј РµРіРѕ РІ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ СЃРїРёСЃРѕРє С‚РµР»РµРїРѕСЂС‚РѕРІ
+    if self.teleport == true then
+        table.insert(teleport_binders, self.object:id())
 
-		-- Заполним таблицу параметров
-		self["parametrs"] = {}
-		if sys_ini:line_exist(self.section, "radius") then
-			self.parametrs["radius"] = get_float(self.section, "radius")
-		else
-			self.parametrs["radius"] = 2 -- Дефолтный радиус по xy
-		end
-		if sys_ini:line_exist(self.section, "z_radius") then
-			self.parametrs["z_radius"] = get_float(self.section, "z_radius")
-		else
-			self.parametrs["z_radius"] = self.parametrs["radius"] -- если радиус высоты не задан то задаем равным радиусу xy
-		end
+        -- Р—Р°РїРѕР»РЅРёРј С‚Р°Р±Р»РёС†Сѓ РїР°СЂР°РјРµС‚СЂРѕРІ
+        self["parametrs"] = {}
+        if sys_ini:line_exist(self.section, "radius") then
+            self.parametrs["radius"] = get_float(self.section, "radius")
+        else
+            self.parametrs["radius"] = 2 -- Р”РµС„РѕР»С‚РЅС‹Р№ СЂР°РґРёСѓСЃ РїРѕ xy
+        end
+        if sys_ini:line_exist(self.section, "z_radius") then
+            self.parametrs["z_radius"] = get_float(self.section, "z_radius")
+        else
+            self.parametrs["z_radius"] = self.parametrs["radius"] -- РµСЃР»Рё СЂР°РґРёСѓСЃ РІС‹СЃРѕС‚С‹ РЅРµ Р·Р°РґР°РЅ С‚Рѕ Р·Р°РґР°РµРј СЂР°РІРЅС‹Рј СЂР°РґРёСѓСЃСѓ xy
+        end
 
-		-- Запомним позицию что-бы каждый раз не считать
-		local pos = self.object:position()
-		self.parametrs["x"] = pos.x
-		self.parametrs["y"] = pos.y
-		self.parametrs["z"] = pos.z
+        -- Р—Р°РїРѕРјРЅРёРј РїРѕР·РёС†РёСЋ С‡С‚Рѕ-Р±С‹ РєР°Р¶РґС‹Р№ СЂР°Р· РЅРµ СЃС‡РёС‚Р°С‚СЊ
+        local pos = self.object:position()
+        self.parametrs["x"] = pos.x
+        self.parametrs["y"] = pos.y
+        self.parametrs["z"] = pos.z
 
-		-- Запомним координаты куда телепортимся
-		self.parametrs["poz_x"] = get_float(self.section, "poz_x")
-		self.parametrs["poz_y"] = get_float(self.section, "poz_y")
-		self.parametrs["poz_z"] = get_float(self.section, "poz_z")
+        -- Р—Р°РїРѕРјРЅРёРј РєРѕРѕСЂРґРёРЅР°С‚С‹ РєСѓРґР° С‚РµР»РµРїРѕСЂС‚РёРјСЃСЏ
+        self.parametrs["poz_x"] = get_float(self.section, "poz_x")
+        self.parametrs["poz_y"] = get_float(self.section, "poz_y")
+        self.parametrs["poz_z"] = get_float(self.section, "poz_z")
 
-		if sys_ini:line_exist(self.section, "rotate") then
-			self.parametrs["rotate"] = get_float(self.section, "rotate")
-		end
+        if sys_ini:line_exist(self.section, "rotate") then
+            self.parametrs["rotate"] = get_float(self.section, "rotate")
+        end
 
-		self.subscribed = {
-			[ "signal" ] = "on_update",
-			[ "fun"    ] = self.actor_update,
-			[ "self"   ] = self,
-		}
-		self.sm:subscribe( self.subscribed )
-		--log3("--Teleport [%s] subscribed to update!", self.object:name())
-	end
-	return true
+        self.subscribed = {
+            ["signal"] = "on_update",
+            ["fun"] = self.actor_update,
+            ["self"] = self
+        }
+        self.sm:subscribe(self.subscribed)
+        -- log3("--Teleport [%s] subscribed to update!", self.object:name())
+    end
+    return true
 end
 
 function restrictor_teleport:net_destroy()
-	-- Удаляем наш телепорт
-	if self.subscribed then
-		self.sm:unsubscribe( self.subscribed )
-		self.subscribed = nil
-		--log3("!!Teleport [%s] UNsubscribed from update!", self.object:name())
-	end
-	teleport_binders[self.object:id()] = nil
-	self.parametrs = nil
-	object_binder.net_destroy(self)
+    -- РЈРґР°Р»СЏРµРј РЅР°С€ С‚РµР»РµРїРѕСЂС‚
+    if self.subscribed then
+        self.sm:unsubscribe(self.subscribed)
+        self.subscribed = nil
+        -- log3("!!Teleport [%s] UNsubscribed from update!", self.object:name())
+    end
+    teleport_binders[self.object:id()] = nil
+    self.parametrs = nil
+    object_binder.net_destroy(self)
 end
 
 function restrictor_teleport:reload(section)
-	self.section = section
-	-- Если это телепорт то 
-	if sys_ini:line_exist(self.section, "teleport") then
-		self["teleport"] = true
-	end
+    self.section = section
+    -- Р•СЃР»Рё СЌС‚Рѕ С‚РµР»РµРїРѕСЂС‚ С‚Рѕ 
+    if sys_ini:line_exist(self.section, "teleport") then
+        self["teleport"] = true
+    end
 end
 
 function restrictor_teleport:actor_update()
-	self.sm:reschedule( 200 )
+    self.sm:reschedule(200)
 
-	local acter_poz = db.actor:position()
-	local s = self.parametrs
-	-- Наш телепорт в онлайне проверяем дальше
-	if s.teleporte ~= nil and s.teleporte ~= false then
-		-- Телепорт запущен
-		if time_global() >= s.time then
-			-- Если время отведенное на показ спецэфектов
-			-- прошло, производим телепортацию
-			teleportate(s.poz_x,s.poz_y,s.poz_z)
-			if s.rotate ~= nil then
-				db.actor:set_actor_direction(s.rotate)
-			end
-			s.teleporte = false
-			local dist = self.object:position():distance_to( db.actor:position() )
-			self.sm:reschedule(
-				( dist < 15 and 200 )
-				or ( dist < 30 and math.random( 1000, 2000 ) )
-				or math.random( 5000, 6000 )
-			)
-		end
-		return
-	end
+    local acter_poz = db.actor:position()
+    local s = self.parametrs
+    -- РќР°С€ С‚РµР»РµРїРѕСЂС‚ РІ РѕРЅР»Р°Р№РЅРµ РїСЂРѕРІРµСЂСЏРµРј РґР°Р»СЊС€Рµ
+    if s.teleporte ~= nil and s.teleporte ~= false then
+        -- РўРµР»РµРїРѕСЂС‚ Р·Р°РїСѓС‰РµРЅ
+        if time_global() >= s.time then
+            -- Р•СЃР»Рё РІСЂРµРјСЏ РѕС‚РІРµРґРµРЅРЅРѕРµ РЅР° РїРѕРєР°Р· СЃРїРµС†СЌС„РµРєС‚РѕРІ
+            -- РїСЂРѕС€Р»Рѕ, РїСЂРѕРёР·РІРѕРґРёРј С‚РµР»РµРїРѕСЂС‚Р°С†РёСЋ
+            teleportate(s.poz_x, s.poz_y, s.poz_z)
+            if s.rotate ~= nil then
+                db.actor:set_actor_direction(s.rotate)
+            end
+            s.teleporte = false
+            local dist = self.object:position():distance_to(db.actor:position())
+            self.sm:reschedule((dist < 15 and 200) or (dist < 30 and math.random(1000, 2000)) or math.random(5000, 6000))
+        end
+        return
+    end
 
-	-- Пороверим не забрел-ли актер в наш телепорт
-	if
-		(abs_comp(s.x, acter_poz.x)< s.radius
-		and abs_comp(s.z, acter_poz.z)< s.radius
-		and abs_comp(s.y, acter_poz.y)< s.z_radius)
-	then
-		-- Актер в зоне действия телепорта, запустим телепорт
-		s["teleporte"] = true
-		s["time"] = time_global() + 500
-		self.sm:reschedule( 500 )
-		-- Запускаем спецэфекты телепортации
-		level.add_pp_effector ("teleport.ppe", 2006, false)
-	else
-		local dist = self.object:position():distance_to( db.actor:position() )
-		self.sm:reschedule(
-			( dist < 25 and 200 ) or ( dist < 100 and 1000 )
-			or math.random( 5000, 6000 )
-		)
-	end
+    -- РџРѕСЂРѕРІРµСЂРёРј РЅРµ Р·Р°Р±СЂРµР»-Р»Рё Р°РєС‚РµСЂ РІ РЅР°С€ С‚РµР»РµРїРѕСЂС‚
+    if (abs_comp(s.x, acter_poz.x) < s.radius and abs_comp(s.z, acter_poz.z) < s.radius and abs_comp(s.y, acter_poz.y) <
+        s.z_radius) then
+        -- РђРєС‚РµСЂ РІ Р·РѕРЅРµ РґРµР№СЃС‚РІРёСЏ С‚РµР»РµРїРѕСЂС‚Р°, Р·Р°РїСѓСЃС‚РёРј С‚РµР»РµРїРѕСЂС‚
+        s["teleporte"] = true
+        s["time"] = time_global() + 500
+        self.sm:reschedule(500)
+        -- Р—Р°РїСѓСЃРєР°РµРј СЃРїРµС†СЌС„РµРєС‚С‹ С‚РµР»РµРїРѕСЂС‚Р°С†РёРё
+        level.add_pp_effector("teleport.ppe", 2006, false)
+    else
+        local dist = self.object:position():distance_to(db.actor:position())
+        self.sm:reschedule((dist < 25 and 200) or (dist < 100 and 1000) or math.random(5000, 6000))
+    end
 end

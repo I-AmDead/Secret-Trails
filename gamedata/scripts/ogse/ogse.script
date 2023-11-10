@@ -5,7 +5,6 @@
 --- 2007-2008 (c) xStream, DEXXX
 --- 2009-2013 (c) OGS Evolution Team
 -----------------------------------------------------------------------
-
 game_time_factor = get_float("alife", "time_factor")
 save_var = ogse_unist.set_value
 load_var = ogse_unist.get_value
@@ -16,355 +15,363 @@ save_or_delete_var = ogse_unist.set_or_remove_value
 
 -- Переменные для типсов
 tips_variable = {
-	["pda_news"] = ([[device\pda\pda_news]]),
-	["pda_tips"] = ([[device\pda\pda_tip]]),
-	["pda_task"] = ([[device\pda\pda_objective]]),
-	["pda_sos"] = ([[device\pda\pda_sos]]),
+    ["pda_news"] = ([[device\pda\pda_news]]),
+    ["pda_tips"] = ([[device\pda\pda_tip]]),
+    ["pda_task"] = ([[device\pda\pda_objective]]),
+    ["pda_sos"] = ([[device\pda\pda_sos]])
 }
 tips_icons = {
-	default  = { 82, 282},
-	trader   = { 332, 893},
-	dolg     = { 0, 658},
-	freedom  = { 0, 658},
-	ecolog   = { 498, 0},
-	arena    = { 332, 141},
-	stalker  = { 0, 658},
-	krot     = { 332, 47},
-	barman   = { 332, 235},
-	wolf	   = { 332, 940},
-	o_soznanie = { 498, 893},
-	monolith = { 0, 658},
-	saharov  = { 332, 470},
-	prizrak  = { 0, 658},
-	killer   = { 0, 658},
-	death    = { 0, 752},
-	gen_info	= { 0, 658},
-	trade 	= { 0, 0},
-	uniq	= { 498, 47}
+    default = {82, 282},
+    trader = {332, 893},
+    dolg = {0, 658},
+    freedom = {0, 658},
+    ecolog = {498, 0},
+    arena = {332, 141},
+    stalker = {0, 658},
+    krot = {332, 47},
+    barman = {332, 235},
+    wolf = {332, 940},
+    o_soznanie = {498, 893},
+    monolith = {0, 658},
+    saharov = {332, 470},
+    prizrak = {0, 658},
+    killer = {0, 658},
+    death = {0, 752},
+    gen_info = {0, 658},
+    trade = {0, 0},
+    uniq = {498, 47}
 }
 
-
 function kill_living_npc(npc_id)
-   local s_npc = alife():object(npc_id)
-   s_npc.force_offline = true
-   go_offline_kill_timer(npc_id):start()
+    local s_npc = alife():object(npc_id)
+    s_npc.force_offline = true
+    go_offline_kill_timer(npc_id):start()
 end
 -- служебный таймер, ждущий ухода в оффлайн
-class "go_offline_kill_timer" (ogse_qt.quick_timer)
-function go_offline_kill_timer:__init(npc_id) super()
-   self.npc_id = npc_id -- запоминаем в таймере id непися
+class "go_offline_kill_timer"(ogse_qt.quick_timer)
+function go_offline_kill_timer:__init(npc_id)
+    super()
+    self.npc_id = npc_id -- запоминаем в таймере id непися
 end
 function go_offline_kill_timer:condition()
-   return (not level.object_by_id(self.npc_id)) -- ждём исчезновения клиентского объекта
+    return (not level.object_by_id(self.npc_id)) -- ждём исчезновения клиентского объекта
 end
 function go_offline_kill_timer:action()
-   local sobj = alife():object(self.npc_id)
-   if sobj then
-      alife():release(sobj, true)
-   --else
-      --send_tip("Something wrong!") -- такое возможно при удалении объекта
-   end
+    local sobj = alife():object(self.npc_id)
+    if sobj then
+        alife():release(sobj, true)
+        -- else
+        -- send_tip("Something wrong!") -- такое возможно при удалении объекта
+    end
 end
 
 --- Перезапуск логики NPC
 function reset_npc_logic(obj)
-	if obj then
-		local npc_id = obj:id()
-		db.storage[npc_id].overrides = nil
-		xr_logic.reset_generic_schemes_on_scheme_switch(obj, "nil", "nil")
-		db.storage[npc_id].active_section = nil
-		db.storage[npc_id].active_scheme = nil
-	end
+    if obj then
+        local npc_id = obj:id()
+        db.storage[npc_id].overrides = nil
+        xr_logic.reset_generic_schemes_on_scheme_switch(obj, "nil", "nil")
+        db.storage[npc_id].active_section = nil
+        db.storage[npc_id].active_scheme = nil
+    end
 end
 
 -- Проверка уровня артефакта по имени левела
 function art_accesible(item)
-	local section = item:section()
-	local level_name = level.name()
-	local art_level = art_levels[section]
-	local loc_level = loc_levels[level_name]
-	if art_level and loc_level then
-		return art_level <= loc_level
-	else
-		return true
-	end
-	return false
+    local section = item:section()
+    local level_name = level.name()
+    local art_level = art_levels[section]
+    local loc_level = loc_levels[level_name]
+    if art_level and loc_level then
+        return art_level <= loc_level
+    else
+        return true
+    end
+    return false
 end
 
 -- Проверка нахождения актора в особой зоне
-function actor_in_zone(pos_psy_x,pos_psy_y,size_psy_x,size_psy_y,z1,z2)
-	local pos = db.actor:position()
-	local x1, x2, y1, y2 = pos_psy_x, pos_psy_y, size_psy_x, size_psy_y
+function actor_in_zone(pos_psy_x, pos_psy_y, size_psy_x, size_psy_y, z1, z2)
+    local pos = db.actor:position()
+    local x1, x2, y1, y2 = pos_psy_x, pos_psy_y, size_psy_x, size_psy_y
 
-	return ( (pos.x >= x1 and pos.x <= x2) and (pos.z >= y1 and pos.z <= y2) and (pos.y >= z1) and (pos.y <= z2) ) and 1 or 0
+    return
+        ((pos.x >= x1 and pos.x <= x2) and (pos.z >= y1 and pos.z <= y2) and (pos.y >= z1) and (pos.y <= z2)) and 1 or 0
 end
 
 -- Проверка нахождения НПС в особой зоне
-function npc_in_zone(obj,lev,pos_psy_x,pos_psy_y,size_psy_x,size_psy_y,z1,z2)
-local level_name = level.name()
-if level_name ~= lev then
-	return false
-end
-local pos = obj:position()
-local x1 = pos_psy_x
-local x2 = pos_psy_y
-local y1 = size_psy_x
-local y2 = size_psy_y
-return (pos.x >= x1 and pos.x <= x2) and (pos.z >= y1 and pos.z <= y2) and (pos.y >= z1) and (pos.y <= z2)
+function npc_in_zone(obj, lev, pos_psy_x, pos_psy_y, size_psy_x, size_psy_y, z1, z2)
+    local level_name = level.name()
+    if level_name ~= lev then
+        return false
+    end
+    local pos = obj:position()
+    local x1 = pos_psy_x
+    local x2 = pos_psy_y
+    local y1 = size_psy_x
+    local y2 = size_psy_y
+    return (pos.x >= x1 and pos.x <= x2) and (pos.z >= y1 and pos.z <= y2) and (pos.y >= z1) and (pos.y <= z2)
 end
 
 local quest_profiles = {}
 
 --- Возвращает true если параметром передан квестовый непись
 function is_quest_npc(npc)
-	if not npc then return false end
-	--
-	local story
-	if npc.m_story_id then
-		story = npc.m_story_id
-	else
-		story = npc:story_id()
-	end
-	--log3("[OGSE] SID of [%s]: [%s]", npc:name(), story)
-	if story == 4294967295 then
-		if quest_profiles[npc:profile_name()] or quest_profiles[npc:name()] then
-			return true
-		end
-	end
-	--
-	return story ~= 4294967295
+    if not npc then
+        return false
+    end
+    --
+    local story
+    if npc.m_story_id then
+        story = npc.m_story_id
+    else
+        story = npc:story_id()
+    end
+    -- log3("[OGSE] SID of [%s]: [%s]", npc:name(), story)
+    if story == 4294967295 then
+        if quest_profiles[npc:profile_name()] or quest_profiles[npc:name()] then
+            return true
+        end
+    end
+    --
+    return story ~= 4294967295
 end
 
 -- телепортация NPC в пределах уровня
 -- сама функция только ставит флажок на выпихивание в оффлайн и запускает ждущий таймер
 -- вся работа будет сделана в экшине таймера
 function teleport_npc(npc_id, pos)
-   local s_npc = alife():object(npc_id)
-   s_npc.force_offline = true
-   go_offline_watch_timer(npc_id, pos):start() -- таймер "выстрелил-забыл"
+    local s_npc = alife():object(npc_id)
+    s_npc.force_offline = true
+    go_offline_watch_timer(npc_id, pos):start() -- таймер "выстрелил-забыл"
 end
 -- служебный таймер, ждущий ухода в оффлайн
-class "go_offline_watch_timer" (ogse_qt.quick_timer)
-function go_offline_watch_timer:__init(npc_id, pos) super()
-   self.npc_id = npc_id -- запоминаем в таймере id непися
-   self.pos    = pos -- запоминаем позицию, куда будем перемещать
+class "go_offline_watch_timer"(ogse_qt.quick_timer)
+function go_offline_watch_timer:__init(npc_id, pos)
+    super()
+    self.npc_id = npc_id -- запоминаем в таймере id непися
+    self.pos = pos -- запоминаем позицию, куда будем перемещать
 end
 function go_offline_watch_timer:condition()
-   return not level.object_by_id(self.npc_id) -- ждём исчезновения клиентского объекта
+    return not level.object_by_id(self.npc_id) -- ждём исчезновения клиентского объекта
 end
 function go_offline_watch_timer:action()
-   local s_npc = alife():object(self.npc_id)
-   if s_npc then
-      s_npc.position = self.pos -- кастуем злое колдунство
-      s_npc.force_offline = nil -- отправляем обратно в онлайн
-   --else
-      --log1("Something wrong!") -- такое возможно при удалении объекта
-   end
+    local s_npc = alife():object(self.npc_id)
+    if s_npc then
+        s_npc.position = self.pos -- кастуем злое колдунство
+        s_npc.force_offline = nil -- отправляем обратно в онлайн
+        -- else
+        -- log1("Something wrong!") -- такое возможно при удалении объекта
+    end
 end
 
 --- Возвращает класс защиты надетой на ГГ брони от выброса. В obj передавать db:actor
 --- С неписями НЕ работает! Пользуйте armor_type(npc)
 function armor_class(obj)
-	if not obj then return end
+    if not obj then
+        return
+    end
 
-	local armor = obj:get_current_outfit()
-	if not armor then return 5 end
+    local armor = obj:get_current_outfit()
+    if not armor then
+        return 5
+    end
 
-	local armorname = armor:section()
-	return (
-			   armorname:find("scientific_outfit")
-			or armorname:find("ecolog_outfit")
-			or armorname:find("protection_outfit")
-			or armorname:find("military_outfit")
-		) and 1
-		or (
-			   armorname:find("exo")
-			or armorname:find("monolit_exoskeleton")
-		) and 2
-		or (   armorname:find("specops_outfit")
-			or armorname:find("monolit_outfit_m1")
-			or armorname:find("svoboda_heavy_outfit")
-		) and 3
-		or 4
+    local armorname = armor:section()
+    return (armorname:find("scientific_outfit") or armorname:find("ecolog_outfit") or
+               armorname:find("protection_outfit") or armorname:find("military_outfit")) and 1 or
+               (armorname:find("exo") or armorname:find("monolit_exoskeleton")) and 2 or
+               (armorname:find("specops_outfit") or armorname:find("monolit_outfit_m1") or
+                   armorname:find("svoboda_heavy_outfit")) and 3 or 4
 end
 
-local armor_type_npc = { ["novice"] = 4, ["experienced"] = 3, ["veteran"] = 2, ["master"] = 1 }
+local armor_type_npc = {
+    ["novice"] = 4,
+    ["experienced"] = 3,
+    ["veteran"] = 2,
+    ["master"] = 1
+}
 --- Возвращает класс защиты непися
 function armor_type(npc)
-	if not npc then return end
+    if not npc then
+        return
+    end
 
-	local npc_rank = ranks.get_obj_rank_name(npc)
-	if npc_rank then
-		return armor_type_npc[npc_rank] or 1
-	end
+    local npc_rank = ranks.get_obj_rank_name(npc)
+    if npc_rank then
+        return armor_type_npc[npc_rank] or 1
+    end
 end
 
 -- Показ типса
 function send_tip(news_text, header, timeout, showtime, sender, sound)
-	if not news_text then return end
+    if not news_text then
+        return
+    end
 
-	local header = header or game.translate_string("st_tip")
-	local timeout = timeout or 0
-	local showtime = showtime or 5
-	local sender = sender or "default"
-	local x = tips_icons[sender][1]
-	local y = tips_icons[sender][2]
-	local player = xr_sound.get_safe_sound_object( tips_variable[sound] or tips_variable["pda_tips"] )
+    local header = header or game.translate_string("st_tip")
+    local timeout = timeout or 0
+    local showtime = showtime or 5
+    local sender = sender or "default"
+    local x = tips_icons[sender][1]
+    local y = tips_icons[sender][2]
+    local player = xr_sound.get_safe_sound_object(tips_variable[sound] or tips_variable["pda_tips"])
 
-	player:play(db.actor, timeout, sound_object.s2d) --Играем дефолтный звук
+    player:play(db.actor, timeout, sound_object.s2d) -- Играем дефолтный звук
 
-	local news_text = "%c[255,160,160,160]"..header.."\\n".."%c[default]"..news_text
-	db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(x,y,83,47), timeout*1000, showtime*1000)
+    local news_text = "%c[255,160,160,160]" .. header .. "\\n" .. "%c[default]" .. news_text
+    db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(x, y, 83, 47), timeout * 1000, showtime * 1000)
 
-	return true
+    return true
 end
 
 -----------------------------------------------------------------------------------------------------------
---Спавним предметы в инвентарь актора, НПС, монстров, ящиков (поддерживаются и клиентские, и серверные объекты)
---ДЛЯ СПАВНА ПАТРОНОВ ИСПОЛЬЗОВАТЬ ОТДЕЛЬНУЮ ФУНКЦИЮ!!!
+-- Спавним предметы в инвентарь актора, НПС, монстров, ящиков (поддерживаются и клиентские, и серверные объекты)
+-- ДЛЯ СПАВНА ПАТРОНОВ ИСПОЛЬЗОВАТЬ ОТДЕЛЬНУЮ ФУНКЦИЮ!!!
 function spawn_item_in_inv(section, npc, num)
-	local npc = npc or db.actor
-	local num = num or 1
+    local npc = npc or db.actor
+    local num = num or 1
 
-	local pos, lvi, gvi, pid, sobj
-	if type(npc.id) == "function" then
-		pos, lvi, gvi, pid = npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id()
-	else
-		pos, lvi, gvi, pid = npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id
-	end
+    local pos, lvi, gvi, pid, sobj
+    if type(npc.id) == "function" then
+        pos, lvi, gvi, pid = npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id()
+    else
+        pos, lvi, gvi, pid = npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id
+    end
 
-	local is_actor = pid == db.actor:id()
-	local game_obj = level.object_by_id(pid)
-	for i = 1, num do
-		sobj = alife():create(section, pos, lvi, gvi, pid)
-		if not is_actor and game_obj then
-			level.client_spawn_manager():add(sobj.id, -1, fix_spawn_item_in_inv, game_obj) --Фикс пропадания доспавненного предмета при сейв/лоаде
-		end
-	end
-	if num == 1 then
-		return alife():object(sobj.id)
-	end
+    local is_actor = pid == db.actor:id()
+    local game_obj = level.object_by_id(pid)
+    for i = 1, num do
+        sobj = alife():create(section, pos, lvi, gvi, pid)
+        if not is_actor and game_obj then
+            level.client_spawn_manager():add(sobj.id, -1, fix_spawn_item_in_inv, game_obj) -- Фикс пропадания доспавненного предмета при сейв/лоаде
+        end
+    end
+    if num == 1 then
+        return alife():object(sobj.id)
+    end
 end
 
---Спавним патроны в инвентарь актора, НПС, монстров, ящиков (поддерживаются и клиентские, и серверные объекты)
+-- Спавним патроны в инвентарь актора, НПС, монстров, ящиков (поддерживаются и клиентские, и серверные объекты)
 function spawn_ammo_in_inv(section, num, npc)
-	if num < 1 then return end
+    if num < 1 then
+        return
+    end
 
-	local npc = npc or db.actor
+    local npc = npc or db.actor
 
-	local pos, lvi, gvi, pid
-	if type(npc.id) == "function" then
-		pos, lvi, gvi, pid = npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id()
-	else
-		pos, lvi, gvi, pid = npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id
-	end
+    local pos, lvi, gvi, pid
+    if type(npc.id) == "function" then
+        pos, lvi, gvi, pid = npc:position(), npc:level_vertex_id(), npc:game_vertex_id(), npc:id()
+    else
+        pos, lvi, gvi, pid = npc.position, npc.m_level_vertex_id, npc.m_game_vertex_id, npc.id
+    end
 
-	local is_actor = pid == db.actor:id()
-	local game_obj = level.object_by_id(pid)
-	local num_in_box = get_u32(section, "box_size")
-	while num > num_in_box or num > 0 do
-		local sitem = alife():create_ammo(section, pos, lvi, gvi, pid, num < num_in_box and num or num_in_box)
-		if not is_actor and game_obj then
-			level.client_spawn_manager():add(sitem.id, -1, fix_spawn_item_in_inv, game_obj) --Фикс пропадания доспавненного предмета при сейв/лоаде
-		end
-		num = num - num_in_box
-	end
+    local is_actor = pid == db.actor:id()
+    local game_obj = level.object_by_id(pid)
+    local num_in_box = get_u32(section, "box_size")
+    while num > num_in_box or num > 0 do
+        local sitem = alife():create_ammo(section, pos, lvi, gvi, pid, num < num_in_box and num or num_in_box)
+        if not is_actor and game_obj then
+            level.client_spawn_manager():add(sitem.id, -1, fix_spawn_item_in_inv, game_obj) -- Фикс пропадания доспавненного предмета при сейв/лоаде
+        end
+        num = num - num_in_box
+    end
 end
 
-function fix_spawn_item_in_inv(obj, item_id, item_obj) --Фикс пропадания доспавненного предмета при сейв/лоаде
+function fix_spawn_item_in_inv(obj, item_id, item_obj) -- Фикс пропадания доспавненного предмета при сейв/лоаде
     obj:transfer_item(item_obj, obj)
 end
 -----------------------------------------------------------------------------------------------------------
 
 -- Удаляем объект из игры
 function remove_item(item_to_remove)
-	if item_to_remove then
-		local sobj = alife():object(item_to_remove:id())
-		if sobj then
-			alife():release(sobj, true)
-			return true
-		else
-			return false
-		end
-	end
-	return false
+    if item_to_remove then
+        local sobj = alife():object(item_to_remove:id())
+        if sobj then
+            alife():release(sobj, true)
+            return true
+        else
+            return false
+        end
+    end
+    return false
 end
 
---/Удаление итемов из инвентаря ГГ
+-- /Удаление итемов из инвентаря ГГ
 function remove_inv_items_by_section(sec, items_to_remove)
-	local items_removed = 0
-	for i = 0, db.actor:object_count() - 1 do
-		local item = db.actor:object(i)
-		if item and item:section() == sec then
-			if remove_item(item) then
-				items_removed = items_removed + 1
-			end
-			if items_removed == items_to_remove then 
-				return
-			end 
-		end
-	end 
+    local items_removed = 0
+    for i = 0, db.actor:object_count() - 1 do
+        local item = db.actor:object(i)
+        if item and item:section() == sec then
+            if remove_item(item) then
+                items_removed = items_removed + 1
+            end
+            if items_removed == items_to_remove then
+                return
+            end
+        end
+    end
 end
 
 -- Выбрасываем объект из инвентаря, применимо к ГГ
 function drop_item(npc, item)
-	if item then
-	    npc:mark_item_dropped(item)
-	end
+    if item then
+        npc:mark_item_dropped(item)
+    end
 end
 
 -- Убиваем непися
 function make_suicide(npc)
-	npc:kill(npc)
+    npc:kill(npc)
 end
 
 -- Узнаем отношение одного непися к другому
-function get_npc_relation(obj,target)
-	local rel = obj:relation(target)
-	if rel then
-		return rel == game_object.neutral and "neutral"
-			or rel == game_object.friend and "friend"
-			or rel == game_object.enemy and "enemy"
-	end
+function get_npc_relation(obj, target)
+    local rel = obj:relation(target)
+    if rel then
+        return rel == game_object.neutral and "neutral" or rel == game_object.friend and "friend" or rel ==
+                   game_object.enemy and "enemy"
+    end
 end
 
 -- Задаем отношение одного непися к другому
-function set_npc_relation(obj,target,relation)
-	ASSERT(relation, "[ogse.set_npc_relation] variable relation == nil!")
-	if relation=="neutral" then
-		rel=game_object.neutral
-	elseif relation=="friend" then
-		rel=game_object.friend
-	elseif relation=="enemy" then
-		rel=game_object.enemy
-	else
-		return false
-	end
-	obj:set_relation(rel,target)
-	return true
+function set_npc_relation(obj, target, relation)
+    ASSERT(relation, "[ogse.set_npc_relation] variable relation == nil!")
+    if relation == "neutral" then
+        rel = game_object.neutral
+    elseif relation == "friend" then
+        rel = game_object.friend
+    elseif relation == "enemy" then
+        rel = game_object.enemy
+    else
+        return false
+    end
+    obj:set_relation(rel, target)
+    return true
 end
 
 -- Выставляем группировку непися, можно ГГ
-function set_npc_community(npc,community_string)
-	--значения для community_string можно узнать в config\creatures\game_relations.ltx
-	return npc:set_character_community(community_string, 0, 0)
+function set_npc_community(npc, community_string)
+    -- значения для community_string можно узнать в config\creatures\game_relations.ltx
+    return npc:set_character_community(community_string, 0, 0)
 end
 
 -- Удаляем предмет из инвентаря по имени
-function remove_item_from_inventory_by_name(remove_item_name,npc)
-	return remove_item_from_inventory(npc:object(remove_item_name),npc)
+function remove_item_from_inventory_by_name(remove_item_name, npc)
+    return remove_item_from_inventory(npc:object(remove_item_name), npc)
 end
 function remove_item_from_inventory(remove_item, npc)
-	npc = npc or db.actor
-	if remove_item then
-	    npc:mark_item_dropped(remove_item)
-		local sobj = alife():object(remove_item:id())
-		if sobj then
-			alife():release(sobj, true)
-			return true
-		end
-	end
-	return false
+    npc = npc or db.actor
+    if remove_item then
+        npc:mark_item_dropped(remove_item)
+        local sobj = alife():object(remove_item:id())
+        if sobj then
+            alife():release(sobj, true)
+            return true
+        end
+    end
+    return false
 end
 
 -- Очищаем инвентарь непися, можно ГГ
@@ -375,253 +382,244 @@ end
 
 -- Очищаем инвентарь непися, можно ГГ
 function clear_clear(item)
-    local sect = item:section() 
-    if sect == "detector_simple"
-    or sect == "matras" 
-    or sect == "bioradar"
-    or sect == "detector_kruglov" 
-    or sect == "device_torch"
-    or sect == "wpn_knife"
-    or sect == "wpn_binoc"   
-    then
+    local sect = item:section()
+    if sect == "detector_simple" or sect == "matras" or sect == "bioradar" or sect == "detector_kruglov" or sect ==
+        "device_torch" or sect == "wpn_knife" or sect == "wpn_binoc" then
         return
     end
     local sobj = alife():object(item:id())
     if sobj then
-    	alife():release(sobj, true)
+        alife():release(sobj, true)
     end
 end
 
 -- Проверка, запущена ли игра
 function check_game()
-	return level.present() and db.actor and db.actor:alive() and device().precache_frame < 1
+    return level.present() and db.actor and db.actor:alive() and device().precache_frame < 1
 end
 
---**********************************************************************************************************
---KRodin перевёл все функции на систему ogse_unist.script.
---В будущем эти функции НЕ ИСПОЛЬЗОВАТЬ! А использовать ТОЛЬКО ogse_unist.script!!! Подробности читать там.
+-- **********************************************************************************************************
+-- KRodin перевёл все функции на систему ogse_unist.script.
+-- В будущем эти функции НЕ ИСПОЛЬЗОВАТЬ! А использовать ТОЛЬКО ogse_unist.script!!! Подробности читать там.
 function save_variable(variable_name, value)
-	save_var("ogse."..variable_name, value)
+    save_var("ogse." .. variable_name, value)
 end
 
 function load_variable(variable_name, value_if_not_found)
-	if var_exists("ogse."..variable_name) then
-		return load_var("ogse."..variable_name)
-	elseif value_if_not_found ~= nil then
-		return value_if_not_found
-	else
-		return nil
-	end
+    if var_exists("ogse." .. variable_name) then
+        return load_var("ogse." .. variable_name)
+    elseif value_if_not_found ~= nil then
+        return value_if_not_found
+    else
+        return nil
+    end
 end
 
 function del_variable(variable_name)
-	delete_var("ogse."..variable_name)
+    delete_var("ogse." .. variable_name)
 end
---***********************************************************************************************************
+-- ***********************************************************************************************************
 
 -- Определяем находится ли ГГ в определенной зоне
-function check_npc_in_box(npc, p1,p2)
-	local pos=npc:position()
-	return is_point_inside_interval(pos.x,p1.x,p2.x) and
-		is_point_inside_interval(pos.y,p1.y,p2.y) and
-		is_point_inside_interval(pos.z,p1.z,p2.z)
+function check_npc_in_box(npc, p1, p2)
+    local pos = npc:position()
+    return is_point_inside_interval(pos.x, p1.x, p2.x) and is_point_inside_interval(pos.y, p1.y, p2.y) and
+               is_point_inside_interval(pos.z, p1.z, p2.z)
 end
 
---определяем находится ли ГГ в определенной зоне
+-- определяем находится ли ГГ в определенной зоне
 function check_npc_in_box_amk(npc, p1, p2, p3)
-	local pos
-	if npc.name then
-		pos = npc:position()
-	else 
-		pos = npc
-	end
+    local pos
+    if npc.name then
+        pos = npc:position()
+    else
+        pos = npc
+    end
 
-	if not p3 then
-		return is_point_inside_interval(pos.x, p1.x, p2.x) and
-		is_point_inside_interval(pos.y, p1.y, p2.y) and
-		is_point_inside_interval(pos.z, p1.z, p2.z)
-	else
-		local v1, v2, r, proj1, proj2, dv1, dv2
-		v1 = sub(p2, p1)
-		v2 = sub(p3, p2)
-		v1.y = 0 
-		v2.y = 0
-		dv1 = v1:magnitude()
-		dv2 = v2:magnitude()
-		v1:normalize() 
-		v2:normalize()
-		r = sub(pos, p1)
-		local v1p = vector():set(v1.z, 0, -v1.x)
-		proj2 = v1p:dotproduct(r) / v1p:dotproduct(v2)
-		proj1 = v1:dotproduct(r) - v1:dotproduct(v2) * proj2
-		return proj1 > 0 and proj1 < dv1 and proj2 > 0 and proj2 < dv2 and pos.y > p1.y and pos.y < p3.y
-	end
+    if not p3 then
+        return is_point_inside_interval(pos.x, p1.x, p2.x) and is_point_inside_interval(pos.y, p1.y, p2.y) and
+                   is_point_inside_interval(pos.z, p1.z, p2.z)
+    else
+        local v1, v2, r, proj1, proj2, dv1, dv2
+        v1 = sub(p2, p1)
+        v2 = sub(p3, p2)
+        v1.y = 0
+        v2.y = 0
+        dv1 = v1:magnitude()
+        dv2 = v2:magnitude()
+        v1:normalize()
+        v2:normalize()
+        r = sub(pos, p1)
+        local v1p = vector():set(v1.z, 0, -v1.x)
+        proj2 = v1p:dotproduct(r) / v1p:dotproduct(v2)
+        proj1 = v1:dotproduct(r) - v1:dotproduct(v2) * proj2
+        return proj1 > 0 and proj1 < dv1 and proj2 > 0 and proj2 < dv2 and pos.y > p1.y and pos.y < p3.y
+    end
 end
 
-function sub(v1,v2)
-  local newvec = vector():set( 0, 0, 0 )
-  newvec.x = v1.x-v2.x
-  newvec.y = v1.y-v2.y
-  newvec.z = v1.z-v2.z
-  return newvec
+function sub(v1, v2)
+    local newvec = vector():set(0, 0, 0)
+    newvec.x = v1.x - v2.x
+    newvec.y = v1.y - v2.y
+    newvec.z = v1.z - v2.z
+    return newvec
 end
 
-function is_point_inside_interval(x,p1,p2)
-	if p1>p2 then
-		p1,p2 = p2,p1
-	end
+function is_point_inside_interval(x, p1, p2)
+    if p1 > p2 then
+        p1, p2 = p2, p1
+    end
 
-	return x>p1 and x<p2
+    return x > p1 and x < p2
 end
 
 function kill_offline_npc(obj)
-	if not obj then return end
-	ASSERT( IsStalker(obj) or IsMonster(obj), "" )
+    if not obj then
+        return
+    end
+    ASSERT(IsStalker(obj) or IsMonster(obj), "")
 
-	local pk = get_netpk(obj)
-	ASSERT( pk:isOk(), "can't read netpacket of %s", obj:name() )
-	local data = pk:get()
-	data.health = 0
-	data.upd.health = 0
-	pk:set(data)
-	obj.offline_dead = 1
-	smart_terrain.on_death( obj.id )
+    local pk = get_netpk(obj)
+    ASSERT(pk:isOk(), "can't read netpacket of %s", obj:name())
+    local data = pk:get()
+    data.health = 0
+    data.upd.health = 0
+    pk:set(data)
+    obj.offline_dead = 1
+    smart_terrain.on_death(obj.id)
 end
 
 -- возвращает уровень здоровья НПС, для проверки в оффлайне жив/мёртв НПС
 function check_offline_npc(obj)
-	if not obj then return end
-	ASSERT( IsStalker(obj) or IsMonster(obj), "" )
+    if not obj then
+        return
+    end
+    ASSERT(IsStalker(obj) or IsMonster(obj), "")
 
-	local pk = get_netpk(obj, 2)
-	ASSERT( pk:isOk(), "can't read netpacket of %s", obj:name() )
-	local data = pk:get()
-	--log3("Data of [%s]: %s", obj:name(), data)
+    local pk = get_netpk(obj, 2)
+    ASSERT(pk:isOk(), "can't read netpacket of %s", obj:name())
+    local data = pk:get()
+    -- log3("Data of [%s]: %s", obj:name(), data)
 
-	return data.upd.health > 0
+    return data.upd.health > 0
 end
-
 
 -- вспомогательная функция, создание одного или нескольких объектов в заданной точке
 -- назначение: убрать повторный код из функций далее по тексту
 local function spawn_single_object_internal(res, spawn_item)
-	ASSERT(spawn_item.sec, "[spawn_single_object_internal] section not defined")
-	ASSERT(spawn_item.pos, "[spawn_single_object_internal] position not defined, sec = '%s'", spawn_item.sec)
-	ASSERT(spawn_item.lvid, "[spawn_single_object_internal] lvid not defined, sec = '%s'", spawn_item.sec)
-	ASSERT(spawn_item.gvid, "[spawn_single_object_internal] gvid not defined, sec = '%s'", spawn_item.sec)
-	if spawn_item.lvl then
-		ASSERT(level_system_name_by_gvid(spawn_item.gvid) == spawn_item.lvl,
-			"[spawn_single_object_internal] gvid does not match the level name, sec = '%s', lvl = '%s', gvid = %d",
-			spawn_item.sec,
-			spawn_item.lvl,
-			spawn_item.gvid
-			)
-	end
-	local count = spawn_item.cnt or 1
-	ASSERT(not (count > 1 and spawn_item.sid), "[spawn_single_object_internal] cannot assign same sid to multiple objects!, sec = '%s'", spawn_item.sec)
-	local sim = alife()
-	for i=1,count do
-		local sobj_abstract = sim:create(spawn_item.sec, vector():set(unpack(spawn_item.pos)), spawn_item.lvid, spawn_item.gvid)
-		-- получаем объект правильнго типа
-		local sobj = sim:object(sobj_abstract.id)
-		-- на самом деле в этой проверке нет смысла. Ситуации, когда объект создать не удалось, а выполнение продолжилось,
-		-- просто не бывает. В этих случаях всегда идёт вылет. Но пусть будет
-		ASSERT(sobj, "[spawn_single_object_internal] cannot create object, sec = '%s'", spawn_item.sec)
-		if spawn_item.use_ai_locations == false then
-			alife():use_ai_locations(sobj, false)
-		elseif spawn_item.use_ai_locations == true then
-			alife():use_ai_locations(sobj, true)
-		end
-		if spawn_item.sid then
-			sim:assign_story_id(sobj.id, spawn_item.sid)
-		end
-		if spawn_item.angle then
-			sobj.angle = vector():set(unpack(spawn_item.angle))
-		end
-		if spawn_item.inf then
-			db.actor:give_info_portion(spawn_item.inf)
-		end
-		table.insert(res, sobj)
-	end
+    ASSERT(spawn_item.sec, "[spawn_single_object_internal] section not defined")
+    ASSERT(spawn_item.pos, "[spawn_single_object_internal] position not defined, sec = '%s'", spawn_item.sec)
+    ASSERT(spawn_item.lvid, "[spawn_single_object_internal] lvid not defined, sec = '%s'", spawn_item.sec)
+    ASSERT(spawn_item.gvid, "[spawn_single_object_internal] gvid not defined, sec = '%s'", spawn_item.sec)
+    if spawn_item.lvl then
+        ASSERT(level_system_name_by_gvid(spawn_item.gvid) == spawn_item.lvl,
+            "[spawn_single_object_internal] gvid does not match the level name, sec = '%s', lvl = '%s', gvid = %d",
+            spawn_item.sec, spawn_item.lvl, spawn_item.gvid)
+    end
+    local count = spawn_item.cnt or 1
+    ASSERT(not (count > 1 and spawn_item.sid),
+        "[spawn_single_object_internal] cannot assign same sid to multiple objects!, sec = '%s'", spawn_item.sec)
+    local sim = alife()
+    for i = 1, count do
+        local sobj_abstract = sim:create(spawn_item.sec, vector():set(unpack(spawn_item.pos)), spawn_item.lvid,
+            spawn_item.gvid)
+        -- получаем объект правильнго типа
+        local sobj = sim:object(sobj_abstract.id)
+        -- на самом деле в этой проверке нет смысла. Ситуации, когда объект создать не удалось, а выполнение продолжилось,
+        -- просто не бывает. В этих случаях всегда идёт вылет. Но пусть будет
+        ASSERT(sobj, "[spawn_single_object_internal] cannot create object, sec = '%s'", spawn_item.sec)
+        if spawn_item.use_ai_locations == false then
+            alife():use_ai_locations(sobj, false)
+        elseif spawn_item.use_ai_locations == true then
+            alife():use_ai_locations(sobj, true)
+        end
+        if spawn_item.sid then
+            sim:assign_story_id(sobj.id, spawn_item.sid)
+        end
+        if spawn_item.angle then
+            sobj.angle = vector():set(unpack(spawn_item.angle))
+        end
+        if spawn_item.inf then
+            db.actor:give_info_portion(spawn_item.inf)
+        end
+        table.insert(res, sobj)
+    end
 end
 
 -- спавнит один или несколько одинаковых предметов в заданной точке
 -- фактически просто обёртка над spawn_single_object_internal
 function spawn_object(spawn_item)
-	local res = {}
-	spawn_single_object_internal(res, spawn_item)
-	return unpack(res)
+    local res = {}
+    spawn_single_object_internal(res, spawn_item)
+    return unpack(res)
 end
 -- спавнит несколько предметов, заданных таблицей
 function spawn_objects(spawn_items)
-	local res = {}
-	for idx,spawn_item in ipairs(spawn_items) do
-		spawn_single_object_internal(res, spawn_item)
-	end
-	return res
+    local res = {}
+    for idx, spawn_item in ipairs(spawn_items) do
+        spawn_single_object_internal(res, spawn_item)
+    end
+    return res
 end
 -- спавнит рандомно один из предметов, заданных таблицей
 function spawn_object_rand(spawn_items)
-	local spawn_item = spawn_items[math.random(#spawn_items)]
-	local res = {}
-	spawn_single_object_internal(res, spawn_item)
-	return unpack(res)
+    local spawn_item = spawn_items[math.random(#spawn_items)]
+    local res = {}
+    spawn_single_object_internal(res, spawn_item)
+    return unpack(res)
 end
 
 function quest_spawn_ex(section, total, spawn_item)
-	local res = {}
-	for i=1,total do
-		local spawn_item_tmp = table.clone_simple(spawn_item)
-		spawn_item_tmp.sec = section
-		spawn_single_object_internal(res, spawn_item_tmp)
-	end
-	return unpack(res)
+    local res = {}
+    for i = 1, total do
+        local spawn_item_tmp = table.clone_simple(spawn_item)
+        spawn_item_tmp.sec = section
+        spawn_single_object_internal(res, spawn_item_tmp)
+    end
+    return unpack(res)
 end
 
-
 function kill_crow()
-	local lname = level.name()
-	for id, sobj in alife():objects() do
-		local crow = level.object_by_id(id)
-		if crow and crow:section() == "m_crow" and object_level_name(crow) == lname then
-			local hit = hit()
-				hit.direction = crow:direction()
-				hit.impulse = 1000
-				hit.draftsman = crow
-				hit.power = 1000
-				hit.type = hit.strike
-			crow:hit(hit)
+    local lname = level.name()
+    for id, sobj in alife():objects() do
+        local crow = level.object_by_id(id)
+        if crow and crow:section() == "m_crow" and object_level_name(crow) == lname then
+            local hit = hit()
+            hit.direction = crow:direction()
+            hit.impulse = 1000
+            hit.draftsman = crow
+            hit.power = 1000
+            hit.type = hit.strike
+            crow:hit(hit)
 
-			ogse_st_mgr.start_gtimer(nil, math.random(150, 300), "ogse.release_crow", id)
-		end
-	end
+            ogse_st_mgr.start_gtimer(nil, math.random(150, 300), "ogse.release_crow", id)
+        end
+    end
 end
 
 function release_crow(id)
-	local sobj = alife():object(id)
-	if sobj then
-		alife():release(sobj, true)
-	end
+    local sobj = alife():object(id)
+    if sobj then
+        alife():release(sobj, true)
+    end
 end
 
 function spawn_crow()
-	local lv = db.actor:level_vertex_id()
-	local gv = db.actor:game_vertex_id()
-	local x_offset = 0
-	local z_offset = 0
-	local y_offset = 100
-	for k=1,20 do
-	x_offset = math.random(-100,100)
-	z_offset = math.random(-100,100)
-		local pos = db.actor:position()
-		pos.x = pos.x + x_offset
-		pos.y = pos.y + y_offset
-		pos.z = pos.z + z_offset
-		alife():create("m_crow", pos, lv, gv)
-	end
+    local lv = db.actor:level_vertex_id()
+    local gv = db.actor:game_vertex_id()
+    local x_offset = 0
+    local z_offset = 0
+    local y_offset = 100
+    for k = 1, 20 do
+        x_offset = math.random(-100, 100)
+        z_offset = math.random(-100, 100)
+        local pos = db.actor:position()
+        pos.x = pos.x + x_offset
+        pos.y = pos.y + y_offset
+        pos.z = pos.z + z_offset
+        alife():create("m_crow", pos, lv, gv)
+    end
 end
-
-
 
 --[[function money_in(money)
 	dialogs.relocate_money(db.actor, money, "in")
@@ -632,146 +630,153 @@ end]]
 end]]
 
 function give_info(info)
-	if not has_info(info) then
-		db.actor:give_info_portion(info)
-	end
+    if not has_info(info) then
+        db.actor:give_info_portion(info)
+    end
 end
 
 function has_info(info)
-	return db.actor:has_info(info)
+    return db.actor:has_info(info)
 end
-
 
 -- функция создания окна сообщения, которое закроется само через определённое время
 function autohiding_msg(txt, delay)
-	local dlg = MonologueMsg(txt)
-	level.start_stop_menu(dlg, true)
-	autohide_dlg_timer(delay, dlg):start()
+    local dlg = MonologueMsg(txt)
+    level.start_stop_menu(dlg, true)
+    autohide_dlg_timer(delay, dlg):start()
 end
 
 -- окно "монологового" типа. Просто сообщение в рамке.
 -- Закрыть можно по ESC. Также можно использовать в комбинации с
 -- таймером автозакрытия (см. MonologueMsg и ф-ю autohiding_msg)
-class "MonologueMsg" (CUIScriptWnd)
-function MonologueMsg:__init(txt) super()
-	local xml = CScriptXmlInit()
-	if device().width / device().height > 0.7 then
-		xml:ParseFile("ui_ogse_monologue_msg.xml") -- 4^3
-	else
-		xml:ParseFile("ui_ogse_monologue_msg_16.xml") -- 16^9
-	end	
-	xml:InitWindow("main", 0, self)
-	self.msg = xml:InitStatic("main:msg", self)
-	self.msg:SetTextST(txt)
-	--log1("--MonologueMsg:__init()")
+class "MonologueMsg"(CUIScriptWnd)
+function MonologueMsg:__init(txt)
+    super()
+    local xml = CScriptXmlInit()
+    if device().width / device().height > 0.7 then
+        xml:ParseFile("ui_ogse_monologue_msg.xml") -- 4^3
+    else
+        xml:ParseFile("ui_ogse_monologue_msg_16.xml") -- 16^9
+    end
+    xml:InitWindow("main", 0, self)
+    self.msg = xml:InitStatic("main:msg", self)
+    self.msg:SetTextST(txt)
+    -- log1("--MonologueMsg:__init()")
 end
 function MonologueMsg:__finalize()
-	--log1("--MonologueMsg:__finalize()")
+    -- log1("--MonologueMsg:__finalize()")
 end
-function MonologueMsg:OnKeyboard(dik, key_act) CUIScriptWnd.OnKeyboard(self,dik,key_act)
-	if key_act == ui_events.WINDOW_KEY_PRESSED and dik == DIK_keys.DIK_ESCAPE then
-		self:GetHolder():start_stop_menu(self,true)
-	end
-	return true
+function MonologueMsg:OnKeyboard(dik, key_act)
+    CUIScriptWnd.OnKeyboard(self, dik, key_act)
+    if key_act == ui_events.WINDOW_KEY_PRESSED and dik == DIK_keys.DIK_ESCAPE then
+        self:GetHolder():start_stop_menu(self, true)
+    end
+    return true
 end
 
 -- служебный таймер для автоматического закрытия диалога через заданное время
-class "autohide_dlg_timer" (ogse_qt.quick_timer)
-function autohide_dlg_timer:__init(delay, dlg) super(delay)
-	self.dlg = dlg
+class "autohide_dlg_timer"(ogse_qt.quick_timer)
+function autohide_dlg_timer:__init(delay, dlg)
+    super(delay)
+    self.dlg = dlg
 end
 function autohide_dlg_timer:taction()
-	if self.dlg and self.dlg:IsShown() then
-		self.dlg:GetHolder():start_stop_menu(self.dlg, true)
-	end
+    if self.dlg and self.dlg:IsShown() then
+        self.dlg:GetHolder():start_stop_menu(self.dlg, true)
+    end
 end
 
-
---/* Уменьшения репутации на .. едениц главному герою..
+-- /* Уменьшения репутации на .. едениц главному герою..
 function reputation_down_20(stalker, player)
-	db.actor:change_character_reputation(-20)
+    db.actor:change_character_reputation(-20)
 end
 
 function reputation_down_10(stalker, player)
-	db.actor:change_character_reputation(-10)
+    db.actor:change_character_reputation(-10)
 end
 
 function reputation_up_10(stalker, player)
-	db.actor:change_character_reputation(10)
+    db.actor:change_character_reputation(10)
 end
 
 function reputation_up_20(stalker, player)
-	db.actor:change_character_reputation(20)
+    db.actor:change_character_reputation(20)
 end
 
-
 function transfer_items_to_box(box_sid, remove_quest_items, exclude_sections, exclude_clsids)
-	local box = level_object_by_sid(box_sid)
-	if not box then return end
-	local cnt = db.actor:object_count()
-	for i=0, cnt-1 do
-		local obj = db.actor:object(i)
-		-- есть ли объект
-		if obj then
-		local sect = obj:section()
-		-- фильтр по запрещенным class id
-		if not exclude_clsids or not exclude_clsids[obj:clsid()] then
-		-- фильтр по запрещенным секциям
-		if not exclude_sections or not exclude_sections[sect] then
-		-- фильтр по квестовым вещам
-		if remove_quest_items or not (sys_ini:line_exist(sect, "quest_item") and sys_ini:r_bool(sect, "quest_item")) then
-			-- особая обработка метки
-			if sect == "amk_metka" then
-				ogse_metka.dropped_to_box = ogse_metka.dropped_to_box + 1
-			end
-			-- передаем предмет
-			db.actor:transfer_item(obj, box)
-		end
-		end
-		end
-		end
-	end
+    local box = level_object_by_sid(box_sid)
+    if not box then
+        return
+    end
+    local cnt = db.actor:object_count()
+    for i = 0, cnt - 1 do
+        local obj = db.actor:object(i)
+        -- есть ли объект
+        if obj then
+            local sect = obj:section()
+            -- фильтр по запрещенным class id
+            if not exclude_clsids or not exclude_clsids[obj:clsid()] then
+                -- фильтр по запрещенным секциям
+                if not exclude_sections or not exclude_sections[sect] then
+                    -- фильтр по квестовым вещам
+                    if remove_quest_items or
+                        not (sys_ini:line_exist(sect, "quest_item") and sys_ini:r_bool(sect, "quest_item")) then
+                        -- особая обработка метки
+                        if sect == "amk_metka" then
+                            ogse_metka.dropped_to_box = ogse_metka.dropped_to_box + 1
+                        end
+                        -- передаем предмет
+                        db.actor:transfer_item(obj, box)
+                    end
+                end
+            end
+        end
+    end
 end
 
 function transfer_items_from_box(box_sid)
-	local box = level_object_by_sid(box_sid)
-	if not box then return end
+    local box = level_object_by_sid(box_sid)
+    if not box then
+        return
+    end
 
-	local cnt = box:inv_box_count()
-	for i=0, cnt-1 do
-		local obj = box:object_from_inv_box(i)
-		-- есть ли объект
-		if obj then
-			local sect = obj:section()
-			-- передаем предмет
-			box:transfer_item(obj, db.actor)
-		end
-	end
+    local cnt = box:inv_box_count()
+    for i = 0, cnt - 1 do
+        local obj = box:object_from_inv_box(i)
+        -- есть ли объект
+        if obj then
+            local sect = obj:section()
+            -- передаем предмет
+            box:transfer_item(obj, db.actor)
+        end
+    end
 end
 
-
 function transfer_weapons_to_box(box_sid, remove_quest_items, exclude_sections, exclude_clsids)
-	local box = level_object_by_sid(box_sid)
-	if not box then return end
-	local cnt = db.actor:object_count()
-	for i=0, cnt-1 do
-		local obj = db.actor:object(i)
-		-- есть ли объект
-		if obj then
-		local sect = obj:section()
-		-- фильтр по запрещенным class id
-		if not exclude_clsids or not exclude_clsids[obj:clsid()] then
-		-- фильтр по запрещенным секциям
-		if not exclude_sections or not exclude_sections[sect] then
-		-- фильтр по квестовым вещам
-		if remove_quest_items or not (sys_ini:line_exist(sect, "quest_item") and sys_ini:r_bool(sect, "quest_item")) then
-			-- передаем предмет
-			if obj:is_weapon() or obj:is_knife() then
-				db.actor:transfer_item(obj, box)
-			end
-		end
-		end
-		end
-		end
-	end
+    local box = level_object_by_sid(box_sid)
+    if not box then
+        return
+    end
+    local cnt = db.actor:object_count()
+    for i = 0, cnt - 1 do
+        local obj = db.actor:object(i)
+        -- есть ли объект
+        if obj then
+            local sect = obj:section()
+            -- фильтр по запрещенным class id
+            if not exclude_clsids or not exclude_clsids[obj:clsid()] then
+                -- фильтр по запрещенным секциям
+                if not exclude_sections or not exclude_sections[sect] then
+                    -- фильтр по квестовым вещам
+                    if remove_quest_items or
+                        not (sys_ini:line_exist(sect, "quest_item") and sys_ini:r_bool(sect, "quest_item")) then
+                        -- передаем предмет
+                        if obj:is_weapon() or obj:is_knife() then
+                            db.actor:transfer_item(obj, box)
+                        end
+                    end
+                end
+            end
+        end
+    end
 end

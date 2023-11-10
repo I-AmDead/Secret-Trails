@@ -1,101 +1,103 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
--- Игнорирование врагов
--- Чугай Александр
-
-function attach( sm )
-  sm:subscribe({ signal = "on_npc_enemy_callback", fun = this.enemy_callback })
+-- РРіРЅРѕСЂРёСЂРѕРІР°РЅРёРµ РІСЂР°РіРѕРІ
+-- Р§СѓРіР°Р№ РђР»РµРєСЃР°РЅРґСЂ
+function attach(sm)
+    sm:subscribe({
+        signal = "on_npc_enemy_callback",
+        fun = this.enemy_callback
+    })
 end
 
-
--- bak  - информация для скриптов: включено ли игнорирование врага
-function is_ignored(obj,enemy)
-	local st = db.storage[obj:id()].combat_ignore
-	if st and st.enabled and st.ignore[enemy:id()] then
-		return true
-	end
-	return false
+-- bak  - РёРЅС„РѕСЂРјР°С†РёСЏ РґР»СЏ СЃРєСЂРёРїС‚РѕРІ: РІРєР»СЋС‡РµРЅРѕ Р»Рё РёРіРЅРѕСЂРёСЂРѕРІР°РЅРёРµ РІСЂР°РіР°
+function is_ignored(obj, enemy)
+    local st = db.storage[obj:id()].combat_ignore
+    if st and st.enabled and st.ignore[enemy:id()] then
+        return true
+    end
+    return false
 end
 
+function enemy_callback(obj, enemy, result)
+    if obj:critically_wounded() then
+        return
+    end
 
-function enemy_callback( obj, enemy, result )
-  if obj:critically_wounded() then return end
+    local st = db.storage[obj:id()].combat_ignore
+    if not st or not st.enabled then
+        return
+    end
 
-  local st = db.storage[ obj:id() ].combat_ignore
-  if not st or not st.enabled then return end
+    local overrides = xr_logic.generic_scheme_overrides(obj)
+    db.storage[obj:id()].enemy = enemy
+    if overrides and overrides.combat_ignore and
+        xr_logic.pick_section_from_condlist(db.actor, obj, overrides.combat_ignore.condlist) ~= nil then
+        st.ignore[enemy:id()] = true -- СЃРѕС…СЂР°РЅРµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р° РїСЂРѕРІРµСЂРєРё РІСЂР°РіР° РЅР° РёРіРЅРѕСЂ
+        table.insert(result, false)
+        return true
+    end
+    st.ignore[enemy:id()] = nil
+end
 
-  local overrides = xr_logic.generic_scheme_overrides( obj )
-  db.storage[ obj:id() ].enemy = enemy
-  if
-    overrides
-    and overrides.combat_ignore
-    and xr_logic.pick_section_from_condlist(
-      db.actor, obj, overrides.combat_ignore.condlist
-    ) ~= nil
-  then
-    st.ignore[enemy:id()] = true -- сохранение результата проверки врага на игнор
-    table.insert( result, false )
+function is_enemy(obj)
+    if obj:critically_wounded() then
+        return true
+    end
+
+    local st = db.storage[obj:id()].combat_ignore
+    if not st or not st.enabled then
+        return true
+    end
+
+    local overrides = xr_logic.generic_scheme_overrides(obj)
+    if overrides and overrides.combat_ignore then
+        return overrides.combat_ignore.cached_condlist:pick_section_from_condlist(db.actor, obj) == nil
+    end
+
     return true
-  end
-  st.ignore[enemy:id()] = nil
 end
-
-
-function is_enemy( obj )
-  if obj:critically_wounded() then return true end
-
-  local st = db.storage[ obj:id() ].combat_ignore
-  if not st or not st.enabled then return true end
-
-  local overrides = xr_logic.generic_scheme_overrides( obj )
-  if overrides and overrides.combat_ignore then
-    return overrides.combat_ignore.cached_condlist
-      :pick_section_from_condlist( db.actor, obj ) == nil
-  end
-
-  return true
-end
-
 
 class "action_process_enemy"
-function action_process_enemy:__init( obj, storage )
-	self.object = obj
-	self.st     = storage
+function action_process_enemy:__init(obj, storage)
+    self.object = obj
+    self.st = storage
 end
 
 function action_process_enemy:hit_callback(obj, amount, local_direction, who, bone_index)
-	if not who then	return end
-	if amount < 0.02 then return end --Кто-то стрельнул в воздух
+    if not who then
+        return
+    end
+    if amount < 0.02 then
+        return
+    end -- РљС‚Рѕ-С‚Рѕ СЃС‚СЂРµР»СЊРЅСѓР» РІ РІРѕР·РґСѓС…
 
-	if who:is_actor() then
-		local overrides = xr_logic.generic_scheme_overrides( obj )
-		if not overrides or not overrides.combat_ignore_keep_when_attacked then
-			self.st.enabled = false
-		end
-	end
+    if who:is_actor() then
+        local overrides = xr_logic.generic_scheme_overrides(obj)
+        if not overrides or not overrides.combat_ignore_keep_when_attacked then
+            self.st.enabled = false
+        end
+    end
 end
 
-
-function add_to_binder( npc, ini, scheme, section, storage )
-	local new_action = this.action_process_enemy( npc, storage )
-	storage.action = new_action
+function add_to_binder(npc, ini, scheme, section, storage)
+    local new_action = this.action_process_enemy(npc, storage)
+    storage.action = new_action
 end
 
-function set_combat_ignore_checker( npc, ini, scheme, section )
-	local st = xr_logic.assign_storage_and_bind( npc, ini, scheme, section )
-	st.enabled = true
-	st.ignore = {}
+function set_combat_ignore_checker(npc, ini, scheme, section)
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    st.enabled = true
+    st.ignore = {}
 
-	xr_logic.subscribe_action_for_events( npc, st, st.action ) --Подписываемся на hit callback-и
+    xr_logic.subscribe_action_for_events(npc, st, st.action) -- РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° hit callback-Рё
 end
 
-function disable_scheme( npc, scheme )
-	-- Отписываемся от hit callback. Это делать обязательно, потому что иначе при переключении на другой набор
-	-- схем, в котором нет перехвата боя, продолжится вызываться callback в старом подписанном action-е.
-	local st = db.storage[npc:id()][scheme]
-	if st then
-		st.enabled = false		-- нужно убирать за собой
-		st.ignore = nil
-		xr_logic.unsubscribe_action_from_events(npc, st, st.action)
-	end
+function disable_scheme(npc, scheme)
+    -- РћС‚РїРёСЃС‹РІР°РµРјСЃСЏ РѕС‚ hit callback. Р­С‚Рѕ РґРµР»Р°С‚СЊ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ, РїРѕС‚РѕРјСѓ С‡С‚Рѕ РёРЅР°С‡Рµ РїСЂРё РїРµСЂРµРєР»СЋС‡РµРЅРёРё РЅР° РґСЂСѓРіРѕР№ РЅР°Р±РѕСЂ
+    -- СЃС…РµРј, РІ РєРѕС‚РѕСЂРѕРј РЅРµС‚ РїРµСЂРµС…РІР°С‚Р° Р±РѕСЏ, РїСЂРѕРґРѕР»Р¶РёС‚СЃСЏ РІС‹Р·С‹РІР°С‚СЊСЃСЏ callback РІ СЃС‚Р°СЂРѕРј РїРѕРґРїРёСЃР°РЅРЅРѕРј action-Рµ.
+    local st = db.storage[npc:id()][scheme]
+    if st then
+        st.enabled = false -- РЅСѓР¶РЅРѕ СѓР±РёСЂР°С‚СЊ Р·Р° СЃРѕР±РѕР№
+        st.ignore = nil
+        xr_logic.unsubscribe_action_from_events(npc, st, st.action)
+    end
 end

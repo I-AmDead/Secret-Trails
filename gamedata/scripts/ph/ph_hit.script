@@ -1,46 +1,45 @@
 ----------------------------------------------------------------------------------------------------
 -- Apply directional hit to the object
 ----------------------------------------------------------------------------------------------------
--- Исходный скрипт: Oleg Hryptul (Haron) haronk@ukr.net
+-- РСЃС…РѕРґРЅС‹Р№ СЃРєСЂРёРїС‚: Oleg Hryptul (Haron) haronk@ukr.net
 ----------------------------------------------------------------------------------------------------
-
 class "action_hit"
 
 ----------------------------------------------------------------------------------------------------
 -- Constructor
 ----------------------------------------------------------------------------------------------------
 function action_hit:__init(obj, storage)
-	self.object = obj
-	self.st = storage
+    self.object = obj
+    self.st = storage
 end
 
 function action_hit:reset_scheme()
-	local p1 = patrol(self.st.dir_path):point(0)
-	local p2 = self.object:position()
-	local h = hit()
-	h.power     = self.st.power
-	h.impulse   = self.st.impulse
-	h:bone(self.st.bone)
-	h.type      = hit.strike
-	h.direction = utils.vector_copy_by_val(p1):sub(p2)
-	h.draftsman = self.object
-	self.object:hit(h)
+    local p1 = patrol(self.st.dir_path):point(0)
+    local p2 = self.object:position()
+    local h = hit()
+    h.power = self.st.power
+    h.impulse = self.st.impulse
+    h:bone(self.st.bone)
+    h.type = hit.strike
+    h.direction = vector():set(p1):sub(p2)
+    h.draftsman = self.object
+    self.object:hit(h)
 end
 
 function action_hit:update(delta)
-	--if not xr_logic.is_active(self.object, self.st) then
-	--	return
-	--end
+    -- if not xr_logic.is_active(self.object, self.st) then
+    --	return
+    -- end
 
-	local actor = level.actor()
-	if not actor then
-		return
-	end
+    local actor = level.actor()
+    if not actor then
+        return
+    end
 
-	if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
-		return
-	end
-	
+    if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
+        return
+    end
+
 end
 
 --[[
@@ -64,19 +63,19 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
-	local new_action = action_hit(npc, storage)
+    local new_action = action_hit(npc, storage)
 
-	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
-	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+    -- Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РІСЃРµ actions, РІ РєРѕС‚РѕСЂС‹С… РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ РјРµС‚РѕРґ reset_scheme РїСЂРё РёР·РјРµРЅРµРЅРёРё РЅР°СЃС‚СЂРѕРµРє СЃС…РµРјС‹:
+    xr_logic.subscribe_action_for_events(npc, storage, new_action)
 end
 
 function set_scheme(npc, ini, scheme, section, gulag_name)
-	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 
-	st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
-	
-	st.power    = utils.cfg_get_number(ini, section, "power", npc, false, 0)
-	st.impulse  = utils.cfg_get_number(ini, section, "impulse", npc, false, 1000)
-	st.bone     = utils.cfg_get_string(ini, section, "bone", npc, true, "")
-	st.dir_path = utils.cfg_get_string(ini, section, "dir_path", npc, true, "")
+    st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+
+    st.power = get_u32(section, "power", 0, ini)
+    st.impulse = get_u32(section, "impulse", 1000, ini)
+    st.bone = get_string(section, "bone", nil, ini)
+    st.dir_path = get_string(section, "dir_path", nil, ini)
 end

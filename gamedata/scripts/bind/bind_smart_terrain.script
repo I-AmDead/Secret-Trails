@@ -1,61 +1,61 @@
 --[[------------------------------------------------------------------------------------------------------------------
 Smart terrain binder
-Нужен для того, чтобы серверный объект smart terrain получал обновления.
-Чугай Александр
---------------------------------------------------------------------------------------------------------------------]]
+РќСѓР¶РµРЅ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ СЃРµСЂРІРµСЂРЅС‹Р№ РѕР±СЉРµРєС‚ smart terrain РїРѕР»СѓС‡Р°Р» РѕР±РЅРѕРІР»РµРЅРёСЏ.
+Р§СѓРіР°Р№ РђР»РµРєСЃР°РЅРґСЂ
+--------------------------------------------------------------------------------------------------------------------]] function bind(
+    obj)
+    local ini = obj:spawn_ini()
 
-function bind( obj )
-	local ini = obj:spawn_ini()
+    if not ini then
+        return
+    end
 
-	if not ini then
-		return
-	end
-
-	if ini:section_exist( "gulag1" ) or ini:section_exist( "smart_terrain" ) then
-		if obj:clsid() == clsid.smart_terrain then
-			if alife() then
-				obj:bind_object( smart_terrain_binder( obj ) )
-			end
-		else
-			abort( "You must use SMART_TERRAIN instead of SCRIPT_ZONE %s", obj:name() )
-		end
-	end
+    if ini:section_exist("gulag1") or ini:section_exist("smart_terrain") then
+        if obj:clsid() == clsid.smart_terrain then
+            if alife() then
+                obj:bind_object(smart_terrain_binder(obj))
+            end
+        else
+            abort("You must use SMART_TERRAIN instead of SCRIPT_ZONE %s", obj:name())
+        end
+    end
 end
 
 ----------------------------------------------------------------------------------------------------------------------
 
-class "smart_terrain_binder" ( object_binder )
+class "smart_terrain_binder"(object_binder)
 
-function smart_terrain_binder:__init( obj ) super( obj )
+function smart_terrain_binder:__init(obj)
+    super(obj)
 end
 
-function smart_terrain_binder:net_spawn( server_object )
-	if not object_binder.net_spawn( self, server_object ) then
-		return false
-	end
+function smart_terrain_binder:net_spawn(server_object)
+    if not object_binder.net_spawn(self, server_object) then
+        return false
+    end
 
-	-- получить ссылку на настоящий серверный объект
-	self.se_smart_terrain = alife():object( server_object.id )
+    -- РїРѕР»СѓС‡РёС‚СЊ СЃСЃС‹Р»РєСѓ РЅР° РЅР°СЃС‚РѕСЏС‰РёР№ СЃРµСЂРІРµСЂРЅС‹Р№ РѕР±СЉРµРєС‚
+    self.se_smart_terrain = alife():object(server_object.id)
 
-	db.add_zone( self.object )
+    db.add_zone(self.object)
 
-	return true
+    return true
 end
 
 function smart_terrain_binder:net_destroy()
-	db.del_zone( self.object )
+    db.del_zone(self.object)
 
-	object_binder.net_destroy( self )
+    object_binder.net_destroy(self)
 end
 
-function smart_terrain_binder:net_Relcase( obj )
-	if self.se_smart_terrain.npc_info[obj:id()] then
-		self.se_smart_terrain.gulag:object_setup_offline( obj:id(), true )
-	end
+function smart_terrain_binder:net_Relcase(obj)
+    if self.se_smart_terrain.npc_info[obj:id()] then
+        self.se_smart_terrain.gulag:object_setup_offline(obj:id(), true)
+    end
 end
 
-function smart_terrain_binder:update( delta )
-	object_binder.update( self, delta )
+function smart_terrain_binder:update(delta)
+    object_binder.update(self, delta)
 
-	self.se_smart_terrain:update()
+    self.se_smart_terrain:update()
 end

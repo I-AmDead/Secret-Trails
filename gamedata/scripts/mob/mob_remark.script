@@ -1,155 +1,154 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 ----------------------------------------------------------------------------------------------------
 -- Mob remarks
 ----------------------------------------------------------------------------------------------------
--- Разработчик: Andrey Fidrya (Zmey) af@svitonline.com
+-- Р Р°Р·СЂР°Р±РѕС‚С‡РёРє: Andrey Fidrya (Zmey) af@svitonline.com
 ----------------------------------------------------------------------------------------------------
-
 class "mob_remark"
 
 function mob_remark:__init(obj, storage)
-	self.object = obj
-	self.st = storage
+    self.object = obj
+    self.st = storage
 end
 
 function mob_remark:reset_scheme()
-	
-	mob_state_mgr.set_state(self.object, db.actor, self.st.state)
-	
-	self.object:disable_talk()
 
-	xr_logic.mob_capture(self.object, not self.st.no_reset)
+    mob_state_mgr.set_state(self.object, db.actor, self.st.state)
 
-	local anims = parse_names(self.st.anim)
-	
-	local snds
-	if self.st.snd then
-		snds = parse_names(self.st.snd)
-	else
-		snds = {}
-	end
-	local sndset
+    self.object:disable_talk()
 
-	local times
-	if self.st.time then
-		times = parse_names(self.st.time)
-	else
-		times = {}
-	end
-	local tm
-	
-	local cnd
-	for num, an in pairs(anims) do
-		sndset = snds[num]
-		if times[num] then
-			tm = tonumber(times[num])
-		else
-			tm = 0
-		end
-		if sndset and an then
-			local snd = mob_sound.pick_sound_from_set(self.object, sndset, {})
-			if not snd then
-				abort("mobile '%s': section '%s': sound set '%s' does not exist",
-					self.object:name(), self.st.section, sndset)
-			end
-			
-			if tm == 0 then
-				cnd = cond(cond.sound_end)
-			else
-				cnd = cond(cond.time_end, tm)
-			end
-			if self.st.anim_head then
-				action(self.object, anim(an), sound(snd, get_string(self.object:section(), "bone_head", "bip01_head"), MonsterSpace[self.st.anim_head]), cnd)
-			else
-				action(self.object, anim(an), sound(snd, get_string(self.object:section(), "bone_head", "bip01_head")), cnd)
-			end
-		elseif an then
-			if tm == 0 then
-				cnd = cond(cond.anim_end)
-			else
-				cnd = cond(cond.time_end, tm)
-			end
-			action(self.object, anim(an), cnd)
-		--else
-		--	if npc:get_script() then
-		--		npc:script(false, script_name())
-		--	end
-		end
-	end
+    xr_logic.mob_capture(self.object, not self.st.no_reset)
 
-	self.tip_sent = false
-	
-	self.st.signals = {}
-	self.action_end_signalled = false
+    local anims = parse_names(self.st.anim)
+
+    local snds
+    if self.st.snd then
+        snds = parse_names(self.st.snd)
+    else
+        snds = {}
+    end
+    local sndset
+
+    local times
+    if self.st.time then
+        times = parse_names(self.st.time)
+    else
+        times = {}
+    end
+    local tm
+
+    local cnd
+    for num, an in pairs(anims) do
+        sndset = snds[num]
+        if times[num] then
+            tm = tonumber(times[num])
+        else
+            tm = 0
+        end
+        if sndset and an then
+            local snd = mob_sound.pick_sound_from_set(self.object, sndset, {})
+            if not snd then
+                abort("mobile '%s': section '%s': sound set '%s' does not exist", self.object:name(), self.st.section,
+                    sndset)
+            end
+
+            if tm == 0 then
+                cnd = cond(cond.sound_end)
+            else
+                cnd = cond(cond.time_end, tm)
+            end
+            if self.st.anim_head then
+                action(self.object, anim(an), sound(snd, get_string(self.object:section(), "bone_head", "bip01_head"),
+                    MonsterSpace[self.st.anim_head]), cnd)
+            else
+                action(self.object, anim(an), sound(snd, get_string(self.object:section(), "bone_head", "bip01_head")),
+                    cnd)
+            end
+        elseif an then
+            if tm == 0 then
+                cnd = cond(cond.anim_end)
+            else
+                cnd = cond(cond.time_end, tm)
+            end
+            action(self.object, anim(an), cnd)
+            -- else
+            --	if npc:get_script() then
+            --		npc:script(false, script_name())
+            --	end
+        end
+    end
+
+    self.tip_sent = false
+
+    self.st.signals = {}
+    self.action_end_signalled = false
 end
 
 function mob_remark:update(delta)
-	--if not xr_logic.is_active(self.object, self.st) then
-	--	return
-	--end
+    -- if not xr_logic.is_active(self.object, self.st) then
+    --	return
+    -- end
 
-	local actor = db.actor
+    local actor = db.actor
 
-	if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
-		return
-	end
+    if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
+        return
+    end
 
-	if self.st.dialog_cond and xr_logic.pick_section_from_condlist(actor, self.object,
-	     self.st.dialog_cond.condlist) ~= nil then
-	     	if not self.object:is_talk_enabled() then
-			self.object:enable_talk()
-		end
-	else
-		if self.object:is_talk_enabled() then
-			self.object:disable_talk()
-		end
-	end
+    if self.st.dialog_cond and xr_logic.pick_section_from_condlist(actor, self.object, self.st.dialog_cond.condlist) ~=
+        nil then
+        if not self.object:is_talk_enabled() then
+            self.object:enable_talk()
+        end
+    else
+        if self.object:is_talk_enabled() then
+            self.object:disable_talk()
+        end
+    end
 
-	if not self.tip_sent then
-		self.tip_sent = true
-		if self.st.tip then
-			--actor:give_game_news(self.st.tip, "ui_icons_npc", 50, 0, 50, 50)
-			news_manager.send_tip(actor, self.st.tip)
-		end
-	end
+    if not self.tip_sent then
+        self.tip_sent = true
+        if self.st.tip then
+            -- actor:give_game_news(self.st.tip, "ui_icons_npc", 50, 0, 50, 50)
+            news_manager.send_tip(actor, self.st.tip)
+        end
+    end
 
-	
-	if self.object:get_script() and not self.object:action() then
-		--self.object:script(false, script_name())
+    if self.object:get_script() and not self.object:action() then
+        -- self.object:script(false, script_name())
 
-		if not self.action_end_signalled then
-			self.action_end_signalled = true
-			self.st.signals["action_end"] = true
-		end
-	end
+        if not self.action_end_signalled then
+            self.action_end_signalled = true
+            self.st.signals["action_end"] = true
+        end
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------------------
 function add_to_binder(npc, ini, scheme, section, storage)
 
-	local new_action = mob_remark(npc, storage)
+    local new_action = mob_remark(npc, storage)
 
-	-- Зарегистрировать все actions, в которых должен быть вызван метод reset_scheme при изменении настроек схемы:
-	xr_logic.subscribe_action_for_events(npc, storage, new_action)
+    -- Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РІСЃРµ actions, РІ РєРѕС‚РѕСЂС‹С… РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ РјРµС‚РѕРґ reset_scheme РїСЂРё РёР·РјРµРЅРµРЅРёРё РЅР°СЃС‚СЂРѕРµРє СЃС…РµРјС‹:
+    xr_logic.subscribe_action_for_events(npc, storage, new_action)
 end
 
 function set_scheme(npc, ini, scheme, section, gulag_name)
-	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 
-	st.logic     = xr_logic.cfg_get_switch_conditions(ini, section, npc)
+    st.logic = xr_logic.cfg_get_switch_conditions(ini, section, npc)
 
-	st.state           = mob_state_mgr.get_state(ini, section, npc)
+    st.state = mob_state_mgr.get_state(ini, section, npc)
 
-	st.dialog_cond    = xr_logic.cfg_get_condlist(ini, section, "dialog_cond", npc)
-	-- Не работает, т.к. при переключении схем в данный момент монстр всегда
-	-- уходит из под скрипта, соответственно, сбрасывает свою очередь actions.
-	--st.no_reset       = utils.cfg_get_bool(ini, section, "no_reset", npc, false)
-	st.no_reset = true
-	st.anim           = utils.cfg_get_string(ini, section, "anim", npc, false, "")
-	st.anim_head      = utils.cfg_get_string(ini, section, "anim_head", npc, false, "")
-	st.tip            = utils.cfg_get_string(ini, section, "tip", npc, false, "")
-	st.snd            = utils.cfg_get_string(ini, section, "snd", npc, false, "")
-	st.time           = utils.cfg_get_string(ini, section, "time", npc, false, "")
+    st.dialog_cond = xr_logic.cfg_get_condlist(ini, section, "dialog_cond", npc)
+    -- РќРµ СЂР°Р±РѕС‚Р°РµС‚, С‚.Рє. РїСЂРё РїРµСЂРµРєР»СЋС‡РµРЅРёРё СЃС…РµРј РІ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ РјРѕРЅСЃС‚СЂ РІСЃРµРіРґР°
+    -- СѓС…РѕРґРёС‚ РёР· РїРѕРґ СЃРєСЂРёРїС‚Р°, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, СЃР±СЂР°СЃС‹РІР°РµС‚ СЃРІРѕСЋ РѕС‡РµСЂРµРґСЊ actions.
+    -- st.no_reset       = get_bool(section, "no_reset", false, ini)
+    st.no_reset = true
+    st.anim = get_string(section, "anim", "", ini)
+    st.anim_head = get_string(section, "anim_head", "", ini)
+    st.tip = get_string(section, "tip", "", ini)
+    st.snd = get_string(section, "snd", "", ini)
+    st.time = get_string(section, "time", "", ini)
 
 end

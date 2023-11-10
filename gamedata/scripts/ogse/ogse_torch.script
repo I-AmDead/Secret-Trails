@@ -1,83 +1,82 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 function attach( sm )
-  sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
-end
+    sm:subscribe({ signal = "on_first_update", fun = this.set_torch_mode })
+  end
 
 local torch_mode = "off"
-function set_torch_mode( k )
-  if db.actor:alive() then
-    local torch = db.actor:item_in_slot( 9 )
-    if torch and torch:is_torch() then
-      torch = get_torch_obj( torch )
-      if torch.on then
-        torch_mode = ogse.load_var( "ogse_torch.torch_mode", "near" )
-        if torch_mode == "far" then
-          set_far_mode( torch, k )
-        elseif torch_mode == "near" then
-          set_near_mode( torch, k )
+function set_torch_mode(k)
+    if db.actor:alive() then
+        local torch = db.actor:item_in_slot(9)
+        if torch and torch:is_torch() then
+            torch = get_torch_obj(torch)
+            if torch.on then
+                torch_mode = ogse.load_var("ogse_torch.torch_mode", "near")
+                if torch_mode == "far" then
+                    set_far_mode(torch, k)
+                elseif torch_mode == "near" then
+                    set_near_mode(torch, k)
+                end
+            else
+                set_near_mode(torch, k)
+                torch_mode = "off"
+            end
         end
-      else
-        set_near_mode( torch, k )
-        torch_mode = "off"
-      end
     end
-  end
 end
 
-function on_switch() --Действие при нажатии клавиши фонаря
-  if db.actor:alive() then
-    local torch = db.actor:item_in_slot( 9 )
-    if torch and torch:is_torch() then
-      torch = get_torch_obj( torch )
-      if torch.on then
-        if torch_mode == "near" then
-          set_far_mode( torch )
-        else
-          set_off_mode( torch )
+function on_switch() -- Действие при нажатии клавиши фонаря
+    if db.actor:alive() then
+        local torch = db.actor:item_in_slot(9)
+        if torch and torch:is_torch() then
+            torch = get_torch_obj(torch)
+            if torch.on then
+                if torch_mode == "near" then
+                    set_far_mode(torch)
+                else
+                    set_off_mode(torch)
+                end
+            else
+                set_near_mode(torch, nil, true)
+            end
+            ogse.save_var("ogse_torch.torch_mode", torch_mode)
         end
-      else
-        set_near_mode( torch, nil, true )
-      end
-      ogse.save_var( "ogse_torch.torch_mode", torch_mode )
     end
-  end
 end
 
-function set_near_mode( torch, r, switch_on )
-  torch_mode = "near"
-  torch:set_range( 30 )
-  torch:set_angle( math.rad( 90 ) )
-  if switch_on and not torch.on then
-    torch:switch( true )
-  end
-end
-
-function set_far_mode( torch, r, switch_on )
-  torch_mode = "far"
-  torch:set_range( 70 )
-  torch:set_angle( math.rad( 55 ) )
-  if switch_on and not torch.on then
-    torch:switch( true )
-  end
-end
-
-function set_off_mode( torch )
-  torch_mode = "off"
-  torch:switch( false )
-end
-
-function is_torch_enabled( torch )
-  if db.actor:alive() then
-    if not torch then
-      torch = db.actor:item_in_slot( 9 )
+function set_near_mode(torch, r, switch_on)
+    torch_mode = "near"
+    torch:set_range(30)
+    torch:set_angle(math.rad(90))
+    if switch_on and not torch.on then
+        torch:switch(true)
     end
-    if torch and torch:is_torch() then
-      torch = get_torch_obj( torch )
-      if torch.on then
-        return torch_mode
-      end
-      return false
+end
+
+function set_far_mode(torch, r, switch_on)
+    torch_mode = "far"
+    torch:set_range(70)
+    torch:set_angle(math.rad(55))
+    if switch_on and not torch.on then
+        torch:switch(true)
     end
-  end
+end
+
+function set_off_mode(torch)
+    torch_mode = "off"
+    torch:switch(false)
+end
+
+function is_torch_enabled(torch)
+    if db.actor:alive() then
+        if not torch then
+            torch = db.actor:item_in_slot(9)
+        end
+        if torch and torch:is_torch() then
+            torch = get_torch_obj(torch)
+            if torch.on then
+                return torch_mode
+            end
+            return false
+        end
+    end
 end

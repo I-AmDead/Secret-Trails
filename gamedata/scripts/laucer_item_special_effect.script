@@ -6,23 +6,22 @@ end
 local our_hits = {
     [hit.fire_wound] = "boost_fire_wound_protection",
     [hit.radiation] = "boost_radiation_protection",
-    [hit.telepatic] = "boost_telepat_protection",
+    [hit.telepatic] = "boost_telepat_protection"
 }
 
 local normal_time_factor = get_float("alife", "time_factor")
 
-local boosters =
-{
-    ["boost_health_restore"]        = false,
-    ["boost_power_restore"]         = false,
-    ["boost_radiation_restore"]     = false,
-    ["boost_bleeding_restore"]      = false,
-    ["boost_psy_health_restore"]    = false,
+local boosters = {
+    ["boost_health_restore"] = false,
+    ["boost_power_restore"] = false,
+    ["boost_radiation_restore"] = false,
+    ["boost_bleeding_restore"] = false,
+    ["boost_psy_health_restore"] = false,
     ["boost_fire_wound_protection"] = false,
-    ["boost_max_weight"]            = false,
-    ["boost_radiation_protection"]  = false,
-    ["boost_telepat_protection"]    = false,
-    ["boost_time_factor"]           = false,
+    ["boost_max_weight"] = false,
+    ["boost_radiation_protection"] = false,
+    ["boost_telepat_protection"] = false,
+    ["boost_time_factor"] = false
 }
 
 booster_type = nil
@@ -50,7 +49,7 @@ function on_first_update()
 
     for k, v in pairs(boosters) do
         local tname = "special_effect." .. k
-        local ttl   = ogse.load_var_safe(tname .. ".ttl") or 0
+        local ttl = ogse.load_var_safe(tname .. ".ttl") or 0
         local value = ogse.load_var_safe(tname) or 0
 
         if ttl > 0 then
@@ -88,7 +87,8 @@ function on_save()
 end
 
 function on_item_use(section)
-    local boost_time = has_alife_info("acv_nar") and get_float(section, "boost_time", 0) - 5.0 or get_float(section, "boost_time", 0)
+    local boost_time = has_alife_info("acv_nar") and get_float(section, "boost_time", 0) - 5.0 or
+                           get_float(section, "boost_time", 0)
     if boost_time <= 0 then -- not a booster
         return
     end
@@ -99,7 +99,7 @@ function on_item_use(section)
             local boost
             if v then
                 boost = v
-                --log1("disable k=" .. k .. " by override")
+                -- log1("disable k=" .. k .. " by override")
                 set_boost(k, -v.value, false) -- disable prev boost affect
             else
                 boost = {}
@@ -107,14 +107,14 @@ function on_item_use(section)
             end
             boost.ttl = boost_time
             boost.value = boostValue
-            --log1("apply k=" .. k .. " for ttl=" .. boost_time .. " with value=" .. boostValue)
+            -- log1("apply k=" .. k .. " for ttl=" .. boost_time .. " with value=" .. boostValue)
             set_boost(k, boostValue, true)
         end
     end
 end
 
 function on_before_hit(hit_data)
-    local amount   = hit_data.power
+    local amount = hit_data.power
     local hit_type = hit_data.hit_type
 
     if not (amount > 0 and db.actor:alive()) then
@@ -130,9 +130,11 @@ function on_before_hit(hit_data)
         return
     end
 
-    --log1("decrease hit with " .. protection_type .. " by value=" .. protection.value)
+    -- log1("decrease hit with " .. protection_type .. " by value=" .. protection.value)
     hit_data.power = amount - protection.value
-    if hit_data.power < 0 then hit_data.power = 0 end
+    if hit_data.power < 0 then
+        hit_data.power = 0
+    end
 end
 
 function process_boost(dt)
@@ -140,7 +142,7 @@ function process_boost(dt)
         if v then
             v.ttl = v.ttl - (dt / normal_time_factor)
             if v.ttl <= 0 then
-                --log1("disable k=" .. k .. " by ttl")
+                -- log1("disable k=" .. k .. " by ttl")
                 set_boost(k, -v.value, false) -- disable prev boost affect
                 boosters[k] = false
             end
@@ -148,16 +150,15 @@ function process_boost(dt)
     end
 end
 
-local booster_hud =
-{
-    ["boost_health_restore"]       = "indicator_booster_health",
-    ["boost_power_restore"]        = "indicator_booster_power",
-    ["boost_radiation_restore"]    = "indicator_booster_rad_cleanup",
-    ["boost_psy_health_restore"]   = "indicator_booster_psy_cleanup",
-    ["boost_bleeding_restore"]     = "indicator_booster_wound",
-    ["boost_max_weight"]           = "indicator_booster_weight",
+local booster_hud = {
+    ["boost_health_restore"] = "indicator_booster_health",
+    ["boost_power_restore"] = "indicator_booster_power",
+    ["boost_radiation_restore"] = "indicator_booster_rad_cleanup",
+    ["boost_psy_health_restore"] = "indicator_booster_psy_cleanup",
+    ["boost_bleeding_restore"] = "indicator_booster_wound",
+    ["boost_max_weight"] = "indicator_booster_weight",
     ["boost_radiation_protection"] = "indicator_booster_rad",
-    ["boost_telepat_protection"]   = "indicator_booster_psy",
+    ["boost_telepat_protection"] = "indicator_booster_psy"
 }
 
 function set_boost(type, value, state)
@@ -195,14 +196,14 @@ function set_boost(type, value, state)
     else
         update_inventory_window()
 
-	for idx = 1, 8 do
-		local b_type = this["booster_type"..idx]
-		if not b_type or b_type == booster_hud[type] then
-			this["booster_type"..idx] = booster_hud[type]
-			this["booster_state"..idx] = state
-			break
-		end
-	end
+        for idx = 1, 8 do
+            local b_type = this["booster_type" .. idx]
+            if not b_type or b_type == booster_hud[type] then
+                this["booster_type" .. idx] = booster_hud[type]
+                this["booster_state" .. idx] = state
+                break
+            end
+        end
     end
 end
 

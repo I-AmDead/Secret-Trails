@@ -7,44 +7,44 @@ end
 
 local wnd = nil
 
-
 function trade_open()
-	if not wnd then	
-		wnd = TradeWnd(level.get_trade_wnd())
-	end
+    if not wnd then
+        wnd = TradeWnd(level.get_trade_wnd())
+    end
 end
 
 function trade_close()
-	if wnd then
-		wnd:DetachWnd()
-		wnd = nil
-	end
+    if wnd then
+        wnd:DetachWnd()
+        wnd = nil
+    end
 end
 
-class "TradeWnd" (CUIScriptWnd)
-function TradeWnd:__init(owner) super()
-	self.owner = owner
-	self:Init(0, 0, 1024, 768)
-	self:InitControls()
+class "TradeWnd"(CUIScriptWnd)
+function TradeWnd:__init(owner)
+    super()
+    self.owner = owner
+    self:Init(0, 0, 1024, 768)
+    self:InitControls()
 end
 
-function TradeWnd:__finalize() end
+function TradeWnd:__finalize()
+end
 
 function TradeWnd:InitControls()
-	self.stat = CUIStatic()
-	self.stat:Init(0, 0, 1024, 768)
-	self.owner:AttachChild(self.stat)
-	self.stat:Show(true)
+    self.stat = CUIStatic()
+    self.stat:Init(0, 0, 1024, 768)
+    self.owner:AttachChild(self.stat)
+    self.stat:Show(true)
 
-        self.stat:SetAutoDelete(true) 
+    self.stat:SetAutoDelete(true)
 
-	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
+    self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
 end
 
-
-function TradeWnd:DetachWnd() 
-	self.DescrWnd:Remove() 
-	self.DescrWnd = nil 
-	self:ClearCallbacks()
-	self.owner:DetachChild(self.stat) 
-end 
+function TradeWnd:DetachWnd()
+    self.DescrWnd:Remove()
+    self.DescrWnd = nil
+    self:ClearCallbacks()
+    self.owner:DetachChild(self.stat)
+end

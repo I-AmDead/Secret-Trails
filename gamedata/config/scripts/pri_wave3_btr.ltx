@@ -1,38 +1,38 @@
 [logic]
 active = ph_idle@wait
 
-; ждем начала сцены
+; Р¶РґРµРј РЅР°С‡Р°Р»Р° СЃС†РµРЅС‹
 [ph_idle@wait]
 on_death_info   = pri_wave3_btr_dead
 on_info         = {+pri_wave3_start} ph_car@start ;{+pri_wave3_start -pri_wave2_end} ph_car@kill_actor, {+pri_wave3_start} ph_car@main
 
-; выезжаем на позицию. актер - враг
+; РІС‹РµР·Р¶Р°РµРј РЅР° РїРѕР·РёС†РёСЋ. Р°РєС‚РµСЂ - РІСЂР°Рі
 [ph_car@start]
 path_walk       = pri_wave3_btr_walk
 target          = actor
 on_death_info   = pri_wave3_btr_dead
 on_signal       = arrived | ph_car@hunt_actor %+pri_wave3_btr_arrived%
 
-; охота на актера
+; РѕС…РѕС‚Р° РЅР° Р°РєС‚РµСЂР°
 [ph_car@hunt_actor]
 target          = actor
 track_target    = true
 on_death_info   = pri_wave3_btr_dead
 on_info         = {+pri_wave3_bomber_on_position} ph_car@wait_bomber
 
-; ждем чтоб убить гранатометчика
+; Р¶РґРµРј С‡С‚РѕР± СѓР±РёС‚СЊ РіСЂР°РЅР°С‚РѕРјРµС‚С‡РёРєР°
 [ph_car@wait_bomber]
 target          = actor
 on_death_info   = pri_wave3_btr_dead
 on_timer        = 1000 | ph_car@kill_bomber
 
-; убиваем гранатометчика
+; СѓР±РёРІР°РµРј РіСЂР°РЅР°С‚РѕРјРµС‚С‡РёРєР°
 [ph_car@kill_bomber]
 target          = 806
 on_death_info   = pri_wave3_btr_dead
 on_info         = {+pri_bomber_dead} ph_car@point_fire
 
-; даем игроку время шоб подобрать гранатомет
+; РґР°РµРј РёРіСЂРѕРєСѓ РІСЂРµРјСЏ С€РѕР± РїРѕРґРѕР±СЂР°С‚СЊ РіСЂР°РЅР°С‚РѕРјРµС‚
 [ph_car@point_fire]
 path_fire       = pri_wave3_btr_look
 fire_repeat     = inf
@@ -40,7 +40,7 @@ auto_fire       = true
 on_death_info   = pri_wave3_btr_dead
 on_timer        = 4000 | ph_car@fight_actor2
 
-; стреляем по точкам
+; СЃС‚СЂРµР»СЏРµРј РїРѕ С‚РѕС‡РєР°Рј
 [ph_car@fire]
 ;path_walk       = pri_wave3_btr_walk
 path_fire       = pri_wave3_btr_look
@@ -50,7 +50,7 @@ on_target_vis   = actor | ph_car@fight_actor2
 on_death_info   = pri_wave3_btr_dead
 on_timer        = 5000 | ph_car@fight_actor2
 
-; стреляем по актеру
+; СЃС‚СЂРµР»СЏРµРј РїРѕ Р°РєС‚РµСЂСѓ
 [ph_car@fight_actor2]
 target          = actor
 track_target    = true

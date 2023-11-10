@@ -1,6 +1,5 @@
--- звук реакции пилотов вертолёта на разные события
--- Чугай
-
+-- Р·РІСѓРє СЂРµР°РєС†РёРё РїРёР»РѕС‚РѕРІ РІРµСЂС‚РѕР»С‘С‚Р° РЅР° СЂР°Р·РЅС‹Рµ СЃРѕР±С‹С‚РёСЏ
+-- Р§СѓРіР°Р№
 snd_see_enemy = {
 	xr_sound.get_safe_sound_object( [[helicopter\see_enemy_1]] ),
 	xr_sound.get_safe_sound_object( [[helicopter\see_enemy_2]] ),
@@ -41,23 +40,19 @@ snd_down = {
 
 --------------------------------------------------------------------------------
 
-function play_snd( st, snd_set, priority )
-	if not st.mute and
-	   ( not st.snd_obj or
-	   not st.snd_obj:playing() or
-	   st.snd_priority < priority )
-	then
-		stop_snd( st )
+function play_snd(st, snd_set, priority)
+    if not st.mute and (not st.snd_obj or not st.snd_obj:playing() or st.snd_priority < priority) then
+        stop_snd(st)
 
-		st.snd_obj = snd_set[math.random( 1, table.getn( snd_set ) )]
-		st.snd_obj:play( db.actor, 0, sound_object.s2d )
+        st.snd_obj = snd_set[math.random(1, table.getn(snd_set))]
+        st.snd_obj:play(db.actor, 0, sound_object.s2d)
 
-		st.snd_priority = priority
-	end
+        st.snd_priority = priority
+    end
 end
 
-function stop_snd( st )
-	if st.snd_obj then
-		st.snd_obj:stop()
-	end
+function stop_snd(st)
+    if st.snd_obj then
+        st.snd_obj:stop()
+    end
 end

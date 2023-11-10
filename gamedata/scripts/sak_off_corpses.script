@@ -1,280 +1,243 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 --
 -- Удаление трупов и т.п.
-
-function attach( sm )
-  sm:subscribe({ signal = "on_before_spawn", fun = this.off_corpses })
+function attach(sm)
+    sm:subscribe({signal = "on_before_spawn", fun = this.off_corpses})
 end
 
-
-local tabl_corpses      = {}
+local tabl_corpses = {}
 local tabl_corpses_9510 = {}
-local exceptions_9510   = {}
+local exceptions_9510 = {}
 local exceptions_9510_info = {}
 
---схема удаления трупов монстров
-local tabl_monsters_dead = {} --все мёртвые монстры
+-- схема удаления трупов монстров
+local tabl_monsters_dead = {} -- все мёртвые монстры
 
---плюс схема удаления бесхозного оружия (если в названии предмета нет
---"grenade_" или "wpn_" - то это не считается оружием и убираться не
---будет !!!)
+-- плюс схема удаления бесхозного оружия (если в названии предмета нет
+-- "grenade_" или "wpn_" - то это не считается оружием и убираться не
+-- будет !!!)
 local tabl_weapons = {}
 
 local always_remove = {
-  [ "gl_fake_missile" ] = true,
-  [ "gl_fake_missile_ammo_m209"    ] = true,
-  [ "gl_fake_missile_ammo_vog-25"  ] = true,
-  [ "gl_fake_missile_ammo_vog-25p" ] = true,
-  [ "gl_test_shell"   ] = true,
-  [ "gl_test_shell_ammo_m209"    ] = true,
-  [ "gl_test_shell_ammo_vog-25"  ] = true,
-  [ "gl_test_shell_ammo_vog-25p" ] = true,
-  [ "grenade_f1_fake"    ] = true,
-  [ "grenade_f1_test"    ] = true,
-  [ "grenade_flash_fake" ] = true,
-  [ "grenade_flash_test" ] = true,
-  [ "grenade_rgd5_fake"  ] = true,
-  [ "grenade_rgd5_test"  ] = true,
-  [ "zone_flame_matches" ] = true,
+    ["gl_fake_missile"] = true,
+    ["gl_fake_missile_ammo_m209"] = true,
+    ["gl_fake_missile_ammo_vog-25"] = true,
+    ["gl_fake_missile_ammo_vog-25p"] = true,
+    ["gl_test_shell"] = true,
+    ["gl_test_shell_ammo_m209"] = true,
+    ["gl_test_shell_ammo_vog-25"] = true,
+    ["gl_test_shell_ammo_vog-25p"] = true,
+    ["grenade_f1_fake"] = true,
+    ["grenade_f1_test"] = true,
+    ["grenade_flash_fake"] = true,
+    ["grenade_flash_test"] = true,
+    ["grenade_rgd5_fake"] = true,
+    ["grenade_rgd5_test"] = true,
+    ["zone_flame_matches"] = true
 }
 
 -- кол-во левел вертексов на локации
 level_vertexes = {
 	aver                  = 1790762,
-	dead_city             =  551769,
-	swamp                 =  0,
-	predbannik	      =  0,
-	l01_escape            =  595499,
-	l02_garbage           =  382663,
-	l03_agroprom          =  437421,
-	l03u_agr_underground  =    4932,
-	l04_darkvalley        =  390125,
-	l04u_labx18           =    7581,
-	l05_bar               =   99539,
-	l06_rostok            =   67713,
-	l07_military          =  418268,
-	l08_yantar            =  141471,
-	l08u_brainlab         =    8008,
-	l10_radar             =  227189,
-	l10u_bunker           =    8821,
-	l11_pripyat           =  261219,
-	l12_stancia           =  477923,
-	l12_stancia_2         =  264577,
-	l12u_control_monolith =    3982,
-	l12u_sarcofag         =   10672,
+	dead_city             = 551769,
+	swamp                 = 0,
+	predbannik            = 0,
+	l01_escape            = 595499,
+	l02_garbage           = 382663,
+	l03_agroprom          = 437421,
+	l03u_agr_underground  = 4932,
+	l04_darkvalley        = 390125,
+	l04u_labx18           = 7581,
+	l05_bar               = 99539,
+	l06_rostok            = 67713,
+	l07_military          = 418268,
+	l08_yantar            = 141471,
+	l08u_brainlab         = 8008,
+	l10_radar             = 227189,
+	l10u_bunker           = 8821,
+	l11_pripyat           = 261219,
+	l12_stancia           = 477923,
+	l12_stancia_2         = 264577,
+	l12u_control_monolith = 3982,
+	l12u_sarcofag         = 10672,
 }
 
-function is_level_vertex_ok( sobj, obj_level )
-  local level_vertexes = level_vertexes[ obj_level ]
-  if level_vertexes > 0 and sobj.m_level_vertex_id >= level_vertexes then
-    log2(
-      "[%s]: found %s on %s: wrong level_vertex: %s >= %s",
-      script_name(), sobj:name(), obj_level,
-      sobj.m_level_vertex_id, level_vertexes
-    )
-    return false
-  end
-  return true
+function is_level_vertex_ok(sobj, obj_level)
+    local level_vertexes = level_vertexes[obj_level]
+    if level_vertexes > 0 and sobj.m_level_vertex_id >= level_vertexes then
+        log2("[%s]: found %s on %s: wrong level_vertex: %s >= %s", script_name(), sobj:name(), obj_level, sobj.m_level_vertex_id, level_vertexes)
+        return false
+    end
+    return true
 end
 
-
-function fix_level_vertex( sobj )
-  local vert_ok = level.vertex_id_by_pos(
-    sobj.m_level_vertex_id, sobj.position
-  )
-  if level.valid_vertex_id( vert_ok ) then
-    sobj.m_level_vertex_id = vert_ok
-    sobj:set_position( level.vertex_position( vert_ok ) )
-    return vert_ok
-  end
+function fix_level_vertex(sobj)
+    local vert_ok = level.vertex_id_by_pos(sobj.m_level_vertex_id, sobj.position)
+    if level.valid_vertex_id(vert_ok) then
+        sobj.m_level_vertex_id = vert_ok
+        sobj:set_position(level.vertex_position(vert_ok))
+        return vert_ok
+    end
 end
-
 
 function off_corpses()
-  local pt = profile_timer()
-  pt:start()
+    local pt = profile_timer()
+    pt:start()
 
-  -- главный цикл
-  local actor_level           = level.name()
-  local dead_monster_on_level = {}
-  dsh_alife.iterate_items(
-    function( obj )
-      local obj_level = object_level_name( obj )
-      local obj_name  = obj:name()
-      local obj_sect  = obj:section_name()
+    -- главный цикл
+    local actor_level = level.name()
+    local dead_monster_on_level = {}
+    dsh_alife.iterate_items(function(obj)
+        local obj_level = object_level_name(obj)
+        local obj_name = obj:name()
+        local obj_sect = obj:section_name()
 
-      if always_remove[ obj_sect ] then
-        table.insert( tabl_monsters_dead, obj )
+        if always_remove[obj_sect] then
+            table.insert(tabl_monsters_dead, obj)
 
-      elseif obj_sect == "psy_dog_phantom" or obj_sect == "m_phantom" then
-        log2(
-          "[%s]: found %s on %s: m_game_vertex_id = %s",
-          script_name(), obj_name, tostring( obj_level ),
-          tostring( obj.m_game_vertex_id )
-        )
-        table.insert( tabl_monsters_dead, obj )
+        elseif obj_sect == "psy_dog_phantom" or obj_sect == "m_phantom" then
+            log2("[%s]: found %s on %s: m_game_vertex_id = %s", script_name(), obj_name, tostring(obj_level),
+                tostring(obj.m_game_vertex_id))
+            table.insert(tabl_monsters_dead, obj)
 
-      elseif IsInventoryBox( obj ) then
-        if obj_level == actor_level then
-          alife():set_switch_online(  obj.id, true  )
-          alife():set_switch_offline( obj.id, false )
-        end
-
-      -- сталкер
-      elseif IsStalker( obj ) then
-        if obj_level ~= actor_level and not obj:alive() then
-          -- проверка трупа сталкера, если не в исключениях - в
-          -- таблицу и бум удалять
-          protected_items.unprotect_tabl_corps_keep( obj )
-          --add_9510_exceptions( obj )
-          if
-            not protected_items.is_corps_keep_by_story_id( obj )
-            and not protected_items.obj_is_protected(obj, "tabl_corps_keep", "exactly")
-          then
-            if
-              obj.m_story_id > 30210 or exceptions_9510[ obj.m_story_id ]
-            then
-              table.insert( tabl_corpses, obj )
-            else
-              -- эти трупы пысовские - не удаляются
-              table.insert( tabl_corpses_9510, obj )
-            end
-          end
-        end
-
-      -- монстр
-      elseif IsMonster( obj ) then
-        if obj:alive() then
-          if not is_level_vertex_ok( obj, obj_level ) then
+        elseif IsInventoryBox(obj) then
             if obj_level == actor_level then
-              local vert_ok = fix_level_vertex( obj )
-              if vert_ok then
-                log2( "[%s]:   fixed vertex: %s", script_name(), vert_ok )
-              end
+                alife():set_switch_online(obj.id, true)
+                alife():set_switch_offline(obj.id, false)
             end
-          end
-        else
-          -- труп
-          if obj_level == actor_level then
-            dead_monster_on_level[ obj.id ] = obj
-          else
-            table.insert( tabl_monsters_dead, obj )
-          end
+
+            -- сталкер
+        elseif IsStalker(obj) then
+            if obj_level ~= actor_level and not obj:alive() then
+                -- проверка трупа сталкера, если не в исключениях - в
+                -- таблицу и бум удалять
+                protected_items.unprotect_tabl_corps_keep(obj)
+                -- add_9510_exceptions( obj )
+                if not protected_items.is_corps_keep_by_story_id(obj) and
+                    not protected_items.obj_is_protected(obj, "tabl_corps_keep", "exactly") then
+                    if obj.m_story_id > 30210 or exceptions_9510[obj.m_story_id] then
+                        table.insert(tabl_corpses, obj)
+                    else
+                        -- эти трупы пысовские - не удаляются
+                        table.insert(tabl_corpses_9510, obj)
+                    end
+                end
+            end
+
+            -- монстр
+        elseif IsMonster(obj) then
+            if obj:alive() then
+                if not is_level_vertex_ok(obj, obj_level) then
+                    if obj_level == actor_level then
+                        local vert_ok = fix_level_vertex(obj)
+                        if vert_ok then
+                            log2("[%s]:   fixed vertex: %s", script_name(), vert_ok)
+                        end
+                    end
+                end
+            else
+                -- труп
+                if obj_level == actor_level then
+                    dead_monster_on_level[obj.id] = obj
+                else
+                    table.insert(tabl_monsters_dead, obj)
+                end
+            end
+
+            -- оружие и т.п.
+        elseif (obj:get_weapon() or isWeapon(obj) or isOutfit(obj)) and obj_level ~= actor_level and obj:name() ==
+            (obj:section_name() .. obj.id) and not item_keep(obj) then
+            table.insert(tabl_weapons, obj)
+
+            -- трупы ворон
+        elseif obj_sect == "mutant_crow" then
+            table.insert(tabl_monsters_dead, obj)
+
+        elseif string.find(obj_sect, "af_", 1, true) then
+            if not is_level_vertex_ok(obj, obj_level) then
+                table.insert(tabl_monsters_dead, obj)
+            end
+
+        elseif get_bool(obj_sect, "monster_part", false) and not item_keep(obj) then
+            table.insert(tabl_monsters_dead, obj)
         end
+    end, 65535 -- находится на земле
+    )
 
-        -- оружие и т.п.
-      elseif
-        (
-          obj:get_weapon()
-          or isWeapon( obj )
-          or isOutfit( obj )
-        )
-        and obj_level ~= actor_level
-        and obj:name() == ( obj:section_name() .. obj.id )
-        and not item_keep( obj )
-      then
-        table.insert( tabl_weapons, obj )
-
-        -- трупы ворон
-      elseif obj_sect == "mutant_crow" then
-        table.insert( tabl_monsters_dead, obj )
-
-      elseif string.find( obj_sect, "af_", 1, true ) then
-        if not is_level_vertex_ok( obj, obj_level ) then
-          table.insert( tabl_monsters_dead, obj )
+    -- зачистка мёртвых монстров
+    local cnt = 0
+    for _, corps in ipairs(tabl_monsters_dead) do
+        local keep = dsh_alife.iterate_items(function(sobj)
+            if item_keep(sobj) then
+                return true
+            end
+        end, corps.id)
+        if not keep then
+            cnt = cnt + 1
+            dsh_alife.release(corps)
         end
-
-      elseif
-        get_bool( obj_sect, "monster_part", false )
-        and not item_keep( obj )
-      then
-        table.insert( tabl_monsters_dead, obj )
-      end
-    end,
-    65535                       -- находится на земле
-  )
-
-  -- зачистка мёртвых монстров
-  local cnt = 0
-  for _, corps in ipairs( tabl_monsters_dead ) do
-    local keep = dsh_alife.iterate_items(
-      function( sobj )
-        if item_keep( sobj ) then return true end
-      end,
-      corps.id
-    )
-    if not keep then
-      cnt = cnt + 1
-      dsh_alife.release( corps )
     end
-  end
 
-  -- удаление мертвых мутантов с пустым инвентарем на текущей локации
-  for id, sobj in pairs( dead_monster_on_level ) do
-    local has_something = dsh_alife.iterate_items(
-      function( sobj ) return true end,
-      sobj.id
-    )
-    if not has_something then
-      cnt = cnt + 1
-      dsh_alife.release( sobj )
+    -- удаление мертвых мутантов с пустым инвентарем на текущей локации
+    for id, sobj in pairs(dead_monster_on_level) do
+        local has_something = dsh_alife.iterate_items(function(sobj)
+            return true
+        end, sobj.id)
+        if not has_something then
+            cnt = cnt + 1
+            dsh_alife.release(sobj)
+        end
     end
-  end
 
-  -- зачистка мёртвых человеков
-  for _, corps in ipairs( tabl_corpses ) do
-    local keep = dsh_alife.iterate_items(
-      function( sobj )
-        if item_keep( sobj ) then return true end
-      end,
-      corps.id
-    )
-    if not keep then
-      cnt = cnt + 1
-      dsh_alife.release( corps )
+    -- зачистка мёртвых человеков
+    for _, corps in ipairs(tabl_corpses) do
+        local keep = dsh_alife.iterate_items(function(sobj)
+            if item_keep(sobj) then
+                return true
+            end
+        end, corps.id)
+        if not keep then
+            cnt = cnt + 1
+            dsh_alife.release(corps)
+        end
     end
-  end
 
-  -- зачистка оружия
-  for _, wpn in ipairs( tabl_weapons ) do
-    cnt = cnt + 1
-    dsh_alife.release( wpn )
-  end
+    -- зачистка оружия
+    for _, wpn in ipairs(tabl_weapons) do
+        cnt = cnt + 1
+        dsh_alife.release(wpn)
+    end
 
-  pt:stop()
-  log2( "[%s]: %s objects released: %s", script_name(), cnt, pt:time() )
+    pt:stop()
+    log2("[%s]: %s objects released: %s", script_name(), cnt, pt:time())
 end
-
 
 local cached_item = {}
-function item_keep( item )
-  -- проверка на предметы, тела с которыми нужно оставить
-  local sect = item:section_name()
-  local k
-  if item:name() == sect .. item.id then
-    k = sect
-  else
-    k = item:name()
-  end
-  if cached_item[ k ] == nil then
-    if get_bool( sect, "sak_off_corpses.ignore_item", false ) then
-      cached_item[ k ] = false
+function item_keep(item)
+    -- проверка на предметы, тела с которыми нужно оставить
+    local sect = item:section_name()
+    local k
+    if item:name() == sect .. item.id then
+        k = sect
     else
-      cached_item[ k ] =
-        get_bool( sect, "quest_item", false )
-        or protected_items.obj_is_protected( item, "tabl_items_keep", "like" )
-        or ( isWeapon( item ) and protected_items.is_unique_wpn_keep( sect ) )
-        or protected_items.obj_is_protected( item, "tabl_wpn_keep", "like" )
-        or false
+        k = item:name()
     end
-  end
-  return cached_item[ k ]
+    if cached_item[k] == nil then
+        if get_bool(sect, "sak_off_corpses.ignore_item", false) then
+            cached_item[k] = false
+        else
+            cached_item[k] = get_bool(sect, "quest_item", false) or
+                                 protected_items.obj_is_protected(item, "tabl_items_keep", "like") or
+                                 (isWeapon(item) and protected_items.is_unique_wpn_keep(sect)) or
+                                 protected_items.obj_is_protected(item, "tabl_wpn_keep", "like") or false
+        end
+    end
+    return cached_item[k]
 end
 
-
---function add_9510_exceptions( sobj )
+-- function add_9510_exceptions( sobj )
 --  local by_info = exceptions_9510_info[ sobj.m_story_id ]
 --  if by_info and sak.has_all_info( by_info ) then
 --    exceptions_9510[ sobj.m_story_id ] = true
 --  end
---end
+-- end

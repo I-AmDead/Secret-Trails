@@ -1,84 +1,100 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
 function attach( sm )
-  sm:subscribe({ signal = "on_use", fun = this.use_repkit })
-end
-
-function use_repkit( obj )
-  if obj:section() == "repair_kit" then
-    level.start_stop_menu(repair.ui_remkit(), true)
-    return true
+    sm:subscribe({ signal = "on_use", fun = this.use_repkit })
   end
+
+function use_repkit(obj)
+    if obj:section() == "repair_kit" then
+        level.start_stop_menu(repair.ui_remkit(), true)
+        return true
+    end
 end
 
 function repair_item(repair_slot)
-  local item_in_slot = db.actor:item_in_slot(repair_slot)
-  local medusa = db.actor:object("af_medusa")
-  if item_in_slot and item_in_slot:condition() < 1 and medusa then
-    item_in_slot:set_condition(1)
-    ogse.remove_item(medusa)
-  end
+    local item_in_slot = db.actor:item_in_slot(repair_slot)
+    local medusa = db.actor:object("af_medusa")
+    if item_in_slot and item_in_slot:condition() < 1 and medusa then
+        item_in_slot:set_condition(1)
+        ogse.remove_item(medusa)
+    end
 end
 
-class "ui_remkit" (CUIScriptWnd)
-function ui_remkit:__init() super()
-	self:InitControls()
-	self:InitCallBacks()
+class "ui_remkit"(CUIScriptWnd)
+function ui_remkit:__init()
+    super()
+    self:InitControls()
+    self:InitCallBacks()
 end
 
-function ui_remkit:__finalize() end
+function ui_remkit:__finalize()
+end
 
 function ui_remkit:InitControls()
-	local scr = {x = 0, y = 0, width = 1024, height = 768}
-	local win = {x = 0, y = 0, width =  260, height = 300}
-	win.x = (scr.width  - win.width )/2 + 25
-	win.y = (scr.height - win.height)/2 + 50
-	self:Init(win.x, win.y, win.width, win.height)
-	self:Enable(true)
-	local xml = CScriptXmlInit()
-	xml:ParseFile("ui_remkit.xml")
-	xml:InitStatic("background", self)
+    local scr = {
+        x = 0,
+        y = 0,
+        width = 1024,
+        height = 768
+    }
+    local win = {
+        x = 0,
+        y = 0,
+        width = 260,
+        height = 300
+    }
+    win.x = (scr.width - win.width) / 2 + 25
+    win.y = (scr.height - win.height) / 2 + 50
+    self:Init(win.x, win.y, win.width, win.height)
+    self:Enable(true)
+    local xml = CScriptXmlInit()
+    xml:ParseFile("ui_remkit.xml")
+    xml:InitStatic("background", self)
 
-	self:Register(xml:Init3tButton("caption", self),"caption")
-	self:Register(xml:Init3tButton("btn_1",   self),"btn_1")
-	self:Register(xml:Init3tButton("btn_2",   self),"btn_2")
-	self:Register(xml:Init3tButton("btn_3",   self),"btn_3")
-	self:Register(xml:Init3tButton("btn_quit", self),"btn_quit")
+    self:Register(xml:Init3tButton("caption", self), "caption")
+    self:Register(xml:Init3tButton("btn_1", self), "btn_1")
+    self:Register(xml:Init3tButton("btn_2", self), "btn_2")
+    self:Register(xml:Init3tButton("btn_3", self), "btn_3")
+    self:Register(xml:Init3tButton("btn_quit", self), "btn_quit")
 end
 
 function ui_remkit:InitCallBacks()
-	self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.on_quit, self)
-	self:AddCallback("btn_1",    ui_events.BUTTON_CLICKED, self.repair_1, self)
-	self:AddCallback("btn_2",    ui_events.BUTTON_CLICKED, self.repair_2, self)
-	self:AddCallback("btn_3",    ui_events.BUTTON_CLICKED, self.repair_3, self)
+    self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.on_quit, self)
+    self:AddCallback("btn_1", ui_events.BUTTON_CLICKED, self.repair_1, self)
+    self:AddCallback("btn_2", ui_events.BUTTON_CLICKED, self.repair_2, self)
+    self:AddCallback("btn_3", ui_events.BUTTON_CLICKED, self.repair_3, self)
 end
 
 function ui_remkit:on_quit()
-	self:GetHolder():start_stop_menu(self,true)
+    self:GetHolder():start_stop_menu(self, true)
 end
 
 function ui_remkit:OnKeyboard(dik, keyboard_action)
-	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
-	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-		if dik == DIK_keys.DIK_ESCAPE  then self:on_quit()
-		elseif dik == DIK_keys.DIK_NUMPAD1 then self:repair_1()
-		elseif dik == DIK_keys.DIK_NUMPAD3 then self:repair_2()
-		elseif dik == DIK_keys.DIK_NUMPAD5 then self:repair_3()
-		end
-	end
+    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+        if dik == DIK_keys.DIK_ESCAPE then
+            self:on_quit()
+        elseif dik == DIK_keys.DIK_NUMPAD1 then
+            self:repair_1()
+        elseif dik == DIK_keys.DIK_NUMPAD3 then
+            self:repair_2()
+        elseif dik == DIK_keys.DIK_NUMPAD5 then
+            self:repair_3()
+        end
+    end
 end
 
 function ui_remkit:repair_1()
-	repair_item(1)
-	self:on_quit()
+    repair_item(1)
+    self:on_quit()
 end
 
 function ui_remkit:repair_2()
-	repair_item(2)
-	self:on_quit()
+    repair_item(2)
+    self:on_quit()
 end
 
 function ui_remkit:repair_3()
-	repair_item(6)
-	self:on_quit()
+    repair_item(6)
+    self:on_quit()
 end

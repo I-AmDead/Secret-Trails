@@ -1,65 +1,61 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 --[[------------------------------------------------------------------------------------------------
-База данных живых онлайновых объектов, зон и рестрикторов, актёра
-Чугай Александр
---------------------------------------------------------------------------------------------------]]
+Р‘Р°Р·Р° РґР°РЅРЅС‹С… Р¶РёРІС‹С… РѕРЅР»Р°Р№РЅРѕРІС‹С… РѕР±СЉРµРєС‚РѕРІ, Р·РѕРЅ Рё СЂРµСЃС‚СЂРёРєС‚РѕСЂРѕРІ, Р°РєС‚С‘СЂР°
+Р§СѓРіР°Р№ РђР»РµРєСЃР°РЅРґСЂ
+--------------------------------------------------------------------------------------------------]] zone_by_name = {}
+storage = {}
+sound = {} -- TODO: Р’С‹РЅРµСЃС‚Рё РѕС‚СЃСЋРґР° РІ xr_sound.
+actor = nil
+actor_proxy = actor_proxy.actor_proxy()
+heli = {}
+cars = {}
+camp_storage = {} -- TODO: РІС‹РЅРµСЃС‚Рё РІ mob_camp.
+story_by_id = {}
+trader = nil -- TODO: Р’С‹РЅРµСЃС‚Рё РІ mob_trader
+creatures = {}
 
-zone_by_name        = {}
-storage             = {}
-sound               = {} --TODO: Вынести отсюда в xr_sound.
-actor               = nil
-actor_proxy         = actor_proxy.actor_proxy()
-heli                = {}
-cars                = {}
-camp_storage        = {} --TODO: вынести в mob_camp.
-story_by_id	    = {}
-trader              = nil --TODO: Вынести в mob_trader
-creatures           = {}
-
-function add_obj( obj )
-	creatures[obj:id()] = obj
+function add_obj(obj)
+    creatures[obj:id()] = obj
 end
 
-function del_obj( obj )
-	storage[obj:id()] = nil
-	creatures[obj:id()] = nil
+function del_obj(obj)
+    storage[obj:id()] = nil
+    creatures[obj:id()] = nil
 end
 
-function add_zone( zone )
-	zone_by_name[zone:name()] = zone
+function add_zone(zone)
+    zone_by_name[zone:name()] = zone
 end
 
-function del_zone( zone )
-	zone_by_name[zone:name()] = nil
+function del_zone(zone)
+    zone_by_name[zone:name()] = nil
 end
 
-
-function add_actor( obj )
-	actor = obj
-	actor_proxy:net_spawn( obj )
-	add_obj( obj )
+function add_actor(obj)
+    actor = obj
+    actor_proxy:net_spawn(obj)
+    add_obj(obj)
 end
 
 function del_actor()
-	del_obj( actor )
-	actor_proxy:net_destroy()
-	actor = nil
+    del_obj(actor)
+    actor_proxy:net_destroy()
+    actor = nil
 end
 
-function add_heli(obj)  
-	heli[obj:id()] = obj
-end 
+function add_heli(obj)
+    heli[obj:id()] = obj
+end
 
 function del_heli(obj)
-	heli[obj:id()] = nil
-end 
+    heli[obj:id()] = nil
+end
 
--- Транспорт
+-- РўСЂР°РЅСЃРїРѕСЂС‚
 function add_car(obj)
-	cars[obj:id()] = obj
+    cars[obj:id()] = obj
 end
 
 function del_car(obj)
-	cars[obj:id()] = nil
+    cars[obj:id()] = nil
 end

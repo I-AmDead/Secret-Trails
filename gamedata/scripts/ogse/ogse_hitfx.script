@@ -1,18 +1,18 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-
 function attach(sm)
 	sm:subscribe({ signal = "on_npc_death", fun = this.npc_on_death })
 	sm:subscribe({ signal = "on_monster_death", fun = this.npc_on_death })
 end
 
 function npc_on_death(victim, who)
-	local binder = victim:binded_object()
-	if not binder.last_hit_data then return end
-	local hd       = binder.last_hit_data
-	local hit_type = hd.hit_type
-	ASSERT( hit_type, "hit_type not found" )
-	if not ( hit_type == hit.fire_wound or hit_type == hit.explosion ) then
-	  return
-  	end
+    local binder = victim:binded_object()
+    if not binder.last_hit_data then
+        return
+    end
+    local hd = binder.last_hit_data
+    local hit_type = hd.hit_type
+    ASSERT(hit_type, "hit_type not found")
+    if not (hit_type == hit.fire_wound or hit_type == hit.explosion) then
+        return
+    end
 end

@@ -1,141 +1,169 @@
 local function fix_recept()
-  if (not db.actor:has_info( "info_amk_recipt_drop_souls" )) and db.actor:has_info( "info_amk_recipt_souls" ) then
-    db.actor:give_info_portion( "info_amk_recipt_soul_drops" )
-    db.actor:give_info_portion( "info_amk_recipt_soul_fire" )
-    db.actor:give_info_portion( "info_amk_recipt_soul_cristal" )
-    db.actor:give_info_portion( "info_amk_recipt_soul_bengal" )
-  end
+    if (not db.actor:has_info("info_amk_recipt_drop_souls")) and db.actor:has_info("info_amk_recipt_souls") then
+        db.actor:give_info_portion("info_amk_recipt_soul_drops")
+        db.actor:give_info_portion("info_amk_recipt_soul_fire")
+        db.actor:give_info_portion("info_amk_recipt_soul_cristal")
+        db.actor:give_info_portion("info_amk_recipt_soul_bengal")
+    end
 
-  if (not db.actor:has_info( "info_amk_recipt_drop_dummy" )) and db.actor:has_info( "info_amk_recipt_dummy" ) then
-    db.actor:give_info_portion( "info_amk_recipt_dummy_fire" )
-    db.actor:give_info_portion( "info_amk_recipt_dummy_bright" )
-    db.actor:give_info_portion( "info_amk_recipt_dummy_moon" )
-    db.actor:give_info_portion( "info_amk_recipt_dummy_puding" )
-  end
+    if (not db.actor:has_info("info_amk_recipt_drop_dummy")) and db.actor:has_info("info_amk_recipt_dummy") then
+        db.actor:give_info_portion("info_amk_recipt_dummy_fire")
+        db.actor:give_info_portion("info_amk_recipt_dummy_bright")
+        db.actor:give_info_portion("info_amk_recipt_dummy_moon")
+        db.actor:give_info_portion("info_amk_recipt_dummy_puding")
+    end
 end
 
 local function del_lampa()
-  local sim = alife()
-  local obj = sim:object("light_uglovaya_1_glass_0006")
-  if obj then
-    sim:release(obj, true)
-  end
+    local obj = alife():object("light_uglovaya_1_glass_0006")
+    if obj then
+        alife():release(obj, true)
+    end
+end
+
+local function del_object_0085()
+    local obj = alife():object("sar_physic_destroyable_object_0085")
+    if obj then
+        alife():release(obj, true)
+    end
 end
 
 local function spawn_sverhprovodnik()
-	if db.actor:has_info( "sverhprovodnik_dialog_done" ) then return end
-	if db.actor:dont_has_info( "sverhprovodnik_dialog_start" ) then return end
-	if db.actor:object( "sverhprovodnik" ) then return end
+    if db.actor:has_info("sverhprovodnik_dialog_done") then
+        return
+    end
+    if db.actor:dont_has_info("sverhprovodnik_dialog_start") then
+        return
+    end
+    if db.actor:object("sverhprovodnik") then
+        return
+    end
 
-	local time = level.get_time_hours()
+    local time = level.get_time_hours()
 
-	if time >= 1 and time < 2 and db.actor:dont_has_info( "sverhprovodnik_spawn" ) then
-		local obj = alife():create( "sverhprovodnik", vector():set(-268.297,-18.055,-25.109),69438,1683)
-		alife():assign_story_id(obj.id, story_ids.sverhprovodnik)
-		db.actor:give_info_portion( "sverhprovodnik_spawn" )
-	end
+    if time >= 1 and time < 2 and db.actor:dont_has_info("sverhprovodnik_spawn") then
+        local obj = alife():create("sverhprovodnik", vector():set(-268.297, -18.055, -25.109), 69438, 1683)
+        alife():assign_story_id(obj.id, story_ids.sverhprovodnik)
+        db.actor:give_info_portion("sverhprovodnik_spawn")
+    end
 
-	if db.actor:has_info( "sverhprovodnik_spawn" ) and time >= 2 then
-		local obj = alife():story_object(story_ids.sverhprovodnik)
-		if obj then
-			alife():release(obj , true)
-			db.actor:disable_info_portion( "sverhprovodnik_spawn" )
-		end
-	end
+    if db.actor:has_info("sverhprovodnik_spawn") and time >= 2 then
+        local obj = alife():story_object(story_ids.sverhprovodnik)
+        if obj then
+            alife():release(obj, true)
+            db.actor:disable_info_portion("sverhprovodnik_spawn")
+        end
+    end
 end
 
 function start_quest()
-	ogse_st_mgr.start_visual_timer(nil, 17*60, script_name() .. ".quest_fail")
+    ogse_st_mgr.start_visual_timer(nil, 17 * 60, script_name() .. ".quest_fail")
 end
 
 function quest_fail()
-  if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
-    db.actor:give_info_portion("pobeg_net")
-  end
+    if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
+        db.actor:give_info_portion("pobeg_net")
+    end
 end
 
 local function fix_first()
-	fix_recept()
-	del_lampa()
+    fix_recept()
+    del_lampa()
+    del_object_0085()
+    swamp_secret()
 end
 
-local function on_drag_drop( obj )
-	local section = obj:section()
+local function on_drag_drop(obj)
+    local section = obj:section()
 
-	if not (db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "nano_outfit") then return end
-	if not (section and (section == "af_buliz" or section == "af_spirit_4")) then return end
+    if not (db.actor:item_in_slot(6) and db.actor:item_in_slot(6):section() == "nano_outfit") then
+        return
+    end
+    if not (section and (section == "af_buliz" or section == "af_spirit_4")) then
+        return
+    end
 
-	if section == "af_buliz" and new_dialog.count_item("af_buliz",5) then
-		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_w"))
-		ogse.remove_inv_items_by_section(section, 5)
-		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
-		ogse.spawn_item_in_inv("nano_outfit_addw")
-		local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	elseif section == "af_spirit_4" and new_dialog.count_item("af_spirit_4",5) then
-		news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_h"))
-		ogse.remove_inv_items_by_section(section, 5)
-		ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
-		ogse.spawn_item_in_inv("nano_outfit_addh")
-		local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
-		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
-	end
+    if section == "af_buliz" and new_dialog.count_item("af_buliz", 5) then
+        news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_w"))
+        ogse.remove_inv_items_by_section(section, 5)
+        ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
+        ogse.spawn_item_in_inv("nano_outfit_addw")
+        local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
+        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+    elseif section == "af_spirit_4" and new_dialog.count_item("af_spirit_4", 5) then
+        news_manager.send_tip(db.actor, game.translate_string("nano_mod_complete_h"))
+        ogse.remove_inv_items_by_section(section, 5)
+        ogse.remove_inv_items_by_section(db.actor:item_in_slot(6):section())
+        ogse.spawn_item_in_inv("nano_outfit_addh")
+        local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
+        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+    end
 end
 
---Фикс Радара - Склады, чтобы dest_position была не в геометрии
+-- Фикс Радара - Склады, чтобы dest_position была не в геометрии
 function fix_radar_level_changer_to_ac()
-	if ogse.var_exists("fix_exit_to_military_01") then return end
-	local sobj = alife():object("exit_to_military_01")
-	if sobj and sobj.level_name == "l05_bar" then
-		log3( "~~[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name )
-		alife():release(sobj)
-		return
-	end
-	if not sobj then return end
-	log3( "~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name )
-	local lc = sobj:get_level_changer()
-	lc.dest_game_vertex_id  = 1812
-	lc.dest_level_vertex_id = 411164
-	lc.dest_position        = vector():set(129.848160, -8.843687, 432.651672)
-	lc.dest_direction       = vector():set(-0.981792, -0.138918, -0.129563)
+    if ogse.var_exists("fix_exit_to_military_01") then
+        return
+    end
+    local sobj = alife():object("exit_to_military_01")
+    if sobj and sobj.level_name == "l05_bar" then
+        log3("~~[%s]: release %s (%s)", script_name(), sobj:name(), sobj.level_name)
+        alife():release(sobj)
+        return
+    end
+    if not sobj then
+        return
+    end
+    log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
+    local lc = sobj:get_level_changer()
+    lc.dest_game_vertex_id = 1812
+    lc.dest_level_vertex_id = 411164
+    lc.dest_position = vector():set(129.848160, -8.843687, 432.651672)
+    lc.dest_direction = vector():set(-0.981792, -0.138918, -0.129563)
 
-	ogse.save_var("fix_exit_to_military_01", true)
+    ogse.save_var("fix_exit_to_military_01", true)
 end
 
 function fix_ac_level_changer_to_mg()
-	local sobj = alife():story_object(story_ids.ac_mg)
-	if sobj and not ogse.var_exists("fix_ac_level_changer_to_mg") then
-		ogse.save_var("fix_ac_level_changer_to_mg", true)
-		log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
-		sobj.position = vector():set(-427.113692, -13.161615, 378.632111)
-		local lc = sobj:get_level_changer()
-		lc.dest_game_vertex_id = 3025
-		lc.dest_level_vertex_id = 81916
-		lc.dest_position = vector():set(-261.535095, 5.432425, -142.20872)
-		lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
-	end
+    local sobj = alife():story_object(story_ids.ac_mg)
+    if sobj and not ogse.var_exists("fix_ac_level_changer_to_mg") then
+        ogse.save_var("fix_ac_level_changer_to_mg", true)
+        log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
+        sobj.position = vector():set(-427.113692, -13.161615, 378.632111)
+        local lc = sobj:get_level_changer()
+        lc.dest_game_vertex_id = 3025
+        lc.dest_level_vertex_id = 81916
+        lc.dest_position = vector():set(-261.535095, 5.432425, -142.20872)
+        lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
+    end
 
-	local sobj = alife():story_object(story_ids.mg_ac)
-	if sobj and not ogse.var_exists("fix_mg_level_changer_to_ac") then
-		ogse.save_var("fix_mg_level_changer_to_ac", true)
-		log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
-		sobj.position = vector():set(-261.535095, 5.432425, -142.20872)
-		local lc = sobj:get_level_changer()
-		lc.dest_game_vertex_id = 1657
-		lc.dest_level_vertex_id = 124966
-		lc.dest_position = vector():set(-427.113692, -13.161615, 378.632111)
-		lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
-	end
+    local sobj = alife():story_object(story_ids.mg_ac)
+    if sobj and not ogse.var_exists("fix_mg_level_changer_to_ac") then
+        ogse.save_var("fix_mg_level_changer_to_ac", true)
+        log3("~~[%s]: fix %s (%s)", script_name(), sobj:name(), sobj.level_name)
+        sobj.position = vector():set(-261.535095, 5.432425, -142.20872)
+        local lc = sobj:get_level_changer()
+        lc.dest_game_vertex_id = 1657
+        lc.dest_level_vertex_id = 124966
+        lc.dest_position = vector():set(-427.113692, -13.161615, 378.632111)
+        lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
+    end
 end
 
 function on_spawn()
-	fix_radar_level_changer_to_ac()
-	fix_ac_level_changer_to_mg()
+    fix_radar_level_changer_to_ac()
+    fix_ac_level_changer_to_mg()
 end
 
-function attach( sm )
-  sm:subscribe({ signal = "on_spawn", 		fun = on_spawn       	   })
-  sm:subscribe({ signal = "on_first_update", 	fun = fix_first       	   })
-  sm:subscribe({ signal = "on_update", 		fun = spawn_sverhprovodnik })
-  sm:subscribe({ signal = "on_fake_drag_drop", 	fun = on_drag_drop         })
+function swamp_secret()
+	if ogse.var_exists("SWAMP_SECRET") and not level.name() == "swamp" then return end
+	local sobj = alife():create("swamp_secret", vector():set(-252.122940, -5.423657, 53.645744), 646368, 2999)
+	ogse.save_var("SWAMP_SECRET", true)
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_spawn",          fun = on_spawn})
+    sm:subscribe({signal = "on_first_update",   fun = fix_first})
+    sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
+    sm:subscribe({signal = "on_fake_drag_drop", fun = on_drag_drop})
 end

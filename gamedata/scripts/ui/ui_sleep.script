@@ -1,73 +1,74 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 
-class "sleep" (CUIScriptWnd)
-function sleep:__init() super()
-	local xml = CScriptXmlInit()
-	xml:ParseFile("ui_sleep_dialog_wnd.xml")
-	xml:InitWindow("main", 0, self)
+class "sleep"(CUIScriptWnd)
+function sleep:__init()
+    super()
+    local xml = CScriptXmlInit()
+    xml:ParseFile("ui_sleep_dialog_wnd.xml")
+    xml:InitWindow("main", 0, self)
 
-	xml:InitStatic("main:background", self)
-	local scale_wnd = xml:InitStatic("main:time_scale_back", self)
-	self.panorama_bgnd = xml:InitStatic("main:panorama_window", self)
-	local current_time = game.get_game_time()
-	local y,m,d,h,m,s,ms = current_time:get()
-	local time_from_current_day_beginning = game.CTime()
-	time_from_current_day_beginning:setHMS(h,m,s)
-	local sec_from_day_beginning = time_from_current_day_beginning:diffSec(game.CTime())
-	local day_part = sec_from_day_beginning / (24.0*3600.0)
-	local panorama_wnd = xml:InitStatic("main:panorama_window:sky_panorama", self.panorama_bgnd)
-	panorama_wnd:InitTexture("ui\\ui_sleep_sky_panorama.dds")
-	panorama_wnd:SetOriginalRect(576*day_part, 0, 618, 117)
-	panorama_wnd:ClipperOn()
-	sleep_st_tbl = {}
-	local minimum_sleep_time = 0.99
-	local maximum_sleep_time = get_float("actor_condition", "max_sleep_hours", 12.0)
-	for i = 0, 24 do -- ìåòêè		
-		sleep_st_tbl[i] = xml:InitStatic("main:sleep_st", self)
-		sleep_st_tbl[i]:SetWndPos(225 + i*23, 436)
-		sleep_st_tbl[i]:SetText(i..game.translate_string("÷"))
-		if i<minimum_sleep_time or i>maximum_sleep_time then
-			sleep_st_tbl[i]:SetTextColor(255, 128, 128, 128)
-		end
-	end
-	for i = 0,24 do -- êíîïêè
-		local t = i
-		if t>=minimum_sleep_time and t<=maximum_sleep_time then
-			local btn = xml:Init3tButton("main:sleep_btn", self)
-			btn:SetWndPos(225 + t*23, 298)
-			self:Register(btn,"sleep_btn_"..i)
-			self:Connect( "sleep_btn_"..i, ui_events.BUTTON_CLICKED, self.on_hour_btn_click, self, t )
-		end
-	end
-	self:Register(xml:Init3tButton("main:caption_1", self),"caption_1")
-	self:Register(xml:Init3tButton("main:btn_cancel", self),"btn_cancel")
-	self:AddCallback("btn_cancel", 	ui_events.BUTTON_CLICKED, self.on_quit, self)
-	level.hide_indicators()
-	ui_minimap_bioradar.hud_hide()
+    xml:InitStatic("main:background", self)
+    local scale_wnd = xml:InitStatic("main:time_scale_back", self)
+    self.panorama_bgnd = xml:InitStatic("main:panorama_window", self)
+    local current_time = game.get_game_time()
+    local y, m, d, h, m, s, ms = current_time:get()
+    local time_from_current_day_beginning = game.CTime()
+    time_from_current_day_beginning:setHMS(h, m, s)
+    local sec_from_day_beginning = time_from_current_day_beginning:diffSec(game.CTime())
+    local day_part = sec_from_day_beginning / (24.0 * 3600.0)
+    local panorama_wnd = xml:InitStatic("main:panorama_window:sky_panorama", self.panorama_bgnd)
+    panorama_wnd:InitTexture("ui\\ui_sleep_sky_panorama.dds")
+    panorama_wnd:SetOriginalRect(576 * day_part, 0, 618, 117)
+    panorama_wnd:ClipperOn()
+    sleep_st_tbl = {}
+    local minimum_sleep_time = 0.99
+    local maximum_sleep_time = get_float("actor_condition", "max_sleep_hours", 12.0)
+    for i = 0, 24 do -- Ð¼ÐµÑ‚ÐºÐ¸		
+        sleep_st_tbl[i] = xml:InitStatic("main:sleep_st", self)
+        sleep_st_tbl[i]:SetWndPos(225 + i * 23, 436)
+        sleep_st_tbl[i]:SetText(i .. game.translate_string("Ñ‡"))
+        if i < minimum_sleep_time or i > maximum_sleep_time then
+            sleep_st_tbl[i]:SetTextColor(255, 128, 128, 128)
+        end
+    end
+    for i = 0, 24 do -- ÐºÐ½Ð¾Ð¿ÐºÐ¸
+        local t = i
+        if t >= minimum_sleep_time and t <= maximum_sleep_time then
+            local btn = xml:Init3tButton("main:sleep_btn", self)
+            btn:SetWndPos(225 + t * 23, 298)
+            self:Register(btn, "sleep_btn_" .. i)
+            self:Connect("sleep_btn_" .. i, ui_events.BUTTON_CLICKED, self.on_hour_btn_click, self, t)
+        end
+    end
+    self:Register(xml:Init3tButton("main:caption_1", self), "caption_1")
+    self:Register(xml:Init3tButton("main:btn_cancel", self), "btn_cancel")
+    self:AddCallback("btn_cancel", ui_events.BUTTON_CLICKED, self.on_quit, self)
+    level.hide_indicators()
+    ui_minimap_bioradar.hud_hide()
 end
 function sleep:__finalize()
-	--log1("~~sleep:__finalize()")
+    -- log1("~~sleep:__finalize()")
 end
 
 function sleep:OnKeyboard(dik, keyboard_action)
-	CUIScriptWnd.OnKeyboard(self,dik,keyboard_action)
-	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
-		if dik == DIK_keys.DIK_ESCAPE then
-			self:on_quit()
-		end
-	end
-	return true
+    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+        if dik == DIK_keys.DIK_ESCAPE then
+            self:on_quit()
+        end
+    end
+    return true
 end
 
-function sleep:on_hour_btn_click( h )
-	ogse_sleep_mgr.begin_sleep( h )
-	self:on_quit()
-	xr_effects.disable_ui()
+function sleep:on_hour_btn_click(h)
+    ogse_sleep_mgr.begin_sleep(h)
+    self:on_quit()
+    xr_effects.disable_ui()
 end
 
 function sleep:on_quit()
-	self:GetHolder():start_stop_menu(self,true)
-	self:ClearCallbacks()
-	level.show_indicators()
-	ui_minimap_bioradar.hud_show()
+    self:GetHolder():start_stop_menu(self, true)
+    self:ClearCallbacks()
+    level.show_indicators()
+    ui_minimap_bioradar.hud_show()
 end
