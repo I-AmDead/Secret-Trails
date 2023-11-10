@@ -1,533 +1,510 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-function attach( sm )
-  sm:subscribe({ signal = "se_monster_on_before_register", fun = this.se_on_before_register })
-  sm:subscribe({ signal = "se_stalker_on_before_register", fun = this.se_on_before_register })
+function attach(sm)
+    sm:subscribe({signal = "se_monster_on_before_register", fun = this.se_on_before_register})
+    sm:subscribe({signal = "se_stalker_on_before_register", fun = this.se_on_before_register})
 end
 
-class "timeout_timer" ( ogse_qt.quick_timer )
-function timeout_timer:__init( delay, fun, ... ) super( delay )
-  self.fun  = fun
-  self.args = { ... }
+class "timeout_timer"(ogse_qt.quick_timer)
+function timeout_timer:__init(delay, fun, ...)
+    super(delay)
+    self.fun = fun
+    self.args = {...}
 end
 function timeout_timer:taction()
-  self.fun( unpack( self.args ) )
+    self.fun(unpack(self.args))
 end
 
-function timeout( delay, fun, ... )
-  local tmout = timeout_timer( delay, fun, ... )
-  --
-  local d = debug.getinfo(2)
-  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
-  --
-  tmout:start()
-  return tmout
+function timeout(delay, fun, ...)
+    local tmout = timeout_timer(delay, fun, ...)
+    --
+    local d = debug.getinfo(2)
+    tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+    --
+    tmout:start()
+    return tmout
 end
 
-
-class "condition_timer" ( ogse_qt.quick_timer )
-function condition_timer:__init( fun1, fun2, fun3 )
-  self.fun1 = fun1
-  self.fun2 = fun2
-  self.fun3 = fun3
+class "condition_timer"(ogse_qt.quick_timer)
+function condition_timer:__init(fun1, fun2, fun3)
+    self.fun1 = fun1
+    self.fun2 = fun2
+    self.fun3 = fun3
 end
 function condition_timer:condition()
-  return self.fun1()
+    return self.fun1()
 end
 function condition_timer:action()
-  self.fun2()
+    self.fun2()
 end
 function condition_timer:update()
-  if self.fun3 then self.fun3( self ) end
+    if self.fun3 then
+        self.fun3(self)
+    end
 end
 
-function wait_condition( ... )
-  local tmout = condition_timer( ... )
-  --
-  local d = debug.getinfo(2)
-  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
-  --
-  tmout:start()
-  return tmout
+function wait_condition(...)
+    local tmout = condition_timer(...)
+    --
+    local d = debug.getinfo(2)
+    tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+    --
+    tmout:start()
+    return tmout
 end
 
-
-class "exec_on_update_timer" ( ogse_qt.quick_timer )
-function exec_on_update_timer:__init( fun, ... )
-  self.fun  = fun
-  self.args = { ... }
+class "exec_on_update_timer"(ogse_qt.quick_timer)
+function exec_on_update_timer:__init(fun, ...)
+    self.fun = fun
+    self.args = {...}
 end
 function exec_on_update_timer:condition()
-  return not ogse_sleep_mgr.is_sleep_active()
+    return not ogse_sleep_mgr.is_sleep_active()
 end
 function exec_on_update_timer:action()
-  self.fun( unpack( self.args ) )
+    self.fun(unpack(self.args))
 end
 
-function exec_on_update( ... )
-  local tmout = exec_on_update_timer( ... )
-  --
-  local d = debug.getinfo(2)
-  tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
-  --
-  tmout:start()
-  return tmout
+function exec_on_update(...)
+    local tmout = exec_on_update_timer(...)
+    --
+    local d = debug.getinfo(2)
+    tmout.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
+    --
+    tmout:start()
+    return tmout
 end
 
+function exec_periodic(freq, f, ...)
+    local args = {...}
+    local t = wait_condition(function()
+        return false
+    end, function()
+    end, function(timer)
+        if freq then
+            timer:reschedule(freq)
+        end
+        f(timer, unpack(args))
+    end)
 
-function exec_periodic( freq, f, ... )
-  local args = { ... }
-  local t = wait_condition(
-    function() return false end,
-    function() end,
-    function( timer )
-      if freq then timer:reschedule( freq ) end
-      f( timer, unpack( args ) )
-    end
-  )
+    local d = debug.getinfo(2)
+    t.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
 
-  local d = debug.getinfo(2)
-  t.script_name = d.short_src:gsub('^.-([^\\]+)%.[^.]+$', '%1') .. "." .. d.linedefined
-
-  return t
+    return t
 end
 
 -- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127456
 -- http://www.amk-team.ru/forum/topic/6185-skriptovanie/?do=findComment&comment=1127526
-function is_actor_looking_to_pos( pos, radius )
---[=[
+function is_actor_looking_to_pos(pos, radius)
+    --[=[
   local k = vector():sub( pos, device().cam_pos )
   local b = k:dotproduct( device().cam_dir )
   local c = k:dotproduct( k ) - radius * radius
   local d = b * b - c
   return d >= 0
 --]=]
-  return level.is_ray_intersect_sphere(device().cam_pos, device().cam_dir, pos, radius) >= 0
+    return level.is_ray_intersect_sphere(device().cam_pos, device().cam_dir, pos, radius) >= 0
 end
 
-function remove_quotes( s ) --Вырезать все кавычки из строки
-  return string.gsub( s, "[«»\"\']", "" )
+function remove_quotes(s) --Р’С‹СЂРµР·Р°С‚СЊ РІСЃРµ РєР°РІС‹С‡РєРё РёР· СЃС‚СЂРѕРєРё
+
+    return string.gsub(s, "[«»\"\']", "")
 end
 
-function strip_quotes( s ) --Срезать кавычки с начала и с конца строки
-  --return string.gsub( s, '^[«»\"\']*(.-)[«»\"\']*$', '%1') --Срезает ВСЕ кавычки слева и справа.
-  return string.gsub( s, '^[«»\"\'](.*)[«»\"\']$', '%1') --Срезает самую первую кавычку слева и самую последнюю кавычку справа.
+function strip_quotes(s)  --РЎСЂРµР·Р°С‚СЊ РєР°РІС‹С‡РєРё СЃ РЅР°С‡Р°Р»Р° Рё СЃ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё 
+    -- return string.gsub( s, '^[«»\"\']*(.-)[«»\"\']*$', '%1') --РЎСЂРµР·Р°РµС‚ Р’РЎР• РєР°РІС‹С‡РєРё СЃР»РµРІР° Рё СЃРїСЂР°РІР°.
+    return string.gsub(s, '^[«»\"\'](.*)[«»\"\']$', '%1') --РЎСЂРµР·Р°РµС‚ СЃР°РјСѓСЋ РїРµСЂРІСѓСЋ РєР°РІС‹С‡РєСѓ СЃР»РµРІР° Рё СЃР°РјСѓСЋ РїРѕСЃР»РµРґРЅСЋСЋ РєР°РІС‹С‡РєСѓ СЃРїСЂР°РІР°.
 end
-
 
 local is_creating_free_mob = false
-function se_on_before_register( sobj )
-  if is_creating_free_mob then
-    is_creating_free_mob = false
-    set_none_smart_terrain( sobj )
-  end
+function se_on_before_register(sobj)
+    if is_creating_free_mob then
+        is_creating_free_mob = false
+        set_none_smart_terrain(sobj)
+    end
 end
 
-function set_none_smart_terrain( sobj )
-  local ini = sobj:spawn_ini()
-  if ini:section_exist( "smart_terrains" ) then return end
-  ini.readonly = false
-  ini:w_bool( "smart_terrains", "none", true )
-  sobj:save_spawn_ini()
+function set_none_smart_terrain(sobj)
+    local ini = sobj:spawn_ini()
+    if ini:section_exist("smart_terrains") then
+        return
+    end
+    ini.readonly = false
+    ini:w_bool("smart_terrains", "none", true)
+    sobj:save_spawn_ini()
 end
 
--- Создать свободного моба, которого не затянет в какой-нибудь гулаг.
-function create_free_mob( ... )
-  is_creating_free_mob = true
-  return alife():create( ... )
+-- РЎРѕР·РґР°С‚СЊ СЃРІРѕР±РѕРґРЅРѕРіРѕ РјРѕР±Р°, РєРѕС‚РѕСЂРѕРіРѕ РЅРµ Р·Р°С‚СЏРЅРµС‚ РІ РєР°РєРѕР№-РЅРёР±СѓРґСЊ РіСѓР»Р°Рі.
+function create_free_mob(...)
+    is_creating_free_mob = true
+    return alife():create(...)
 end
-
 
 local ini_file_cache = {}
-function cached_ini_file( fname )
-  if not ini_file_cache[ fname ] then
-    ini_file_cache[ fname ] = ini_file( fname )
-  end
-  return ini_file_cache[ fname ]
+function cached_ini_file(fname)
+    if not ini_file_cache[fname] then
+        ini_file_cache[fname] = ini_file(fname)
+    end
+    return ini_file_cache[fname]
 end
 
-
---Можно использовать эту функцию, если по каким-то причинам недоступен метод alife():use_ai_locations(sobj, false)
-function clear_used_ai_locations( sobj )
-  local pk = get_netpk( sobj, 1 )
-  ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
-  local data = pk:get()
-  data.object_flags = bit_and(
-    data.object_flags, bit_not( object_flags.UsedAI_Locations )
-  ) -- снять флаг flUsedAI_Locations
-  pk:set( data )
+--РњРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚Сѓ С„СѓРЅРєС†РёСЋ, РµСЃР»Рё РїРѕ РєР°РєРёРј-С‚Рѕ РїСЂРёС‡РёРЅР°Рј РЅРµРґРѕСЃС‚СѓРїРµРЅ РјРµС‚РѕРґ alife():use_ai_locations(sobj, false)
+function clear_used_ai_locations(sobj)
+    local pk = get_netpk(sobj, 1)
+    ASSERT((pk and pk:isOk()), "can't read netpacket of %s", sobj:name())
+    local data = pk:get()
+    data.object_flags = bit_and(data.object_flags, bit_not(object_flags.UsedAI_Locations)) -- снять флаг flUsedAI_Locations
+    pk:set(data)
 end
 
-
-function clear_useful_for_ai( sobj )
-  local pk = get_netpk( sobj, 1 )
-  ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
-  local data = pk:get()
-  data.object_flags = bit_and(
-    data.object_flags, bit_not( object_flags.UsefulForAI )
-  )
-  pk:set( data )
+function clear_useful_for_ai(sobj)
+    local pk = get_netpk(sobj, 1)
+    ASSERT((pk and pk:isOk()), "can't read netpacket of %s", sobj:name())
+    local data = pk:get()
+    data.object_flags = bit_and(data.object_flags, bit_not(object_flags.UsefulForAI))
+    pk:set(data)
 end
-
 
 class "cached_condlist"
-function cached_condlist:__init( parsed, ttl )
-  self.parsed = parsed
-  self.ttl    = ttl
+function cached_condlist:__init(parsed, ttl)
+    self.parsed = parsed
+    self.ttl = ttl
 end
-function cached_condlist:pick_section_from_condlist( actor, npc )
-  if ( not self.cached_time ) or self.cached_time < time_global() then
-    self.cached_res  = xr_logic.pick_section_from_condlist(
-      actor, npc, self.parsed
-    )
-    self.cached_time = time_global() + self.ttl
-  end
-  return self.cached_res
+function cached_condlist:pick_section_from_condlist(actor, npc)
+    if (not self.cached_time) or self.cached_time < time_global() then
+        self.cached_res = xr_logic.pick_section_from_condlist(actor, npc, self.parsed)
+        self.cached_time = time_global() + self.ttl
+    end
+    return self.cached_res
 end
 
+-- СЃРѕР·РґР°С‚СЊ РєРѕСЃС‚РµСЂ РґР»СЏ Р»Р°РіРµСЂСЏ СЃС‚Р°Р»РєРµСЂРѕРІ
 
--- создать костер для лагеря сталкеров
--- Пример:
+-- РџСЂРёРјРµСЂ:
 -- local p = patrol( "yan_st_stalker3_kamp_1" )
 -- dsh.create_campfire( p:point( 0 ), p:level_vertex_id( 0 ), p:game_vertex_id( 0 ), "objects\\koster_palki_nastil", 0.7 )
-function create_campfire( pos, lvid, gvid, vis, lamp_height )
-  -- кострище
-  if vis then
-    local sobj = alife():create( "physic_object", pos, lvid, gvid )
-    local pk   = get_netpk( sobj, 1 )
-    ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
+function create_campfire(pos, lvid, gvid, vis, lamp_height)
+    -- РєРѕСЃС‚СЂРёС‰Рµ 
+    if vis then
+        local sobj = alife():create("physic_object", pos, lvid, gvid)
+        local pk = get_netpk(sobj, 1)
+        ASSERT(pk and pk:isOk(), "can't read netpacket of %s", sobj:name())
+        local data = pk:get()
+        data.visual_name = vis
+        data.physic_type = 3
+        data.mass = 10
+        data.fixed_bones = "bone01"
+        pk:set(data)
+        sobj = alife():object(sobj.id)
+        sobj:used_ai_locations(false)
+        local ini = sobj:spawn_ini()
+        ini.readonly = false
+        for _, k in ipairs({"dynamic", "ragdoll", "static"}) do
+            local kk = "ignore_" .. k
+            ini:w_bool("collide", kk, true)
+        end
+        sobj:save_spawn_ini()
+    end
+
+    -- Р°РЅРѕРјР°Р»РёСЏ
+
+    local sobj = ogse_anomaly.spawn_anomaly("zone_flame_small", pos, lvid, gvid, {
+        shtype = 0,
+        radius = 1,
+        center = {0, 0, 0}
+    })
+    local sr = sobj:get_space_restrictor()
+    sr.restrictor_type = global_flags.eRestrictorTypeNone
+
+    -- Р»Р°РјРїРѕС‡РєР°
+
+    local sobj = alife():create("lights_hanging_lamp_campfire", vector():set(pos.x, pos.y + (lamp_height or 0), pos.z),
+        lvid, gvid)
+    local pk = get_netpk(sobj, 1)
+    ASSERT(pk and pk:isOk(), "can't read netpacket of %s", sobj:name())
     local data = pk:get()
-    data.visual_name = vis
-    data.physic_type = 3
-    data.mass        = 10
-    data.fixed_bones = "bone01"
-    pk:set( data )
-    sobj = alife():object( sobj.id )
-    sobj:used_ai_locations( false )
-    local ini = sobj:spawn_ini()
-    ini.readonly = false
-    for _, k in ipairs({ "dynamic", "ragdoll", "static" }) do
-      local kk = "ignore_" .. k
-      ini:w_bool( "collide", kk, true )
+    local props = {
+        ["main_color"] = tonumber("fffab807", 16),
+        ["main_brightness"] = 0.7,
+        ["main_color_animator"] = "koster",
+        ["main_range"] = 6,
+        ["light_flags"] = tonumber("2a", 16),
+        ["health"] = 100,
+        ["main_virtual_size"] = 0.1,
+        ["ambient_radius"] = 10,
+        ["ambient_power"] = 0.40000001,
+        ["main_cone_angle"] = 2.0943952,
+        ["glow_radius"] = 0.69999999
+    }
+    for k, v in pairs(props) do
+        data[k] = v
     end
-    sobj:save_spawn_ini()
-  end
-
-  -- аномалия
-  local sobj = ogse_anomaly.spawn_anomaly(
-    "zone_flame_small",
-     pos, lvid, gvid,
-     { shtype = 0, radius = 1, center = { 0, 0, 0 } }
-  )
-  local sr = sobj:get_space_restrictor()
-  sr.restrictor_type = global_flags.eRestrictorTypeNone
-
-  -- лампочка
-  local sobj = alife():create(
-    "lights_hanging_lamp_campfire",
-     vector():set( pos.x, pos.y + ( lamp_height or 0 ), pos.z ), lvid, gvid
-  )
-  local pk = get_netpk( sobj, 1 )
-  ASSERT( pk and pk:isOk(), "can't read netpacket of %s", sobj:name() )
-  local data = pk:get()
-  local props = {
-    [ "main_color"          ] = tonumber( "fffab807", 16 ),
-    [ "main_brightness"     ] = 0.7,
-    [ "main_color_animator" ] = "koster",
-    [ "main_range"          ] = 6,
-    [ "light_flags"         ] = tonumber( "2a", 16 ),
-    [ "health"              ] = 100,
-    [ "main_virtual_size"   ] = 0.1,
-    [ "ambient_radius"      ] = 10,
-    [ "ambient_power"       ] = 0.40000001,
-    [ "main_cone_angle"     ] = 2.0943952,
-    [ "glow_radius"         ] = 0.69999999,
-  }
-  for k, v in pairs( props ) do
-    data[ k ] = v
-  end
-  pk:set( data )
+    pk:set(data)
 end
 
-
-function copy_hit_data( hd, t )
-  for _, k in ipairs({
-    "power", "dir", "who_id", "weapon_id", "bone_id", "impulse", "hit_type",
-  }) do
-    t[ k ] = hd[ k ]
-  end
-  return t
-end
-
-
-function my_name_is_strelok() --Вызывается по инфопоршню esc_find_doctor_done
-  local new_name = game.translate_string("actor_name2")
-  db.actor:get_inventory_owner():SetName( new_name )
-  local sobj   = alife():object( db.actor:id() )
-  local trader = sobj:get_trader()
-  trader.character_name = new_name
-end
-
-
-function find_all_vertexes_in_radius( around_pos, radius )
-  local vertexes = {}
-  level.iterate_vertices_inside(
-    around_pos, radius, false,
-    function( lvid )
-      table.insert( vertexes, lvid )
+function copy_hit_data(hd, t)
+    for _, k in ipairs({"power", "dir", "who_id", "weapon_id", "bone_id", "impulse", "hit_type"}) do
+        t[k] = hd[k]
     end
-  )
-  return vertexes
+    return t
 end
 
+function my_name_is_strelok() --Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїРѕ РёРЅС„РѕРїРѕСЂС€РЅСЋ esc_find_doctor_done
+    local new_name = game.translate_string("actor_name2")
+    db.actor:get_inventory_owner():SetName(new_name)
+    local sobj = alife():object(db.actor:id())
+    local trader = sobj:get_trader()
+    trader.character_name = new_name
+end
+
+function find_all_vertexes_in_radius(around_pos, radius)
+    local vertexes = {}
+    level.iterate_vertices_inside(around_pos, radius, false, function(lvid)
+        table.insert(vertexes, lvid)
+    end)
+    return vertexes
+end
 
 function is_torch_enabled()
-  if db.actor:alive() then
-    local torch = db.actor:item_in_slot( 9 )
-    if torch and torch:is_torch() then
-      torch = get_torch_obj( torch )
-      return torch.on
+    if db.actor:alive() then
+        local torch = db.actor:item_in_slot(9)
+        if torch and torch:is_torch() then
+            torch = get_torch_obj(torch)
+            return torch.on
+        end
     end
-  end
 end
 
-
-function shuffle( array )
-  local n, random, j, k = table.getn( array ), math.random
-  for i = 1, n do
-    j, k = random( n ), random( n )
-    array[ j ], array[ k ] = array[ k ], array[ j ]
-  end
-  return array
+function shuffle(array)
+    local n, random, j, k = table.getn(array), math.random
+    for i = 1, n do
+        j, k = random(n), random(n)
+        array[j], array[k] = array[k], array[j]
+    end
+    return array
 end
-
 
 function cleanup_pri_waves()
-  for _, name in ipairs({
-    "pri_wave1_monolith1_rsniper1",
-    "pri_wave1_monolith2_free1",
-    "pri_wave1_monolith3_free2",
-    "pri_wave2_monolith1_rsniper1",
-    "pri_wave2_monolith2_wsniper1",
-    "pri_wave2_monolith3_rsniper2",
-    "pri_wave2_monolith4_wsniper2",
-    "pri_wave4_monolith1_rsniper1",
-    "pri_wave4_monolith2_wsniper1",
-    "pri_wave4_monolith3_rsniper2",
-    "pri_wave4_monolith4_wsniper2",
-    "pri_wave4_monolith5_free1",
-    "pri_wave4_monolith5_free2",
-    "pri_wave4_monolith5_free3",
-    "pri_wave5_monolith1_free1",
-    "pri_wave5_monolith2_free2",
-    "pri_wave5_monolith3_free3",
-    "pri_wave5_monolith4_free4",
-    "pri_wave6_monolith1_rsniper1",
-    "pri_wave6_monolith2_wsniper1",
-    "pri_wave7_monolith1",
-    "pri_wave7_monolith2",
-    "pri_wave7_monolith3",
-    "pri_wave7_monolith4",
-    "pri_wave7_monolith5",
-  }) do
-    local sobj = alife():object( name )
-    if sobj and sobj:alive() then
-      log3( "~~[%s]: release [%s] (%s)", script_name(), sobj:name(), sobj.level_name )
-      alife():release( sobj )
+    for _, name in ipairs({
+        "pri_wave1_monolith1_rsniper1",
+        "pri_wave1_monolith2_free1",
+        "pri_wave1_monolith3_free2",
+        "pri_wave2_monolith1_rsniper1",
+        "pri_wave2_monolith2_wsniper1",
+        "pri_wave2_monolith3_rsniper2",
+        "pri_wave2_monolith4_wsniper2",
+        "pri_wave4_monolith1_rsniper1",
+        "pri_wave4_monolith2_wsniper1",
+        "pri_wave4_monolith3_rsniper2",
+        "pri_wave4_monolith4_wsniper2",
+        "pri_wave4_monolith5_free1",
+        "pri_wave4_monolith5_free2",
+        "pri_wave4_monolith5_free3",
+        "pri_wave5_monolith1_free1",
+        "pri_wave5_monolith2_free2",
+        "pri_wave5_monolith3_free3",
+        "pri_wave5_monolith4_free4",
+        "pri_wave6_monolith1_rsniper1",
+        "pri_wave6_monolith2_wsniper1",
+        "pri_wave7_monolith1",
+        "pri_wave7_monolith2",
+        "pri_wave7_monolith3",
+        "pri_wave7_monolith4",
+        "pri_wave7_monolith5",
+    }) do
+        local sobj = alife():object(name)
+        if sobj and sobj:alive() then
+            log3("~~[%s]: release [%s] (%s)", script_name(), sobj:name(), sobj.level_name)
+            alife():release(sobj)
+        end
     end
-  end
 end
-
 
 -------------------------------------------------------------
-function safe_file_name( fname ) --Вырезаем неподдерживаемые FS символы и пробелы по краям.
-  fname = fname:clear():gsub( '[%(%)]*', "" ):trim()
-  if fname:len() > 60 then
-    fname = fname:sub( 1, 58 ) .. "..."
-  end
-  return fname
+function safe_file_name(fname) --Р’С‹СЂРµР·Р°РµРј РЅРµРїРѕРґРґРµСЂР¶РёРІР°РµРјС‹Рµ FS СЃРёРјРІРѕР»С‹ Рё РїСЂРѕР±РµР»С‹ РїРѕ РєСЂР°СЏРј.
+    fname = fname:clear():gsub('[%(%)]*', ""):trim()
+    if fname:len() > 60 then
+        fname = fname:sub(1, 58) .. "..."
+    end
+    return fname
 end
 
-function on_level_changer_action( obj, wnd )
-  ogse.save_var( script_name()..".last_lc_id", obj:id(), "u16" )
-  wait_condition(
-	function() return not wnd:IsShown() end,
-	function() ogse.delete_var( script_name()..".last_lc_id" ) end,
-	function() ogsr_signals.get_mgr():reschedule( 1000 ) end
-  )
+function on_level_changer_action(obj, wnd)
+    ogse.save_var(script_name() .. ".last_lc_id", obj:id(), "u16")
+    wait_condition(
+        function() return not wnd:IsShown() end, 
+        function() ogse.delete_var(script_name() .. ".last_lc_id") end, 
+        function() ogsr_signals.get_mgr():reschedule(1000) end)
 end
 
 function backup_autosave()
-  local last_save_name = alife().loaded_save_name
-  if not last_save_name:find( "_autosave.sav" ) then return end
+    local last_save_name = alife().loaded_save_name
+    if not last_save_name:find("_autosave.sav") then
+        return
+    end
 
-  local last_lc_id = ogse.load_var_safe( script_name()..".last_lc_id" )
-  if not last_lc_id then return end
+    local last_lc_id = ogse.load_var_safe(script_name() .. ".last_lc_id")
+    if not last_lc_id then
+        return
+    end
 
-  ogse.delete_var( script_name()..".last_lc_id" )
+    ogse.delete_var(script_name() .. ".last_lc_id")
 
-  local lc_sobj = alife():object(last_lc_id)
-  if not lc_sobj then return end
+    local lc_sobj = alife():object(last_lc_id)
+    if not lc_sobj then
+        return
+    end
 
-  local prev_lname = lc_sobj.level_name
-  local lc_save_name = safe_file_name( string.format( "%s %d. %s %s - %s.sav", game.translate_string( "ui_autosave_day" ), news_manager.game_days(), game.translate_string( "ui_autosave_trans" ), game.translate_string( prev_lname ), game.translate_string( level.name() ) ) )
+    local prev_lname = lc_sobj.level_name
+    local lc_save_name = safe_file_name(string.format("%s %d. %s %s - %s.sav", game.translate_string("ui_autosave_day"),
+        news_manager.game_days(), game.translate_string("ui_autosave_trans"), game.translate_string(prev_lname),
+        game.translate_string(level.name())))
 
-  local f = getFS()
-  local last_save = f:update_path( "$game_saves$", last_save_name )
-  local lc_save   = f:update_path( "$game_saves$", lc_save_name )
-  f:file_rename( last_save, lc_save, true )
+    local f = getFS()
+    local last_save = f:update_path("$game_saves$", last_save_name)
+    local lc_save = f:update_path("$game_saves$", lc_save_name)
+    f:file_rename(last_save, lc_save, true)
 end
 -------------------------------------------------------------
 
-
--- Удаление всех участников сцены на ДТ (Круглов и ко)
+-- РЈРґР°Р»РµРЅРёРµ РІСЃРµС… СѓС‡Р°СЃС‚РЅРёРєРѕРІ СЃС†РµРЅС‹ РЅР° Р”Рў (РљСЂСѓРіР»РѕРІ Рё РєРѕ)
 function clean_bar_ecolog_professor()
-  if level.name() == "l06_rostok" then return end
-  if not has_alife_info("bar_rescue_research_done") or not has_alife_info("bar_rescue_research_fail") then return end
-
-  for _, name in ipairs({
-    "bar_freedom_attacker_1",
-    "bar_freedom_attacker_4",
-    "bar_freedom_attacker_6",
-    "bar_freedom_attacker_2",
-    "bar_freedom_attacker_3",
-    "bar_freedom_attacker_5",
-    "bar_ecolog_professor",
-    --Эти четверо теперь останутся на ДТ в смарте ros_smart_stalker_bandits1
-    --"bar_ecolog_crush_1",
-    --"bar_ecolog_crush_3",
-    --"bar_ecolog_crush_2",
-    --"bar_ecolog_crush_4",
-    "bar_freedom_attacker_commander",
-    "bar_freedom_attacker_7",
-    "bar_freedom_attacker_8",
-    "bar_ambush_killer_01",
-    "bar_ambush_killer_05",
-    "bar_ambush_killer_07",
-    "rostok_stalker_0001",
-    "rostok_stalker_0002",
-    "rostok_stalker_0003",
-    "rostok_stalker_0004",
-    "bar_ecolog_crush_dead_0002",
-    "bar_ecolog_crush_dead_0003",
-    "bar_ambush_killer_09",
-    "bar_freedom_attacker_10",
-    "bar_freedom_attacker_11",
-    "bar_freedom_attacker_12",
-    "bar_freedom_attacker_9",
-    "bar_freedom_attacker_0000",
-    "bar_freedom_attacker_0001",
-    "bar_freedom_attacker_0002",
-    "bar_freedom_attacker_0003",
-    "bar_ambush_killer_02",
-    "bar_ambush_killer_04",
-  }) do
-    local sobj = alife():object( name )
-    if sobj and sobj.level_name == "l06_rostok" then
-      log3( "~~[%s.clean_bar_ecolog_professor]: release [%s]", script_name(), sobj:name() )
-      alife():release( sobj )
+    if level.name() == "l06_rostok" then
+        return
     end
-  end
+    if not has_alife_info("bar_rescue_research_done") or not has_alife_info("bar_rescue_research_fail") then
+        return
+    end
+
+    for _, name in ipairs({
+        "bar_freedom_attacker_1",
+        "bar_freedom_attacker_4",
+        "bar_freedom_attacker_6",
+        "bar_freedom_attacker_2",
+        "bar_freedom_attacker_3",
+        "bar_freedom_attacker_5",
+        "bar_ecolog_professor",
+        --Р­С‚Рё С‡РµС‚РІРµСЂРѕ С‚РµРїРµСЂСЊ РѕСЃС‚Р°РЅСѓС‚СЃСЏ РЅР° Р”Рў РІ СЃРјР°СЂС‚Рµ ros_smart_stalker_bandits1
+        --"bar_ecolog_crush_1",
+        --"bar_ecolog_crush_3",
+        --"bar_ecolog_crush_2",
+        --"bar_ecolog_crush_4",
+        "bar_freedom_attacker_commander",
+        "bar_freedom_attacker_7",
+        "bar_freedom_attacker_8",
+        "bar_ambush_killer_01",
+        "bar_ambush_killer_05",
+        "bar_ambush_killer_07",
+        "rostok_stalker_0001",
+        "rostok_stalker_0002",
+        "rostok_stalker_0003",
+        "rostok_stalker_0004",
+        "bar_ecolog_crush_dead_0002",
+        "bar_ecolog_crush_dead_0003",
+        "bar_ambush_killer_09",
+        "bar_freedom_attacker_10",
+        "bar_freedom_attacker_11",
+        "bar_freedom_attacker_12",
+        "bar_freedom_attacker_9",
+        "bar_freedom_attacker_0000",
+        "bar_freedom_attacker_0001",
+        "bar_freedom_attacker_0002",
+        "bar_freedom_attacker_0003",
+        "bar_ambush_killer_02",
+        "bar_ambush_killer_04",
+    }) do
+        local sobj = alife():object( name )
+        if sobj and sobj.level_name == "l06_rostok" then
+            log3("~~[%s.clean_bar_ecolog_professor]: release [%s]", script_name(), sobj:name())
+            alife():release(sobj)
+        end
+    end
 end
 
 function cleanup_bar_ecologs()
-  for _, name in ipairs({
-    "bar_ecolog_crush_1",
-    "bar_ecolog_crush_3",
-    "bar_ecolog_crush_2",
-    "bar_ecolog_crush_4",
-  }) do
-    local sobj = alife():object( name )
-    if sobj then
-      local pk = get_netpk( sobj )
-      ASSERT( ( pk and pk:isOk() ), "can't read netpacket of %s", sobj:name() )
-      local data = pk:get()
-      data.base_in_restrictors  = ""
-      data.base_out_restrictors = ""
-      pk:set( data )
-      log3( "~~[%s.cleanup_bar_ecologs]: cleanup [%s]", script_name(), sobj:name() )
+    for _, name in ipairs({
+        "bar_ecolog_crush_1",
+        "bar_ecolog_crush_3",
+        "bar_ecolog_crush_2",
+        "bar_ecolog_crush_4",
+    }) do
+        local sobj = alife():object(name)
+        if sobj then
+            local pk = get_netpk(sobj)
+            ASSERT((pk and pk:isOk()), "can't read netpacket of %s", sobj:name())
+            local data = pk:get()
+            data.base_in_restrictors = ""
+            data.base_out_restrictors = ""
+            pk:set(data)
+            log3("~~[%s.cleanup_bar_ecologs]: cleanup [%s]", script_name(), sobj:name())
+        end
     end
-  end
 end
-
 
 local free_logic_gulag = {}
-function is_free_logic_gulag( name )
-  if free_logic_gulag[ name ] == nil then
-    local cond = get_string( "dsh.gulag.free_logic", name, false )
-    if cond then
-      local pc = xr_logic.parse_condlist(
-        nil, "dsh.gulag.free_logic", name, cond
-      )
-      cond = xr_logic.pick_section_from_condlist(
-        db.actor_proxy, db.actor_proxy, pc
-      ) ~= nil
+function is_free_logic_gulag(name)
+    if free_logic_gulag[name] == nil then
+        local cond = get_string("dsh.gulag.free_logic", name, false)
+        if cond then
+            local pc = xr_logic.parse_condlist(nil, "dsh.gulag.free_logic", name, cond)
+            cond = xr_logic.pick_section_from_condlist(db.actor_proxy, db.actor_proxy, pc) ~= nil
+        end
+        free_logic_gulag[name] = cond
     end
-    free_logic_gulag[ name ] = cond
-  end
-  return free_logic_gulag[ name ]
+    return free_logic_gulag[name]
 end
 
-
-function clear_smart_terrain_conditions( sobj )
-  sobj.smart_terrain_conditions = nil
+function clear_smart_terrain_conditions(sobj)
+    sobj.smart_terrain_conditions = nil
 end
 
-
-function start_gtimerDHMS( name, d, h, m, s, fname, ... )
-  if ogse_st_mgr.timer_exists(name) then
-    local found = false
-    for i = 0, 65535 do
-      local id = name .. "." .. tostring( i )
-      if not ogse_st_mgr.timer_exists( id ) then
-        log2(
-          "[%s.g_start_timer]: found free id %s for %s",
-          script_name(), id, tn
-        )
-        found = true
-        name = id
-        break
-      end
+function start_gtimerDHMS(name, d, h, m, s, fname, ...)
+    if ogse_st_mgr.timer_exists(name) then
+        local found = false
+        for i = 0, 65535 do
+            local id = name .. "." .. tostring(i)
+            if not ogse_st_mgr.timer_exists(id) then
+                log2("[%s.g_start_timer]: found free id %s for %s", script_name(), id, tn)
+                found = true
+                name = id
+                break
+            end
+        end
+        ASSERT(found, "can't find free id for timer %s", tn)
     end
-    ASSERT( found, "can't find free id for timer %s", tn )
-  end
-  return ogse_st_mgr.delayed_fun_start( name )
-    :set_gdelayDHMS( d, h, m, s )
-    :init( fname, ... )
-    :start()
+    return ogse_st_mgr.delayed_fun_start(name):set_gdelayDHMS(d, h, m, s):init(fname, ...):start()
 end
 
-function start_timer( name, delay, fname, ... )
-  if ogse_st_mgr.timer_exists(name) then
-    local found = false
-    for i = 0, 65535 do
-      local id = name .. "." .. tostring( i )
-      if not ogse_st_mgr.timer_exists( id ) then
-        log2(
-          "[%s.start_timer]: found free id %s for %s",
-          script_name(), id, name
-        )
-        found = true
-        name = id
-        break
-      end
+function start_timer(name, delay, fname, ...)
+    if ogse_st_mgr.timer_exists(name) then
+        local found = false
+        for i = 0, 65535 do
+            local id = name .. "." .. tostring(i)
+            if not ogse_st_mgr.timer_exists(id) then
+                log2("[%s.start_timer]: found free id %s for %s", script_name(), id, name)
+                found = true
+                name = id
+                break
+            end
+        end
+        ASSERT(found, "can't find free id for timer %s", name)
     end
-    ASSERT( found, "can't find free id for timer %s", name )
-  end
-  return ogse_st_mgr.start_timer(name, delay, fname, ...)
+    return ogse_st_mgr.start_timer(name, delay, fname, ...)
 end
 
-function level_timeout( ms, func )
-  local t = level.add_call(
-    function() return true end,
-    function() func() end
-  )
-  t:set_pause( ms )
-  return t
+function level_timeout(ms, func)
+    local t = level.add_call(function()
+        return true
+    end, function()
+        func()
+    end)
+    t:set_pause(ms)
+    return t
 end
 
 function unpack_time(v)
-    if not v then return end
+    if not v then
+        return
+    end
     local t = game.CTime()
     t:set(unpack(v))
     return t
@@ -539,7 +516,7 @@ function get_ammo_sections(wpn)
     if not ammo_sections_cache[sect] then
         local t = {}
         ammo_sections_cache[sect] = t
-        for _, k in ipairs({ "ammo_class", "grenade_class" }) do
+        for _, k in ipairs({"ammo_class", "grenade_class"}) do
             local s = get_string(sect, k)
             if s then
                 t[k] = string.explode(",", s, true)

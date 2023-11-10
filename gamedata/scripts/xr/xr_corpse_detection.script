@@ -1,166 +1,168 @@
 ----------------------------------------------------------------------------------------------------------------------
---'	Схема обыска трупов и собирания предметов, версия 3.06
---' AI Additions
---'	Rulix aka Bak
---'	26.05.2016
+-- '	Схема обыска трупов и собирания предметов, версия 3.06
+-- ' AI Additions
+-- '	Rulix aka Bak
+-- '	26.05.2016
 ----------------------------------------------------------------------------------------------------------------------
-
 local cd_ini = ini_file([[misc\ai_additions\corpse_detection.ltx]])
-ASSERT(cd_ini:section_exist("default"),"no cd_ini")
-local excluded_npcs = rx_utils.collect_sections(cd_ini,{"excluded_npcs"},nil,true)
-local excluded_communities = rx_utils.parse_list(cd_ini,"main","excluded_communities",true)
-local forbidden_items = rx_utils.collect_sections(cd_ini,{"forbidden_items"},nil,true)
-local forbidden_corpses = rx_utils.collect_sections(cd_ini,{"forbidden_corpses"},nil,true)
-local knife_req = rx_utils.read_from_ini(cd_ini,'main',"knife_req_to_loot_monster",false,0)
-local take_quest_items = rx_utils.read_from_ini(cd_ini,'main',"take_quest_items",false,0)
-local min_weapon_condition = rx_utils.read_from_ini(cd_ini,'main',"min_weapon_condition",0.2)
-local check_prd = rx_utils.read_from_ini(cd_ini,'main',"check_period",5000,3)
+ASSERT(cd_ini:section_exist("default"), "no cd_ini")
+local excluded_npcs = rx_utils.collect_sections(cd_ini, {"excluded_npcs"}, nil, true)
+local excluded_communities = rx_utils.parse_list(cd_ini, "main", "excluded_communities", true)
+local forbidden_items = rx_utils.collect_sections(cd_ini, {"forbidden_items"}, nil, true)
+local forbidden_corpses = rx_utils.collect_sections(cd_ini, {"forbidden_corpses"}, nil, true)
+local knife_req = rx_utils.read_from_ini(cd_ini, 'main', "knife_req_to_loot_monster", false, 0)
+local take_quest_items = rx_utils.read_from_ini(cd_ini, 'main', "take_quest_items", false, 0)
+local min_weapon_condition = rx_utils.read_from_ini(cd_ini, 'main', "min_weapon_condition", 0.2)
+local check_prd = rx_utils.read_from_ini(cd_ini, 'main', "check_period", 5000, 3)
 local check_prd_active = 2700
 
-local visible_mod	= 1.2
-local cost_factor = 1				-- Множитель цены предмета при расчете приоритета
-local distance_factor = 1.8			-- Влияние расстояния на приоритет собирания
-local memory_factor = 0.1			-- Влияние memory_time на приоритет собирания
-local max_dist_from_node = 11		-- Максимальное расстояние лута до аи сетки (квадрат)
+local visible_mod = 1.2
+local cost_factor = 1 -- Множитель цены предмета при расчете приоритета
+local distance_factor = 1.8 -- Влияние расстояния на приоритет собирания
+local memory_factor = 0.1 -- Влияние memory_time на приоритет собирания
+local max_dist_from_node = 11 -- Максимальное расстояние лута до аи сетки (квадрат)
 local knife_slot = 0
 
-local item_clsids = {	-- список clsid собираемых предметов
+local item_clsids = { -- список clsid собираемых предметов
 
---	[clsid.equ_exo] = true,
---	[clsid.equ_military] = true,
---	[clsid.equ_scientific] = true,
-	[clsid.equ_stalker_s] = true,
+    --	[clsid.equ_exo] = true,
+    --	[clsid.equ_military] = true,
+    --	[clsid.equ_scientific] = true,
+    [clsid.equ_stalker_s] = true,
 
-	[clsid.device_detector_simple] = true,
-	[clsid.device_pda] = true,
---	[clsid.device_torch] = true,
---	[clsid.device_torch_s] = true,
+    [clsid.device_detector_simple] = true,
+    [clsid.device_pda] = true,
+    --	[clsid.device_torch] = true,
+    --	[clsid.device_torch_s] = true,
 
-	[clsid.obj_antirad] = true,
-	[clsid.obj_attachable] = true,
-	[clsid.obj_bandage] = true,
-	[clsid.obj_food] = true,
-	[clsid.obj_medkit] = true,
+    [clsid.obj_antirad] = true,
+    [clsid.obj_attachable] = true,
+    [clsid.obj_bandage] = true,
+    [clsid.obj_food] = true,
+    [clsid.obj_medkit] = true,
 
-	[clsid.obj_bottle] = true,
-	[clsid.obj_document] = true,
+    [clsid.obj_bottle] = true,
+    [clsid.obj_document] = true,
 
-	[clsid.wpn_ammo] = true,
-	[clsid.wpn_ammo_m209] = true,
-	[clsid.wpn_ammo_og7b] = true,
-	[clsid.wpn_ammo_vog25] = true,
+    [clsid.wpn_ammo] = true,
+    [clsid.wpn_ammo_m209] = true,
+    [clsid.wpn_ammo_og7b] = true,
+    [clsid.wpn_ammo_vog25] = true,
 
-	[clsid.wpn_ak74_s] = true,
-	[clsid.wpn_vintorez_s] = true,
-	[clsid.wpn_lr300_s] = true,
-	[clsid.wpn_hpsa_s] = true,
-	[clsid.wpn_pm_s] = true,
-	[clsid.wpn_shotgun_s] = true,
-	[clsid.wpn_bm16_s] = true,
-	[clsid.wpn_svd_s] = true,
-	[clsid.wpn_svu_s] = true,
-	[clsid.wpn_rpg7_s] = true,
-	[clsid.wpn_val_s] = true,
-	[clsid.wpn_walther_s] = true,
-	[clsid.wpn_usp45_s] = true,
-	[clsid.wpn_groza_s] = true,
-	[clsid.wpn_knife_s] = true,
---	[clsid.wpn_rg6_s] = true,
+    [clsid.wpn_ak74_s] = true,
+    [clsid.wpn_vintorez_s] = true,
+    [clsid.wpn_lr300_s] = true,
+    [clsid.wpn_hpsa_s] = true,
+    [clsid.wpn_pm_s] = true,
+    [clsid.wpn_shotgun_s] = true,
+    [clsid.wpn_bm16_s] = true,
+    [clsid.wpn_svd_s] = true,
+    [clsid.wpn_svu_s] = true,
+    [clsid.wpn_rpg7_s] = true,
+    [clsid.wpn_val_s] = true,
+    [clsid.wpn_walther_s] = true,
+    [clsid.wpn_usp45_s] = true,
+    [clsid.wpn_groza_s] = true,
+    [clsid.wpn_knife_s] = true,
+    --	[clsid.wpn_rg6_s] = true,
 
-	[clsid.wpn_binocular_s] = true,
-	[clsid.wpn_grenade_f1] = true,
-	[clsid.wpn_grenade_rgd5] = true,
-	[clsid.wpn_grenade_rpg7] = true,
-	[clsid.wpn_grenade_launcher] = true,
-	[clsid.wpn_scope_s] = true,
-	[clsid.wpn_silencer] = true,
+    [clsid.wpn_binocular_s] = true,
+    [clsid.wpn_grenade_f1] = true,
+    [clsid.wpn_grenade_rgd5] = true,
+    [clsid.wpn_grenade_rpg7] = true,
+    [clsid.wpn_grenade_launcher] = true,
+    [clsid.wpn_scope_s] = true,
+    [clsid.wpn_silencer] = true,
 
-	[clsid.artefact] = true,
-	[clsid.artefact_s] = true,
+    [clsid.artefact] = true,
+    [clsid.artefact_s] = true
 }
 local artefact_clsids = {
-	[clsid.artefact] = true,
-	[clsid.artefact_s] = true,
+    [clsid.artefact] = true,
+    [clsid.artefact_s] = true
 }
 local monster_parts_cut_bones = {
-		[clsid.dog_s] = "bip01_tail1",
-		[clsid.boar_s] = "bip01_l_foot",
-		[clsid.flesh_s] = "bip01_head",
-		[clsid.pseudodog_s] = "bip01_tail1",
-		[clsid.bloodsucker_s] = "bip01_head",
-		[clsid.snork_s] = "bip01_r_foot",
-		[clsid.tushkano_s] = "bip01_neck1",
-		[clsid.zombie_s] = "bip01_l_hand",
-		[clsid.gigant_s] = "bip01_r_forearm",
-		[clsid.chimera_s] = "bip01_l_finger0",
-		[clsid.burer_s] = "bip01_r_hand",
-		[clsid.controller_s] = "bip01_r_hand",
-		[clsid.poltergeist_s] = "bip01_head",
-		[clsid.fracture_s] = "bip01_l_hand",
-		[clsid.cat_s] = "bip01_tail1",
-		[clsid.psy_dog_s] = "bip01_tail1",
+    [clsid.dog_s] = "bip01_tail1",
+    [clsid.boar_s] = "bip01_l_foot",
+    [clsid.flesh_s] = "bip01_head",
+    [clsid.pseudodog_s] = "bip01_tail1",
+    [clsid.bloodsucker_s] = "bip01_head",
+    [clsid.snork_s] = "bip01_r_foot",
+    [clsid.tushkano_s] = "bip01_neck1",
+    [clsid.zombie_s] = "bip01_l_hand",
+    [clsid.gigant_s] = "bip01_r_forearm",
+    [clsid.chimera_s] = "bip01_l_finger0",
+    [clsid.burer_s] = "bip01_r_hand",
+    [clsid.controller_s] = "bip01_r_hand",
+    [clsid.poltergeist_s] = "bip01_head",
+    [clsid.fracture_s] = "bip01_l_hand",
+    [clsid.cat_s] = "bip01_tail1",
+    [clsid.psy_dog_s] = "bip01_tail1"
 }
 local useful_items = {}
-for c,_ in pairs(rx_utils.collect_sections(cd_ini,{"useful_items"})) do
-	useful_items[clsid[c]] = true
+for c, _ in pairs(rx_utils.collect_sections(cd_ini, {"useful_items"})) do
+    useful_items[clsid[c]] = true
 end
 
 local function sq(n)
-	return n and n*n
+    return n and n * n
 end
 
 local profile_default = {
-meet = cd_ini:r_bool("default","meet") or nil,
-keep_actor_haul = cd_ini:r_bool("default","keep_actor_haul") or nil,
-loot_items = cd_ini:r_bool("default","loot_items") or nil,
-loot_stalker = cd_ini:r_bool("default","loot_stalker") or nil,
-loot_mutant = cd_ini:r_bool("default","loot_mutant") or nil,
+    meet = cd_ini:r_bool("default", "meet") or nil,
+    keep_actor_haul = cd_ini:r_bool("default", "keep_actor_haul") or nil,
+    loot_items = cd_ini:r_bool("default", "loot_items") or nil,
+    loot_stalker = cd_ini:r_bool("default", "loot_stalker") or nil,
+    loot_mutant = cd_ini:r_bool("default", "loot_mutant") or nil,
 
-leisurely = cd_ini:r_bool("default","leisurely") or nil,
-gather_items_enabled = cd_ini:r_bool("default","gather_items_enabled") or nil,
-take_artefacts = cd_ini:r_bool("default","take_artefacts") or nil,
-take_best_weapons_only = cd_ini:r_bool("default","take_best_weapons_only") or nil,
-take_useful_items_only = cd_ini:r_bool("default","take_useful_items_only") or nil,
+    leisurely = cd_ini:r_bool("default", "leisurely") or nil,
+    gather_items_enabled = cd_ini:r_bool("default", "gather_items_enabled") or nil,
+    take_artefacts = cd_ini:r_bool("default", "take_artefacts") or nil,
+    take_best_weapons_only = cd_ini:r_bool("default", "take_best_weapons_only") or nil,
+    take_useful_items_only = cd_ini:r_bool("default", "take_useful_items_only") or nil,
 
-walk_dist = cd_ini:r_float("default","walk_dist"),
-min_loot_distance = sq(cd_ini:r_float("default","min_loot_distance")),
-max_loot_distance = sq(cd_ini:r_float("default","max_loot_distance")),
-min_loot_value = cd_ini:r_s32("default","min_loot_value"),
-max_loot_value = cd_ini:r_s32("default","max_loot_value"),
+    walk_dist = cd_ini:r_float("default", "walk_dist"),
+    min_loot_distance = sq(cd_ini:r_float("default", "min_loot_distance")),
+    max_loot_distance = sq(cd_ini:r_float("default", "max_loot_distance")),
+    min_loot_value = cd_ini:r_s32("default", "min_loot_value"),
+    max_loot_value = cd_ini:r_s32("default", "max_loot_value")
 }
 local profile_story = {
-meet = rx_utils.read_from_ini(cd_ini,"story","meet",nil,0),
-keep_actor_haul = rx_utils.read_from_ini(cd_ini,"story","keep_actor_haul",nil,0),
-loot_items = rx_utils.read_from_ini(cd_ini,"story","loot_items",nil,0),
-loot_stalker = rx_utils.read_from_ini(cd_ini,"story","loot_stalker",nil,0),
-loot_mutant = rx_utils.read_from_ini(cd_ini,"story","loot_mutant",nil,0),
+    meet = rx_utils.read_from_ini(cd_ini, "story", "meet", nil, 0),
+    keep_actor_haul = rx_utils.read_from_ini(cd_ini, "story", "keep_actor_haul", nil, 0),
+    loot_items = rx_utils.read_from_ini(cd_ini, "story", "loot_items", nil, 0),
+    loot_stalker = rx_utils.read_from_ini(cd_ini, "story", "loot_stalker", nil, 0),
+    loot_mutant = rx_utils.read_from_ini(cd_ini, "story", "loot_mutant", nil, 0),
 
-leisurely = rx_utils.read_from_ini(cd_ini,"story","leisurely",nil,0),
-gather_items_enabled = rx_utils.read_from_ini(cd_ini,"story","gather_items_enabled",nil,0),
-take_artefacts = rx_utils.read_from_ini(cd_ini,"story","take_artefacts",nil,0),
-take_best_weapons_only = rx_utils.read_from_ini(cd_ini,"story","take_best_weapons_only",nil,0),
-take_useful_items_only = rx_utils.read_from_ini(cd_ini,"story","take_useful_items_only",nil,0),
+    leisurely = rx_utils.read_from_ini(cd_ini, "story", "leisurely", nil, 0),
+    gather_items_enabled = rx_utils.read_from_ini(cd_ini, "story", "gather_items_enabled", nil, 0),
+    take_artefacts = rx_utils.read_from_ini(cd_ini, "story", "take_artefacts", nil, 0),
+    take_best_weapons_only = rx_utils.read_from_ini(cd_ini, "story", "take_best_weapons_only", nil, 0),
+    take_useful_items_only = rx_utils.read_from_ini(cd_ini, "story", "take_useful_items_only", nil, 0),
 
-walk_dist = rx_utils.read_from_ini(cd_ini,"story","walk_dist"),
-min_loot_distance = sq(rx_utils.read_from_ini(cd_ini,"story","min_loot_distance")),
-max_loot_distance = sq(rx_utils.read_from_ini(cd_ini,"story","max_loot_distance")),
-min_loot_value = rx_utils.read_from_ini(cd_ini,"story","min_loot_value"),
-max_loot_value = rx_utils.read_from_ini(cd_ini,"story","max_loot_value"),
-}setmetatable(profile_story,{__index = profile_default})
+    walk_dist = rx_utils.read_from_ini(cd_ini, "story", "walk_dist"),
+    min_loot_distance = sq(rx_utils.read_from_ini(cd_ini, "story", "min_loot_distance")),
+    max_loot_distance = sq(rx_utils.read_from_ini(cd_ini, "story", "max_loot_distance")),
+    min_loot_value = rx_utils.read_from_ini(cd_ini, "story", "min_loot_value"),
+    max_loot_value = rx_utils.read_from_ini(cd_ini, "story", "max_loot_value")
+}
+setmetatable(profile_story, {
+    __index = profile_default
+})
 
 local selected = {}
 local restricted = {}
 local r_anomaly = -1
 local r_actor = 0
 
-local PR,min_loot_distance
-local weapon_manager,best_weapon_prm,best_knife_prm
+local PR, min_loot_distance
+local weapon_manager, best_weapon_prm, best_knife_prm
 
-local function sort_loot(l1,l2)
-	if l1.dist < min_loot_distance or l2.dist < min_loot_distance then
-		return l1.dist < l2.dist
-	end
-	return l1.rating > l2.rating
+local function sort_loot(l1, l2)
+    if l1.dist < min_loot_distance or l2.dist < min_loot_distance then
+        return l1.dist < l2.dist
+    end
+    return l1.rating > l2.rating
 end
 
 --[[	-- ARTEFACT ACTIVATION FIX
@@ -177,695 +179,737 @@ end]]
 ----------------------------------------------------------------------------------------------------------------------
 -- EVALUATORS
 ----------------------------------------------------------------------------------------------------------------------
-class "evaluator_corpse" (property_evaluator)
-function evaluator_corpse:__init(name, storage, npc) super (nil, name)
-	storage.dtimer = 0
-	storage.obj_stor = {}
-	self.rtimer = time_global()+math.random(4000,6000)
-	self.corpse_rating_memory = {}
-	self.a = storage
+class "evaluator_corpse"(property_evaluator)
+function evaluator_corpse:__init(name, storage, npc)
+    super(nil, name)
+    storage.dtimer = 0
+    storage.obj_stor = {}
+    self.rtimer = time_global() + math.random(4000, 6000)
+    self.corpse_rating_memory = {}
+    self.a = storage
 end
 function evaluator_corpse:evaluate()
-	local npc,tg = self.object,time_global()
-	if self.rtimer > tg then
-		return false
-	end
+    local npc, tg = self.object, time_global()
+    if self.rtimer > tg then
+        return false
+    end
 
-	if npc:best_enemy() or self.a.corpse_detection_enabled == false or xr_wounded.is_wounded(npc) or db.storage[npc:id()].danger_flag then
-		self.a.active = nil
-		self.rtimer = tg+6000
-		return false
-	end
+    if npc:best_enemy() or self.a.corpse_detection_enabled == false or xr_wounded.is_wounded(npc) or
+        db.storage[npc:id()].danger_flag then
+        self.a.active = nil
+        self.rtimer = tg + 6000
+        return false
+    end
 
-	local npc_id = npc:id()
-	if self.a.dtimer > tg or self.a.anim_started then
-		if self.a.active then
-			local chur = selected[self.a.target_id]
-			if (chur == nil or chur == npc_id) and not (npc:is_talking() and self.a.pr.meet and not self.a.anim_started) then
-				return true
-			end
-			self.a.active = nil
-		end
-		return false
-	end
-	self.a.dtimer = tg+(self.a.active and check_prd_active or math.random(check_prd,check_prd+1500))
+    local npc_id = npc:id()
+    if self.a.dtimer > tg or self.a.anim_started then
+        if self.a.active then
+            local chur = selected[self.a.target_id]
+            if (chur == nil or chur == npc_id) and not (npc:is_talking() and self.a.pr.meet and not self.a.anim_started) then
+                return true
+            end
+            self.a.active = nil
+        end
+        return false
+    end
+    self.a.dtimer = tg + (self.a.active and check_prd_active or math.random(check_prd, check_prd + 1500))
 
-	if not npc:alive() then
-		self.rtimer = math.huge
-		return false
-	end
+    if not npc:alive() then
+        self.rtimer = math.huge
+        return false
+    end
 
-	if device().precache_frame > 0 then
-		self.rtimer = self.a.dtimer
-		return false
-	end
+    if device().precache_frame > 0 then
+        self.rtimer = self.a.dtimer
+        return false
+    end
 
-	PR = self.a.pr
-	if PR.meet and (npc:is_talking() or xr_meet.is_meet(npc)) then
-		self.rtimer = self.a.dtimer
-		return false
-	end
+    PR = self.a.pr
+    if PR.meet and (npc:is_talking() or xr_meet.is_meet(npc)) then
+        self.rtimer = self.a.dtimer
+        return false
+    end
 
-	local keep_actor_haul = PR.keep_actor_haul or npc:relation(db.actor) == game_object.enemy
-	local function check_owner(loot,id)
-		local owner = restricted[id]
-		if owner == r_anomaly then
-			return true
-		elseif owner == r_actor then
-			return keep_actor_haul and (loot:death_time() == 0 or tg-loot:death_time() < 300000 or restricted_delete(loot))
-		elseif owner == npc_id then
-			return false
-		end
-		local obj = owner and level.object_by_id(owner)
-		if obj and obj:alive() then
-			return true
-		end
-		restricted[id] = nil
-		return false
-	end
+    local keep_actor_haul = PR.keep_actor_haul or npc:relation(db.actor) == game_object.enemy
+    local function check_owner(loot, id)
+        local owner = restricted[id]
+        if owner == r_anomaly then
+            return true
+        elseif owner == r_actor then
+            return keep_actor_haul and
+                       (loot:death_time() == 0 or tg - loot:death_time() < 300000 or restricted_delete(loot))
+        elseif owner == npc_id then
+            return false
+        end
+        local obj = owner and level.object_by_id(owner)
+        if obj and obj:alive() then
+            return true
+        end
+        restricted[id] = nil
+        return false
+    end
 
-	if PR.max_loot_distance > 0 then	-- начало поиска
+    if PR.max_loot_distance > 0 then -- начало поиска
 
-	local loot,rating,id,cls_id,item,wanted_ammo
-	-- Будем искать оружие лучше имеющегося
-	-- Если нет оружия - искать любое
-	-- Если нет патронов - искать патроны к имеющемуся оружию
-	-- Если нужен нож - найдём и его
-	weapon_manager = npc:get_wm(true)
-	best_weapon_prm,best_knife_prm = get_best_weapon_prm(npc)
-	if best_weapon_prm == -1 and not rx_utils.IsTrader(npc) then
-		wanted_ammo = {}
-		for i=0,npc:object_count()-1 do
-			item = npc:object(i)
-			if rx_utils.item_is_fa(item) then
-				local amt = rx_wmgr and rx_wmgr.read_wpn_params(item:section()).amt or rx_utils.parse_list(nil,item:section(),"ammo_class")
-				for _,as in ipairs(amt) do
-					wanted_ammo[as] = true
-				end
-			end
-		end
-	end
+        local loot, rating, id, cls_id, item, wanted_ammo
+        -- Будем искать оружие лучше имеющегося
+        -- Если нет оружия - искать любое
+        -- Если нет патронов - искать патроны к имеющемуся оружию
+        -- Если нужен нож - найдём и его
+        weapon_manager = npc:get_wm(true)
+        best_weapon_prm, best_knife_prm = get_best_weapon_prm(npc)
+        if best_weapon_prm == -1 and not rx_utils.IsTrader(npc) then
+            wanted_ammo = {}
+            for i = 0, npc:object_count() - 1 do
+                item = npc:object(i)
+                if rx_utils.item_is_fa(item) then
+                    local amt = rx_wmgr and rx_wmgr.read_wpn_params(item:section()).amt or
+                                    rx_utils.parse_list(nil, item:section(), "ammo_class")
+                    for _, as in ipairs(amt) do
+                        wanted_ammo[as] = true
+                    end
+                end
+            end
+        end
 
-	local npc_pos = npc:position()
-	local loot_table,obj_stor = {},self.a.obj_stor
-	min_loot_distance = PR.min_loot_distance
-	local dist_length,rating_length = PR.max_loot_distance-min_loot_distance,PR.max_loot_value-PR.min_loot_value
-	if dist_length == 0 then
-		dist_length = 1
-	end
-	local dist_ratio = min_loot_distance/dist_length
-	local can_loot_mutant = PR.loot_mutant and (not knife_req or npc:item_in_slot(knife_slot))
-	for v in npc:memory_visible_objects() do
-		loot = v:object()
-		if loot and not loot:alive() then
-			id = loot:id()
-			if (selected[id] == nil or selected[id] == npc_id) and obj_stor[id] ~= false
-			and not (restricted[id] and check_owner(loot,id)) then
-				cls_id = loot:clsid()
-				if (PR.loot_stalker and IsStalker(nil,cls_id) or can_loot_mutant and IsMonster(nil,cls_id)) and not (forbidden_corpses[loot:name()] or forbidden_corpses[loot:profile_name()]) then
-					local pos = loot:center()
-					local dist = npc_pos:distance_to_sqr(pos)
-					if dist < PR.max_loot_distance or (v.level_time == tg and dist < PR.max_loot_distance*visible_mod) or self.a.target_id == id then
-						rating = 0
-						if obj_stor[id] ~= loot:object_count() then
-							for i=0,loot:object_count()-1 do
-								item = loot:object(i)
-								if lootable(item) then
-									rating = rating+item:cost()*cost_factor
-									if wanted_ammo and wanted_ammo[item:section()] then
-										rating = rating+20000*cost_factor
-									end
-									if rating > 6000 and rating > PR.min_loot_value then
-										rating = rating+loot:character_rank()*rx_utils.rank_unit*1500
-										break
-									end
-								end
-							end
-							if rating > 0 then
-								self.corpse_rating_memory[id] = rating
-								obj_stor[id] = loot:object_count()
-							else
-								self.corpse_rating_memory[id] = nil
-								obj_stor[id] = false
-								npc:enable_memory_object(loot,false)
-							end
-						else
-							rating = self.corpse_rating_memory[id]
-						end
-						if rating > 0 and (dist < min_loot_distance or rating >= PR.min_loot_value and (rating > (dist/dist_length-dist_ratio)*rating_length+PR.min_loot_value or self.a.target_id == id)) then
-							local vertex = loot:level_vertex_id()
-							if npc:accessible(vertex) and level.vertex_position(vertex):distance_to_sqr(pos) <= max_dist_from_node then
-								rating = self.a.target_id == id and rating or rating-dist*distance_factor+(v.level_time-tg)*memory_factor
-								loot_table[#loot_table+1] = {dist = dist,rating = rating,id = id,vertex = vertex,pos = pos,corpse = true}
-							end
-						end
-					end
---				elseif item_clsids[cls_id] and PR.loot_items and lootable(loot,cls_id) and (not artefact_clsids[cls_id] or can_take_art(id,tg)) then	-- ARTEFACT ACTIVATION FIX
-				elseif item_clsids[cls_id] and PR.loot_items and lootable(loot,cls_id) then
-					local pos = loot:position()
-					local dist = npc_pos:distance_to_sqr(pos)
-					if dist < PR.max_loot_distance or (v.level_time == tg and dist < PR.max_loot_distance*visible_mod) or self.a.target_id == id then
-						rating = loot:cost()*loot:condition()*cost_factor
-						if wanted_ammo and wanted_ammo[loot:section()] then
-							rating = rating+20000*cost_factor
-						end
-						if isWeapon(loot,cls_id) and not rx_utils.item_is_grenade(nil,cls_id) then
-							if best_weapon_prm == -1 then
-								rating = rating+15000*cost_factor
-							elseif PR.take_best_weapons_only then
-								rating = rating*3
-							elseif cls_id == clsid.wpn_knife_s and best_knife_prm and (best_knife_prm == -1 or best_knife_prm < rx_utils.read_from_ini(nil,loot:section(),"hit_power",1)*(loot:condition()+0.6)) then
-								rating = rating+1000
-							elseif rx_utils.item_is_fa(nil,cls_id) and best_weapon_prm < (weapon_manager and weapon_manager:get_weapon_prior(loot) or rx_utils.get_wpn_type(loot:section()) or 0) then
-								rating = rating*3
-							end
-						end
-						if dist < min_loot_distance or rating >= PR.min_loot_value and (rating > (dist/dist_length-dist_ratio)*rating_length+PR.min_loot_value or self.a.target_id == id) then
-							local vertex = loot:level_vertex_id()
-							if npc:accessible(vertex) and level.vertex_position(vertex):distance_to_sqr(pos) <= max_dist_from_node then
-								rating = self.a.target_id == id and rating or rating-dist*distance_factor+(v.level_time-tg)*memory_factor
-								loot_table[#loot_table+1] = {dist = dist,rating = rating,id = id,vertex = vertex,pos = pos}
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	weapon_manager = nil
+        local npc_pos = npc:position()
+        local loot_table, obj_stor = {}, self.a.obj_stor
+        min_loot_distance = PR.min_loot_distance
+        local dist_length, rating_length = PR.max_loot_distance - min_loot_distance,
+            PR.max_loot_value - PR.min_loot_value
+        if dist_length == 0 then
+            dist_length = 1
+        end
+        local dist_ratio = min_loot_distance / dist_length
+        local can_loot_mutant = PR.loot_mutant and (not knife_req or npc:item_in_slot(knife_slot))
+        for v in npc:memory_visible_objects() do
+            loot = v:object()
+            if loot and not loot:alive() then
+                id = loot:id()
+                if (selected[id] == nil or selected[id] == npc_id) and obj_stor[id] ~= false and
+                    not (restricted[id] and check_owner(loot, id)) then
+                    cls_id = loot:clsid()
+                    if (PR.loot_stalker and IsStalker(nil, cls_id) or can_loot_mutant and IsMonster(nil, cls_id)) and
+                        not (forbidden_corpses[loot:name()] or forbidden_corpses[loot:profile_name()]) then
+                        local pos = loot:center()
+                        local dist = npc_pos:distance_to_sqr(pos)
+                        if dist < PR.max_loot_distance or
+                            (v.level_time == tg and dist < PR.max_loot_distance * visible_mod) or self.a.target_id == id then
+                            rating = 0
+                            if obj_stor[id] ~= loot:object_count() then
+                                for i = 0, loot:object_count() - 1 do
+                                    item = loot:object(i)
+                                    if lootable(item) then
+                                        rating = rating + item:cost() * cost_factor
+                                        if wanted_ammo and wanted_ammo[item:section()] then
+                                            rating = rating + 20000 * cost_factor
+                                        end
+                                        if rating > 6000 and rating > PR.min_loot_value then
+                                            rating = rating + loot:character_rank() * rx_utils.rank_unit * 1500
+                                            break
+                                        end
+                                    end
+                                end
+                                if rating > 0 then
+                                    self.corpse_rating_memory[id] = rating
+                                    obj_stor[id] = loot:object_count()
+                                else
+                                    self.corpse_rating_memory[id] = nil
+                                    obj_stor[id] = false
+                                    npc:enable_memory_object(loot, false)
+                                end
+                            else
+                                rating = self.corpse_rating_memory[id]
+                            end
+                            if rating > 0 and (dist < min_loot_distance or rating >= PR.min_loot_value and
+                                (rating > (dist / dist_length - dist_ratio) * rating_length + PR.min_loot_value or
+                                    self.a.target_id == id)) then
+                                local vertex = loot:level_vertex_id()
+                                if npc:accessible(vertex) and level.vertex_position(vertex):distance_to_sqr(pos) <=
+                                    max_dist_from_node then
+                                    rating = self.a.target_id == id and rating or rating - dist * distance_factor +
+                                                 (v.level_time - tg) * memory_factor
+                                    loot_table[#loot_table + 1] = {
+                                        dist = dist,
+                                        rating = rating,
+                                        id = id,
+                                        vertex = vertex,
+                                        pos = pos,
+                                        corpse = true
+                                    }
+                                end
+                            end
+                        end
+                        --				elseif item_clsids[cls_id] and PR.loot_items and lootable(loot,cls_id) and (not artefact_clsids[cls_id] or can_take_art(id,tg)) then	-- ARTEFACT ACTIVATION FIX
+                    elseif item_clsids[cls_id] and PR.loot_items and lootable(loot, cls_id) then
+                        local pos = loot:position()
+                        local dist = npc_pos:distance_to_sqr(pos)
+                        if dist < PR.max_loot_distance or
+                            (v.level_time == tg and dist < PR.max_loot_distance * visible_mod) or self.a.target_id == id then
+                            rating = loot:cost() * loot:condition() * cost_factor
+                            if wanted_ammo and wanted_ammo[loot:section()] then
+                                rating = rating + 20000 * cost_factor
+                            end
+                            if isWeapon(loot, cls_id) and not rx_utils.item_is_grenade(nil, cls_id) then
+                                if best_weapon_prm == -1 then
+                                    rating = rating + 15000 * cost_factor
+                                elseif PR.take_best_weapons_only then
+                                    rating = rating * 3
+                                elseif cls_id == clsid.wpn_knife_s and best_knife_prm and
+                                    (best_knife_prm == -1 or best_knife_prm <
+                                        rx_utils.read_from_ini(nil, loot:section(), "hit_power", 1) *
+                                        (loot:condition() + 0.6)) then
+                                    rating = rating + 1000
+                                elseif rx_utils.item_is_fa(nil, cls_id) and best_weapon_prm <
+                                    (weapon_manager and weapon_manager:get_weapon_prior(loot) or
+                                        rx_utils.get_wpn_type(loot:section()) or 0) then
+                                    rating = rating * 3
+                                end
+                            end
+                            if dist < min_loot_distance or rating >= PR.min_loot_value and
+                                (rating > (dist / dist_length - dist_ratio) * rating_length + PR.min_loot_value or
+                                    self.a.target_id == id) then
+                                local vertex = loot:level_vertex_id()
+                                if npc:accessible(vertex) and level.vertex_position(vertex):distance_to_sqr(pos) <=
+                                    max_dist_from_node then
+                                    rating = self.a.target_id == id and rating or rating - dist * distance_factor +
+                                                 (v.level_time - tg) * memory_factor
+                                    loot_table[#loot_table + 1] = {
+                                        dist = dist,
+                                        rating = rating,
+                                        id = id,
+                                        vertex = vertex,
+                                        pos = pos
+                                    }
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        weapon_manager = nil
 
-	if #loot_table > 0 then
-		table.sort(loot_table,sort_loot)
-		self.a.active = true
-		self.a.target_id = loot_table[1].id
-		self.a.target_vertex = loot_table[1].vertex
-		self.a.is_corpse = loot_table[1].corpse
-		return true
-	end
+        if #loot_table > 0 then
+            table.sort(loot_table, sort_loot)
+            self.a.active = true
+            self.a.target_id = loot_table[1].id
+            self.a.target_vertex = loot_table[1].vertex
+            self.a.is_corpse = loot_table[1].corpse
+            return true
+        end
 
-	end		-- конец поиска
+    end -- конец поиска
 
-	if npc:best_item() and PR.gather_items_enabled then
-		local item = npc:best_item()
-		local item_id = item:id()
-		if (selected[item_id] == nil or selected[item_id] == npc_id)
---		and npc:position():distance_to_sqr(item:position()) < PR.max_loot_distance
-		and not ( item:parent() or is_quest_item(item) or (restricted[item_id] and check_owner(item,item_id)) )
-		and npc:accessible(item:level_vertex_id()) and level.vertex_position(item:level_vertex_id()):distance_to_sqr(item:position()) <= max_dist_from_node then
-			self.a.active = true
-			self.a.target_id = item_id
-			self.a.target_vertex = item:level_vertex_id()
-			self.a.is_corpse = nil
-			return true
-		end
-	end
+    if npc:best_item() and PR.gather_items_enabled then
+        local item = npc:best_item()
+        local item_id = item:id()
+        if (selected[item_id] == nil or selected[item_id] == npc_id) --		and npc:position():distance_to_sqr(item:position()) < PR.max_loot_distance
+        and not (item:parent() or is_quest_item(item) or (restricted[item_id] and check_owner(item, item_id))) and
+            npc:accessible(item:level_vertex_id()) and
+            level.vertex_position(item:level_vertex_id()):distance_to_sqr(item:position()) <= max_dist_from_node then
+            self.a.active = true
+            self.a.target_id = item_id
+            self.a.target_vertex = item:level_vertex_id()
+            self.a.is_corpse = nil
+            return true
+        end
+    end
 
-	self.a.active = nil
-	if not self.a.anim_started then
-		self.rtimer = self.a.dtimer
-	end
-	return false
+    self.a.active = nil
+    if not self.a.anim_started then
+        self.rtimer = self.a.dtimer
+    end
+    return false
 end
 
-
 ----------------------------------------------------------------------------------------------------------------------
---Actions
+-- Actions
 ----------------------------------------------------------------------------------------------------------------------
-class "action_search_corpse" (action_base)
-function action_search_corpse:__init (npc_name,action_name,storage) super (nil,action_name)
-	self.a = storage
+class "action_search_corpse"(action_base)
+function action_search_corpse:__init(npc_name, action_name, storage)
+    super(nil, action_name)
+    self.a = storage
 end
-function action_search_corpse:hit_callback(amount,dir,who)
-	if who and self.a.target_id then
-		local whodid = rx_utils.is_actor(who) and r_actor or rx_utils.is_anomaly(who) and r_anomaly
-		if whodid then
-			restricted[self.a.target_id] = whodid
-			self.a.active = nil
-			self.a.dtimer = time_global()+30000
-			if self.a.is_corpse and db.storage[self.a.target_id] then
-				local obj = level.object_by_id(self.a.target_id)
-				if obj and (whodid == r_actor or self.object:position():distance_to(obj:position()) < 12) then
-					rx_ai.save_var(obj,"cd_restr",whodid)
-				end
-			end
-		end
-	end
+function action_search_corpse:hit_callback(amount, dir, who)
+    if who and self.a.target_id then
+        local whodid = rx_utils.is_actor(who) and r_actor or rx_utils.is_anomaly(who) and r_anomaly
+        if whodid then
+            restricted[self.a.target_id] = whodid
+            self.a.active = nil
+            self.a.dtimer = time_global() + 30000
+            if self.a.is_corpse and db.storage[self.a.target_id] then
+                local obj = level.object_by_id(self.a.target_id)
+                if obj and (whodid == r_actor or self.object:position():distance_to(obj:position()) < 12) then
+                    rx_ai.save_var(obj, "cd_restr", whodid)
+                end
+            end
+        end
+    end
 end
 function action_search_corpse:initialize()
-	action_base.initialize(self)
-	local npc = self.object
-	npc:set_desired_position()
-	npc:set_desired_direction()
-	npc:set_path_type(game_object.level_path)
-	npc:set_dest_level_vertex_id(self.a.target_vertex)
-	npc:set_mental_state(anim.free)
-	npc:set_body_state(move.standing)
-	local wm = npc:get_wm(true)
-	if wm then
-		wm:disable()
-	end
-	state_mgr.lock(npc,true)
-	rx_ai.subscribe_for_events(npc,self)
-	self.timer = time_global()+(self.a.pr.leisurely and 90000 or 50000)
-	self.id = self.a.target_id
-	selected[self.id] = npc:id()
+    action_base.initialize(self)
+    local npc = self.object
+    npc:set_desired_position()
+    npc:set_desired_direction()
+    npc:set_path_type(game_object.level_path)
+    npc:set_dest_level_vertex_id(self.a.target_vertex)
+    npc:set_mental_state(anim.free)
+    npc:set_body_state(move.standing)
+    local wm = npc:get_wm(true)
+    if wm then
+        wm:disable()
+    end
+    state_mgr.lock(npc, true)
+    rx_ai.subscribe_for_events(npc, self)
+    self.timer = time_global() + (self.a.pr.leisurely and 90000 or 50000)
+    self.id = self.a.target_id
+    selected[self.id] = npc:id()
 end
 function action_search_corpse:execute()
-	action_base.execute(self)
-	local npc = self.object
+    action_base.execute(self)
+    local npc = self.object
 
-	if self.id ~= self.a.target_id then
-		if self.a.target_id == nil then
-			self:update_animation()
-			return
-		end
-		selected[self.id] = nil
-		self.id = self.a.target_id
-		selected[self.id] = npc:id()
-		self.a.anim_started = nil
-		self.timer = time_global()+(self.a.pr.leisurely and 120000 or 90000)
-		self.last_vertex_id = nil
-	end
+    if self.id ~= self.a.target_id then
+        if self.a.target_id == nil then
+            self:update_animation()
+            return
+        end
+        selected[self.id] = nil
+        self.id = self.a.target_id
+        selected[self.id] = npc:id()
+        self.a.anim_started = nil
+        self.timer = time_global() + (self.a.pr.leisurely and 120000 or 90000)
+        self.last_vertex_id = nil
+    end
 
-	local target = self.id and level.object_by_id(self.id)
-	if not target then
-		self.a.active = nil
---		restricted[self.id] = r_anomaly
-		return
-	end
+    local target = self.id and level.object_by_id(self.id)
+    if not target then
+        self.a.active = nil
+        --		restricted[self.id] = r_anomaly
+        return
+    end
 
-	local is_mutant = self.a.is_corpse and IsMonster(target)
+    local is_mutant = self.a.is_corpse and IsMonster(target)
 
-	local function target_bone()
-	        local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
-	        if target:get_bone_id(valid_bone) == 65535 then
-	            valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
-	        end
-	        return target:bone_position(valid_bone)
-	end
+    local function target_bone()
+        local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+        if target:get_bone_id(valid_bone) == 65535 then
+            valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+        end
+        return target:bone_position(valid_bone)
+    end
 
-	local npc_pos = npc:position()
-	local dist = npc_pos:distance_to(self.a.is_corpse and target_bone() or target:center())
+    local npc_pos = npc:position()
+    local dist = npc_pos:distance_to(self.a.is_corpse and target_bone() or target:center())
 
-	if self.timer < time_global() then
-		if dist > 3 then
-			npc:enable_memory_object(target,false)
-			self.a.obj_stor[self.id] = false
-		elseif self.a.is_corpse then
-			get_all_from_corpse(npc,self)
-		else
-			grab_item(npc,self)
-		end
-		if self.a.anim_started then
-			self.a.target_id = nil
-		else
-			self.a.active = nil
-			self.a.dtimer = 0
-		end
-		return
-	end
+    if self.timer < time_global() then
+        if dist > 3 then
+            npc:enable_memory_object(target, false)
+            self.a.obj_stor[self.id] = false
+        elseif self.a.is_corpse then
+            get_all_from_corpse(npc, self)
+        else
+            grab_item(npc, self)
+        end
+        if self.a.anim_started then
+            self.a.target_id = nil
+        else
+            self.a.active = nil
+            self.a.dtimer = 0
+        end
+        return
+    end
 
-	-- ништяк кто-то подобрал!
-	if not self.a.is_corpse and target:parent() then
-		if target:parent():id() == npc:id() then
-			if not self.a.anim_started then
-				self.a.active = nil
-				self.a.dtimer = 0	-- найти новую цель
-				return
-			end
-		else--if dist < 15 or npc:see(target:parent()) then
-			self:anim_callback()
-			return
-		end
-	end
+    -- ништяк кто-то подобрал!
+    if not self.a.is_corpse and target:parent() then
+        if target:parent():id() == npc:id() then
+            if not self.a.anim_started then
+                self.a.active = nil
+                self.a.dtimer = 0 -- найти новую цель
+                return
+            end
+        else -- if dist < 15 or npc:see(target:parent()) then
+            self:anim_callback()
+            return
+        end
+    end
 
-	local target_pos = target:position()
-	-- если цель вдруг сместилась от своего вертекса
-	if self.a.is_corpse then
-		if target_pos:distance_to_sqr(level.vertex_position(self.a.target_vertex)) > max_dist_from_node then
-			self.a.active = nil
-			self.a.dtimer = time_global()+7000	-- обождать
-			if db.actor and db.actor:position():distance_to(target_pos) < 2 then	-- ГГ тянет труп, ну его
-				npc:enable_memory_object(target,false)
-				self.a.obj_stor[self.id] = false
-			end
-			return
-		end
-	elseif target_pos:distance_to_sqr(level.vertex_position(self.a.target_vertex)) > 3 then
-		local new_lvid = target:level_vertex_id()
-		if new_lvid ~= self.a.target_vertex and not npc:accessible(new_lvid) then
-			new_lvid = self.a.target_vertex
-		end
-		if target_pos:distance_to_sqr(level.vertex_position(new_lvid)) > max_dist_from_node then
-			self.a.active = nil
-			return
-		end
-		if new_lvid ~= self.a.target_vertex then
-			self.a.target_vertex = new_lvid
-		end
-	end
+    local target_pos = target:position()
+    -- если цель вдруг сместилась от своего вертекса
+    if self.a.is_corpse then
+        if target_pos:distance_to_sqr(level.vertex_position(self.a.target_vertex)) > max_dist_from_node then
+            self.a.active = nil
+            self.a.dtimer = time_global() + 7000 -- обождать
+            if db.actor and db.actor:position():distance_to(target_pos) < 2 then -- ГГ тянет труп, ну его
+                npc:enable_memory_object(target, false)
+                self.a.obj_stor[self.id] = false
+            end
+            return
+        end
+    elseif target_pos:distance_to_sqr(level.vertex_position(self.a.target_vertex)) > 3 then
+        local new_lvid = target:level_vertex_id()
+        if new_lvid ~= self.a.target_vertex and not npc:accessible(new_lvid) then
+            new_lvid = self.a.target_vertex
+        end
+        if target_pos:distance_to_sqr(level.vertex_position(new_lvid)) > max_dist_from_node then
+            self.a.active = nil
+            return
+        end
+        if new_lvid ~= self.a.target_vertex then
+            self.a.target_vertex = new_lvid
+        end
+    end
 
-	if dist <= (self.a.is_corpse and 0.85 or 0.75) or npc:level_vertex_id() == self.a.target_vertex then
+    if dist <= (self.a.is_corpse and 0.85 or 0.75) or npc:level_vertex_id() == self.a.target_vertex then
 
-		local look_pos = self.a.is_corpse and target_bone() or target:center()
-		local look_vector = vector():sub(vector():set(0, 0.3, npc_pos:distance_to_xz(target_pos) < 0.3 and 0.5 or 0):add(look_pos), npc:bone_position(self.torso_look == true and "bip01_neck" or "bip01_spine"))
+        local look_pos = self.a.is_corpse and target_bone() or target:center()
+        local look_vector = vector():sub(vector():set(0, 0.3, npc_pos:distance_to_xz(target_pos) < 0.3 and 0.5 or 0)
+            :add(look_pos), npc:bone_position(self.torso_look == true and "bip01_neck" or "bip01_spine"))
 
-		npc:set_sight(look.direction, look_vector, self.torso_look == true)
-		if self.a.anim_started then
-			if self.a.do_chik and self.a.do_chik < time_global() then
-				self.a.do_chik = nil
-				if self.a.is_corpse then
-					chik_chik(npc, target)
-				end
-			end
-			self:update_animation()
-			return
-		end
-		self.torso_look = nil
-		if self.a.is_corpse then
-			if target:object_count() < (is_mutant and 1 or 3) then	-- оппа! игрок уже обобрал
-				self:set_animation("search_corpse_high")
-			elseif is_mutant then
-				self.timer = time_global()+9000
-				self.torso_look = true
-				local knife = npc:item_in_slot(knife_slot)
-				if knife then
-					self:set_animation("loot_monster_knife")
-				else
-					self:set_animation("loot_monster")
-				end
-			else
-				self.timer = time_global()+3700
-				if can_play_loot_sound(npc,target) then
-					rx_sound.set_sound_play(npc:id(),"corpse_loot_begin")
-				end
-				if look_pos.y > npc_pos.y+0.4 then
-					self:set_animation("search_corpse_high")
-				else
-					self:set_animation("search_corpse")
-				end
-			end
-		else
-			self.timer = time_global()+5000
-			if look_pos.y > npc_pos.y+0.3 then
-				self.torso_look = true
-				self:set_animation("grab_item_high")
-			else
-				self:set_animation("grab_item")
-			end
-		end
-		return
-	end
+        npc:set_sight(look.direction, look_vector, self.torso_look == true)
+        if self.a.anim_started then
+            if self.a.do_chik and self.a.do_chik < time_global() then
+                self.a.do_chik = nil
+                if self.a.is_corpse then
+                    chik_chik(npc, target)
+                end
+            end
+            self:update_animation()
+            return
+        end
+        self.torso_look = nil
+        if self.a.is_corpse then
+            if target:object_count() < (is_mutant and 1 or 3) then -- оппа! игрок уже обобрал
+                self:set_animation("search_corpse_high")
+            elseif is_mutant then
+                self.timer = time_global() + 9000
+                self.torso_look = true
+                local knife = npc:item_in_slot(knife_slot)
+                if knife then
+                    self:set_animation("loot_monster_knife")
+                else
+                    self:set_animation("loot_monster")
+                end
+            else
+                self.timer = time_global() + 3700
+                if can_play_loot_sound(npc, target) then
+                    rx_sound.set_sound_play(npc:id(), "corpse_loot_begin")
+                end
+                if look_pos.y > npc_pos.y + 0.4 then
+                    self:set_animation("search_corpse_high")
+                else
+                    self:set_animation("search_corpse")
+                end
+            end
+        else
+            self.timer = time_global() + 5000
+            if look_pos.y > npc_pos.y + 0.3 then
+                self.torso_look = true
+                self:set_animation("grab_item_high")
+            else
+                self:set_animation("grab_item")
+            end
+        end
+        return
+    end
 
-	-- во время анимации кто-то пихнул
-	if self.a.anim_started then
-		if dist > 1.2 then
-			if self.a.is_corpse then
-				get_all_from_corpse(npc,self)
-			else
-				grab_item(npc,self)
-			end
-			self:anim_callback()
-		else
-			self:update_animation()
-		end
-		return
-	end
+    -- во время анимации кто-то пихнул
+    if self.a.anim_started then
+        if dist > 1.2 then
+            if self.a.is_corpse then
+                get_all_from_corpse(npc, self)
+            else
+                grab_item(npc, self)
+            end
+            self:anim_callback()
+        else
+            self:update_animation()
+        end
+        return
+    end
 
-	-- MOVEMENT PART
-	if dist > 2.5 then
-		npc:set_mental_state(anim.free)
-		npc:set_body_state(move.standing)
-	end
-	npc:set_sight(look.path_dir,nil)
+    -- MOVEMENT PART
+    if dist > 2.5 then
+        npc:set_mental_state(anim.free)
+        npc:set_body_state(move.standing)
+    end
+    npc:set_sight(look.path_dir, nil)
 
-	if dist < self.a.pr.walk_dist then
-		npc:set_movement_type(move.walk)
-		if is_mutant and npc:item_in_slot(knife_slot) then
-			npc:set_item(object.idle,npc:item_in_slot(knife_slot))
-		elseif self.a.is_corpse and npc:best_danger() and (dist > 2 or not npc:weapon_strapped()) then
-			npc:set_item(object.idle,npc:active_item())
-		elseif state_mgr_weapon.strappable_weapon(npc:active_item()) then
-			npc:set_item(object.strap,npc:active_item())
-		else
-			npc:set_item(object.idle,npc:active_item())
-		end
-	else
-		npc:set_movement_type(self.a.pr.leisurely and move.walk or move.run)
-		-- reload weapon
-		local nr = true
-		if rx_reload and not self.reload and dist > self.a.pr.walk_dist+5 then
-			local wpn = rx_reload.get_weapon_to_reload(npc,true,true)
-			if wpn then
-				npc:set_item(object.aim_force_full1,wpn)
-				self.reload = true
-				nr = false
-			end
-		end
-		--
-		if nr and (npc:best_danger() or npc:weapon_unstrapped() and npc:active_item()) then
-			npc:set_item(object.idle,npc:active_item() or npc:best_weapon())
-		end
-	end
+    if dist < self.a.pr.walk_dist then
+        npc:set_movement_type(move.walk)
+        if is_mutant and npc:item_in_slot(knife_slot) then
+            npc:set_item(object.idle, npc:item_in_slot(knife_slot))
+        elseif self.a.is_corpse and npc:best_danger() and (dist > 2 or not npc:weapon_strapped()) then
+            npc:set_item(object.idle, npc:active_item())
+        elseif state_mgr_weapon.strappable_weapon(npc:active_item()) then
+            npc:set_item(object.strap, npc:active_item())
+        else
+            npc:set_item(object.idle, npc:active_item())
+        end
+    else
+        npc:set_movement_type(self.a.pr.leisurely and move.walk or move.run)
+        -- reload weapon
+        local nr = true
+        if rx_reload and not self.reload and dist > self.a.pr.walk_dist + 5 then
+            local wpn = rx_reload.get_weapon_to_reload(npc, true, true)
+            if wpn then
+                npc:set_item(object.aim_force_full1, wpn)
+                self.reload = true
+                nr = false
+            end
+        end
+        --
+        if nr and (npc:best_danger() or npc:weapon_unstrapped() and npc:active_item()) then
+            npc:set_item(object.idle, npc:active_item() or npc:best_weapon())
+        end
+    end
 
-	-- фикс застревания на месте (что-то мешает пройти)
-	local lvid = npc:level_vertex_id()
-	if lvid == self.last_vertex_id then
-		if self.last_vertex_time + (npc:movement_type() == move.stand and 1500 or 6000) < time_global() then
-			if dist > 3 then
-				if npc:movement_type() ~= move.stand then
-					npc:enable_memory_object(target,false)
-					self.a.obj_stor[self.id] = false
-				end
-			elseif self.a.is_corpse then
-				get_all_from_corpse(npc,self)
-			else
-				grab_item(npc,self)
-			end
-			self.a.active = nil
-			self.a.dtimer = time_global()+math.random(7000)
-			return
-		end
-	else
-		self.last_vertex_id = lvid
-		self.last_vertex_time = time_global()
-	end
-	npc:set_dest_level_vertex_id(self.a.target_vertex)
---	npc:set_desired_direction(target_pos:sub(level.vertex_position(self.a.target_vertex)))
+    -- фикс застревания на месте (что-то мешает пройти)
+    local lvid = npc:level_vertex_id()
+    if lvid == self.last_vertex_id then
+        if self.last_vertex_time + (npc:movement_type() == move.stand and 1500 or 6000) < time_global() then
+            if dist > 3 then
+                if npc:movement_type() ~= move.stand then
+                    npc:enable_memory_object(target, false)
+                    self.a.obj_stor[self.id] = false
+                end
+            elseif self.a.is_corpse then
+                get_all_from_corpse(npc, self)
+            else
+                grab_item(npc, self)
+            end
+            self.a.active = nil
+            self.a.dtimer = time_global() + math.random(7000)
+            return
+        end
+    else
+        self.last_vertex_id = lvid
+        self.last_vertex_time = time_global()
+    end
+    npc:set_dest_level_vertex_id(self.a.target_vertex)
+    --	npc:set_desired_direction(target_pos:sub(level.vertex_position(self.a.target_vertex)))
 end
 function action_search_corpse:finalize()
-	action_base.finalize(self)
-	local npc = self.object
-	selected[self.id] = nil
-	self.a.active = nil
-	self.a.anim_started = nil
-	self.id = nil
-	self.reload = nil
-	self.torso_look = nil
-	self.last_vertex_id = nil
-	if not npc:alive() then
-		return
-	end
-	self.a.target_id = nil
-	npc:clear_animations()
-	npc:set_dest_level_vertex_id(npc:level_vertex_id())
---	npc:set_sight(look.danger,npc:direction(),0)	-- удовлетворить стейт менеджер
-	npc:set_body_state(move.standing)
-	local wm = npc:get_wm(true)
-	if wm then
-		wm:disable(time_global()+3000)
-	end
-	state_mgr.lock(npc,false)
-	rx_ai.process_postponed_setup(npc:id())
-	rx_ai.unsubscribe_from_events(npc:id(),self)
+    action_base.finalize(self)
+    local npc = self.object
+    selected[self.id] = nil
+    self.a.active = nil
+    self.a.anim_started = nil
+    self.id = nil
+    self.reload = nil
+    self.torso_look = nil
+    self.last_vertex_id = nil
+    if not npc:alive() then
+        return
+    end
+    self.a.target_id = nil
+    npc:clear_animations()
+    npc:set_dest_level_vertex_id(npc:level_vertex_id())
+    --	npc:set_sight(look.danger,npc:direction(),0)	-- удовлетворить стейт менеджер
+    npc:set_body_state(move.standing)
+    local wm = npc:get_wm(true)
+    if wm then
+        wm:disable(time_global() + 3000)
+    end
+    state_mgr.lock(npc, false)
+    rx_ai.process_postponed_setup(npc:id())
+    rx_ai.unsubscribe_from_events(npc:id(), self)
 end
 ----------------------------------------------------------------------------------------------------------------------
 -- ANIMATION CALLBACKs
 ----------------------------------------------------------------------------------------------------------------------
 function action_search_corpse:set_animation(anim)
-	local npc = self.object
-	self.a.anim_started = anim
-	self.anim_num = 0
-	self.turn_time = time_global()+math.random(2000,3000)
-	npc:clear_animations()
-	npc:set_movement_type(move.stand)
-	if anim == "grab_item" and npc:body_state() == move.crouch then
-		self.turn_time = 0
-		self:update_animation()
-	end
+    local npc = self.object
+    self.a.anim_started = anim
+    self.anim_num = 0
+    self.turn_time = time_global() + math.random(2000, 3000)
+    npc:clear_animations()
+    npc:set_movement_type(move.stand)
+    if anim == "grab_item" and npc:body_state() == move.crouch then
+        self.turn_time = 0
+        self:update_animation()
+    end
 end
 
 function action_search_corpse:update_animation()
-	if not self.a.anim_started then
-		return
-	end
-	local npc = self.object
-	local animat = animations[self.a.anim_started]
-	-- WEAPON
-	if animat.weapon then
-		local actit = npc:active_item()
-		if animat.weapon == "none" and actit then
-			npc:set_item(object.idle,nil)
-			return
-		elseif animat.weapon == "strapped" and actit and not npc:weapon_strapped() then
-			if state_mgr_weapon.strappable_weapon(actit) then
-				npc:set_item(object.strap,actit)
-			else
-				npc:set_item(object.idle,nil)
-			end
-			return
-		elseif animat.weapon == "knife" and npc:item_in_slot(knife_slot) then
-			local knife = npc:item_in_slot(knife_slot)
-			if not (actit and actit:id() == knife:id()) then
-				npc:set_item(object.idle,knife)
-				return
-			end
-		elseif animat.weapon == "one-handed" and actit and not npc:weapon_strapped() and state_mgr_weapon.strappable_weapon(actit) then
-			npc:set_item(object.strap,actit)
-			return
-		end
-	elseif not (npc:weapon_strapped() or npc:weapon_unstrapped()) and self.a.target_id ~= nil then
-		return
-	end
-	-- TURN
-	if npc:is_body_turning() then
-		if self.turn_time > time_global() then
-			return
-		end
-	end
-	-- BODY STATE
-	if animat.bodystate and npc:body_state() ~= animat.bodystate then
-		npc:set_body_state(animat.bodystate)
-		if animat.bodystate == move.crouch then
-			npc:set_mental_state(anim.danger)
-		end
-		return
-	end
-	-- ANIMATIONS
-	animat = animat[get_anim_slot(npc)] or animat[0]
-	if self.anim_num == 0 then
-		for i,a in ipairs(animat.a) do
-			if type(a) == "string" then
-				rx_utils.add_anim(npc,a,true)
-			else
-				rx_utils.add_anim(npc,a[math.random(#a)],true)
-			end
-		end
-		self.anim_num = #animat.a
-		local add_func = animat.f[0]
-		if add_func then
-			add_func(npc,self)
-		end
-		return
-	end
-	-- FUNCTIONS
-	local acnt = npc:animation_count()
-	if self.anim_num > acnt then
-		local func = animat.f[#animat.a-acnt]
-		if func then
-			func(npc,self)
-		end
-		if acnt == 0 then
-			self:anim_callback()
-		end
-		self.anim_num = acnt
-	end
+    if not self.a.anim_started then
+        return
+    end
+    local npc = self.object
+    local animat = animations[self.a.anim_started]
+    -- WEAPON
+    if animat.weapon then
+        local actit = npc:active_item()
+        if animat.weapon == "none" and actit then
+            npc:set_item(object.idle, nil)
+            return
+        elseif animat.weapon == "strapped" and actit and not npc:weapon_strapped() then
+            if state_mgr_weapon.strappable_weapon(actit) then
+                npc:set_item(object.strap, actit)
+            else
+                npc:set_item(object.idle, nil)
+            end
+            return
+        elseif animat.weapon == "knife" and npc:item_in_slot(knife_slot) then
+            local knife = npc:item_in_slot(knife_slot)
+            if not (actit and actit:id() == knife:id()) then
+                npc:set_item(object.idle, knife)
+                return
+            end
+        elseif animat.weapon == "one-handed" and actit and not npc:weapon_strapped() and
+            state_mgr_weapon.strappable_weapon(actit) then
+            npc:set_item(object.strap, actit)
+            return
+        end
+    elseif not (npc:weapon_strapped() or npc:weapon_unstrapped()) and self.a.target_id ~= nil then
+        return
+    end
+    -- TURN
+    if npc:is_body_turning() then
+        if self.turn_time > time_global() then
+            return
+        end
+    end
+    -- BODY STATE
+    if animat.bodystate and npc:body_state() ~= animat.bodystate then
+        npc:set_body_state(animat.bodystate)
+        if animat.bodystate == move.crouch then
+            npc:set_mental_state(anim.danger)
+        end
+        return
+    end
+    -- ANIMATIONS
+    animat = animat[get_anim_slot(npc)] or animat[0]
+    if self.anim_num == 0 then
+        for i, a in ipairs(animat.a) do
+            if type(a) == "string" then
+                rx_utils.add_anim(npc, a, true)
+            else
+                rx_utils.add_anim(npc, a[math.random(#a)], true)
+            end
+        end
+        self.anim_num = #animat.a
+        local add_func = animat.f[0]
+        if add_func then
+            add_func(npc, self)
+        end
+        return
+    end
+    -- FUNCTIONS
+    local acnt = npc:animation_count()
+    if self.anim_num > acnt then
+        local func = animat.f[#animat.a - acnt]
+        if func then
+            func(npc, self)
+        end
+        if acnt == 0 then
+            self:anim_callback()
+        end
+        self.anim_num = acnt
+    end
 end
 
 function action_search_corpse:anim_callback()
-	self.a.anim_started = nil
-	self.a.active = nil
-	self.a.dtimer = 0
-	self.last_vertex_time = time_global()
-	self.object:clear_animations()
+    self.a.anim_started = nil
+    self.a.active = nil
+    self.a.dtimer = 0
+    self.last_vertex_time = time_global()
+    self.object:clear_animations()
 end
 
-function grab_item(npc,act)
-	local item = act.a.target_id and level.object_by_id(act.a.target_id)
---	arts_time[act.a.target_id] = nil	-- ARTEFACT ACTIVATION FIX
-	act.a.target_id = nil
-	if not item or item:parent() then
-		return
-	end
-	item:transfer_item(item,npc)
+function grab_item(npc, act)
+    local item = act.a.target_id and level.object_by_id(act.a.target_id)
+    --	arts_time[act.a.target_id] = nil	-- ARTEFACT ACTIVATION FIX
+    act.a.target_id = nil
+    if not item or item:parent() then
+        return
+    end
+    item:transfer_item(item, npc)
 end
 
-function get_all_from_corpse(npc,act)
-	local corpse_npc_id = act.a.target_id
-	act.a.target_id = nil
-	local corpse_npc = corpse_npc_id and level.object_by_id(corpse_npc_id)
-	if not corpse_npc then
-		return
-	end
-	PR = act.a.pr
-	local items_value = 0
-	local play_snd
-	if IsStalker(corpse_npc) then
-		play_snd = can_play_loot_sound(npc,corpse_npc)
-		-- best weapon
-		weapon_manager = npc:get_wm(true)
-		best_weapon_prm,best_knife_prm = get_best_weapon_prm(npc)
-	end
-	for i=0,corpse_npc:object_count()-1 do
-		local item = corpse_npc:object(i)
-		local cls_id = item:clsid()
-		if lootable(item,cls_id) then
-			if play_snd and items_value < 100 then
-				if isWeapon(item,cls_id) and not rx_utils.item_is_grenade(nil,cls_id) and item:condition() > min_weapon_condition+0.1 then
-					if PR.take_best_weapons_only then
-						items_value = items_value+(cls_id == clsid.wpn_knife_s and 50 or 80)
-					elseif cls_id == clsid.wpn_knife_s and best_knife_prm and (best_knife_prm == -1 or best_knife_prm < rx_utils.read_from_ini(nil,item:section(),"hit_power",1)*(item:condition()+0.6)) then
-						items_value = items_value+50
-					elseif rx_utils.item_is_fa(nil,cls_id) and best_weapon_prm < (weapon_manager and weapon_manager:get_weapon_prior(item) or rx_utils.get_wpn_type(item:section()) or 0) then
-						items_value = items_value+80
-					end
-				end
-				items_value = items_value+item:cost()*item:condition()/30
-			end
-			corpse_npc:transfer_item(item,npc)
-		end
-	end
-	weapon_manager = nil
-	if items_value >= 100 then
-		rx_sound.set_sound_play(npc:id(),"corpse_loot_good")
-	elseif items_value > 5 and math.random(items_value) < 40 then
-		rx_sound.set_sound_play(npc:id(),"corpse_loot_bad")
-	end
-	npc:enable_memory_object(corpse_npc,false)
-	act.a.obj_stor[corpse_npc_id] = false
+function get_all_from_corpse(npc, act)
+    local corpse_npc_id = act.a.target_id
+    act.a.target_id = nil
+    local corpse_npc = corpse_npc_id and level.object_by_id(corpse_npc_id)
+    if not corpse_npc then
+        return
+    end
+    PR = act.a.pr
+    local items_value = 0
+    local play_snd
+    if IsStalker(corpse_npc) then
+        play_snd = can_play_loot_sound(npc, corpse_npc)
+        -- best weapon
+        weapon_manager = npc:get_wm(true)
+        best_weapon_prm, best_knife_prm = get_best_weapon_prm(npc)
+    end
+    for i = 0, corpse_npc:object_count() - 1 do
+        local item = corpse_npc:object(i)
+        local cls_id = item:clsid()
+        if lootable(item, cls_id) then
+            if play_snd and items_value < 100 then
+                if isWeapon(item, cls_id) and not rx_utils.item_is_grenade(nil, cls_id) and item:condition() >
+                    min_weapon_condition + 0.1 then
+                    if PR.take_best_weapons_only then
+                        items_value = items_value + (cls_id == clsid.wpn_knife_s and 50 or 80)
+                    elseif cls_id == clsid.wpn_knife_s and best_knife_prm and
+                        (best_knife_prm == -1 or best_knife_prm <
+                            rx_utils.read_from_ini(nil, item:section(), "hit_power", 1) * (item:condition() + 0.6)) then
+                        items_value = items_value + 50
+                    elseif rx_utils.item_is_fa(nil, cls_id) and best_weapon_prm <
+                        (weapon_manager and weapon_manager:get_weapon_prior(item) or
+                            rx_utils.get_wpn_type(item:section()) or 0) then
+                        items_value = items_value + 80
+                    end
+                end
+                items_value = items_value + item:cost() * item:condition() / 30
+            end
+            corpse_npc:transfer_item(item, npc)
+        end
+    end
+    weapon_manager = nil
+    if items_value >= 100 then
+        rx_sound.set_sound_play(npc:id(), "corpse_loot_good")
+    elseif items_value > 5 and math.random(items_value) < 40 then
+        rx_sound.set_sound_play(npc:id(), "corpse_loot_bad")
+    end
+    npc:enable_memory_object(corpse_npc, false)
+    act.a.obj_stor[corpse_npc_id] = false
 end
 
-function chik(npc,act)
-	act.a.do_chik = time_global()+300
+function chik(npc, act)
+    act.a.do_chik = time_global() + 300
 end
 
 local knife_snd = {}
 
-function chik_chik(npc,target)
-	local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
-	if target:get_bone_id( valid_bone ) == 65535 then
-		valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
-	end
+function chik_chik(npc, target)
+    local valid_bone = monster_parts_cut_bones[target:clsid()] or "bip01_spine1"
+    if target:get_bone_id(valid_bone) == 65535 then
+        valid_bone = get_string(target:section(), "bone_torso", "bip01_spine")
+    end
 
-	local pos = target:bone_position(valid_bone)
-	local knife = npc:item_in_slot(knife_slot)
-	pos.y = pos.y+0.05
-	local hi = hit()
-	hi:bone(valid_bone)
-	hi.type = hit.wound
-	hi.power = 1
-	hi.impulse = 30
-	hi.draftsman = npc
-	hi.direction = knife and vector():sub(pos,npc:bone_position("bip01_neck")) or vector():sub(npc:bone_position("bip01_neck"),pos)
-	if knife then
-		local knife_section = knife:section()
-		if not knife_snd[knife_section] then
-			knife_snd[knife_section] = rx_sound.dihud_sound(knife_section,"snd_shoot")
-		end
-		knife_snd[knife_section]:play(target,pos,0,1.2)
-	end
-	particles_object([[hit_fx\hit_flesh_01]]):play_at_pos(pos)
-	target:hit(hi)
+    local pos = target:bone_position(valid_bone)
+    local knife = npc:item_in_slot(knife_slot)
+    pos.y = pos.y + 0.05
+    local hi = hit()
+    hi:bone(valid_bone)
+    hi.type = hit.wound
+    hi.power = 1
+    hi.impulse = 30
+    hi.draftsman = npc
+    hi.direction = knife and vector():sub(pos, npc:bone_position("bip01_neck")) or
+                       vector():sub(npc:bone_position("bip01_neck"), pos)
+    if knife then
+        local knife_section = knife:section()
+        if not knife_snd[knife_section] then
+            knife_snd[knife_section] = rx_sound.dihud_sound(knife_section, "snd_shoot")
+        end
+        knife_snd[knife_section]:play(target, pos, 0, 1.2)
+    end
+    particles_object([[hit_fx\hit_flesh_01]]):play_at_pos(pos)
+    target:hit(hi)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -873,86 +917,88 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 -- Будем подменять движковую схему gather_items
 
-evid_corpse_exist = rx_ai.base_id+47
+evid_corpse_exist = rx_ai.base_id + 47
 actid_corpse_exist = stalker_ids.action_gather_items
 
 rx_ai.reset_protected_actions[actid_corpse_exist] = true
 rx_ai.death_disable_evas[evid_corpse_exist] = false
 
 function add_to_binder(npc, char_ini, scheme, section, st)
-	local manager = npc:motivation_action_manager()
+    local manager = npc:motivation_action_manager()
 
-	-- Evaluators
-	if ogse.is_quest_npc(npc) or excluded_communities[npc:character_community()] or excluded_npcs[npc:name()] or excluded_npcs[npc:profile_name()] or not npc:alive() then
-		manager:add_evaluator (evid_corpse_exist,property_evaluator_const(false))
-		local action = manager:action(stalker_ids.action_gather_items)
-		action:add_precondition(world_property(xr_evaluators_id.state_mgr+2,true))
-		return
-	end
-	manager:remove_evaluator(stalker_ids.property_items)
-	manager:add_evaluator (stalker_ids.property_items,property_evaluator_const(false))
-	manager:add_evaluator(evid_corpse_exist,evaluator_corpse("corpse_exist", st))
+    -- Evaluators
+    if ogse.is_quest_npc(npc) or excluded_communities[npc:character_community()] or excluded_npcs[npc:name()] or
+        excluded_npcs[npc:profile_name()] or not npc:alive() then
+        manager:add_evaluator(evid_corpse_exist, property_evaluator_const(false))
+        local action = manager:action(stalker_ids.action_gather_items)
+        action:add_precondition(world_property(xr_evaluators_id.state_mgr + 2, true))
+        return
+    end
+    manager:remove_evaluator(stalker_ids.property_items)
+    manager:add_evaluator(stalker_ids.property_items, property_evaluator_const(false))
+    manager:add_evaluator(evid_corpse_exist, evaluator_corpse("corpse_exist", st))
 
-	-- Actions
-	manager:remove_action(actid_corpse_exist)
-	local action = action_search_corpse (npc:name(),"action_search_corpse", st)
-	action:add_precondition		(world_property(stalker_ids.property_alive, true))
-	action:add_precondition		(world_property(stalker_ids.property_enemy,	false))
-	action:add_precondition		(world_property(stalker_ids.property_danger,false))
-	action:add_precondition		(world_property(stalker_ids.property_anomaly,false))
---	action:add_precondition		(world_property(xr_evaluators_id.sidor_wounded_base,false))
-	action:add_precondition		(world_property(xr_evaluators_id.state_mgr+3,true))	--!!
-	if post_combat_idle then
-		action:add_precondition(world_property(post_combat_idle.evid_post_combat,false))
-	end
-	if xr_help_wounded then
-		action:add_precondition (world_property(xr_help_wounded.evid_wounded_exist,false))
-	end
-	if rx_gl then
-		action:add_precondition (world_property(rx_gl.evid_gl_reload,		false))
-	end
-	if rx_bandage then
-		action:add_precondition (world_property(rx_bandage.evid_bandage,	false))
-	end
-	if xrs_grenade then
-		action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade,false))
-	end
+    -- Actions
+    manager:remove_action(actid_corpse_exist)
+    local action = action_search_corpse(npc:name(), "action_search_corpse", st)
+    action:add_precondition(world_property(stalker_ids.property_alive, true))
+    action:add_precondition(world_property(stalker_ids.property_enemy, false))
+    action:add_precondition(world_property(stalker_ids.property_danger, false))
+    action:add_precondition(world_property(stalker_ids.property_anomaly, false))
+    --	action:add_precondition		(world_property(xr_evaluators_id.sidor_wounded_base,false))
+    action:add_precondition(world_property(xr_evaluators_id.state_mgr + 3, true)) -- !!
+    if post_combat_idle then
+        action:add_precondition(world_property(post_combat_idle.evid_post_combat, false))
+    end
+    if xr_help_wounded then
+        action:add_precondition(world_property(xr_help_wounded.evid_wounded_exist, false))
+    end
+    if rx_gl then
+        action:add_precondition(world_property(rx_gl.evid_gl_reload, false))
+    end
+    if rx_bandage then
+        action:add_precondition(world_property(rx_bandage.evid_bandage, false))
+    end
+    if xrs_grenade then
+        action:add_precondition(world_property(xrs_grenade.evid_aaa_grenade, false))
+    end
 
-	action:add_precondition		(world_property(evid_corpse_exist,	true))
-	action:add_effect (world_property(evid_corpse_exist, 			false))
-	manager:add_action (actid_corpse_exist, action)
+    action:add_precondition(world_property(evid_corpse_exist, true))
+    action:add_effect(world_property(evid_corpse_exist, false))
+    manager:add_action(actid_corpse_exist, action)
 
-	action = manager:action (xr_actions_id.alife)
-	action:add_precondition		(world_property(evid_corpse_exist,		false))
+    action = manager:action(xr_actions_id.alife)
+    action:add_precondition(world_property(evid_corpse_exist, false))
 
-	action = manager:action (xr_actions_id.state_mgr + 2)
-	action:add_precondition		(world_property(evid_corpse_exist,		false))
+    action = manager:action(xr_actions_id.state_mgr + 2)
+    action:add_precondition(world_property(evid_corpse_exist, false))
 
-	action = manager:action (xr_actions_id.stohe_meet_base+1)
-	action:add_precondition		(world_property(evid_corpse_exist,		false))
+    action = manager:action(xr_actions_id.stohe_meet_base + 1)
+    action:add_precondition(world_property(evid_corpse_exist, false))
 end
 
 function set_corpse_detection(npc, ini, scheme, section)
-	local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
+    local st = xr_logic.assign_storage_and_bind(npc, ini, scheme, section)
 end
 
 function reset_corpse_detection(npc, scheme, st, section)
-	if section and st.ini:line_exist(section,"corpse_detection_enabled") then
-		st.corpse_detection.corpse_detection_enabled = st.ini:r_bool(section,"corpse_detection_enabled")
-	else
-		st.corpse_detection.corpse_detection_enabled = rx_utils.read_from_ini(st.ini,st.section_logic,"corpse_detection_enabled",true,0)
-	end
-	local pr = read_profile(npc, scheme, st, section)
-	-- отрубаемся с профиля dont_loot и с метки disabled_strict
-	if pr.disabled_strict or pr.max_loot_distance <= 0 and not pr.gather_items_enabled then
-		st.corpse_detection.corpse_detection_enabled = false
-	end
-	st.corpse_detection.pr = pr
+    if section and st.ini:line_exist(section, "corpse_detection_enabled") then
+        st.corpse_detection.corpse_detection_enabled = st.ini:r_bool(section, "corpse_detection_enabled")
+    else
+        st.corpse_detection.corpse_detection_enabled = rx_utils.read_from_ini(st.ini, st.section_logic,
+            "corpse_detection_enabled", true, 0)
+    end
+    local pr = read_profile(npc, scheme, st, section)
+    -- отрубаемся с профиля dont_loot и с метки disabled_strict
+    if pr.disabled_strict or pr.max_loot_distance <= 0 and not pr.gather_items_enabled then
+        st.corpse_detection.corpse_detection_enabled = false
+    end
+    st.corpse_detection.pr = pr
 end
 
 function is_under_corpse_detection(npc)
-	local mgr = npc:motivation_action_manager()
-	return mgr:initialized() and mgr:current_action_id() == actid_corpse_exist
+    local mgr = npc:motivation_action_manager()
+    return mgr:initialized() and mgr:current_action_id() == actid_corpse_exist
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -960,170 +1006,180 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 
 function is_quest_item(obj)
-	local sec = obj:section()
-	if forbidden_items[sec] ~= nil then
-		return forbidden_items[sec]
-	end
-	if take_quest_items == true then
-		return false
-	end
-	forbidden_items[sec] = rx_utils.read_from_ini(nil,sec,"quest_item",nil,0) == true
-	return forbidden_items[sec]
+    local sec = obj:section()
+    if forbidden_items[sec] ~= nil then
+        return forbidden_items[sec]
+    end
+    if take_quest_items == true then
+        return false
+    end
+    forbidden_items[sec] = rx_utils.read_from_ini(nil, sec, "quest_item", nil, 0) == true
+    return forbidden_items[sec]
 end
 
-function can_play_loot_sound(npc,target)
-	return npc:relation(target) == game_object.enemy or time_global() - target:death_time() > 70000
+function can_play_loot_sound(npc, target)
+    return npc:relation(target) == game_object.enemy or time_global() - target:death_time() > 70000
 end
 
 function get_best_weapon_prm(npc)
-	local weapon_prm,knife_prm
-	if weapon_manager then	--	check type 0
-		weapon_prm = #weapon_manager.weapons > 0 and weapon_manager.weapons[1].prm or -1
-	else
-		local wpn = npc:best_weapon()
-		weapon_prm = wpn and rx_utils.item_is_fa(wpn) and rx_utils.get_wpn_type(wpn:section()) or -1
-	end
-	if rx_knife then
-		local knife = npc:item_in_slot(knife_slot)
-		knife_prm = knife and rx_utils.read_from_ini(nil,knife:section(),"hit_power",1)*(knife:condition()+0.6) or -1
-	end
-	return weapon_prm,knife_prm
+    local weapon_prm, knife_prm
+    if weapon_manager then --	check type 0
+        weapon_prm = #weapon_manager.weapons > 0 and weapon_manager.weapons[1].prm or -1
+    else
+        local wpn = npc:best_weapon()
+        weapon_prm = wpn and rx_utils.item_is_fa(wpn) and rx_utils.get_wpn_type(wpn:section()) or -1
+    end
+    if rx_knife then
+        local knife = npc:item_in_slot(knife_slot)
+        knife_prm =
+            knife and rx_utils.read_from_ini(nil, knife:section(), "hit_power", 1) * (knife:condition() + 0.6) or -1
+    end
+    return weapon_prm, knife_prm
 end
 
-function lootable(item,cls_id)
-	if is_quest_item(item) then
-		return false
-	end
-	cls_id = cls_id or item:clsid()
-	if isWeapon(item,cls_id) and not rx_utils.item_is_grenade(nil,cls_id) then
-		if item:condition() < min_weapon_condition then
-			return false
-		elseif PR.take_best_weapons_only then
-			return cls_id == clsid.wpn_knife_s and best_knife_prm and (best_knife_prm == -1 or best_knife_prm < rx_utils.read_from_ini(nil,item:section(),"hit_power",1)*(item:condition()+0.6))
-			or rx_utils.item_is_fa(nil,cls_id) and best_weapon_prm < (weapon_manager and weapon_manager:get_weapon_prior(item) or rx_utils.get_wpn_type(item:section()) or 0)
-		else
-			return true
-		end
-	elseif artefact_clsids[cls_id] then
-		return PR.take_artefacts
-	elseif not PR.take_useful_items_only or useful_items[cls_id] then
-		return true
-	end
-	return false
+function lootable(item, cls_id)
+    if is_quest_item(item) then
+        return false
+    end
+    cls_id = cls_id or item:clsid()
+    if isWeapon(item, cls_id) and not rx_utils.item_is_grenade(nil, cls_id) then
+        if item:condition() < min_weapon_condition then
+            return false
+        elseif PR.take_best_weapons_only then
+            return cls_id == clsid.wpn_knife_s and best_knife_prm and
+                       (best_knife_prm == -1 or best_knife_prm <
+                           rx_utils.read_from_ini(nil, item:section(), "hit_power", 1) * (item:condition() + 0.6)) or
+                       rx_utils.item_is_fa(nil, cls_id) and best_weapon_prm <
+                       (weapon_manager and weapon_manager:get_weapon_prior(item) or
+                           rx_utils.get_wpn_type(item:section()) or 0)
+        else
+            return true
+        end
+    elseif artefact_clsids[cls_id] then
+        return PR.take_artefacts
+    elseif not PR.take_useful_items_only or useful_items[cls_id] then
+        return true
+    end
+    return false
 end
 
 function get_anim_slot(npc)
-	local wpn = npc:active_item()
-	if wpn and npc:weapon_unstrapped() then
-		return wpn:animation_slot()
-	end
-	return 0
+    local wpn = npc:active_item()
+    if wpn and npc:weapon_unstrapped() then
+        return wpn:animation_slot()
+    end
+    return 0
 end
 
-function near_anomaly(id,pos)
-	return false
+function near_anomaly(id, pos)
+    return false
 end
 
 function read_profile(npc, scheme, stor, section)
-	local pr = {}
-	-- 1 если профиль задан в логике
-	if section and stor.ini:line_exist(section,"corpse_detection_profile") then
-		table.insert(pr,stor.ini:r_string(section,"corpse_detection_profile"))
-	elseif stor.ini:line_exist(stor.section_logic,"corpse_detection_profile") then
-		table.insert(pr,stor.ini:r_string(stor.section_logic,"corpse_detection_profile"))
-	end
-	-- 2 если есть профиль имени
-	table.insert(pr,npc:profile_name())
-	-- 3 смарта
-	local sobj = alife():object(npc:id())
-	if sobj and sobj:smart_terrain_id() ~= 65535 then
-		local smart = alife():object(sobj:smart_terrain_id())
-		if smart then
-			table.insert(pr,smart:name())
-		end
-	end
-	-- 4 активной схемы
-	if scheme then
-		table.insert(pr,scheme)
-	end
-	-- 5 группировки
-	table.insert(pr,npc:character_community())
-	--
-	pr = rx_utils.collect_sections(cd_ini,pr,true)
-	local cnt = rx_utils.count_table(pr)
-	if cnt > 0 then
-		pr.meet = pr.meet and (pr.meet == "true" or pr.meet == "on")
-		pr.leisurely = pr.leisurely and (pr.leisurely == "true" or pr.leisurely == "on")
-		pr.keep_actor_haul = pr.keep_actor_haul and (pr.keep_actor_haul == "true" or pr.keep_actor_haul == "on")
-		pr.loot_items = pr.loot_items and (pr.loot_items == "true" or pr.loot_items == "on")
-		pr.loot_stalker = pr.loot_stalker and (pr.loot_stalker == "true" or pr.loot_stalker == "on")
-		pr.loot_mutant = pr.loot_mutant and (pr.loot_mutant == "true" or pr.loot_mutant == "on")
-		pr.gather_items_enabled = pr.gather_items_enabled and (pr.gather_items_enabled == "true" or pr.gather_items_enabled == "on")
-		pr.take_artefacts = pr.take_artefacts and (pr.take_artefacts == "true" or pr.take_artefacts == "on")
-		pr.take_best_weapons_only = pr.take_best_weapons_only and (pr.take_best_weapons_only == "true" or pr.take_best_weapons_only == "on")
-		pr.take_useful_items_only = pr.take_useful_items_only and (pr.take_useful_items_only == "true" or pr.take_useful_items_only == "on")
-		pr.min_loot_distance = sq(pr.min_loot_distance)
-		pr.max_loot_distance = sq(pr.max_loot_distance)
-	-- 5 default
-		setmetatable(pr,{__index = profile_default})
-	-- 6 story
-		if rx_utils.is_story_object(npc) then
-			for k,v in pairs(profile_story) do
-				if pr[k] ~= v then
-					if string.find(k,"loot_distance") then
-						pr[k] = math.min(pr[k],v)
-					elseif string.find(k,"loot_value") then
-						pr[k] = math.max(pr[k],v)
-					elseif pr[k] == profile_default[k] then
-						pr[k] = v
-					end
-				end
-			end
-		end
-	else
-		if rx_utils.is_story_object(npc) then
-			pr = profile_story
-		else
-			pr = profile_default
-		end
-	end
-	return pr
+    local pr = {}
+    -- 1 если профиль задан в логике
+    if section and stor.ini:line_exist(section, "corpse_detection_profile") then
+        table.insert(pr, stor.ini:r_string(section, "corpse_detection_profile"))
+    elseif stor.ini:line_exist(stor.section_logic, "corpse_detection_profile") then
+        table.insert(pr, stor.ini:r_string(stor.section_logic, "corpse_detection_profile"))
+    end
+    -- 2 если есть профиль имени
+    table.insert(pr, npc:profile_name())
+    -- 3 смарта
+    local sobj = alife():object(npc:id())
+    if sobj and sobj:smart_terrain_id() ~= 65535 then
+        local smart = alife():object(sobj:smart_terrain_id())
+        if smart then
+            table.insert(pr, smart:name())
+        end
+    end
+    -- 4 активной схемы
+    if scheme then
+        table.insert(pr, scheme)
+    end
+    -- 5 группировки
+    table.insert(pr, npc:character_community())
+    --
+    pr = rx_utils.collect_sections(cd_ini, pr, true)
+    local cnt = rx_utils.count_table(pr)
+    if cnt > 0 then
+        pr.meet = pr.meet and (pr.meet == "true" or pr.meet == "on")
+        pr.leisurely = pr.leisurely and (pr.leisurely == "true" or pr.leisurely == "on")
+        pr.keep_actor_haul = pr.keep_actor_haul and (pr.keep_actor_haul == "true" or pr.keep_actor_haul == "on")
+        pr.loot_items = pr.loot_items and (pr.loot_items == "true" or pr.loot_items == "on")
+        pr.loot_stalker = pr.loot_stalker and (pr.loot_stalker == "true" or pr.loot_stalker == "on")
+        pr.loot_mutant = pr.loot_mutant and (pr.loot_mutant == "true" or pr.loot_mutant == "on")
+        pr.gather_items_enabled = pr.gather_items_enabled and
+                                      (pr.gather_items_enabled == "true" or pr.gather_items_enabled == "on")
+        pr.take_artefacts = pr.take_artefacts and (pr.take_artefacts == "true" or pr.take_artefacts == "on")
+        pr.take_best_weapons_only = pr.take_best_weapons_only and
+                                        (pr.take_best_weapons_only == "true" or pr.take_best_weapons_only == "on")
+        pr.take_useful_items_only = pr.take_useful_items_only and
+                                        (pr.take_useful_items_only == "true" or pr.take_useful_items_only == "on")
+        pr.min_loot_distance = sq(pr.min_loot_distance)
+        pr.max_loot_distance = sq(pr.max_loot_distance)
+        -- 5 default
+        setmetatable(pr, {
+            __index = profile_default
+        })
+        -- 6 story
+        if rx_utils.is_story_object(npc) then
+            for k, v in pairs(profile_story) do
+                if pr[k] ~= v then
+                    if string.find(k, "loot_distance") then
+                        pr[k] = math.min(pr[k], v)
+                    elseif string.find(k, "loot_value") then
+                        pr[k] = math.max(pr[k], v)
+                    elseif pr[k] == profile_default[k] then
+                        pr[k] = v
+                    end
+                end
+            end
+        end
+    else
+        if rx_utils.is_story_object(npc) then
+            pr = profile_story
+        else
+            pr = profile_default
+        end
+    end
+    return pr
 end
 
 ----------------------------------------------------------------------------------------------------------------------
-function npc_death(npc,who)
-	local whodid = rx_utils.is_actor(who) and r_actor or rx_utils.is_anomaly(who) and r_anomaly
-	if not whodid then
-		return
-	end
-	local npc_id = npc:id()
-	-- запретить лут убитого
-	local weapon = npc:active_item()
-	if weapon then
-		restricted[weapon:id()] = whodid
-	end
-	restricted[npc_id] = whodid
-	rx_ai.save_var(npc,"cd_restr",whodid)
-	-- при убийстве лутающего НПС, запретить его цель
-	local cd = db.storage[npc_id].corpse_detection
-	if cd and cd.target_id then
-		restricted[cd.target_id] = whodid
-		if cd.is_corpse and db.storage[cd.target_id] then
-			local obj = level.object_by_id(cd.target_id)
-			if obj then
-				rx_ai.save_var(obj,"cd_restr",whodid)
-			end
-		end
-	end
+function npc_death(npc, who)
+    local whodid = rx_utils.is_actor(who) and r_actor or rx_utils.is_anomaly(who) and r_anomaly
+    if not whodid then
+        return
+    end
+    local npc_id = npc:id()
+    -- запретить лут убитого
+    local weapon = npc:active_item()
+    if weapon then
+        restricted[weapon:id()] = whodid
+    end
+    restricted[npc_id] = whodid
+    rx_ai.save_var(npc, "cd_restr", whodid)
+    -- при убийстве лутающего НПС, запретить его цель
+    local cd = db.storage[npc_id].corpse_detection
+    if cd and cd.target_id then
+        restricted[cd.target_id] = whodid
+        if cd.is_corpse and db.storage[cd.target_id] then
+            local obj = level.object_by_id(cd.target_id)
+            if obj then
+                rx_ai.save_var(obj, "cd_restr", whodid)
+            end
+        end
+    end
 end
 
 function actor_item_take(item)
-	restricted[item:id()] = nil
---	arts_time[item:id()] = nil	-- ARTEFACT ACTIVATION FIX
+    restricted[item:id()] = nil
+    --	arts_time[item:id()] = nil	-- ARTEFACT ACTIVATION FIX
 end
 
 function actor_net_spawn()
-	--level.add_call(function() return device().precache_frame < 2 end,fill_restricted_by_anomaly)
+    -- level.add_call(function() return device().precache_frame < 2 end,fill_restricted_by_anomaly)
 end
 --[==[ --Нам это не нужно, потому что система обхода аномалий сама исключит такие ситуации, нпсу просто запрещено заходить в аномалии, метод npc:accessible(...) не позволит.
 -- находит все предметы на уровне
@@ -1164,19 +1220,19 @@ end
 --]==]
 
 function corpse_net_spawn(npc)
-	local whodid = rx_ai.get_var(npc,"cd_restr")
-	if whodid then
-		restricted[npc:id()] = whodid
-	end
+    local whodid = rx_ai.get_var(npc, "cd_restr")
+    if whodid then
+        restricted[npc:id()] = whodid
+    end
 end
 
 function restricted_delete(obj)
-	restricted[obj:id()] = nil
-	rx_ai.save_var(obj,"cd_restr",nil)
+    restricted[obj:id()] = nil
+    rx_ai.save_var(obj, "cd_restr", nil)
 end
 
-function restricted_add(id,who)
-	restricted[id] = who == 'anomaly' and r_anomaly or who == 'actor' and r_actor or who
+function restricted_add(id, who)
+    restricted[id] = who == 'anomaly' and r_anomaly or who == 'actor' and r_actor or who
 end
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -1184,50 +1240,72 @@ end
 ----------------------------------------------------------------------------------------------------------------------
 
 animations = {
-	search_corpse = {	[0]	= { "cr_torso_0_check_corps_0",get_all_from_corpse },--no/knife
-						[1]	= { "cr_torso_1_check_corps_0",get_all_from_corpse },--pistol
-						[2]	= { "cr_torso_2_check_corps_0",get_all_from_corpse },--ak
-						[3]	= { "cr_torso_3_check_corps_0",get_all_from_corpse },--bm16
-						[4]	= { "cr_torso_4_check_corps_0",get_all_from_corpse },--rpg
-						[8]	= { "cr_torso_8_check_corps_0",get_all_from_corpse },--groza
-						[9]	= { "cr_torso_9_check_corps_0",get_all_from_corpse },--shotgun
-						[10]= { "cr_torso_10_check_corps_0",get_all_from_corpse },--rg6
-						bodystate = move.crouch,
-					},
+    search_corpse = {
+        [0] = {"cr_torso_0_check_corps_0", get_all_from_corpse}, -- no/knife
+        [1] = {"cr_torso_1_check_corps_0", get_all_from_corpse}, -- pistol
+        [2] = {"cr_torso_2_check_corps_0", get_all_from_corpse}, -- ak
+        [3] = {"cr_torso_3_check_corps_0", get_all_from_corpse}, -- bm16
+        [4] = {"cr_torso_4_check_corps_0", get_all_from_corpse}, -- rpg
+        [8] = {"cr_torso_8_check_corps_0", get_all_from_corpse}, -- groza
+        [9] = {"cr_torso_9_check_corps_0", get_all_from_corpse}, -- shotgun
+        [10] = {"cr_torso_10_check_corps_0", get_all_from_corpse}, -- rg6
+        bodystate = move.crouch
+    },
 
-	search_corpse_high = {	[0]	= { "poisk_0_idle_0",get_all_from_corpse },
-							[1]	= { "poisk_1_idle_2",get_all_from_corpse },
-							[2]	= { "poisk_2_idle_2",get_all_from_corpse },
-							[3]	= { "poisk_1_idle_2",get_all_from_corpse },
-							[4]	= { "poisk_4_idle_0",get_all_from_corpse },
-							[8]	= { "poisk_8_idle_2",get_all_from_corpse },
-							[9]	= { "poisk_9_idle_2",get_all_from_corpse },
-							[10]= { "poisk_1_idle_2",get_all_from_corpse },
-							bodystate = move.standing,
-						},
+    search_corpse_high = {
+        [0] = {"poisk_0_idle_0", get_all_from_corpse},
+        [1] = {"poisk_1_idle_2", get_all_from_corpse},
+        [2] = {"poisk_2_idle_2", get_all_from_corpse},
+        [3] = {"poisk_1_idle_2", get_all_from_corpse},
+        [4] = {"poisk_4_idle_0", get_all_from_corpse},
+        [8] = {"poisk_8_idle_2", get_all_from_corpse},
+        [9] = {"poisk_9_idle_2", get_all_from_corpse},
+        [10] = {"poisk_1_idle_2", get_all_from_corpse},
+        bodystate = move.standing
+    },
 
-	loot_monster = { [0] = { {"d_0_idle_0","d_0_idle_2"},chik,"cr_all_7_attack_2",get_all_from_corpse }, bodystate = move.crouch, weapon = "strapped"},
+    loot_monster = {
+        [0] = {{"d_0_idle_0", "d_0_idle_2"}, chik, "cr_all_7_attack_2", get_all_from_corpse},
+        bodystate = move.crouch,
+        weapon = "strapped"
+    },
 
-	loot_monster_knife = { [0] = { {"d_0_idle_0","d_0_idle_2"},chik,"cr_all_5_attack_1",chik,{"cr_all_5_attack_0","cr_all_5_attack_1"},"cr_all_7_attack_2",get_all_from_corpse }, bodystate = move.crouch, weapon = "knife"},
+    loot_monster_knife = {
+        [0] = {{"d_0_idle_0", "d_0_idle_2"}, chik, "cr_all_5_attack_1", chik,
+               {"cr_all_5_attack_0", "cr_all_5_attack_1"}, "cr_all_7_attack_2", get_all_from_corpse},
+        bodystate = move.crouch,
+        weapon = "knife"
+    },
 
-	grab_item = { [0] = { "cr_raciya_0_hide_1",grab_item,"cr_raciya_0_draw_0" }, bodystate = move.crouch, weapon = "one-handed"},
+    grab_item = {
+        [0] = {"cr_raciya_0_hide_1", grab_item, "cr_raciya_0_draw_0"},
+        bodystate = move.crouch,
+        weapon = "one-handed"
+    },
 
-	grab_item_high = { [0] = { "cr_all_7_attack_2",grab_item }, bodystate = move.crouch, weapon = "strapped"},
+    grab_item_high = {
+        [0] = {"cr_all_7_attack_2", grab_item},
+        bodystate = move.crouch,
+        weapon = "strapped"
+    }
 
 }
 
-for k1,v1 in pairs(animations) do
-	for k2,v2 in pairs(v1) do
-		if type(v2) == "table" then
-			local at,ft = {},{}
-			for _,v3 in ipairs(v2) do
-				if type(v3) == "function" then
-					ft[#at] = v3
-				else
-					table.insert(at,v3)
-				end
-			end
-			v1[k2] = {a = at,f = ft}
-		end
-	end
+for k1, v1 in pairs(animations) do
+    for k2, v2 in pairs(v1) do
+        if type(v2) == "table" then
+            local at, ft = {}, {}
+            for _, v3 in ipairs(v2) do
+                if type(v3) == "function" then
+                    ft[#at] = v3
+                else
+                    table.insert(at, v3)
+                end
+            end
+            v1[k2] = {
+                a = at,
+                f = ft
+            }
+        end
+    end
 end

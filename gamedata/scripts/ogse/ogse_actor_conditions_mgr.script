@@ -1,344 +1,316 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 -- минимальная и максимальная амплитуда раскачки ходьбы
 local BOBBING_MIN = 1.5
 local BOBBING_MAX = 6
 
-
 function attach( sm ) -- для менеджера сигналов
-  if get_con_string("g_god ") == "off" then
-    sm:subscribe({ signal = "on_first_update",   fun = this.on_first_update   })
-    sm:subscribe({ signal = "on_mm_return_game", fun = this.on_mm_return_game })
-    sm:subscribe({
-      signal = "update_artefacts_on_belt", fun = this.update_artefacts_on_belt,
-      [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"
-    })
-  end
+    if get_con_string("g_god ") == "off" then
+        sm:subscribe({signal = "on_first_update",           fun = this.on_first_update   })
+        sm:subscribe({signal = "on_mm_return_game",         fun = this.on_mm_return_game })
+        sm:subscribe({signal = "update_artefacts_on_belt",  fun = this.update_artefacts_on_belt, [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"})
+    end
 end
 
-
 -- читаем глобальные параметры эффектов здоровья
-local satiety_v = get_float( "actor_condition", "satiety_v" )
-local light_hunger_limit = get_float( "actor_condition", "satiety_light_limit" )
+local satiety_v = get_float("actor_condition", "satiety_v")
+local light_hunger_limit = get_float("actor_condition", "satiety_light_limit")
 
-local def_stand_power = get_float( "actor_condition", "stand_power" )
+local def_stand_power = get_float("actor_condition", "stand_power")
 local cur_stand_power = def_stand_power
 
-local satiety_health_v    = get_float( "actor_condition", "satiety_health_v" )
-local satiety_power_v     = get_float( "actor_condition", "satiety_power_v"  )
-local wound_incarnation_v = get_float(
-  "actor_condition", "wound_incarnation_v"
-)
+local satiety_health_v = get_float("actor_condition", "satiety_health_v")
+local satiety_power_v = get_float("actor_condition", "satiety_power_v")
+local wound_incarnation_v = get_float("actor_condition", "wound_incarnation_v")
 
-local sprint_koef     = get_float( "actor", "sprint_koef" )
+local sprint_koef = get_float("actor", "sprint_koef")
 local cur_sprint_koef = sprint_koef
 local override_sprint_koef
 
-local walk_accel     = get_float( "actor", "walk_accel" )
+local walk_accel = get_float("actor", "walk_accel")
 local min_walk_accel = 6
 local override_walk_accel
 
-local def_jump_power = get_float( "actor_condition", "jump_power" )
+local def_jump_power = get_float("actor_condition", "jump_power")
 local cur_jump_power = def_jump_power
 local override_jump_power
 
-local overweight_jump_k = get_float( "actor_condition", "overweight_jump_k" )
-local overweight_walk_k = get_float( "actor_condition", "overweight_walk_k" )
+local overweight_jump_k = get_float("actor_condition", "overweight_jump_k")
+local overweight_walk_k = get_float("actor_condition", "overweight_walk_k")
 
-local jump_speed     = get_float( "actor", "jump_speed" )
+local jump_speed = get_float("actor", "jump_speed")
 local cur_jump_speed = jump_speed
 local override_jump_speed
 
-local limp_amp = get_float( "bobbing_effector", "limp_amplitude" )
-local run_amp  = get_float( "bobbing_effector", "run_amplitude"  )
-local walk_amp = get_float( "bobbing_effector", "walk_amplitude" )
-
+local limp_amp = get_float("bobbing_effector", "limp_amplitude")
+local run_amp = get_float("bobbing_effector", "run_amplitude")
+local walk_amp = get_float("bobbing_effector", "walk_amplitude")
 
 local cur_cam_inert, new_cam_inert
 local health_t, satiety_t
 
 function on_first_update()
-  if db.actor.health < 0.9 then
-    health_t = 0
-  end
-  if db.actor.satiety < light_hunger_limit then
-    satiety_t = 0
-  end
-  local sm = ogsr_signals.get_mgr()
-  sm:subscribe({
-    signal = "on_update", fun = this.apply_weight,
-    [ "script_name" ] = "ogse_actor_conditions_mgr.apply_weight"
-  })
-  sm:subscribe({
-    signal = "on_update", fun = this.apply_conds,
-    [ "script_name" ] = "ogse_actor_conditions_mgr.apply_conds"
-  })
+    if db.actor.health < 0.9 then
+        health_t = 0
+    end
+    if db.actor.satiety < light_hunger_limit then
+        satiety_t = 0
+    end
+    local sm = ogsr_signals.get_mgr()
+    sm:subscribe({
+        signal = "on_update",
+        fun = this.apply_weight,
+        ["script_name"] = "ogse_actor_conditions_mgr.apply_weight"
+    })
+    sm:subscribe({
+        signal = "on_update",
+        fun = this.apply_conds,
+        ["script_name"] = "ogse_actor_conditions_mgr.apply_conds"
+    })
 end
-
 
 has_overweight = false
 local cur_walk_accel = walk_accel - min_walk_accel
 local ext_walk_accel = 0
 local override_power = 1
 local use_overweight = true
-local overweight_k   = 0
+local overweight_k = 0
 
 local ext = {
-  [ "alcohol_restore_speed"    ] = 0,
-  [ "bleeding_restore_speed"   ] = 0,
-  [ "health_restore_speed"     ] = 0,
-  [ "jump_speed_add"           ] = 0,
-  [ "power_restore_speed"      ] = 0,
-  [ "psy_health_restore_speed" ] = 0,
-  [ "radiation_restore_speed"  ] = 0,
-  [ "satiety_restore_speed"    ] = 0,
-  [ "sprint_koef_add"          ] = 0,
-  [ "walk_accel_add"           ] = 0,
+    ["alcohol_restore_speed"] = 0,
+    ["bleeding_restore_speed"] = 0,
+    ["health_restore_speed"] = 0,
+    ["jump_speed_add"] = 0,
+    ["power_restore_speed"] = 0,
+    ["psy_health_restore_speed"] = 0,
+    ["radiation_restore_speed"] = 0,
+    ["satiety_restore_speed"] = 0,
+    ["sprint_koef_add"] = 0,
+    ["walk_accel_add"] = 0
 }
 
-function update_artefacts_on_belt( dt )
-  for k, v in pairs( ext ) do
-    ext[ k ] = 0
-  end
-  ogsr_signals.get_mgr():call( "on_before_actor_conditions_update", ext, dt )
-
-  local act = db.actor
-  local cur_satiety_v = satiety_v
-    * ( 1 - math.min( act.health, override_power ) )
-  local aobj = get_actor_obj()
-  if aobj:is_actor_sprinting() or aobj:is_actor_climbing() then
-    cur_satiety_v = cur_satiety_v + satiety_v
-  end
-
-  if act.health < 1 then
-    local belt_health_restore_speed = inventory.on_belt_restore_speed_pos(
-      "health_restore_speed"
-    )
-    if belt_health_restore_speed then
-      cur_satiety_v = cur_satiety_v
-        + satiety_v * 2 * ( belt_health_restore_speed / satiety_health_v )
+function update_artefacts_on_belt(dt)
+    for k, v in pairs(ext) do
+        ext[k] = 0
     end
-  end
+    ogsr_signals.get_mgr():call("on_before_actor_conditions_update", ext, dt)
 
-  if act:get_bleeding() > 0 then
-    local belt_bleeding_restore_speed = inventory.on_belt_restore_speed_pos(
-      "bleeding_restore_speed"
-    )
-    if belt_bleeding_restore_speed then
-      cur_satiety_v = cur_satiety_v
-        + satiety_v * 2 * ( belt_bleeding_restore_speed / wound_incarnation_v )
+    local act = db.actor
+    local cur_satiety_v = satiety_v * (1 - math.min(act.health, override_power))
+    local aobj = get_actor_obj()
+    if aobj:is_actor_sprinting() or aobj:is_actor_climbing() then
+        cur_satiety_v = cur_satiety_v + satiety_v
     end
-  end
 
-  local cur_power_restore_speed = (
-    inventory.on_belt_restore_speed_pos( "power_restore_speed" ) or 0
-  ) + ext.power_restore_speed
-  if cur_power_restore_speed > 0 then
-    cur_satiety_v = cur_satiety_v
-      + satiety_v * 2 * ( cur_power_restore_speed / satiety_power_v / 100 )
-  end
-
-  local summary_health_effect            = ext.health_restore_speed
-  local summary_satiety_effect           = cur_satiety_v + ext.satiety_restore_speed
-  local summary_power_effect             = ext.power_restore_speed
-  local summary_bleeding_restore_effect  = ext.bleeding_restore_speed
-  local summary_psy_health_effect        = ext.psy_health_restore_speed
-  local summary_radiation_restore_effect = ext.radiation_restore_speed
-  local summary_alcohol_effect           = ext.alcohol_restore_speed
-
-  act.health    = summary_health_effect * dt
-  act.radiation = summary_radiation_restore_effect * dt
-  act.satiety   = -summary_satiety_effect * dt
-
-  if not ogse_sleep_mgr.is_sleep_active() then
-    if summary_power_effect > 0 then
-      summary_power_effect = summary_power_effect
-        * ( 1 - dsh_sleep.want_sleep_k() )
+    if act.health < 1 then
+        local belt_health_restore_speed = inventory.on_belt_restore_speed_pos("health_restore_speed")
+        if belt_health_restore_speed then
+            cur_satiety_v = cur_satiety_v + satiety_v * 2 * (belt_health_restore_speed / satiety_health_v)
+        end
     end
-    act.power = summary_power_effect * dt
-  end
 
-  if math.abs( summary_bleeding_restore_effect ) > 0 then
     if act:get_bleeding() > 0 then
-      act:heal_wounds( summary_bleeding_restore_effect * dt )
+        local belt_bleeding_restore_speed = inventory.on_belt_restore_speed_pos("bleeding_restore_speed")
+        if belt_bleeding_restore_speed then
+            cur_satiety_v = cur_satiety_v + satiety_v * 2 * (belt_bleeding_restore_speed / wound_incarnation_v)
+        end
     end
-  end
 
-  if math.abs( summary_psy_health_effect ) > 0 then
-    act.psy_health = summary_psy_health_effect * dt
-  end
+    local cur_power_restore_speed = (inventory.on_belt_restore_speed_pos("power_restore_speed") or 0) +
+                                        ext.power_restore_speed
+    if cur_power_restore_speed > 0 then
+        cur_satiety_v = cur_satiety_v + satiety_v * 2 * (cur_power_restore_speed / satiety_power_v / 100)
+    end
 
-  if math.abs( summary_alcohol_effect ) > 0 then
-    act.alcohol = summary_alcohol_effect * dt
-  end
+    local summary_health_effect = ext.health_restore_speed
+    local summary_satiety_effect = cur_satiety_v + ext.satiety_restore_speed
+    local summary_power_effect = ext.power_restore_speed
+    local summary_bleeding_restore_effect = ext.bleeding_restore_speed
+    local summary_psy_health_effect = ext.psy_health_restore_speed
+    local summary_radiation_restore_effect = ext.radiation_restore_speed
+    local summary_alcohol_effect = ext.alcohol_restore_speed
 
-  cur_jump_speed  = override_jump_speed or (
-    jump_speed + ext.jump_speed_add
-  )
-  cur_sprint_koef = override_sprint_koef or (
-    sprint_koef + ext.sprint_koef_add
-  )
-  ext_walk_accel  = ext.walk_accel_add
+    act.health = summary_health_effect * dt
+    act.radiation = summary_radiation_restore_effect * dt
+    act.satiety = -summary_satiety_effect * dt
+
+    if not ogse_sleep_mgr.is_sleep_active() then
+        if summary_power_effect > 0 then
+            summary_power_effect = summary_power_effect * (1 - dsh_sleep.want_sleep_k())
+        end
+        act.power = summary_power_effect * dt
+    end
+
+    if math.abs(summary_bleeding_restore_effect) > 0 then
+        if act:get_bleeding() > 0 then
+            act:heal_wounds(summary_bleeding_restore_effect * dt)
+        end
+    end
+
+    if math.abs(summary_psy_health_effect) > 0 then
+        act.psy_health = summary_psy_health_effect * dt
+    end
+
+    if math.abs(summary_alcohol_effect) > 0 then
+        act.alcohol = summary_alcohol_effect * dt
+    end
+
+    cur_jump_speed = override_jump_speed or (jump_speed + ext.jump_speed_add)
+    cur_sprint_koef = override_sprint_koef or (sprint_koef + ext.sprint_koef_add)
+    ext_walk_accel = ext.walk_accel_add
 end
-
 
 function disable_sprint()
-  set_sprint( 1 )
+    set_sprint(1)
 end
-function set_sprint( koef )
-  override_sprint_koef = koef
+function set_sprint(koef)
+    override_sprint_koef = koef
 end
 function restore_sprint()
-  set_sprint( nil )
+    set_sprint(nil)
 end
 
-
-function change_jump_power( k )
-  override_jump_power = k
+function change_jump_power(k)
+    override_jump_power = k
 end
 
-
-function change_jump_speed( k )
-  override_jump_speed = k
-  set_jump_speed( override_jump_speed or cur_jump_speed )
+function change_jump_speed(k)
+    override_jump_speed = k
+    set_jump_speed(override_jump_speed or cur_jump_speed)
 end
 
-
-function change_walk_accel( k )
-  override_walk_accel = k
-  set_walk_accel( override_walk_accel or ( min_walk_accel + cur_walk_accel ) )
+function change_walk_accel(k)
+    override_walk_accel = k
+    set_walk_accel(override_walk_accel or (min_walk_accel + cur_walk_accel))
 end
-
 
 function get_overweight_power()
-  return override_power
+    return override_power
 end
 
-
-function switch_use_overweight( mode )
-  use_overweight = mode and true or false
+function switch_use_overweight(mode)
+    use_overweight = mode and true or false
 end
-
 
 function apply_weight()
-  ogsr_signals.get_mgr():reschedule( 1000 )
-  local inv_weight = db.actor:get_inventory_weight()
-  local max_weight = db.actor:get_max_weight()
-  if inv_weight > max_weight and use_overweight then
-    has_overweight    = true
-    local walk_weight = db.actor:get_max_walk_weight()
-    if inv_weight > walk_weight then inv_weight = walk_weight end
-    overweight_k = ( inv_weight - max_weight ) / ( walk_weight - max_weight )
-    set_overweight_jump_k( 1 + ( overweight_jump_k - 1 ) * overweight_k )
-    set_overweight_walk_k( 1 + ( overweight_walk_k - 1 ) * overweight_k )
-  else
-    has_overweight = false
-    overweight_k   = 0
-    set_overweight_jump_k( 1 )
-    set_overweight_walk_k( 1 )
-  end
+    ogsr_signals.get_mgr():reschedule(1000)
+    local inv_weight = db.actor:get_inventory_weight()
+    local max_weight = db.actor:get_max_weight()
+    if inv_weight > max_weight and use_overweight then
+        has_overweight = true
+        local walk_weight = db.actor:get_max_walk_weight()
+        if inv_weight > walk_weight then
+            inv_weight = walk_weight
+        end
+        overweight_k = (inv_weight - max_weight) / (walk_weight - max_weight)
+        set_overweight_jump_k(1 + (overweight_jump_k - 1) * overweight_k)
+        set_overweight_walk_k(1 + (overweight_walk_k - 1) * overweight_k)
+    else
+        has_overweight = false
+        overweight_k = 0
+        set_overweight_jump_k(1)
+        set_overweight_walk_k(1)
+    end
 end
-
 
 function apply_conds()
-  ogsr_signals.get_mgr():reschedule( 1000 )
+    ogsr_signals.get_mgr():reschedule(1000)
 
-  cur_walk_accel = walk_accel - min_walk_accel
-  local act = db.actor
-  if act.satiety < light_hunger_limit then
-    if not satiety_t then satiety_t = time_global() + 30000 end
-    if satiety_t < time_global() then
-      cur_walk_accel = cur_walk_accel * ( act.satiety / light_hunger_limit )
-    end
-  else
-    satiety_t = nil
-  end
-  if act.health < 0.9 then
-    if not health_t then health_t = time_global() + 30000 end
-    if health_t < time_global() then
-      cur_walk_accel = cur_walk_accel * ( act.health / 0.9 )
-    end
-  else
-    health_t = nil
-  end
-
-  if has_overweight and use_overweight then
-    local k2       = 1 - overweight_k
-    cur_walk_accel = cur_walk_accel * k2
-    new_cam_inert  = overweight_k
-    if k2 < 0.1 then
-      override_power = 0.1
+    cur_walk_accel = walk_accel - min_walk_accel
+    local act = db.actor
+    if act.satiety < light_hunger_limit then
+        if not satiety_t then
+            satiety_t = time_global() + 30000
+        end
+        if satiety_t < time_global() then
+            cur_walk_accel = cur_walk_accel * (act.satiety / light_hunger_limit)
+        end
     else
-      override_power = k2
+        satiety_t = nil
     end
-  else
-    override_power = 1
-    new_cam_inert  = 0
-  end
-
-  if act.power < 0.8 then
-    local power_inert = 1 - act.power / 0.8
-    if power_inert > new_cam_inert then new_cam_inert = power_inert end
-    if act.power < 0.3 then
-      cur_walk_accel = cur_walk_accel * ( act.power / 0.3 )
+    if act.health < 0.9 then
+        if not health_t then
+            health_t = time_global() + 30000
+        end
+        if health_t < time_global() then
+            cur_walk_accel = cur_walk_accel * (act.health / 0.9)
+        end
+    else
+        health_t = nil
     end
-  end
-  local want_sleep_k = 1 - dsh_sleep.want_sleep_k()
-  cur_walk_accel = ( cur_walk_accel + ext_walk_accel ) * want_sleep_k
 
-  cur_jump_power = override_jump_power or def_jump_power
-  if act.satiety < light_hunger_limit and satiety_t < time_global() then
-    cur_jump_power = cur_jump_power + (
-      ( 0.4 - cur_jump_power ) * ( 1 - ( act.satiety / light_hunger_limit ) )
-    )
-  end
-  if act.health < 0.9 and health_t < time_global() then
-    cur_jump_power = cur_jump_power + (
-      ( 0.4 - cur_jump_power ) * ( 1 - ( act.health / 0.9 ) )
-    )
-    if act.health < 0.8 then
-      local health_inert = 0.8 - act.health
-      if health_inert > new_cam_inert then new_cam_inert = health_inert end
+    if has_overweight and use_overweight then
+        local k2 = 1 - overweight_k
+        cur_walk_accel = cur_walk_accel * k2
+        new_cam_inert = overweight_k
+        if k2 < 0.1 then
+            override_power = 0.1
+        else
+            override_power = k2
+        end
+    else
+        override_power = 1
+        new_cam_inert = 0
     end
-  end
 
-  set_sprint_factor( cur_sprint_koef * want_sleep_k )
-  set_walk_accel(
-    override_walk_accel or ( min_walk_accel + cur_walk_accel )
-  )
-  if cur_walk_accel < 1 then
-    set_jump_speed( 0 )
-  else
-    set_jump_speed( cur_jump_speed * want_sleep_k )
-  end
-  set_jump_power( cur_jump_power )
-  set_stand_power( cur_stand_power * want_sleep_k )
-
-  if new_cam_inert ~= cur_cam_inert then
-    local bobbing_eff = level.get_effector_bobbing()
-    if bobbing_eff then
-      if new_cam_inert > 0 then
-        local k = BOBBING_MIN + new_cam_inert * ( BOBBING_MAX - BOBBING_MIN )
-        bobbing_eff.limp_amplitude = limp_amp * k
-        bobbing_eff.run_amplitude  = run_amp  * k
-        bobbing_eff.walk_amplitude = walk_amp * k
-        cur_cam_inert = new_cam_inert
-      else
-        bobbing_eff.limp_amplitude = limp_amp
-        bobbing_eff.run_amplitude  = run_amp
-        bobbing_eff.walk_amplitude = walk_amp
-        cur_cam_inert = 0
-      end
+    if act.power < 0.8 then
+        local power_inert = 1 - act.power / 0.8
+        if power_inert > new_cam_inert then
+            new_cam_inert = power_inert
+        end
+        if act.power < 0.3 then
+            cur_walk_accel = cur_walk_accel * (act.power / 0.3)
+        end
     end
-  end
+    local want_sleep_k = 1 - dsh_sleep.want_sleep_k()
+    cur_walk_accel = (cur_walk_accel + ext_walk_accel) * want_sleep_k
+
+    cur_jump_power = override_jump_power or def_jump_power
+    if act.satiety < light_hunger_limit and satiety_t < time_global() then
+        cur_jump_power = cur_jump_power + ((0.4 - cur_jump_power) * (1 - (act.satiety / light_hunger_limit)))
+    end
+    if act.health < 0.9 and health_t < time_global() then
+        cur_jump_power = cur_jump_power + ((0.4 - cur_jump_power) * (1 - (act.health / 0.9)))
+        if act.health < 0.8 then
+            local health_inert = 0.8 - act.health
+            if health_inert > new_cam_inert then
+                new_cam_inert = health_inert
+            end
+        end
+    end
+
+    set_sprint_factor(cur_sprint_koef * want_sleep_k)
+    set_walk_accel(override_walk_accel or (min_walk_accel + cur_walk_accel))
+    if cur_walk_accel < 1 then
+        set_jump_speed(0)
+    else
+        set_jump_speed(cur_jump_speed * want_sleep_k)
+    end
+    set_jump_power(cur_jump_power)
+    set_stand_power(cur_stand_power * want_sleep_k)
+
+    if new_cam_inert ~= cur_cam_inert then
+        local bobbing_eff = level.get_effector_bobbing()
+        if bobbing_eff then
+            if new_cam_inert > 0 then
+                local k = BOBBING_MIN + new_cam_inert * (BOBBING_MAX - BOBBING_MIN)
+                bobbing_eff.limp_amplitude = limp_amp * k
+                bobbing_eff.run_amplitude = run_amp * k
+                bobbing_eff.walk_amplitude = walk_amp * k
+                cur_cam_inert = new_cam_inert
+            else
+                bobbing_eff.limp_amplitude = limp_amp
+                bobbing_eff.run_amplitude = run_amp
+                bobbing_eff.walk_amplitude = walk_amp
+                cur_cam_inert = 0
+            end
+        end
+    end
 end
-
 
 function on_mm_return_game()
-  cur_cam_inert = 0
+    cur_cam_inert = 0
 end
 
-
 function get_satiety_v()
-  return satiety_v
+    return satiety_v
 end

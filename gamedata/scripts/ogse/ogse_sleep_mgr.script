@@ -1,139 +1,135 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 -----------------------------------------------------------------------
 --- ogse_sleep_mgr.script
---- Менеджер сна и бодрствования ГГ
---- Исходная версия: xStream, Ab@dDon & DEXXX 2007-2008
---- Правки и адаптация: KamikaZze, Dusty79 (c) OGS Evolution Team
---- Версия 2: Malandrinus
+--- РњРµРЅРµРґР¶РµСЂ СЃРЅР° Рё Р±РѕРґСЂСЃС‚РІРѕРІР°РЅРёСЏ Р“Р“
+--- РСЃС…РѕРґРЅР°СЏ РІРµСЂСЃРёСЏ: xStream, Ab@dDon & DEXXX 2007-2008
+--- РџСЂР°РІРєРё Рё Р°РґР°РїС‚Р°С†РёСЏ: KamikaZze, Dusty79 (c) OGS Evolution Team
+--- Р’РµСЂСЃРёСЏ 2: Malandrinus
 --- version 2.1.1 (02/2013)
 -----------------------------------------------------------------------
-
-function attach( sm )
+function attach(sm)
 end
-
 
 local sleeping_now = false
 function is_sleep_active()
-  return sleeping_now
+    return sleeping_now
 end
 
-
-local break_sleep_request = false -- флажок запроса на прерывание сна
-function break_sleep()            -- принудительное прерывание сна
-  break_sleep_request = true
+local break_sleep_request = false -- С„Р»Р°Р¶РѕРє Р·Р°РїСЂРѕСЃР° РЅР° РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР°
+function break_sleep() -- РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕРµ РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР°
+    break_sleep_request = true
 end
 
 local snd_volume_eff
 local snd_volume_music
 
-function begin_sleep( desired_sleep_time )
-  -- если кто-то запрашивал прерывание сна во время бодрствования, то
-  -- сбрасываем это
-  break_sleep_request = false
-  db.actor:stop_talk()
-  level.disable_input()
-  level.add_cam_effector("camera_effects\\surge_02.anm", 6666, false, "")
-  level.add_pp_effector("surge_fade.ppe", 11, false)
-  level.add_pp_effector( "black.ppe", 105, false )
-  dsh.level_timeout( 2000, function() begin_sleep2( desired_sleep_time ) end )
-  snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
-  snd_volume_music = get_con_float("snd_volume_music", 1.0)
-  cmd("snd_volume_eff", 0.0)
-  cmd("snd_volume_music", 0.0)
+function begin_sleep(desired_sleep_time)
+    -- РµСЃР»Рё РєС‚Рѕ-С‚Рѕ Р·Р°РїСЂР°С€РёРІР°Р» РїСЂРµСЂС‹РІР°РЅРёРµ СЃРЅР° РІРѕ РІСЂРµРјСЏ Р±РѕРґСЂСЃС‚РІРѕРІР°РЅРёСЏ, С‚Рѕ
+    -- СЃР±СЂР°СЃС‹РІР°РµРј СЌС‚Рѕ
+    break_sleep_request = false
+    db.actor:stop_talk()
+    level.disable_input()
+    level.add_cam_effector("camera_effects\\surge_02.anm", 6666, false, "")
+    level.add_pp_effector("surge_fade.ppe", 11, false)
+    level.add_pp_effector("black.ppe", 105, false)
+    dsh.level_timeout(2000, function()
+        begin_sleep2(desired_sleep_time)
+    end)
+    snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
+    snd_volume_music = get_con_float("snd_volume_music", 1.0)
+    cmd("snd_volume_eff", 0.0)
+    cmd("snd_volume_music", 0.0)
 end
 
+function begin_sleep2(desired_sleep_time)
+    local sm = ogsr_signals.get_mgr()
+    sm:call("on_before_sleep", desired_sleep_time)
+    sleeping_now = true
+    local urgent_awakening = false
+    local start_sleep_time = game.get_game_time()
+    -- РєР°Р¶РґС‹Р№ С‡Р°СЃ СЃРЅР° РґРµР»РёРј РЅР° РїРµСЂРёРѕРґС‹ РїРѕ 15 РјРёРЅСѓС‚ (4 РѕС‚СЃС‡С‘С‚Р° РЅР° С‡Р°СЃ)
+    local sleep_counts = math.ceil(desired_sleep_time * 4)
+    local dt_ms = math.ceil(desired_sleep_time * 3600 * 1000 / sleep_counts)
+    local prev_health = db.actor.health
+    local aobj = get_actor_obj()
 
-function begin_sleep2( desired_sleep_time )
-  local sm = ogsr_signals.get_mgr()
-  sm:call( "on_before_sleep", desired_sleep_time )
-  sleeping_now = true
-  local urgent_awakening = false
-  local start_sleep_time = game.get_game_time()
-  -- каждый час сна делим на периоды по 15 минут (4 отсчёта на час)
-  local sleep_counts     = math.ceil( desired_sleep_time * 4 )
-  local dt_ms            = math.ceil(
-    desired_sleep_time * 3600 * 1000 / sleep_counts
-  )
-  local prev_health      = db.actor.health
-  local aobj             = get_actor_obj()
-
-  local surge_dt = dsh_cop_weather.get_surge_time() * 3600 * 1000
-  for i = 1, sleep_counts do
-    -- переводим стрелки
-    level.advance_game_time( dt_ms )
-    -- обновляем движковые эффекты здоровья
-    db.actor:update_condition()
-    aobj:UpdateArtefactsOnBelt()
-    sm:call( "on_actor_update", 0 )
-    sm:call( "on_update", 0 )
-    -- проверяем останов по разным событиям
-    if break_sleep_request then -- кто-то запросил останов сна
-      urgent_awakening = true
-      break
+    local surge_dt = dsh_cop_weather.get_surge_time() * 3600 * 1000
+    for i = 1, sleep_counts do
+        -- РїРµСЂРµРІРѕРґРёРј СЃС‚СЂРµР»РєРё
+        level.advance_game_time(dt_ms)
+        -- РѕР±РЅРѕРІР»СЏРµРј РґРІРёР¶РєРѕРІС‹Рµ СЌС„С„РµРєС‚С‹ Р·РґРѕСЂРѕРІСЊСЏ
+        db.actor:update_condition()
+        aobj:UpdateArtefactsOnBelt()
+        sm:call("on_actor_update", 0)
+        sm:call("on_update", 0)
+        -- РїСЂРѕРІРµСЂСЏРµРј РѕСЃС‚Р°РЅРѕРІ РїРѕ СЂР°Р·РЅС‹Рј СЃРѕР±С‹С‚РёСЏРј
+        if break_sleep_request then -- РєС‚Рѕ-С‚Рѕ Р·Р°РїСЂРѕСЃРёР» РѕСЃС‚Р°РЅРѕРІ СЃРЅР°
+            urgent_awakening = true
+            break
+        end
+        -- РЅР°С‡Р°Р»СЃСЏ РІС‹Р±СЂРѕСЃ
+        if has_alife_info("pre_blowout") then
+            -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
+            urgent_awakening = true
+            break
+        end
+        -- РЅР°С‡РёРЅР°РµС‚СЃСЏ РІС‹Р±СЂРѕСЃ
+        if dsh_cop_weather.get_weather_mgr():is_surge_in_process() then
+            -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
+            urgent_awakening = true
+            break
+        end
+        -- РІ СЃР»РµРґСѓСЋС‰РµР№ РёС‚РµСЂР°С†РёРё РЅР°С‡РЅРµС‚СЃСЏ РІС‹Р±СЂРѕСЃ
+        surge_dt = surge_dt - dt_ms
+        if surge_dt < dt_ms then
+            urgent_awakening = true
+            break
+        end
+        -- РїСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РѕСЃС‚Р°РЅРѕРІР° СЃРЅР° РїРѕ СЃРѕСЃС‚РѕСЏРЅРёСЋ Р·РґРѕСЂРѕРІСЊСЏ
+        local cur_health = db.actor.health
+        local dh = cur_health - prev_health
+        if cur_health < 0.1 and dh < 0 then
+            -- Р·РґРѕСЂРѕРІСЊРµ СЃРЅРёР·РёР»РѕСЃСЊ РґРѕ РєСЂРёС‚РёС‡РµСЃРєРѕР№ РІРµР»РёС‡РёРЅС‹ Рё РїСЂРѕРґРѕР»Р¶Р°РµС‚ СЃРЅРёР¶Р°С‚СЊСЃСЏ
+            -- ogse.autohiding_msg( "ogse_sleep_mgr_warn_4_text", 1500 )
+            urgent_awakening = true
+            break
+        end
+        prev_health = cur_health
     end
-    -- начался выброс
-    if has_alife_info( "pre_blowout" ) then
-      -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
-      urgent_awakening = true
-      break
+
+    -- db.actor:update_condition()
+    db.actor.power = 1
+    level.set_ignore_game_state_update()
+    sleeping_now = false
+    break_sleep_request = false
+    -- РѕР±РЅРѕРІРёР»Рё РјРµРЅРµРґР¶РµСЂ РїРѕРіРѕРґС‹
+    dsh_cop_weather.get_weather_mgr():force_update()
+
+    -- СЃРєРѕР»СЊРєРѕ СЂРµР°Р»СЊРЅРѕ СЃРїР°Р»Рё
+    local awakening_time = game.get_game_time()
+    local real_sleep_time = awakening_time:diffSec(start_sleep_time)
+
+    -- РїСЂРёРІРµС‚ РјРёСЂ
+    dsh_sleep.cant_sleep_timer(30000)
+    sm:call("on_sleep_finished", real_sleep_time)
+    dsh.exec_on_update(u3_utils.savegame,
+        game.translate_string("save_sleep") .. " - " .. game.translate_string(level.name()))
+
+    cmd("snd_volume_eff", tostring(snd_volume_eff))
+    cmd("snd_volume_music", tostring(snd_volume_music))
+
+    swm_legs.hidden_legs()
+    level.add_cam_effector("camera_effects\\surge_01.anm", 6666, false, "ogse_sleep_mgr.sleep_finish")
+    level.add_pp_effector("surge_fade.ppe", 11, false)
+
+    local snd_obj = xr_sound.get_safe_sound_object([[actor\watch_timer]])
+    if snd_obj then
+        snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), 15.0)
     end
-    -- начинается выброс
-    if dsh_cop_weather.get_weather_mgr():is_surge_in_process() then
-      -- ogse.autohiding_msg( "blowout_not_sleep", 1500 )
-      urgent_awakening = true
-      break
-    end
-    -- в следующей итерации начнется выброс
-    surge_dt = surge_dt - dt_ms
-    if surge_dt < dt_ms then
-      urgent_awakening = true
-      break
-    end
-    -- проверяем условие останова сна по состоянию здоровья
-    local cur_health = db.actor.health
-    local dh         = cur_health - prev_health
-    if cur_health < 0.1 and dh < 0 then
-      -- здоровье снизилось до критической величины и продолжает снижаться
-      -- ogse.autohiding_msg( "ogse_sleep_mgr_warn_4_text", 1500 )
-      urgent_awakening = true
-      break
-    end
-    prev_health = cur_health
-  end
-
-  -- db.actor:update_condition()
-  db.actor.power = 1
-  level.set_ignore_game_state_update()
-  sleeping_now = false
-  break_sleep_request = false
-  -- обновили менеджер погоды
-  dsh_cop_weather.get_weather_mgr():force_update()
-
-  -- сколько реально спали
-  local awakening_time  = game.get_game_time()
-  local real_sleep_time = awakening_time:diffSec( start_sleep_time )
-
-  -- привет мир
-  dsh_sleep.cant_sleep_timer( 30000 )
-  sm:call( "on_sleep_finished", real_sleep_time )
-  dsh.exec_on_update(u3_utils.savegame, game.translate_string("save_sleep") .. " - " .. game.translate_string( level.name())
-  )
-
-  cmd("snd_volume_eff", tostring(snd_volume_eff))
-  cmd("snd_volume_music", tostring(snd_volume_music))
-
-  swm_legs.hidden_legs()
-  level.add_cam_effector("camera_effects\\surge_01.anm", 6666, false, "ogse_sleep_mgr.sleep_finish")
-  level.add_pp_effector("surge_fade.ppe", 11, false)
-
-  local snd_obj = xr_sound.get_safe_sound_object([[actor\watch_timer]])
-  if snd_obj then
-    snd_obj:play_no_feedback( db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 15.0 )
-  end
-  archievements.acv_count_event("acv_slp", 730, game.translate_string("acv_slp"), math.floor(real_sleep_time / 3600))
+    archievements.acv_count_event("acv_slp", 730, game.translate_string("acv_slp"), math.floor(real_sleep_time / 3600))
 end
 
 function sleep_finish()
-  swm_legs.show_legs()
-  xr_effects.enable_ui()
+    swm_legs.show_legs()
+    xr_effects.enable_ui()
 end

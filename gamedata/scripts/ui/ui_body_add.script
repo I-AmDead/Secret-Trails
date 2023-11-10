@@ -7,44 +7,44 @@ end
 
 local wnd = nil
 
-
 function body_open()
-	if not wnd then	
-		wnd = BodyWnd(level.get_car_body_wnd())
-	end
+    if not wnd then
+        wnd = BodyWnd(level.get_car_body_wnd())
+    end
 end
 
 function body_close()
-	if wnd then
-		wnd:DetachWnd()
-		wnd = nil
-	end
+    if wnd then
+        wnd:DetachWnd()
+        wnd = nil
+    end
 end
 
-class "BodyWnd" (CUIScriptWnd)
-function BodyWnd:__init(owner) super()
-	self.owner = owner
-	self:Init(0, 0, 1024, 768)
-	self:InitControls()
+class "BodyWnd"(CUIScriptWnd)
+function BodyWnd:__init(owner)
+    super()
+    self.owner = owner
+    self:Init(0, 0, 1024, 768)
+    self:InitControls()
 end
 
-function BodyWnd:__finalize() end
+function BodyWnd:__finalize()
+end
 
 function BodyWnd:InitControls()
-	self.stat = CUIStatic()
-	self.stat:Init(0, 0, 1024, 768)
-	self.owner:AttachChild(self.stat)
-	self.stat:Show(true)
+    self.stat = CUIStatic()
+    self.stat:Init(0, 0, 1024, 768)
+    self.owner:AttachChild(self.stat)
+    self.stat:Show(true)
 
-	self.stat:SetAutoDelete(true) 
+    self.stat:SetAutoDelete(true)
 
-	self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
+    self.DescrWnd = ui_inv_descr.CUIDescriptionWnd(self.stat)
 end
 
-
-function BodyWnd:DetachWnd() 
-	self.DescrWnd:Remove() 
-	self.DescrWnd = nil 
-	self:ClearCallbacks()
-	self.owner:DetachChild(self.stat) 
-end 
+function BodyWnd:DetachWnd()
+    self.DescrWnd:Remove()
+    self.DescrWnd = nil
+    self:ClearCallbacks()
+    self.owner:DetachChild(self.stat)
+end

@@ -1,559 +1,538 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-local particles={}
+local particles = {}
 
 ----------------------------------------------------------------------------------------------------------------------
-class "motivator_binder" (object_binder)
+class "motivator_binder"(object_binder)
 
-function motivator_binder:__init (obj) super(obj)
-  self.loaded = false
-  self.first_update = false
-  self.particles = {}
-  self.am = ogsr_signals.get_mgr()
-  self.am:call( "on_npc_init", obj, self )
+function motivator_binder:__init(obj)
+    super(obj)
+    self.loaded = false
+    self.first_update = false
+    self.particles = {}
+    self.am = ogsr_signals.get_mgr()
+    self.am:call("on_npc_init", obj, self)
 end
+
 function motivator_binder:__finalize()
-  --log1("--motivator_binder:__finalize() called!")
+    -- log1("--motivator_binder:__finalize() called!")
 end
 
 function motivator_binder:extrapolate_callback(cur_pt)
-  if self.st.active_section then
-    xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "extrapolate_callback")
-    self.st.move_mgr:extrapolate_callback(self.object)
-  end
+    if self.st.active_section then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "extrapolate_callback")
+        self.st.move_mgr:extrapolate_callback(self.object)
+    end
 
-  if patrol(self.object:patrol()):flags(cur_pt):get() == 0 then
-    return true
-  end
-  return false
+    if patrol(self.object:patrol()):flags(cur_pt):get() == 0 then
+        return true
+    end
+    return false
 end
 
 function motivator_binder:reinit()
     object_binder.reinit(self)
 
-    db.storage[self.object:id()] = {  followers = {} }
+    db.storage[self.object:id()] = {
+        followers = {}
+    }
     self.st = db.storage[self.object:id()]
 
-  if self.object:alive() then
-    self.st.state_mgr = state_mgr.bind_manager(self.object)
+    if self.object:alive() then
+        self.st.state_mgr = state_mgr.bind_manager(self.object)
 
-
-    self.st.move_mgr = move_mgr.move_mgr(self.object)
-    self.st.move_mgr:initialize()
-  end
+        self.st.move_mgr = move_mgr.move_mgr(self.object)
+        self.st.move_mgr:initialize()
+    end
 end
 ----------------------------------------------------------------------------------------------------------------------
 function motivator_binder:net_spawn(sobject)
-  if not object_binder.net_spawn(self, sobject) then return false end
-
-  local npc = self.object
-
-  db.add_obj(self.object)
-  if not self.loaded then
-    local char_ini = self.object:spawn_ini() or ini_file("scripts\\dummy.ltx")
-    xr_info.loadInfo(self.object, char_ini)
-  end
-  --
-  self.object:set_callback(callback.use_object, self.use_callback, self)
-  --
-  self:subscribe_updaters()
-  --
-  if not self.object:alive() then
-    if rx_ai then rx_ai.corpse_net_spawn(self.object,self.loaded) end
-    return true
-  end
-
-  -- Р’СЃРµ CALLBACK-Рё СЃС‚Р°РІРёС‚СЊ Р·РґРµСЃСЊ:
-  self.object:set_patrol_extrapolate_callback(self.extrapolate_callback, self)
-  self.object:set_callback(callback.hit, self.hit_callback, self)
-  self.object:set_callback(callback.death, self.death_callback, self)
-  self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self )
-  self.object:set_callback(callback.on_item_drop, self.on_item_drop, self)	
-  self.object:set_callback(callback.on_item_take, self.on_item_take, self)
-  self.object:set_callback(callback.on_footstep, self.on_footstep, self )
-  self.object:set_enemy_callback( self.enemy_callback, self )
-  self.am:call( "on_npc_before_spawn", self.object, self )
-  if not self.object:alive() then
-    self.am:call( "on_npc_spawn", self.object, self )
-    return true
-  end
-  local manager = self.object:motivation_action_manager()
-  manager:remove_evaluator(stalker_ids.property_anomaly)
-  manager:add_evaluator(stalker_ids.property_anomaly, property_evaluator_const(false))
-  manager:remove_evaluator( stalker_ids.property_items )
-  manager:add_evaluator(stalker_ids.property_items, property_evaluator_const(false))
-  manager:add_evaluator(blowout_scheme.evid_outside, property_evaluator_const(false ))
-  manager:add_evaluator(blowout_scheme.evid_blowout, property_evaluator_const(false ))
-  manager:add_evaluator(blowout_scheme.evid_preblowout, property_evaluator_const(false))
-  xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_stalker, self.loaded )
-
-  local particle_param = utils.cfg_get_string(
-    sys_ini, self.object:section(), "bones_particles", nil, false, false, nil
-  )
-  if particle_param and sys_ini:section_exist( particle_param ) then
-    local tmp = xrs_utils.parse_ini_section_to_array( sys_ini, particle_param )
-    for k, v in pairs( tmp ) do
-      local t = xrs_utils.parse_ini_section_to_array( sys_ini, v )
-      t.obj = self.object
-      if not t.stop_on_death or self.object:alive() then
-        play_particle( self.object, t )
-      end
+    if not object_binder.net_spawn(self, sobject) then
+        return false
     end
-  end
 
-  if rx_ai then rx_ai.npc_net_spawn(self.object) end
-  self.am:call( "on_npc_spawn", self.object, self )
-  return true
+    local npc = self.object
+
+    db.add_obj(self.object)
+    if not self.loaded then
+        local char_ini = self.object:spawn_ini() or ini_file("scripts\\dummy.ltx")
+        xr_info.loadInfo(self.object, char_ini)
+    end
+    --
+    self.object:set_callback(callback.use_object, self.use_callback, self)
+    --
+    self:subscribe_updaters()
+    --
+    if not self.object:alive() then
+        if rx_ai then
+            rx_ai.corpse_net_spawn(self.object, self.loaded)
+        end
+        return true
+    end
+
+    -- Р’СЃРµ CALLBACK-Рё СЃС‚Р°РІРёС‚СЊ Р·РґРµСЃСЊ:
+    self.object:set_patrol_extrapolate_callback(self.extrapolate_callback, self)
+    self.object:set_callback(callback.hit, self.hit_callback, self)
+    self.object:set_callback(callback.death, self.death_callback, self)
+    self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self)
+    self.object:set_callback(callback.on_item_drop, self.on_item_drop, self)
+    self.object:set_callback(callback.on_item_take, self.on_item_take, self)
+    self.object:set_callback(callback.on_footstep, self.on_footstep, self)
+    self.object:set_enemy_callback(self.enemy_callback, self)
+    self.am:call("on_npc_before_spawn", self.object, self)
+    if not self.object:alive() then
+        self.am:call("on_npc_spawn", self.object, self)
+        return true
+    end
+    local manager = self.object:motivation_action_manager()
+    manager:remove_evaluator(stalker_ids.property_anomaly)
+    manager:add_evaluator(stalker_ids.property_anomaly, property_evaluator_const(false))
+    manager:remove_evaluator(stalker_ids.property_items)
+    manager:add_evaluator(stalker_ids.property_items, property_evaluator_const(false))
+    manager:add_evaluator(blowout_scheme.evid_outside, property_evaluator_const(false))
+    manager:add_evaluator(blowout_scheme.evid_blowout, property_evaluator_const(false))
+    manager:add_evaluator(blowout_scheme.evid_preblowout, property_evaluator_const(false))
+    xr_gulag.setup_gulag_and_logic_on_spawn(self.object, self.st, sobject, modules.stype_stalker, self.loaded)
+
+    local particle_param = get_string(self.object:section(), "bones_particles", nil)
+    if particle_param and sys_ini:section_exist(particle_param) then
+        local tmp = get_section_keys_and_values(particle_param)
+        for k, v in pairs(tmp) do
+            local t = get_section_keys_and_values(v)
+            t.obj = self.object
+            if not t.stop_on_death or self.object:alive() then
+                play_particle(self.object, t)
+            end
+        end
+    end
+
+    if rx_ai then
+        rx_ai.npc_net_spawn(self.object)
+    end
+    self.am:call("on_npc_spawn", self.object, self)
+    return true
 end
 
 function motivator_binder:subscribe_updaters()
-  local s_name = "on_npc_update." .. self.object:id()
-  if self.object:alive() then
-    self.updaters = {
-      {
-        [ "signal" ] = s_name,
-        [ "self"   ] = self,
-        [ "fun"    ] = self.update_tip_text,
-        [ "queued" ] = true,
-      },
-    }
-  else
-    self.updaters = {}
-  end
-  for _, s in ipairs( self.updaters ) do
-    self.am:subscribe( s )
-  end
+    local s_name = "on_npc_update." .. self.object:id()
+    if self.object:alive() then
+        self.updaters = {{
+            ["signal"] = s_name,
+            ["self"] = self,
+            ["fun"] = self.update_tip_text,
+            ["queued"] = true
+        }}
+    else
+        self.updaters = {}
+    end
+    for _, s in ipairs(self.updaters) do
+        self.am:subscribe(s)
+    end
 end
 
 function motivator_binder:unsubscribe_updaters()
-  if not self.updaters then return end
+    if not self.updaters then
+        return
+    end
 
-  for k, s in pairs( self.updaters ) do
-    self.am:unsubscribe( s )
-	self.updaters[k] = nil
-  end
-  self.updaters = nil
+    for k, s in pairs(self.updaters) do
+        self.am:unsubscribe(s)
+        self.updaters[k] = nil
+    end
+    self.updaters = nil
 end
 
 function motivator_binder:net_destroy()
 
-  if rx_ai then rx_ai.npc_net_destroy(self.object) end
-
-  if table.getn(self.particles)>0 then
-    for kk,vv in pairs(self.particles) do
-      if not vv:is_finished() then
-        vv:stop()
-        self.particles[kk]=nil
-      end
+    if rx_ai then
+        rx_ai.npc_net_destroy(self.object)
     end
-  end
 
-  if self.object == nil then return end
+    if table.getn(self.particles) > 0 then
+        for kk, vv in pairs(self.particles) do
+            if not vv:is_finished() then
+                vv:stop()
+                self.particles[kk] = nil
+            end
+        end
+    end
 
-  local st = db.storage[self.object:id()]
-  if st.active_scheme then
-    xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy", self.object)
-  end
+    if self.object == nil then
+        return
+    end
 
-  db.del_obj( self.object )
+    local st = db.storage[self.object:id()]
+    if st.active_scheme then
+        xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy", self.object)
+    end
 
-  db.storage[ self.object:id() ] = nil
+    db.del_obj(self.object)
 
-  self:clear_callbacks()
-  self.object:set_callback( callback.use_object, nil )
+    db.storage[self.object:id()] = nil
 
-  self.am:call( "on_npc_net_destroy", self.object, self )
-  self:unsubscribe_updaters()
-  self.am:cleanup_signal_subs( "on_npc_update." .. self.object:id() )
+    self:clear_callbacks()
+    self.object:set_callback(callback.use_object, nil)
 
-  object_binder.net_destroy( self )
+    self.am:call("on_npc_net_destroy", self.object, self)
+    self:unsubscribe_updaters()
+    self.am:cleanup_signal_subs("on_npc_update." .. self.object:id())
 
-  -- АМК. Очистка рестрикторов
-  local id   = self.object:id()
-  local sobj = alife():object( id )
-  if sobj then
-    alife():remove_in_restrictions( sobj )
-  end
+    object_binder.net_destroy(self)
+
+    -- АМК. Очистка рестрикторов
+    local id = self.object:id()
+    local sobj = alife():object(id)
+    if sobj then
+        alife():remove_in_restrictions(sobj)
+    end
 end
 
 function motivator_binder:clear_callbacks()
-  self.object:set_patrol_extrapolate_callback(nil)
-  self.object:set_callback(callback.hit, nil)
-  self.object:set_callback(callback.death, nil)
-  self.object:set_callback(callback.on_item_drop, nil)
-  self.object:set_callback(callback.on_item_take, nil)
-  self.object:set_callback(callback.entity_alive_before_hit, nil)
-  self.object:set_callback(callback.on_footstep, nil)
-  self.object:set_enemy_callback()
+    self.object:set_patrol_extrapolate_callback(nil)
+    self.object:set_callback(callback.hit, nil)
+    self.object:set_callback(callback.death, nil)
+    self.object:set_callback(callback.on_item_drop, nil)
+    self.object:set_callback(callback.on_item_take, nil)
+    self.object:set_callback(callback.entity_alive_before_hit, nil)
+    self.object:set_callback(callback.on_footstep, nil)
+    self.object:set_enemy_callback()
 end
 
 function motivator_binder:before_hit_callback(hit_data)
-  if hit_data.weapon_id then
-    local wpn = level.object_by_id(hit_data.weapon_id)
-    if hit_data.hit_type == hit.fire_wound and wpn and wpn:is_weapon_magazined() then
-      local koef = has_alife_info("acv_kill2") and 1.3 or (has_alife_info("acv_kill") and 1.2 or 1.0)
-       hit_data.power = hit_data.power * koef
+    if hit_data.weapon_id then
+        local wpn = level.object_by_id(hit_data.weapon_id)
+        if hit_data.hit_type == hit.fire_wound and wpn and wpn:is_weapon_magazined() then
+            local koef = has_alife_info("acv_kill2") and 1.3 or (has_alife_info("acv_kill") and 1.2 or 1.0)
+            hit_data.power = hit_data.power * koef
+        end
     end
-  end
 
-  if not self.last_hit_data then
-    self.last_hit_data = {}
-  end
+    if not self.last_hit_data then
+        self.last_hit_data = {}
+    end
 
-  dsh.copy_hit_data( hit_data, self.last_hit_data )
+    dsh.copy_hit_data(hit_data, self.last_hit_data)
 end
 
 function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_index)
-  if self.st.active_section then
-    xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount, local_direction, who, bone_index)
-  end
+    if self.st.active_section then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount,
+            local_direction, who, bone_index)
+    end
 
-  if self.st.combat_ignore then
-    xr_logic.issue_event(self.object, self.st.combat_ignore, "hit_callback", self.object, amount, local_direction, who, bone_index)
-  end
+    if self.st.combat_ignore then
+        xr_logic.issue_event(self.object, self.st.combat_ignore, "hit_callback", self.object, amount, local_direction,
+            who, bone_index)
+    end
 
-  if self.st.combat then
-    xr_logic.issue_event(self.object, self.st.combat, "hit_callback", self.object, amount, local_direction, who, bone_index)
-  end
+    if self.st.combat then
+        xr_logic.issue_event(self.object, self.st.combat, "hit_callback", self.object, amount, local_direction, who,
+            bone_index)
+    end
 
-  if self.st.hit then
-    xr_logic.issue_event(self.object, self.st.hit, "hit_callback", self.object, amount, local_direction, who, bone_index)
-  end
+    if self.st.hit then
+        xr_logic.issue_event(self.object, self.st.hit, "hit_callback", self.object, amount, local_direction, who,
+            bone_index)
+    end
 
-  sr_territory.issue_event(self.object, "hit_callback", self.object, amount, local_direction, who, bone_index)
+    sr_territory.issue_event(self.object, "hit_callback", self.object, amount, local_direction, who, bone_index)
 
-  xr_wounded.hit_callback(self.object:id())
+    xr_wounded.hit_callback(self.object:id())
 
-  if rx_ai then rx_ai.npc_hit(obj,amount,local_direction,who,bone_index,self.object) end
+    if rx_ai then
+        rx_ai.npc_hit(obj, amount, local_direction, who, bone_index, self.object)
+    end
 
-  self.am:call( "on_npc_hit", self.object, amount, local_direction, who, bone_index )
+    self.am:call("on_npc_hit", self.object, amount, local_direction, who, bone_index)
 end
 
 function motivator_binder:death_callback(victim, who)
-  self:unsubscribe_updaters()
+    self:unsubscribe_updaters()
 
-  self.object:set_tip_text_default()
+    self.object:set_tip_text_default()
 
-  if rx_ai then rx_ai.npc_death(self.object,who) end
+    if rx_ai then
+        rx_ai.npc_death(self.object, who)
+    end
 
-  xr_statistic.addKillCount(who, self.object) --Добавление опыта за убийство
+    xr_statistic.addKillCount(who, self.object) -- Добавление опыта за убийство
 
-  if self.st.death then
-    xr_logic.issue_event(self.object, self.st.death, "death_callback", self.object, who)
-  end
+    if self.st.death then
+        xr_logic.issue_event(self.object, self.st.death, "death_callback", self.object, who)
+    end
 
-  if self.st.active_section then
-    xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
-  end
+    if self.st.active_section then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
+    end
 
-  sr_territory.issue_event(self.object, "death_callback", self.object, who)
+    sr_territory.issue_event(self.object, "death_callback", self.object, who)
 
-  smart_terrain.on_death(self.object:id())
+    smart_terrain.on_death(self.object:id())
 
-  self:clear_callbacks()
+    self:clear_callbacks()
 
-  if table.getn(self.particles)>0 then
-          for kk,vv in pairs(self.particles) do
-              vv:on_death()
-          end
-  end
+    if table.getn(self.particles) > 0 then
+        for kk, vv in pairs(self.particles) do
+            vv:on_death()
+        end
+    end
 
-  if who and who:id() == db.actor:id() then
-    archievements.acv_kill()
-  end
+    if who and who:id() == db.actor:id() then
+        archievements.acv_kill()
+    end
 
-  actor_stats.remove_from_ranking( self.object:id() )
+    actor_stats.remove_from_ranking(self.object:id())
 
-  self.st.move_mgr = nil
+    self.st.move_mgr = nil
 
-  self.am:call("on_npc_death", self.object, who)
+    self.am:call("on_npc_death", self.object, who)
 end
 
 function motivator_binder:use_callback(obj, who)
-  if self.object:alive() then
-    xr_use.notify_on_use(self.object, who)
+    if self.object:alive() then
+        xr_use.notify_on_use(self.object, who)
 
-    if self.st.active_section then
-      xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", self.object, who)
+        if self.st.active_section then
+            xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "use_callback", self.object, who)
+        end
     end
-  else
-    self.object:set_nonscript_usable(false)
-    ogsr_actor_animation.open_inventory_owner(self.object)
-  end
 
-  self.am:call("on_npc_use", self.object, who)
+    self.am:call("on_npc_use", self.object, who)
 end
 
-function motivator_binder:update( delta )
-  object_binder.update(self, delta)
+function motivator_binder:update(delta)
+    object_binder.update(self, delta)
 
-  if table.getn(self.particles)>0 then
-    for kk,vv in pairs(self.particles) do
-      if vv:is_finished() then
-        self.particles[kk]=nil
-      else
-        vv:update(delta)
-       end
+    if table.getn(self.particles) > 0 then
+        for kk, vv in pairs(self.particles) do
+            if vv:is_finished() then
+                self.particles[kk] = nil
+            else
+                vv:update(delta)
+            end
+        end
     end
-  end
 
-  if not self.first_update then
-    self.first_update = true
-    self.am:call( "on_npc_first_update", self.object, delta )
-  end
+    if not self.first_update then
+        self.first_update = true
+        self.am:call("on_npc_first_update", self.object, delta)
+    end
 
-  if self.object:alive() then
-    if rx_ai then rx_ai.npc_update(self.object,self.st) end
-  end
+    if self.object:alive() then
+        if rx_ai then
+            rx_ai.npc_update(self.object, self.st)
+        end
+    end
 
-  if ogse.get_npc_relation(self.object,db.actor) == "enemy" 
-  and self.object:alive() and self.object:see(db.actor)
-  and db.actor:position():distance_to(self.object:position()) < 150 then
-    enemy_see_actor(self.object,"npc")
-  end
-  sr_light.check_light(self.object)
-  self.object:info_clear()
+    if ogse.get_npc_relation(self.object, db.actor) == "enemy" and self.object:alive() and self.object:see(db.actor) and
+        db.actor:position():distance_to(self.object:position()) < 150 then
+        enemy_see_actor(self.object, "npc")
+    end
+    sr_light.check_light(self.object)
+    self.object:info_clear()
 
-  self.am:call( "on_npc_update", self.object, delta )
-  self.am:call( "on_npc_update." .. self.object:id(), self.object, delta )
+    self.am:call("on_npc_update", self.object, delta)
+    self.am:call("on_npc_update." .. self.object:id(), self.object, delta)
 end
 
 function motivator_binder:update_tip_text()
-  if self.object:is_talk_enabled() then
-    self.object:set_tip_text("character_use")
-  else
-    self.object:set_tip_text("")
-  end
+    if self.object:is_talk_enabled() then
+        self.object:set_tip_text("character_use")
+    else
+        self.object:set_tip_text("")
+    end
 end
 
-function motivator_binder:reload( section )
-  object_binder.reload( self, section )
+function motivator_binder:reload(section)
+    object_binder.reload(self, section)
 end
 
 function motivator_binder:net_save_relevant()
-  return true
+    return true
 end
 
 function motivator_binder:save(packet)
-  xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
-  object_binder.save(self, packet)
-  packet:w_bool(self.treasure_processed)
-  xr_logic.save_obj(self.object, packet)
-  dialog_manager.save(self.object, packet)
+    xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
+    object_binder.save(self, packet)
+    packet:w_bool(self.treasure_processed)
+    xr_logic.save_obj(self.object, packet)
+    dialog_manager.save(self.object, packet)
 end
 
 function motivator_binder:load(reader)
-  self.loaded = true
+    self.loaded = true
 
-  object_binder.load(self, reader)
+    object_binder.load(self, reader)
 
-  if reader:r_eof() then
-    abort("[xr_motivator.script]SAVE FILE IS CORRUPT")
-  end
-
-
-  self.treasure_processed = reader:r_bool()
-
-  xr_logic.load_obj(self.object, reader)
-
-  self.npc_script_version = alife():object(self.object:id()).script_version
-  dialog_manager.load(self.object, reader, self.npc_script_version)
-
-  local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
-  self.object:invulnerable(is_invulnerable)
-end
-
-function motivator_binder:hear_callback(self, who, sound_type, sound_position, sound_power)
-  if who:id() == self:id() then
-    return
-  end
-  local type = "NIL"
-  if bit_and(sound_type, snd_type.weapon) == snd_type.weapon then
-    type = "WPN"
-    if bit_and(sound_type, snd_type.weapon_shoot) == snd_type.weapon_shoot then
-      type = "WPN_shoot"
-    elseif bit_and(sound_type, snd_type.weapon_empty) == snd_type.weapon_empty then
-      type = "WPN_empty"
-    elseif bit_and(sound_type, snd_type.weapon_bullet_hit) == snd_type.weapon_bullet_hit then
-      type = "WPN_hit"
-    elseif bit_and(sound_type, snd_type.weapon_reload) == snd_type.weapon_reload then
-      type = "WPN_reload"
+    if reader:r_eof() then
+        abort("[xr_motivator.script]SAVE FILE IS CORRUPT")
     end
-  elseif bit_and(sound_type, snd_type.item) == snd_type.item then
-    type = "ITM"
-    if bit_and(sound_type, snd_type.item_pick_up) == snd_type.item_pick_up then
-      type = "ITM_pckup"
-    elseif bit_and(sound_type, snd_type.item_drop) == snd_type.item_drop then
-      type = "ITM_drop"
-    elseif bit_and(sound_type, snd_type.item_hide) == snd_type.item_hide then
-      type = "ITM_hide"
-    elseif bit_and(sound_type, snd_type.item_take) == snd_type.item_take then
-      type = "ITM_take"
-    elseif bit_and(sound_type, snd_type.item_use) == snd_type.item_use then
-      type = "ITM_use"
-    end
-  elseif bit_and(sound_type, snd_type.monster) == snd_type.monster then
-    type = "MST"
-    if bit_and(sound_type, snd_type.monster_die) == snd_type.monster_die then
-      type = "MST_die"
-    elseif bit_and(sound_type, snd_type.monster_injure) == snd_type.monster_injure then
-      type = "MST_damage"
-    elseif bit_and(sound_type, snd_type.monster_step) == snd_type.monster_step then
-      type = "MST_step"
-    elseif bit_and(sound_type, snd_type.monster_talk) == snd_type.monster_talk then
-      type = "MST_talk"
-    elseif bit_and(sound_type, snd_type.monster_attack) == snd_type.monster_attack then
-      type = "MST_attack"
-    elseif bit_and(sound_type, snd_type.monster_eat) == snd_type.monster_eat then
-      type = "MST_eat"
-    end
-  end
+
+    self.treasure_processed = reader:r_bool()
+
+    xr_logic.load_obj(self.object, reader)
+
+    self.npc_script_version = alife():object(self.object:id()).script_version
+    dialog_manager.load(self.object, reader, self.npc_script_version)
+
+    local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
+    self.object:invulnerable(is_invulnerable)
 end
 
 function motivator_binder:on_item_drop(obj)
-  if not obj then return end
-  local sobj = alife():object(obj:id())
-  --if not sobj then return end --XRKRODIN: Это важно, чтобы правильно обновлять оружейный менежжер при удалении оружия из инвентаря нпс, не раскомментировать!
+    if not obj then
+        return
+    end
+    local sobj = alife():object(obj:id())
+    -- if not sobj then return end --XRKRODIN: Это важно, чтобы правильно обновлять оружейный менежжер при удалении оружия из инвентаря нпс, не раскомментировать!
 
-  if rx_ai then
-    rx_ai.npc_item_drop(self.object,obj)
-  end
+    if rx_ai then
+        rx_ai.npc_item_drop(self.object, obj)
+    end
 
-  self.am:call( "on_npc_item_drop", self.object, obj, sobj )
+    self.am:call("on_npc_item_drop", self.object, obj, sobj)
 end
 
 function motivator_binder:on_item_take(obj)
-  if not obj then return end
-  local sobj = alife():object(obj:id())
-  if not sobj then return end
+    if not obj then
+        return
+    end
+    local sobj = alife():object(obj:id())
+    if not sobj then
+        return
+    end
 
-  if obj:is_torch() then
-    local t_obj = get_torch_obj(obj)
-      if t_obj.on then
-        t_obj:enable( false )
-      end
-  end
+    if obj:is_torch() then
+        local t_obj = get_torch_obj(obj)
+        if t_obj.on then
+            t_obj:enable(false)
+        end
+    end
 
-  if rx_ai then
-    rx_ai.npc_item_take(self.object,obj)
-  end
+    if rx_ai then
+        rx_ai.npc_item_take(self.object, obj)
+    end
 
-  self.am:call( "on_npc_item_take", self.object, obj, sobj )
-  self.am:call(
-    "on_npc_item_take." .. self.object:id(), self.object, obj, sobj
-  )
+    self.am:call("on_npc_item_take", self.object, obj, sobj)
+    self.am:call("on_npc_item_take." .. self.object:id(), self.object, obj, sobj)
 end
 
 function motivator_binder:on_footstep(obj, power)
-  if not obj then return end
-  local sobj = alife():object(obj:id())
-  if not sobj then return end
-  self.am:call( "on_npc_foot_step", self.object, obj, sobj )
+    if not obj then
+        return
+    end
+    local sobj = alife():object(obj:id())
+    if not sobj then
+        return
+    end
+    self.am:call("on_npc_foot_step", self.object, obj, sobj)
 end
 
---Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
---Если вернёт false - объект не будет вступать в бой.
---Вызывается:
---Одноименным калбеком из движка (для движковой боёвки)
---Из xr_danger
---Из xr_camper.action_patrol:process_danger()
---Из функции check_sound в мотиваторе
+-- Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
+-- Если вернёт false - объект не будет вступать в бой.
+-- Вызывается:
+-- Одноименным калбеком из движка (для движковой боёвки)
+-- Из xr_danger
+-- Из xr_camper.action_patrol:process_danger()
+-- Из функции check_sound в мотиваторе
 local enemy_callback_freq = 1000
-function motivator_binder:enemy_callback( obj, enemy_st )
-  local valid, enemy = validate_enemy_object( enemy_st )
-  if not valid then return false end
-
-  local res, ttl, t
-  local cached = self[ "xr_motivator.cached" ]
-  if cached then
-    t = cached[ enemy:id() ]
-	if t then
-      res, ttl = unpack( t )
+function motivator_binder:enemy_callback(obj, enemy_st)
+    local valid, enemy = validate_enemy_object(enemy_st)
+    if not valid then
+        return false
     end
-  end
-  if res == nil or ttl < time_global() then
-    --log3("~~[%s] Called add_cache_rec for [%s], [%s]", script_name(), self.object:name(), enemy:name())
-    local result = {}
-    self.am:call( "on_npc_enemy_callback", self.object, enemy, result )
-    res = result[1] ~= false
+
+    local res, ttl, t
+    local cached = self["xr_motivator.cached"]
     if cached then
-	--
-      if t then
-        t[ 1 ] = res
-        t[ 2 ] = time_global() + enemy_callback_freq
-      else
-        cached[ enemy:id() ] = { res, time_global() + enemy_callback_freq }
-      end
-    else
-      self[ script_name() .. ".cached" ] = {
-        [ enemy:id() ] = { res, time_global() + enemy_callback_freq }
-      }
+        t = cached[enemy:id()]
+        if t then
+            res, ttl = unpack(t)
+        end
     end
-  end
-  return res
+    if res == nil or ttl < time_global() then
+        -- log3("~~[%s] Called add_cache_rec for [%s], [%s]", script_name(), self.object:name(), enemy:name())
+        local result = {}
+        self.am:call("on_npc_enemy_callback", self.object, enemy, result)
+        res = result[1] ~= false
+        if cached then
+            --
+            if t then
+                t[1] = res
+                t[2] = time_global() + enemy_callback_freq
+            else
+                cached[enemy:id()] = {res, time_global() + enemy_callback_freq}
+            end
+        else
+            self[script_name() .. ".cached"] = {
+                [enemy:id()] = {res, time_global() + enemy_callback_freq}
+            }
+        end
+    end
+    return res
 end
-
 
 function AddToMotivator(npc)
-  if alife() then
-    npc:bind_object(this.motivator_binder(npc))
-  end
+    if alife() then
+        npc:bind_object(this.motivator_binder(npc))
+    end
 end
 
 -- Эвалюаторы, которые имеют высший приоритет, и, соответственно, перебивают остальные скрипты собой
 function addCommonPrecondition(action)
-  action:add_precondition (world_property(xr_evaluators_id.stohe_meet_base + 1,false))
-  action:add_precondition (world_property(xr_evaluators_id.sidor_wounded_base + 0,  false))
-  action:add_precondition (world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
-  action:add_precondition (world_property(xr_evaluators_id.abuse_base, false))
-  action:add_precondition(world_property( blowout_scheme.evid_outside, false))
-  action:add_precondition(world_property( blowout_scheme.evid_blowout, false))
-  action:add_precondition(world_property( blowout_scheme.evid_preblowout, false))
+    action:add_precondition(world_property(xr_evaluators_id.stohe_meet_base + 1, false))
+    action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base + 0, false))
+    action:add_precondition(world_property(xr_evaluators_id.chugai_heli_hunter_base, false))
+    action:add_precondition(world_property(xr_evaluators_id.abuse_base, false))
+    action:add_precondition(world_property(blowout_scheme.evid_outside, false))
+    action:add_precondition(world_property(blowout_scheme.evid_blowout, false))
+    action:add_precondition(world_property(blowout_scheme.evid_preblowout, false))
 
-  if rx_ai then rx_ai.addCommonPrecondition(action) end
+    if rx_ai then
+        rx_ai.addCommonPrecondition(action)
+    end
 end
 
-function play_particle(obj,params)
-        if not particles[obj:id()] then
-                particles[obj:id()]={}
-        end
-        table.insert(particles[obj:id()],params)
+function play_particle(obj, params)
+    if not particles[obj:id()] then
+        particles[obj:id()] = {}
+    end
+    table.insert(particles[obj:id()], params)
 end
 
 function enemy_see_actor(obj, typ)
-	if string.find(obj:name(),"fedya_razboinik") then
-		db.actor:give_info_portion("fedya_razboinik_see")
-	end
+    if string.find(obj:name(), "fedya_razboinik") then
+        db.actor:give_info_portion("fedya_razboinik_see")
+    end
 
-	if string.find(obj:name(),"ucen_ohr1") then
-		db.actor:give_info_portion("ucen_ohr1_see")
-	end
+    if string.find(obj:name(), "ucen_ohr1") then
+        db.actor:give_info_portion("ucen_ohr1_see")
+    end
 
-	if string.find(obj:name(),"ucen_ohr2") then
-		db.actor:give_info_portion("ucen_ohr2_see")
-	end
+    if string.find(obj:name(), "ucen_ohr2") then
+        db.actor:give_info_portion("ucen_ohr2_see")
+    end
 
-	if string.find(obj:name(),"ucen_ohr3") then
-		db.actor:give_info_portion("ucen_ohr3_see")
-	end
+    if string.find(obj:name(), "ucen_ohr3") then
+        db.actor:give_info_portion("ucen_ohr3_see")
+    end
 
-	if string.find(obj:name(),"razbor_ban1") then
-		db.actor:give_info_portion("razbor_ban1_see")
-	end
+    if string.find(obj:name(), "razbor_ban1") then
+        db.actor:give_info_portion("razbor_ban1_see")
+    end
 
-	if string.find(obj:name(),"razbor_ban2") then
-		db.actor:give_info_portion("razbor_ban2_see")
-	end
+    if string.find(obj:name(), "razbor_ban2") then
+        db.actor:give_info_portion("razbor_ban2_see")
+    end
 
-	if string.find(obj:name(),"razbor_ban3") then
-		db.actor:give_info_portion("razbor_ban3_see")
-	end
+    if string.find(obj:name(), "razbor_ban3") then
+        db.actor:give_info_portion("razbor_ban3_see")
+    end
 
-	if string.find(obj:name(),"razbor_ban4") then
-		db.actor:give_info_portion("razbor_ban4_see")
-	end
+    if string.find(obj:name(), "razbor_ban4") then
+        db.actor:give_info_portion("razbor_ban4_see")
+    end
 
-	if string.find(obj:name(),"razbor_ban5") then
-		db.actor:give_info_portion("razbor_ban5_see")
-	end
+    if string.find(obj:name(), "razbor_ban5") then
+        db.actor:give_info_portion("razbor_ban5_see")
+    end
 end

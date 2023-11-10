@@ -1,8 +1,6 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-
-subscribed_anoms = {} --ключи - id радиоактивных аномалий, которые возможно подписать на сигналы, значения - подписана ли аномалия на апдейт (true/false)
-autosubscribe = false --Должны ли аномалии подписываться на апдейт автоматически при net_spawn
+subscribed_anoms = {} -- ключи - id радиоактивных аномалий, которые возможно подписать на сигналы, значения - подписана ли аномалия на апдейт (true/false)
+autosubscribe = false -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
 
 local radzone_sect = {
 	["zone_radioactive"] = { warn = 1, last_warn = 4,  alarm = 8 },
@@ -15,214 +13,217 @@ local radzone_sect = {
 local radzone_deeps = {}
 
 function init(obj)
-	local new_binder = anomaly_binder(obj)
-	obj:bind_object(new_binder)
+    local new_binder = anomaly_binder(obj)
+    obj:bind_object(new_binder)
 end
 
 ---------------------------------------------------------------------------------------------
-class "anomaly_binder" (object_binder)
-function anomaly_binder:__init(obj) super(obj)
-	self.sm = ogsr_signals.get_mgr()
+class "anomaly_binder"(object_binder)
+function anomaly_binder:__init(obj)
+    super(obj)
+    self.sm = ogsr_signals.get_mgr()
 end
 
-
 function anomaly_binder:subscribe()
-	if not self.subscribed then
-		self.subscribed = {
-			[ "signal" ] = "on_update",
-			[ "fun"    ] = self.get_rad_intensity,
-			[ "self"   ] = self,
-			[ "script_name" ] = "anomaly_binder.get_rad_intensity." .. self.object:name(),
-		}
-		self.sm:subscribe( self.subscribed )
-		subscribed_anoms[self.object:id()] = true
-		--log3("--Anom [%s] subscribed on update", self.object:name())
-	end
+    if not self.subscribed then
+        self.subscribed = {
+            ["signal"] = "on_update",
+            ["fun"] = self.get_rad_intensity,
+            ["self"] = self,
+            ["script_name"] = "anomaly_binder.get_rad_intensity." .. self.object:name()
+        }
+        self.sm:subscribe(self.subscribed)
+        subscribed_anoms[self.object:id()] = true
+        -- log3("--Anom [%s] subscribed on update", self.object:name())
+    end
 end
 
 function anomaly_binder:unsubscribe()
-	if self.subscribed then
-		self.sm:unsubscribe( self.subscribed )
-		self.subscribed = nil
-		local id = self.object:id()
-		subscribed_anoms[id] = false
-		--log3("--Anom [%s] UNsubscribed from update", self.object:name())
-		--
-		if radzone_deeps[id] then
-			radzone_deeps[id] = nil
-		end
-	end
+    if self.subscribed then
+        self.sm:unsubscribe(self.subscribed)
+        self.subscribed = nil
+        local id = self.object:id()
+        subscribed_anoms[id] = false
+        -- log3("--Anom [%s] UNsubscribed from update", self.object:name())
+        --
+        if radzone_deeps[id] then
+            radzone_deeps[id] = nil
+        end
+    end
 end
 
-
 function anomaly_binder:net_spawn(data)
-	if not object_binder.net_spawn( self, data ) then
-		return false
-	end
+    if not object_binder.net_spawn(self, data) then
+        return false
+    end
 
-	local id = self.object:id()
-	local sobj = alife():object( id )
-	if not sobj then return true end
-	--
-	local status = ogse_anomaly.get_anomaly_mode( sobj )
-	if status == "anom_off" then
-		--log3("~~[%s] Disabling anomaly: [%s]", script_name(), self.object:name())
-		self.object:disable_anomaly()
-		return true --думаю, больше тут делать нечего.
-	end
+    local id = self.object:id()
+    local sobj = alife():object(id)
+    if not sobj then
+        return true
+    end
+    --
+    local status = ogse_anomaly.get_anomaly_mode(sobj)
+    if status == "anom_off" then
+        -- log3("~~[%s] Disabling anomaly: [%s]", script_name(), self.object:name())
+        self.object:disable_anomaly()
+        return true -- думаю, больше тут делать нечего.
+    end
 
-	if radzone_sect[self.object:section()] then
-		if autosubscribe then
-			self:subscribe()
-		else
-			subscribed_anoms[id] = false
-		end
-	end
+    if radzone_sect[self.object:section()] then
+        if autosubscribe then
+            self:subscribe()
+        else
+            subscribed_anoms[id] = false
+        end
+    end
 
-	self.object:set_callback(callback.zone_enter, self.on_enter, self)
-	self.object:set_callback(callback.zone_exit,  self.on_exit,  self)
+    self.object:set_callback(callback.zone_enter, self.on_enter, self)
+    self.object:set_callback(callback.zone_exit, self.on_exit, self)
 
-	self.sm:call( "on_anomaly_spawn", self.object, self )
-	return true
+    self.sm:call("on_anomaly_spawn", self.object, self)
+    return true
 end
 
 local geiger_warn = 15
 local actor_radlevel = 0
 local estimate_size = {}
 function anomaly_binder:get_rad_intensity()
-	local intencity = radzone_sect[self.object:section()]
-	if not intencity then return end
-	local actor_pos = db.actor:position()
-	local dist_to_actor = self.object:position():distance_to(actor_pos)
-	local o_id = self.object:id()
-	if self.object:inside(actor_pos) and dist_to_actor > geiger_warn then	
-		--- актор внутри радзоны, но дальше радиуса предупреждения - большая зона, считаем по крайним значениям
-		local low = intencity.warn
-		local high = intencity.alarm
-		if not estimate_size[o_id] then
-			estimate_size[o_id] = dist_to_actor
-		end
-		local radius = estimate_size[o_id]
-		local step = radius/high
-		local rad_level = math.ceil(radius/step)
-		if rad_level > high then
-			rad_level = high
-		end		
-		radzone_deeps[o_id] = rad_level
-	elseif self.object:inside(actor_pos) and dist_to_actor < geiger_warn then	
-		--- актор внутри радзоны, и меньше радиуса предупреждения - актор вошел внутрь, считаем по верхним значениям
-		local low = intencity.last_warn
-		local high = intencity.alarm
-		if not estimate_size[o_id] then
-			estimate_size[o_id] = dist_to_actor
-		end
-		local radius = estimate_size[o_id]
-		local div = high - low
-		local step = radius/div
-		local deep = high - (dist_to_actor/step)
-		local rad_level = math.ceil(deep)
-		if rad_level > high then
-			rad_level = high
-		end		
-		radzone_deeps[o_id] = rad_level
-	elseif dist_to_actor < geiger_warn then
-		--- актор снаружи радзоны, и меньше радиуса предупреждения - актор рядом, считаем по нижним значениям
-		local low = intencity.warn
-		local high = intencity.last_warn
-		local radius = geiger_warn
-		local div = high - low
-		local step = radius/div
-		local deep = high - (dist_to_actor/step)
-		local rad_level = math.ceil(deep)
-		if rad_level > high then
-			rad_level = high
-		end		
-		radzone_deeps[o_id] = rad_level
-	elseif dist_to_actor > geiger_warn then	
-		if radzone_deeps[o_id] then
-			radzone_deeps[o_id] = nil
-		end
-		self.sm:reschedule(
-			( dist_to_actor < geiger_warn * 2 and 200 )
-			or ( dist_to_actor < geiger_warn * 3 and math.random(1000, 1500) )
-			or ( dist_to_actor < geiger_warn * 4 and math.random(2500, 3000) )
-			or math.random(4000, 5000)
-		)
-	end
+    local intencity = radzone_sect[self.object:section()]
+    if not intencity then
+        return
+    end
+    local actor_pos = db.actor:position()
+    local dist_to_actor = self.object:position():distance_to(actor_pos)
+    local o_id = self.object:id()
+    if self.object:inside(actor_pos) and dist_to_actor > geiger_warn then
+        --- актор внутри радзоны, но дальше радиуса предупреждения - большая зона, считаем по крайним значениям
+        local low = intencity.warn
+        local high = intencity.alarm
+        if not estimate_size[o_id] then
+            estimate_size[o_id] = dist_to_actor
+        end
+        local radius = estimate_size[o_id]
+        local step = radius / high
+        local rad_level = math.ceil(radius / step)
+        if rad_level > high then
+            rad_level = high
+        end
+        radzone_deeps[o_id] = rad_level
+    elseif self.object:inside(actor_pos) and dist_to_actor < geiger_warn then
+        --- актор внутри радзоны, и меньше радиуса предупреждения - актор вошел внутрь, считаем по верхним значениям
+        local low = intencity.last_warn
+        local high = intencity.alarm
+        if not estimate_size[o_id] then
+            estimate_size[o_id] = dist_to_actor
+        end
+        local radius = estimate_size[o_id]
+        local div = high - low
+        local step = radius / div
+        local deep = high - (dist_to_actor / step)
+        local rad_level = math.ceil(deep)
+        if rad_level > high then
+            rad_level = high
+        end
+        radzone_deeps[o_id] = rad_level
+    elseif dist_to_actor < geiger_warn then
+        --- актор снаружи радзоны, и меньше радиуса предупреждения - актор рядом, считаем по нижним значениям
+        local low = intencity.warn
+        local high = intencity.last_warn
+        local radius = geiger_warn
+        local div = high - low
+        local step = radius / div
+        local deep = high - (dist_to_actor / step)
+        local rad_level = math.ceil(deep)
+        if rad_level > high then
+            rad_level = high
+        end
+        radzone_deeps[o_id] = rad_level
+    elseif dist_to_actor > geiger_warn then
+        if radzone_deeps[o_id] then
+            radzone_deeps[o_id] = nil
+        end
+        self.sm:reschedule((dist_to_actor < geiger_warn * 2 and 200) or
+                               (dist_to_actor < geiger_warn * 3 and math.random(1000, 1500)) or
+                               (dist_to_actor < geiger_warn * 4 and math.random(2500, 3000)) or math.random(4000, 5000))
+    end
 end
 
 function get_max_radlevel()
-	local radlevel = 0
-	for k, v in pairs(radzone_deeps) do
-		if v > radlevel then
-			radlevel = v
-		end	
-	end
-	return radlevel
+    local radlevel = 0
+    for k, v in pairs(radzone_deeps) do
+        if v > radlevel then
+            radlevel = v
+        end
+    end
+    return radlevel
 end
 
 function anomaly_binder:net_destroy()
-	if radzone_sect[self.object:section()] then
-		self:unsubscribe()
-		subscribed_anoms[self.object:id()] = nil
-	end
+    if radzone_sect[self.object:section()] then
+        self:unsubscribe()
+        subscribed_anoms[self.object:id()] = nil
+    end
 
-	self.object:set_callback(callback.zone_enter, nil)
-	self.object:set_callback(callback.zone_exit,  nil)
+    self.object:set_callback(callback.zone_enter, nil)
+    self.object:set_callback(callback.zone_exit, nil)
 
-	self.sm:call( "on_anomaly_net_destroy", self.object, self )
+    self.sm:call("on_anomaly_net_destroy", self.object, self)
 
-	object_binder.net_destroy( self )
+    object_binder.net_destroy(self)
 end
 
 local hud = get_hud()
 
 function anomaly_binder:on_enter(zone, obj)
-	if obj:is_actor() and obj:alive() then
+    if obj:is_actor() and obj:alive() then
 
-		if string.find(zone:section(), "zone_radioactive") then
-			hud:RemoveCustomStatic("indicator_rad")
-			hud:AddCustomStatic("indicator_rad", true)
-		end
+        if string.find(zone:section(), "zone_radioactive") then
+            hud:RemoveCustomStatic("indicator_rad")
+            hud:AddCustomStatic("indicator_rad", true)
+        end
 
-		if string.find(zone:section(), "zone_field_acidic") then
-			hud:RemoveCustomStatic("indicator_acid")
-			hud:AddCustomStatic("indicator_acid", true)
-		end
+        if string.find(zone:section(), "zone_field_acidic") then
+            hud:RemoveCustomStatic("indicator_acid")
+            hud:AddCustomStatic("indicator_acid", true)
+        end
 
-		if string.find(zone:section(), "zone_field_psychic") then
-			hud:RemoveCustomStatic("indicator_psi")
-			hud:AddCustomStatic("indicator_psi", true)
-		end
+        if string.find(zone:section(), "zone_field_psychic") then
+            hud:RemoveCustomStatic("indicator_psi")
+            hud:AddCustomStatic("indicator_psi", true)
+        end
 
-		if string.find(zone:section(), "zone_field_thermal") then
-			hud:RemoveCustomStatic("indicator_thermal")
-			hud:AddCustomStatic("indicator_thermal", true)
-		end
-	end
+        if string.find(zone:section(), "zone_field_thermal") then
+            hud:RemoveCustomStatic("indicator_thermal")
+            hud:AddCustomStatic("indicator_thermal", true)
+        end
+    end
 
-	if obj:is_artefact() then
-		amk_mod.af_on_enter_zone(obj)
-	end
+    local is_anomaly = get_bool(zone:section(), "is_anomaly", false)
+
+    if is_anomaly and obj:is_artefact() then
+        amk_mod.af_on_enter_zone(obj)
+    end
 end
 
-
 function anomaly_binder:on_exit(zone, obj)
-	if not obj:is_actor() and obj:alive() then return end
+    if not obj:is_actor() and obj:alive() then
+        return
+    end
 
-	if string.find(zone:section(), "zone_radioactive") then
-		hud:RemoveCustomStatic("indicator_rad")
-	end
+    if string.find(zone:section(), "zone_radioactive") then
+        hud:RemoveCustomStatic("indicator_rad")
+    end
 
-	if string.find(zone:section(), "zone_field_acidic") then
-		hud:RemoveCustomStatic("indicator_acid")
-	end
+    if string.find(zone:section(), "zone_field_acidic") then
+        hud:RemoveCustomStatic("indicator_acid")
+    end
 
-	if string.find(zone:section(), "zone_field_psychic") then
-		hud:RemoveCustomStatic("indicator_psi")
-	end
+    if string.find(zone:section(), "zone_field_psychic") then
+        hud:RemoveCustomStatic("indicator_psi")
+    end
 
-	if string.find(zone:section(), "zone_field_thermal") then
-		hud:RemoveCustomStatic("indicator_thermal")
-	end
+    if string.find(zone:section(), "zone_field_thermal") then
+        hud:RemoveCustomStatic("indicator_thermal")
+    end
 end

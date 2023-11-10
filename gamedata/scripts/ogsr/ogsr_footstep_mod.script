@@ -1,47 +1,46 @@
-function is_exo_visual( obj )
-  local vis = obj:get_visual_name()
-  return string.find( vis, "exo" ) or string.find( vis, "tank" )
-    or string.find( vis, "_cherep" )
-    or string.find( vis, "_redeye" )
-    or string.find( vis, "stalker_arhara1" )
+function is_exo_visual(obj)
+    local vis = obj:get_visual_name()
+    return string.find(vis, "exo") or string.find(vis, "tank") or string.find(vis, "_cherep") or
+               string.find(vis, "_redeye") or string.find(vis, "stalker_arhara1")
 end
 
-local function on_foot_step( obj, power )
-	local outfit = db.actor:item_in_slot(6)
-	if outfit then
-		local exo = get_string( outfit:section(), "exo" )
-		if exo then
-			local snd_fname = "exo\\exo_step".. math.random(4)
-			local snd_servo = sound_object( snd_fname )
-			snd_servo:play(db.actor, 0, sound_object.s2d)
-			snd_servo.volume = math.clamp(power, 0.0, 1.5) + 0.2
-		end
-	end
+local function on_foot_step(obj, power)
+    local outfit = db.actor:item_in_slot(6)
+    if outfit then
+        local exo = get_string(outfit:section(), "exo")
+        if exo then
+            local snd_fname = "exo\\exo_step" .. math.random(4)
+            local snd_servo = sound_object(snd_fname)
+            snd_servo:play(db.actor, 0, sound_object.s2d)
+            snd_servo.volume = math.clamp(power, 0.0, 1.5) + 0.2
+            -- snd_servo:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), volume)
+        end
+    end
 
-	if not db.actor:is_ActorHide() and level.rain_wetness() then
-		local snd_fname = "material\\human\\step\\rain_0".. math.random(8)
-		local body_state = get_actor_obj():get_body_state()
-		if body_state > 512 and body_state < 2048 then
-			snd_fname = "material\\human\\step\\rain_land_0".. math.random(3)
-		--elseif body_state > 128 and body_state < 256 then -- не робит на этом калбеке
-		--	snd_fname = "material\\human\\step\\rain_jump_0".. math.random(3)
-		end
-		local snd_rain = xr_sound.get_safe_sound_object(snd_fname)
-		local volume = math.clamp(level.rain_wetness(), 0.0, 0.4) + (level.rain_factor() * 0.1)
-		snd_rain:play(db.actor, 0, sound_object.s2d)
-		snd_rain.volume = volume
-	end
+    if not db.actor:is_ActorHide() and level.rain_wetness() then
+        local snd_fname = "material\\human\\step\\rain_0" .. math.random(8)
+        local body_state = get_actor_obj():get_body_state()
+        if body_state > 512 and body_state < 2048 then
+            snd_fname = "material\\human\\step\\rain_land_0" .. math.random(3)
+            -- elseif body_state > 128 and body_state < 256 then -- не робит на этом калбеке
+            --	snd_fname = "material\\human\\step\\rain_jump_0".. math.random(3)
+        end
+        local snd_rain = xr_sound.get_safe_sound_object(snd_fname)
+        local volume = math.clamp(level.rain_wetness(), 0.0, 0.4) + (level.rain_factor() * 0.1)
+        snd_rain:play(db.actor, 0, sound_object.s2d)
+        snd_rain.volume = volume
+    end
 end
 
 local function on_npc_foot_step(obj, power)
-	if is_exo_visual(obj) then
-		local snd_fname = "exo\\exo_step".. math.random( 4 )
-		local snd = sound_object( snd_fname )
-		snd:play_no_feedback(obj, sound_object.s3d, 0, obj:position(), 2.1)	
-	end
+    if is_exo_visual(obj) then
+        local snd_fname = "exo\\exo_step" .. math.random(4)
+        local snd = sound_object(snd_fname)
+        snd:play_no_feedback(obj, sound_object.s3d, 0, obj:position(), 2.1)
+    end
 end
 
 function attach(sm)
-	sm:subscribe({ signal = "on_foot_step", fun = on_foot_step })
+	sm:subscribe({ signal = "on_footstep", fun = on_foot_step })
 	sm:subscribe({ signal = "on_npc_foot_step", fun = on_npc_foot_step })
 end

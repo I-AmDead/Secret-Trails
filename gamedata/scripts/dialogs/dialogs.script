@@ -1,329 +1,321 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
 function allow_break_dialog(first_speaker, second_speaker, id)
-	if second_speaker:profile_name() == "osoznanie" then
-		return false
-	end
+    if second_speaker:profile_name() == "osoznanie" then
+        return false
+    end
 
-	return true
+    return true
 end
 
-
 function break_dialog(first_speaker, second_speaker, id)
-	first_speaker:stop_talk()
-	second_speaker:stop_talk()
+    first_speaker:stop_talk()
+    second_speaker:stop_talk()
 end
 
 function disable_talk_self(first_speaker, second_speaker)
-	first_speaker:disable_talk()
+    first_speaker:disable_talk()
 end
 function disable_talk_victim(first_speaker, second_speaker)
-	second_speaker:disable_talk()
+    second_speaker:disable_talk()
 end
 
 function punch(first_speaker, second_speaker)
-	db.storage[second_speaker:id()].punch.enabled = true
+    db.storage[second_speaker:id()].punch.enabled = true
 end
 
 function get_money_then_leave(first_speaker, second_speaker)
-	db.storage[first_speaker:id()].meet.enabled = false
-	db.storage[first_speaker:id()].robber.enabled = true
+    db.storage[first_speaker:id()].meet.enabled = false
+    db.storage[first_speaker:id()].robber.enabled = true
 end
 
 function is_wounded(first_speaker, second_speaker)
     if db.storage[first_speaker:id()].wounded ~= nil and
-       db.storage[first_speaker:id()].wounded.wound_manager.can_use_medkit == true
-    then
+        db.storage[first_speaker:id()].wounded.wound_manager.can_use_medkit == true then
         return false
     end
 
-	return xr_wounded.is_wounded(first_speaker)
+    return xr_wounded.is_wounded(first_speaker)
 end
 function is_opp_wounded(first_speaker, second_speaker, dialog_id)
     if db.storage[second_speaker:id()].wounded ~= nil and
-       db.storage[second_speaker:id()].wounded.wound_manager.can_use_medkit == true
-    then
+        db.storage[second_speaker:id()].wounded.wound_manager.can_use_medkit == true then
         return false
     end
-	return	xr_wounded.is_wounded(second_speaker)
+    return xr_wounded.is_wounded(second_speaker)
 end
 function is_not_wounded(first_speaker, second_speaker)
-	return not this.is_wounded(first_speaker, second_speaker)
+    return not this.is_wounded(first_speaker, second_speaker)
 end
 function actor_have_medkit(first_speaker, second_speaker)
-	return first_speaker:object("medkit") ~= nil or
-		   first_speaker:object("medkit_army") ~= nil or
-		   first_speaker:object("medkit_scientic") ~= nil
+    return first_speaker:object("medkit") ~= nil or first_speaker:object("medkit_army") ~= nil or
+               first_speaker:object("medkit_scientic") ~= nil
 end
---KRodin: убрал здесь установку отношений с напарниками. Не понятно, зачем это нужно.
---Если для того, чтобы не воевали - enemy_callback и так им воевать не разрешит.
+-- KRodin: СѓР±СЂР°Р» Р·РґРµСЃСЊ СѓСЃС‚Р°РЅРѕРІРєСѓ РѕС‚РЅРѕС€РµРЅРёР№ СЃ РЅР°РїР°СЂРЅРёРєР°РјРё. РќРµ РїРѕРЅСЏС‚РЅРѕ, Р·Р°С‡РµРј СЌС‚Рѕ РЅСѓР¶РЅРѕ.
+-- Р•СЃР»Рё РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РЅРµ РІРѕРµРІР°Р»Рё - enemy_callback Рё С‚Р°Рє РёРј РІРѕРµРІР°С‚СЊ РЅРµ СЂР°Р·СЂРµС€РёС‚.
 function make_relationship_with_actor(relation, npc, actor)
-	if relation == "friend" then
-		npc:set_relation(game_object.friend, actor)
-		npc:set_goodwill(5000, actor)
-	elseif relation == "neutral" then
-		npc:set_relation(game_object.neutral, actor)
-		npc:set_goodwill(500, actor)
-	elseif relation == "enemy" then
-		npc:set_relation(game_object.enemy, actor)
-		npc:set_goodwill(-5000, actor)
-	end	
+    if relation == "friend" then
+        npc:set_relation(game_object.friend, actor)
+        npc:set_goodwill(5000, actor)
+    elseif relation == "neutral" then
+        npc:set_relation(game_object.neutral, actor)
+        npc:set_goodwill(500, actor)
+    elseif relation == "enemy" then
+        npc:set_relation(game_object.enemy, actor)
+        npc:set_goodwill(-5000, actor)
+    end
 end
 
 function actor_have_bandage(first_speaker, second_speaker)
-	return first_speaker:object("bandage") ~= nil
+    return first_speaker:object("bandage") ~= nil
 end
 
 function transfer_medkit(first_speaker, second_speaker)
-	if first_speaker:object("medkit") then
-		dialogs.relocate_item_section(second_speaker, "medkit", "out")
-	elseif first_speaker:object("medkit_army") ~= nil then
-		dialogs.relocate_item_section(second_speaker, "medkit_army", "out")
-	else
-		dialogs.relocate_item_section(second_speaker, "medkit_scientic", "out")
-	end
+    if first_speaker:object("medkit") then
+        dialogs.relocate_item_section(second_speaker, "medkit", "out")
+    elseif first_speaker:object("medkit_army") ~= nil then
+        dialogs.relocate_item_section(second_speaker, "medkit_army", "out")
+    else
+        dialogs.relocate_item_section(second_speaker, "medkit_scientic", "out")
+    end
 
-	local obj_community = second_speaker:character_community()
-	--' Тут надо анлочить аптечку для использования.
-	xr_wounded.unlock_medkit(second_speaker)
+    local obj_community = second_speaker:character_community()
+    -- ' РўСѓС‚ РЅР°РґРѕ Р°РЅР»РѕС‡РёС‚СЊ Р°РїС‚РµС‡РєСѓ РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ.
+    xr_wounded.unlock_medkit(second_speaker)
 
-	
-	if second_speaker:relation(first_speaker) == game_object.enemy then
-		local rand = math.random()
-		if obj_community == "monolith" then
-			first_speaker:change_character_reputation(-25)
-			if rand < 0.1 then
-				-- друг
-				make_relationship_with_actor("friend", second_speaker, first_speaker)
-			elseif rand >= 0.1 and rand < 0.15 then
-				-- нейтрал
-				make_relationship_with_actor("neutral", second_speaker, first_speaker)
-			end
-		elseif obj_community == "zombied" then
-			make_relationship_with_actor("neutral", second_speaker, first_speaker)			
-		else
-			first_speaker:change_character_reputation(-10)
-			if rand < 0.35 then
-				-- друг
-				make_relationship_with_actor("friend", second_speaker, first_speaker)
-			elseif rand >= 0.35 and rand < 0.55 then
-				-- нейтрал
-				make_relationship_with_actor("neutral", second_speaker, first_speaker)		
-			end
-		end
+    if second_speaker:relation(first_speaker) == game_object.enemy then
+        local rand = math.random()
+        if obj_community == "monolith" then
+            first_speaker:change_character_reputation(-25)
+            if rand < 0.1 then
+                -- РґСЂСѓРі
+                make_relationship_with_actor("friend", second_speaker, first_speaker)
+            elseif rand >= 0.1 and rand < 0.15 then
+                -- РЅРµР№С‚СЂР°Р»
+                make_relationship_with_actor("neutral", second_speaker, first_speaker)
+            end
+        elseif obj_community == "zombied" then
+            make_relationship_with_actor("neutral", second_speaker, first_speaker)
+        else
+            first_speaker:change_character_reputation(-10)
+            if rand < 0.35 then
+                -- РґСЂСѓРі
+                make_relationship_with_actor("friend", second_speaker, first_speaker)
+            elseif rand >= 0.35 and rand < 0.55 then
+                -- РЅРµР№С‚СЂР°Р»
+                make_relationship_with_actor("neutral", second_speaker, first_speaker)
+            end
+        end
 
-		second_speaker:set_character_community(first_speaker:character_community())
-		second_speaker:remove_memory_object( first_speaker )
-		ogse.reset_npc_logic( second_speaker )
-		xr_gulag.resetJob( second_speaker )
-		local sobj = alife():object( second_speaker:id() )
-		if sobj then
-			sobj.custom_data = ""
-			smart_terrain.unregister_npc( sobj )
-			clear_smart_terrain_conditions( sobj )
-			sobj:brain():can_choose_alife_tasks( true )
-			sobj:brain():update()
-		end
+        second_speaker:set_character_community(first_speaker:character_community())
+        second_speaker:remove_memory_object(first_speaker)
+        ogse.reset_npc_logic(second_speaker)
+        xr_gulag.resetJob(second_speaker)
+        local sobj = alife():object(second_speaker:id())
+        if sobj then
+            sobj.custom_data = ""
+            smart_terrain.unregister_npc(sobj)
+            clear_smart_terrain_conditions(sobj)
+            sobj:brain():can_choose_alife_tasks(true)
+            sobj:brain():update()
+        end
 
-	elseif second_speaker:relation(first_speaker) == game_object.neutral then
-		first_speaker:change_character_reputation(25)
-		make_relationship_with_actor("friend", second_speaker, first_speaker)	
-	elseif second_speaker:relation(first_speaker) == game_object.friend then
-		first_speaker:change_character_reputation(10)
-		make_relationship_with_actor("friend", second_speaker, first_speaker)
-	end
+    elseif second_speaker:relation(first_speaker) == game_object.neutral then
+        first_speaker:change_character_reputation(25)
+        make_relationship_with_actor("friend", second_speaker, first_speaker)
+    elseif second_speaker:relation(first_speaker) == game_object.friend then
+        first_speaker:change_character_reputation(10)
+        make_relationship_with_actor("friend", second_speaker, first_speaker)
+    end
 
 end
 
-function clear_smart_terrain_conditions( sobj )
-  sobj.smart_terrain_conditions = nil
+function clear_smart_terrain_conditions(sobj)
+    sobj.smart_terrain_conditions = nil
 end
 
 function transfer_bandage(first_speaker, second_speaker)
-	dialogs.relocate_item_section(second_speaker, "bandage", "out")
-	second_speaker:set_relation(game_object.friend, first_speaker)
+    dialogs.relocate_item_section(second_speaker, "bandage", "out")
+    second_speaker:set_relation(game_object.friend, first_speaker)
 end
 function kill_yourself(npc, actor)
-	npc:kill(actor)
+    npc:kill(actor)
 end
 
-
---' Obsolete, do not use!!!
+-- ' Obsolete, do not use!!!
 function relocate_item(victim, obj, type)
-	if db.actor and victim then
-		if type == "in" then
-			victim:transfer_item(obj, db.actor)
-		elseif type == "out" then
-			db.actor:transfer_item(obj, victim)
-		end
-		--'news_manager.relocate_item(db.actor, type, obj)
-	end
+    if db.actor and victim then
+        if type == "in" then
+            victim:transfer_item(obj, db.actor)
+        elseif type == "out" then
+            db.actor:transfer_item(obj, victim)
+        end
+        -- 'news_manager.relocate_item(db.actor, type, obj)
+    end
 end
 
---' Use this function instead.
-function relocate_item_section( victim, section, type, n )
-  n = n or 1
-  if db.actor and victim then
-    if type == "in" then
-      for i = 1, n do
-        ogse.spawn_item_in_inv( section )
-      end
-    elseif type == "out" then
-      ogse.remove_inv_items_by_section( section, n )
+-- ' Use this function instead.
+function relocate_item_section(victim, section, type, n)
+    n = n or 1
+    if db.actor and victim then
+        if type == "in" then
+            for i = 1, n do
+                ogse.spawn_item_in_inv(section)
+            end
+        elseif type == "out" then
+            ogse.remove_inv_items_by_section(section, n)
+        end
+        news_manager.relocate_item(db.actor, type, section)
     end
-    news_manager.relocate_item( db.actor, type, section )
-  end
 end
 
 function relocate_money(victim, num, type)
-	if db.actor and victim then
-		if type == "in" then
-			db.actor:give_money(num)
-		elseif type == "out" then
-			db.actor:transfer_money(num, victim)
-		end
-		news_manager.relocate_money(db.actor, type, num)
-	end
+    if db.actor and victim then
+        if type == "in" then
+            db.actor:give_money(num)
+        elseif type == "out" then
+            db.actor:transfer_money(num, victim)
+        end
+        news_manager.relocate_money(db.actor, type, num)
+    end
 end
 
---'---------------------------------------------------------------------------------
---' DIALOG ALLOWED
---'---------------------------------------------------------------------------------
+-- '---------------------------------------------------------------------------------
+-- ' DIALOG ALLOWED
+-- '---------------------------------------------------------------------------------
 function dialog_allowed(object, victim, id)
-	--if id ~= nil then
---		log1("*DIALOGS*: dialog_allowed: %s", id)
-	--else
---		log1("*DIALOGS*: dialog_allowed: nil")
-	--end
-	if db.storage[victim:id()].actor_dialogs ~= nil then
-		for k,v in pairs(db.storage[victim:id()].actor_dialogs) do
-			if v == id then return true end
-		end
-	end
-	return false
+    -- if id ~= nil then
+    --		log1("*DIALOGS*: dialog_allowed: %s", id)
+    -- else
+    --		log1("*DIALOGS*: dialog_allowed: nil")
+    -- end
+    if db.storage[victim:id()].actor_dialogs ~= nil then
+        for k, v in pairs(db.storage[victim:id()].actor_dialogs) do
+            if v == id then
+                return true
+            end
+        end
+    end
+    return false
 end
 function dialog_not_disable(object, victim, id)
-	--if id ~= nil then
---		log1("*DIALOGS*: dialog_disable:%s", id)
-	--else
---		log1("*DIALOGS*: dialog_disable:nil")
-	--end
-	if db.storage[victim:id()].actor_disable ~= nil then
-		for k,v in pairs(db.storage[victim:id()].actor_disable) do
-			if v == id then return false end
-		end
-	end
-	return true
+    -- if id ~= nil then
+    --		log1("*DIALOGS*: dialog_disable:%s", id)
+    -- else
+    --		log1("*DIALOGS*: dialog_disable:nil")
+    -- end
+    if db.storage[victim:id()].actor_disable ~= nil then
+        for k, v in pairs(db.storage[victim:id()].actor_disable) do
+            if v == id then
+                return false
+            end
+        end
+    end
+    return true
 end
 
 function allow_wounded_dialog(object, victim, id)
-	if db.storage[victim:id()].wounded == nil then
-		return false
-	end	
-	if db.storage[victim:id()].wounded.help_dialog == id then
-		return true
-	end
-	return false	
+    if db.storage[victim:id()].wounded == nil then
+        return false
+    end
+    if db.storage[victim:id()].wounded.help_dialog == id then
+        return true
+    end
+    return false
 end
-
 
 -----------------------------------------------------------------------------------
 -- LEVELS
 -----------------------------------------------------------------------------------
 function level_escape(first_speaker, second_speaker)
-	return level.name() == "l01_escape"
+    return level.name() == "l01_escape"
 end
 
 function level_garbage(first_speaker, second_speaker)
-	return level.name() == "l02_garbage"
+    return level.name() == "l02_garbage"
 end
 
 function level_agroprom(first_speaker, second_speaker)
-	return level.name() == "l03_agroprom_ai2" or level.name() == "l03_agroprom"
+    return level.name() == "l03_agroprom_ai2" or level.name() == "l03_agroprom"
 end
 
 -----------------------------------------------------------------------------------
 -- Relation functions
 -----------------------------------------------------------------------------------
 function is_friend(first_speaker, second_speaker)
-	return first_speaker:relation(second_speaker) == game_object.friend
+    return first_speaker:relation(second_speaker) == game_object.friend
 end
 
 function is_not_friend(first_speaker, second_speaker)
-	return not is_friend(first_speaker, second_speaker)
+    return not is_friend(first_speaker, second_speaker)
 end
 
 function become_friend(first_speaker, second_speaker)
-	first_speaker:set_relation(game_object.friend, second_speaker)
+    first_speaker:set_relation(game_object.friend, second_speaker)
 end
 
 -----------------------------------------------------------------------------------
 -- Community
 -----------------------------------------------------------------------------------
 function actor_clear_community()
-	if db.actor and db.actor:alive() then
-		db.actor:set_character_community("actor", 0, 0)
-	end
-	return true
+    if db.actor and db.actor:alive() then
+        db.actor:set_character_community("actor", 0, 0)
+    end
+    return true
 end
-
 
 function actor_in_dolg(actor, npc)
-	if db.actor then
-		return db.actor:character_community() == "actor_dolg"
-	end
-	return false
+    if db.actor then
+        return db.actor:character_community() == "actor_dolg"
+    end
+    return false
 end
 function actor_not_in_dolg(actor, npc)
-	return not actor_in_dolg(actor, npc)
+    return not actor_in_dolg(actor, npc)
 end
 function actor_set_dolg(actor, npc)
-	if db.actor then
-		db.actor:set_character_community("actor_dolg", 0, 0)
-	end
-	return true
+    if db.actor then
+        db.actor:set_character_community("actor_dolg", 0, 0)
+    end
+    return true
 end
 function actor_set_monolith(actor, npc)
-	if db.actor then
-		db.actor:set_character_community("monolith", 0, 0)
-	end
-	return true
+    if db.actor then
+        db.actor:set_character_community("monolith", 0, 0)
+    end
+    return true
 end
 function actor_clear_community(actor, npc)
-	if db.actor then
-		db.actor:set_character_community("actor", 0, 0)
-	end
-	return true
+    if db.actor then
+        db.actor:set_character_community("actor", 0, 0)
+    end
+    return true
 end
 
 -----------------------------------------------------------------------------------
 -- Money functions
 -----------------------------------------------------------------------------------
 function has_2000_money(first_speaker, second_speaker)
-	return first_speaker:money() >= 2000
+    return first_speaker:money() >= 2000
 end
 
 -----------------------------------------------------------------------------------
 -- TRADE
 -----------------------------------------------------------------------------------
---' Инициализация торговли
+-- ' РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚РѕСЂРіРѕРІР»Рё
 function trade_init(seller, buyer)
-	db.storage[seller:id()].meet.begin_wait_to_see.begin = time_global()/1000
-	xr_position.setPosition(db.storage[seller:id()].meet.Seller, 
-							db.storage[seller:id()].meet.Seller:level_vertex_id())
-	db.storage[seller:id()].meet.Buyer = buyer
+    db.storage[seller:id()].meet.begin_wait_to_see.begin = time_global() / 1000
+    xr_position.setPosition(db.storage[seller:id()].meet.Seller, db.storage[seller:id()].meet.Seller:level_vertex_id())
+    db.storage[seller:id()].meet.Buyer = buyer
 end
 
 function want_trade(seller, buyer)
-	if seller:relation(buyer) == game_object.friend or
-		seller:relation(buyer) == game_object.neutral
-	then
-		return true
-	else
-		return false
-	end
+    if seller:relation(buyer) == game_object.friend or seller:relation(buyer) == game_object.neutral then
+        return true
+    else
+        return false
+    end
 end
 
-function dont_want_trade(seller, buyer)	
-	return not want_trade(seller,buyer)
+function dont_want_trade(seller, buyer)
+    return not want_trade(seller, buyer)
 end

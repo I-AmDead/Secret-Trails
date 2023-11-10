@@ -1,30 +1,46 @@
 local ANIMS_ENABLED = true
 
 local cfg = {
-	["eat_health"]		= function(v) db.actor.health = has_alife_info("acv_tera") and v + 0.05 or v end,
-	["eat_power"]		= function(v) db.actor.power = v end,
-	["eat_radiation"]	= function(v) db.actor.radiation = has_alife_info("acv_tera") and v + 0.05 or v end,
-	["eat_satiety"]		= function(v) db.actor.satiety = has_alife_info("acv_sat") and v + 0.1 or v end,
-	["eat_thirst"]		= function(v) db.actor.thirst = v end,
-	["eat_alcohol"]		= function(v) db.actor.alcohol = has_alife_info("acv_alk") and v - 0.1 or v end,
-	["eat_psy_health"]	= function(v) db.actor.psy_health = v end,
-	["wounds_heal_perc"]	= function(v) db.actor:heal_wounds(has_alife_info("acv_tera") and v + 0.05 or v) end,
+    ["eat_health"] = function(v)
+        db.actor.health = has_alife_info("acv_tera") and v + 0.05 or v
+    end,
+    ["eat_power"] = function(v)
+        db.actor.power = v
+    end,
+    ["eat_radiation"] = function(v)
+        db.actor.radiation = has_alife_info("acv_tera") and v + 0.05 or v
+    end,
+    ["eat_satiety"] = function(v)
+        db.actor.satiety = has_alife_info("acv_sat") and v + 0.1 or v
+    end,
+    ["eat_thirst"] = function(v)
+        db.actor.thirst = v
+    end,
+    ["eat_alcohol"] = function(v)
+        db.actor.alcohol = has_alife_info("acv_alk") and v - 0.1 or v
+    end,
+    ["eat_psy_health"] = function(v)
+        db.actor.psy_health = v
+    end,
+    ["wounds_heal_perc"] = function(v)
+        db.actor:heal_wounds(has_alife_info("acv_tera") and v + 0.05 or v)
+    end
 }
 
-local function apply_item( sect )
-	for line, func in pairs( cfg ) do
-		local val = get_float( sect, line )
-		if val ~= 0	then
-			func(val)
-		end
-	end
+local function apply_item(sect)
+    for line, func in pairs(cfg) do
+        local val = get_float(sect, line)
+        if val ~= 0 then
+            func(val)
+        end
+    end
 
-	if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
-		arc_radiation.use_antirad()
-	end
+    if sect == "antirad" or sect == "medkit_scientic" or sect == "vodka" then
+        arc_radiation.use_antirad()
+    end
 
-	apply_boost(sect)
-	archievements.on_use_item(sect)
+    apply_boost(sect)
+    archievements.on_use_item(sect)
 end
 
 function apply_boost(sect)
@@ -35,21 +51,22 @@ function apply_boost(sect)
 end
 
 local function respawn_item(obj)
-	obj:zero_effects()
-	alife():create( obj:section(), db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(), db.actor:id() )	
+    obj:zero_effects()
+    alife():create(obj:section(), db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(),
+        db.actor:id())
 end
 
 local snd_in_use = false
 
 local function play_use_sound(sect, snd_name)
-	local snd = snd_name or get_string( sect, "snd_use" )
-	if snd then
-		if snd_in_use then
-			snd_in_use:stop()
-		end
-		snd_in_use = sound_object( snd )
-		snd_in_use:play( db.actor, 0, sound_object.s2d )
-	end
+    local snd = snd_name or get_string(sect, "snd_use")
+    if snd then
+        if snd_in_use then
+            snd_in_use:stop()
+        end
+        snd_in_use = sound_object(snd)
+        snd_in_use:play(db.actor, 0, sound_object.s2d)
+    end
 end
 
 local function play_item_use(item)
@@ -62,7 +79,7 @@ local function play_item_use(item)
 
     if outfit then
         exo = get_string(outfit:section(), "exo")
-        if exo and ( string.find(item, "^medkit") or item == "antirad" ) then
+        if exo and (string.find(item, "^medkit") or item == "antirad") then
             item_hud = get_string(item, "hud_exo")
             used_time = get_string(item, "item_used_timing_exo")
             snd = get_string(item, "snd_use_exo_anm")
@@ -70,12 +87,14 @@ local function play_item_use(item)
         end
     end
 
-    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and "anm_use_alt" or "anm_use"
+    local anim =
+        (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and
+            "anm_use_alt" or "anm_use"
 
     if level.get_inventory_wnd():IsShown() then
-    	level.start_stop_menu(level.get_inventory_wnd(), true)
+        level.start_stop_menu(level.get_inventory_wnd(), true)
     elseif level.get_car_body_wnd():IsShown() then
-    	level.start_stop_menu(level.get_car_body_wnd(), true)			
+        level.start_stop_menu(level.get_car_body_wnd(), true)
     end
 
     level.only_allow_movekeys(true)
@@ -84,28 +103,30 @@ local function play_item_use(item)
     local prev_active_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
 
-    dsh.wait_condition(function() return not db.actor:active_item() end, function()
-    	snd_in_use = sound_object(snd)
-    	snd_in_use:play(db.actor, 0, sound_object.s2d)
+    dsh.wait_condition(function()
+        return not db.actor:active_item()
+    end, function()
+        snd_in_use = sound_object(snd)
+        snd_in_use:play(db.actor, 0, sound_object.s2d)
 
-    	local anm_start = time_global()
-    	local anm_duration = game.play_hud_motion(2, item_hud, anim, false, 1, true)
-    	level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
+        local anm_start = time_global()
+        local anm_duration = game.play_hud_motion(2, item_hud, anim, false, 1, true)
+        level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
 
-    	dsh.timeout(used_time, function()
-    		apply_item(item)
-    	end)
+        dsh.timeout(used_time, function()
+            apply_item(item)
+        end)
 
-    	local tmr = dsh.timeout(anm_duration, function()
-    	    level.only_allow_movekeys(false)
-    	    level.set_actor_allow_ladder(true)
+        local tmr = dsh.timeout(anm_duration, function()
+            level.only_allow_movekeys(false)
+            level.set_actor_allow_ladder(true)
 
-    	    db.actor:activate_slot(prev_active_slot)
-    	end)
+            db.actor:activate_slot(prev_active_slot)
+        end)
     end)
 end
 
-local function on_actor_before_use( obj, sobj )
+local function on_actor_before_use(obj, sobj)
     local sect = obj:section()
 
     if ANIMS_ENABLED then
@@ -128,12 +149,13 @@ local function on_actor_before_use( obj, sobj )
 end
 
 local function animation_off()
-	level.only_allow_movekeys(false)
-	level.set_actor_allow_ladder(true)
-	game.stop_hud_motion()
-	if snd_in_use then
-		snd_in_use:stop()
-	end
+    level.only_allow_movekeys(false)
+    level.set_actor_allow_ladder(true)
+    game.stop_hud_motion()
+    if snd_in_use then
+        snd_in_use:stop()
+    end
+
 end
 
 function attach( sm )

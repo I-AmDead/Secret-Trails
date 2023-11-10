@@ -1,14 +1,14 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
---************************************************* Инициализация расширений движка ************************************************
+--************************************************* РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЂР°СЃС€РёСЂРµРЅРёР№ РґРІРёР¶РєР° ************************************************
 log1("--LUA version: ["..(jit.version or _VERSION).."]")
 log1("--MOD version: "..system_ini():r_string_wq("mod_ver", "mod_ver").." "..stdfs.path(getFS():update_path( "$fs_root$",  "gamedata.db_base_configs" )).last_write_time_string_short)
 --==============================================================================================
-FFI = require('ffi') --Делать только здесь и только один раз!
+FFI = require('ffi') --Р”РµР»Р°С‚СЊ С‚РѕР»СЊРєРѕ Р·РґРµСЃСЊ Рё С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·!
 --==============================================================================================
---===================[string.lower и string.upper с поддержкой русских букв]====================
---[=[--KRodin: Из-за setlocale могут возникать проблемы.
-os.setlocale("", "ctype") --Для старых версий LuaJIT достаточно установить правильную локаль.
-if jit.version_num >= 20000 then --В новых версиях установки локали недостаточно
+--===================[string.lower Рё string.upper СЃ РїРѕРґРґРµСЂР¶РєРѕР№ СЂСѓСЃСЃРєРёС… Р±СѓРєРІ]====================
+--[=[--KRodin: РР·-Р·Р° setlocale РјРѕРіСѓС‚ РІРѕР·РЅРёРєР°С‚СЊ РїСЂРѕР±Р»РµРјС‹.
+os.setlocale("", "ctype") --Р”Р»СЏ СЃС‚Р°СЂС‹С… РІРµСЂСЃРёР№ LuaJIT РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂР°РІРёР»СЊРЅСѓСЋ Р»РѕРєР°Р»СЊ.
+if jit.version_num >= 20000 then --Р’ РЅРѕРІС‹С… РІРµСЂСЃРёСЏС… СѓСЃС‚Р°РЅРѕРІРєРё Р»РѕРєР°Р»Рё РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ
 	FFI.cdef[[
 		int tolower( int code );
 		int toupper( int code );
@@ -28,29 +28,29 @@ end
 do
 	local lower = string.lower
 	string.lower = function(s)
-		return lower(s:gsub("([А-Я])",function(c) return string.char(c:byte()+32) end):gsub("Ё", "ё"))
+		return lower(s:gsub("([Рђ-РЇ])",function(c) return string.char(c:byte()+32) end):gsub("РЃ", "С‘"))
 	end
 	--
 	local upper = string.upper
 	string.upper = function(s)
-		return upper(s:gsub("([а-я])",function(c) return string.char(c:byte()-32) end):gsub("ё", "Ё"))
+		return upper(s:gsub("([Р°-СЏ])",function(c) return string.char(c:byte()-32) end):gsub("С‘", "РЃ"))
 	end
 end
---=======================================[Константы]============================================
+--=======================================[РљРѕРЅСЃС‚Р°РЅС‚С‹]============================================
 NO_ACTIVE_SLOT = 255
 BI_NONE = 65535
 INVALID_STORY_ID = 4294967295
 --==============================================================================================
 math.randomseed(os.time())
---=================================[Функции из xrLuaFix]========================================
---Срезать пробелы слева
+--=================================[Р¤СѓРЅРєС†РёРё РёР· xrLuaFix]========================================
+--РЎСЂРµР·Р°С‚СЊ РїСЂРѕР±РµР»С‹ СЃР»РµРІР°
 string.trim_l = function(s) return s:gsub("^%s+", '') end
---Срезать пробелы справа
+--РЎСЂРµР·Р°С‚СЊ РїСЂРѕР±РµР»С‹ СЃРїСЂР°РІР°
 string.trim_r = function(s) return s:gsub("%s*$", '') end
---Срезать все пробелы слева и справа
+--РЎСЂРµР·Р°С‚СЊ РІСЃРµ РїСЂРѕР±РµР»С‹ СЃР»РµРІР° Рё СЃРїСЂР°РІР°
 string.trim   = function(s) return s:match( "^%s*(.*%S)" ) or "" end
 --==============================================================================================
--- Взято из аддона Naxac'a
+-- Р’Р·СЏС‚Рѕ РёР· Р°РґРґРѕРЅР° Naxac'a
 local to_ptrn = {
 	[' '] = '%s',
 	['.'] = '%.',
@@ -58,9 +58,9 @@ local to_ptrn = {
 	['*'] = '%*',
 	['-'] = '%-'
 }
-string.explode = function ( div,		-- разделитель
-							str,		-- строка
-							clear )		-- обрезать ли пробелы по краям строк (false/true)
+string.explode = function ( div,		-- СЂР°Р·РґРµР»РёС‚РµР»СЊ
+							str,		-- СЃС‚СЂРѕРєР°
+							clear )		-- РѕР±СЂРµР·Р°С‚СЊ Р»Рё РїСЂРѕР±РµР»С‹ РїРѕ РєСЂР°СЏРј СЃС‚СЂРѕРє (false/true)
 	local ret = {}
 	for s in str:gmatch("([^"..(to_ptrn[div] or div).."]+)") do
 		ret[#ret+1] = (clear and s:trim() or s)
@@ -68,12 +68,12 @@ string.explode = function ( div,		-- разделитель
 	return ret
 end
 --==============================================================================================
--- очистка строки от "лишних" символов (полезно при работе с FS)
-string.clear = function(str) --KRodin: поправил функцию, теперь работает.
+-- РѕС‡РёСЃС‚РєР° СЃС‚СЂРѕРєРё РѕС‚ "Р»РёС€РЅРёС…" СЃРёРјРІРѕР»РѕРІ (РїРѕР»РµР·РЅРѕ РїСЂРё СЂР°Р±РѕС‚Рµ СЃ FS)
+string.clear = function(str) --KRodin: РїРѕРїСЂР°РІРёР» С„СѓРЅРєС†РёСЋ, С‚РµРїРµСЂСЊ СЂР°Р±РѕС‚Р°РµС‚.
 	return str:gsub( '[/:<>|%*%?"\\]*', "" )
 end
 --==============================================================================================
--- Форматирование текста по ширине
+-- Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ С‚РµРєСЃС‚Р° РїРѕ С€РёСЂРёРЅРµ
 -- http://www.amk-team.ru/forum/topic/13216-sborochnyy-ceh/?do=findComment&comment=959286
 string.width = function(str, width, return_table, indent, paragrapf)
     indent    = indent    or 0
@@ -111,10 +111,10 @@ string.width = function(str, width, return_table, indent, paragrapf)
 	end
 end
 --==============================================================================================
--- поверхностное (простое) клонирование таблицы: 
--- создаётся копия таблицы и копии всех элементов без их клонирования,
--- т.е. для ссылочных типов обе таблицы будут содержать ссылки на одни и те же данные
--- метатаблицы не копируются
+-- РїРѕРІРµСЂС…РЅРѕСЃС‚РЅРѕРµ (РїСЂРѕСЃС‚РѕРµ) РєР»РѕРЅРёСЂРѕРІР°РЅРёРµ С‚Р°Р±Р»РёС†С‹: 
+-- СЃРѕР·РґР°С‘С‚СЃСЏ РєРѕРїРёСЏ С‚Р°Р±Р»РёС†С‹ Рё РєРѕРїРёРё РІСЃРµС… СЌР»РµРјРµРЅС‚РѕРІ Р±РµР· РёС… РєР»РѕРЅРёСЂРѕРІР°РЅРёСЏ,
+-- С‚.Рµ. РґР»СЏ СЃСЃС‹Р»РѕС‡РЅС‹С… С‚РёРїРѕРІ РѕР±Рµ С‚Р°Р±Р»РёС†С‹ Р±СѓРґСѓС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ СЃСЃС‹Р»РєРё РЅР° РѕРґРЅРё Рё С‚Рµ Р¶Рµ РґР°РЅРЅС‹Рµ
+-- РјРµС‚Р°С‚Р°Р±Р»РёС†С‹ РЅРµ РєРѕРїРёСЂСѓСЋС‚СЃСЏ
 function table.clone_simple(tbl)
 	local res = {}
 	for k,v in pairs(tbl) do
@@ -123,7 +123,7 @@ function table.clone_simple(tbl)
 	return res
 end
 --==============================================================================================
-function table.copy(tbl) --Возвращает копию таблицы.
+function table.copy(tbl) --Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕРїРёСЋ С‚Р°Р±Р»РёС†С‹.
 	local mt = getmetatable(tbl)
 	local res = {}
 	for k, v in pairs(tbl) do
@@ -139,7 +139,7 @@ function table.copy(tbl) --Возвращает копию таблицы.
 	return res
 end
 --=================================[CUIScriptWnd Extension]=====================================
--- Вызов обычный, как и в AddCallback, но после последнего аргумента можно передавать множество дополнительных.
+-- Р’С‹Р·РѕРІ РѕР±С‹С‡РЅС‹Р№, РєР°Рє Рё РІ AddCallback, РЅРѕ РїРѕСЃР»Рµ РїРѕСЃР»РµРґРЅРµРіРѕ Р°СЂРіСѓРјРµРЅС‚Р° РјРѕР¶РЅРѕ РїРµСЂРµРґР°РІР°С‚СЊ РјРЅРѕР¶РµСЃС‚РІРѕ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С….
 function CUIScriptWnd:Connect(name, event, func, ...)
 	local args = {...}
 	return self:AddCallback( name, event, function() func(unpack(args)) end )
@@ -148,29 +148,29 @@ end
 prefetch("_luaxml")
 --==============================================================================================
 local _advance_game_time = level.advance_game_time
-level.advance_game_time = function(game_ms) --KRodin: универсальная функция для перевода часов. Вынесена из менеджера сна.
-	_advance_game_time(game_ms) --Прокручивает игровое время вперед на заданное кол-во ИГРОВЫХ миллисекунд.
+level.advance_game_time = function(game_ms) --KRodin: СѓРЅРёРІРµСЂСЃР°Р»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РїРµСЂРµРІРѕРґР° С‡Р°СЃРѕРІ. Р’С‹РЅРµСЃРµРЅР° РёР· РјРµРЅРµРґР¶РµСЂР° СЃРЅР°.
+	_advance_game_time(game_ms) --РџСЂРѕРєСЂСѓС‡РёРІР°РµС‚ РёРіСЂРѕРІРѕРµ РІСЂРµРјСЏ РІРїРµСЂРµРґ РЅР° Р·Р°РґР°РЅРЅРѕРµ РєРѕР»-РІРѕ РР“Р РћР’Р«РҐ РјРёР»Р»РёСЃРµРєСѓРЅРґ.
 	--
-	db.actor:update_condition() --Обновляем движковые эффекты здоровья
-	get_actor_obj():UpdateArtefactsOnBelt() --И эффекты артефактов
+	db.actor:update_condition() --РћР±РЅРѕРІР»СЏРµРј РґРІРёР¶РєРѕРІС‹Рµ СЌС„С„РµРєС‚С‹ Р·РґРѕСЂРѕРІСЊСЏ
+	get_actor_obj():UpdateArtefactsOnBelt() --Р СЌС„С„РµРєС‚С‹ Р°СЂС‚РµС„Р°РєС‚РѕРІ
 	--
-	ogsr_signals.get_mgr():call("after_time_change") --KRodin: Добавил специальный сигнал для обновления погодного менеджера, таймеров и прочих систем, зависящих от игрового времени.
+	ogsr_signals.get_mgr():call("after_time_change") --KRodin: Р”РѕР±Р°РІРёР» СЃРїРµС†РёР°Р»СЊРЅС‹Р№ СЃРёРіРЅР°Р» РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ РїРѕРіРѕРґРЅРѕРіРѕ РјРµРЅРµРґР¶РµСЂР°, С‚Р°Р№РјРµСЂРѕРІ Рё РїСЂРѕС‡РёС… СЃРёСЃС‚РµРј, Р·Р°РІРёСЃСЏС‰РёС… РѕС‚ РёРіСЂРѕРІРѕРіРѕ РІСЂРµРјРµРЅРё.
 	--
-	ogsr_signals.get_mgr():call("on_update", 0) --Учитываем все возможные скриптовые эффекты
+	ogsr_signals.get_mgr():call("on_update", 0) --РЈС‡РёС‚С‹РІР°РµРј РІСЃРµ РІРѕР·РјРѕР¶РЅС‹Рµ СЃРєСЂРёРїС‚РѕРІС‹Рµ СЌС„С„РµРєС‚С‹
 	--
-	--Malandrinus: Эта функция идёт как затычка к механизму прокрутки времени, который в ОГСЕ используется для сна.
-	--Я обнаружил, что после прокрутки времени происходят косяки с пересчётом состояний актора.
-	--Подробностей уже не помню, но лечилось это разовым игнорированием соответствующего обновления сразу после приращения времени.
-	--Для установки этого разового игнора и предназначена эта функция.
-	--Вполне допускаю, хотя уже и не помню точно, что вместе с актором пропускается обновление чего-то ещё.
+	--Malandrinus: Р­С‚Р° С„СѓРЅРєС†РёСЏ РёРґС‘С‚ РєР°Рє Р·Р°С‚С‹С‡РєР° Рє РјРµС…Р°РЅРёР·РјСѓ РїСЂРѕРєСЂСѓС‚РєРё РІСЂРµРјРµРЅРё, РєРѕС‚РѕСЂС‹Р№ РІ РћР“РЎР• РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СЃРЅР°.
+	--РЇ РѕР±РЅР°СЂСѓР¶РёР», С‡С‚Рѕ РїРѕСЃР»Рµ РїСЂРѕРєСЂСѓС‚РєРё РІСЂРµРјРµРЅРё РїСЂРѕРёСЃС…РѕРґСЏС‚ РєРѕСЃСЏРєРё СЃ РїРµСЂРµСЃС‡С‘С‚РѕРј СЃРѕСЃС‚РѕСЏРЅРёР№ Р°РєС‚РѕСЂР°.
+	--РџРѕРґСЂРѕР±РЅРѕСЃС‚РµР№ СѓР¶Рµ РЅРµ РїРѕРјРЅСЋ, РЅРѕ Р»РµС‡РёР»РѕСЃСЊ СЌС‚Рѕ СЂР°Р·РѕРІС‹Рј РёРіРЅРѕСЂРёСЂРѕРІР°РЅРёРµРј СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ РїСЂРёСЂР°С‰РµРЅРёСЏ РІСЂРµРјРµРЅРё.
+	--Р”Р»СЏ СѓСЃС‚Р°РЅРѕРІРєРё СЌС‚РѕРіРѕ СЂР°Р·РѕРІРѕРіРѕ РёРіРЅРѕСЂР° Рё РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅР° СЌС‚Р° С„СѓРЅРєС†РёСЏ.
+	--Р’РїРѕР»РЅРµ РґРѕРїСѓСЃРєР°СЋ, С…РѕС‚СЏ СѓР¶Рµ Рё РЅРµ РїРѕРјРЅСЋ С‚РѕС‡РЅРѕ, С‡С‚Рѕ РІРјРµСЃС‚Рµ СЃ Р°РєС‚РѕСЂРѕРј РїСЂРѕРїСѓСЃРєР°РµС‚СЃСЏ РѕР±РЅРѕРІР»РµРЅРёРµ С‡РµРіРѕ-С‚Рѕ РµС‰С‘.
 	-- http://www.amk-team.ru/forum/topic/10538-x-ray-extensions/page-50#entry975972
 	level.set_ignore_game_state_update()
 end
 --==============================================================================================
-function get_ammo_size(obj) --Возвращает колличество патрон в пачке
+function get_ammo_size(obj) --Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»Р»РёС‡РµСЃС‚РІРѕ РїР°С‚СЂРѕРЅ РІ РїР°С‡РєРµ
 	return obj:get_current_ammo()
 end
-function set_ammo_size(obj, size) --Задать кол-во патронов в пачке
+function set_ammo_size(obj, size) --Р—Р°РґР°С‚СЊ РєРѕР»-РІРѕ РїР°С‚СЂРѕРЅРѕРІ РІ РїР°С‡РєРµ
 	obj:set_ammo_box_curr(size)
 end
 function get_inv_item_slot( obj )
@@ -180,14 +180,14 @@ function set_inv_item_slot( obj, slot )
 	obj:get_inventory_item().slot = slot
 end
 --==============================================================================================
---Для экспериментов.
+--Р”Р»СЏ СЌРєСЃРїРµСЂРёРјРµРЅС‚РѕРІ.
 --game_object.make_object_visible_somewhen = function() end
 --==============================================================================================
---******************************************** Инициализация расширений движка закончена ********************************************
+--******************************************** РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЂР°СЃС€РёСЂРµРЅРёР№ РґРІРёР¶РєР° Р·Р°РєРѕРЅС‡РµРЅР° ********************************************
 
 -- FIX Nazgool ------------------------------------------------------------------
--- Возможно подобные функции уже где-то и есть, но я пока не нашёл.
--- Проверки
+-- Р’РѕР·РјРѕР¶РЅРѕ РїРѕРґРѕР±РЅС‹Рµ С„СѓРЅРєС†РёРё СѓР¶Рµ РіРґРµ-С‚Рѕ Рё РµСЃС‚СЊ, РЅРѕ СЏ РїРѕРєР° РЅРµ РЅР°С€С‘Р».
+-- РџСЂРѕРІРµСЂРєРё
 function isTable   (obj) return type(obj) == 'table'    end
 function isBoolean (obj) return type(obj) == 'boolean'  end
 function isNumber  (obj) return type(obj) == 'number'   end
@@ -195,9 +195,9 @@ function isFunction(obj) return type(obj) == 'function' end
 function isString  (obj) return type(obj) == 'string'   end
 function isUserdata(obj) return type(obj) == 'userdata' end
 function isThread  (obj) return type(obj) == 'thread'   end
-function isNil     (obj) return       obj == nil        end -- не false, а именно nil
--- Проверка - пуста ли таблица или строка
--- Если параметр 'space' не nil/false, то строка, состоящая только из пробельных символов и(или) неразрывного пробела будет считаться пустой.
+function isNil     (obj) return       obj == nil        end -- РЅРµ false, Р° РёРјРµРЅРЅРѕ nil
+-- РџСЂРѕРІРµСЂРєР° - РїСѓСЃС‚Р° Р»Рё С‚Р°Р±Р»РёС†Р° РёР»Рё СЃС‚СЂРѕРєР°
+-- Р•СЃР»Рё РїР°СЂР°РјРµС‚СЂ 'space' РЅРµ nil/false, С‚Рѕ СЃС‚СЂРѕРєР°, СЃРѕСЃС‚РѕСЏС‰Р°СЏ С‚РѕР»СЊРєРѕ РёР· РїСЂРѕР±РµР»СЊРЅС‹С… СЃРёРјРІРѕР»РѕРІ Рё(РёР»Рё) РЅРµСЂР°Р·СЂС‹РІРЅРѕРіРѕ РїСЂРѕР±РµР»Р° Р±СѓРґРµС‚ СЃС‡РёС‚Р°С‚СЊСЃСЏ РїСѓСЃС‚РѕР№.
 function isEmpty(obj, space)
     if isString(obj) then
         if space then return not obj:match('[^%s\160]+') end
@@ -206,27 +206,27 @@ function isEmpty(obj, space)
     if isTable(obj) then return next(obj) == nil end
     return false
 end
--- является ли таблица массивом
+-- СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚Р°Р±Р»РёС†Р° РјР°СЃСЃРёРІРѕРј
 function isArray(tbl)
 	local n=0
 	for _ in pairs(tbl) do n=n+1 end
     return n <= #tbl
 end
 
--- Приведение значения переменной 'val' к булевому значению
+-- РџСЂРёРІРµРґРµРЅРёРµ Р·РЅР°С‡РµРЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№ 'val' Рє Р±СѓР»РµРІРѕРјСѓ Р·РЅР°С‡РµРЅРёСЋ
 function toBoolean(val)
     return not not val
 end
 -- END FIX  Nazgool -------------------------------------------------------------
 
 ----------------------------------------------------------------------
-schemes = {} -- соответствие схем модулям
-stypes = {} -- типы схем
+schemes = {} -- СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЃС…РµРј РјРѕРґСѓР»СЏРј
+stypes = {} -- С‚РёРїС‹ СЃС…РµРј
 
---/ Загружает схему из файла на диске и активирует в мотиваторе.
---/ Здесь:
---/  filename - имя файла, в котором реализована схема, без расширения
---/  scheme - имя схемы
+--/ Р—Р°РіСЂСѓР¶Р°РµС‚ СЃС…РµРјСѓ РёР· С„Р°Р№Р»Р° РЅР° РґРёСЃРєРµ Рё Р°РєС‚РёРІРёСЂСѓРµС‚ РІ РјРѕС‚РёРІР°С‚РѕСЂРµ.
+--/ Р—РґРµСЃСЊ:
+--/  filename - РёРјСЏ С„Р°Р№Р»Р°, РІ РєРѕС‚РѕСЂРѕРј СЂРµР°Р»РёР·РѕРІР°РЅР° СЃС…РµРјР°, Р±РµР· СЂР°СЃС€РёСЂРµРЅРёСЏ
+--/  scheme - РёРјСЏ СЃС…РµРјС‹
 function load_scheme(filename, scheme, stype)
 	schemes[scheme] = filename
 	stypes[scheme] = stype
@@ -238,7 +238,7 @@ function validate_enemy_object( enemy )
   if enemy.health == nil or enemy.health <= 0 then 
     return false, nil
   end
-  if enemy.m_story_id ~= nil then -- это грязный хак чтобы выяснить не попался ли нам серверный объект
+  if enemy.m_story_id ~= nil then -- СЌС‚Рѕ РіСЂСЏР·РЅС‹Р№ С…Р°Рє С‡С‚РѕР±С‹ РІС‹СЏСЃРЅРёС‚СЊ РЅРµ РїРѕРїР°Р»СЃСЏ Р»Рё РЅР°Рј СЃРµСЂРІРµСЂРЅС‹Р№ РѕР±СЉРµРєС‚
     if not ( IsStalker( enemy ) or IsMonster( enemy) ) then
       return false, nil
     end
@@ -258,7 +258,7 @@ function validate_enemy_object( enemy )
 end
 
 ----------------------------------------------------------------------
-function action(obj, ...) --Пример использования можно увидеть в ogse_hitfx. Ещё используется в mob_walker.script и mob_camp.script, может ещё где-то.
+function action(obj, ...) --РџСЂРёРјРµСЂ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РјРѕР¶РЅРѕ СѓРІРёРґРµС‚СЊ РІ ogse_hitfx. Р•С‰С‘ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ mob_walker.script Рё mob_camp.script, РјРѕР¶РµС‚ РµС‰С‘ РіРґРµ-С‚Рѕ.
 	local args = {...}
 	local act = entity_action()
 	for i=1, #args do
@@ -279,13 +279,13 @@ function distance_between(obj1, obj2)
     return obj1:position():distance_to(obj2:position())
 end
 
---/ Если один объект nil, например нет актера, то считаем, что он далеко
+--/ Р•СЃР»Рё РѕРґРёРЅ РѕР±СЉРµРєС‚ nil, РЅР°РїСЂРёРјРµСЂ РЅРµС‚ Р°РєС‚РµСЂР°, С‚Рѕ СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ РѕРЅ РґР°Р»РµРєРѕ
 function distance_between_safe(obj1, obj2)
     if(obj1 == nil or obj2 == nil) then return 100000 end
 	return obj1:position():distance_to(obj2:position())
 end
 
---/ Проверка на инфопоршны, даже если игрока не существует
+--/ РџСЂРѕРІРµСЂРєР° РЅР° РёРЅС„РѕРїРѕСЂС€РЅС‹, РґР°Р¶Рµ РµСЃР»Рё РёРіСЂРѕРєР° РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
 function has_alife_info(info_id)
 	return alife():has_info(0, info_id)
 end
@@ -295,15 +295,15 @@ function if_then_else(cond, if_true, if_false)
 end
 
 -------------------------------------------------------------------------------------------------------
---Отличается от split_comma_separated_list тем, что кроме запятых обрабатывает ещё и пробелы.
+--РћС‚Р»РёС‡Р°РµС‚СЃСЏ РѕС‚ split_comma_separated_list С‚РµРј, С‡С‚Рѕ РєСЂРѕРјРµ Р·Р°РїСЏС‚С‹С… РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ РµС‰С‘ Рё РїСЂРѕР±РµР»С‹.
 function parse_names( s )
 	return string.explode(",", s, true)
 end
 
---Конвертирует строку вида "actor, 0, actor_dolg, 1, actor_freedom, 2, ..."
---В таблицу вида { ["actor"] = "0", ["actor_dolg"] = "1", ["actor_freedom"] = "2", ... }
+--РљРѕРЅРІРµСЂС‚РёСЂСѓРµС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° "actor, 0, actor_dolg, 1, actor_freedom, 2, ..."
+--Р’ С‚Р°Р±Р»РёС†Сѓ РІРёРґР° { ["actor"] = "0", ["actor_dolg"] = "1", ["actor_freedom"] = "2", ... }
 function parse_key_value( s )
-	if s == nil then return nil end --бывает и такое
+	if s == nil then return nil end --Р±С‹РІР°РµС‚ Рё С‚Р°РєРѕРµ
 
     local t = {}
 	local t0 = parse_names( s )
@@ -315,7 +315,7 @@ function parse_key_value( s )
     return t
 end
 
---Парсит строку вида "n1, n2, n3..." в таблицу { n1, n2, n3, ... } где n1, n2, n3... - числа
+--РџР°СЂСЃРёС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° "n1, n2, n3..." РІ С‚Р°Р±Р»РёС†Сѓ { n1, n2, n3, ... } РіРґРµ n1, n2, n3... - С‡РёСЃР»Р°
 function parse_nums( s )
     local t = {}
     for i,entry in ipairs(parse_names( s )) do
@@ -328,8 +328,8 @@ end
 -------------------------------------------------------------------------------------------------------
 
 function get_clsid(npc)
-	--Надо бы изучить, в каких случаях сюда попадают несуществующие объекты,
-	--Исправить это, и тогда можно будет убрать эти нагромождения отсюда.
+	--РќР°РґРѕ Р±С‹ РёР·СѓС‡РёС‚СЊ, РІ РєР°РєРёС… СЃР»СѓС‡Р°СЏС… СЃСЋРґР° РїРѕРїР°РґР°СЋС‚ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РѕР±СЉРµРєС‚С‹,
+	--РСЃРїСЂР°РІРёС‚СЊ СЌС‚Рѕ, Рё С‚РѕРіРґР° РјРѕР¶РЅРѕ Р±СѓРґРµС‚ СѓР±СЂР°С‚СЊ СЌС‚Рё РЅР°РіСЂРѕРјРѕР¶РґРµРЅРёСЏ РѕС‚СЃСЋРґР°.
 	if not npc then return nil end
 	if npc and npc.id then
 		if type(npc.id) == "function" then
@@ -360,7 +360,7 @@ function get_clsid(npc)
 end
 
 
---/ Вычисляет yaw в радианах
+--/ Р’С‹С‡РёСЃР»СЏРµС‚ yaw РІ СЂР°РґРёР°РЅР°С…
 function yaw(v1, v2)
 	return math.abs(v2:getH() - v1:getH())
 end
@@ -377,7 +377,7 @@ function vector_cross(...)
 	return vector():crossproduct(...)
 end
 
---/ Вращает вектор вокруг оси y против часовой стрелки
+--/ Р’СЂР°С‰Р°РµС‚ РІРµРєС‚РѕСЂ РІРѕРєСЂСѓРі РѕСЃРё y РїСЂРѕС‚РёРІ С‡Р°СЃРѕРІРѕР№ СЃС‚СЂРµР»РєРё
 function vector_rotate_y(v, angle)
     angle = angle * 0.017453292519943295769236907684886
     local c = math.cos (angle)
@@ -459,7 +459,7 @@ function IsInventoryBox( object, class_id )
   return id == clsid.inventory_box or id == clsid.inventory_container
 end
 -------------------------------------------------------------------------------------------
-function isIndoor(level_name) --KRodin: всем подземным уровням прописывается НЕ default погода. По этому признаку и будем проверять.
+function isIndoor(level_name) --KRodin: РІСЃРµРј РїРѕРґР·РµРјРЅС‹Рј СѓСЂРѕРІРЅСЏРј РїСЂРѕРїРёСЃС‹РІР°РµС‚СЃСЏ РќР• default РїРѕРіРѕРґР°. РџРѕ СЌС‚РѕРјСѓ РїСЂРёР·РЅР°РєСѓ Рё Р±СѓРґРµРј РїСЂРѕРІРµСЂСЏС‚СЊ.
 	return get_string(level_name, "weathers", nil, game_ini()) ~= "default"
 end
 -------------------------------------------------------------------------------------------
@@ -485,7 +485,7 @@ function level_object_by_sid( sid )
 end
 
 
--- Крешнуть игру (после вывода сообщения об ошибке в лог)
+-- РљСЂРµС€РЅСѓС‚СЊ РёРіСЂСѓ (РїРѕСЃР»Рµ РІС‹РІРѕРґР° СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ РІ Р»РѕРі)
 function abort(fmt, ...)
 	log1("!!****************************[ABORT]*********************************")
 	log1(debug.traceback())
@@ -494,42 +494,42 @@ function abort(fmt, ...)
 	error(tostring(fmt))
 end
 
---/ проверяет целую часть числа на нечётность
+--/ РїСЂРѕРІРµСЂСЏРµС‚ С†РµР»СѓСЋ С‡Р°СЃС‚СЊ С‡РёСЃР»Р° РЅР° РЅРµС‡С‘С‚РЅРѕСЃС‚СЊ
 function odd( x )
 	return math.floor( x * 0.5 ) * 2 == math.floor( x )
 end
 
 
---/ Усталость
+--/ РЈСЃС‚Р°Р»РѕСЃС‚СЊ
 function on_actor_critical_power()
 end
 
 function on_actor_critical_max_power()
 end
 
---/ Кровотечение
+--/ РљСЂРѕРІРѕС‚РµС‡РµРЅРёРµ
 function on_actor_bleeding()
 end
---/ Жажда
+--/ Р–Р°Р¶РґР°
 function on_actor_thirst()
 end
---/ Голод
+--/ Р“РѕР»РѕРґ
 function on_actor_satiety()
 end
 
---/ Радиация
+--/ Р Р°РґРёР°С†РёСЏ
 function on_actor_radiation()
 end
 
---/ Заклинило оружие
+--/ Р—Р°РєР»РёРЅРёР»Рѕ РѕСЂСѓР¶РёРµ
 function on_actor_weapon_jammed()
 end
 
---/ не может ходить изза веса
+--/ РЅРµ РјРѕР¶РµС‚ С…РѕРґРёС‚СЊ РёР·Р·Р° РІРµСЃР°
 function on_actor_cant_walk_weight()
 end
 
---/ пси воздействие
+--/ РїСЃРё РІРѕР·РґРµР№СЃС‚РІРёРµ
 function on_actor_psy()	
 end
 
@@ -672,7 +672,7 @@ end
 
 
 -------------------------------------------------------------------------------
---                            Добавлено в OGSE                               --
+--                            Р”РѕР±Р°РІР»РµРЅРѕ РІ OGSE                               --
 -------------------------------------------------------------------------------
 function ASSERT(cond, ...)
 	if not cond then
@@ -680,61 +680,76 @@ function ASSERT(cond, ...)
 	end
 end
 
-sys_ini = system_ini() --Из скриптов вызывать только sys_ini!!!!
+sys_ini = system_ini() --РР· СЃРєСЂРёРїС‚РѕРІ РІС‹Р·С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ sys_ini!!!!
 
--- служебные функции для чтения параметров из секций объектов
+local debug_ini = false
+
+-- СЃР»СѓР¶РµР±РЅС‹Рµ С„СѓРЅРєС†РёРё РґР»СЏ С‡С‚РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ РёР· СЃРµРєС†РёР№ РѕР±СЉРµРєС‚РѕРІ
+function get_line_exist(section, ini, param)
+	return section and ini:section_exist(section) and ini:line_exist(section, param)
+end
 
 function get_string(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	ASSERT(ini:section_exist(section), "get_string: section '"..section.."' doesn't exist")
-	if ini:line_exist(section, param) then
+	if get_line_exist(section, ini, param) then
 		return ini:r_string(section, param)
 	else
+		if def_val == nil and debug_ini then
+			log3("get_string section: %s, param %s' doesn't exist", section, param)
+		end
 		return def_val
 	end
 end
 
 function get_string_wq(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	ASSERT(ini:section_exist(section), "get_string: section '"..section.."' doesn't exist")
-	if ini:line_exist(section, param) then
+	if get_line_exist(section, ini, param) then
 		return ini:r_string_wq(section, param)
 	else
+		if def_val == nil and debug_ini then
+			log3("get_string_wq section: %s, param %s' doesn't exist", section, param)
+		end
 		return def_val
 	end
 end
 
 function get_u32(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	ASSERT(ini:section_exist(section), "get_u32: section '"..section.."' doesn't exist")
-	if ini:line_exist(section, param) then
+	if get_line_exist(section, ini, param) then
 		return ini:r_u32(section, param)
 	else
+		if def_val == nil and debug_ini then
+			log3("get_u32 section: %s, param %s' doesn't exist", section, param)
+		end
 		return def_val
 	end
 end
 
 function get_bool(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	ASSERT(ini:section_exist(section), "get_bool: section '"..section.."' doesn't exist")
-	if ini:line_exist(section, param) then
+	if get_line_exist(section, ini, param) then
 		return ini:r_bool(section, param)
 	else
+		if def_val == nil and debug_ini then
+			log3("get_bool section: %s, param %s' doesn't exist", section, param)
+		end
 		return not (not def_val)
 	end
 end
 
 function get_float(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	ASSERT(ini:section_exist(section), "get_float: section '"..section.."' doesn't exist")
-	if ini:line_exist(section, param) then
+	if get_line_exist(section, ini, param) then
 		return ini:r_float(section, param)
 	else
+		if def_val == nil and debug_ini then
+			log3("get_float section: %s, param %s' doesn't exist", section, param)
+		end
 		return def_val
 	end
 end
 
--- получить класс из секции, полезно в том случае, если нет объекта (и недоступен метод clsid), а есть только имя секции
+-- РїРѕР»СѓС‡РёС‚СЊ РєР»Р°СЃСЃ РёР· СЃРµРєС†РёРё, РїРѕР»РµР·РЅРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РЅРµС‚ РѕР±СЉРµРєС‚Р° (Рё РЅРµРґРѕСЃС‚СѓРїРµРЅ РјРµС‚РѕРґ clsid), Р° РµСЃС‚СЊ С‚РѕР»СЊРєРѕ РёРјСЏ СЃРµРєС†РёРё
 function get_class(section)
 	ASSERT(sys_ini:section_exist(section), "get_class: section '"..section.."' doesn't exist")
 	ASSERT(sys_ini:line_exist(section, "class"), "get_class: there is no 'class' parameter in the section '"..section.."'")
@@ -743,7 +758,6 @@ end
 
 function get_rect(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-
 	if ini:line_exist(section, param) then
 		local pos = get_names(section, param, ini)
 		log3("pos %f %f %f %f", pos[1], pos[2], pos[3], pos[4])
@@ -755,12 +769,21 @@ function get_rect(section, param, def_val, ini_file)
 	return nil
 end
 
--- делит строку в виде "aaa,bbb,ccc" на строки "aaa", "bbb", "ccc" и возвращает их в виде массива
+function string_concat(string, gulag_name)
+	if string and gulag_name and gulag_name ~= "" then
+		return gulag_name .. "_" .. string
+	else
+		log3("concat failed - gulag = %s or string = %s not found, return string!", gulag_name and gulag_name or "nil", string and string or "nil")
+		return string
+	end
+end
+
+-- РґРµР»РёС‚ СЃС‚СЂРѕРєСѓ РІ РІРёРґРµ "aaa,bbb,ccc" РЅР° СЃС‚СЂРѕРєРё "aaa", "bbb", "ccc" Рё РІРѕР·РІСЂР°С‰Р°РµС‚ РёС… РІ РІРёРґРµ РјР°СЃСЃРёРІР°
 function split_comma_separated_list(s)
 	return string.explode(",", s)
 end
 
--- читает время, сохранённое в виде строки со значениями, разделёнными запятой, и конвертирует в значение класса CTime
+-- С‡РёС‚Р°РµС‚ РІСЂРµРјСЏ, СЃРѕС…СЂР°РЅС‘РЅРЅРѕРµ РІ РІРёРґРµ СЃС‚СЂРѕРєРё СЃРѕ Р·РЅР°С‡РµРЅРёСЏРјРё, СЂР°Р·РґРµР»С‘РЅРЅС‹РјРё Р·Р°РїСЏС‚РѕР№, Рё РєРѕРЅРІРµСЂС‚РёСЂСѓРµС‚ РІ Р·РЅР°С‡РµРЅРёРµ РєР»Р°СЃСЃР° CTime
 function unpack_time_from_string(str_time)
 	local time_values = {}
 	for i,s in ipairs(split_comma_separated_list(str_time)) do
@@ -774,13 +797,13 @@ function unpack_time_from_string(str_time)
 	return res
 end
 
--- упаковать время в виде объекта CTime в строку значений, разделённых запятой
+-- СѓРїР°РєРѕРІР°С‚СЊ РІСЂРµРјСЏ РІ РІРёРґРµ РѕР±СЉРµРєС‚Р° CTime РІ СЃС‚СЂРѕРєСѓ Р·РЅР°С‡РµРЅРёР№, СЂР°Р·РґРµР»С‘РЅРЅС‹С… Р·Р°РїСЏС‚РѕР№
 function pack_time_to_string(t)
 	ASSERT(t, "pack_time_to_string: t is a nil reference")
 	return table.concat({t:get()}, ',')
 end
 
--- читает строку вида "s1,s2,s3" и парсит на строковые значения, разделённые запятой, в таблицу вида {s1, s2, s3}
+-- С‡РёС‚Р°РµС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° "s1,s2,s3" Рё РїР°СЂСЃРёС‚ РЅР° СЃС‚СЂРѕРєРѕРІС‹Рµ Р·РЅР°С‡РµРЅРёСЏ, СЂР°Р·РґРµР»С‘РЅРЅС‹Рµ Р·Р°РїСЏС‚РѕР№, РІ С‚Р°Р±Р»РёС†Сѓ РІРёРґР° {s1, s2, s3}
 function get_names(section, param, ini_file)
 	local ini = ini_file or sys_ini
 	ASSERT(ini:section_exist(section), "get_names: section '"..section.."' doesn't exist")
@@ -788,7 +811,7 @@ function get_names(section, param, ini_file)
 	return split_comma_separated_list(s)
 end
 
--- читает строку вида "s1,s2,s3" и парсит на численные значения, разделённые запятой, в таблицу вида {n1, n2, n3}
+-- С‡РёС‚Р°РµС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° "s1,s2,s3" Рё РїР°СЂСЃРёС‚ РЅР° С‡РёСЃР»РµРЅРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ, СЂР°Р·РґРµР»С‘РЅРЅС‹Рµ Р·Р°РїСЏС‚РѕР№, РІ С‚Р°Р±Р»РёС†Сѓ РІРёРґР° {n1, n2, n3}
 function get_numbers(section, param, ini_file)
 	local t = {}
 	for i,sv in ipairs(get_names(section, param, ini_file)) do
@@ -836,7 +859,7 @@ function get_vector(section, param, def_val, ini_file)
 	end
 end
 
--- значение по умолчанию должно задаваться таблицей {num1, num2}
+-- Р·РЅР°С‡РµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґРѕР»Р¶РЅРѕ Р·Р°РґР°РІР°С‚СЊСЃСЏ С‚Р°Р±Р»РёС†РµР№ {num1, num2}
 function get_vector2(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
 	ASSERT(ini:section_exist(section), "get_vector2: section '"..section.."' doesn't exist")
@@ -852,29 +875,29 @@ function get_vector2(section, param, def_val, ini_file)
 	end
 end
 
--- Берём параметры иконки из конфигов
+-- Р‘РµСЂС‘Рј РїР°СЂР°РјРµС‚СЂС‹ РёРєРѕРЅРєРё РёР· РєРѕРЅС„РёРіРѕРІ
 function get_inventory_icon_rect(sect)
 	return 50*sys_ini:r_u32(sect, "inv_grid_x"), 50*sys_ini:r_u32(sect, "inv_grid_y"), 50*sys_ini:r_u32(sect, "inv_grid_width"), 50*sys_ini:r_u32(sect, "inv_grid_height")
 end
--- получить номер локации по номеру глобального вертекса
+-- РїРѕР»СѓС‡РёС‚СЊ РЅРѕРјРµСЂ Р»РѕРєР°С†РёРё РїРѕ РЅРѕРјРµСЂСѓ РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ РІРµСЂС‚РµРєСЃР°
 function location_id_by_gvid(gvid)
 	if gvid and game_graph():valid_vertex_id( gvid ) then
 		return game_graph():vertex( gvid ):level_id()
 	end
 end
 
--- получить номер локации для клиентского объекта
+-- РїРѕР»СѓС‡РёС‚СЊ РЅРѕРјРµСЂ Р»РѕРєР°С†РёРё РґР»СЏ РєР»РёРµРЅС‚СЃРєРѕРіРѕ РѕР±СЉРµРєС‚Р°
 function object_location_id(obj)
 	local gvid = obj.game_vertex_id and obj:game_vertex_id() or obj.m_game_vertex_id
 	return location_id_by_gvid(gvid)
-	--return obj.level_id --Тут может вылетать, если у объекта невалидный gvid, походу.
+	--return obj.level_id --РўСѓС‚ РјРѕР¶РµС‚ РІС‹Р»РµС‚Р°С‚СЊ, РµСЃР»Рё Сѓ РѕР±СЉРµРєС‚Р° РЅРµРІР°Р»РёРґРЅС‹Р№ gvid, РїРѕС…РѕРґСѓ.
 end
 function object_level_name(obj)
 	local lid = object_location_id( obj )
 	if lid then
 		return level_system_name_by_lid( lid )
 	end
-	--return obj.level_name --Тут может вылетать, если у объекта невалидный gvid, походу.
+	--return obj.level_name --РўСѓС‚ РјРѕР¶РµС‚ РІС‹Р»РµС‚Р°С‚СЊ, РµСЃР»Рё Сѓ РѕР±СЉРµРєС‚Р° РЅРµРІР°Р»РёРґРЅС‹Р№ gvid, РїРѕС…РѕРґСѓ.
 end
 function level_system_name_by_lid(lid)
 	if lid then
@@ -884,44 +907,44 @@ end
 function level_name_by_level_system_name(lname)
 	return game.translate_string(lname)
 end
---системное имя уровня
+--СЃРёСЃС‚РµРјРЅРѕРµ РёРјСЏ СѓСЂРѕРІРЅСЏ
 function level_system_name_by_gvid(gvid)
 	return level_system_name_by_lid(location_id_by_gvid(gvid))
 end
---Внятное имя уровня (не системное, а то, которое изображается на карте):
+--Р’РЅСЏС‚РЅРѕРµ РёРјСЏ СѓСЂРѕРІРЅСЏ (РЅРµ СЃРёСЃС‚РµРјРЅРѕРµ, Р° С‚Рѕ, РєРѕС‚РѕСЂРѕРµ РёР·РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РЅР° РєР°СЂС‚Рµ):
 function level_name_by_gvid(gvid)
 	return level_name_by_level_system_name(level_system_name_by_gvid(gvid))
 end
 
---***********************************[Функции для вывода в лог]****************************************
+--***********************************[Р¤СѓРЅРєС†РёРё РґР»СЏ РІС‹РІРѕРґР° РІ Р»РѕРі]****************************************
 -----------------------------------------------------------------------------------------
 local tostring_all_tbl = {
-	["table"] =		function(table, ind) --Распечатка таблиц
-						local res = "{" --Начало
-						local end_res = ind and "\n"..ind.."}" or "\n}" --Конец
-						local def_ind = "  " --Отступ от начала строки
-						ind = ind and ind..def_ind or def_ind --Для каждой "таблицы внутри таблицы" отступ увеличивается в 2 раза
+	["table"] =		function(table, ind) --Р Р°СЃРїРµС‡Р°С‚РєР° С‚Р°Р±Р»РёС†
+						local res = "{" --РќР°С‡Р°Р»Рѕ
+						local end_res = ind and "\n"..ind.."}" or "\n}" --РљРѕРЅРµС†
+						local def_ind = "  " --РћС‚СЃС‚СѓРї РѕС‚ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРєРё
+						ind = ind and ind..def_ind or def_ind --Р”Р»СЏ РєР°Р¶РґРѕР№ "С‚Р°Р±Р»РёС†С‹ РІРЅСѓС‚СЂРё С‚Р°Р±Р»РёС†С‹" РѕС‚СЃС‚СѓРї СѓРІРµР»РёС‡РёРІР°РµС‚СЃСЏ РІ 2 СЂР°Р·Р°
 						for k, v in pairs(table) do
 							res = res.."\n"..ind.."["..tostring_all(k, ind).."] = "..tostring_all(v, ind)..","
 						end
 						return res..end_res
 					end,
-	["string"] =	function(v) return "'"..v.."'" end, --Строки берём в кавычки. Это нужно, чтобы можно было отличить строку "123" от числа 123, "nil" от nil и тд...
+	["string"] =	function(v) return "'"..v.."'" end, --РЎС‚СЂРѕРєРё Р±РµСЂС‘Рј РІ РєР°РІС‹С‡РєРё. Р­С‚Рѕ РЅСѓР¶РЅРѕ, С‡С‚РѕР±С‹ РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РѕС‚Р»РёС‡РёС‚СЊ СЃС‚СЂРѕРєСѓ "123" РѕС‚ С‡РёСЃР»Р° 123, "nil" РѕС‚ nil Рё С‚Рґ...
 	["number"] =	function(v) return tostring(v) end,
 	["boolean"] =	function(v) return tostring(v) end,
 	["nil"] =		function(v) return tostring(v) end,
-	["function"] =	function() return "[[FUNCTION]]" end, --Function, Userdata и Thread распечатать нельзя, просто заменим на строки
+	["function"] =	function() return "[[FUNCTION]]" end, --Function, Userdata Рё Thread СЂР°СЃРїРµС‡Р°С‚Р°С‚СЊ РЅРµР»СЊР·СЏ, РїСЂРѕСЃС‚Рѕ Р·Р°РјРµРЅРёРј РЅР° СЃС‚СЂРѕРєРё
 	["userdata"] =	function() return "[[USERDATA]]" end,
 	["thread"] =	function() return "[[THREAD]]" end,
 }
---Конвертирование чего угодно в строку. Использовать только для вывода в лог!
-function tostring_all(obj, ind) --ind - служебный аргумент для распечатки "таблиц в таблицах".
+--РљРѕРЅРІРµСЂС‚РёСЂРѕРІР°РЅРёРµ С‡РµРіРѕ СѓРіРѕРґРЅРѕ РІ СЃС‚СЂРѕРєСѓ. РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ РІС‹РІРѕРґР° РІ Р»РѕРі!
+function tostring_all(obj, ind) --ind - СЃР»СѓР¶РµР±РЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚ РґР»СЏ СЂР°СЃРїРµС‡Р°С‚РєРё "С‚Р°Р±Р»РёС† РІ С‚Р°Р±Р»РёС†Р°С…".
 	return tostring_all_tbl[type(obj)](obj, ind)
 end
 
---Функциональная обёртка для log1.
---Делает дополнительную работу по конвертации параметров, которые не воспринимаются родной функцией string.format.
---Параметры можно передавать ЛЮБОГО ТИПА! В строке формата они должны стоять как %s (потому, что будут сконвертированы в строки).
+--Р¤СѓРЅРєС†РёРѕРЅР°Р»СЊРЅР°СЏ РѕР±С‘СЂС‚РєР° РґР»СЏ log1.
+--Р”РµР»Р°РµС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ СЂР°Р±РѕС‚Сѓ РїРѕ РєРѕРЅРІРµСЂС‚Р°С†РёРё РїР°СЂР°РјРµС‚СЂРѕРІ, РєРѕС‚РѕСЂС‹Рµ РЅРµ РІРѕСЃРїСЂРёРЅРёРјР°СЋС‚СЃСЏ СЂРѕРґРЅРѕР№ С„СѓРЅРєС†РёРµР№ string.format.
+--РџР°СЂР°РјРµС‚СЂС‹ РјРѕР¶РЅРѕ РїРµСЂРµРґР°РІР°С‚СЊ Р›Р®Р‘РћР“Рћ РўРРџРђ! Р’ СЃС‚СЂРѕРєРµ С„РѕСЂРјР°С‚Р° РѕРЅРё РґРѕР»Р¶РЅС‹ СЃС‚РѕСЏС‚СЊ РєР°Рє %s (РїРѕС‚РѕРјСѓ, С‡С‚Рѕ Р±СѓРґСѓС‚ СЃРєРѕРЅРІРµСЂС‚РёСЂРѕРІР°РЅС‹ РІ СЃС‚СЂРѕРєРё).
 function log3(fmt, ...)
 	local args = {...}
 	for i=1, #args do
@@ -931,16 +954,16 @@ function log3(fmt, ...)
 	--
 	--if res then msg = msg.."\nlog3 called from: "..debug.traceback() end
 	--
-	if not res then --Если произошла ошибка
+	if not res then --Р•СЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°
 		msg = "!!log3 failed: "..msg.."\n"..debug.traceback()
 	end
 	log1(msg)
 end
 -----------------------------------------------------------------------------------------
 local logs_cach = {}
---Функция создаёт новый лог-файл и выводит текст в него.
---fname - название лог-файла, например "Anomaly_Evader". Он будет создан в папке logs, к названию добавится дата и время создания.
---fmt, ... - строка формата с параметрами как и в функции log3
+--Р¤СѓРЅРєС†РёСЏ СЃРѕР·РґР°С‘С‚ РЅРѕРІС‹Р№ Р»РѕРі-С„Р°Р№Р» Рё РІС‹РІРѕРґРёС‚ С‚РµРєСЃС‚ РІ РЅРµРіРѕ.
+--fname - РЅР°Р·РІР°РЅРёРµ Р»РѕРі-С„Р°Р№Р»Р°, РЅР°РїСЂРёРјРµСЂ "Anomaly_Evader". РћРЅ Р±СѓРґРµС‚ СЃРѕР·РґР°РЅ РІ РїР°РїРєРµ logs, Рє РЅР°Р·РІР°РЅРёСЋ РґРѕР±Р°РІРёС‚СЃСЏ РґР°С‚Р° Рё РІСЂРµРјСЏ СЃРѕР·РґР°РЅРёСЏ.
+--fmt, ... - СЃС‚СЂРѕРєР° С„РѕСЂРјР°С‚Р° СЃ РїР°СЂР°РјРµС‚СЂР°РјРё РєР°Рє Рё РІ С„СѓРЅРєС†РёРё log3
 function log4(fname, fmt, ...)
 	local f = logs_cach[fname]
 	if not f then
@@ -963,11 +986,11 @@ end
 -----------------------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------------------
-function log2(fmt, ...) --Простая обёртка для log1.
+function log2(fmt, ...) --РџСЂРѕСЃС‚Р°СЏ РѕР±С‘СЂС‚РєР° РґР»СЏ log1.
 	log1(fmt:format(...))
 end
 -----------------------------------------------------------------------------------------
-function clear_log() --Очистить лог
+function clear_log() --РћС‡РёСЃС‚РёС‚СЊ Р»РѕРі
 	cmd("clear_log")	
 end
 -----------------------------------------------------------------------------------------
@@ -1023,7 +1046,7 @@ function hit_object_ex(hit_params)
 	hit_params.obj:hit(h)
 end
 
---/Нанести хит
+--/РќР°РЅРµСЃС‚Рё С…РёС‚
 
 function hit_obj_by_id_simple(ObjId, Pwr, iImpulse)
 	local obj2hit = level.object_by_id(ObjId)
@@ -1047,8 +1070,8 @@ function seconds2ctime(time_sec)
 	return t
 end
 
--- надёжнее, чем device().aspect_ratio, поскольку не зависит от инициализированности рендера
--- однако медленная. Не рекомендуется использовать часто
+-- РЅР°РґС‘Р¶РЅРµРµ, С‡РµРј device().aspect_ratio, РїРѕСЃРєРѕР»СЊРєСѓ РЅРµ Р·Р°РІРёСЃРёС‚ РѕС‚ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅРѕСЃС‚Рё СЂРµРЅРґРµСЂР°
+-- РѕРґРЅР°РєРѕ РјРµРґР»РµРЅРЅР°СЏ. РќРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‡Р°СЃС‚Рѕ
 function get_aspect_ratio()
 	local s =  get_con_string("vid_mode")
 	local sw,sh = string.match(s, "(%d+)x(%d+)")
@@ -1056,12 +1079,12 @@ function get_aspect_ratio()
 end
 
 
--- установка невидимости сталкера со стороны аномалий
+-- СѓСЃС‚Р°РЅРѕРІРєР° РЅРµРІРёРґРёРјРѕСЃС‚Рё СЃС‚Р°Р»РєРµСЂР° СЃРѕ СЃС‚РѕСЂРѕРЅС‹ Р°РЅРѕРјР°Р»РёР№
 function set_anomaly_invisibility(npc, vis)
 	npc:get_custom_monster().visible_for_zones = not vis
 end
 
--- получение статуса невидимости сталкера со стороны аномалий
+-- РїРѕР»СѓС‡РµРЅРёРµ СЃС‚Р°С‚СѓСЃР° РЅРµРІРёРґРёРјРѕСЃС‚Рё СЃС‚Р°Р»РєРµСЂР° СЃРѕ СЃС‚РѕСЂРѕРЅС‹ Р°РЅРѕРјР°Р»РёР№
 function get_anomaly_invisibility(npc)
 	return not npc:get_custom_monster().visible_for_zones
 end
@@ -1072,7 +1095,7 @@ function get_day_time_sec(t)
 	return h * 3600.0 + min * 60.0 + s + ms * 1e-3
 end
 
--- получить текушее игровое время от начала суток, измеренное в часах (значение в пределах [0, 24) )
+-- РїРѕР»СѓС‡РёС‚СЊ С‚РµРєСѓС€РµРµ РёРіСЂРѕРІРѕРµ РІСЂРµРјСЏ РѕС‚ РЅР°С‡Р°Р»Р° СЃСѓС‚РѕРє, РёР·РјРµСЂРµРЅРЅРѕРµ РІ С‡Р°СЃР°С… (Р·РЅР°С‡РµРЅРёРµ РІ РїСЂРµРґРµР»Р°С… [0, 24) )
 function get_game_day_time_h()
 	local gt = game.get_game_time()
 	local y,m,d,h,min,sec,ms = gt:get()
@@ -1084,13 +1107,13 @@ function is_16_9_mode()
 	return dev.width / dev.height > 1.34
 end
 
--- выравнивание значения n в пределы от min до max
+-- РІС‹СЂР°РІРЅРёРІР°РЅРёРµ Р·РЅР°С‡РµРЅРёСЏ n РІ РїСЂРµРґРµР»С‹ РѕС‚ min РґРѕ max
 math.clamp = function( n, min, max )
 	if min>max then min,max=max,min end
 	return (n>max and max) or (n<min and min) or n
 end
 
--- округление к ближайшему
+-- РѕРєСЂСѓРіР»РµРЅРёРµ Рє Р±Р»РёР¶Р°Р№С€РµРјСѓ
 function math.round(v)
 	return math.floor(v + 0.5)
 end
@@ -1104,7 +1127,7 @@ function math.similar(a1, a2, tol)
 end
 
 
--- установка направления взгляда актора в заданную точку
+-- СѓСЃС‚Р°РЅРѕРІРєР° РЅР°РїСЂР°РІР»РµРЅРёСЏ РІР·РіР»СЏРґР° Р°РєС‚РѕСЂР° РІ Р·Р°РґР°РЅРЅСѓСЋ С‚РѕС‡РєСѓ
 function actor_look_at_point(target_point)
 	ASSERT(target_point, "actor_look_at_point: target point vector is a nil reference!")
 	local look_dir = vector():sub(target_point, device().cam_pos)
@@ -1138,10 +1161,10 @@ function get_con_bool(param)
 	return con:get_bool(param)
 end
 
--- проверка сушествования файла на диске
--- примечания: 
--- 1. это  для проверки существования реального файла, не в архиве
--- 2. способ неуклюжий, но другого в чистом Lua нет
+-- РїСЂРѕРІРµСЂРєР° СЃСѓС€РµСЃС‚РІРѕРІР°РЅРёСЏ С„Р°Р№Р»Р° РЅР° РґРёСЃРєРµ
+-- РїСЂРёРјРµС‡Р°РЅРёСЏ: 
+-- 1. СЌС‚Рѕ  РґР»СЏ РїСЂРѕРІРµСЂРєРё СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ СЂРµР°Р»СЊРЅРѕРіРѕ С„Р°Р№Р»Р°, РЅРµ РІ Р°СЂС…РёРІРµ
+-- 2. СЃРїРѕСЃРѕР± РЅРµСѓРєР»СЋР¶РёР№, РЅРѕ РґСЂСѓРіРѕРіРѕ РІ С‡РёСЃС‚РѕРј Lua РЅРµС‚
 function file_exists(name)
 	local f = io.open(name,"r")
 	if f then
@@ -1190,58 +1213,58 @@ function mark_grenade_non_pickable( obj )
   end
 end
 
--- сделать предмет безусловно негруппируемым в окнах инвентаря
+-- СЃРґРµР»Р°С‚СЊ РїСЂРµРґРјРµС‚ Р±РµР·СѓСЃР»РѕРІРЅРѕ РЅРµРіСЂСѓРїРїРёСЂСѓРµРјС‹Рј РІ РѕРєРЅР°С… РёРЅРІРµРЅС‚Р°СЂСЏ
 function set_item_ungroupable( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIUngroupable, true )
   item:set_inventory_item_flags( f )
 end
 
--- включить движковую группировку для предмета
+-- РІРєР»СЋС‡РёС‚СЊ РґРІРёР¶РєРѕРІСѓСЋ РіСЂСѓРїРїРёСЂРѕРІРєСѓ РґР»СЏ РїСЂРµРґРјРµС‚Р°
 function set_item_default_grouping( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIUngroupable, false )
   item:set_inventory_item_flags( f )
 end
 
--- сделать предмет безусловно непродаваемым,
--- в окне торговли будет показан тёмно-красным.
--- Для избежания глюков надо также выключать группируемость для этого предмета.
+-- СЃРґРµР»Р°С‚СЊ РїСЂРµРґРјРµС‚ Р±РµР·СѓСЃР»РѕРІРЅРѕ РЅРµРїСЂРѕРґР°РІР°РµРјС‹Рј,
+-- РІ РѕРєРЅРµ С‚РѕСЂРіРѕРІР»Рё Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅ С‚С‘РјРЅРѕ-РєСЂР°СЃРЅС‹Рј.
+-- Р”Р»СЏ РёР·Р±РµР¶Р°РЅРёСЏ РіР»СЋРєРѕРІ РЅР°РґРѕ С‚Р°РєР¶Рµ РІС‹РєР»СЋС‡Р°С‚СЊ РіСЂСѓРїРїРёСЂСѓРµРјРѕСЃС‚СЊ РґР»СЏ СЌС‚РѕРіРѕ РїСЂРµРґРјРµС‚Р°.
 function set_item_always_untradable( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIAlwaysUntradable, true )
   item:set_inventory_item_flags( f )
 end
 
--- убрать принудительную неторгуемость и оставить только движковый алгоритм
+-- СѓР±СЂР°С‚СЊ РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅСѓСЋ РЅРµС‚РѕСЂРіСѓРµРјРѕСЃС‚СЊ Рё РѕСЃС‚Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґРІРёР¶РєРѕРІС‹Р№ Р°Р»РіРѕСЂРёС‚Рј
 function set_item_default_tradability( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIAlwaysUntradable, false )
   item:set_inventory_item_flags( f )
 end
 
--- сделать предмет невидимым в инвентаре
+-- СЃРґРµР»Р°С‚СЊ РїСЂРµРґРјРµС‚ РЅРµРІРёРґРёРјС‹Рј РІ РёРЅРІРµРЅС‚Р°СЂРµ
 function set_item_inv_hidden( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIHiddenForInventory, true )
   item:set_inventory_item_flags( f )
 end
 
--- сделать его обратно видимым
+-- СЃРґРµР»Р°С‚СЊ РµРіРѕ РѕР±СЂР°С‚РЅРѕ РІРёРґРёРјС‹Рј
 function set_item_inv_visible( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIHiddenForInventory, false )
   item:set_inventory_item_flags( f )
 end
 
--- Покрасить предмет в окнах обыска тайников/трупов в зелёный цвет
+-- РџРѕРєСЂР°СЃРёС‚СЊ РїСЂРµРґРјРµС‚ РІ РѕРєРЅР°С… РѕР±С‹СЃРєР° С‚Р°Р№РЅРёРєРѕРІ/С‚СЂСѓРїРѕРІ РІ Р·РµР»С‘РЅС‹Р№ С†РІРµС‚
 function set_item_always_highlighted( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIAlwaysHighlighted, true )
   item:set_inventory_item_flags( f )
 end
 
--- использовать только движковую раскраску
+-- РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ РґРІРёР¶РєРѕРІСѓСЋ СЂР°СЃРєСЂР°СЃРєСѓ
 function set_item_default_highlighting( item )
   local f = item:get_inventory_item_flags()
   f:set( global_flags.FIAlwaysHighlighted, false )
@@ -1260,8 +1283,8 @@ ASSERTX = ASSERT
 function printf() end
 
 --*****************************************************************************************************************
---Средства для отдадки таблиц, должны детектировать часть ошибок когда с unordered таблицей пытаются работать как c ordered.
---Включать только по необходимости, в отладочных целях.
+--РЎСЂРµРґСЃС‚РІР° РґР»СЏ РѕС‚РґР°РґРєРё С‚Р°Р±Р»РёС†, РґРѕР»Р¶РЅС‹ РґРµС‚РµРєС‚РёСЂРѕРІР°С‚СЊ С‡Р°СЃС‚СЊ РѕС€РёР±РѕРє РєРѕРіРґР° СЃ unordered С‚Р°Р±Р»РёС†РµР№ РїС‹С‚Р°СЋС‚СЃСЏ СЂР°Р±РѕС‚Р°С‚СЊ РєР°Рє c ordered.
+--Р’РєР»СЋС‡Р°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё, РІ РѕС‚Р»Р°РґРѕС‡РЅС‹С… С†РµР»СЏС….
 if false then
 	local function sizeof(t)
 		local s = 0
@@ -1271,7 +1294,7 @@ if false then
 		return s
 	end
 
-	local function ARRAY_DBG(t) --Можно тут и вылет поставить в общем-то, но наверн лучше не надо.
+	local function ARRAY_DBG(t) --РњРѕР¶РЅРѕ С‚СѓС‚ Рё РІС‹Р»РµС‚ РїРѕСЃС‚Р°РІРёС‚СЊ РІ РѕР±С‰РµРј-С‚Рѕ, РЅРѕ РЅР°РІРµСЂРЅ Р»СѓС‡С€Рµ РЅРµ РЅР°РґРѕ.
 		if select('#', unpack(t)) ~= sizeof(t) then
 			log1("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 			log3("!!This is unordered table: %s", t)

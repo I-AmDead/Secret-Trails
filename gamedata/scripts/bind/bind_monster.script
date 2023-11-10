@@ -2,78 +2,77 @@
 -----------------------------------------------------------------------------------
 -- Monster binding
 -----------------------------------------------------------------------------------
-local particles={}
+local particles = {}
 
-function bind( obj )
-  local new_binder = generic_object_binder( obj )
-  obj:bind_object( new_binder )
+function bind(obj)
+    local new_binder = generic_object_binder(obj)
+    obj:bind_object(new_binder)
 end
 
-
-class "generic_object_binder" ( object_binder )
-function generic_object_binder:__init( obj ) super( obj )
-	self.loaded = false
-	self.last_update = 0
-	self.particles = {}
-	self.am = ogsr_signals.get_mgr()
-	self.am:call( "on_monster_init", obj, self )
+class "generic_object_binder"(object_binder)
+function generic_object_binder:__init(obj)
+    super(obj)
+    self.loaded = false
+    self.last_update = 0
+    self.particles = {}
+    self.am = ogsr_signals.get_mgr()
+    self.am:call("on_monster_init", obj, self)
 end
 
-
-function generic_object_binder:reload( section )
-  object_binder.reload( self, section )
+function generic_object_binder:reload(section)
+    object_binder.reload(self, section)
 end
-
 
 function generic_object_binder:reinit()
-  object_binder.reinit( self )
+    object_binder.reinit(self)
 
-  -- Ó òîðãîâöà íåò ïîääåðæêè ïåðåìåùåíèÿ
-  if self.object:clsid() ~= clsid.script_trader then
-    self.object:set_patrol_extrapolate_callback(generic_object_binder.extrapolate_callback, self)
-  end
+    -- Ð£ Ñ‚Ð¾Ñ€Ð³Ð¾Ð²Ñ†Ð° Ð½ÐµÑ‚ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶ÐºÐ¸ Ð¿ÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ñ
+    if self.object:clsid() ~= clsid.script_trader then
+        self.object:set_patrol_extrapolate_callback(generic_object_binder.extrapolate_callback, self)
+    end
 
-  db.storage[ self.object:id() ] = {}
-  self.st = db.storage[self.object:id() ]
-  self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
-  self.object:set_callback(callback.hit, self.hit_callback, self)
-  self.object:set_callback(callback.death, self.death_callback,	self)
-  self.object:set_callback(callback.use_object, self.use_callback, self)
-  self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self)
+    db.storage[self.object:id()] = {}
+    self.st = db.storage[self.object:id()]
+    self.object:set_callback(callback.patrol_path_in_point, self.waypoint_callback, self)
+    self.object:set_callback(callback.hit, self.hit_callback, self)
+    self.object:set_callback(callback.death, self.death_callback, self)
+    self.object:set_callback(callback.use_object, self.use_callback, self)
+    self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self)
 end
 
 function generic_object_binder:net_spawn(sobject)
-	if not object_binder.net_spawn(self, sobject) then
-		return false
-	end
+    if not object_binder.net_spawn(self, sobject) then
+        return false
+    end
 
-	db.add_obj(self.object)
+    db.add_obj(self.object)
 
-	self.am:call( "on_monster_net_spawn", self.object, self )
+    self.am:call("on_monster_net_spawn", self.object, self)
 
-	if not self.object:alive() then if rx_ai then rx_ai.corpse_net_spawn(self.object, self.loaded) end end
-	xr_gulag.setup_gulag_and_logic_on_spawn( self.object, self.st, sobject, modules.stype_mobile, self.loaded )
+    if not self.object:alive() then
+        if rx_ai then
+            rx_ai.corpse_net_spawn(self.object, self.loaded)
+        end
+    end
+    xr_gulag.setup_gulag_and_logic_on_spawn(self.object, self.st, sobject, modules.stype_mobile, self.loaded)
 
-	local particle_param = utils.cfg_get_string(system_ini(), self.object:section(), "bones_particles", null, false, false, nil)
-	if particle_param and system_ini():section_exist(particle_param) then
-		local tmp = xrs_utils.parse_ini_section_to_array(system_ini(),particle_param)
-		for k,v in pairs(tmp) do
-			local t = xrs_utils.parse_ini_section_to_array(system_ini(), v)
-			t.obj = self.object
-			if not t.stop_on_death or self.object:alive() then
-				play_particle(self.object, t)
-			end
-		end
-	end
-	return true
+    local particle_param = get_string(self.object:section(), "bones_particles", nil)
+    if particle_param and system_ini():section_exist(particle_param) then
+        local tmp = get_section_keys_and_values(particle_param)
+        for k, v in pairs(tmp) do
+            local t = get_section_keys_and_values(v)
+            t.obj = self.object
+            if not t.stop_on_death or self.object:alive() then
+                play_particle(self.object, t)
+            end
+        end
+    end
+    return true
 end
-
-prevent_gulag_registration_for_id=0
 
 function generic_object_binder:update(delta)
     local obj = self.object
     object_binder.update(self, delta)
-
 
     if obj:alive() then
         if obj:is_talk_enabled() then
@@ -93,135 +92,126 @@ function generic_object_binder:update(delta)
             end
         end
     end
-	
-	local act_scheme = db.storage[self.object:id()].active_section or ""
-	local is_fake = string.find(act_scheme, "mob_fake_death") or false
-  
-	if has_alife_info("surge_process_stage_7") and (not self.control_override) then
-		if not self.object:action() then
-			-- Çàõâàòûâàåì çâåðóøêó
-			xr_logic.mob_capture(self.object,true)
-			self.control_override=true
-		end
-	elseif self.control_override and blowout==3 then
-		if not self.object:action() then
-			local snds={sound.take_damage,sound.panic,sound.idle}
-			local snd=snds[math.random(1,table.getn(snds))]
-			action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
-		end
-	elseif self.control_override and blowout~=3 then
-		-- îòïóñêàåì çâåðóøêó
-		self.control_override=nil
-		xr_logic.mob_release(self.object)
-	elseif self.st.active_section ~= nil then
-		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
-	end
-	
-	self.am:call( "on_monster_update." .. self.object:id(), self.object, delta )
+
+    local act_scheme = db.storage[self.object:id()].active_section or ""
+    local is_fake = string.find(act_scheme, "mob_fake_death") or false
+
+    if has_alife_info("surge_process_stage_7") and (not self.control_override) then
+        if not self.object:action() then
+            -- Ð—Ð°Ñ…Ð²Ð°Ñ‚Ñ‹Ð²Ð°ÐµÐ¼ Ð·Ð²ÐµÑ€ÑƒÑˆÐºÑƒ
+            xr_logic.mob_capture(self.object, true)
+            self.control_override = true
+        end
+    elseif self.control_override and blowout == 3 then
+        if not self.object:action() then
+            local snds = {sound.take_damage, sound.panic, sound.idle}
+            local snd = snds[math.random(1, table.getn(snds))]
+            action(self.object, anim(anim.lie_idle, 0), sound(snd), cond(cond.sound_end))
+        end
+    elseif self.control_override and blowout ~= 3 then
+        -- Ð¾Ñ‚Ð¿ÑƒÑÐºÐ°ÐµÐ¼ Ð·Ð²ÐµÑ€ÑƒÑˆÐºÑƒ
+        self.control_override = nil
+        xr_logic.mob_release(self.object)
+    elseif self.st.active_section ~= nil then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
+    end
+
+    self.am:call("on_monster_update." .. self.object:id(), self.object, delta)
 end
 
 function generic_object_binder:extrapolate_callback()
-	if not self.object:get_script() then return false end
-	--
-	local cur_pt = self.object:get_current_point_index() 
-	local patr = self.object:patrol()
-	if patr == "" then
-		--Òàêàÿ ñèòóàöèÿ - ýòî íîðìà, ïðîñòî âàíèëüíûé äâèæîê íå âûëåòàë ïðè âûçîâå patrol(""), à íîâûé âûëåòàåò, ïðîâåðåíî.
-		log3("!![%s] Invalid patrol path name [%s] for object [%s]", script_name(), patr, self.object:name())
-	elseif patrol(patr):flags(cur_pt):get() == 0 then
-		return true
-	end
-	return false
+    if not self.object:get_script() then
+        return false
+    end
+    --
+    local cur_pt = self.object:get_current_point_index()
+    local patr = self.object:patrol()
+    if patr == "" then
+        -- Ð¢Ð°ÐºÐ°Ñ ÑÐ¸Ñ‚ÑƒÐ°Ñ†Ð¸Ñ - ÑÑ‚Ð¾ Ð½Ð¾Ñ€Ð¼Ð°, Ð¿Ñ€Ð¾ÑÑ‚Ð¾ Ð²Ð°Ð½Ð¸Ð»ÑŒÐ½Ñ‹Ð¹ Ð´Ð²Ð¸Ð¶Ð¾Ðº Ð½Ðµ Ð²Ñ‹Ð»ÐµÑ‚Ð°Ð» Ð¿Ñ€Ð¸ Ð²Ñ‹Ð·Ð¾Ð²Ðµ patrol(""), Ð° Ð½Ð¾Ð²Ñ‹Ð¹ Ð²Ñ‹Ð»ÐµÑ‚Ð°ÐµÑ‚, Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐµÐ½Ð¾.
+        log3("!![%s] Invalid patrol path name [%s] for object [%s]", script_name(), patr, self.object:name())
+    elseif patrol(patr):flags(cur_pt):get() == 0 then
+        return true
+    end
+    return false
 end
 
 function generic_object_binder:waypoint_callback(obj, action_type, index)
-	if self.st.active_section ~= nil then
-		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "waypoint_callback", obj, action_type, index)
-	end
+    if self.st.active_section ~= nil then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "waypoint_callback", obj, action_type, index)
+    end
 end
 
 function generic_object_binder:death_callback(victim, who)
-	if not self.object then self.object = victim end
+    self.object:set_tip_text_default()
 
-	self.object:set_tip_text_default()
+    self:clear_callbacks()
 
-	xr_statistic.addKillCount(who, self.object)
+    xr_statistic.addKillCount(who, self.object)
 
-	if self.st and self.st.mob_death then
-		xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", self.object, who)
-	end
+    if self.st and self.st.mob_death then
+        xr_logic.issue_event(self.object, self.st.mob_death, "death_callback", self.object, who)
+    end
 
-	if self.st and self.st.active_section then
-		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
-	end
+    if self.st and self.st.active_section then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "death_callback", self.object, who)
+    end
 
-	smart_terrain.on_death( self.object:id() )
-	
-	if rx_ai then rx_ai.monster_death(victim, who) end
+    smart_terrain.on_death(self.object:id())
 
-	-- Íàíîñèì íåáîëüøîé èìïóëüñ âïåðåä.
-	local h = hit()
-	h.draftsman = self.object
-	h.type      = hit.fire_wound
-	h.direction = db.actor:position():sub( self.object:position() )
-	h:bone( "pelvis" )
-	h.power     =  1
-	h.impulse   = 10
-	self.object:hit( h )
-	
-	if table.getn(self.particles)>0 then
-	  for kk,vv in pairs(self.particles) do
-	    vv:on_death()
-	  end
-	end
+    if rx_ai then
+        rx_ai.monster_death(victim, who)
+    end
 
-	if who and who:id() == db.actor:id() then
-		archievements.acv_mons()
-	end
+    if table.getn(self.particles) > 0 then
+        for kk, vv in pairs(self.particles) do
+            vv:on_death()
+        end
+    end
 
-	self.am:call( "on_monster_death", self.object, who )
+    if who and who:id() == db.actor:id() then
+        archievements.acv_mons()
+    end
+
+    self.am:call("on_monster_death", self.object, who)
 end
 
 function generic_object_binder:hit_callback(obj, amount, local_direction, who, bone_index)
-	if self.st.active_section then
-		xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", obj, amount, local_direction, who, bone_index)
-	end
-	if self.st.hit then
-		xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
-	end
-	if bone_index==14 and string.find(obj:section(),"bloodsucker") then
-		local h=hit()
-		h.type = hit.fire_wound
-		h.power = 100*local_direction.x*local_direction.x*local_direction.x*local_direction.x
-		h.impulse = h.power
-		h.draftsman = who
-		h.direction = vector():set(0,-1,0)
-		obj:hit(h)    
-	end
-	
-	if obj:section() == "electro_chimera" and time_global() > (self.charge_time or 0) + 3000 then
-		local chimera_particle = particles_object("anomaly2\\electra2_blast_00")
-		local chimera_sound = sound_object([[anomaly\electra_blast1]])
-		local posit = obj:position()
-		local enemy = obj:best_enemy()
-		if enemy and posit:distance_to(enemy:position()) < ( enemy:is_actor() and 13 or 5 ) and obj:see(enemy) then
-			if not chimera_sound:playing() and not chimera_particle:playing()then
-				chimera_particle:play_at_pos(posit)
-				chimera_sound:play_at_pos(obj, posit, 0)
+    if amount == 0 or bone_index == 0 then
+        return
+    end -- ÐÐµ ÑƒÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°ÐµÐ¼ Ð²Ñ‹ÑÑ‚Ñ€ÐµÐ»Ñ‹ Ð² Ð²Ð¾Ð·Ð´ÑƒÑ…. ÐŸÑ€Ð¸Ñ‡Ð¸Ð½Ñƒ Ð¾Ð¿Ð¸ÑÐ°Ð» Ð² Ð¼Ð¾Ñ‚Ð¸Ð²Ð°Ñ‚Ð¾Ñ€Ðµ.
 
-				local zh = hit()
-				zh.draftsman = obj
-				zh.type = hit.shock
-				zh.direction = posit:sub(enemy:position())
-				zh:bone( get_string( enemy:section(), "bone_torso", "bip01_spine" ) ) -- ÷òîáû ó÷èòûâàëàñü áðîíÿ
-				zh.power = 0.15
-				zh.impulse = 0.1
-				enemy:hit(zh)
-			end
-		end
-	end
-	
-	self.am:call("on_monster_hit", obj, amount, local_direction, who, bone_index)		
+    if self.st.active_section then
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", obj, amount, local_direction,
+            who, bone_index)
+    end
+
+    if self.st.hit then
+        xr_logic.issue_event(self.object, self.st.hit, "hit_callback", obj, amount, local_direction, who, bone_index)
+    end
+
+    if obj:section() == "electro_chimera" and time_global() > (self.charge_time or 0) + 3000 then
+        local chimera_particle = particles_object("anomaly2\\electra2_blast_00")
+        local chimera_sound = sound_object([[anomaly\electra_blast1]])
+        local posit = obj:position()
+        local enemy = obj:best_enemy()
+        if enemy and posit:distance_to(enemy:position()) < 5 and obj:see(enemy) then
+            if not chimera_sound:playing() and not chimera_particle:playing() then
+                chimera_particle:play_at_pos(posit)
+                chimera_sound:play_at_pos(obj, posit, 0)
+
+                local zh = hit()
+                zh.draftsman = obj
+                zh.type = hit.shock
+                zh.direction = posit:sub(enemy:position())
+                zh:bone(get_string(enemy:section(), "bone_torso", "bip01_spine")) -- Ñ‡Ñ‚Ð¾Ð±Ñ‹ ÑƒÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°Ð»Ð°ÑÑŒ Ð±Ñ€Ð¾Ð½Ñ
+                zh.power = 0.15
+                zh.impulse = 0.1
+                enemy:hit(zh)
+            end
+        end
+    end
+
+    self.am:call("on_monster_hit", obj, amount, local_direction, who, bone_index)
 end
 
 function generic_object_binder:use_callback(obj, who)
@@ -242,7 +232,6 @@ function generic_object_binder:use_callback(obj, who)
         mobj:set_nonscript_usable(false)
     end
 
-
     if mobj:object_count() < 1 then
         return
     end
@@ -253,7 +242,7 @@ function generic_object_binder:use_callback(obj, who)
         local function move_all()
             local moved = false
 
-             for i = 0, mobj:object_count() - 1 do
+            for i = 0, mobj:object_count() - 1 do
                 local obj = mobj:object(i)
                 mobj:transfer_item(obj, who)
             end
@@ -266,109 +255,119 @@ end
 
 function generic_object_binder:net_destroy()
 
-  if table.getn(self.particles)>0 then
-  	for kk,vv in pairs(self.particles) do
-  		if not vv:is_finished() then
-  			vv:stop()
-  			self.particles[kk]=nil
-  		end
-  	end
-  end
+    if table.getn(self.particles) > 0 then
+        for kk, vv in pairs(self.particles) do
+            if not vv:is_finished() then
+                vv:stop()
+                self.particles[kk] = nil
+            end
+        end
+    end
 
-  self:clear_callbacks()
+    self:clear_callbacks()
 
-  local st = db.storage[ self.object:id() ]
-  if st and st.active_scheme then
-    xr_logic.issue_event( self.object, st[ st.active_scheme ], "net_destroy" )
-  end
+    local st = db.storage[self.object:id()]
+    if st and st.active_scheme then
+        xr_logic.issue_event(self.object, st[st.active_scheme], "net_destroy")
+    end
 
-  db.del_obj( self.object )
-  db.storage[ self.object:id() ] = nil
-  self.am:call( "on_monster_net_destroy", self.object, self )
-  self.am:cleanup_signal_subs( "on_monster_update." .. self.object:id() )
+    db.del_obj(self.object)
+    db.storage[self.object:id()] = nil
+    self.am:call("on_monster_net_destroy", self.object, self)
+    self.am:cleanup_signal_subs("on_monster_update." .. self.object:id())
 
-  object_binder.net_destroy(self)
+    object_binder.net_destroy(self)
 
-  local id   = self.object:id()
-  local sobj = alife():object( id )
-  if sobj then
-    alife():remove_in_restrictions( sobj )
-  end
---log3("--[%s] End destroy [%s]", script_name(), self.object and self.object:name() or "nil")
-end 
+    local id = self.object:id()
+    local sobj = alife():object(id)
+    if sobj then
+        alife():remove_in_restrictions(sobj)
+    end
+    -- log3("--[%s] End destroy [%s]", script_name(), self.object and self.object:name() or "nil")
+end
 
 function generic_object_binder:clear_callbacks()
-  self.object:set_callback( callback.death, nil )
-  self.object:set_callback( callback.patrol_path_in_point, nil )
-  self.object:set_callback( callback.hit, nil )
-  self.object:set_callback( callback.use_object, nil )
-  self.object:set_callback( callback.entity_alive_before_hit, nil )
-  self.object:set_enemy_callback()
+    self.object:set_callback(callback.death, nil)
+    self.object:set_callback(callback.patrol_path_in_point, nil)
+    self.object:set_callback(callback.hit, nil)
+    self.object:set_callback(callback.use_object, nil)
+    self.object:set_callback(callback.entity_alive_before_hit, nil)
+    self.object:set_enemy_callback()
+end
+
+function generic_object_binder:clear_callbacks()
+    self.object:set_callback(callback.death, nil)
+    self.object:set_callback(callback.patrol_path_in_point, nil)
+    self.object:set_callback(callback.hit, nil)
+    self.object:set_callback(callback.entity_alive_before_hit, nil)
+    self.object:set_enemy_callback()
 end
 
 function generic_object_binder:reload(section)
-  object_binder.reload( self, section )
+    object_binder.reload(self, section)
 end
-
 
 function generic_object_binder:net_save_relevant()
-	return true
+    return true
 end
 
-function generic_object_binder:save( packet )
-	if string.find(self.object:name(), "crow_") then return false end
+function generic_object_binder:save(packet)
+    if string.find(self.object:name(), "crow_") then
+        return false
+    end
 
-	if self.object:clsid() ~= clsid.script_trader then
-		xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
-	end
+    if self.object:clsid() ~= clsid.script_trader then
+        xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
+    end
 
-	ASSERT( not db.saving_obj, "found saving_obj = %s", tostring( db.saving_obj and db.saving_obj:name() or nil ) )
-	db.saving_obj = self.object
-	object_binder.save(self, packet)
-	xr_logic.save_obj(self.object, packet)
-  	db.saving_obj = false
+    ASSERT(not db.saving_obj, "found saving_obj = %s", tostring(db.saving_obj and db.saving_obj:name() or nil))
+    db.saving_obj = self.object
+    object_binder.save(self, packet)
+    xr_logic.save_obj(self.object, packet)
+    db.saving_obj = false
 end
 
+function generic_object_binder:load(reader)
+    if string.find(self.object:name(), "crow_") then
+        return false
+    end
 
-function generic_object_binder:load( reader )
-	if string.find(self.object:name(), "crow_") then return false end
+    self.loaded = true
 
-	self.loaded = true
+    object_binder.load(self, reader)
 
-	object_binder.load(self, reader)
+    if reader:r_eof() then
+        abort("[bind_monster.script]SAVE FILE IS CORRUPT " .. self.object:name())
+    end
+    xr_logic.load_obj(self.object, reader)
 
-	if reader:r_eof() then
-		abort("[bind_monster.script]SAVE FILE IS CORRUPT "..self.object:name())
-	end
-	xr_logic.load_obj(self.object, reader)
-
-	if self.object:clsid() ~= clsid.script_trader then
-		local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
-		self.object:invulnerable(is_invulnerable)
-	end
+    if self.object:clsid() ~= clsid.script_trader then
+        local is_invulnerable = xr_logic.pstor_retrieve(self.object, "is_invulnerable", false)
+        self.object:invulnerable(is_invulnerable)
+    end
 end
 
-function play_particle(obj,params)
-	if not particles[obj:id()] then
-		particles[obj:id()]={}
-	end
-	table.insert(particles[obj:id()],params)
+function play_particle(obj, params)
+    if not particles[obj:id()] then
+        particles[obj:id()] = {}
+    end
+    table.insert(particles[obj:id()], params)
 end
 
 function generic_object_binder:before_hit_callback(hit_data)
-	if hit_data.weapon_id then
-		local wpn = level.object_by_id(hit_data.weapon_id)
-		if hit_data.hit_type == hit.fire_wound and wpn and wpn:is_weapon_magazined() then
-			local koef = has_alife_info("acv_mons2") and 1.3 or (has_alife_info("acv_mons") and 1.2 or 1.0)
-			hit_data.power = hit_data.power * koef
-		end
-	end
+    if hit_data.weapon_id then
+        local wpn = level.object_by_id(hit_data.weapon_id)
+        if hit_data.hit_type == hit.fire_wound and wpn and wpn:is_weapon_magazined() then
+            local koef = has_alife_info("acv_mons2") and 1.3 or (has_alife_info("acv_mons") and 1.2 or 1.0)
+            hit_data.power = hit_data.power * koef
+        end
+    end
 
-	if not self.last_hit_data then
-		self.last_hit_data = {}
-	end
+    if not self.last_hit_data then
+        self.last_hit_data = {}
+    end
 
-	dsh.copy_hit_data( hit_data, self.last_hit_data )
+    dsh.copy_hit_data(hit_data, self.last_hit_data)
 
-	self.am:call( "on_monster_before_hit", self.object, hit_data )
+    self.am:call("on_monster_before_hit", self.object, hit_data)
 end

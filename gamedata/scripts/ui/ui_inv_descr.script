@@ -1,10 +1,10 @@
 -- -*- mode: lua; encoding: windows-1251 -*-
 
 local kScreen = math.min((1024 / 768) / (device().width / device().height), 1)
-local cell_size = 25		-- размер иконки в описании свойств предмета
-local vert_interval = 1		-- параметр vert_interval в скролле
+local cell_size = 25		-- СЂР°Р·РјРµСЂ РёРєРѕРЅРєРё РІ РѕРїРёСЃР°РЅРёРё СЃРІРѕР№СЃС‚РІ РїСЂРµРґРјРµС‚Р°
+local vert_interval = 1		-- РїР°СЂР°РјРµС‚СЂ vert_interval РІ СЃРєСЂРѕР»Р»Рµ
 
-local shift_show_descr = 700  -- через какое время после наведения курсора будет показано окно, ms
+local shift_show_descr = 700  -- С‡РµСЂРµР· РєР°РєРѕРµ РІСЂРµРјСЏ РїРѕСЃР»Рµ РЅР°РІРµРґРµРЅРёСЏ РєСѓСЂСЃРѕСЂР° Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅРѕ РѕРєРЅРѕ, ms
 
 
 local is_grenade={
@@ -17,9 +17,9 @@ local is_grenade={
 	[clsid.wpn_ammo_og7b]		= true
 }
 
--- Пушки, для которых дополнительное описание не пишем
+-- РџСѓС€РєРё, РґР»СЏ РєРѕС‚РѕСЂС‹С… РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ РѕРїРёСЃР°РЅРёРµ РЅРµ РїРёС€РµРј
 local forbidden_wpns = {
-	['wpn_binoc']                   = true,		-- бинокль
+	['wpn_binoc']                   = true,		-- Р±РёРЅРѕРєР»СЊ
 }
 
 local forbidden_ammo = {
@@ -29,7 +29,7 @@ local forbidden_ammo = {
 	['ammo_og-7b']	    = true,
 }
 
--- Параметры актёра, по которым считаются некоторые параметры артефактов или костюмов
+-- РџР°СЂР°РјРµС‚СЂС‹ Р°РєС‚С‘СЂР°, РїРѕ РєРѕС‚РѕСЂС‹Рј СЃС‡РёС‚Р°СЋС‚СЃСЏ РЅРµРєРѕС‚РѕСЂС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ Р°СЂС‚РµС„Р°РєС‚РѕРІ РёР»Рё РєРѕСЃС‚СЋРјРѕРІ
 local conditions = {
 	bleeding_restore_speed	= get_float('actor_condition', 'bleeding_v'),
 	health_restore_speed	= get_float('actor_condition', 'satiety_health_v'),
@@ -37,15 +37,15 @@ local conditions = {
 	satiety_restore_speed	= get_float('actor_condition', 'satiety_v'),
 	radiation_restore_speed	= get_float('actor_condition', 'radiation_v') *100
 }
--- параметры костюмов и артов
+-- РїР°СЂР°РјРµС‚СЂС‹ РєРѕСЃС‚СЋРјРѕРІ Рё Р°СЂС‚РѕРІ
 local conditions_params = {
 	{ prop = "health_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_health")),		tex = "health"		},
 	{ prop = "bleeding_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_bleeding")),	    tex = "bleeding"	},
 	{ prop = "satiety_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_satiety")),		tex = "satiety"		},
 	{ prop = "power_restore_speed",		text = string.format("%s:", game.translate_string("ui_inv_power")),	    	tex = "power"		},
-	{ prop = "radiation_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_radiation")),		tex = "radiation_2", unit = "Ки"	},
+	{ prop = "radiation_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_radiation")),		tex = "radiation_2", unit = "РљРё"	},
 }
--- Типы хитов и соответствующие им текстуры и названия
+-- РўРёРїС‹ С…РёС‚РѕРІ Рё СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РёРј С‚РµРєСЃС‚СѓСЂС‹ Рё РЅР°Р·РІР°РЅРёСЏ
 local hit_types = {
 	{ prop = "burn",			text = string.format("%s:", game.translate_string("ui_inv_outfit_burn_protection")),			},
 	{ prop = "shock",			text = string.format("%s:", game.translate_string("ui_inv_outfit_shock_protection")),	        },
@@ -57,7 +57,7 @@ local hit_types = {
 	{ prop = "explosion",		text = string.format("%s:", game.translate_string("ui_inv_outfit_explosion_protection")),	    },
 	{ prop = "fire_wound",		text = string.format("%s:", game.translate_string("ui_inv_outfit_fire_wound_protection")),	    },
 }
--- Параметры еды
+-- РџР°СЂР°РјРµС‚СЂС‹ РµРґС‹
 local eatable_params = {
 	{ prop = "eat_health",				text = string.format("%s:", game.translate_string("ui_inv_health")),		tex = "health"		},
 	{ prop = "wounds_heal_perc",		text = string.format("%s:", game.translate_string("ui_inv_bleeding")),		tex = "bleeding"	},
@@ -380,7 +380,7 @@ function CUIDescriptionWnd:ShowDescription(item)
 	self.frame:Show(true)
 end
 
--- Показываем параметры съедобных предметов
+-- РџРѕРєР°Р·С‹РІР°РµРј РїР°СЂР°РјРµС‚СЂС‹ СЃСЉРµРґРѕР±РЅС‹С… РїСЂРµРґРјРµС‚РѕРІ
 function CUIDescriptionWnd:ShowEatableParams()
 	local params = {}
 	local tm, val, txt = nil, 0, ""
@@ -419,7 +419,7 @@ function CUIDescriptionWnd:ShowEatableParams()
 	end
 end
 
--- Показываем описание оружия
+-- РџРѕРєР°Р·С‹РІР°РµРј РѕРїРёСЃР°РЅРёРµ РѕСЂСѓР¶РёСЏ
 function CUIDescriptionWnd:ShowWeaponParams()
 	local params = {}
 	local val, txt = 0, ""
@@ -453,7 +453,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	st:SetText(string.format("%s", game.translate_string("descr_ammo_weapon")))
 	st:SetTextColor(255, 0, 255, 110)
-	-- Боеприпасы
+	-- Р‘РѕРµРїСЂРёРїР°СЃС‹
 	local s = sys_ini:r_string(self.section, 'ammo_class')
 
 	local t = split_comma_separated_list(s)
@@ -490,7 +490,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	local n1 = get_float(self.section, 'scope_status')
 
-	-- Прицелы
+	-- РџСЂРёС†РµР»С‹
 	if n1 == 2 then
 		local s1 = sys_ini:line_exist(self.section, 'scope_names') and sys_ini:r_string(self.section, 'scope_names') or sys_ini:r_string(self.section, 'scope_name')
 		st = self.xml:InitStatic("props", self.scroll_v)
@@ -537,7 +537,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	local n2 = get_float(self.section, 'silencer_status')
 
-	-- Глушитель
+	-- Р“Р»СѓС€РёС‚РµР»СЊ
 	if n2 == 2 then
 		local s2 = sys_ini:r_string(self.section, 'silencer_name')	
 		st = self.xml:InitStatic("props", self.scroll_v)
@@ -552,7 +552,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 
 	local n3 = get_float(self.section, 'grenade_launcher_status')
 
-	-- Подствольник
+	-- РџРѕРґСЃС‚РІРѕР»СЊРЅРёРє
 	if n3 == 2 then
 		local s3 = sys_ini:r_string(self.section, 'grenade_launcher_name')	
 		st = self.xml:InitStatic("props", self.scroll_v)
@@ -566,7 +566,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	end
 end
 
--- Показываем параметры артефактов
+-- РџРѕРєР°Р·С‹РІР°РµРј РїР°СЂР°РјРµС‚СЂС‹ Р°СЂС‚РµС„Р°РєС‚РѕРІ
 function CUIDescriptionWnd:ShowAfParams()
 	local params = {}
 	local val, txt = 0, ""
@@ -611,7 +611,7 @@ function CUIDescriptionWnd:ShowAfParams()
 		self:ShowProps(params)
 	end
 end
--- Показываем параметры костмов
+-- РџРѕРєР°Р·С‹РІР°РµРј РїР°СЂР°РјРµС‚СЂС‹ РєРѕСЃС‚РјРѕРІ
 function CUIDescriptionWnd:ShowOutfitParams()
 	local outfit = db.actor:item_in_slot(6)
 	local params = {}
@@ -675,12 +675,12 @@ function CUIDescriptionWnd:OnItemFocusLost( obj )
 	end
 end
 
-function CUIDescriptionWnd:OnUpdate( delta ) --Если сюда передали аргументом передали true - обновление будет форсировано.
+function CUIDescriptionWnd:OnUpdate( delta ) --Р•СЃР»Рё СЃСЋРґР° РїРµСЂРµРґР°Р»Рё Р°СЂРіСѓРјРµРЅС‚РѕРј РїРµСЂРµРґР°Р»Рё true - РѕР±РЅРѕРІР»РµРЅРёРµ Р±СѓРґРµС‚ С„РѕСЂСЃРёСЂРѕРІР°РЅРѕ.
 	if ( not self.keypressed and self.shift_tmr and self.shift_tmr < time_global() ) or delta == true then
 		if self.itemInFocus and ( self.itemInFocus > 65535 or alife():object( self.itemInFocus ) ) then
 			self:ShowDescription( level.object_by_id(self.itemInFocus) )
 		end
-		self.shift_tmr = 1 --А может обновлять всегда когда есть фокус?
+		self.shift_tmr = 1 --Рђ РјРѕР¶РµС‚ РѕР±РЅРѕРІР»СЏС‚СЊ РІСЃРµРіРґР° РєРѕРіРґР° РµСЃС‚СЊ С„РѕРєСѓСЃ?
 	end
 end
 
@@ -723,7 +723,7 @@ function get_cur_wpn_ammo_section(wpn)
     return ammo_sect
 end
 
-function get_actual_cost(obj) -- костыль для расчета реально цеты айтема в окне торговли. не лутшее решение но в целом пойдет
+function get_actual_cost(obj) -- РєРѕСЃС‚С‹Р»СЊ РґР»СЏ СЂР°СЃС‡РµС‚Р° СЂРµР°Р»СЊРЅРѕ С†РµС‚С‹ Р°Р№С‚РµРјР° РІ РѕРєРЅРµ С‚РѕСЂРіРѕРІР»Рё. РЅРµ Р»СѓС‚С€РµРµ СЂРµС€РµРЅРёРµ РЅРѕ РІ С†РµР»РѕРј РїРѕР№РґРµС‚
     local trade_wnd = level.get_trade_wnd()
     if trade_wnd and trade_wnd:IsShown() then
         local b_buying = obj:parent() and obj:parent():id() == db.actor:id()

@@ -1,48 +1,49 @@
 function init(obj)
-	local new_binder = explosion_binder(obj)
-	obj:bind_object(new_binder)
+    local new_binder = explosion_binder(obj)
+    obj:bind_object(new_binder)
 end
 
 ---------------------------------------------------------------------------------------------
-class "explosion_binder" (object_binder)
-function explosion_binder:__init(obj) super(obj)
-	self.initialized = false
-	self.loaded = false
-end 
+class "explosion_binder"(object_binder)
+function explosion_binder:__init(obj)
+    super(obj)
+    self.initialized = false
+    self.loaded = false
+end
 
 function explosion_binder:reload(section)
-	object_binder.reload(self, section)
+    object_binder.reload(self, section)
 end
 
 function explosion_binder:reinit()
-	object_binder.reinit(self)
+    object_binder.reinit(self)
 end
 
 function explosion_binder:net_spawn(data)
-	if not object_binder.net_spawn(self, data) then
-		return false
-	end
-	self.object:explode()
-	return true
+    if not object_binder.net_spawn(self, data) then
+        return false
+    end
+    self.object:explode()
+    return true
 end
 
 function explosion_binder:update(delta)
-	object_binder.update(self, delta)
+    object_binder.update(self, delta)
 end
 
 function explosion_binder:net_destroy()
-	object_binder.net_destroy(self)
+    object_binder.net_destroy(self)
 end
 
 function explosion_binder:net_save_relevant()
-	return true
+    return true
 end
 
 function explosion_binder:save(packet)
-	object_binder.save(self, packet)
+    object_binder.save(self, packet)
 end
 
 function explosion_binder:load(reader)
-	self.loaded = true
-	object_binder.load(self, reader)
+    self.loaded = true
+    object_binder.load(self, reader)
 end

@@ -1,90 +1,92 @@
-function attach( sm )
-  sm:subscribe({ signal = "on_spawn",		fun = this.on_spawn })
-  sm:subscribe({ signal = "on_save_after_all", 	fun = this.on_save  })
-  sm:subscribe({ signal = "on_load",		fun = this.on_load  })
+function attach(sm)
+    sm:subscribe({signal = "on_spawn",          fun = this.on_spawn})
+    sm:subscribe({signal = "on_save_after_all", fun = this.on_save})
+    sm:subscribe({signal = "on_load",           fun = this.on_load})
 end
 
 local show_wnd_tutorial
 
 function on_spawn()
-	if not show_wnd_tutorial then return end
+    if not show_wnd_tutorial then
+        return
+    end
 
-	local text = string.format("%s", game.translate_string("later_other"))
-	local hud = get_hud()
-	hud:AddCustomStatic("main_task", true)
-	hud:GetCustomStatic("main_task"):wnd():SetTextST(text)
-	hud:GetCustomStatic("main_task").m_endTime = time_global() / 1000 + 10
-	show_wnd_tutorial = false
+    local text = string.format("%s", game.translate_string("later_other"))
+    local hud = get_hud()
+    hud:AddCustomStatic("main_task", true)
+    hud:GetCustomStatic("main_task"):wnd():SetTextST(text)
+    hud:GetCustomStatic("main_task").m_endTime = time_global() / 1000 + 10
+    show_wnd_tutorial = false
 end
 
 function on_save()
-	ogse.save_var("teleport_tutorial", show_wnd_tutorial)
+    ogse.save_var("teleport_tutorial", show_wnd_tutorial)
 end
 
 function on_load()
-	show_wnd_tutorial = ogse.load_var("teleport_tutorial", false)
+    show_wnd_tutorial = ogse.load_var("teleport_tutorial", false)
 end
 
-function teleport_actor( lvid, gvid, pos, dir )
-  level.add_pp_effector( "teleport.ppe", 2006, false )
-  if type( pos ) == "table" then
-    pos = vector():set( unpack( pos ) )
-  end
-  if not dir then
-    dir = vector():set( 0, 0, 0 )
-  elseif type( dir ) == "table" then
-    dir = vector():set( unpack( dir ) )
-  end
-  dsh.timeout( 1000, function()
-    level.change_level( gvid, lvid, pos, dir )
-  end )
+function teleport_actor(lvid, gvid, pos, dir)
+    level.add_pp_effector("black.ppe", 2006, false)
+    if type(pos) == "table" then
+        pos = vector():set(unpack(pos))
+    end
+    if not dir then
+        dir = vector():set(0, 0, 0)
+    elseif type(dir) == "table" then
+        dir = vector():set(unpack(dir))
+    end
+    dsh.timeout(1000, function()
+        level.change_level(gvid, lvid, pos, dir)
+    end)
 end
 
 -----------------------------Телепортация--------------------------------
 
 function sarcofag_start()
-	teleport_actor(10193, 2437, vector():set(66.210,15.040,4.250), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(10193, 2437, vector():set(66.210, 15.040, 4.250), vector():set(0.0, 0.0, 0.0))
 end
 
 function generator()
-	teleport_actor(210301, 2641, vector():set(554.542,152.252,201.912), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(210301, 2641, vector():set(554.542, 152.252, 201.912), vector():set(0.0, 0.0, 0.0))
 end
 
-function radar() 
-	teleport_actor(190530, 2623, vector():set(415.81,43.58,93.31), vector():set(0.0, 0.0, 0.0))
+function radar()
+    teleport_actor(190530, 2623, vector():set(415.81, 43.58, 93.31), vector():set(0.0, 0.0, 0.0))
 end
 
-function pripyat_mervin() 
-	teleport_actor(212430, 2185, vector():set(101.590,4.00,150.572), vector():set(0.0, 0.0, 0.0))
+function pripyat_mervin()
+    teleport_actor(212430, 2185, vector():set(101.590, 4.00, 150.572), vector():set(0.0, 0.0, 0.0))
 end
 
-function mg_pripyat_new() 
-	teleport_actor(581, 2141, vector():set(-162.555,-1.757,65.565), vector():set(0.0, 0.0, 0.0))
+function mg_pripyat_new()
+    teleport_actor(581, 2141, vector():set(-162.555, -1.757, 65.565), vector():set(0.0, 0.0, 0.0))
 end
 
-function bunker_brat() 
-	teleport_actor(178968, 2618, vector():set(-31.369,20.150,646.914), vector():set(0.0, -0.1, 0.0))
+function bunker_brat()
+    teleport_actor(178968, 2618, vector():set(-31.369, 20.150, 646.914), vector():set(0.0, -0.1, 0.0))
 end
 
-function bunker_end() 
-	teleport_actor(3231, 2514, vector():set(22.659,-34.482,13.152), vector():set(0.0, 1.5, 0.0))
+function bunker_end()
+    teleport_actor(3231, 2514, vector():set(22.659, -34.482, 13.152), vector():set(0.0, 1.5, 0.0))
 end
 
-function sarfinal() 
-	teleport_actor(3729, 2464, vector():set(11.325,55.594,28.993), vector():set(0.0, -0.8, 0.0))
+function sarfinal()
+    teleport_actor(3729, 2464, vector():set(11.325, 55.594, 28.993), vector():set(0.0, -0.8, 0.0))
 end
 
-function stadium_teleport() 
-	teleport_actor(218545, 2265, vector():set(106.772,1.017,407.975), vector():set(0.0, 3.0, 0.0))
-	show_wnd_tutorial = true
+function stadium_teleport()
+    teleport_actor(218545, 2265, vector():set(106.772, 1.017, 407.975), vector():set(0.0, 3.0, 0.0))
+    show_wnd_tutorial = true
 end
 
 function sarcofag_teleport()
-	teleport_actor(10193, 2437, vector():set(46.698,12.195,-5.712), vector():set(0.0, 0.0, 0.0))
-	show_wnd_tutorial = true
+    teleport_actor(10193, 2437, vector():set(46.698, 12.195, -5.712), vector():set(0.0, 0.0, 0.0))
+    show_wnd_tutorial = true
 end
 
 function chaos_teleport()
-	teleport_actor(172158, 2385, vector():set(393.82781,-0.0035887,63.712), vector():set(0.0,3.0,0.0))
-	show_wnd_tutorial = true
+    teleport_actor(172158, 2385, vector():set(393.82781, -0.0035887, 63.712), vector():set(0.0, 3.0, 0.0))
+    show_wnd_tutorial = true
 end

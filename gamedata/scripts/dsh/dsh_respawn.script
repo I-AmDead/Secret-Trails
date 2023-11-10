@@ -1,563 +1,442 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
--- ˝ÚÓÚ ÒÍ‚‡‰ ·Û‰ÂÚ Ì‡ÁÌ‡˜‡Ú¸Òˇ ÒÓÁ‰‡‚‡ÂÏ˚Ï ÏÓ·‡Ï
+-- —ç—Ç–æ—Ç —Å–∫–≤–∞–¥ –±—É–¥–µ—Ç –Ω–∞–∑–Ω–∞—á–∞—Ç—å—Å—è —Å–æ–∑–¥–∞–≤–∞–µ–º—ã–º –º–æ–±–∞–º
 local SQUAD = 51
 
-
-function attach( sm )
-  sm:subscribe({ signal = "on_before_spawn",  fun = this.on_spawn })
-  sm:subscribe({ signal = "on_load",          fun = this.load     })
-  sm:subscribe({ signal = "on_monster_first_update", fun = this.on_monster_first_update })
-  sm:subscribe({ signal = "on_release_npc",   fun = this.on_release_npc   })
-  sm:subscribe({ signal = "on_save",          fun = this.on_save  })
+function attach(sm)
+    sm:subscribe({signal = "on_before_spawn",           fun = this.on_spawn})
+    sm:subscribe({signal = "on_load",                   fun = this.load})
+    sm:subscribe({signal = "on_monster_first_update",   fun = this.on_monster_first_update})
+    sm:subscribe({signal = "on_release_npc",            fun = this.on_release_npc})
+    sm:subscribe({signal = "on_save",                   fun = this.on_save})
 end
 
 function init()
-  event( "se_monster:on_before_register" ):register(
-    this.se_on_before_register
-  )
-  event( "se_stalker:on_before_register" ):register(
-    this.se_on_before_register
-  )
+    event("se_monster:on_before_register"):register(this.se_on_before_register)
+    event("se_stalker:on_before_register"):register(this.se_on_before_register)
 end
-
 
 local loaded = {}
 
 function load()
-  local data = ogse.load_var_safe( "dsh_respawn.active" )
-  if not data then return end
-  local spawned_cnt = 0
-  for _, t in ipairs( data ) do
-    local name, pos, lvid, gvid, spawned_obj = unpack( t )
-    pos = vector():set( unpack( pos ) )
-    loaded[ name ] = {
-      [ "spawned_obj" ] = spawned_obj,
-      [ "xyzlg"       ] = { pos, lvid, gvid },
-    }
-    spawned_cnt = spawned_cnt + table.getn( spawned_obj )
-  end
-  log2(
-    "[%s]: %s respawners loaded: %s spawned",
-    script_name(), table.getn( data ), spawned_cnt
-  )
+    local data = ogse.load_var_safe("dsh_respawn.active")
+    if not data then
+        return
+    end
+    local spawned_cnt = 0
+    for _, t in ipairs(data) do
+        local name, pos, lvid, gvid, spawned_obj = unpack(t)
+        pos = vector():set(unpack(pos))
+        loaded[name] = {
+            ["spawned_obj"] = spawned_obj,
+            ["xyzlg"] = {pos, lvid, gvid}
+        }
+        spawned_cnt = spawned_cnt + table.getn(spawned_obj)
+    end
+    log2("[%s]: %s respawners loaded: %s spawned", script_name(), table.getn(data), spawned_cnt)
 end
 
-
-local active          = {}
+local active = {}
 local all_spawned_obj = {}
 
 function on_spawn()
-  local root_sect = "dsh.respawn.respawners"
-  if sys_ini:section_exist( root_sect ) then
-    local resp_cnt, spawned_cnt = 0, 0
-    for _, name in ipairs( get_section_keys( root_sect ) ) do
-      local enabled = get_bool( root_sect, name )
-      local tname   = "dsh_respawn." .. name
-      if enabled then
-        local respawn  = dsh_respawner( name, loaded[ name ] )
-        active[ name ] = respawn
-        resp_cnt       = resp_cnt + 1
-        spawned_cnt    = spawned_cnt + table.getn( respawn.spawned_obj )
-        if not ogse_st_mgr.timer_exists( tname ) then
-          respawn:refresh_spawned_obj()
+    local root_sect = "dsh.respawn.respawners"
+    if sys_ini:section_exist(root_sect) then
+        local resp_cnt, spawned_cnt = 0, 0
+        for _, name in ipairs(get_section_keys(root_sect)) do
+            local enabled = get_bool(root_sect, name)
+            local tname = "dsh_respawn." .. name
+            if enabled then
+                local respawn = dsh_respawner(name, loaded[name])
+                active[name] = respawn
+                resp_cnt = resp_cnt + 1
+                spawned_cnt = spawned_cnt + table.getn(respawn.spawned_obj)
+                if not ogse_st_mgr.timer_exists(tname) then
+                    respawn:refresh_spawned_obj()
+                end
+            else
+                if ogse_st_mgr.timer_exists(tname) then
+                    local t = ogse_st_mgr.get_timer(tname)
+                    t:stop()
+                    cleanup_spawned_obj(name, loaded[name])
+                end
+            end
         end
-      else
-        if ogse_st_mgr.timer_exists( tname ) then
-          local t = ogse_st_mgr.get_timer( tname )
-          t:stop()
-          cleanup_spawned_obj( name, loaded[ name ] )
-        end
-      end
+        log2("[%s]: %s respawners created: %s spawned", script_name(), resp_cnt, spawned_cnt)
     end
-    log2(
-      "[%s]: %s respawners created: %s spawned",
-      script_name(), resp_cnt, spawned_cnt
-    )
-  end
 end
-
 
 class "dsh_respawner"
-function dsh_respawner:__init( name, loaded )
-  self.name   = name
-  self.loaded = loaded
-  self:init_respawn_params()
-  self:load_spawned_obj()
+function dsh_respawner:__init(name, loaded)
+    self.name = name
+    self.loaded = loaded
+    self:init_respawn_params()
+    self:load_spawned_obj()
 end
-
 
 function dsh_respawner:name()
-  return self.name
+    return self.name
 end
-
 
 function dsh_respawner:init_respawn_params()
-  self.sectSpawnProps = {}
-  local sect = "dsh.respawn." .. self.name
+    self.sectSpawnProps = {}
+    local sect = "dsh.respawn." .. self.name
 
-  self.respawn_section = se_respawn.r_spawns(
-    sys_ini, sect, "respawn_section", self.sectSpawnProps
-  )
-  ASSERT(
-    self.respawn_section,
-    "RESPAWN: [%s] field 'respawn_section' doesn't exist.", sect
-  )
+    self.respawn_section = se_respawn.r_spawns(sys_ini, sect, "respawn_section", self.sectSpawnProps)
+    ASSERT(self.respawn_section, "RESPAWN: [%s] field 'respawn_section' doesn't exist.", sect)
 
-  self.min_count   = get_u32( sect, "min_count", 0 )
-  self.max_count   = get_float( sect, "max_count", -1 )
-  ASSERT(
-    not ( self.min_count > self.max_count and self.max_count ~= -1 ),
-    "RESPAWN: [%s] min_count (%s) > max_count (%s)",
-    sect, self.min_count, self.max_count
-  )
-  self.max_spawn = get_u32( sect, "max_spawn", 1 )
+    self.min_count = get_u32(sect, "min_count", 0)
+    self.max_count = get_float(sect, "max_count", -1)
+    ASSERT(not (self.min_count > self.max_count and self.max_count ~= -1),
+        "RESPAWN: [%s] min_count (%s) > max_count (%s)", sect, self.min_count, self.max_count)
+    self.max_spawn = get_u32(sect, "max_spawn", 1)
 
-  self.str_conditions = get_string( sect, "conditions", 100 )
-  self.conditions     = xr_logic.parse_condlist(
-    self, sect, "conditions", self.str_conditions
-  )
+    self.str_conditions = get_string(sect, "conditions", 100)
+    self.conditions = xr_logic.parse_condlist(self, sect, "conditions", self.str_conditions)
 
-  self.creature_binded_logic = get_string( sect, "creature_binded_logic" )
-  if self.creature_binded_logic then
-    local ini = dsh.cached_ini_file( self.creature_binded_logic )
-    if ini:section_exist( "smart_terrains" ) then
-      self.smart_terrains = get_section_keys_and_values(
-        "smart_terrains", ini
-      )
+    self.creature_binded_logic = get_string(sect, "creature_binded_logic")
+    if self.creature_binded_logic then
+        local ini = dsh.cached_ini_file(self.creature_binded_logic)
+        if ini:section_exist("smart_terrains") then
+            self.smart_terrains = get_section_keys_and_values("smart_terrains", ini)
+        end
+        self.creature_binded_logic = ini:get_as_string()
+        ASSERT((self.smart_terrains and self.smart_terrains.none), "[%s]: %s: wrong smart_terrains", script_name(),
+            self.name)
     end
-    self.creature_binded_logic = ini:get_as_string()
-    ASSERT(
-      ( self.smart_terrains and self.smart_terrains.none ),
-      "[%s]: %s: wrong smart_terrains", script_name(), self.name
-    )
-  end
 
-  local xyzlg = get_string( sect, "xyzlg" )
-  if xyzlg then
-    xyzlg = parse_nums( xyzlg )
-    ASSERT(
-      table.getn( xyzlg ) == 5, "incorrect line '%s'", tostring( xyzlg )
-    )
-    self.position = vector():set( xyzlg[ 1 ], xyzlg[ 2 ], xyzlg[ 3 ] )
-    self.m_level_vertex_id = xyzlg[ 4 ]
-    self.m_game_vertex_id  = xyzlg[ 5 ]
-  else
-    local pos = parse_nums( get_string( sect, "position" ) )
-    ASSERT(
-      table.getn( pos ) == 3, "incorrect line '%s'", tostring( pos )
-    )
-    self.position = vector():set( pos[ 1 ], pos[ 2 ], pos[ 3 ] )
-    self.m_level_vertex_id = get_u32( sect, "level_vertex_id" )
-    self.m_game_vertex_id  = get_u32( sect, "game_vertex_id"  )
-  end
-
-  self.moveable = get_bool( sect, "dsh_moveable", false )
-  self.move_radius_min = get_float( sect, "dsh_move_radius.min",  10 )
-  self.move_radius_max = get_float( sect, "dsh_move_radius.max", 200 )
-
-  if
-    self.moveable and self.loaded and table.getn( self.loaded.xyzlg ) == 5
-  then
-    self.xyzlg = self.loaded.xyzlg
-    local x, y, z, lvid, gvid = unpack( self.xyzlg )
-    if level_system_name_by_gvid( self.m_game_vertex_id ) ~= level_system_name_by_gvid( gvid ) then
-      log2(
-        "[%s]: %s: found wrong xyzlg: %s, %s, %s, %s, %s (%s)",
-        script_name(), self.name, x, y, z, lvid, gvid,
-        level_system_name_by_gvid( gvid )
-      )
-      self.xyzlg = {
-        self.position, self.m_level_vertex_id, self.m_game_vertex_id
-      }
+    local xyzlg = get_string(sect, "xyzlg")
+    if xyzlg then
+        xyzlg = parse_nums(xyzlg)
+        ASSERT(table.getn(xyzlg) == 5, "incorrect line '%s'", tostring(xyzlg))
+        self.position = vector():set(xyzlg[1], xyzlg[2], xyzlg[3])
+        self.m_level_vertex_id = xyzlg[4]
+        self.m_game_vertex_id = xyzlg[5]
+    else
+        local pos = parse_nums(get_string(sect, "position"))
+        ASSERT(table.getn(pos) == 3, "incorrect line '%s'", tostring(pos))
+        self.position = vector():set(pos[1], pos[2], pos[3])
+        self.m_level_vertex_id = get_u32(sect, "level_vertex_id")
+        self.m_game_vertex_id = get_u32(sect, "game_vertex_id")
     end
-  else
-    self.xyzlg = {
-      self.position, self.m_level_vertex_id, self.m_game_vertex_id
-    }
-  end
 
-  self.home_max_radius  = get_float( sect, "home_max_radius" )
-  self.home_min_radius  = get_float( sect, "home_min_radius" )
-  self.walk_on_location = get_bool( sect, "dsh_walk_on_location", false )
-  self.walk_together    = get_bool( sect, "dsh_walk_together", true )
+    self.moveable = get_bool(sect, "dsh_moveable", false)
+    self.move_radius_min = get_float(sect, "dsh_move_radius.min", 10)
+    self.move_radius_max = get_float(sect, "dsh_move_radius.max", 200)
+
+    if self.moveable and self.loaded and table.getn(self.loaded.xyzlg) == 5 then
+        self.xyzlg = self.loaded.xyzlg
+        local x, y, z, lvid, gvid = unpack(self.xyzlg)
+        if level_system_name_by_gvid(self.m_game_vertex_id) ~= level_system_name_by_gvid(gvid) then
+            log2("[%s]: %s: found wrong xyzlg: %s, %s, %s, %s, %s (%s)", script_name(), self.name, x, y, z, lvid, gvid,
+                level_system_name_by_gvid(gvid))
+            self.xyzlg = {self.position, self.m_level_vertex_id, self.m_game_vertex_id}
+        end
+    else
+        self.xyzlg = {self.position, self.m_level_vertex_id, self.m_game_vertex_id}
+    end
+
+    self.home_max_radius = get_float(sect, "home_max_radius")
+    self.home_min_radius = get_float(sect, "home_min_radius")
+    self.walk_on_location = get_bool(sect, "dsh_walk_on_location", false)
+    self.walk_together = get_bool(sect, "dsh_walk_together", true)
 end
-
 
 function dsh_respawner:read_spawned_obj()
-  return self.loaded and self.loaded.spawned_obj or {}
+    return self.loaded and self.loaded.spawned_obj or {}
 end
-
 
 function dsh_respawner:load_spawned_obj()
-  local objs = self:read_spawned_obj()
-  self.spawned_obj = {}
-  for _, k in ipairs( objs ) do
-    local sobj = alife():object( k )
-    if sobj then
-      all_spawned_obj[ k ] = self.name
-      table.insert( self.spawned_obj, k )
-    end
-  end
-end
-
-
-function dsh_respawner:remove_spawned( id )
-  ASSERT(
-    table.getn( self.spawned_obj ) > 0,
-    "Trying to remove %s from empty %s", id, self.name
-  )
-  local filtered = {}
-  for _, k in ipairs( self.spawned_obj ) do
-    if k ~= id then
-      table.insert( filtered, k )
-    end
-  end
-  all_spawned_obj[ id ] = nil
-  if
-    self.moveable
-    and table.getn( self.spawned_obj ) >= self.min_count
-    and (
-      table.getn( filtered ) == 0
-      or table.getn( filtered ) < self.min_count
-    )
-  then
-    self:walk_respawner()
-  end
-  self.spawned_obj = filtered
-end
-
-
-function dsh_respawner:walk_respawner()
-  ASSERT(
-    game_graph():valid_vertex_id( self.m_game_vertex_id ),
-    "[%s]: invalid gvid: %s", self.name, self.m_game_vertex_id
-  )
-  local lid = game_graph():vertex( self.m_game_vertex_id ):level_id()
-  if alife():level_name( lid ) ~= level.name() then
-    log2(
-      "[%s.walk_respawner]: %s: not current level: %s",
-      script_name(), self.name, level.name()
-    )
-    return
-  end
-  local pos, lvid, gvid = dsh.find_random_lvid_in_radius(
-    self.m_level_vertex_id,
-    math.random( self.move_radius_min, self.move_radius_max )
-  )
-  if pos then
-    ASSERT(
-      level_system_name_by_gvid( self.m_game_vertex_id ) == level_system_name_by_gvid( gvid ),
-      "[%s]: %s: wrong gvid %s: level.name() = %s, from_lvid = %s",
-      script_name(), self.name, tostring( gvid ), level.name(),
-      tostring( self.m_level_vertex_id )
-    )
-    self.xyzlg = { pos, lvid, gvid }
-  else
-    self.xyzlg = {
-      self.position, self.m_level_vertex_id, self.m_game_vertex_id
-    }
-  end
-end
-
-
-function dsh_respawner:refresh_spawned_obj()
-  local res = self:do_refresh_spawned_obj()
-  self:schedule_next_spawn()
-  return res
-end
-
-
-function dsh_respawner:do_refresh_spawned_obj()
-  local our_sections = {}
-  for _, v in ipairs( self.respawn_section ) do
-    our_sections[ v.section ] = true
-  end
-  -- œÓ·Â„‡ÂÏÒˇ ÔÓ ÒÔËÒÍÛ ÛÊÂ Á‡ÒÔ‡‚ÌÂÌÌ˚ı Ó·˙ÂÍÚÓ‚ Ë Û‰‡ÎˇÂÏ ËÁ
-  -- ÌËı ÏÂÚ‚˚Â ÎË·Ó ÛÌË˜ÚÓÊÂÌÌ˚Â.
-  if table.getn( self.spawned_obj ) > 0 then
-    local filtered = {}
-    for _, v in ipairs( self.spawned_obj ) do
-      local sobj = alife():object( v )
-      local keep = true
-      if sobj and our_sections[ sobj:section_name() ] then
-        if IsStalker( sobj ) or IsMonster( sobj ) then
-          if sobj:alive() then
-            if self.smart_terrains and self.smart_terrains.none then
-              if sobj:smart_terrain_id() ~= 65535 then
-                local strn = alife():object( sobj:smart_terrain_id() )
-                log2(
-                  "[%s]: %s: %s has smart_terrain_id = %s (%s)",
-                  script_name(), self.name, sobj:name(),
-                  ( strn and strn:name() or "unknown" ),
-                  sobj:smart_terrain_id()
-                )
-                keep = false
-              end
-            end
-          else
-            keep = false
-          end
+    local objs = self:read_spawned_obj()
+    self.spawned_obj = {}
+    for _, k in ipairs(objs) do
+        local sobj = alife():object(k)
+        if sobj then
+            all_spawned_obj[k] = self.name
+            table.insert(self.spawned_obj, k)
         end
-      else
-        keep = false
-      end
-      if keep then
-        table.insert( filtered, v )
-      else
-        all_spawned_obj[ v ] = nil
-      end
+    end
+end
+
+function dsh_respawner:remove_spawned(id)
+    ASSERT(table.getn(self.spawned_obj) > 0, "Trying to remove %s from empty %s", id, self.name)
+    local filtered = {}
+    for _, k in ipairs(self.spawned_obj) do
+        if k ~= id then
+            table.insert(filtered, k)
+        end
+    end
+    all_spawned_obj[id] = nil
+    if self.moveable and table.getn(self.spawned_obj) >= self.min_count and
+        (table.getn(filtered) == 0 or table.getn(filtered) < self.min_count) then
+        self:walk_respawner()
     end
     self.spawned_obj = filtered
-  end
-
-  if
-    xr_logic.pick_section_from_condlist(
-      db.actor_proxy, self, self.conditions
-    ) == "0"
-  then
-    return
-  end
-
-  -- ˝ÍÒÚÂÌÌ˚È ÒÔ‡ÛÌ ÏËÌËÏ‡Î¸ÌÓ„Ó ÍÓÎË˜ÂÒÚ‚‡ Ó·˙ÂÍÚÓ‚
-  if table.getn( self.spawned_obj ) < self.min_count then
-    while table.getn( self.spawned_obj ) < self.min_count do
-      if self:create( 100 ) == false then return end
-    end
-    return
-  end
-
-  -- ‰ÂÎ‡ÂÏ ÌÂÒÍÓÎ¸ÍÓ ÔÓÔ˚ÚÓÍ Á‡ÒÔ‡ÛÌËÚ¸ Ó·˙ÂÍÚ.
-  for i = 1, self.max_spawn do
-    if
-      self.max_count ~= -1
-      and table.getn( self.spawned_obj ) >= self.max_count
-    then
-      return
-    end
-    if
-      self:create(
-        xr_logic.pick_section_from_condlist(
-          db.actor_proxy, self, self.conditions
-        )
-      ) == false
-    then
-      return
-    end
-  end
 end
 
+function dsh_respawner:walk_respawner()
+    ASSERT(game_graph():valid_vertex_id(self.m_game_vertex_id), "[%s]: invalid gvid: %s", self.name,
+        self.m_game_vertex_id)
+    local lid = game_graph():vertex(self.m_game_vertex_id):level_id()
+    if alife():level_name(lid) ~= level.name() then
+        log2("[%s.walk_respawner]: %s: not current level: %s", script_name(), self.name, level.name())
+        return
+    end
+    local pos, lvid, gvid = dsh.find_random_lvid_in_radius(self.m_level_vertex_id,
+        math.random(self.move_radius_min, self.move_radius_max))
+    if pos then
+        ASSERT(level_system_name_by_gvid(self.m_game_vertex_id) == level_system_name_by_gvid(gvid),
+            "[%s]: %s: wrong gvid %s: level.name() = %s, from_lvid = %s", script_name(), self.name, tostring(gvid),
+            level.name(), tostring(self.m_level_vertex_id))
+        self.xyzlg = {pos, lvid, gvid}
+    else
+        self.xyzlg = {self.position, self.m_level_vertex_id, self.m_game_vertex_id}
+    end
+end
+
+function dsh_respawner:refresh_spawned_obj()
+    local res = self:do_refresh_spawned_obj()
+    self:schedule_next_spawn()
+    return res
+end
+
+function dsh_respawner:do_refresh_spawned_obj()
+    local our_sections = {}
+    for _, v in ipairs(self.respawn_section) do
+        our_sections[v.section] = true
+    end
+    -- –ü—Ä–æ–±–µ–≥–∞–µ–º—Å—è –ø–æ —Å–ø–∏—Å–∫—É —É–∂–µ –∑–∞—Å–ø–∞–≤–Ω–µ–Ω–Ω—ã—Ö –æ–±—ä–µ–∫—Ç–æ–≤ –∏ —É–¥–∞–ª—è–µ–º –∏–∑
+    -- –Ω–∏—Ö –º–µ—Ä—Ç–≤—ã–µ –ª–∏–±–æ —É–Ω–∏—á—Ç–æ–∂–µ–Ω–Ω—ã–µ.
+    if table.getn(self.spawned_obj) > 0 then
+        local filtered = {}
+        for _, v in ipairs(self.spawned_obj) do
+            local sobj = alife():object(v)
+            local keep = true
+            if sobj and our_sections[sobj:section_name()] then
+                if IsStalker(sobj) or IsMonster(sobj) then
+                    if sobj:alive() then
+                        if self.smart_terrains and self.smart_terrains.none then
+                            if sobj:smart_terrain_id() ~= 65535 then
+                                local strn = alife():object(sobj:smart_terrain_id())
+                                log2("[%s]: %s: %s has smart_terrain_id = %s (%s)", script_name(), self.name,
+                                    sobj:name(), (strn and strn:name() or "unknown"), sobj:smart_terrain_id())
+                                keep = false
+                            end
+                        end
+                    else
+                        keep = false
+                    end
+                end
+            else
+                keep = false
+            end
+            if keep then
+                table.insert(filtered, v)
+            else
+                all_spawned_obj[v] = nil
+            end
+        end
+        self.spawned_obj = filtered
+    end
+
+    if xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions) == "0" then
+        return
+    end
+
+    -- —ç–∫—Å—Ç—Ä–µ–Ω–Ω—ã–π —Å–ø–∞—É–Ω –º–∏–Ω–∏–º–∞–ª—å–Ω–æ–≥–æ –∫–æ–ª–∏—á–µ—Å—Ç–≤–∞ –æ–±—ä–µ–∫—Ç–æ–≤
+    if table.getn(self.spawned_obj) < self.min_count then
+        while table.getn(self.spawned_obj) < self.min_count do
+            if self:create(100) == false then
+                return
+            end
+        end
+        return
+    end
+
+    -- –¥–µ–ª–∞–µ–º –Ω–µ—Å–∫–æ–ª—å–∫–æ –ø–æ–ø—ã—Ç–æ–∫ –∑–∞—Å–ø–∞—É–Ω–∏—Ç—å –æ–±—ä–µ–∫—Ç.
+    for i = 1, self.max_spawn do
+        if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
+            return
+        end
+        if self:create(xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions)) == false then
+            return
+        end
+    end
+end
 
 local created_custom_data = false
-function se_on_before_register( e )
-  local sobj = e.sobj
-  sobj.squad = SQUAD
-  if created_custom_data then
-    sobj.custom_data = created_custom_data
-    created_custom_data = false
-  end
+function se_on_before_register(e)
+    local sobj = e.sobj
+    sobj.squad = SQUAD
+    if created_custom_data then
+        sobj.custom_data = created_custom_data
+        created_custom_data = false
+    end
 end
 
-
-function dsh_respawner:create( prob )
-  if     tostring( prob ) == "true" then
-    prob = 80
-  elseif tostring( prob ) == "false" then
-    prob =  0
-  end
-  prob = tonumber( prob )
-  ASSERT(
-    prob ~= nil,
-    "RESPAWN: [%s] spawn probability doesn't set", self.name
-  )
-
-  if math.random( 100 ) <= prob then
-    local spawn_section
-    local sum = 0
-    -- œÓËÁ‚Ó‰ËÏ ‡Ì‰ÓÏÌÛ˛ ‚Á‚Â¯ÂÌÌÛ˛ ‚˚·ÓÍÛ Ò Û˜ÂÚÓÏ ÛÊÂ
-    -- Á‡ÒÔ‡‚ÎÂÌÌÓ„Ó ÍÓÎË˜ÂÒÚ‚‡ ˜ÂÎÓ‚ÂÍ.
-    for k, v in pairs( self.respawn_section ) do
-      sum = sum + v.prob
+function dsh_respawner:create(prob)
+    if tostring(prob) == "true" then
+        prob = 80
+    elseif tostring(prob) == "false" then
+        prob = 0
     end
-    sum = math.random( 0, sum )
-    for _, v in ipairs( self.respawn_section ) do
-      sum = sum - v.prob
-      if sum <= 0 then
-        spawn_section = v.section
-        break
-      end
-    end
-    if not spawn_section then return false end
+    prob = tonumber(prob)
+    ASSERT(prob ~= nil, "RESPAWN: [%s] spawn probability doesn't set", self.name)
 
-    local check_cd = false
-    if spawn_section ~= "m_crow" and self.creature_binded_logic then
-      check_cd = true
-      created_custom_data = self.creature_binded_logic
-    end
-    local sobj = alife():create( spawn_section, unpack( self.xyzlg ) )
-    ASSERT(
-      created_custom_data == false,
-      "[%s]: %s: found created_custom_data exists after %s",
-      script_name(), self.name, sobj:name()
-    )
-    sobj = alife():object( sobj.id )
-    if check_cd then
-      ASSERT(
-        sobj.custom_data == self.creature_binded_logic,
-        "[%s]: %s: %s: found custom_data inconsistency: %s",
-        script_name(), self.name, sobj:name(), sobj.custom_data
-      )
-    end
+    if math.random(100) <= prob then
+        local spawn_section
+        local sum = 0
+        -- –ü—Ä–æ–∏–∑–≤–æ–¥–∏–º —Ä–∞–Ω–¥–æ–º–Ω—É—é –≤–∑–≤–µ—à–µ–Ω–Ω—É—é –≤—ã–±–æ—Ä–∫—É —Å —É—á–µ—Ç–æ–º —É–∂–µ
+        -- –∑–∞—Å–ø–∞–≤–ª–µ–Ω–Ω–æ–≥–æ –∫–æ–ª–∏—á–µ—Å—Ç–≤–∞ —á–µ–ª–æ–≤–µ–∫.
+        for k, v in pairs(self.respawn_section) do
+            sum = sum + v.prob
+        end
+        sum = math.random(0, sum)
+        for _, v in ipairs(self.respawn_section) do
+            sum = sum - v.prob
+            if sum <= 0 then
+                spawn_section = v.section
+                break
+            end
+        end
+        if not spawn_section then
+            return false
+        end
 
-    if IsStalker( sobj ) or IsMonster( sobj ) then
-      sobj:set_check_distance()
-    end
+        local check_cd = false
+        if spawn_section ~= "m_crow" and self.creature_binded_logic then
+            check_cd = true
+            created_custom_data = self.creature_binded_logic
+        end
+        local sobj = alife():create(spawn_section, unpack(self.xyzlg))
+        ASSERT(created_custom_data == false, "[%s]: %s: found created_custom_data exists after %s", script_name(),
+            self.name, sobj:name())
+        sobj = alife():object(sobj.id)
+        if check_cd then
+            ASSERT(sobj.custom_data == self.creature_binded_logic, "[%s]: %s: %s: found custom_data inconsistency: %s",
+                script_name(), self.name, sobj:name(), sobj.custom_data)
+        end
 
-    table.insert( self.spawned_obj, sobj.id )
-    all_spawned_obj[ sobj.id ] = self.name
-    return true
-  end
+        if IsStalker(sobj) or IsMonster(sobj) then
+            sobj:set_check_distance()
+        end
+
+        table.insert(self.spawned_obj, sobj.id)
+        all_spawned_obj[sobj.id] = self.name
+        return true
+    end
 end
-
 
 function dsh_respawner:schedule_next_spawn()
-  local delay_hours = math.random( 20, 48 )
-  local tname = "dsh_respawn." .. self.name
-  return ogse_st_mgr.delayed_fun_start( tname )
-    :set_gdelayDHMS(
-      0, delay_hours, math.random( 0, 59 ), math.random( 0, 59 )
-    )
-    :init( "dsh_respawn.on_timer", self.name )
-    :start()
+    local delay_hours = math.random(20, 48)
+    local tname = "dsh_respawn." .. self.name
+    return ogse_st_mgr.delayed_fun_start(tname):set_gdelayDHMS(0, delay_hours, math.random(0, 59), math.random(0, 59))
+        :init("dsh_respawn.on_timer", self.name):start()
 end
 
-
-function on_timer( name )
-  local respawn = active[ name ]
-  if respawn then
-    respawn:refresh_spawned_obj()
-  else
-    log2( "[%s]: on_timer for inactive respawner: %s", script_name(), name )
-  end
-end
-
-
-function cleanup_spawned_obj( name, loaded )
-  if not loaded then return end
-  local cleaned_cnt = 0
-  for _, id in ipairs( loaded.spawned_obj ) do
-    local sobj = alife():object( id )
-    if sobj then
-      if IsMonster( sobj ) or IsStalker( sobj ) then
-        dsh.release_mob( sobj )
-      else
-        dsh_alife.release( sobj )
-      end
-      cleaned_cnt = cleaned_cnt + 1
+function on_timer(name)
+    local respawn = active[name]
+    if respawn then
+        respawn:refresh_spawned_obj()
+    else
+        log2("[%s]: on_timer for inactive respawner: %s", script_name(), name)
     end
-    all_spawned_obj[ id ] = nil
-  end
-  log2( "[%s]: cleaned %s: %s released", script_name(), name, cleaned_cnt )
 end
 
-
--- ”‰‡ÎËÚ¸ id ÏÓ·‡ Í‡Í ÏÓÊÌÓ ÒÍÓÂÂ, ˜ÚÓ ·˚ ÌÂ ÛÒÔÂÎ ÒÓÁ‰‡ÒÚ¸Òˇ Í‡ÍÓÈ-ÌË·Û‰¸
--- Ó·˙ÂÍÚ Ò ˝ÚËÏ ÊÂ id. ¿ ÚÓ ÔÓÒÎÂ Ú‡ÍÓ„Ó ÏÓÊÌÓ Ì‡·Î˛‰‡Ú¸, ˜ÚÓ ‚ ÂÒÔ‡ÛÌÂÂ
--- Ò Í˚Ò‡ÏË, ‚ ÔÓ‰ÁÂÏÍÂ ¿„ÓÔÓÏ‡, Á‡Â„ÂÒÚËÓ‚‡Ì‡ √ÓÁ‡.  ‡Í ÔËÏÂ.
--- œÓÚÓÏÛ, ˜ÚÓ ÂÈ ·˚Î ÔËÒ‚ÓÂÌ id Û·ËÂÌÌÓÈ Í˚Ò˚.
-function on_release_npc( id )
-  local name = all_spawned_obj[ id ]
-  if name then
-    local respawn = active[ name ]
-    respawn:remove_spawned( id )
-  end
+function cleanup_spawned_obj(name, loaded)
+    if not loaded then
+        return
+    end
+    local cleaned_cnt = 0
+    for _, id in ipairs(loaded.spawned_obj) do
+        local sobj = alife():object(id)
+        if sobj then
+            if IsMonster(sobj) or IsStalker(sobj) then
+                dsh.release_mob(sobj)
+            else
+                dsh_alife.release(sobj)
+            end
+            cleaned_cnt = cleaned_cnt + 1
+        end
+        all_spawned_obj[id] = nil
+    end
+    log2("[%s]: cleaned %s: %s released", script_name(), name, cleaned_cnt)
 end
 
+-- –£–¥–∞–ª–∏—Ç—å id –º–æ–±–∞ –∫–∞–∫ –º–æ–∂–Ω–æ —Å–∫–æ—Ä–µ–µ, —á—Ç–æ –±—ã –Ω–µ —É—Å–ø–µ–ª —Å–æ–∑–¥–∞—Å—Ç—å—Å—è –∫–∞–∫–æ–π-–Ω–∏–±—É–¥—å
+-- –æ–±—ä–µ–∫—Ç —Å —ç—Ç–∏–º –∂–µ id. –ê —Ç–æ –ø–æ—Å–ª–µ —Ç–∞–∫–æ–≥–æ –º–æ–∂–Ω–æ –Ω–∞–±–ª—é–¥–∞—Ç—å, —á—Ç–æ –≤ —Ä–µ—Å–ø–∞—É–Ω–µ—Ä–µ
+-- —Å –∫—Ä—ã—Å–∞–º–∏, –≤ –ø–æ–¥–∑–µ–º–∫–µ –ê–≥—Ä–æ–ø—Ä–æ–º–∞, –∑–∞—Ä–µ–≥–µ—Å—Ç—Ä–∏—Ä–æ–≤–∞–Ω–∞ –ì—Ä–æ–∑–∞. –ö–∞–∫ –ø—Ä–∏–º–µ—Ä.
+-- –ü–æ—Ç–æ–º—É, —á—Ç–æ –µ–π –±—ã–ª –ø—Ä–∏—Å–≤–æ–µ–Ω id —É–±–∏–µ–Ω–Ω–æ–π –∫—Ä—ã—Å—ã.
+function on_release_npc(id)
+    local name = all_spawned_obj[id]
+    if name then
+        local respawn = active[name]
+        respawn:remove_spawned(id)
+    end
+end
 
 function on_save()
-  local data, spawned_cnt = {}, 0
-  for name, resp in pairs( active ) do
-    local pos, lv, gv = unpack( resp.xyzlg )
-    local t = {
-      name, { pos.x, pos.y, pos.z }, lv, gv, resp.spawned_obj,
-    }
-    table.insert( data, t )
-    spawned_cnt = spawned_cnt + table.getn( resp.spawned_obj )
-  end
-  ogse.save_var(
-    "dsh_respawn.active", data, "array_template",
-    {
-      "string",
-      "vector", "u32", "u32",
-      { "array_template", { "u16" } },
-    }
-  )
-  log2(
-    "[%s]: %s respawners saved: %s spawned",
-    script_name(), table.getn( data ), spawned_cnt
-  )
+    local data, spawned_cnt = {}, 0
+    for name, resp in pairs(active) do
+        local pos, lv, gv = unpack(resp.xyzlg)
+        local t = {name, {pos.x, pos.y, pos.z}, lv, gv, resp.spawned_obj}
+        table.insert(data, t)
+        spawned_cnt = spawned_cnt + table.getn(resp.spawned_obj)
+    end
+    ogse.save_var("dsh_respawn.active", data, "array_template",
+        {"string", "vector", "u32", "u32", {"array_template", {"u16"}}})
+    log2("[%s]: %s respawners saved: %s spawned", script_name(), table.getn(data), spawned_cnt)
 end
 
-
-function iterate_respawners( f )
-  for name, respawn in pairs( active ) do
-    f( respawn )
-  end
+function iterate_respawners(f)
+    for name, respawn in pairs(active) do
+        f(respawn)
+    end
 end
 
-
-function get_respawner( name )
-  return active[ name ]
+function get_respawner(name)
+    return active[name]
 end
 
-
-function get_respawner_by_npc_id( id )
-  local name = all_spawned_obj[ id ]
-  if name then
-    return active[ name ]
-  end
+function get_respawner_by_npc_id(id)
+    local name = all_spawned_obj[id]
+    if name then
+        return active[name]
+    end
 end
-
 
 local walk_timers = {}
 
-function on_monster_first_update( obj )
-  if not obj:alive() then return end
-  local resp = get_respawner_by_npc_id( obj:id() )
-  if not resp then return end
-  if resp.walk_on_location then
-    local squad = "dsh.respawn." .. resp.name
-    dsh_walking_stalkers.walk_on_location( obj, squad, resp.walk_together )
-    if not walk_timers[ resp.name ] then
-      schedule_next_walk( resp, squad )
+function on_monster_first_update(obj)
+    if not obj:alive() then
+        return
     end
-  elseif resp.home_max_radius then
-    dsh_mob_home.create_home(
-      obj, resp.m_level_vertex_id, resp.home_min_radius, resp.home_max_radius,
-      true, false
-    )
-  end
+    local resp = get_respawner_by_npc_id(obj:id())
+    if not resp then
+        return
+    end
+    if resp.walk_on_location then
+        local squad = "dsh.respawn." .. resp.name
+        dsh_walking_stalkers.walk_on_location(obj, squad, resp.walk_together)
+        if not walk_timers[resp.name] then
+            schedule_next_walk(resp, squad)
+        end
+    elseif resp.home_max_radius then
+        dsh_mob_home.create_home(obj, resp.m_level_vertex_id, resp.home_min_radius, resp.home_max_radius, true, false)
+    end
 end
 
-
-function schedule_next_walk( resp, squad )
-  local t = math.random( 15 ) * 60 * 1000 -- ÓÚ 1 ‰Ó 15 Â‡Î¸Ì˚ı ÏËÌÛÚ
-  walk_timers[ resp.name ] = dsh.timeout(
-    t,
-    function()
-      dsh_walking_stalkers.reset_walking_vertexes( squad )
-      local cnt = 0
-      for _, id in ipairs( resp.spawned_obj ) do
-        local obj = level.object_by_id( id )
-        if obj and obj:alive() then
-          dsh_walking_stalkers.walk_on_location(
-            obj, squad, resp.walk_together
-          )
-          cnt = cnt + 1
+function schedule_next_walk(resp, squad)
+    local t = math.random(15) * 60 * 1000 -- –æ—Ç 1 –¥–æ 15 —Ä–µ–∞–ª—å–Ω—ã—Ö –º–∏–Ω—É—Ç
+    walk_timers[resp.name] = dsh.timeout(t, function()
+        dsh_walking_stalkers.reset_walking_vertexes(squad)
+        local cnt = 0
+        for _, id in ipairs(resp.spawned_obj) do
+            local obj = level.object_by_id(id)
+            if obj and obj:alive() then
+                dsh_walking_stalkers.walk_on_location(obj, squad, resp.walk_together)
+                cnt = cnt + 1
+            end
         end
-      end
-      walk_timers[ resp.name ] = cnt > 0
-        and schedule_next_walk( resp, squad ) or nil
-    end
-  )
+        walk_timers[resp.name] = cnt > 0 and schedule_next_walk(resp, squad) or nil
+    end)
 end

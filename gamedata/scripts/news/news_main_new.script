@@ -1,33 +1,33 @@
 --/ news_main_new.script /--
 --/ OGS Evolution - team /--
 --/ ver. 2.1 /--
---/ Использовались некоторые наработки АМК (тексты,некоторые функции) /--
+--/ РСЃРїРѕР»СЊР·РѕРІР°Р»РёСЃСЊ РЅРµРєРѕС‚РѕСЂС‹Рµ РЅР°СЂР°Р±РѕС‚РєРё РђРњРљ (С‚РµРєСЃС‚С‹,РЅРµРєРѕС‚РѕСЂС‹Рµ С„СѓРЅРєС†РёРё) /--
 
---/ функции выдачи сообщений /--
+--/ С„СѓРЅРєС†РёРё РІС‹РґР°С‡Рё СЃРѕРѕР±С‰РµРЅРёР№ /--
 
 
 local random_news = sys_ini:r_s32("options","random_news") 
-local news_showtime = sys_ini:r_s32("options","news_showtime") -- стандартное время показа сообщения
+local news_showtime = sys_ini:r_s32("options","news_showtime") -- СЃС‚Р°РЅРґР°СЂС‚РЅРѕРµ РІСЂРµРјСЏ РїРѕРєР°Р·Р° СЃРѕРѕР±С‰РµРЅРёСЏ
 
-local post_message_prob = 1 -- простые сообщения, сообщения о выбросе.
-local post_message_prob2 = 1 --продажа айтема
-local post_message_dolg = 1 --Сообщения от Долговцев
-local post_message_freedom = 1 --Сообщения от Свободовцев
-local post_message_random = 1 --Рандомные составные сообщения
-local post_message_horror = 1 --Сообщения во время ужаса
-local post_message_PDA_error = 1 --Сообщения ПДА о глюках сети и сообщения с ошибками
-local post_message_semetskjy_death = 1 --Сообщения о смерти Семецкого
-local post_message_vibros_news = 1 --Сообщения о помощи при начале Выброса
-local post_message_fake_vibros_news = 1 --Ложные сообщения о Выбросе
-local post_message_net_dialogs = 1 --Диалоги сталкеров в сети
+local post_message_prob = 1 -- РїСЂРѕСЃС‚С‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ, СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ РІС‹Р±СЂРѕСЃРµ.
+local post_message_prob2 = 1 --РїСЂРѕРґР°Р¶Р° Р°Р№С‚РµРјР°
+local post_message_dolg = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ РѕС‚ Р”РѕР»РіРѕРІС†РµРІ
+local post_message_freedom = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ РѕС‚ РЎРІРѕР±РѕРґРѕРІС†РµРІ
+local post_message_random = 1 --Р Р°РЅРґРѕРјРЅС‹Рµ СЃРѕСЃС‚Р°РІРЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ
+local post_message_horror = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ РІРѕ РІСЂРµРјСЏ СѓР¶Р°СЃР°
+local post_message_PDA_error = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ РџР”Рђ Рѕ РіР»СЋРєР°С… СЃРµС‚Рё Рё СЃРѕРѕР±С‰РµРЅРёСЏ СЃ РѕС€РёР±РєР°РјРё
+local post_message_semetskjy_death = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ Рѕ СЃРјРµСЂС‚Рё РЎРµРјРµС†РєРѕРіРѕ
+local post_message_vibros_news = 1 --РЎРѕРѕР±С‰РµРЅРёСЏ Рѕ РїРѕРјРѕС‰Рё РїСЂРё РЅР°С‡Р°Р»Рµ Р’С‹Р±СЂРѕСЃР°
+local post_message_fake_vibros_news = 1 --Р›РѕР¶РЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ Р’С‹Р±СЂРѕСЃРµ
+local post_message_net_dialogs = 1 --Р”РёР°Р»РѕРіРё СЃС‚Р°Р»РєРµСЂРѕРІ РІ СЃРµС‚Рё
 
-local sem_death_message_prob = 0.07 -- вероятность появления сообщения о смерти Семецкого
-local sem_komm_message_prob = 0.8 -- вероятность комментариев к сообщению о смерти Семецкого
-local vubros_msg_fake_prob = 0.03 -- вероятность появления ложного сообщения о Выбросе
-local net_dialogs_message_prob = 0.1 -- вероятность появления диалогов сталкеров в сети
+local sem_death_message_prob = 0.07 -- РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РїРѕСЏРІР»РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ СЃРјРµСЂС‚Рё РЎРµРјРµС†РєРѕРіРѕ
+local sem_komm_message_prob = 0.8 -- РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ Рє СЃРѕРѕР±С‰РµРЅРёСЋ Рѕ СЃРјРµСЂС‚Рё РЎРµРјРµС†РєРѕРіРѕ
+local vubros_msg_fake_prob = 0.03 -- РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РїРѕСЏРІР»РµРЅРёСЏ Р»РѕР¶РЅРѕРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ Р’С‹Р±СЂРѕСЃРµ
+local net_dialogs_message_prob = 0.1 -- РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РїРѕСЏРІР»РµРЅРёСЏ РґРёР°Р»РѕРіРѕРІ СЃС‚Р°Р»РєРµСЂРѕРІ РІ СЃРµС‚Рё
 
 
--- Выброс! (тексты)
+-- Р’С‹Р±СЂРѕСЃ! (С‚РµРєСЃС‚С‹)
 local blu_when = {
 game.translate_string( "blu_when_0" ), 
 game.translate_string( "blu_when_1" ), 
@@ -88,7 +88,7 @@ game.translate_string( "blu_reaction_8" )
 }
 
 
--- Выброс!
+-- Р’С‹Р±СЂРѕСЃ!
 function vubros_msg()
 if random_news == 1 then
 	if post_message_prob == 1 and not isIndoor(level.name()) then
@@ -134,7 +134,7 @@ end
 end
 
 
--- Выброс кончился (тексты)
+-- Р’С‹Р±СЂРѕСЃ РєРѕРЅС‡РёР»СЃСЏ (С‚РµРєСЃС‚С‹)
 local blu_out_text = {
 game.translate_string( "blu_out_text_0" ),
 game.translate_string( "blu_out_text_1" ),
@@ -154,7 +154,7 @@ game.translate_string( "anser_blu_out_text_5" ),
 game.translate_string( "anser_blu_out_text_6" )
 }
 
--- Выброс кончился
+-- Р’С‹Р±СЂРѕСЃ РєРѕРЅС‡РёР»СЃСЏ
 function vubros_out_msg()
 if random_news == 1 then
 if math.random() < 0.7 then	
@@ -179,7 +179,7 @@ end
 end
 end
 
--- Ложные сообщения о Выбросе
+-- Р›РѕР¶РЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ Р’С‹Р±СЂРѕСЃРµ
 function vubros_msg_fake()
 if post_message_fake_vibros_news == 1 and math.random() < vubros_msg_fake_prob then
 	vubros_msg()
@@ -187,7 +187,7 @@ end
 end
 
 
--- Убеждаемся, что персонажи живы
+-- РЈР±РµР¶РґР°РµРјСЃСЏ, С‡С‚Рѕ РїРµСЂСЃРѕРЅР°Р¶Рё Р¶РёРІС‹
 function npc_alive_check(sid1, sid2)
 local npc1, npc2
 local flag1 = false
@@ -220,7 +220,7 @@ local flag2 = false
 end 
 
 
--- Тексты сообщений
+-- РўРµРєСЃС‚С‹ СЃРѕРѕР±С‰РµРЅРёР№
 local dolg_news={
 	{news = 
 	{text = game.translate_string( "dolg_news_0" ),
@@ -1159,7 +1159,7 @@ game.translate_string( "message_errors_12" )
 }
 
 
--- Смерть Семецкого (тексты)
+-- РЎРјРµСЂС‚СЊ РЎРµРјРµС†РєРѕРіРѕ (С‚РµРєСЃС‚С‹)
 local level_text = {
 game.translate_string( "level_text_0" ),
 game.translate_string( "level_text_1" ),
@@ -1185,9 +1185,9 @@ game.translate_string( "sem_death_komment_5" )
 
 
 
--- Функции выдачи сообщений и мелкие вспомогательные
+-- Р¤СѓРЅРєС†РёРё РІС‹РґР°С‡Рё СЃРѕРѕР±С‰РµРЅРёР№ Рё РјРµР»РєРёРµ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ
 
--- Получаем имя персонажа
+-- РџРѕР»СѓС‡Р°РµРј РёРјСЏ РїРµСЂСЃРѕРЅР°Р¶Р°
 function gen_names_strings()
 	local fname = fnames[math.random(table.getn(fnames))]
 	local sname = snames[math.random(table.getn(snames))]
@@ -1196,7 +1196,7 @@ function gen_names_strings()
 end
 
 
--- Сообщения о торговле
+-- РЎРѕРѕР±С‰РµРЅРёСЏ Рѕ С‚РѕСЂРіРѕРІР»Рµ
 function show_news_trade()
 if post_message_prob2 == 1 then
 	trade_maseges = trade_templates[math.random(table.getn(trade_templates))]
@@ -1211,7 +1211,7 @@ end
 end
 
 
--- Просто
+-- РџСЂРѕСЃС‚Рѕ
 function show_news_another()
 if post_message_prob == 1 then
 	local m_post_message = noname_teamletes[math.random(table.getn(noname_teamletes))]
@@ -1231,7 +1231,7 @@ end
 end                
 
 
--- Долг
+-- Р”РѕР»Рі
 function show_news_dolg()
 if post_message_dolg == 1 then
 	local m_post_dolg = dolg_news[math.random(table.getn(dolg_news))]
@@ -1251,7 +1251,7 @@ end
 end
 
 
--- Свобода
+-- РЎРІРѕР±РѕРґР°
 function show_news_freedom()
 if post_message_freedom == 1 then
 	local m_post_freedom = freedom_news[math.random(table.getn(freedom_news))]
@@ -1271,7 +1271,7 @@ end
 end
 
 
--- полностью рандомные
+-- РїРѕР»РЅРѕСЃС‚СЊСЋ СЂР°РЅРґРѕРјРЅС‹Рµ
 function show_news_random()
 if post_message_random == 1 then
 	news_random = news_when[math.random(table.getn(news_when))]
@@ -1287,7 +1287,7 @@ end
 end
 
 
--- Хоррор
+-- РҐРѕСЂСЂРѕСЂ
 function show_news_horror()
 if post_message_horror == 1 then
 	local horror_text = horror_news[math.random(table.getn(horror_news))]
@@ -1301,32 +1301,32 @@ end
 end
 
 
--- Из амк, переделано, старт
+-- РР· Р°РјРє, РїРµСЂРµРґРµР»Р°РЅРѕ, СЃС‚Р°СЂС‚
 function on_daytime()
 if post_message_prob == 1 then
 
--- ночь, рассвет, закат...
+-- РЅРѕС‡СЊ, СЂР°СЃСЃРІРµС‚, Р·Р°РєР°С‚...
 	if news_main_data.game_minutes()  then
 		local m_h = level:get_time_hours()
 		local m_m = level:get_time_minutes()
 		local m_t = m_h * 60 + m_m
           
 		if (m_t >= 4*60+30 and m_t <= 6*60) then 
-			-- 04:30 - 06:00 Рассвет
+			-- 04:30 - 06:00 Р Р°СЃСЃРІРµС‚
 			local d_text = morning_templates[math.random(table.getn(morning_templates))]
 			local from = gen_names_strings()
 			local news_text = "%c[255,160,160,160]".. from ..":\\n%c[default]" .. d_text
 			db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(498,47,83,47), 0, news_showtime)
 
 		elseif (m_t >= 20*60+30 and m_t <= 22*60) then 
-			-- 20:30 - 22:00 Закат
+			-- 20:30 - 22:00 Р—Р°РєР°С‚
 			local d_text = evening_templates[math.random(table.getn(evening_templates))]
 			local from = gen_names_strings()
 			local news_text = "%c[255,160,160,160]".. from ..":\\n%c[default]" .. d_text
 			db.actor:give_game_news(news_text, "ui\\ui_iconsTotal", Frect():set(498,47,83,47), 0, news_showtime)
 
 		elseif (m_t >= 23*60 and m_t <= 24*60) or (m_t >= 0*60 and m_t <= 4*60) then 
-			--23:00 - 04:00 Ночь            
+			--23:00 - 04:00 РќРѕС‡СЊ            
 			show_news_random()
                     
 		end
@@ -1334,9 +1334,9 @@ if post_message_prob == 1 then
 	end
 end
 end
--- Из амк, переделано, финиш
+-- РР· Р°РјРє, РїРµСЂРµРґРµР»Р°РЅРѕ, С„РёРЅРёС€
 
--- Сеть глючит
+-- РЎРµС‚СЊ РіР»СЋС‡РёС‚
 function show_PDA_error()
 if post_message_PDA_error == 1 then
 	local PDA_err = PDA_errors[math.random(table.getn(PDA_errors))] 
@@ -1347,7 +1347,7 @@ end
 end
 
 
--- Сообщения с ошибками
+-- РЎРѕРѕР±С‰РµРЅРёСЏ СЃ РѕС€РёР±РєР°РјРё
 function show_news_error()
 if post_message_PDA_error == 1 then
 	local msg_err1 = message_errors[math.random(table.getn(message_errors))]
@@ -1360,7 +1360,7 @@ end
 end
 
 
--- Семецкий умер
+-- РЎРµРјРµС†РєРёР№ СѓРјРµСЂ
 function semetskjy_death()
 if (post_message_semetskjy_death == 1) and (math.random() < sem_death_message_prob) then
 	local s_level = level_text[math.random(table.getn(level_text))]
@@ -1378,12 +1378,12 @@ end
 end
 
 
--- Сообщения при начале Выброса
--- Выброс - помогите! (тексты)
+-- РЎРѕРѕР±С‰РµРЅРёСЏ РїСЂРё РЅР°С‡Р°Р»Рµ Р’С‹Р±СЂРѕСЃР°
+-- Р’С‹Р±СЂРѕСЃ - РїРѕРјРѕРіРёС‚Рµ! (С‚РµРєСЃС‚С‹)
 local group_type = {
-1, -- Одиночки
-2, -- Долг
-3 -- Свобода
+1, -- РћРґРёРЅРѕС‡РєРё
+2, -- Р”РѕР»Рі
+3 -- РЎРІРѕР±РѕРґР°
 }
 
 
@@ -1484,7 +1484,7 @@ game.translate_string( "no_query_help_text_4" )
 }
 
 
---Выброс - помогите! (общая)
+--Р’С‹Р±СЂРѕСЃ - РїРѕРјРѕРіРёС‚Рµ! (РѕР±С‰Р°СЏ)
 function show_news_vibros()
 if post_message_vibros_news == 1 then
 local msg_type = ""
@@ -1588,7 +1588,7 @@ end
 end
 
 
---Выброс - помогите! (одиночки)
+--Р’С‹Р±СЂРѕСЃ - РїРѕРјРѕРіРёС‚Рµ! (РѕРґРёРЅРѕС‡РєРё)
 function lone_query_help_vibros()
 	local from1 = gen_names_strings()
 	local from2 = gen_names_strings()
@@ -1608,7 +1608,7 @@ function lone_query_help_vibros()
 end
 
 
---Диалоги
+--Р”РёР°Р»РѕРіРё
 
 local dialog_msg_texts = {
 {news =

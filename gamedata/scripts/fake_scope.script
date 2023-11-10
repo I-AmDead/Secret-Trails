@@ -20,12 +20,15 @@ end
 
 function actor_on_weapon_zoom_in()
     pnv_mode_save = get_con_string("r_pnv_mode", 0)
-    if (get_con_string("fake_scope_enable") == "off" 
-    or get_con_string("fake_scope_enable") == "0")
-    and (db.actor and db.actor:alive()) then return end
+    if (get_con_string("fake_scope_enable") == "off" or get_con_string("fake_scope_enable") == "0") and
+        (db.actor and db.actor:alive()) then
+        return
+    end
 
     local wpn = db.actor:active_item()
-    if not (wpn) then return end
+    if not (wpn) then
+        return
+    end
 
     local wpn_w = wpn:get_weapon()
     if wpn_w and wpn_w:UseScopeTexture() then
@@ -58,23 +61,20 @@ function updateScope(wpn)
             cmd("scope_params_4 " .. scope_radius .. ", 1.25" .. ", 10")
             local scope_section = get_string(wpn:section(), "scope_name")
             if nv_enable then
-                zooming_t = dsh.wait_condition(
-                    function()
-                        local wpn = db.actor:active_item()
-                        if wpn and wpn.get_weapon then
-                            return not (wpn:get_weapon().zoom_rotation_factor < 1)
-                        else
-                            return true -- что б если пушка куда то пропала - не ждать вечно
-                        end
-                    end,
-                    function()
-                        zooming_t = nil
-                        if pnv_mode_save == "1" then
-                            cmd("r_pnv_mode", 0)
-                        end
-                        apply_pnv(scope_section)
+                zooming_t = dsh.wait_condition(function()
+                    local wpn = db.actor:active_item()
+                    if wpn and wpn.get_weapon then
+                        return not (wpn:get_weapon().zoom_rotation_factor < 1)
+                    else
+                        return true -- что б если пушка куда то пропала - не ждать вечно
                     end
-                )
+                end, function()
+                    zooming_t = nil
+                    if pnv_mode_save == "1" then
+                        cmd("r_pnv_mode", 0)
+                    end
+                    apply_pnv(scope_section)
+                end)
             end
         end
     end
@@ -89,13 +89,13 @@ function apply_pnv(nv_sect)
         cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
         cmd("r_pnv_mode", tostring(mode))
         cmd("r_pnv_radius", scope_radius)
-	cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
-	cmd("r_pnv_generation_and_vignete_mode", get_float(nv_sect, "r_pnv_generation_and_vignete_mode", 2.1))
-	cmd("r_pnv_brightness_and_alfa_vignete", get_float(nv_sect, "r_pnv_brightness_and_alfa_vignete"))
-	cmd("r_pnv_brightness_and_blur_alfa", get_float(nv_sect, "r_pnv_brightness_and_blur_alfa"))
-	cmd("r_pnv_size_vignet_and_glitch", get_float(nv_sect, "r_pnv_size_vignet_and_glitch"))
+        cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
+        cmd("r_pnv_generation_and_vignete_mode", get_float(nv_sect, "r_pnv_generation_and_vignete_mode", 2.1))
+        cmd("r_pnv_brightness_and_alfa_vignete", get_float(nv_sect, "r_pnv_brightness_and_alfa_vignete"))
+        cmd("r_pnv_brightness_and_blur_alfa", get_float(nv_sect, "r_pnv_brightness_and_blur_alfa"))
+        cmd("r_pnv_size_vignet_and_glitch", get_float(nv_sect, "r_pnv_size_vignet_and_glitch"))
     else
-        local nv_slot = db.actor:item_in_slot( 11 )
+        local nv_slot = db.actor:item_in_slot(11)
         local mode = pnv_mode_save
         if nv_slot then
             local nv_sect = nv_slot:section()
@@ -104,11 +104,11 @@ function apply_pnv(nv_sect)
                 cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
                 cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
                 cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
-		cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
-		cmd("r_pnv_generation_and_vignete_mode", get_float(nv_sect, "r_pnv_generation_and_vignete_mode", 10.2 ))
+                cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
+                cmd("r_pnv_generation_and_vignete_mode", get_float(nv_sect, "r_pnv_generation_and_vignete_mode", 10.2))
                 cmd("r_pnv_brightness_and_alfa_vignete", get_float(nv_sect, "r_pnv_brightness_and_alfa_vignete", 10.1))
-		cmd("r_pnv_brightness_and_blur_alfa", get_float(nv_sect, "r_pnv_brightness_and_blur_alfa"))
-		cmd("r_pnv_size_vignet_and_glitch", get_float(nv_sect, "r_pnv_size_vignet_and_glitch"))
+                cmd("r_pnv_brightness_and_blur_alfa", get_float(nv_sect, "r_pnv_brightness_and_blur_alfa"))
+                cmd("r_pnv_size_vignet_and_glitch", get_float(nv_sect, "r_pnv_size_vignet_and_glitch"))
                 cmd("r_pnv_radius", get_float(nv_sect, "r_pnv_radius", 0.5))
             end
         end

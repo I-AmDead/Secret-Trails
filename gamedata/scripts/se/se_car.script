@@ -1,36 +1,35 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
-
-class "se_car" (cse_alife_car)
+class "se_car"(cse_alife_car)
 --------------------
-function se_car:__init (section) super (section)
-	self.ini = nil
-	self.spawner_present = false
+function se_car:__init(section)
+    super(section)
+    self.ini = nil
+    self.spawner_present = false
 end
 --------------------
-function se_car:can_switch_offline ()
-	return cse_alife_car.can_switch_offline(self)
+function se_car:can_switch_offline()
+    return cse_alife_car.can_switch_offline(self)
 end
 --------------------
-function se_car:can_switch_online ()
-	if self.ini == nil then
-		self.ini = self:spawn_ini() 
-		self.spawner_present = self.ini:section_exist("spawner")
-	end
+function se_car:can_switch_online()
+    if self.ini == nil then
+        self.ini = self:spawn_ini()
+        self.spawner_present = self.ini:section_exist("spawner")
+    end
 
-	if self.ini == nil or self.spawner_present == false then 
-		return cse_alife_car.can_switch_online(self)
-	end    
-	return xr_spawner.check_spawn (self)
-end    
+    if self.ini == nil or self.spawner_present == false then
+        return cse_alife_car.can_switch_online(self)
+    end
+    return xr_spawner.check_spawn(self)
+end
 --------------------
 
-
-
---'Helicopter
-class "se_heli" (cse_alife_helicopter)
+-- 'Helicopter
+class "se_heli"(cse_alife_helicopter)
 --------------------
-function se_heli:__init (section) super (section)
+function se_heli:__init(section)
+    super(section)
 end
 function se_heli:keep_saved_data_anyway()
-	return true
+    return true
 end

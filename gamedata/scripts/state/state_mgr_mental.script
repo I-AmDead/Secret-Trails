@@ -1,96 +1,100 @@
 local state_lib_states = state_lib.states
 
---' ���������� ��������� ����
---' �� ��� ��������� � ����������� ���������?
-class "eva_state_mgr_mental" (property_evaluator)
-function eva_state_mgr_mental:__init(name, st) super (nil, name)
-	self.st = st
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+-- ' пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ?
+class "eva_state_mgr_mental"(property_evaluator)
+function eva_state_mgr_mental:__init(name, st)
+    super(nil, name)
+    self.st = st
 end
 function eva_state_mgr_mental:evaluate()
-	local mental = state_lib_states[self.st.target_state].mental
-	return mental == nil
-		or mental == self.object:target_mental_state()
+    local mental = state_lib_states[self.st.target_state].mental
+    return mental == nil or mental == self.object:target_mental_state()
 end
 
-
---' ����� �� ��� ���� � ��������� FREE
-class "eva_state_mgr_mental_free" (property_evaluator)
-function eva_state_mgr_mental_free:__init(name, st) super (nil, name)
-	self.st = st
+-- ' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ FREE
+class "eva_state_mgr_mental_free"(property_evaluator)
+function eva_state_mgr_mental_free:__init(name, st)
+    super(nil, name)
+    self.st = st
 end
 function eva_state_mgr_mental_free:evaluate()
-	return state_lib_states[self.st.target_state].mental == anim.free
+    return state_lib_states[self.st.target_state].mental == anim.free
 end
 
---' ����� �� ��� ���� � ��������� DANGER
-class "eva_state_mgr_mental_danger" (property_evaluator)
-function eva_state_mgr_mental_danger:__init(name, st) super (nil, name)
-	self.st = st
+-- ' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ DANGER
+class "eva_state_mgr_mental_danger"(property_evaluator)
+function eva_state_mgr_mental_danger:__init(name, st)
+    super(nil, name)
+    self.st = st
 end
 function eva_state_mgr_mental_danger:evaluate()
-	return state_lib_states[self.st.target_state].mental == anim.danger
+    return state_lib_states[self.st.target_state].mental == anim.danger
 end
 
---' ����� �� ��� ���� � ��������� PANIC
-class "eva_state_mgr_mental_panic" (property_evaluator)
-function eva_state_mgr_mental_panic:__init(name, st) super (nil, name)
-	self.st = st
+-- ' пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ PANIC
+class "eva_state_mgr_mental_panic"(property_evaluator)
+function eva_state_mgr_mental_panic:__init(name, st)
+    super(nil, name)
+    self.st = st
 end
 function eva_state_mgr_mental_panic:evaluate()
-	return state_lib_states[self.st.target_state].mental == anim.panic
+    return state_lib_states[self.st.target_state].mental == anim.panic
 end
 
-
-
---' ��������� �� �� ������ �� FREE	(�� ������������)
-class "eva_state_mgr_mental_free_now" (property_evaluator)
-function eva_state_mgr_mental_free_now:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ FREE	(пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+class "eva_state_mgr_mental_free_now"(property_evaluator)
+function eva_state_mgr_mental_free_now:__init(name)
+    super(nil, name)
 end
 function eva_state_mgr_mental_free_now:evaluate()
-	return self.object:target_mental_state() == anim.free
+    return self.object:target_mental_state() == anim.free
 end
 
---' ��������� �� �� ������ � ��������� DANGER
-class "eva_state_mgr_mental_danger_now" (property_evaluator)
-function eva_state_mgr_mental_danger_now:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ DANGER
+class "eva_state_mgr_mental_danger_now"(property_evaluator)
+function eva_state_mgr_mental_danger_now:__init(name)
+    super(nil, name)
 end
 function eva_state_mgr_mental_danger_now:evaluate()
-	return self.object:target_mental_state() == anim.danger
+    return self.object:target_mental_state() == anim.danger
 end
 
---' ��������� �� �� ������ � PANIC	(�� ������������)
-class "eva_state_mgr_mental_panic_now" (property_evaluator)
-function eva_state_mgr_mental_panic_now:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ PANIC	(пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+class "eva_state_mgr_mental_panic_now"(property_evaluator)
+function eva_state_mgr_mental_panic_now:__init(name)
+    super(nil, name)
 end
 function eva_state_mgr_mental_panic_now:evaluate()
-	return self.object:target_mental_state() == anim.panic
+    return self.object:target_mental_state() == anim.panic
 end
 
-
-
---' �������� ��������� ���������
-class "act_state_mgr_mental_free" (action_base)
-function act_state_mgr_mental_free:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+class "act_state_mgr_mental_free"(action_base)
+function act_state_mgr_mental_free:__init(name)
+    super(nil, name)
 end
 function act_state_mgr_mental_free:execute()
-	action_base.execute(self)
-	self.object:set_mental_state(anim.free)
+    action_base.execute(self)
+    self.object:set_mental_state(anim.free)
 end
 
---' �������� ������������ ���������
-class "act_state_mgr_mental_danger" (action_base)
-function act_state_mgr_mental_danger:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+class "act_state_mgr_mental_danger"(action_base)
+function act_state_mgr_mental_danger:__init(name)
+    super(nil, name)
 end
 function act_state_mgr_mental_danger:execute()
-	action_base.execute(self)
-	self.object:set_mental_state(anim.danger)
+    action_base.execute(self)
+    self.object:set_mental_state(anim.danger)
 end
 
---' �������� ���������� ���������
-class "act_state_mgr_mental_panic" (action_base)
-function act_state_mgr_mental_panic:__init(name) super (nil, name)
+-- ' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+class "act_state_mgr_mental_panic"(action_base)
+function act_state_mgr_mental_panic:__init(name)
+    super(nil, name)
 end
 function act_state_mgr_mental_panic:execute()
-	action_base.execute(self)
-	self.object:set_mental_state(anim.panic)
+    action_base.execute(self)
+    self.object:set_mental_state(anim.panic)
 end

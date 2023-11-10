@@ -9,13 +9,13 @@ local watch_mode = "actor_hud"
 local minimap_static, back_static, frame_static, compass_static
 
 function on_spawn()
-    local wnd      = get_main_window()
+    local wnd = get_main_window()
 
-    --log1("init_hand_minimap")
+    -- log1("init_hand_minimap")
 
     minimap_static = wnd:GetStatic("minimap")
-    back_static    = wnd:GetStatic("minimap:background")
-    frame_static   = wnd:GetStatic("minimap:level_frame")
+    back_static = wnd:GetStatic("minimap:background")
+    frame_static = wnd:GetStatic("minimap:level_frame")
     compass_static = wnd:GetStatic("minimap:compass")
 
     frame_static:Show(false)
@@ -26,345 +26,357 @@ end
 
 function on_key_down(key, bind)
     if bind == key_bindings.kBIOMAP_SWITCH then
-	if watch_mode == "actor_hud" then
-        	watch_mode = "weapon_hud"
-	else
-        	watch_mode = "map_hud"
-	end
+        if watch_mode == "actor_hud" then
+            watch_mode = "weapon_hud"
+        else
+            watch_mode = "map_hud"
+        end
         ogse.save_var("watch_mode", watch_mode)
-	log3("watch mode %s", watch_mode)
+        log3("watch mode %s", watch_mode)
     end
 end
 
 function get_instance()
-	if (not GUI) then
-		GUI = UIWatch()
-	end
-	
-	return GUI
+    if (not GUI) then
+        GUI = UIWatch()
+    end
+
+    return GUI
 end
 
 function c2t(ct)
-	if not ct then return nil end
-	local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
-	Y, M, D, h, m, s, ms = ct:get(Y, M, D, h, m, s, ms)
-	return { Y=Y, M=M, D=D, h=h, m=m, s=s, ms=ms }
+    if not ct then
+        return nil
+    end
+    local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
+    Y, M, D, h, m, s, ms = ct:get(Y, M, D, h, m, s, ms)
+    return {
+        Y = Y,
+        M = M,
+        D = D,
+        h = h,
+        m = m,
+        s = s,
+        ms = ms
+    }
 end
-
-arc_rad = arc_radiation.get_radiation_dose()
 
 -- Радиация
 function radiation_level()
-	if arc_rad > 100 and arc_rad < 150 then
-        	return "green"
- 	end
-	if arc_rad > 150 and arc_rad < 250 then
-        	return "yellow"
-	end
-	if arc_rad > 250 and arc_rad < 300 then
-        	return "orange"
-	end
-	if arc_rad > 300 then
-        	return "red"
-	end
-	return "nil"
+    if arc_radiation.get_radiation_dose() > 100 and arc_radiation.get_radiation_dose() < 150 then
+        return "green"
+    end
+    if arc_radiation.get_radiation_dose() > 150 and arc_radiation.get_radiation_dose() < 250 then
+        return "yellow"
+    end
+    if arc_radiation.get_radiation_dose() > 250 and arc_radiation.get_radiation_dose() < 300 then
+        return "orange"
+    end
+    if arc_radiation.get_radiation_dose() > 300 then
+        return "red"
+    end
+    return "nil"
 end
 
 -- Кровотечения
 function bleeding_level()
-	if db.actor:get_bleeding() > 0.01 and db.actor:get_bleeding() < 0.25 then
-        	return "green"
-	end
-	if db.actor:get_bleeding() > 0.25 and db.actor:get_bleeding() < 0.5 then
-        	return "yellow"
-	end
-	if db.actor:get_bleeding() > 0.5 and db.actor:get_bleeding() < 0.75 then
-        	return "orange"
-	end
-	if db.actor:get_bleeding() > 0.75 then
-        	return "red"
-	end
-	return "nil"
+    if db.actor:get_bleeding() > 0.01 and db.actor:get_bleeding() < 0.25 then
+        return "green"
+    end
+    if db.actor:get_bleeding() > 0.25 and db.actor:get_bleeding() < 0.5 then
+        return "yellow"
+    end
+    if db.actor:get_bleeding() > 0.5 and db.actor:get_bleeding() < 0.75 then
+        return "orange"
+    end
+    if db.actor:get_bleeding() > 0.75 then
+        return "red"
+    end
+    return "nil"
 end
 
 -- Пси
 function psy_level()
-	if db.actor.psy_health < 0.9 and db.actor.psy_health >= 0.7 then
-        	return "green"
-	end
-	if db.actor.psy_health < 0.7 and db.actor.psy_health >= 0.5 then
-        	return "yellow"
-	end
-	if db.actor.psy_health < 0.5 and db.actor.psy_health >= 0.3 then
-        	return "orange"
-	end
-	if db.actor.psy_health < 0.3 then
-        	return "red"
-	end
-	return "nil"
+    if db.actor.psy_health < 0.9 and db.actor.psy_health >= 0.7 then
+        return "green"
+    end
+    if db.actor.psy_health < 0.7 and db.actor.psy_health >= 0.5 then
+        return "yellow"
+    end
+    if db.actor.psy_health < 0.5 and db.actor.psy_health >= 0.3 then
+        return "orange"
+    end
+    if db.actor.psy_health < 0.3 then
+        return "red"
+    end
+    return "nil"
 end
 
 -- Голод
 function hunger_level()
-	if db.actor.satiety < 0.9 and db.actor.satiety >= 0.7 then
-        	return "green"
-	end
-	if db.actor.satiety < 0.7 and db.actor.satiety >= 0.5 then
-        	return "yellow"
-	end
-	if db.actor.satiety < 0.5 and db.actor.satiety >= 0.3 then
-        	return "orange"
-	end
-	if db.actor.satiety < 0.3 then
-        	return "red"
-	end
-	return "nil"
+    if db.actor.satiety < 0.9 and db.actor.satiety >= 0.7 then
+        return "green"
+    end
+    if db.actor.satiety < 0.7 and db.actor.satiety >= 0.5 then
+        return "yellow"
+    end
+    if db.actor.satiety < 0.5 and db.actor.satiety >= 0.3 then
+        return "orange"
+    end
+    if db.actor.satiety < 0.3 then
+        return "red"
+    end
+    return "nil"
 end
 
 -- Перевес
 function overweight_level()
-	local inv_weight = db.actor:get_inventory_weight()
-	local max_weight = db.actor:get_max_weight()
-	local max_walk_weight = db.actor:get_max_walk_weight()
-	local yellow_over = max_weight + (max_walk_weight - max_weight) * 0.6
-	local orange_over = max_weight + (max_walk_weight - max_weight) * 0.8
+    local inv_weight = db.actor:get_inventory_weight()
+    local max_weight = db.actor:get_max_weight()
+    local max_walk_weight = db.actor:get_max_walk_weight()
+    local yellow_over = max_weight + (max_walk_weight - max_weight) * 0.6
+    local orange_over = max_weight + (max_walk_weight - max_weight) * 0.8
 
-	if (inv_weight >= max_walk_weight) then
-		return "red"
-	elseif (inv_weight >= orange_over and inv_weight <= max_walk_weight) then
-		return "orange"
-	elseif (inv_weight >= yellow_over and inv_weight <= orange_over) then
-		return "yellow"
-	elseif (inv_weight >= max_weight and inv_weight <= yellow_over) then
-		return "green"
-	end
+    if (inv_weight >= max_walk_weight) then
+        return "red"
+    elseif (inv_weight >= orange_over and inv_weight <= max_walk_weight) then
+        return "orange"
+    elseif (inv_weight >= yellow_over and inv_weight <= orange_over) then
+        return "yellow"
+    elseif (inv_weight >= max_weight and inv_weight <= yellow_over) then
+        return "green"
+    end
 
-	return "nil"
+    return "nil"
 end
 
-class "UIWatch" (CUIScriptWnd)
+class "UIWatch"(CUIScriptWnd)
 
-function UIWatch:__init() super()
-	self:Show					(true)
-	self:Enable					(true)
-	self:SetAutoDelete				(true)
+function UIWatch:__init()
+    super()
+    self:Show(true)
+    self:Enable(true)
+    self:SetAutoDelete(true)
 
-	local xml					= CScriptXmlInit()
-	self.xml = xml
+    local xml = CScriptXmlInit()
+    self.xml = xml
 
-	xml:ParseFile					("ui_watch.xml")
-	xml:InitWindow					("display", 0, self)
+    xml:ParseFile("ui_watch.xml")
+    xml:InitWindow("display", 0, self)
 
-	self.clock					= {}
-	self.clock.h 					= {}
-	self.clock.m 					= {}
-	self.clock_colon				= xml:InitStatic("display:colon", self)
+    self.clock = {}
+    self.clock.h = {}
+    self.clock.m = {}
+    self.clock_colon = xml:InitStatic("display:colon", self)
 
-	self.line 					= {}
-	for i = 1, 4 do
-		self.line[i]				= xml:InitStatic("display:line_" .. i, self)
-	end
+    self.line = {}
+    for i = 1, 4 do
+        self.line[i] = xml:InitStatic("display:line_" .. i, self)
+    end
 
-	self.rad					= {}
-	self.rad.level 					= {}
+    self.rad = {}
+    self.rad.level = {}
 
-	for i = 1, 2 do
-		self.clock.h[i]				= xml:InitStatic("display:clock_h_" .. i, self)
-		self.clock.m[i]				= xml:InitStatic("display:clock_m_" .. i, self)
-	end
+    for i = 1, 2 do
+        self.clock.h[i] = xml:InitStatic("display:clock_h_" .. i, self)
+        self.clock.m[i] = xml:InitStatic("display:clock_m_" .. i, self)
+    end
 
-	for i = 1, 4 do
-		self.rad.level[i]			= xml:InitStatic("display:rad_level_" .. i, self)
-	end
+    for i = 1, 4 do
+        self.rad.level[i] = xml:InitStatic("display:rad_level_" .. i, self)
+    end
 
-	self.health_static 				= xml:InitStatic("display:static_health", self)
-	self.health_progress 				= xml:InitStatic("display:health_progress", self)
+    self.health_static = xml:InitStatic("display:static_health", self)
+    self.health_progress = xml:InitStatic("display:health_progress", self)
 
-	self.indik_blood 				= xml:InitStatic("display:indik_blood", self)
-	self.indik_hunger 				= xml:InitStatic("display:indik_hunger", self)
-	self.indik_radiation 				= xml:InitStatic("display:indik_radiation", self)
-	self.indik_psy 					= xml:InitStatic("display:indik_psy", self)
-	self.indik_overweight 				= xml:InitStatic("display:indik_overweight", self)
+    self.indik_blood = xml:InitStatic("display:indik_blood", self)
+    self.indik_hunger = xml:InitStatic("display:indik_hunger", self)
+    self.indik_radiation = xml:InitStatic("display:indik_radiation", self)
+    self.indik_psy = xml:InitStatic("display:indik_psy", self)
+    self.indik_overweight = xml:InitStatic("display:indik_overweight", self)
 
-
-	self.indicator_booster_psy 			= xml:InitStatic("display:indicator_booster_psy", self)
-	self.indicator_booster_rad 			= xml:InitStatic("display:indicator_booster_rad", self)
-	self.indicator_booster_health 			= xml:InitStatic("display:indicator_booster_health", self)
-	self.indicator_booster_power 			= xml:InitStatic("display:indicator_booster_power", self)
-	self.indicator_booster_rad_cleanup 		= xml:InitStatic("display:indicator_booster_rad_cleanup", self)
-	self.indicator_booster_psy_cleanup 		= xml:InitStatic("display:indicator_booster_psy_cleanup", self)
-	self.indicator_booster_wound 			= xml:InitStatic("display:indicator_booster_wound", self)
-	self.indicator_booster_weight 			= xml:InitStatic("display:indicator_booster_weight", self)
+    self.indicator_booster_psy = xml:InitStatic("display:indicator_booster_psy", self)
+    self.indicator_booster_rad = xml:InitStatic("display:indicator_booster_rad", self)
+    self.indicator_booster_health = xml:InitStatic("display:indicator_booster_health", self)
+    self.indicator_booster_power = xml:InitStatic("display:indicator_booster_power", self)
+    self.indicator_booster_rad_cleanup = xml:InitStatic("display:indicator_booster_rad_cleanup", self)
+    self.indicator_booster_psy_cleanup = xml:InitStatic("display:indicator_booster_psy_cleanup", self)
+    self.indicator_booster_wound = xml:InitStatic("display:indicator_booster_wound", self)
+    self.indicator_booster_weight = xml:InitStatic("display:indicator_booster_weight", self)
 end
 
-function UIWatch:__finalize() 
-	GUI = nil
+function UIWatch:__finalize()
+    GUI = nil
 end
 
 function UIWatch:Update()
-	CUIScriptWnd.Update(self)
-	self:ShowLine(false)
-	self:ShowClock(false)
-	self:ShowRad(false)
-	self:ShowHealth(false)
-	self:ShowBoosterIndicators(false)
-	if watch_mode == "actor_hud" then
-		self:UpdateTopPanel()
-	else
-		--self:UpdateMap()
-	end
+    CUIScriptWnd.Update(self)
+    self:ShowLine(false)
+    self:ShowClock(false)
+    self:ShowRad(false)
+    self:ShowHealth(false)
+    self:ShowBoosterIndicators(false)
+    if watch_mode == "actor_hud" then
+        self:UpdateTopPanel()
+    else
+        -- self:UpdateMap()
+    end
 end
 
 function UIWatch:UpdateTopPanel()
-	self:ShowLine(true)
-	self:UpdateClock()
-	self:UpdateRad()
-	self:UpdateHealth()
-	self:UpdateIndicators()
-	self:UpdateBoosterIndicators()
+    self:ShowLine(true)
+    self:UpdateClock()
+    self:UpdateRad()
+    self:UpdateHealth()
+    self:UpdateIndicators()
+    self:UpdateBoosterIndicators()
 end
 
 function UIWatch:UpdateClock()
-	self:ShowClock(true)
+    self:ShowClock(true)
 
-	local game_time = c2t(game.get_game_time())
-	local time = { 
-		h = string.format("%02d", tostring(game_time.h)),
-		m = string.format("%02d", tostring(game_time.m))
-	}
+    local game_time = c2t(game.get_game_time())
+    local time = {
+        h = string.format("%02d", tostring(game_time.h)),
+        m = string.format("%02d", tostring(game_time.m))
+    }
 
-	for k, v in pairs(time) do
-		local i = 1
-		v:gsub(".", function(c)
-			self.clock[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
-			i = i + 1
-		end)
-	end
+    for k, v in pairs(time) do
+        local i = 1
+        v:gsub(".", function(c)
+            self.clock[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
+            i = i + 1
+        end)
+    end
 end
 
 function UIWatch:UpdateRad()
-	self:ShowRad(true)
+    self:ShowRad(true)
 
-	local rad_level = arc_radiation.get_radiation_dose() or 0000
-	local rad = {level = string.format("%04d", tostring(rad_level))}
+    local rad_level = arc_radiation.get_radiation_dose() or 0000
+    local rad = {
+        level = string.format("%04d", tostring(rad_level))
+    }
 
-	for k, v in pairs(rad) do
-		local i = 1
-		v:gsub(".", function(c)
-			self.rad[k][i]:InitTextureEx("watch_" .. c, "hud\\p3d")
-			i = i + 1
-		end)
-	end
+    for k, v in pairs(rad) do
+        local i = 1
+        v:gsub(".", function(c)
+            self.rad[k][i]:InitTextureEx("watch_" .. c, "hud\\p3d")
+            i = i + 1
+        end)
+    end
 end
 
 function UIWatch:UpdateHealth()
-	self:ShowHealth(true)
+    self:ShowHealth(true)
 
-	local cond = db.actor.health
-	
-	self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * cond, 0.0018)
+    local cond = db.actor.health
+
+    self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * cond, 0.0018)
 end
 
 function UIWatch:ShowClock(vis)
-	for i = 1, 2 do
-		self.clock.h[i]:Show(vis)
-		self.clock.m[i]:Show(vis)
-	end
+    for i = 1, 2 do
+        self.clock.h[i]:Show(vis)
+        self.clock.m[i]:Show(vis)
+    end
 
-	self.clock_colon:Show(vis)
+    self.clock_colon:Show(vis)
 end
 
 function UIWatch:ShowRad(vis)
-	for i = 1, 4 do
-		self.rad.level[i]:Show(vis)
-	end
+    for i = 1, 4 do
+        self.rad.level[i]:Show(vis)
+    end
 end
 
 function UIWatch:ShowHealth(vis)
-	self.health_static:Show(vis)
-	self.health_progress:Show(vis)
+    self.health_static:Show(vis)
+    self.health_progress:Show(vis)
 end
 
 function UIWatch:ShowLine(vis)
-	for i = 1, 4 do
-		self.line[i]:Show(vis)
-	end
+    for i = 1, 4 do
+        self.line[i]:Show(vis)
+    end
 end
 
 function UIWatch:ShowBoosterIndicators(vis)
-	self.indicator_booster_psy:Show(vis)
-	self.indicator_booster_rad:Show(vis)
-	self.indicator_booster_health:Show(vis)
-	self.indicator_booster_power:Show(vis)
-	self.indicator_booster_rad_cleanup:Show(vis)
-	self.indicator_booster_psy_cleanup:Show(vis)
-	self.indicator_booster_wound:Show(vis)
-	self.indicator_booster_weight:Show(vis)
+    self.indicator_booster_psy:Show(vis)
+    self.indicator_booster_rad:Show(vis)
+    self.indicator_booster_health:Show(vis)
+    self.indicator_booster_power:Show(vis)
+    self.indicator_booster_rad_cleanup:Show(vis)
+    self.indicator_booster_psy_cleanup:Show(vis)
+    self.indicator_booster_wound:Show(vis)
+    self.indicator_booster_weight:Show(vis)
 end
 
 function UIWatch:UpdateIndicators()
-	if not db.actor:alive() then return end
+    if not db.actor:alive() then
+        return
+    end
 
-	if bleeding_level() ~= "nil" then
-		self.indik_blood:Show(true)
-		self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_" .. bleeding_level(), "hud\\p3d")
-	else
-		self.indik_blood:Show(false)
-	end
+    if bleeding_level() ~= "nil" then
+        self.indik_blood:Show(true)
+        self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_" .. bleeding_level(), "hud\\p3d")
+    else
+        self.indik_blood:Show(false)
+    end
 
-	if hunger_level() ~= "nil" then
-		self.indik_hunger:Show(true)
-		self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_" .. hunger_level(), "hud\\p3d")
-	else
-		self.indik_hunger:Show(false)
-	end
+    if hunger_level() ~= "nil" then
+        self.indik_hunger:Show(true)
+        self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_" .. hunger_level(), "hud\\p3d")
+    else
+        self.indik_hunger:Show(false)
+    end
 
-	if radiation_level() ~= "nil" then
-		self.indik_radiation:Show(true)
-		self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_" .. radiation_level(), "hud\\p3d")
-	else
-		self.indik_radiation:Show(false)
-	end
+    if radiation_level() ~= "nil" then
+        self.indik_radiation:Show(true)
+        self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_" .. radiation_level(), "hud\\p3d")
+    else
+        self.indik_radiation:Show(false)
+    end
 
-	if psy_level() ~= "nil" then
-		self.indik_psy:Show(true)
-		self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_" .. psy_level(), "hud\\p3d")
-	else
-		self.indik_psy:Show(false)
-	end
+    if psy_level() ~= "nil" then
+        self.indik_psy:Show(true)
+        self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_" .. psy_level(), "hud\\p3d")
+    else
+        self.indik_psy:Show(false)
+    end
 
-	if overweight_level() ~= "nil" then
-		self.indik_overweight:Show(true)
-		self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_" .. overweight_level(), "hud\\p3d")
-	else
-		self.indik_overweight:Show(false)
-	end
+    if overweight_level() ~= "nil" then
+        self.indik_overweight:Show(true)
+        self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_" .. overweight_level(), "hud\\p3d")
+    else
+        self.indik_overweight:Show(false)
+    end
 
+    -- self.indik_blood:Show(true)
+    -- self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_green", "hud\\p3d")
 
+    -- self.indik_hunger:Show(true)
+    -- self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_green", "hud\\p3d")
 
+    -- self.indik_radiation:Show(true)
+    -- self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_green", "hud\\p3d")
 
-	--self.indik_blood:Show(true)
-	--self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_green", "hud\\p3d")
+    -- self.indik_psy:Show(true)
+    -- self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_green", "hud\\p3d")
 
-	--self.indik_hunger:Show(true)
-	--self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_green", "hud\\p3d")
-
-	--self.indik_radiation:Show(true)
-	--self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_green", "hud\\p3d")
-
-	--self.indik_psy:Show(true)
-	--self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_green", "hud\\p3d")
-
-	--self.indik_overweight:Show(true)
-	--self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_green", "hud\\p3d")
+    -- self.indik_overweight:Show(true)
+    -- self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_green", "hud\\p3d")
 end
 
 function UIWatch:UpdateBoosterIndicators()
-	if not db.actor:alive() then return end
+    if not db.actor:alive() then
+        return
+    end
 
-	for idx = 1, 8 do
-		if laucer_item_special_effect["booster_type"..idx] then
-			self[laucer_item_special_effect["booster_type"..idx]]:Show(laucer_item_special_effect["booster_state"..idx])
-		end
-	end
+    for idx = 1, 8 do
+        if laucer_item_special_effect["booster_type" .. idx] then
+            self[laucer_item_special_effect["booster_type" .. idx]]:Show(
+                laucer_item_special_effect["booster_state" .. idx])
+        end
+    end
 end

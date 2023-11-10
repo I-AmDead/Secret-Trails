@@ -1,21 +1,21 @@
 -- -*- mode: lua; coding: windows-1251-dos -*-
 --[[ ----------------------------------------------------------------------------------------------
  File       : m_netpk.script [optional]
- Description: Интерфейс чтения/записи net-пакетов (SHoC:6/7(118),CS:8(124),SCoP:12(128))
- Copyright  : 2008-2013 © STALKER-community
- Author     : Artos (по материалам: bardak, Red75, Sokol_jack, KD87 (uACDC), xStream (xs_netpk))
- Last edit  : 13.06.2017 (включены исправления авторов: Charsi, Kirgudu, naxac, dsh)
+ Description: РРЅС‚РµСЂС„РµР№СЃ С‡С‚РµРЅРёСЏ/Р·Р°РїРёСЃРё net-РїР°РєРµС‚РѕРІ (SHoC:6/7(118),CS:8(124),SCoP:12(128))
+ Copyright  : 2008-2013 В© STALKER-community
+ Author     : Artos (РїРѕ РјР°С‚РµСЂРёР°Р»Р°Рј: bardak, Red75, Sokol_jack, KD87 (uACDC), xStream (xs_netpk))
+ Last edit  : 13.06.2017 (РІРєР»СЋС‡РµРЅС‹ РёСЃРїСЂР°РІР»РµРЅРёСЏ Р°РІС‚РѕСЂРѕРІ: Charsi, Kirgudu, naxac, dsh)
 --]] ----------------------------------------------------------------------------------------------
 
 --/ -----------------------------------------------------------------
 --/ VARIABLEs (not to change!)
 --/ -----------------------------------------------------------------
-local disabled_convert_obj = false --/ отключена проверка на тип объекта и конвертирование в серверную сущность
-local disabled_convert_cd  = false --/ отключено конвертирование 'custom_data' из строки в таблицу (и обратно)
-local disabled_net_dummy   = false --/ отключено использование net_dummy в хелперах
-local enabled_debug        = false --/ включен режим отладки ...
-local str_clsid2class = {} --/ массив (строковый) соответствия 'script_clsid' <=> 'server_object_class'
-local clsid2net       = {} --/ массив соответствий 'script_clsid' <=> 'net-class'
+local disabled_convert_obj = false --/ РѕС‚РєР»СЋС‡РµРЅР° РїСЂРѕРІРµСЂРєР° РЅР° С‚РёРї РѕР±СЉРµРєС‚Р° Рё РєРѕРЅРІРµСЂС‚РёСЂРѕРІР°РЅРёРµ РІ СЃРµСЂРІРµСЂРЅСѓСЋ СЃСѓС‰РЅРѕСЃС‚СЊ
+local disabled_convert_cd  = false --/ РѕС‚РєР»СЋС‡РµРЅРѕ РєРѕРЅРІРµСЂС‚РёСЂРѕРІР°РЅРёРµ 'custom_data' РёР· СЃС‚СЂРѕРєРё РІ С‚Р°Р±Р»РёС†Сѓ (Рё РѕР±СЂР°С‚РЅРѕ)
+local disabled_net_dummy   = false --/ РѕС‚РєР»СЋС‡РµРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ net_dummy РІ С…РµР»РїРµСЂР°С…
+local enabled_debug        = false --/ РІРєР»СЋС‡РµРЅ СЂРµР¶РёРј РѕС‚Р»Р°РґРєРё ...
+local str_clsid2class = {} --/ РјР°СЃСЃРёРІ (СЃС‚СЂРѕРєРѕРІС‹Р№) СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ 'script_clsid' <=> 'server_object_class'
+local clsid2net       = {} --/ РјР°СЃСЃРёРІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёР№ 'script_clsid' <=> 'net-class'
 local sim = alife() --/ cache function 'alife'
 --/ ----------------------------------------------
 local bits_mode = { --/ table of admissible flags
@@ -760,7 +760,7 @@ end
 _w_cmb_mgr = function(pk,tbl)
 	pk:w_u8( table_size(tbl.squads) ) --/< squads count
 	for k,v in pairs(tbl.squads) do
-		pk:w_stringZ(k) --/ ID отряда
+		pk:w_stringZ(k) --/ ID РѕС‚СЂСЏРґР°
 		pk:w_stringZ(v.stage)
 		pk:w_bool   (v.attack_shouted)
 		pk:w_bool   (v.prepare_shouted)
@@ -1349,7 +1349,7 @@ function net_base:get_pk2tbl()
 		local pk = self.pk
 		local r_pos,w_pos = pk:r_tell(),pk:w_tell() --/ begin&end of reading
 		pk:r_seek(0) --/ installation of the beginning of reading
-		while not pk:r_eof() do --/ цикл (до конца читаемого пакета)
+		while not pk:r_eof() do --/ С†РёРєР» (РґРѕ РєРѕРЅС†Р° С‡РёС‚Р°РµРјРѕРіРѕ РїР°РєРµС‚Р°)
 			table.insert( t, string.format("%02x", pk:r_u8()) )
 		end
 		--/ restore of the beginning of reading
@@ -1367,7 +1367,7 @@ function net_base:get_pk2tbl()
 		self.obj:STATE_Write(stpk)
 		if stpk:r_elapsed() > 2 then
 			stpk:r_seek(2) --/ installation of the beginning (+2) of reading
-			while not stpk:r_eof() do --/ цикл (до конца читаемого пакета)
+			while not stpk:r_eof() do --/ С†РёРєР» (РґРѕ РєРѕРЅС†Р° С‡РёС‚Р°РµРјРѕРіРѕ РїР°РєРµС‚Р°)
 				table.insert( t, string.format("%02x", stpk:r_u8()) )
 			end
 		end
@@ -1380,7 +1380,7 @@ function net_base:get_pk2tbl()
 		if uppk:r_elapsed() > 2 then
 			uppk:r_seek(2) --/ installation of the beginning (+2) of reading
 			t.upd = {} --/ sub-table for update-propeties
-			while not uppk:r_eof() do --/ цикл (до конца читаемого пакета)
+			while not uppk:r_eof() do --/ С†РёРєР» (РґРѕ РєРѕРЅС†Р° С‡РёС‚Р°РµРјРѕРіРѕ РїР°РєРµС‚Р°)
 				table.insert( t.upd, string.format("%02x", uppk:r_u8()) )
 			end
 		end
@@ -1455,8 +1455,8 @@ end
 --/ -----------------------------------------------------------------
 --/ Helper: switchings 'online->offline->online'
 --/ -----------------------------------------------------------------
-local actived_switchings = false --/ флаг запущенного коллбэка переключений
-local tbl_switchings = {} --/ локальный ID-массив флагов/счетчиков для переключений
+local actived_switchings = false --/ С„Р»Р°Рі Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РєРѕР»Р»Р±СЌРєР° РїРµСЂРµРєР»СЋС‡РµРЅРёР№
+local tbl_switchings = {} --/ Р»РѕРєР°Р»СЊРЅС‹Р№ ID-РјР°СЃСЃРёРІ С„Р»Р°РіРѕРІ/СЃС‡РµС‚С‡РёРєРѕРІ РґР»СЏ РїРµСЂРµРєР»СЋС‡РµРЅРёР№
 
 local execute_switchings = function()
 	local can_switch = next(tbl_switchings) ~= nil --/ flag: exist switchings
@@ -1497,8 +1497,8 @@ local execute_switchings = function()
 end
 function do_switchings(id)
 	if type(db.do_switchings) == 'function' then
-		db.do_switchings(id) --/ добавляем в 'единый переключатель' (for SIMBION)
-	elseif type(id) == 'number' then --/ проверка валидности аргумента
+		db.do_switchings(id) --/ РґРѕР±Р°РІР»СЏРµРј РІ 'РµРґРёРЅС‹Р№ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ' (for SIMBION)
+	elseif type(id) == 'number' then --/ РїСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё Р°СЂРіСѓРјРµРЅС‚Р°
 		--/ added to table 'online->offline->online'
 		tbl_switchings[id] = {cnt = 0, off = not level.object_by_id(id)}
 		--/ start callback for 'online->offline->online'
@@ -1525,7 +1525,7 @@ function net_cse_abstract:__init(obj, mode, packet, net_class)
 	super(obj, bits_mode[0], bits_mode[0], "cse_abstract") --/< only 'state' part from net-packet
 	self.bases = { net_class and net_class(obj, bits_mode[0]) } --/ 'net_class' - object class
 	self.props = {
-		--{ name = 'dummy16',            type = 'u16',    default = 0           }, --/#x# читаем/пишем в hook'е!
+		--{ name = 'dummy16',            type = 'u16',    default = 0           }, --/#x# С‡РёС‚Р°РµРј/РїРёС€РµРј РІ hook'Рµ!
 		{ name = 'section_name',       type = 'sz',     default = ''          },
 		{ name = 'name',               type = 'sz',     default = ''          },
 		{ name = 's_gameid',           type = 'h8',     default = 0           },
@@ -1544,8 +1544,8 @@ function net_cse_abstract:__init(obj, mode, packet, net_class)
 		{ name = 'spawn_id',           type = 'u16',    default = 65535       }, --/ index section from all.spawn
 		{ name = 'extended_size',      type = 'u16',    default = 0           }
 	}
-	self.co_props = { --/ может в ~> 'net_cse_alife_dynamic_object_visual'?
-		--{ name = 'ph_shell_state',     type = 'u8',     default = 0           } --/ доступность физ.оболочки у объекта (CPhysicsShellHolder)
+	self.co_props = { --/ РјРѕР¶РµС‚ РІ ~> 'net_cse_alife_dynamic_object_visual'?
+		--{ name = 'ph_shell_state',     type = 'u8',     default = 0           } --/ РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ С„РёР·.РѕР±РѕР»РѕС‡РєРё Сѓ РѕР±СЉРµРєС‚Р° (CPhysicsShellHolder)
 	}
 	self.pk = packet --/< 'abstract' packet
 	self.dbg = bit_and(mode or 0, 4) ~= 0 --/ boolean-flag for debug
@@ -1560,24 +1560,24 @@ function net_cse_abstract:get(packet)
 	if packet then self.pk = packet end
 	if not (self.obj and self.pk) then
 		log("net_cse_abstract:get:obj=["..type(self.obj).."],packet=["..type(self.pk).."]:<Warning!>")
-		return self._data or {} --/> ошибка вызова/инициализации
+		return self._data or {} --/> РѕС€РёР±РєР° РІС‹Р·РѕРІР°/РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 	end
 	local r_pos, w_pos = self.pk:r_tell(), self.pk:w_tell() --/ begin&end of reading
 	if r_pos < 4 or w_pos < 4 then
-		return self._data or {} --/> пакет 'пуст'
+		return self._data or {} --/> РїР°РєРµС‚ 'РїСѓСЃС‚'
 	end
 	--/ read data from packet
 	self._data = self:_read_data()
-	--/ check left (подстраховка)
-	local end_pos = r_pos --/ читать до 'state'-part
-	if r_pos > w_pos then --/ если 'state'-part некорректна:
-		end_pos = w_pos --/ читать все записанные данные
+	--/ check left (РїРѕРґСЃС‚СЂР°С…РѕРІРєР°)
+	local end_pos = r_pos --/ С‡РёС‚Р°С‚СЊ РґРѕ 'state'-part
+	if r_pos > w_pos then --/ РµСЃР»Рё 'state'-part РЅРµРєРѕСЂСЂРµРєС‚РЅР°:
+		end_pos = w_pos --/ С‡РёС‚Р°С‚СЊ РІСЃРµ Р·Р°РїРёСЃР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ
 	end
 	if self.pk:r_tell() < end_pos then --/ exist left? -> read
 		self._data.__tail = tail_data():peekPartFrom(self.pk,end_pos)
 		self._data.__tail_size = self._data.__tail.pk:r_elapsed()
 	end
-	if r_pos < w_pos then --/ если имелась 'state'-part
+	if r_pos < w_pos then --/ РµСЃР»Рё РёРјРµР»Р°СЃСЊ 'state'-part
 		self.pk:r_seek(r_pos) --/ restore of the beginning of reading
 	end
 	return self._data --/> data-table
@@ -1599,19 +1599,19 @@ end
 function net_cse_abstract:_read_data()
 	local t,pk = {}, self.pk
 	pk:r_seek(0) --/ installation of the beginning of reading
-	t.dummy16 = pk:r_u16() --/ hook: считываем 'стартовые' байты пакета (2)
+	t.dummy16 = pk:r_u16() --/ hook: СЃС‡РёС‚С‹РІР°РµРј 'СЃС‚Р°СЂС‚РѕРІС‹Рµ' Р±Р°Р№С‚С‹ РїР°РєРµС‚Р° (2)
 	for _,prop in ipairs(self.props) do
 		if can_ver(prop.ver) then
 			if prop.name ~= 'cobj_data' or not self.bases[1] then
 				t[prop.name] = this["_r_"..prop.type](pk, prop.ver)
-			else --/ читаем 'клиентские' данные
+			else --/ С‡РёС‚Р°РµРј 'РєР»РёРµРЅС‚СЃРєРёРµ' РґР°РЅРЅС‹Рµ
 				local size = pk:r_u16() --/ count bytes
 				if size == 0 then
 					t[prop.name] = prop.default --/< zero-table
 				else
 					if self.dbg then log("net_cse_abstract:_read_data:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
 					local tbl,first_pos = {}, pk:r_tell() --/ create table 'cobj_data'
-					tbl.ph_shell_state = pk:r_u8() --/ читаем общий параметр (CPhysicsShellHolder)
+					tbl.ph_shell_state = pk:r_u8() --/ С‡РёС‚Р°РµРј РѕР±С‰РёР№ РїР°СЂР°РјРµС‚СЂ (CPhysicsShellHolder)
 					self:_read(tbl,pk) --/ read cobj params
 					--/ read dynamic data
 					local first_dyn = pk:r_tell() - first_pos +1
@@ -1621,7 +1621,7 @@ function net_cse_abstract:_read_data()
 						else --/ for debug (with key-value)
 							tbl.dyn = {}
 							for i=first_dyn,size do
-								table.insert( tbl.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: смещение байта от начала
+								table.insert( tbl.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: СЃРјРµС‰РµРЅРёРµ Р±Р°Р№С‚Р° РѕС‚ РЅР°С‡Р°Р»Р°
 							end
 						end
 					end
@@ -1636,12 +1636,12 @@ end
 --/ write 'abstract'-part
 function net_cse_abstract:_write_data()
 	local pk,data = self.pk, self._data
-	pk:w_begin(data.dummy16) --/ hook: пишем 'стартовые' байты (+2)
+	pk:w_begin(data.dummy16) --/ hook: РїРёС€РµРј 'СЃС‚Р°СЂС‚РѕРІС‹Рµ' Р±Р°Р№С‚С‹ (+2)
 	for _,prop in ipairs(self.props) do
 		if can_ver(prop.ver) then
 			if prop.name ~= 'cobj_data' or not data.cobj_size then
 				this["_w_"..prop.type](pk, data[prop.name] or prop.default or 0)
-			else --/ пишем 'клиентские' данные
+			else --/ РїРёС€РµРј 'РєР»РёРµРЅС‚СЃРєРёРµ' РґР°РЅРЅС‹Рµ
 				local size = data.cobj_size
 				if not size then
 					pk:w_u16(0) --/< write zero count bytes
@@ -1649,7 +1649,7 @@ function net_cse_abstract:_write_data()
 					if self.dbg then log("net_cse_abstract:_write_data:Obj=[%s/%s]:cobj_size=[%s]:cid=[%s/%s]", self.obj:name(), self.obj.id, size, self.obj:clsid(), self.bases[1] and self.bases[1].name, "") end --/#~#
 					pk:w_u16(size) --/< write count bytes
 					local tbl = data[prop.name] --/ table 'cobj_data'
-					pk:w_u8(tbl.ph_shell_state or 0) --/ пишем общий параметр (CPhysicsShellHolder)
+					pk:w_u8(tbl.ph_shell_state or 0) --/ РїРёС€РµРј РѕР±С‰РёР№ РїР°СЂР°РјРµС‚СЂ (CPhysicsShellHolder)
 					self:_write(tbl,pk) --/ write cobj params
 					--/ write dynamic data
 					if tbl.__dyn_data then
@@ -1702,9 +1702,9 @@ function net_cse_abstract:get_cobj(reader)
 	local size = pk:r_elapsed() --/ count bytes
 	if size == 0 then return {} end --/> zero-table
 	if self.dbg then log("net_cse_abstract:get_cobj:Obj=[%s/%s]:cid=[%s/%s]:cobj_size=[%s]", self.obj:name(), self.obj.id, self.obj:clsid(), self.bases[1] and self.bases[1].name, size, "") end --/#~#
-	--/ читаем 'клиентские' данные ('cobj_data')
+	--/ С‡РёС‚Р°РµРј 'РєР»РёРµРЅС‚СЃРєРёРµ' РґР°РЅРЅС‹Рµ ('cobj_data')
 	local t = {} --/ create table 'cobj_data'
-	t.ph_shell_state = pk:r_u8() --/ читаем общий параметр (CPhysicsShellHolder)
+	t.ph_shell_state = pk:r_u8() --/ С‡РёС‚Р°РµРј РѕР±С‰РёР№ РїР°СЂР°РјРµС‚СЂ (CPhysicsShellHolder)
 	self:_read(t,pk) --/ read cobj params
 	--/ read dynamic data
 	if not pk:r_eof() then  --log("net_cse_abstract:get_cobj:Obj=[%s/%s]:cobj_size=[%s],first_pos=[%s],first_dyn=[%s]", self.obj:name(), self.obj.id, size, r_pos, pk:r_tell(), "") --/#~#
@@ -1714,11 +1714,11 @@ function net_cse_abstract:get_cobj(reader)
 			t.dyn,i = {},0
 			while not pk:r_eof() do
 				i = i +1
-				table.insert( t.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: смещение байта от начала
+				table.insert( t.dyn, {["offset_"..i] = pk:r_u8()} ) --/ key: СЃРјРµС‰РµРЅРёРµ Р±Р°Р№С‚Р° РѕС‚ РЅР°С‡Р°Р»Р°
 			end
 		end
 	end
-	pk:r_seek(r_pos) --/ restore position of reading (а нужно ли?)
+	pk:r_seek(r_pos) --/ restore position of reading (Р° РЅСѓР¶РЅРѕ Р»Рё?)
 	return t --/> data-table
 end
 
@@ -1754,11 +1754,11 @@ function net_cse_alife_object:_write_st_props(data,pk)
 	if self.obj then --/ hook 'object_flags' for painless spawn
 		local script_clsid = self.obj:clsid()
 		if script_clsid == clsid.inventory_box then
-			--/ сброс флагов: 'UseSwitches'[1] + 'SwitchOffline'[4] + 'OfflineNoMove'[64] + 'UsedAI_Locations'[128]
-			data.object_flags = bit_and(data.object_flags,bit_not(197)) --/ сброс флагов: (1+4+64+128)=>(0xffffff3a)
+			--/ СЃР±СЂРѕСЃ С„Р»Р°РіРѕРІ: 'UseSwitches'[1] + 'SwitchOffline'[4] + 'OfflineNoMove'[64] + 'UsedAI_Locations'[128]
+			data.object_flags = bit_and(data.object_flags,bit_not(197)) --/ СЃР±СЂРѕСЃ С„Р»Р°РіРѕРІ: (1+4+64+128)=>(0xffffff3a)
 		elseif script_clsid == clsid.script_heli or script_clsid == clsid.helicopter or script_clsid == clsid.car_s then
-			--/ сброс флагов: 'UseSwitches'[1] + 'SwitchOffline'[4]
-			data.object_flags = bit_and(data.object_flags,bit_not(5)) --/ сброс флагов: (1+4)=>(0xffffff3a)
+			--/ СЃР±СЂРѕСЃ С„Р»Р°РіРѕРІ: 'UseSwitches'[1] + 'SwitchOffline'[4]
+			data.object_flags = bit_and(data.object_flags,bit_not(5)) --/ СЃР±СЂРѕСЃ С„Р»Р°РіРѕРІ: (1+4)=>(0xffffff3a)
 		end
 	end
 	for _,prop in ipairs(self.st_props) do
@@ -2036,7 +2036,7 @@ function net_cse_alife_object_physic:_write_up_props(data,pk)
 	end
 end
 --/ -----------------------------------------------------------------
-class "net_se_safe" (net_base) --/[+] LA (в разработке!)
+class "net_se_safe" (net_base) --/[+] LA (РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ!)
 --/ -----------------------------------------------------------------
 function net_se_smart_cover:__init(obj,mode)
 	super(obj, mode, only_st(mode), "se_safe")
@@ -2170,7 +2170,7 @@ function net_cse_alife_car:__init(obj,mode)
 	self.up_props = {}
 end
 --/ -----------------------------------------------------------------
-class "net_se_car" (net_base) --/[???] LA (в разработке!)
+class "net_se_car" (net_base) --/[???] LA (РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ!)
 --/ -----------------------------------------------------------------
 function net_se_car:__init(obj,mode)
 	super(obj, mode, only_st(mode), "se_car")
@@ -2564,7 +2564,7 @@ function net_se_anom_zone:__init(obj,mode)
 	self.up_props = {}
 end
 --/ -----------------------------------------------------------------
-class "net_se_anomaly_field" (net_base) --/#???# (в разработке!)
+class "net_se_anomaly_field" (net_base) --/#???# (РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ!)
 --/ -----------------------------------------------------------------
 function net_se_anomaly_field:__init(obj,mode)
 	super(obj, mode, only_st(mode), "se_anomaly_field")
@@ -2894,10 +2894,10 @@ function net_cse_alife_inventory_item:__init(obj,mode)
 		{ name = 'enabled',        type = 'b8',    default = false,               ver = 6 } --/#~# changed type 'u8'
 	}
 	self.co_props = {
-		{ name = 'place_flags',    type = 'h8',    default = 0                            }, --/ находится у кого-то (CoP: в слоте/на поясе/...)
+		{ name = 'place_flags',    type = 'h8',    default = 0                            }, --/ РЅР°С…РѕРґРёС‚СЃСЏ Сѓ РєРѕРіРѕ-С‚Рѕ (CoP: РІ СЃР»РѕС‚Рµ/РЅР° РїРѕСЏСЃРµ/...)
 		{ name = 'inv_item_unk1',  type = 'u8',    default = 0,                   ver = 4 }, --/#?# CoP
-		{ name = 'condition',      type = 'f32',   default = 1.0                          }, --/ состояние предмета (износ)
-		{ name = 'ph_shell_enable',type = 'b8',    default = true                         }, --/ имеет физ.оболочку (не имеет владельна)
+		{ name = 'condition',      type = 'f32',   default = 1.0                          }, --/ СЃРѕСЃС‚РѕСЏРЅРёРµ РїСЂРµРґРјРµС‚Р° (РёР·РЅРѕСЃ)
+		{ name = 'ph_shell_enable',type = 'b8',    default = true                         }, --/ РёРјРµРµС‚ С„РёР·.РѕР±РѕР»РѕС‡РєСѓ (РЅРµ РёРјРµРµС‚ РІР»Р°РґРµР»СЊРЅР°)
 	}
 end
 function net_cse_alife_inventory_item:_read_up_props(ret,pk)
@@ -3118,12 +3118,12 @@ function net_cse_alife_item_weapon:__init(obj,mode)
 		{ name = 'weapon_zoom',  type = 'u8',  default = 0 }
 	}
 	self.co_props = {
-		{ name = 'ammo_elapsed', type = 'u8',  default = 0          }, --/#!# остаток патронов/зарядов в магазине/аддоне
+		{ name = 'ammo_elapsed', type = 'u8',  default = 0          }, --/#!# РѕСЃС‚Р°С‚РѕРє РїР°С‚СЂРѕРЅРѕРІ/Р·Р°СЂСЏРґРѕРІ РІ РјР°РіР°Р·РёРЅРµ/Р°РґРґРѕРЅРµ
 		{ name = 'addon_state',  type = 'h8',  default = 0          }, --/#?#'u8'/'b8'
 		{ name = 'ammo_type',    type = 'u8',  default = 0          }, --/
-		{ name = 'zoom_mode',    type = 'u8',  default = 0          }, --/#?#'b8' прицеливание
-		{ name = 'scope_type',   type = 'u8',  default = 0, ver = 4 }, --/ CoP: тип прицела (number-index)
-		{ name = 'addon_flags',  type = 'h8',  default = 0          }, --/ флаги аддонов:: 0:none, 1:scope, 2:gl, 4:sil
+		{ name = 'zoom_mode',    type = 'u8',  default = 0          }, --/#?#'b8' РїСЂРёС†РµР»РёРІР°РЅРёРµ
+		{ name = 'scope_type',   type = 'u8',  default = 0, ver = 4 }, --/ CoP: С‚РёРї РїСЂРёС†РµР»Р° (number-index)
+		{ name = 'addon_flags',  type = 'h8',  default = 0          }, --/ С„Р»Р°РіРё Р°РґРґРѕРЅРѕРІ:: 0:none, 1:scope, 2:gl, 4:sil
 	}
 end
 --/ -----------------------------------------------------------------
@@ -3140,7 +3140,7 @@ function net_cse_alife_item_weapon_magazined:__init(obj,mode)
 	}
 	self.co_props = {
 		{ name = 'queue_size',        type = 'u8', default = 0 }, --/#?#
-		{ name = 'shot_count',        type = 'u8', default = 0 }, --/#?# режим огня:: 0:Auto , 1:одиночные выстрелы
+		{ name = 'shot_count',        type = 'u8', default = 0 }, --/#?# СЂРµР¶РёРј РѕРіРЅСЏ:: 0:Auto , 1:РѕРґРёРЅРѕС‡РЅС‹Рµ РІС‹СЃС‚СЂРµР»С‹
 		{ name = 'current_fire_mode', type = 'u8', default = 0 }, --/#!#
 	}
 end
@@ -3224,13 +3224,13 @@ end
 local function initialize()
 	if not sim then sim = alife() end
 	local sini = system_ini() --/ cache function 'system_ini'
-	--/ читаем конфиг-файл модуля
-	local ltx = ini_file("mods\\"..sModule..".ltx") --/ объект конфиг-файла (из папки мода)
+	--/ С‡РёС‚Р°РµРј РєРѕРЅС„РёРі-С„Р°Р№Р» РјРѕРґСѓР»СЏ
+	local ltx = ini_file("mods\\"..sModule..".ltx") --/ РѕР±СЉРµРєС‚ РєРѕРЅС„РёРі-С„Р°Р№Р»Р° (РёР· РїР°РїРєРё РјРѕРґР°)
 	if not ltx:section_exist("clsid_to_class") then
-		ltx = ini_file(sModule..".ltx") --/ проверяем в корневой папке конфиг-файлов
+		ltx = ini_file(sModule..".ltx") --/ РїСЂРѕРІРµСЂСЏРµРј РІ РєРѕСЂРЅРµРІРѕР№ РїР°РїРєРµ РєРѕРЅС„РёРі-С„Р°Р№Р»РѕРІ
 	end
 	if ltx:section_exist("clsid_to_class") then
-		--/ установка параметров (режимов) работы модуля
+		--/ СѓСЃС‚Р°РЅРѕРІРєР° РїР°СЂР°РјРµС‚СЂРѕРІ (СЂРµР¶РёРјРѕРІ) СЂР°Р±РѕС‚С‹ РјРѕРґСѓР»СЏ
 		disabled_convert_obj = utils.cfg_get_bool(ltx, "options", "disable_convert_client2server", nil, false, disabled_convert_obj)
 		disabled_convert_cd  = utils.cfg_get_bool(ltx, "options", "disable_convert_custom_data",   nil, false, disabled_convert_cd)
 		disabled_net_dummy   = utils.cfg_get_bool(ltx, "options", "disable_net_dummy",             nil, false, disabled_net_dummy)
@@ -3240,7 +3240,7 @@ local function initialize()
 			bits_mode[4]=0 bits_mode[5]=5 bits_mode[6]=6 bits_mode[7]=7 --/ for 'manual' debug
 		end
 		local iBitMode = (db.is_dbg0 and bit_ver) or 15 --/ for debug
-		--/ читаем секцию общих соответствий 'script_clsid <==> cse_server_object_class' (строки!)
+		--/ С‡РёС‚Р°РµРј СЃРµРєС†РёСЋ РѕР±С‰РёС… СЃРѕРѕС‚РІРµС‚СЃС‚РІРёР№ 'script_clsid <==> cse_server_object_class' (СЃС‚СЂРѕРєРё!)
 		for i=0, ltx:line_count("clsid_to_class")-1 do
 			local result,idx,value = ltx:r_line("clsid_to_class",i,"","")
 			local scr_clsid = idx and idx:match('%S+') --/ trim_w
@@ -3274,14 +3274,14 @@ local function initialize()
 		end
 	end
 	if not next(str_clsid2class) then
-		abort(sModule..":initialize:Error_read_config_file") --/ ошибка чтения конфиг-файла
+		abort(sModule..":initialize:Error_read_config_file") --/ РѕС€РёР±РєР° С‡С‚РµРЅРёСЏ РєРѕРЅС„РёРі-С„Р°Р№Р»Р°
 	end
 end
 
 function get_clsid2net()
 	if auto_attach then this.attach() end
 	if not sim then sim = alife() end
-	--/ создаем массив соответствий 'script_clsid <==> net_class'
+	--/ СЃРѕР·РґР°РµРј РјР°СЃСЃРёРІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёР№ 'script_clsid <==> net_class'
 	if next(str_clsid2class) and clsid ~= nil then
 		clsid2net = {}
 		for k,v in pairs(str_clsid2class) do

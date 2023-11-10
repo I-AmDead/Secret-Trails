@@ -16,41 +16,41 @@
 --- Схема работы
 -----------------------------------------------------------------------
 -- 1. Монстры
-	-- Проверяют неписей
-	-- Проверяют актора
-	-- update
-	-- death_callback
-	-- hit_callback
-	-- MutantManager:update
-	-- MutantManager:on_death
-	-- net_spawn
+-- Проверяют неписей
+-- Проверяют актора
+-- update
+-- death_callback
+-- hit_callback
+-- MutantManager:update
+-- MutantManager:on_death
+-- net_spawn
 -- 2. NPC
-	-- Проверяют монстров
-	-- Проверяют актора
-	-- update
-	-- hit_callback
-	-- death_callback
-	-- use_callback
-	-- hear_callback
-	-- net_spawn
-	-- state_mgr_update
-	-- state_mgr_weap_update
-	-- state_mgr_set_state
+-- Проверяют монстров
+-- Проверяют актора
+-- update
+-- hit_callback
+-- death_callback
+-- use_callback
+-- hear_callback
+-- net_spawn
+-- state_mgr_update
+-- state_mgr_weap_update
+-- state_mgr_set_state
 -- 3. Актор
-	-- Проверяет неписей
-	-- Проверяет монстров
-	-- Проверяет гулаги
-	-- net_spawn
-	-- update
-	-- ogse.on_actor_update
-	-- info_callback
-	-- on_item_take
-	-- on_item_drop
-	-- use_inventory_item
-	-- task_callback
-	-- on_key
-	-- on_key_free
-	-- on_key_hold
+-- Проверяет неписей
+-- Проверяет монстров
+-- Проверяет гулаги
+-- net_spawn
+-- update
+-- ogse.on_actor_update
+-- info_callback
+-- on_item_take
+-- on_item_drop
+-- use_inventory_item
+-- task_callback
+-- on_key
+-- on_key_free
+-- on_key_hold
 -----------------------------------------------------------------------	
 --- Флаг отладки для неопознанных вылетов
 --- при выставлении флага каждый вызов направляется в лог
@@ -62,12 +62,10 @@ local debug_prefix = "!!OGSE_DEBUG: "
 local xtime = os.clock()
 anim_debug = false
 
-
-function bench_log1( str )
-  log1( str )
-  xtime = os.clock()
+function bench_log1(str)
+    log1(str)
+    xtime = os.clock()
 end
-
 
 -----------------------------------------------------------------------
 --- Флаг отладки эвалуаторов - при включенном каждый сработавший 
@@ -79,54 +77,54 @@ local debug_eval = true
 --- Таблицы данных
 -----------------------------------------------------------------------
 local active_evaluators = {}
-local active_dangers    = {}
-local active_anims      = {}
+local active_dangers = {}
+local active_anims = {}
 
 -----------------------------------------------------------------------
-local monsters_update 			= {}
-local monsters_death_callback 	= {}
-local monsters_hit_callback		= {}
-local monsters_mut_man_update 	= {}
-local monsters_mut_man_death	= {}
-local monsters_net_spawn		= {}
+local monsters_update = {}
+local monsters_death_callback = {}
+local monsters_hit_callback = {}
+local monsters_mut_man_update = {}
+local monsters_mut_man_death = {}
+local monsters_net_spawn = {}
 -----------------------------------------------------------------------
-local npc_update				= {}
-local npc_death_callback		= {}
-local npc_hit_callback			= {}
-local npc_use_callback			= {}
-local npc_hear_callback			= {}
-local npc_net_spawn				= {}
-local npc_state_mgr_update		= {}
-local npc_state_mgr_weap_update	= {}
-local npc_state_mgr_set_state	= {}
-local npc_save					= {}
+local npc_update = {}
+local npc_death_callback = {}
+local npc_hit_callback = {}
+local npc_use_callback = {}
+local npc_hear_callback = {}
+local npc_net_spawn = {}
+local npc_state_mgr_update = {}
+local npc_state_mgr_weap_update = {}
+local npc_state_mgr_set_state = {}
+local npc_save = {}
 -----------------------------------------------------------------------
-local gulag_init				= {}
+local gulag_init = {}
 -----------------------------------------------------------------------
-local actor_update			= 0
-local actor_update_amk		= 0
-local actor_info_callback	= 0
-local actor_task_callback	= 0
-local actor_on_item_take	= 0
-local actor_on_item_drop	= 0
-local actor_use_item		= 0
-local actor_on_key			= 0
-local actor_on_key_free		= 0
-local actor_on_key_hold		= 0
-local actor_net_spawn		= 0
+local actor_update = 0
+local actor_update_amk = 0
+local actor_info_callback = 0
+local actor_task_callback = 0
+local actor_on_item_take = 0
+local actor_on_item_drop = 0
+local actor_use_item = 0
+local actor_on_key = 0
+local actor_on_key_free = 0
+local actor_on_key_hold = 0
+local actor_net_spawn = 0
 
 function dump_actor_codes()
-	log3("actor_update = %s", actor_update)
-	log3("actor_update_amk = %s", actor_update_amk)
-	log3("actor_info_callback = %s", actor_info_callback)
-	log3("actor_task_callback = %s", actor_task_callback)
-	log3("actor_on_item_take = %s", actor_on_item_take)
-	log3("actor_on_item_drop = %s", actor_on_item_drop)
-	log3("actor_use_item = %s", actor_use_item)
-	log3("actor_on_key = %s", actor_on_key)
-	log3("actor_on_key_free = %s", actor_on_key_free)
-	log3("actor_on_key_hold = %s", actor_on_key_hold)
-	log3("actor_net_spawn = %s", actor_net_spawn)
+    log3("actor_update = %s", actor_update)
+    log3("actor_update_amk = %s", actor_update_amk)
+    log3("actor_info_callback = %s", actor_info_callback)
+    log3("actor_task_callback = %s", actor_task_callback)
+    log3("actor_on_item_take = %s", actor_on_item_take)
+    log3("actor_on_item_drop = %s", actor_on_item_drop)
+    log3("actor_use_item = %s", actor_use_item)
+    log3("actor_on_key = %s", actor_on_key)
+    log3("actor_on_key_free = %s", actor_on_key_free)
+    log3("actor_on_key_hold = %s", actor_on_key_hold)
+    log3("actor_net_spawn = %s", actor_net_spawn)
 end
 -----------------------------------------------------------------------
 --- Счетчики
@@ -157,515 +155,566 @@ end
 --- gul_i	- gulag init
 -----------------------------------------------------------------------
 
-
-function add_active_item( obj, t, id )
-  if not t[ obj:id() ] then
-    t[ obj:id() ] = {
-      items      = {
-        [ id ] = time_global(),
-      },
-      last_id    = id,
-      last_items = false,
-    }
-  end
-  t = t[ obj:id() ]
-  if t.last_id == id then return end
-  t.items[ id ] = time_global()
-  t.last_id     = id
-  t.last_items  = false
-end
-
-
-function get_active_items( obj, t )
-  if not t[ obj:id() ] then return end
-  t = t[ obj:id() ]
-  if t.last_items then return t.last_items end
-  local all = {}
-  local n   = 0
-  for id, _ in pairs( t.items ) do
-    n = n + 1
-    all[ n ] = id
-  end
-  table.sort( all, function( a, b ) return t.items[ a ] > t.items[ b ] end )
-  local active = {}
-  local len    = 0
-  for i = 1, n do
-    local id = all[ i ]
-    if len < 150 then
-      local diff = 0
-      if i > 1 then
-        diff = t.items[ active[ 1 ] ] - t.items[ id ]
-        if diff > 0 then diff = time_global() - t.items[ id ] end
-      end
-      if diff < 10000 then
-        if diff > 0 then id = id .. "[" .. diff .. "]" end
-        active[ i ] = id
-        len = len + string.len( id )
-      else
-        t.items[ id ] = nil
-      end
-    else
-      t.items[ id ] = nil
+function add_active_item(obj, t, id)
+    if not t[obj:id()] then
+        t[obj:id()] = {
+            items = {
+                [id] = time_global()
+            },
+            last_id = id,
+            last_items = false
+        }
     end
-  end
-  t.last_items = table.concat( active, ", " )
-  return t.last_items
+    t = t[obj:id()]
+    if t.last_id == id then
+        return
+    end
+    t.items[id] = time_global()
+    t.last_id = id
+    t.last_items = false
 end
 
-
-function add_active_eval( obj, calling_script, eval_id )
-  if not ( debug_eval and obj and _sdata.GlobalEnable ) then return end
-  local eval_id_str = calling_script .. "[" .. eval_id .. "]"
-  add_active_item( obj, active_evaluators, eval_id_str )
+function get_active_items(obj, t)
+    if not t[obj:id()] then
+        return
+    end
+    t = t[obj:id()]
+    if t.last_items then
+        return t.last_items
+    end
+    local all = {}
+    local n = 0
+    for id, _ in pairs(t.items) do
+        n = n + 1
+        all[n] = id
+    end
+    table.sort(all, function(a, b)
+        return t.items[a] > t.items[b]
+    end)
+    local active = {}
+    local len = 0
+    for i = 1, n do
+        local id = all[i]
+        if len < 150 then
+            local diff = 0
+            if i > 1 then
+                diff = t.items[active[1]] - t.items[id]
+                if diff > 0 then
+                    diff = time_global() - t.items[id]
+                end
+            end
+            if diff < 10000 then
+                if diff > 0 then
+                    id = id .. "[" .. diff .. "]"
+                end
+                active[i] = id
+                len = len + string.len(id)
+            else
+                t.items[id] = nil
+            end
+        else
+            t.items[id] = nil
+        end
+    end
+    t.last_items = table.concat(active, ", ")
+    return t.last_items
 end
 
-function get_active_evals( obj )
-  return get_active_items( obj, active_evaluators )
+function add_active_eval(obj, calling_script, eval_id)
+    if not (debug_eval and obj and _sdata.GlobalEnable) then
+        return
+    end
+    local eval_id_str = calling_script .. "[" .. eval_id .. "]"
+    add_active_item(obj, active_evaluators, eval_id_str)
 end
 
-
-function add_active_danger( obj, calling_script, eval_id )
-  if not ( debug_eval and obj and _sdata.GlobalEnable ) then return end
-  local eval_id_str = calling_script .. "[" .. eval_id .. "]"
-  add_active_item( obj, active_dangers, eval_id_str )
+function get_active_evals(obj)
+    return get_active_items(obj, active_evaluators)
 end
 
-function get_active_dangers( obj )
-  return get_active_items( obj, active_dangers )
+function add_active_danger(obj, calling_script, eval_id)
+    if not (debug_eval and obj and _sdata.GlobalEnable) then
+        return
+    end
+    local eval_id_str = calling_script .. "[" .. eval_id .. "]"
+    add_active_item(obj, active_dangers, eval_id_str)
 end
 
-
-function add_active_anim( obj, eval_id )
-  if not ( debug_eval and obj and _sdata.GlobalEnable ) then return end
-  add_active_item( obj, active_anims, eval_id )
+function get_active_dangers(obj)
+    return get_active_items(obj, active_dangers)
 end
 
-function get_active_anims( obj )
-  return get_active_items( obj, active_anims )
+function add_active_anim(obj, eval_id)
+    if not (debug_eval and obj and _sdata.GlobalEnable) then
+        return
+    end
+    add_active_item(obj, active_anims, eval_id)
 end
 
+function get_active_anims(obj)
+    return get_active_items(obj, active_anims)
+end
 
 -----------------------------------------------------------------------
 function process_monster(monster, call_type, code)
-	if not monster then abort("ogse_debug: process_monster failed - no monster") end
-	if not code then abort("ogse_debug: process_monster failed - no code specified") end
-	if verbose_debug then
-		bench_log1(debug_prefix.." ["..tostring(os.clock()-xtime).."] "..monster:name().." call_type: "..call_type.." code: "..code)
-	end
-	local id = monster:id()
-	if call_type == "upd" then
-		monsters_update[id] = code
-	elseif call_type == "dth" then
-		monsters_death_callback[id] = code
-	elseif call_type == "hit" then
-		monsters_hit_callback[id] = code
-	elseif call_type == "m_up" then
-		monsters_mut_man_update[id] = code
-	elseif call_type == "m_dth" then
-		monsters_mut_man_death[id] = code
-	elseif call_type == "m_spw" then
-		monsters_net_spawn[id] = code		
-	else
-		notify_crash()
-		abort("ogse_debug: process_monster - invalid call_type for monsters: "..tostring(call_type))
-	end
+    if not monster then
+        abort("ogse_debug: process_monster failed - no monster")
+    end
+    if not code then
+        abort("ogse_debug: process_monster failed - no code specified")
+    end
+    if verbose_debug then
+        bench_log1(debug_prefix .. " [" .. tostring(os.clock() - xtime) .. "] " .. monster:name() .. " call_type: " ..
+                       call_type .. " code: " .. code)
+    end
+    local id = monster:id()
+    if call_type == "upd" then
+        monsters_update[id] = code
+    elseif call_type == "dth" then
+        monsters_death_callback[id] = code
+    elseif call_type == "hit" then
+        monsters_hit_callback[id] = code
+    elseif call_type == "m_up" then
+        monsters_mut_man_update[id] = code
+    elseif call_type == "m_dth" then
+        monsters_mut_man_death[id] = code
+    elseif call_type == "m_spw" then
+        monsters_net_spawn[id] = code
+    else
+        notify_crash()
+        abort("ogse_debug: process_monster - invalid call_type for monsters: " .. tostring(call_type))
+    end
 end
 
 function process_npc(npc, call_type, code)
-	if not npc then abort("ogse_debug: process_npc failed - no npc") end
-	if not code then abort("ogse_debug: process_npc failed - no code specified") end
-	if verbose_debug then
-		bench_log1(debug_prefix.." ["..tostring(os.clock()-xtime).."] "..npc:name().." call_type: "..call_type.." code: "..code)
-	end	
-	local id = nil
-	if type(npc.id) == "function" then
-		id = npc:id()
-	else
-		id = npc.id
-	end	
-	if call_type == "upd" then
-		npc_update[id] = code
-	elseif call_type == "dth" then
-		npc_death_callback[id] = code
-	elseif call_type == "hit" then
-		npc_hit_callback[id] = code
-	elseif call_type == "use" then
-		npc_use_callback[id] = code
-	elseif call_type == "hr" then
-		npc_hear_callback[id] = code
-	elseif call_type == "s_spw" then
-		npc_net_spawn[id] = code	
-	elseif call_type == "smgr_u" then
-		npc_state_mgr_update[id] = code
-	elseif call_type == "smgr_uw" then
-		npc_state_mgr_weap_update[id] = code		
-	elseif call_type == "smgr_s" then
-		npc_state_mgr_set_state[id] = code	
-	elseif call_type == "npc_sv" then
-		npc_save[id] = code	
-	else
-		notify_crash()
-		abort("ogse_debug: process_npc - invalid call_type for npc: "..tostring(call_type))
-	end
+    if not npc then
+        abort("ogse_debug: process_npc failed - no npc")
+    end
+    if not code then
+        abort("ogse_debug: process_npc failed - no code specified")
+    end
+    if verbose_debug then
+        bench_log1(debug_prefix .. " [" .. tostring(os.clock() - xtime) .. "] " .. npc:name() .. " call_type: " ..
+                       call_type .. " code: " .. code)
+    end
+    local id = nil
+    if type(npc.id) == "function" then
+        id = npc:id()
+    else
+        id = npc.id
+    end
+    if call_type == "upd" then
+        npc_update[id] = code
+    elseif call_type == "dth" then
+        npc_death_callback[id] = code
+    elseif call_type == "hit" then
+        npc_hit_callback[id] = code
+    elseif call_type == "use" then
+        npc_use_callback[id] = code
+    elseif call_type == "hr" then
+        npc_hear_callback[id] = code
+    elseif call_type == "s_spw" then
+        npc_net_spawn[id] = code
+    elseif call_type == "smgr_u" then
+        npc_state_mgr_update[id] = code
+    elseif call_type == "smgr_uw" then
+        npc_state_mgr_weap_update[id] = code
+    elseif call_type == "smgr_s" then
+        npc_state_mgr_set_state[id] = code
+    elseif call_type == "npc_sv" then
+        npc_save[id] = code
+    else
+        notify_crash()
+        abort("ogse_debug: process_npc - invalid call_type for npc: " .. tostring(call_type))
+    end
 end
 
 function process_actor(call_type, code)
-	if not code then abort("ogse_debug: process_actor failed - no code specified") end
-	if verbose_debug then
-		bench_log1(debug_prefix.." ["..tostring(os.clock()-xtime).."] ".." ACTOR call_type: "..call_type.." code: "..code)
-	end		
-	if call_type == "upd" then
-		actor_update = code
-	elseif call_type == "upd_a" then
-		actor_update_amk = code
-	elseif call_type == "inf" then
-		actor_info_callback = code
-	elseif call_type == "tsk" then
-		actor_task_callback = code
-	elseif call_type == "itm_t" then
-		actor_on_item_take = code
-	elseif call_type == "itm_d" then
-		actor_on_item_drop = code
-	elseif call_type == "itm_u" then
-		actor_use_item = code
-	elseif call_type == "key" then
-		actor_on_key = code
-	elseif call_type == "key_f" then
-		actor_on_key_free = code
-	elseif call_type == "key_h" then
-		actor_on_key_hold = code
-	elseif call_type == "a_spw" then
-		actor_net_spawn = code		
-	else
-		notify_crash()
-		abort("ogse_debug: process_actor - invalid call_type for actor: "..tostring(call_type))
-	end
+    if not code then
+        abort("ogse_debug: process_actor failed - no code specified")
+    end
+    if verbose_debug then
+        bench_log1(debug_prefix .. " [" .. tostring(os.clock() - xtime) .. "] " .. " ACTOR call_type: " .. call_type ..
+                       " code: " .. code)
+    end
+    if call_type == "upd" then
+        actor_update = code
+    elseif call_type == "upd_a" then
+        actor_update_amk = code
+    elseif call_type == "inf" then
+        actor_info_callback = code
+    elseif call_type == "tsk" then
+        actor_task_callback = code
+    elseif call_type == "itm_t" then
+        actor_on_item_take = code
+    elseif call_type == "itm_d" then
+        actor_on_item_drop = code
+    elseif call_type == "itm_u" then
+        actor_use_item = code
+    elseif call_type == "key" then
+        actor_on_key = code
+    elseif call_type == "key_f" then
+        actor_on_key_free = code
+    elseif call_type == "key_h" then
+        actor_on_key_hold = code
+    elseif call_type == "a_spw" then
+        actor_net_spawn = code
+    else
+        notify_crash()
+        abort("ogse_debug: process_actor - invalid call_type for actor: " .. tostring(call_type))
+    end
 
 end
 
 function process_gulag(gulag, call_type, code)
-	if not gulag then abort("ogse_debug: process_gulag failed - no gulag") end
-	if not code then abort("ogse_debug: process_gulag failed - no code specified") end
-	if verbose_debug then
-		bench_log1(debug_prefix.." ["..tostring(os.clock()-xtime).."] "..gulag.name.." call_type: "..call_type.." code: "..code)
-	end	
-	local id = gulag.smrttrn.id
-	if call_type == "gul_i" then
-		gulag_init[id] = code
-	else
-		notify_crash()
-		abort("ogse_debug: process_gulag - invalid call_type for gulag: "..tostring(call_type))
-	end
+    if not gulag then
+        abort("ogse_debug: process_gulag failed - no gulag")
+    end
+    if not code then
+        abort("ogse_debug: process_gulag failed - no code specified")
+    end
+    if verbose_debug then
+        bench_log1(debug_prefix .. " [" .. tostring(os.clock() - xtime) .. "] " .. gulag.name .. " call_type: " ..
+                       call_type .. " code: " .. code)
+    end
+    local id = gulag.smrttrn.id
+    if call_type == "gul_i" then
+        gulag_init[id] = code
+    else
+        notify_crash()
+        abort("ogse_debug: process_gulag - invalid call_type for gulag: " .. tostring(call_type))
+    end
 end
 -----------------------------------------------------------------------
 --- Проверки
 -----------------------------------------------------------------------
 function check_monsters()
-	for k, v in pairs(monsters_update) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_update hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(monsters_death_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_death_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
-	for k, v in pairs(monsters_hit_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_hit_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end		
-	for k, v in pairs(monsters_mut_man_update) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_mut_man_update hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end		
-	for k, v in pairs(monsters_mut_man_death) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_mut_man_death hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(monsters_net_spawn) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_monsters - monsters_net_spawn hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end		
+    for k, v in pairs(monsters_update) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_monsters - monsters_update hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(monsters_death_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort(
+                "ogse_debug: check_monsters - monsters_death_callback hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                    " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(monsters_hit_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_monsters - monsters_hit_callback hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(monsters_mut_man_update) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort(
+                "ogse_debug: check_monsters - monsters_mut_man_update hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                    " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(monsters_mut_man_death) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort(
+                "ogse_debug: check_monsters - monsters_mut_man_death hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                    " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(monsters_net_spawn) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_monsters - monsters_net_spawn hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
 end
 
 function check_npc()
-	for k, v in pairs(npc_update) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_update hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(npc_death_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_death_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
-	for k, v in pairs(npc_hit_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_hit_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
-	for k, v in pairs(npc_use_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_use_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
-	for k, v in pairs(npc_hear_callback) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_hear_callback hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(npc_net_spawn) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_net_spawn hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(npc_state_mgr_update) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_state_mgr_update hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(npc_state_mgr_weap_update) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_state_mgr_weap_update hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
-	for k, v in pairs(npc_state_mgr_set_state) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_state_mgr_set_state hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
-	for k, v in pairs(npc_save) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_npc - npc_save hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end	
+    for k, v in pairs(npc_update) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_update hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                      tostring(v))
+        end
+    end
+    for k, v in pairs(npc_death_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_death_callback hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(npc_hit_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort(
+                "ogse_debug: check_npc - npc_hit_callback hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                    tostring(v))
+        end
+    end
+    for k, v in pairs(npc_use_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort(
+                "ogse_debug: check_npc - npc_use_callback hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                    tostring(v))
+        end
+    end
+    for k, v in pairs(npc_hear_callback) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_hear_callback hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(npc_net_spawn) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_net_spawn hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                      tostring(v))
+        end
+    end
+    for k, v in pairs(npc_state_mgr_update) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_state_mgr_update hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(npc_state_mgr_weap_update) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_state_mgr_weap_update hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(npc_state_mgr_set_state) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_state_mgr_set_state hang >> obj:" .. name .. " id: " .. tostring(k) ..
+                      " code: " .. tostring(v))
+        end
+    end
+    for k, v in pairs(npc_save) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_npc - npc_save hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                      tostring(v))
+        end
+    end
 end
 
 function check_actor()
-	if actor_update_amk ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_update_amk hang >> code: "..tostring(actor_update_amk))
-	end
-	if actor_update ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_update hang >> code: "..tostring(actor_update))
-	end
-	if actor_info_callback ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_info_callback hang >> code: "..tostring(actor_info_callback))
-	end	
-	if actor_task_callback ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_task_callback hang >> code: "..tostring(actor_task_callback))
-	end	
-	if actor_on_item_take ~= 0 then
-		notify_crash()	
-		abort("ogse_debug: check_actor - actor_on_item_take hang >> code: "..tostring(actor_on_item_take))
-	end
-	if actor_on_item_drop ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_on_item_drop hang >> code: "..tostring(actor_on_item_drop))
-	end
-	if actor_use_item ~= 0 then
-		notify_crash()	
-		abort("ogse_debug: check_actor - actor_use_item hang >> code: "..tostring(actor_use_item))
-	end
-	if actor_on_key ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_on_key hang >> code: "..tostring(actor_on_key))
-	end
-	if actor_on_key_free ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_on_key_free hang >> code: "..tostring(actor_on_key_free))
-	end
-	if actor_on_key_hold ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_on_key_hold hang >> code: "..tostring(actor_on_key_hold))
-	end
-	if actor_net_spawn ~= 0 then
-		notify_crash()
-		abort("ogse_debug: check_actor - actor_net_spawn hang >> code: "..tostring(actor_net_spawn))
-	end	
+    if actor_update_amk ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_update_amk hang >> code: " .. tostring(actor_update_amk))
+    end
+    if actor_update ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_update hang >> code: " .. tostring(actor_update))
+    end
+    if actor_info_callback ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_info_callback hang >> code: " .. tostring(actor_info_callback))
+    end
+    if actor_task_callback ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_task_callback hang >> code: " .. tostring(actor_task_callback))
+    end
+    if actor_on_item_take ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_on_item_take hang >> code: " .. tostring(actor_on_item_take))
+    end
+    if actor_on_item_drop ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_on_item_drop hang >> code: " .. tostring(actor_on_item_drop))
+    end
+    if actor_use_item ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_use_item hang >> code: " .. tostring(actor_use_item))
+    end
+    if actor_on_key ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_on_key hang >> code: " .. tostring(actor_on_key))
+    end
+    if actor_on_key_free ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_on_key_free hang >> code: " .. tostring(actor_on_key_free))
+    end
+    if actor_on_key_hold ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_on_key_hold hang >> code: " .. tostring(actor_on_key_hold))
+    end
+    if actor_net_spawn ~= 0 then
+        notify_crash()
+        abort("ogse_debug: check_actor - actor_net_spawn hang >> code: " .. tostring(actor_net_spawn))
+    end
 end
 
 function check_gulag()
-	for k, v in pairs(gulag_init) do
-		if v and v ~= 0 then
-			local obj = level.object_by_id(k)
-			local sobj = alife():object(k)
-			local name = "nil"
-			if obj then
-				name = obj:name()
-			elseif sobj then
-				name = sobj:name()
-			end
-			notify_crash()
-			abort("ogse_debug: check_gulag - gulag_init hang >> obj:"..name.." id: "..tostring(k).." code: "..tostring(v))
-		end
-	end
+    for k, v in pairs(gulag_init) do
+        if v and v ~= 0 then
+            local obj = level.object_by_id(k)
+            local sobj = alife():object(k)
+            local name = "nil"
+            if obj then
+                name = obj:name()
+            elseif sobj then
+                name = sobj:name()
+            end
+            notify_crash()
+            abort("ogse_debug: check_gulag - gulag_init hang >> obj:" .. name .. " id: " .. tostring(k) .. " code: " ..
+                      tostring(v))
+        end
+    end
 end
 
 function notify_crash()
-	local crash_text = game.translate_string("critical_error_alife_text")
+    local crash_text = game.translate_string("critical_error_alife_text")
 
-	local hud = get_hud()
-	local critical = hud:GetCustomStatic("btr_critical")
-	if not critical then
-		hud:AddCustomStatic("btr_critical", true)
-		critical = hud:GetCustomStatic("btr_critical"):wnd()
-		critical:SetText(crash_text)
-	end
-	local snd_obj = xr_sound.get_safe_sound_object([[affects\zvon]])
-	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set( 0, 0, 0 ), 1.0)
+    local hud = get_hud()
+    local critical = hud:GetCustomStatic("btr_critical")
+    if not critical then
+        hud:AddCustomStatic("btr_critical", true)
+        critical = hud:GetCustomStatic("btr_critical"):wnd()
+        critical:SetText(crash_text)
+    end
+    local snd_obj = xr_sound.get_safe_sound_object([[affects\zvon]])
+    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), 1.0)
 end
-
 
