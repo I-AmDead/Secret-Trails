@@ -1,12 +1,13 @@
 function attach(sm)
     sm:subscribe({ signal = "on_spawn",    fun = this.on_spawn	  })
-    sm:subscribe({ signal = "on_key_down", fun = this.on_key_down })
+    --sm:subscribe({ signal = "on_key_down", fun = this.on_key_down })
 end
 
 local GUI
 
 local watch_mode = "actor_hud"
 local minimap_static, back_static, frame_static, compass_static
+watch_ui_show = ogse.load_var("watch_ui_show", true)
 
 function on_spawn()
     local wnd = get_main_window()
@@ -34,6 +35,11 @@ function on_key_down(key, bind)
         ogse.save_var("watch_mode", watch_mode)
         log3("watch mode %s", watch_mode)
     end
+end
+
+function ui_show(show)
+	watch_ui_show = show
+	ogse.save_var("watch_ui_show", watch_ui_show)	
 end
 
 function get_instance()
@@ -216,11 +222,10 @@ function UIWatch:Update()
     self:ShowRad(false)
     self:ShowHealth(false)
     self:ShowBoosterIndicators(false)
-    if watch_mode == "actor_hud" then
-        self:UpdateTopPanel()
-    else
-        -- self:UpdateMap()
-    end
+    self:ShowIndicators(false)
+    if watch_ui_show then
+    	self:UpdateTopPanel()
+    end	
 end
 
 function UIWatch:UpdateTopPanel()
@@ -312,6 +317,14 @@ function UIWatch:ShowBoosterIndicators(vis)
     self.indicator_booster_weight:Show(vis)
 end
 
+function UIWatch:ShowIndicators(vis)
+    self.indik_blood:Show(vis)
+    self.indik_hunger:Show(vis)
+    self.indik_radiation:Show(vis)
+    self.indik_psy:Show(vis)
+    self.indik_overweight:Show(vis)
+end
+
 function UIWatch:UpdateIndicators()
     if not db.actor:alive() then
         return
@@ -351,21 +364,6 @@ function UIWatch:UpdateIndicators()
     else
         self.indik_overweight:Show(false)
     end
-
-    -- self.indik_blood:Show(true)
-    -- self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_green", "hud\\p3d")
-
-    -- self.indik_hunger:Show(true)
-    -- self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_green", "hud\\p3d")
-
-    -- self.indik_radiation:Show(true)
-    -- self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_green", "hud\\p3d")
-
-    -- self.indik_psy:Show(true)
-    -- self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_green", "hud\\p3d")
-
-    -- self.indik_overweight:Show(true)
-    -- self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_green", "hud\\p3d")
 end
 
 function UIWatch:UpdateBoosterIndicators()

@@ -593,6 +593,7 @@ function on_surge_end()
     db.actor:disable_info_portion("pre_blowout2")
     db.actor:give_info_portion("net_signal") -- связь восстановлена
     set_pda_params(vector():set(0.1, 0.0, 1))
+    ui_watch.ui_show(true)
     anim = nil
     ogsr_signals.get_mgr():call("on_after_blowout")
 end
@@ -633,6 +634,7 @@ function surge_final()
     dsh_cop_weather.get_weather_mgr():prepare_new_surge()-- тут вставляем перезапуск выброса в погодном менеджере
     dsh.timeout(10000, function() autosave_blowout() end)
     set_pda_params(vector():set(0, 0, 0))
+    ui_watch.ui_show(true)
     archievements.acv_count_event("acv_blow", 5, game.translate_string("acv_blow"))
 end
 
@@ -892,6 +894,7 @@ end
 
 function pda_off()
     set_pda_params(vector():set(0.5, 0.2, 0.0))
+    ui_watch.ui_show(false)
     if db.actor:dont_has_info("no_net_signal") then return end
     if db.actor:active_slot() == 7 and not (anim and ogsr_actor_animation.allow_animation()) then
         dsh.timeout(500, function()
