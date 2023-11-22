@@ -1,4 +1,4 @@
--- -*- mode: lua; coding: windows-1251-dos -*-
+
 ------------- БИОРАДАР -------------
 -- Dетектор живых форм, будь он неладен.
 -- Автор Charsi
@@ -95,15 +95,14 @@ function on_item_to_ruck(obj)
 end
 
 function hud_show()
-    local show = ogse.load_var("hud_show", false)
-    if show then
+    local show = ogse.load_var("hud_show", true)
+    if not show then
         return
     end
     if biomap then
         biomap:Show(true)
     end
     map_dlg:Show(true)
-    -- level.show_indicators()
 end
 
 function hud_hide()
@@ -111,21 +110,17 @@ function hud_hide()
         biomap:Show(false)
     end
     map_dlg:Show(false)
-    -- level.hide_indicators()
 end
 
 function on_zoom_out()
     local show = ogse.load_var("hud_show", true)
-    if show then
+    if not show then
         return
     end
     if biomap then
         biomap:Show(true)
     end
     map_dlg:Show(true)
-    level.show_indicators()
-
-    -- game.play_hud_anm("script\\zoom_start.anm", 2, 0.5, 0.5, false, false)
 end
 
 function on_zoom_in()
@@ -133,9 +128,6 @@ function on_zoom_in()
         biomap:Show(false)
     end
     map_dlg:Show(false)
-    -- level.hide_indicators()
-
-    -- game.play_hud_anm("script\\zoom_end.anm", 2, 0.5, 0.5, false, false)
 end
 
 function on_spawn()
@@ -181,12 +173,12 @@ function on_key_down(key, bind)
     end
 
     if bind == key_bindings.kHIDEHUD then
-        ogse.save_var("hud_show", true)
+        ogse.save_var("hud_show", false)
         hud_hide()
     end
 
     if bind == key_bindings.kSHOWHUD then
-        ogse.save_var("hud_show", false)
+        ogse.save_var("hud_show", true)
         hud_show()
     end
 end
@@ -329,7 +321,7 @@ function on_first_update()
         end
     end
 
-    bio_showing = ogse.load_var("biomap_show", false)
+    bio_showing = ogse.load_var("biomap_show", true)
     if not subscribed then
         bioradar_hide()
     end

@@ -1,22 +1,10 @@
--- -*- mode: lua; coding: windows-1251-dos -*-
+
 function attach(sm)
-    sm:subscribe({
-        signal = "on_first_update",
-        fun = this.animation_off
-    })
-    -- sm:subscribe({ signal = "on_update",		      fun = this.sprint_no_item        })
-    sm:subscribe({
-        signal = "on_key_down",
-        fun = this.on_key_down
-    })
-    sm:subscribe({
-        signal = "on_key_up",
-        fun = this.on_key_up
-    })
-    sm:subscribe({
-        signal = "on_item_before_pickup",
-        fun = this.on_item_before_pickup
-    })
+    sm:subscribe({signal = "on_first_update",		fun = this.animation_off})
+    -- sm:subscribe({ signal = "on_update",		fun = this.sprint_no_item})
+    sm:subscribe({signal = "on_key_down",		fun = this.on_key_down})
+    sm:subscribe({signal = "on_key_up",			fun = this.on_key_up})
+    sm:subscribe({signal = "on_item_before_pickup",	fun = this.on_item_before_pickup})
 end
 
 --------------------------------------------------------------
@@ -363,15 +351,12 @@ local force_crouch_subscribed = nil
 
 function toggle_force_crouch()
     if force_crouch then
-
         ogsr_signals.get_mgr():unsubscribe(force_crouch_subscribed)
         force_crouch_subscribed = nil
         get_actor_obj():release_action(key_bindings.kCROUCH)
-
         force_crouch = false
     else
         force_crouch = true
-
         get_actor_obj():press_action(key_bindings.kCROUCH)
         force_crouch_subscribed = {
             signal = "on_update",
@@ -382,7 +367,6 @@ function toggle_force_crouch()
             end
         }
         ogsr_signals.get_mgr():subscribe(force_crouch_subscribed)
-
     end
 end
 
