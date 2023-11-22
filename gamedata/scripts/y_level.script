@@ -25,19 +25,15 @@ function create_level(sid, position, lvid, gvid, dest_position, dest_lvid, dest_
     table_lc.silent_mode = mode
     table_lc.restrictor_type = 3
 
-    if type(shapes) == "number" then
-        table_lc.shapes:addSphere(shapes)
-    elseif type(shapes) == "table" then
-        for i, shp in ipairs(shapes) do
-            if shp.shtype == 0 then -- / sphere
-                table_lc.shapes:addSphere(shp.radius, vector():set(unpack(shp.center)))
-            else -- / box
-                table_lc.shapes:addBox(matrix():set(vector():set(unpack(shp.box[1])), vector():set(unpack(shp.box[2])),
-                    vector():set(unpack(shp.box[3])), vector():set(unpack(shp.offset))))
-            end
-        end
+    if shapes.shtype == 0 then
+        table_lc.shapes:addSphere(shapes.radius, vector():set(unpack(shapes.center)))
     else
-        abort("create_level_changer: unknown shape type")
+        table_lc.shapes:addBox(
+            vector():set( unpack( shapes.v1 ) ),
+            vector():set( unpack( shapes.v2 ) ),
+            vector():set( unpack( shapes.v3 ) ),
+            vector():set( unpack( shapes.offset ) )
+        )
     end
 
     initial_packet:set(table_lc)
@@ -58,7 +54,7 @@ function create_level_changer(p_story_id, -- STORY_ID нового level_changer
     p_silent -- следует задать 1, чтобы подавить вопрос о смене уровня (автоматический переход)
 )
     local sobj = create_level(p_story_id, p_position, p_lvertex_id, p_gvertex_id, p_dest_pos, p_dest_lv, p_dest_gv,
-        p_dest_dir, p_silent, {shtype = 0, radius = radius and radius or 2.5, center = {0, 0, 0}})
+        p_dest_dir, p_silent, {shtype = 0, radius = radius and radius or 5.0, center = {0, 0, 0}})
     news_manager.send_tip(db.actor, game.translate_string("new_way"))
     return sobj
 end
