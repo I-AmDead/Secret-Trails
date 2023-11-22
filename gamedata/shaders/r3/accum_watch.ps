@@ -1,13 +1,15 @@
 #include "common.h"
 
+uniform float4 m_affects;
+
 float4 main(p_flat I) : SV_Target
 {
     // diffuse
     float3 D = s_base.Sample(smp_base, I.tcdh); // IN:  rgb.a
     D = SRGBToLinear(D);
 
-    float brightness = 0.2;
-    float4 color = float4(D.rgb, 1.0);
+    float brightness = 1.0 - m_affects.x - m_affects.x;
+    float4 color = float4(D.rgb, brightness);
 
     color.x *= 0.0;
     color.y *= 0.0;
