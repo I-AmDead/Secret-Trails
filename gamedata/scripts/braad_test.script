@@ -1333,40 +1333,15 @@ end
 ----------
 -- перепаковка нет-пакета созданного скриптом рестрикта
 ----------
-function rewrite_restrictor(se_obj, custom, radius)
-    local packet = net_packet()
-    se_obj:STATE_Write(packet)
-    local game_vertex_id = packet:r_u16()
-    local distance = packet:r_float()
-    local direct_control = packet:r_s32()
-    local level_vertex_id = packet:r_s32()
-    local object_flags = packet:r_s32()
-    local custom_data = packet:r_stringZ()
-    local story_id = packet:r_s32()
-    local spawn_story_id = packet:r_s32()
-    local shape = r_shape(packet)
-    local restrictor_type = packet:r_u8()
-
-    custom_data = custom
-    shape = {}
-    shape.count = 1
-    shape.shapes = {}
-    shape.shapes[1] = {}
-    shape.shapes[1].type = 0
-    shape.shapes[1].center = vector():set(0, 0, 0)
-    shape.shapes[1].radius = radius
-
-    packet:w_u16(game_vertex_id)
-    packet:w_float(distance)
-    packet:w_s32(direct_control)
-    packet:w_s32(level_vertex_id)
-    packet:w_s32(object_flags)
-    packet:w_stringZ(custom_data)
-    packet:w_s32(story_id)
-    packet:w_s32(spawn_story_id)
-    w_shape(packet, shape)
-    packet:w_u8(restrictor_type)
-    se_obj:STATE_Read(packet, packet:w_tell() - packet:r_tell())
+function rewrite_restrictor(se_obj, custom_data, radius)
+    local pk = get_netpk(se_obj, 1)
+    ASSERT((pk and pk:isOk()), "can't read netpacket of %s", se_obj:name())
+    local data = pk:get()
+    data.shapes:addSphere(
+        radius, vector():set(0, 0, 0)
+    )
+    data.custom_data:setString(custom_data)
+    pk:set(data)
 end
 
 function friendsvoboda(community1, community2)
