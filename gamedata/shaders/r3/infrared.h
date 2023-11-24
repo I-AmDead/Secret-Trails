@@ -2,6 +2,7 @@
 #define INFRARED
 
 #include "common.h"
+#include "night_vision.h"
 
 #ifdef USE_MSAA
 	#ifndef SM_5
@@ -16,9 +17,6 @@
 uniform float4 heat_vision_steps;
 uniform float4 heat_vision_blurring;
 uniform float4 heat_fade_distance;
-
-uniform float4  pnv_param_1;
-uniform float4  pnv_param_2;
 
 ///////////////////////////////////////////////////////
 // COLOR SETTINGS HERE
@@ -48,10 +46,8 @@ uniform float4  pnv_param_2;
 #define color_gradient_warm     COLOR_YELLOW
 #define color_gradient_hot      COLOR_RED
 
-
 float3 normal_blur(float2 pos2d, int samples)
 {
-
     float3 accum = (0.0, 0.0, 0.0);
 
     for (int i = -samples; i < samples; i++) {

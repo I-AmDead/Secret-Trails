@@ -54,11 +54,11 @@ float4 main(p_screen I) : SV_Target
 	///////////////////////////////////////////////////////
 	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
 
-	float lua_param_nvg_num_tubes = frac(pnv_param_2.x) * 10.0f;
-	float lua_param_glitch_power = fmod(pnv_param_2.z, 1.0f);
-	float lua_param_nvg_gain_current = floor(pnv_param_2.y) / 10.0f;
-	float lua_param_vignette_current = floor(pnv_param_2.z) / 100.0f;
-	float lua_param_nvg_mode = frac(pnv_param_2.w) * 10;
+	float lua_param_nvg_num_tubes = pnv_param_4.x;
+	float lua_param_glitch_power = pnv_param_4.z;
+	float lua_param_nvg_gain_current = pnv_param_2.y;
+	float lua_param_vignette_current = pnv_param_2.z;
+	float lua_param_nvg_mode = pnv_param_4.w;
 
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{

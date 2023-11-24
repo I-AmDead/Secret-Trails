@@ -183,8 +183,8 @@ local op = {id= "demonized_ledge_grabbing",sh=true ,gr={
 		{id= "title", type= "slide", link= "ui_options_slider_player", text="ui_mcm_ledge_grabbing_title", size= {512,50}, spacing= 20 },
 		{id = "enable", type = "check", val = 1, def = true},
 		{id = "climbTriggerDistance", type = "track", val = 2, min = 0.6, max = 2, step = 0.05, def = 1.3},
-		{id = "raySteps", type = "track", val = 2, min = 10, max = 30, step = 1, def = 15},
-		{id = "jumpTriggerTime", type = "track", val = 2, min = 0, max = 200, step = 5, def = 70},
+		{id = "raySteps", type = "track", val = 2, min = 5, max = 30, step = 1, def = 15},
+		{id = "jumpTriggerTime", type = "track", val = 2, min = 0, max = 200, step = 10, def = 0},
 		{id = "soundVolume", type = "track", val = 2, min = 0, max = 1, step = 0.05, def = 1},
 		{id = "gruntVolume", type = "track", val = 2, min = 0, max = 1, step = 0.05, def = 1},
 		{id = "gruntProbability", type = "track", val = 2, min = 0, max = 1, step = 0.05, def = 0.5},
@@ -249,7 +249,7 @@ function reset(gizmosArr, force)
 end
 
 function getMaxClimbHeight()
-	return 2.65
+	return 2.53
 end
 
 -- I suggest not monkey patch min climb or you'll make climbing small obstacles harder
@@ -312,7 +312,7 @@ end
 
 
 function checkLedgeGrabbing()
-	if climbActive then 
+	if climbActive then
 		log3("checkLedgeGrabbing() error climbActive")
 		return 
 	end
@@ -369,7 +369,7 @@ function checkLedgeGrabbing()
 		local i = rayStepDistance * j
 		local ray = geometry_ray({
 			ray_range = rayRange,
-			flags = 2,
+			flags = rq_target.rqtStatic,
 			ignore_object = db.actor
 		})
 		local pos = vector():mad(actorPos, actorDir, i)
@@ -390,7 +390,7 @@ function checkLedgeGrabbing()
 					local function posCheck(res)
 						local ray = geometry_ray({
 							ray_range = 1.4,
-							flags = 2,
+							flags = rq_target.rqtStatic,
 							ignore_object = db.actor
 						})
 						local heightRes = ray:get(res.position, vector():set(0,1,0))
@@ -407,16 +407,26 @@ function checkLedgeGrabbing()
 
 					-- Advance position a bit further and check it as well for better result
 					-- If successfull - use that, otherwise use result
-					local pos = vector():mad(actorPos, actorDir, i + 0.05)
-					pos.y = maxY
-					local res = ray:get(pos, dir)
-					if res.success then
-						local flat, normal = isFlat(pos, dir)
-						if normal and flat then
-							local valid = posCheck(res)
-							if valid then
-								climbPos = res.position
-								climbNormal = normal
+					for _, v in ipairs({0.05, 0.025}) do
+						local pos = vector():mad(actorPos, actorDir, i + v)
+						pos.y = maxY
+
+						local ray = geometry_ray({
+							ray_range = rayRange,
+							flags = 2,
+							ignore_object = db.actor
+						})
+
+						local res = ray:get(pos, dir)
+						if res.success then
+							local flat, normal = isFlat(pos, dir)
+							if normal and flat then
+								local valid = posCheck(res)
+								if valid then
+									climbPos = res.position
+									climbNormal = normal
+									break
+								end
 							end
 						end
 					end
@@ -438,6 +448,7 @@ function checkLedgeGrabbing()
 		reset()
 		return
 	end
+
 
 	if not validCollisionPos then
 		reset({"pathLines", "sphereEnd", "climbNormal", "sphereInter", "sphereActor"})
@@ -467,14 +478,16 @@ function checkLedgeGrabbing()
     end
 
     -- Collision check for climb path - ray cast to interPos
-    local posToInterVec = vector():set(interPos):sub(actorPos)
+    local adjActorPos = vector():set(actorPos)
+    adjActorPos.y = adjActorPos.y + 0.02
+    local posToInterVec = vector():set(interPos):sub(adjActorPos)
     local collisionCheckRay = geometry_ray({
     	ray_range = posToInterVec:magnitude(),
-		flags = 2,
+		flags = rq_target.rqtStatic,
 		ignore_object = db.actor
     })
 
-	local pos = actorPos
+	local pos = adjActorPos
 	local dir = vector():set(posToInterVec):normalize()
 	local res = collisionCheckRay:get(pos, dir)
 	local collisionCheck = res.distance == posToInterVec:magnitude()
@@ -613,7 +626,7 @@ function tryToClimb()
 
 	-- make playerPos during climb so it will stay there during camera anim
 	-- Adjust it to fit animation
-	local playerPosOffsetFromWall = 0.035
+	local playerPosOffsetFromWall = 0.037
 	local playerPosOffset = vector():set(0, -0.024, 0)
 	local d = vector():set(collisionPos):sub(climbPos)
 	d.y = 0
@@ -672,10 +685,8 @@ function tryToClimb()
 	local activeWpnId
 
 	if activeWpn then
-		if activeWpn then
-			db.actor:move_to_ruck(activeWpn)
-			activeWpnId = activeWpn:id()
-		end
+		db.actor:move_to_ruck(activeWpn)
+		activeWpnId = activeWpn:id()
 	end
 	
 	-- Uncrouch if was crouched
@@ -717,15 +728,13 @@ function tryToClimb()
 				-- Restore weapons if had
 				
 				if activeWpnId then
-					if activeWpnId then
-						local obj = level.object_by_id(activeWpnId)
-						if obj then
-							db.actor:move_to_slot(obj, activeSlot)
-							nextTick(function()
-								db.actor:activate_slot(activeSlot)
-								return true
-							end, 2)
-						end
+					local obj = level.object_by_id(activeWpnId)
+					if obj then
+						db.actor:move_to_slot(obj, activeSlot)
+						nextTick(function()
+							db.actor:activate_slot(activeSlot)
+							return true
+						end, 2)
 					end
 				end
 
@@ -886,7 +895,6 @@ function tryToClimb()
 			-- Start hud motion on next tick
 			if not hudMotionStarted then
 				hudMotionStarted = true
-
 				nextTick(function()
 					game.play_hud_motion(2, "anim_ledge_grabbing", "anm_climb", true, animationSpeed * hudMotionSpeed)
 					return true

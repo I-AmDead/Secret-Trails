@@ -5,6 +5,7 @@ uniform float4 pnv_color;
 uniform float4 pnv_param_1;
 uniform float4 pnv_param_2;
 uniform float4 pnv_param_3;
+uniform float4 pnv_param_4;
 
 float rand(float n)
 {
@@ -174,26 +175,25 @@ float3 make_crt_ified(float3 fragColor, float2 tc )
 ///////////////////////////////////////////////////////
 float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 {
-    float tube_radius = ((pnv_param_1.y));
+	float tube_radius = ((pnv_param_1.y));
 
-    float2 single_tube_centered = float2(0.5f, -0.5f + ((pnv_param_1.x) / 100));
-    float2 single_tube_offset_left = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));		// Single tube screen position (0.5, 0.5 is centered)
-    float2 single_tube_offset_right = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));	// Single tube screen position (0.5, 0.5 is centered)
+	float2 single_tube_centered = float2(0.5f, -0.5f + ((pnv_param_1.x) / 100));
+	float2 single_tube_offset_left = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));		// Single tube screen position (0.5, 0.5 is centered)
+	float2 single_tube_offset_right = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));	// Single tube screen position (0.5, 0.5 is centered)
 
-    float2 dual_tube_offset_1 = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube left eye
-    float2 dual_tube_offset_2 = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube right eye
+	float2 dual_tube_offset_1 = float2(0.25f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube left eye
+	float2 dual_tube_offset_2 = float2(0.75f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for dual tube right eye
 
-    float2 quad_tube_offset_1 = float2(0.05f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left outer tube
-    float2 quad_tube_offset_2 = float2(0.3f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left inner tube
-    float2 quad_tube_offset_3 = float2(0.7f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right inner tube
-    float2 quad_tube_offset_4 = float2(0.95f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right outer tube
-
-
-	float vignette;
-	float2 corrected_texturecoords = aspect_ratio_correction(tc);
+	float2 quad_tube_offset_1 = float2(0.05f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left outer tube
+	float2 quad_tube_offset_2 = float2(0.3f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube left inner tube
+	float2 quad_tube_offset_3 = float2(0.7f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right inner tube
+	float2 quad_tube_offset_4 = float2(0.95f, -0.5f + ((pnv_param_1.x) / 100));			// Offset for quad tube right outer tube
 
 	float lua_param_flip_down = (pnv_param_1.x);
 	lua_param_flip_down = clamp(5 - (lua_param_flip_down / 20.0f),1.0f,5.0f);
+
+	float vignette;
+	float2 corrected_texturecoords = aspect_ratio_correction(tc);
 
 	corrected_texturecoords.y = corrected_texturecoords.y * lua_param_flip_down;
 
