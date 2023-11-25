@@ -230,51 +230,6 @@ function load_job(sj, gname, type, squad, groups)
         }
         table.insert(sj, t)
     end
-
-    if type == "dar_military_scout" then
-        t = {
-            section = "logic@dar_military_scout_hide",
-            idle = 0,
-            prior = 5,
-            state = {0},
-            online = "{+x18_actor_fall}",
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-        t = {
-            section = "logic@dar_military_scout_camper1",
-            idle = 0,
-            prior = 5,
-            state = {0},
-            online = "{+x18_actor_fall}",
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-        t = {
-            section = "logic@dar_military_scout_camper2",
-            idle = 0,
-            prior = 5,
-            state = {0},
-            online = "{+x18_actor_fall}",
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-        t = {
-            section = "logic@dar_military_scout_camper3",
-            idle = 0,
-            prior = 5,
-            state = {0},
-            online = "{+x18_actor_fall}",
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-
-    end
-
 end
 
 function load_states(gname, type)
@@ -322,24 +277,9 @@ function load_states(gname, type)
 
     if type == "dar_poltergeist_ring" then
         return function(gulag)
-            if not has_alife_info("dar_codelock1_unlock") then
-                return 3 -- оффлайн все
-            elseif has_alife_info("dar_ring_spawn1") and not has_alife_info("dar_ring_spawn2") then
-                return 1 -- онлайн 2
-            elseif has_alife_info("dar_ring_spawn2") then
-                return 2 -- онлайн 3
-            else
-                return 0 -- онлайн 1
-            end
+            return 0 -- онлайн 1
         end
     end
-
-    if type == "dar_military_scout" then
-        return function(gulag)
-            return 0
-        end
-    end
-
 end
 
 --------------------------------------------------------------------------
@@ -350,10 +290,6 @@ function load_ltx(gname, type)
 end
 
 function checkStalker(npc_community, gulag_type, npc_rank, se_obj)
-    if gulag_type == "dar_military_scout" then
-        return se_obj:profile_name() == "dar_military_scout"
-    end
-
     return false
 end
 

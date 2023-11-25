@@ -51,21 +51,6 @@ function trader_give_extra_job(trader, actor)
     return false
 end
 
-function bandits_die(actor, npc)
-    local actor = db.actor
-    if has_alife_info("esc_kill_bandits_quest_kill") and not has_alife_info("esc_kill_bandits_noquest_kill") then
-        return true
-    end
-    return false
-end
-
-function trader_need_extra_job(trader, actor)
-    if not has_alife_info("escape_blockpost_case") and has_alife_info("esc_return") then
-        return true
-    end
-    return false
-end
-
 function is_tutorial()
     return not has_alife_info("tutorial_end")
 end
@@ -214,15 +199,6 @@ function have_artefact_from_fleshes(first_speaker, second_speaker)
     return false
 end
 
--- ' Ящик с блокпоста
-function trader_need_blockpost_box(first_speaker, second_speaker)
-    if has_alife_info("tutorial_end") and has_alife_info("esc_trader_speak") and
-        not has_alife_info("escape_blockpost_case") then
-        return true
-    end
-    return false
-end
-
 -- ' tutorial wounded in vagon
 function wounded_need_help(first_speaker, second_speaker)
     local actor = db.actor
@@ -235,15 +211,6 @@ function trader_need_military_document(first_speaker, second_speaker)
         return true
     end
     return false
-end
-
--- ' trader dialog about docs from labx18
-function actor_has_documents(actor, npc)
-    if actor:object("dar_document4") then
-        return true
-    else
-        return false
-    end
 end
 
 -- ' Escape dynamite for Wolf
@@ -314,9 +281,4 @@ function run_tutorial_pda(first_speaker, second_speaker)
     first_speaker:stop_talk()
     second_speaker:stop_talk()
     game.start_tutorial("part_1_pda")
-end
-
-function wolf_precond_univ(actor, npc)
-    return has_alife_info("esc_kill_bandits_quest_done") or
-               (has_alife_info("tutorial_wounded_give_info") and not has_alife_info("esc_kill_bandits_quest_have"))
 end

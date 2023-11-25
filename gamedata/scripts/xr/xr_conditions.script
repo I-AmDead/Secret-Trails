@@ -417,20 +417,6 @@ function check_fighting_by_profile_name(actor, npc, p)
     return false
 end
 
-function val_nap1_check_fighting(actor, npc, p)
-    local enemy, npc1
-    for i, v in pairs(p) do
-        npc1 = level_object_by_sid(v)
-        if npc1 then
-            enemy = npc1:best_enemy()
-            if enemy and (enemy:id() == npc:id() or enemy:id() == actor:id()) then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 -- true, если гулага с таким именем (или story id) не существует или в нём нет никого
 function gulag_empty(actor, npc, p)
     return (not p[1]) or (xr_gulag.getGulagPopulationComed(p[1]) == 0)
@@ -618,16 +604,6 @@ end
 function actor_enemy(actor, npc)
     local t = db.storage[npc:id()].death
     return npc:relation(actor) == game_object.enemy or (t ~= nil and t.killer == actor:id())
-end
-
-function gar_dm_nearest_bandit(actor, npc)
-    --		if_then_else(xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 1), "true", "false"))
-    return xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 1)
-end
-
-function gar_dm_2nd_nearest_bandit(actor, npc)
-    --		if_then_else(xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 2), "true", "false"))
-    return xr_conditions_impl.gar_dm_nearest_bandit(actor, npc, 2)
 end
 
 function trade_exchanged(actor, npc)
@@ -823,143 +799,6 @@ function gar_boars_nest2_dead(actor, npc)
     --	return (not g) or (g:get_population() == 0)
 end
 
-function gar_damaged_bandits(actor, npc)
-    if (gulag_population_active(actor, npc, {"gar_bandit_agr"}) <= 5) then
-        return true
-    end
-    return false
-end
-
-function gar_angar_sleep(actor, npc)
-    return (gulag_empty(actor, npc, {"gar_seryi_bandits"}) and not has_alife_info("agr_krot_band_start")) or
-               (gulag_population_le(actor, npc, {"gar_smart_bandit_large_lager", 9}) and
-                   has_alife_info("agr_krot_band_start"))
-end
-
-function gar_not_damaged_bandits(actor, npc)
-    return not this.gar_damaged_bandits(actor, npc)
-end
-
-function gar_bandits_seryi_die()
-    if db.actor then
-        if gulag_population_active(db.actor, npc, {"gar_seryi_bandits"}) == 0 then
-            return true
-        else
-            return false
-        end
-    else
-        return false
-    end
-end
-
-function gar_bandits_seryi_not_die()
-    return not xr_conditions.gar_bandits_seryi_die()
-end
-
-------------------------------------------------------------------------------------
--- Special functions for Dark Valley
-------------------------------------------------------------------------------------
--- General combat ignore for bandits
-function val_bandits_ci(actor, npc)
-    local ig = {
-        val_escort_captive_enemy = 400,
-        val_sacrifice_finish = 401,
-        val_prisoner_free = 402
-    }
-
-    local enemy_st = db.storage[npc:id()].enemy
-    local valid, enemy = validate_enemy_object(enemy_st)
-    if valid == false then
-        return false
-    end
-    local sid
-    if enemy and enemy:alive() then
-        sid = enemy:story_id()
-        for v, i in pairs(ig) do
-            if sid == i then
-                if has_alife_info(v) then
-                    return false
-                end
-                return true
-            end
-        end
-    end
-    return false
-end
-
--- Combat ignore for bandits with checking combat with actor checking
-function val_bandits_ci_actor(actor, npc, p)
-    local ig = {
-        val_escort_captive_enemy = 400,
-        val_sacrifice_finish = 401,
-        val_prisoner_free = 402
-    }
-
-    local enemy_st = db.storage[npc:id()].enemy
-    local valid, enemy = validate_enemy_object(enemy_st)
-    if valid == false then
-        return false
-    end
-    local sid
-    if enemy and enemy:alive() then
-        if enemy:id() == actor:id() then
-            return npc:position():distance_to_sqr(actor:position()) >= p[1] * p[1]
-        end
-
-        sid = enemy:story_id()
-        for v, i in pairs(ig) do
-            if sid == i then
-                if has_alife_info(v) then
-                    return false
-                end
-                return true
-            end
-        end
-    end
-    return false
-end
-
--- параметры: [dist]
-function val_escort_captive_dist_to_guards_ge(actor, npc, p)
-    local d2 = p[1] * p[1]
-
-    local g1 = level_object_by_sid(407)
-    if g1 and g1:alive() then
-        if npc:position():distance_to_sqr(g1:position()) < d2 then
-            return false
-        end
-    end
-
-    local g2 = level_object_by_sid(408)
-    if g2 and g2:alive() then
-        if npc:position():distance_to_sqr(g2:position()) < d2 then
-            return false
-        end
-    end
-
-    return true
-end
-
-function val_escort_captive_dist_to_guards_le(actor, npc, p)
-    local d2 = p[1] * p[1]
-
-    local g1 = level_object_by_sid(407)
-    if g1 and g1:alive() then
-        if npc:position():distance_to_sqr(g1:position()) > d2 then
-            return false
-        end
-    end
-
-    local g2 = level_object_by_sid(408)
-    if g2 and g2:alive() then
-        if npc:position():distance_to_sqr(g2:position()) > d2 then
-            return false
-        end
-    end
-
-    return true
-end
-
 function val_fighting_captive(actor, npc)
     local enemy_st = db.storage[npc:id()].enemy
     local valid, enemy = validate_enemy_object(enemy_st)
@@ -971,10 +810,6 @@ function val_fighting_captive(actor, npc)
     else
         return false
     end
-end
-
-function val_escort_combat_end(actor, npc)
-    return false
 end
 
 function val_hit_by_nap1(actor, npc)
@@ -998,24 +833,6 @@ function val_hit_by_guard(actor, npc)
     return hit_by_guard
 end
 
-function val_fighting_sacrifice_victim(actor, npc)
-    -- FIXME: use SID!!!
-    return db.storage[npc:id()].enemy:name() == "val_sacrifice_victim"
-end
-
-function val_fighting_prisoner(actor, npc)
-    -- FIXME: use SID!!!
-    return db.storage[npc:id()].enemy:name() == "val_prisoner_captive"
-end
-
-function val_fighting_sacrifice_bloodsucker(actor, npc)
-    return db.storage[npc:id()].enemy:story_id() == 403
-end
-
-function val_actor_in_cage(actor, npc)
-    return utils.npc_in_zone(actor, db.zone_by_name["val_prisoner_cage_zone"])
-end
-
 function val_actor_has_key_to_underground(actor, npc)
     if xr_conditions_impl.actor_has_object(actor, "val_key_to_underground") then
         return true
@@ -1023,35 +840,13 @@ function val_actor_has_key_to_underground(actor, npc)
     return false
 end
 
---[[
-function val_prisoner_in_cage(actor, npc)
-	local prisoner = level_object_by_sid(402)
-	if not prisoner then
-		return false
-	end
-	return utils.npc_in_zone(prisoner, db.zone_by_name["val_prisoner_cage_zone"])
-end
---]]
-
 function actor_wears_bandit_outfit(actor, npc)
-    --[[
-	local cur_eq = actor:get_current_equipment()
-	local wears = cur_eq and cur_eq:name() == "bandit_outfit"
-	return wears
-	--]]
     return xr_conditions_impl.actor_has_object(actor, "bandit_outfit")
 end
 
 ------------------------------------------------------------------------------------
 -- Special functions for Pripyat
 ------------------------------------------------------------------------------------
-function pri_followers_can_hear(actor, npc)
-    local gulag = xr_gulag.get_gulag(823)
-
-    return not has_alife_info("pri_followers_start") or gulag ~= nil and gulag:get_population() > 0 and
-               not gulag:npc_is_enemy_to_anybody(actor)
-end
-
 function pri_monolith_combat_ignore(actor, npc)
     local enemy_st = db.storage[npc:id()].enemy
     local valid, enemy = validate_enemy_object(enemy_st)
@@ -1067,22 +862,7 @@ function pri_monolith_combat_ignore(actor, npc)
 end
 
 function pri_actor_has_rpg_ammo(actor, npc)
-    return actor:object("ammo_og-7b") ~= nil
-end
-
-function pri_follower_see_ambush(actor, npc)
-    local gulag = xr_gulag.get_gulag_by_name("pri_wave7")
-
-    if gulag == nil then
-        return true
-    end
-
-    for k, v in pairs(gulag.Object) do
-        if v ~= nil and npc:best_enemy() and npc:best_enemy():id() == v:id() then
-            return true
-        end
-    end
-    return false
+    return actor:object("ammo_og-7b")
 end
 
 ------------------------------------------------------------------------------------
@@ -1099,20 +879,9 @@ function esc_blokpost_night(actor, npc)
     return false
 end
 
-function esc_bandits_die(sctor, npc)
-    if has_alife_info("esc_kill_bandits_quest_kill") or has_alife_info("esc_kill_bandits_noquest_kill") then
-        return true
-    end
-    return false
-end
-
 ------------------------------------------------------------------------------------
 -- Special functions for LabX18
 ------------------------------------------------------------------------------------
-function dar_actor_has_a_key1(actor, npc)
-    return xr_conditions_impl.actor_has_object(actor, "ugrum_flash")
-end
-
 function dar_actor_has_a_key2(actor, npc)
     return xr_conditions_impl.actor_has_object(actor, "krot_flash")
 end
@@ -1120,34 +889,6 @@ end
 ------------------------------------------------------------------------------------
 -- Special functions for BAR - ROSTOK
 ------------------------------------------------------------------------------------
-function bar_arena_actor_inside(actor, npc)
-    local t = db.zone_by_name["bar_arena_waiter"]
-    if t and db.actor then
-        if t:inside(db.actor:position()) then
-            return true
-        end
-    end
-    return false
-end
-function bar_arena_actor_fight(actor, npc)
-    local t = db.zone_by_name["bar_arena_sr"]
-    local tt = db.zone_by_name["bar_arena_waiter"]
-    if t and tt and db.actor then
-        if t:inside(db.actor:position()) and not tt:inside(db.actor:position()) then
-            return true
-        end
-    end
-    return false
-end
-function bar_arena_actor_outside(actor, npc)
-    local t = db.zone_by_name["bar_arena_waiter_out"]
-    if t and db.actor then
-        if t:inside(db.actor:position()) then
-            return true
-        end
-    end
-    return false
-end
 function bar_dolg_alarm(actor, npc)
     if xr_gulag.getGulagState("bar_dolg_general") == 2 then
         return true
@@ -1184,29 +925,6 @@ function bar_actor_rank_veteran(actor, npc)
     end
 end
 
-function bar_arena_fight_3_end()
-    return has_alife_info("bar_arena_fight_3_stalker_1_die") and has_alife_info("bar_arena_fight_3_stalker_2_die")
-end
-
-function bar_arena_fight_4_end()
-    return has_alife_info("bar_arena_fight_4_stalker_1_die") and has_alife_info("bar_arena_fight_4_stalker_2_die") and
-               has_alife_info("bar_arena_fight_4_stalker_3_die")
-end
-
-function bar_arena_fight_5_end()
-    return has_alife_info("bar_arena_fight_5_stalker_1_die") and has_alife_info("bar_arena_fight_5_stalker_2_die")
-end
-
-function bar_arena_fight_6_end()
-    return has_alife_info("bar_arena_fight_6_stalker_1_die") and has_alife_info("bar_arena_fight_6_stalker_2_die") and
-               has_alife_info("bar_arena_fight_6_stalker_3_die") and has_alife_info("bar_arena_fight_6_stalker_4_die") and
-               has_alife_info("bar_arena_fight_6_stalker_5_die") and has_alife_info("bar_arena_fight_6_stalker_6_die")
-end
-
-function bar_arena_fight_8_end()
-    return has_alife_info("bar_arena_fight_8_stalker_1_die") and has_alife_info("bar_arena_fight_8_stalker_2_die") and
-               has_alife_info("bar_arena_fight_8_stalker_3_die") and has_alife_info("bar_arena_fight_8_stalker_4_die")
-end
 ------------------------------------------------------------------------------------
 -- Special functions for Military
 ------------------------------------------------------------------------------------
@@ -1269,77 +987,6 @@ end
 
 function is_wfx_playing(actor, npc)
     return level.is_wfx_playing()
-end
-
--------------------------------------------------------------------------------------
--- Special for rostok
--------------------------------------------------------------------------------------
-function rostok_gulag_inactive(actor, npc)
-    local gulag = xr_gulag.get_gulag_by_name("bar_freedom_attack")
-
-    if gulag == nil then
-        return true
-    end
-
-    local val = 0
-
-    for k, v in pairs(gulag.Object) do
-        local job_prior = gulag.Job[gulag.ObjectJob[k]].prior
-
-        if (v == true or
-            (v:alive() and not xr_wounded.is_heavy_wounded_by_id(k) and not xr_wounded.is_psy_wounded_by_id(k) and
-                job_prior == 5)) and gulag.Object_begin_job[k] == true then
-            val = val + 1
-        end
-    end
-    if val == 0 then
-        return true
-    end
-    return false
-end
-
-function agr_factory_hold_inactive(actor, npc)
-    local gulag = xr_gulag.get_gulag_by_name("agr_factory_hold")
-
-    if gulag == nil then
-        return true
-    end
-
-    local val = 0
-
-    for k, v in pairs(gulag.Object) do
-        if (v == true or
-            (v:alive() and not (xr_wounded.is_heavy_wounded_by_id(k) or xr_wounded.is_psy_wounded_by_id(k)))) and
-            gulag.Object_begin_job[k] == true then
-            val = val + 1
-        end
-    end
-    if val == 0 then
-        return true
-    end
-    return false
-end
-
-function rostok_gulag_2_inactive(actor, npc)
-    local gulag = xr_gulag.get_gulag_by_name("bar_freedom_chasers_attack")
-
-    if gulag == nil then
-        return true
-    end
-
-    local val = 0
-
-    for k, v in pairs(gulag.Object) do
-        if (v == true or
-            (v:alive() and not (xr_wounded.is_heavy_wounded_by_id(k) or xr_wounded.is_psy_wounded_by_id(k)))) and
-            gulag.Object_begin_job[k] == true then
-            val = val + 1
-        end
-    end
-    if val == 0 then
-        return true
-    end
-    return false
 end
 
 function rostok_dist_to_actor_le(actor, npc, p)

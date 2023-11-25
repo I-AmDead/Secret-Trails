@@ -283,42 +283,6 @@ function shuffle(array)
     return array
 end
 
-function cleanup_pri_waves()
-    for _, name in ipairs({
-        "pri_wave1_monolith1_rsniper1",
-        "pri_wave1_monolith2_free1",
-        "pri_wave1_monolith3_free2",
-        "pri_wave2_monolith1_rsniper1",
-        "pri_wave2_monolith2_wsniper1",
-        "pri_wave2_monolith3_rsniper2",
-        "pri_wave2_monolith4_wsniper2",
-        "pri_wave4_monolith1_rsniper1",
-        "pri_wave4_monolith2_wsniper1",
-        "pri_wave4_monolith3_rsniper2",
-        "pri_wave4_monolith4_wsniper2",
-        "pri_wave4_monolith5_free1",
-        "pri_wave4_monolith5_free2",
-        "pri_wave4_monolith5_free3",
-        "pri_wave5_monolith1_free1",
-        "pri_wave5_monolith2_free2",
-        "pri_wave5_monolith3_free3",
-        "pri_wave5_monolith4_free4",
-        "pri_wave6_monolith1_rsniper1",
-        "pri_wave6_monolith2_wsniper1",
-        "pri_wave7_monolith1",
-        "pri_wave7_monolith2",
-        "pri_wave7_monolith3",
-        "pri_wave7_monolith4",
-        "pri_wave7_monolith5",
-    }) do
-        local sobj = alife():object(name)
-        if sobj and sobj:alive() then
-            log3("~~[%s]: release [%s] (%s)", script_name(), sobj:name(), sobj.level_name)
-            alife():release(sobj)
-        end
-    end
-end
-
 -------------------------------------------------------------
 function safe_file_name(fname) --Вырезаем неподдерживаемые FS символы и пробелы по краям.
     fname = fname:clear():gsub('[%(%)]*', ""):trim()
@@ -363,81 +327,6 @@ function backup_autosave()
     local last_save = f:update_path("$game_saves$", last_save_name)
     local lc_save = f:update_path("$game_saves$", lc_save_name)
     f:file_rename(last_save, lc_save, true)
-end
--------------------------------------------------------------
-
--- Удаление всех участников сцены на ДТ (Круглов и ко)
-function clean_bar_ecolog_professor()
-    if level.name() == "l06_rostok" then
-        return
-    end
-    if not has_alife_info("bar_rescue_research_done") or not has_alife_info("bar_rescue_research_fail") then
-        return
-    end
-
-    for _, name in ipairs({
-        "bar_freedom_attacker_1",
-        "bar_freedom_attacker_4",
-        "bar_freedom_attacker_6",
-        "bar_freedom_attacker_2",
-        "bar_freedom_attacker_3",
-        "bar_freedom_attacker_5",
-        "bar_ecolog_professor",
-        --Эти четверо теперь останутся на ДТ в смарте ros_smart_stalker_bandits1
-        --"bar_ecolog_crush_1",
-        --"bar_ecolog_crush_3",
-        --"bar_ecolog_crush_2",
-        --"bar_ecolog_crush_4",
-        "bar_freedom_attacker_commander",
-        "bar_freedom_attacker_7",
-        "bar_freedom_attacker_8",
-        "bar_ambush_killer_01",
-        "bar_ambush_killer_05",
-        "bar_ambush_killer_07",
-        "rostok_stalker_0001",
-        "rostok_stalker_0002",
-        "rostok_stalker_0003",
-        "rostok_stalker_0004",
-        "bar_ecolog_crush_dead_0002",
-        "bar_ecolog_crush_dead_0003",
-        "bar_ambush_killer_09",
-        "bar_freedom_attacker_10",
-        "bar_freedom_attacker_11",
-        "bar_freedom_attacker_12",
-        "bar_freedom_attacker_9",
-        "bar_freedom_attacker_0000",
-        "bar_freedom_attacker_0001",
-        "bar_freedom_attacker_0002",
-        "bar_freedom_attacker_0003",
-        "bar_ambush_killer_02",
-        "bar_ambush_killer_04",
-    }) do
-        local sobj = alife():object( name )
-        if sobj and sobj.level_name == "l06_rostok" then
-            log3("~~[%s.clean_bar_ecolog_professor]: release [%s]", script_name(), sobj:name())
-            alife():release(sobj)
-        end
-    end
-end
-
-function cleanup_bar_ecologs()
-    for _, name in ipairs({
-        "bar_ecolog_crush_1",
-        "bar_ecolog_crush_3",
-        "bar_ecolog_crush_2",
-        "bar_ecolog_crush_4",
-    }) do
-        local sobj = alife():object(name)
-        if sobj then
-            local pk = get_netpk(sobj)
-            ASSERT((pk and pk:isOk()), "can't read netpacket of %s", sobj:name())
-            local data = pk:get()
-            data.base_in_restrictors = ""
-            data.base_out_restrictors = ""
-            pk:set(data)
-            log3("~~[%s.cleanup_bar_ecologs]: cleanup [%s]", script_name(), sobj:name())
-        end
-    end
 end
 
 local free_logic_gulag = {}
