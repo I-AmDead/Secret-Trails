@@ -123,11 +123,10 @@ function evaluator_gl_ready:hit_callback(amount, dir, who, bone_id)
 end
 -- удаление мусора из инвентаря при смерти
 function evaluator_gl_ready:death_callback()
-    local npc, sim = self.object, alife()
-    for i = 0, npc:object_count() - 1 do
-        local item = npc:object(i)
+    for i = 0, self.object:object_count() - 1 do
+        local item = self.object:object(i)
         local sec = item:section()
-        if (string.find(sec, "gl_fake_missile") or string.find(sec, "gl_test_shell")) and sim:object(item:id()) then
+        if (string.find(sec, "gl_fake_missile") or string.find(sec, "gl_test_shell")) and alife():object(item:id()) then
             delete_obj(item:id())
         end
     end

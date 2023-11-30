@@ -602,15 +602,13 @@ end
 -- происходит ли в данный момент смена уровня?
 -- нужно для того, чтобы объекты знали, какую информацию записывать при сохранении, а какую нет
 function level_changing()
-    local sim = alife()
-
-    if not sim then
+    if not alife() then
         return false
     end
 
-    local actor_gv = game_graph():vertex(sim:actor().m_game_vertex_id)
+    local actor_gv = game_graph():vertex(alife():actor().m_game_vertex_id)
 
-    return actor_gv:level_id() ~= sim:level_id()
+    return actor_gv:level_id() ~= alife():level_id()
 end
 
 function parse_data_1v(npc, s)

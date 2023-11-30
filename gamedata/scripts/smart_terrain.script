@@ -178,10 +178,9 @@ end
 -- получить серверные объекты персонажей
 -- выполняется строго один раз как часть initialize_if_needed
 function se_smart_terrain:get_se_objs()
-    local sim = alife()
     local del = {}
     for id, v in pairs(self.npc_info) do
-        local obj = sim:object(id)
+        local obj = alife():object(id)
         if obj then
             self:fill_npc_info(obj, v)
         else
@@ -951,13 +950,12 @@ end
 -- вызывается из кучи мест. Скорее всего дубируется многократно
 function on_death(obj_id)
     --	log3( "on_death obj_id=%d", obj_id )
-    local sim = alife()
-    if sim then
-        local obj = sim:object(obj_id)
+    if alife() then
+        local obj = alife():object(obj_id)
         if obj then
             local smrt_id = obj:smart_terrain_id()
             if 65535 ~= smrt_id then
-                local smrt = sim:object(smrt_id)
+                local smrt = alife():object(smrt_id)
                 if smrt and smrt.gulag then
                     smrt.gulag:clear_dead(obj_id)
                 end
@@ -969,15 +967,13 @@ end
 -----------------------
 --' Удаляет объект из смарттеррейнов.
 function unregister_npc(npc)
-    local sim = alife()
-
-    if sim then
-        local obj = sim:object(npc.id)
+    if alife() then
+        local obj = alife():object(npc.id)
         local strn_id = obj:smart_terrain_id()
 
         if strn_id ~= 65535 then
-            if sim:object(strn_id) then
-                sim:object(strn_id):unregister_npc(obj)
+            if alife():object(strn_id) then
+                alife():object(strn_id):unregister_npc(obj)
             end
         end
     end

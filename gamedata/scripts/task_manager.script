@@ -610,7 +610,6 @@ function CRandomTask:check_task_props(task_id)
         end
         self.task_info[task_id].enabled_props = false
     elseif self.task_info[task_id].type == "kill_stalker" then
-        local sim = alife()
         for id, sobj in alife():objects() do -- KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
             if sobj:clsid() == clsid.script_stalker and sobj:alive() and sobj:profile_name() ==
                 self.task_info[task_id].target then
@@ -624,14 +623,13 @@ function CRandomTask:check_task_props(task_id)
         end
         self.task_info[task_id].enabled_props = false
     elseif self.task_info[task_id].type == "find_item" then
-        local sim = alife()
         for id, sobj in alife():objects() do -- KRodin: лучше немного тормозов тут, чем регистрация 100500 объектов из se_* при каждой загрузке сейва
             if sobj:section_name() == self.task_info[task_id].target then
                 -- Нужно игнорировать предметы, которые находяться у вендоров.
                 local ignore = false
                 if sobj.parent_id then
                     for kk, vv in pairs(parent_by_story) do
-                        local parent = sim:story_object(kk)
+                        local parent = alife():story_object(kk)
                         if parent and sobj.parent_id == parent.id then
                             ignore = true
                         end

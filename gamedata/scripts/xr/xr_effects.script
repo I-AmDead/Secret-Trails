@@ -618,16 +618,14 @@ function mil_actor_enemy_reset(actor, npc)
 end
 
 function mil_bomb_explode(actor, npc)
-    local source = nil
-    local sim = alife()
-    if sim then
-        local se_obj = sim:story_object(723)
-        if se_obj then
-            source = level.object_by_id(se_obj.id)
-        end
+    local source
+
+    local obj = alife():story_object(723)
+    if obj then
+        source = level.object_by_id(obj.id)
     end
 
-    if source == nil then
+    if not source then
         -- 'abort ("Bomb with story id MIL_BOMB not found")
         return
     end
@@ -1000,16 +998,14 @@ end
 ------------------------------------------------------------------------------------
 function destroy_monolith_generator(actor, npc)
     local source = nil
-    local sim = alife()
-    if sim then
-        local se_obj = sim:story_object(1305)
-        if se_obj then
-            source = level.object_by_id(se_obj.id)
-        end
+
+    local obj = alife():story_object(1305)
+    if obj then
+        source = level.object_by_id(obj.id)
     end
 
-    if source == nil then
-        abort("MONOLITH GENERATOR story id 1305 not found")
+    if not source then
+        --abort("MONOLITH GENERATOR story id 1305 not found")
         return
     end
 

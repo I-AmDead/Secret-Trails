@@ -65,13 +65,9 @@ function get_level_object_by_id(id)
 end
 
 function get_level_object_by_sid(sid)
-    local sim = alife()
-
-    if sim then
-        local se_obj = sim:story_object(sid)
-        if se_obj then
-            return get_level_object_by_id(se_obj.id)
-        end
+    local obj = alife():story_object(sid)
+    if obj then
+        return get_level_object_by_id(obj.id)
     end
 
     return nil
@@ -91,24 +87,6 @@ function update()
             --			heli_mgr:set_path( "heli_path_tutorial" )
             heli_mgr.not_die = true
             heli_mgr.heliObject:TurnEngineSound(false)
-
-            -- запомнить ID новичков и тут же их спрятать
-            --[[			wounded_id = get_level_object( "esc_vagon_wounded" ):id()
-			table.insert( newbies, get_level_object( "esc_vagon_newbie1" ):id() )
-			table.insert( newbies, get_level_object( "esc_vagon_newbie2" ):id() )
-
-			local sim = alife()
-			if sim then
-				sim:set_switch_online(  wounded_id, false )
-				sim:set_switch_offline( wounded_id, true )
-
-				sim:set_switch_online(  newbies[1], false )
-				sim:set_switch_offline( newbies[1], true )
-
-				sim:set_switch_online(  newbies[2], false )
-				sim:set_switch_offline( newbies[2], true )
-			end]]
-
             state_init = false
         end
 
@@ -120,29 +98,8 @@ function update()
     -- ждём рождения новичков
     if state == state_wait_spawn then
         if state_init then
-            --[[			local sim = alife()
-			if sim then
-				sim:set_switch_online(  newbies[1], true )
-				sim:set_switch_offline( newbies[1], false )
-
-				sim:set_switch_online(  newbies[2], true )
-				sim:set_switch_offline( newbies[2], false )
-			end]]
-
             state_init = false
         end
-
-        --[[		if type( newbies[1] ) == "number" then
-			newbies[1] = level.debug_object( "esc_vagon_newbie1" ) or newbies[1]
-		end
-
-		if type( newbies[2] ) == "number" then
-			newbies[2] = level.debug_object( "esc_vagon_newbie2" ) or newbies[2]
-		end
-
-		if type( newbies[1] ) ~= "number" and type( newbies[2] ) ~= "number" then
-			chst( state_heli_fly )
-		end]]
 
         if not newbies[1] then
             newbies[1] = get_level_object_by_sid(12) -- "esc_vagon_newbie1"
@@ -235,10 +192,6 @@ function update()
     -- сцена закончена
     if state == state_after then
         if state_init then
-            --			local sim = alife()
-            --			if sim then
-            --				sim:set_switch_online( wounded_id, true )
-            --			end
 
             -- отправить вертолёт патрулировать уровень
             heli_mgr:set_path("heli_path_patrol")

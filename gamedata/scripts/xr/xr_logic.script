@@ -1011,14 +1011,9 @@ end
 function cfg_get_npc_and_zone(ini, section, field, npc)
     local t = cfg_get_two_strings_and_condlist(ini, section, field, npc)
     if t then
-        local sim = alife()
-        if sim then
-            local se_obj = sim:story_object(tonumber(t.v1) or abort(""))
-            if se_obj then
-                t.npc_id = se_obj.id
-            else
-                t.npc_id = -1
-            end
+        local obj = alife():story_object(tonumber(t.v1) or abort(""))
+        if obj then
+            t.npc_id = obj.id
         else
             t.npc_id = -1
         end

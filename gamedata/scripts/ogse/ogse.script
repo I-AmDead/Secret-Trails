@@ -519,12 +519,11 @@ local function spawn_single_object_internal(res, spawn_item)
     local count = spawn_item.cnt or 1
     ASSERT(not (count > 1 and spawn_item.sid),
         "[spawn_single_object_internal] cannot assign same sid to multiple objects!, sec = '%s'", spawn_item.sec)
-    local sim = alife()
     for i = 1, count do
-        local sobj_abstract = sim:create(spawn_item.sec, vector():set(unpack(spawn_item.pos)), spawn_item.lvid,
+        local sobj_abstract = alife():create(spawn_item.sec, vector():set(unpack(spawn_item.pos)), spawn_item.lvid,
             spawn_item.gvid)
         -- получаем объект правильнго типа
-        local sobj = sim:object(sobj_abstract.id)
+        local sobj = alife():object(sobj_abstract.id)
         -- на самом деле в этой проверке нет смысла. Ситуации, когда объект создать не удалось, а выполнение продолжилось,
         -- просто не бывает. В этих случаях всегда идёт вылет. Но пусть будет
         ASSERT(sobj, "[spawn_single_object_internal] cannot create object, sec = '%s'", spawn_item.sec)
@@ -534,7 +533,7 @@ local function spawn_single_object_internal(res, spawn_item)
             alife():use_ai_locations(sobj, true)
         end
         if spawn_item.sid then
-            sim:assign_story_id(sobj.id, spawn_item.sid)
+            alife():assign_story_id(sobj.id, spawn_item.sid)
         end
         if spawn_item.angle then
             sobj.angle = vector():set(unpack(spawn_item.angle))
