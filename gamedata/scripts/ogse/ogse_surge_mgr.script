@@ -19,7 +19,6 @@ is_surge_raskolbas = false --Находится ли выброс в смерт�
 local debug_logging = false
 local fsurgelog = false
 local snd_pda_dead = sound_object('device\\pda\\pda_dead')
-local anim
 
 local aux_counter = 0
 function surge_log(f, ...)
@@ -47,6 +46,7 @@ local surge_postpone_time   = 10 -- [час.], время откладывани
 local lname
 local is_indoor = false
 local actor_was_hit = false
+local anim_playing = false
 
 function on_actor_spawn()
     this.surge_db_init()
@@ -232,7 +232,6 @@ function surge_db_init()
         on_info_deferred = {
             if_surface = {
                 call1 = soundtrack.surge_sound, -- радиопереговоры с последующими раскатами грома
-                pp_eff1 = {"vibros_p.ppe", 1974, false}, -- разовое двоение картинки
                 cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true}}, -- постоянное раскачивание, как будто качается земля
             if_underground = {
                 call1 = soundtrack.play_ambient -- опять шум ветра
@@ -317,7 +316,6 @@ function surge_db_init()
                 call1 = soundtrack.surge_wave_2, -- хитрое гудение
                 snd1 = [[anomaly\blowout]] -- раскаты грома с сиренами
             },
-            pp_eff1 = {"vibros.ppe", 1974, false}, -- разовое двоение картинки с покраснением, выбелением, выцветанием картинки в конце
             cam_eff1 = {"camera_effects\\earthquake.anm", 1974, true} -- землетрясение
         },
         on_reinit = {
@@ -365,17 +363,13 @@ function surge_db_init()
             },
             if_surface = {
                 call1 = soundtrack.surge_wave_3, -- долгое, низкое гудение
-                pp_eff1 = {"yantar_underground_psi.ppe", 2010, false} -- кратковременное раздвоение в глазах
             },
             if_underground = {
-                pp_eff1 = {"escape.ppe", 1974, false}, -- короткое покраснение картинки
                 call1 = soundtrack.play_ambient -- шум ветра
             }
         },
         on_reinit = {
-            call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
-            end,
+            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
             if_surface = {
                 call1 = function()
                     is_surge_started = true
@@ -412,25 +406,15 @@ function surge_db_init()
                 call1 = soundtrack.surge_wave_4 -- опять гудение
             },
             if_underground = {
-                rnd = {{
-                    call1 = soundtrack.rock_sound, -- камешки сыпятся
-                    pp_eff1 = {"yantar_underground_psi.ppe", 1974, false}
-                }, {
-                    call1 = soundtrack.earthquake_sound, -- отдалённый грохот камней или обвал
-                    pp_eff1 = {"total_recall.ppe", 1974, false} -- сильное кратковременное двоение
-                }, {
-                    call1 = soundtrack.earthquake_sound, -- отдалённый грохот камней или обвал
-                    pp_eff1 = {"agr_u_fade.ppe", 1974, false}, -- полное плавное почернение, потом плавный возврат
-                    pp_eff2 = {"total_recall.ppe", 1986, false}
-                }, {
-                    -- тут тишина
-                }}
+                rnd = {{call1 = soundtrack.rock_sound},  -- камешки сыпятся 
+                       {call1 = soundtrack.earthquake_sound},  -- отдалённый грохот камней или обвал 
+                       {call1 = soundtrack.earthquake_sound},  -- отдалённый грохот камней или обвал 
+                       {},  -- тут тишина
+                }
             }
         },
         on_reinit = {
-            call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
-            end,
+            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
             if_surface = {
                 call2 = function()
                     is_surge_started = true
@@ -467,25 +451,15 @@ function surge_db_init()
                 call1 = soundtrack.surge_rumble -- шум ветра с отдалёнными раскатами грома
             },
             if_underground = {
-                rnd = {{
-                    call1 = soundtrack.rock_sound, -- камешки сыпятся
-                    pp_eff1 = {"yantar_underground_psi.ppe", 1974, false} -- лёгкое короткое двоение с расплыванием
-                }, {
-                    call1 = soundtrack.earthquake_sound,
-                    pp_eff1 = {"total_recall.ppe", 1974, false}
-                }, {
-                    call1 = soundtrack.earthquake_sound,
-                    pp_eff1 = {"agr_u_fade.ppe", 1974, false},
-                    pp_eff2 = {"total_recall.ppe", 1986, false}
-                }, {
-                   -- тут тишина
-                }}
+                rnd = {{call1 = soundtrack.rock_sound},  -- камешки сыпятся 
+                       {call1 = soundtrack.earthquake_sound},  -- отдалённый грохот камней или обвал 
+                       {call1 = soundtrack.earthquake_sound},  -- отдалённый грохот камней или обвал 
+                       {},  -- тут тишина
+                }
             }
         },
         on_reinit = {
-            call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
-            end,
+            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
             if_surface = {
                 call2 = function()
                     is_surge_started = true
@@ -528,9 +502,7 @@ function surge_db_init()
             }
         },
         on_reinit = {
-            call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
-            end,
+            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
             if_surface = {
                 call1 = function()
                     is_surge_started = true
@@ -591,7 +563,7 @@ function on_surge_end()
     db.actor:give_info_portion("net_signal") -- связь восстановлена
     set_pda_params(vector():set(0.1, 0.0, 1))
     ui_watch.ui_show(true)
-    anim = nil
+    anim_playing = false
     ogsr_signals.get_mgr():call("on_after_blowout")
 end
 
@@ -629,7 +601,7 @@ function surge_final()
         db.actor:disable_info_portion(k)
     end
     dsh_cop_weather.get_weather_mgr():prepare_new_surge()-- тут вставляем перезапуск выброса в погодном менеджере
-    dsh.timeout(10000, function() autosave_blowout() end)
+    dsh.timeout(10000, news_manager.autosave, game.translate_string("save_surge") .. game.translate_string(level.name()))
     set_pda_params(vector():set(0, 0, 0))
     ui_watch.ui_show(true)
     archievements.acv_count_event("acv_blow", 5, game.translate_string("acv_blow"))
@@ -799,8 +771,6 @@ function deadly_blowout()
         blow.type = hit.explosion
         db.actor:hit(blow)
 
-        level.add_cam_effector("camera_effects\\fusker.anm", 959, false, "")
-
         local active_item = db.actor:active_item()
         if active_item and active_item:section() ~= "bolt" and not active_item:is_knife() then
             db.actor:drop_item(active_item)
@@ -827,20 +797,19 @@ end
 
 local surge_hit_db = {
 	aver           = { power = 0.001,  type = hit.radiation},
-	deadc_city     = {{power = 0.01,type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
+	predbannik     = { power = 0.001,  type = hit.radiation},
+	swamp          = { power = 0.0,    type = hit.radiation},
 	l01_escape     = { power = 0.001,  type = hit.radiation},
-	l02_garbage    = { power = 0.0013, type = hit.radiation},
-	l03_agroprom   = { power = 0.0018, type = hit.radiation},
-	l04_darkvalley = { power = 0.0018, type = hit.radiation},
-	l05_bar        = { power = 0.0023, type = hit.radiation},
-	l06_rostok     = { power = 0.0023, type = hit.radiation},
-	l08_yantar     = {{power = 0.003,  type = hit.radiation}, {power = 0.0001, type = hit.shock}, },
-	l07_military   = {{power = 0.005,  type = hit.radiation}, {power = 0.0005, type = hit.shock}, },
-	l10_radar      = {{power = 0.008,  type = hit.radiation}, {power = 0.0007, type = hit.shock}, },
-	l11_pripyat    = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
-	dead_city      = {{power = 0.01,type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
-	predbannik     = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
-	swamp          = {{power = 0.01,   type = hit.radiation}, {power = 0.001,  type = hit.shock}, },
+	l02_garbage    = { power = 0.001,  type = hit.radiation},
+	l03_agroprom   = { power = 0.001,  type = hit.radiation},
+	l04_darkvalley = { power = 0.001,  type = hit.radiation},
+	l05_bar        = { power = 0.005,  type = hit.radiation},
+	l06_rostok     = { power = 0.005,  type = hit.radiation},
+	l08_yantar     = {{power = 0.01,   type = hit.radiation}, {power = 0.1, type = hit.telepatic}},
+	l07_military   = {{power = 0.01,   type = hit.radiation}, {power = 0.2, type = hit.telepatic}},
+	l10_radar      = {{power = 0.02,   type = hit.radiation}, {power = 0.2, type = hit.telepatic}},
+	l11_pripyat    = {{power = 0.02,   type = hit.radiation}, {power = 0.2, type = hit.telepatic}},
+	dead_city      = {{power = 0.01,   type = hit.radiation}, {power = 0.1, type = hit.telepatic}}
 }
 -- Нанесение хита актору в смертельной стадии выброса
 function hit_actor()
@@ -870,7 +839,6 @@ function run_vibros_effects()
     if not effects_playing then
         xr_sound.set_actor_sound("level_border_detector")
         xr_sound.set_actor_sound_factor(0.01)
-        level.add_cam_effector("camera_effects\\fatigue.anm", 2004, true, "")
         level.add_pp_effector("yantar_underground_psi.ppe", 299, true)
         level.set_pp_effector_factor(299, 1.0)
         soundtrack.strange_sounds()
@@ -882,7 +850,6 @@ end
 function stop_vibros_effects()
     if effects_playing then
         level.remove_pp_effector(1003)
-        level.remove_cam_effector(2004)
         level.remove_pp_effector(299)
         xr_sound.set_actor_sound("")
         effects_playing = nil
@@ -893,13 +860,13 @@ function pda_off()
     set_pda_params(vector():set(0.5, 0.2, 0.0))
     ui_watch.ui_show(false)
     if db.actor:dont_has_info("no_net_signal") then return end
-    if db.actor:active_slot() == 7 and not (anim and ogsr_actor_animation.allow_animation()) then
+    if db.actor:active_slot() == 7 and ogsr_actor_animation.allow_animation() and not anim_playing then
         dsh.timeout(500, function()
             local pda_anm_time = game.play_hud_motion(2, "pda_hud", "anm_empty", true, 1)
             snd_pda_dead:play(db.actor, 0, sound_object.s2d)
             ogsr_actor_animation.animation_on()
             dsh.timeout(pda_anm_time, ogsr_actor_animation.animation_off)
-            anim = true
+            anim_playing = true
         end)
     end
 end

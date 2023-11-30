@@ -398,14 +398,14 @@ function watch_wide()
         end
         local watch_anm_time
         local watch2_anm_time
-        anim_plays = true
-        animation_on()
         local function play_anim()
             local time_g = time_global()
             if mc_anm_state == 1 then
                 anm_start = time_g
                 watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
                 game.play_hud_anm(anm_name, 0, 0.5, 1, false)
+        	anim_plays = true
+        	animation_on()
                 mc_anm_state = 2
             elseif mc_anm_state == 2 and time_g > anm_start + watch_anm_time then
                 if not key_release then
@@ -418,6 +418,8 @@ function watch_wide()
                         "anm_fake_idle", true, 30)
                     mc_anm_state = 3
                 end
+        	anim_plays = true
+        	animation_on()
                 ui_minimap_bioradar.hud_hide()
             elseif mc_anm_state == 3 and time_g > anm_start + watch2_anm_time then
                 watch3_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out",

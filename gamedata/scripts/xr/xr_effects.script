@@ -423,25 +423,34 @@ end
 
 -- постпроцесс и влияние удара в морду
 function actor_punch(npc)
-    if db.actor:position():distance_to_sqr(npc:position()) > 4 then
-        return
-    end
+	if db.actor:position():distance_to_sqr(npc:position()) > 4 then
+		return
+	end
 
-    local active_slot = db.actor:active_slot()
-    if active_slot ~= 1 and active_slot ~= 2 then
-        return
-    end
+	local active_slot = db.actor:active_slot()
+	if active_slot ~= 1 and
+	   active_slot ~= 2
+	then
+		return 
+	end
 
-    local active_item = db.actor:active_item()
-    if active_item then
-        db.actor:drop_item(active_item)
-    end
+	local active_item = db.actor:active_item()
+	if active_item then
+		db.actor:drop_item(active_item)
+	end
 
-    set_inactivate_input_time(30)
-    local snd_obj = xr_sound.get_safe_sound_object([[affects\hit_fist]])
-    snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	level.disable_input()
 
-    level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")
+	dsh.timeout( 5000, function()
+		level.enable_input()
+	end )
+
+	local snd_obj = xr_sound.get_safe_sound_object([[affects\hit_fist]])
+	if snd_obj then
+		snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	end
+
+	level.add_cam_effector("camera_effects\\fusker.anm", 999, false, "")		
 end
 
 -- Принудительное усыпание игрока на радаре.
@@ -555,6 +564,16 @@ end
 
 function search_gulag_job(actor, npc)
     xr_gulag.resetJob(npc)
+end
+
+function bar_arena_hit(actor, npc)
+	local h = hit()
+	h.power = 0.01
+	h.direction = npc:direction()
+	h.draftsman = db.actor 
+	h.impulse = 1
+	h.type = hit.wound
+	npc:hit(h)
 end
 
 function esc_hit_from_fox(actor, npc)
