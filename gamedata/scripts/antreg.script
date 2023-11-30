@@ -638,13 +638,9 @@ function spawn_doctor_mutantes()
 end
 
 function enemy_doc()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "swamp_doctor" then
-            obj = alife():object(npc:id())
-            npc:set_relation(game_object.enemy, db.actor)
-        end
+    local obj = level_object_by_sid(30172)
+    if obj then
+        obj:set_relation(game_object.enemy, db.actor)
     end
 end
 
@@ -665,10 +661,9 @@ function spawn_dolg_attak()
 end
 
 function del_borov()
-    local sim = alife()
-    local se_obj = sim:story_object(500)
-    if se_obj then
-        sim:release(se_obj, true)
+    local obj = alife():story_object(500)
+    if obj then
+        alife():release(obj, true)
     end
 end
 
@@ -707,18 +702,16 @@ function voronin_bar_dialog_done(first_speaker, second_speaker)
 end
 
 function del_voronin()
-    local sim = alife()
-    local se_obj = sim:story_object(9635)
-    if se_obj then
-        sim:release(se_obj, true)
+    local obj = alife():story_object(9635)
+    if obj then
+        alife():release(obj, true)
     end
 end
 
 function del_barman_dolg()
-    local sim = alife()
-    local se_obj = sim:story_object(30192)
-    if se_obj then
-        sim:release(se_obj, true)
+    local obj = alife():story_object(30192)
+    if obj then
+        alife():release(obj, true)
     end
 end
 
@@ -741,10 +734,9 @@ function spawn_pripyat()
 end
 
 function del_grig()
-    local sim = alife()
-    local se_obj = sim:story_object(30171)
-    if se_obj then
-        sim:release(se_obj, true)
+    local obj = alife():story_object(30171)
+    if obj then
+        alife():release(obj, true)
     end
 end
 
@@ -1811,18 +1803,15 @@ function del_gigant_x18()
 end
 
 function enemy_koldun()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "koldun" then
-            obj = alife():object(npc:id())
-            npc:set_relation(game_object.enemy, db.actor)
-        end
+    local obj = level_object_by_sid(32670)
+    if obj then
+        obj:set_relation(game_object.enemy, db.actor)
     end
 end
 
 function spawn_koldun()
     local obj = alife():create("koldun", vector():set(252.939, -0.050, 73.060), 428024, 498)
+    alife():assign_story_id(obj.id, story_ids.koldun)
     local obj = alife():create("koldun_stalk", vector():set(257.083, -0.135, 73.170), 429229, 498)
     local obj = alife():create("koldun_mafon", vector():set(255.388, -0.200, 71.861), 428848, 498)
 end

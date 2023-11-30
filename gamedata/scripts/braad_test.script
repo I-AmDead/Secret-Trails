@@ -829,11 +829,10 @@ function spawn_aes()
 end
 
 function set_relation(sid)
-    local npc = level_object_by_sid(9603)
-    if not npc or not npc:alive() then
-        return
+    local obj = level_object_by_sid(9603)
+    if obj or obj:alive() then
+        npc:set_character_community("monolith", 0, 0)
     end
-    npc:set_character_community("monolith", 0, 0)
 end
 
 function set_community(actor, npc)
@@ -867,7 +866,7 @@ function spawn_case()
 end
 
 function add_spot()
-    local obj = alife():story_object(9704)
+    local obj = alife():story_object(32669)
     if obj then
         level.map_add_object_spot(obj.id, "level_changer", game.translate_string("l12u_control_monolith"))
     end
@@ -1524,11 +1523,10 @@ function add_semeckii_treasure()
 end
 
 function set_jeka(sid)
-    local npc = level_object_by_sid(9634)
-    if npc == nil or npc:alive() == false then
-        return
+    local obj = level_object_by_sid(9634)
+    if obj or obj:alive() then
+        obj:set_relation(game_object.enemy, db.actor)
     end
-    npc:set_relation(game_object.enemy, db.actor)
 end
 
 function actor_has_money_15000()
@@ -1801,24 +1799,16 @@ function controler_zasada()
 end
 
 function ecolog_new()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "ecolog_new" then
-            obj = alife():object(npc:id())
-            npc:set_relation(game_object.enemy, db.actor)
-        end
+    local obj = level_object_by_sid(9942)
+    if obj then
+        obj:set_relation(game_object.enemy, db.actor)
     end
 end
 
 function yan_wound_ucen()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "yan_wound_ucen" then
-            obj = alife():object(npc:id())
-            npc:set_relation(game_object.enemy, db.actor)
-        end
+    local obj = level_object_by_sid(9641)
+    if obj then
+        obj:set_relation(game_object.enemy, db.actor)
     end
 end
 
@@ -1882,11 +1872,10 @@ function remove_spot_ban()
 end
 
 function set_relation_jila(sid)
-    local npc = level_object_by_sid(9642)
-    if npc == nil or npc:alive() == false then
-        return
+    local obj = level_object_by_sid(9642)
+    if obj or obj:alive() then
+        obj:set_character_community("stalker", 0, 0)
     end
-    npc:set_character_community("stalker", 0, 0)
 end
 
 function set_community_jila(actor, npc)
@@ -2092,57 +2081,10 @@ function knyaz_razborka()
     news_manager.send_tip(db.actor, game.translate_string("knyaz_razborka"))
 end
 
-function knyaz_set1()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:alive() and npc:name() == "razbor_ban1" then
-            obj = alife():object(npc:id())
-            npc:set_character_community("killer", 0, 0)
-        end
-    end
-end
-
-function knyaz_set2()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:alive() and npc:name() == "razbor_ban2" then
-            obj = alife():object(npc:id())
-            npc:set_character_community("killer", 0, 0)
-        end
-    end
-end
-
-function knyaz_set3()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:alive() and npc:name() == "razbor_ban3" then
-            obj = alife():object(npc:id())
-            npc:set_character_community("killer", 0, 0)
-        end
-    end
-end
-
-function knyaz_set4()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:alive() and npc:name() == "razbor_ban4" then
-            obj = alife():object(npc:id())
-            npc:set_character_community("killer", 0, 0)
-        end
-    end
-end
-
-function knyaz_set5()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:alive() and npc:name() == "razbor_ban5" then
-            obj = alife():object(npc:id())
-            npc:set_character_community("killer", 0, 0)
+function knyaz_set()
+    for a, obj in alife():objects() do
+	if obj and string.find(obj:name(), "razbor_ban") then
+            obj:set_character_community("killer", 0, 0)
         end
     end
 end
@@ -2152,23 +2094,10 @@ function razborka_begin()
     news_manager.send_tip(db.actor, game.translate_string("razborka_begin"))
 end
 
-function knyaz_set_nazad1()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "esc_krest_bratok" then
-            npc:set_character_community("bratok", 0, 0)
-            db.actor:give_info_portion("krest_razborka_set")
-        end
-    end
-end
-
-function knyaz_set_nazad2()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "esc_krest_ohr1" then
-            npc:set_character_community("bratok", 0, 0)
+function knyaz_set_nazad()
+    for a, obj in alife():objects() do
+        if obj and string.find(obj:name(), "esc_krest_ohr") then
+            obj:set_character_community("bratok", 0, 0)
         end
     end
 end
@@ -2212,7 +2141,7 @@ function new_logic()
             level.add_cam_effector("camera_effects\\prison_1.anm", 25, false, "")
             level.add_pp_effector("black.ppe", 2506, false, "")
             local sobj = alife():create("agr_und_zombi", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id())
-            npc = alife():assign_story_id(sobj.id, 9810)
+            local npc = alife():assign_story_id(sobj.id, 9810)
             ogse.reset_npc_logic(npc)
             break
         end
@@ -2293,11 +2222,10 @@ function del_item(npc, item)
 end
 
 function set_fedya(sid)
-    local npc = level_object_by_sid(9628)
-    if not npc or not npc:alive() then
-        return
+    local obj = level_object_by_sid(9628)
+    if obj or obj:alive() then
+        obj:set_relation(game_object.enemy, db.actor)
     end
-    npc:set_relation(game_object.enemy, db.actor)
 end
 
 function friendall(community1, community2)
@@ -2327,31 +2255,25 @@ end
 
 local mina_band_particle = particles_object("explosions\\explosion_fuelcan")
 local mina_band_sound = sound_object([[weapons\t_rgd5_explosion]])
-function mina_band(obj)
-    for a = 1, 65534 do
-        local obj = level.object_by_id(a)
-        if obj then
-            if obj:section() == "prov_ruk" then
-                local posit = obj:position()
-                mina_band_particle:play_at_pos(posit)
-                mina_band_sound:play_at_pos(obj, posit, 0)
-                local dist = db.actor:position():distance_to(obj:position())
-                if dist < 30 then
-                    local h = hit()
-                    h.draftsman = db.actor
-                    h.direction = vector():set(0, 0, 0)
-                    h:bone("bip01_spine")
-                    h.type = hit.explosion
-                    h.power = 0.6
-                    h.impulse = 500
-                    db.actor:hit(h)
-                    level.add_pp_effector("amk_shoot.ppe", 2011, false)
-                end
-                alife():release(alife():object(obj:id()))
-                return
-            end
+function mina_band()
+    local obj = alife():story_object(levch)
+    if obj then
+        local posit = obj:position()
+        mina_band_particle:play_at_pos(posit)
+        mina_band_sound:play_at_pos(obj, posit, 0)
+        local dist = db.actor:position():distance_to(obj:position())
+        if dist < 30 then
+            local h = hit()
+            h.draftsman = db.actor
+            h.direction = vector():set(0, 0, 0)
+            h:bone("bip01_spine")
+            h.type = hit.explosion
+            h.power = 0.6
+            h.impulse = 500
+            db.actor:hit(h)
+            level.add_pp_effector("amk_shoot.ppe", 2011, false)
         end
-        break
+        alife():release(obj)
     end
 end
 
@@ -2394,6 +2316,7 @@ end
 
 function kogot_rukzak_spawn()
     local obj = alife():create("prov_ruk", vector():set(142.93045043945, 5.8323435783386, -245.087890625), 341121, 966)
+    alife():assign_story_id(sobj.id, 32669)
 end
 
 function pda_priz_spawn()
@@ -2560,14 +2483,8 @@ function drink_adulin()
     db.actor:eat(db.actor:object("adulin"))
 end
 
-function set_lapsha()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "atp_barman" then
-            npc:set_relation(game_object.enemy, db.actor)
-        end
-    end
+function set_lapsha(first_speaker, second_speaker)
+    second_speaker:set_relation(game_object.enemy, first_speaker) 
 end
 
 function monach_spawn()
@@ -2594,12 +2511,9 @@ function krest_info()
 end
 
 function set_pri_priz()
-    local npc, obj
-    for i = 0, 65534 do
-        npc = level.object_by_id(i)
-        if npc and npc:name() == "new_prizrak" then
-            npc:set_relation(game_object.friend, db.actor)
-        end
+    local obj = level_object_by_sid(9608)
+    if obj then
+        obj:set_relation(game_object.friend, db.actor)
     end
 end
 
