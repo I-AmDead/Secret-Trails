@@ -1181,43 +1181,6 @@ end
 function actor_net_spawn()
     -- level.add_call(function() return device().precache_frame < 2 end,fill_restricted_by_anomaly)
 end
---[==[ --Нам это не нужно, потому что система обхода аномалий сама исключит такие ситуации, нпсу просто запрещено заходить в аномалии, метод npc:accessible(...) не позволит.
--- находит все предметы на уровне
-function fill_restricted_by_anomaly()
-	local sim,ggraph,is_anomaly = alife(),game_graph(),rx_utils.is_anomaly
-	local seobj,gv,vpos = sim.object,ggraph.vertex,level.vertex_position
-	local clid,items,anoms,obj = sim:level_id(),{},{}
-	for id = 1,65534 do
-		obj = seobj(sim,id)
-		if obj and obj.parent_id > 65534 and gv(ggraph,obj.m_game_vertex_id):level_id() == clid then
-			local cls_id = obj:clsid()
-			if is_anomaly(nil,cls_id) then
---				if vpos(obj.m_level_vertex_id):distance_to_sqr(obj.position) < 25 then
-					table.insert(anoms,level.object_by_id(obj.id))
---				end
-			elseif item_clsids[cls_id] then
-				local tbl = items[obj.m_level_vertex_id]
-				if not tbl then
-					tbl = {}
-					items[obj.m_level_vertex_id] = tbl
-				end
-				table.insert(tbl,obj)
-			end
-		end
-	end
-	for vid,item in pairs(items) do
-		local pos = vpos(vid)
-		for i = 1,#anoms do
-			if anoms[i]:inside(pos,2.7) then
-				for i = 1,#item do
-					restricted[item[i].id] = r_anomaly
-				end
-				break
-			end
-		end
-	end
-end
---]==]
 
 function corpse_net_spawn(npc)
     local whodid = rx_ai.get_var(npc, "cd_restr")
