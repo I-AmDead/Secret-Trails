@@ -46,7 +46,7 @@ uniform float3 gasmask_inertia;
 uniform float3 device_inertia;
 
 uniform float3 eye_direction;
-float4 m_cam_inertia_smooth;
+uniform float4 m_cam_inertia_smooth;
 
 //Gasmask settings
 #define GM_DIST_INT 0.05 //Refraction intensity

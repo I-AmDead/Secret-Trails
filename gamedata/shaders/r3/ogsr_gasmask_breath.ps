@@ -33,7 +33,8 @@ float4 main(p_screen I) : SV_Target
 {
     //texcoord
     float2 texcoord = I.tc0;
-    float3 image = s_image.Sample(smp_rtlinear, texcoord).xyz;
+    float3 image_orig = s_image.Sample(smp_rtlinear, texcoord).xyz;
+    float3 image = image_orig;
     float3 image_blur = s_image_blurred.Sample(smp_rtlinear, texcoord).xyz;
     texcoord = applyInertia(texcoord);
 
@@ -66,5 +67,5 @@ float4 main(p_screen I) : SV_Target
     image_blur = lerp(image_blur, glossyTex, .25);
 
     image = lerp(image, image_blur, circleTex.xyz); // add our blurred area to the main texture
-    return float4(image.xyz,1.0);
+    return float4(image, 1.0);
 }

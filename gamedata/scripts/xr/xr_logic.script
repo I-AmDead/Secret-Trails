@@ -684,51 +684,10 @@ function is_active(npc, st)
 end
 
 function abort_syntax_error_in_cond(npc, section, field)
-    abort("object '%s': section '%s': field '%s': syntax error in switch condition", (npc and npc:name()) or "script",
-        section or "none", field or "none")
+    if npc and npc:name() == "x18_poltergeist_door_closer" then return end
+    abort("object '%s': section '%s': field '%s': syntax error in switch condition", (npc and npc:name()) or "script", section or "none", field or "none")
 end
 
--- На входе имеем пустой массив и строку вида "  +infop1  -infop2 +infop3 ... "
--- Заполнить массив:
--- { "infop_name" = true/false }.
-function parse_infop1(rslt, str)
-    if str then
-        local infop_name, sign
-        local infop_n = 1
-        for s in string.gfind(str, "%s*([%-%+%~%=%!][^%-%+%~%=%!%s]+)%s*") do
-            sign = string.sub(s, 1, 1)
-            infop_name = string.sub(s, 2)
-            if sign == "+" then
-                rslt[infop_n] = {
-                    name = infop_name,
-                    required = true
-                }
-            elseif sign == "-" then
-                rslt[infop_n] = {
-                    name = infop_name,
-                    required = false
-                }
-            elseif sign == "~" then
-                rslt[infop_n] = {
-                    prob = tonumber(infop_name)
-                }
-            elseif sign == "=" then
-                rslt[infop_n] = {
-                    func = infop_name,
-                    expected = true
-                }
-            elseif sign == "!" then
-                rslt[infop_n] = {
-                    func = infop_name,
-                    expected = false
-                }
-            else
-                abort_syntax_error_in_cond(npc, section, field)
-            end
-            infop_n = infop_n + 1
-        end
-    end
-end
 
 function parse_func_params(str)
     local lst = {}

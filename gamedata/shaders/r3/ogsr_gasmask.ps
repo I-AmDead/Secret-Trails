@@ -70,14 +70,13 @@ float4 main(p_screen I) : SV_Target
     float distFromCenter = length(refr_tc.xy - center);
     image = lerp(image, blurredImage, (m_actor_params.y / 10) * abs(distFromCenter * 1.5));
 
+    //Add glass reflection on top
+    if (mask_control.z == 1)
+    	image = visor_reflection(image, I.tc0.xy);
 
     //Mix gasmask cracks with image
     image += (gasmask_tex.w * image) * GM_DIFF_INT;
-
-    //Add glass reflection on top
-    if (mask_control.z == 1)	
-    	image = visor_reflection(image, I.tc0.xy);
-		
+	
     //Output
     return float4(image, 1.0);
 } 

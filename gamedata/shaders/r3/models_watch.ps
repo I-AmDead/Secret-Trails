@@ -2,6 +2,8 @@
 #include "sload.h"
 #include "screenspace_hud_raindrops.h"
 
+uniform float4 m_affects;
+
 f_deffer main(p_flat I)
 {
     f_deffer O;
@@ -34,6 +36,9 @@ f_deffer main(p_flat I)
 
     // diffuse
     float3 D = tbase(I.tcdh); // IN:  rgb.a
+
+    if (m_affects.x > 0.41)
+	D = 0.1f;
 
 #ifdef USE_TDETAIL
     //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;

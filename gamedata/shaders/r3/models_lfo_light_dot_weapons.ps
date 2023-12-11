@@ -14,9 +14,11 @@ float random(float2 p)
     return frac(cos(dot(p, K1)) * 12345.6789f);
 }
 
+float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
+
 float4 main(p_flat I, float4 pos2d : SV_Position, float2 tc0 : TEXCOORD0) : SV_Target
 {
-    float factor = screen_res.y / 2160.0;
+    float factor = screen_res.y / 1480.0;
     factor = factor * (1.0 / (m_hud_params.z / 0.45)) * 0.75;
     float size = 512.0 * factor;
 
@@ -29,6 +31,13 @@ float4 main(p_flat I, float4 pos2d : SV_Position, float2 tc0 : TEXCOORD0) : SV_T
     float mig = 1.0f - (m_affects.x * 2.f);
 
     float4 final = s_base.Load(pos2d.xyz) * m_hud_params.x;
+
+    final.rgb = final.rgb * 0.8;
+
+    float noise = get_noise(tc0 * timers.z) * 0.25 * 0.25 * 25;
+    final.r += noise;
+    final.g += noise;
+    final.b += noise;
 
     return float4(final.r, final.g, final.b, random(timers.xz) > mig ? 0.f : final.a);
 }

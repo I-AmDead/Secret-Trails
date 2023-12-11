@@ -658,20 +658,16 @@ local function on_info(npc, info_id)
         db.actor:give_info_portion("krest_work_fail")
     end
 
-    if has_alife_info("krest_dead") and has_alife_info("krest_razborka_spawn")
-    and not has_alife_info("krest_razborka_done") then
+    if (has_alife_info("krest_dead") and has_alife_info("krest_razborka_spawn")
+    and not has_alife_info("krest_razborka_done")) or ((has_alife_info("razbor_ban1_see") or has_alife_info("razbor_ban2_see") or has_alife_info("razbor_ban3_see") 
+    or has_alife_info("razbor_ban4_see") or has_alife_info("razbor_ban5_see"))
+    and has_alife_info("krest_razborka_spawn") and not has_alife_info("krest_razborka_begin")) then
         db.actor:give_info_portion("krest_razborka_fail")
     end
 
     if (has_alife_info("volk_dead") or has_alife_info("esc_fanat_new_dead")) and has_alife_info("derevna_stalker_start")
     and not has_alife_info("derevna_stalker_done") then
         db.actor:give_info_portion("derevna_stalker_fail")
-    end
-
-    if (has_alife_info("razbor_ban1_see") or has_alife_info("razbor_ban2_see") or has_alife_info("razbor_ban3_see") 
-    or has_alife_info("razbor_ban4_see") or has_alife_info("razbor_ban5_see"))
-    and has_alife_info("krest_razborka_spawn") and not has_alife_info("krest_razborka_begin") then
-        db.actor:give_info_portion("krest_razborka_fail")
     end
 
     if (has_alife_info("ucen_ohr1_see") or has_alife_info("ucen_ohr2_see") or has_alife_info("ucen_ohr3_see")) 
@@ -830,7 +826,7 @@ end
 
 function set_relation(sid)
     local obj = level_object_by_sid(9603)
-    if obj or obj:alive() then
+    if obj and obj:alive() then
         npc:set_character_community("monolith", 0, 0)
     end
 end
@@ -1332,8 +1328,8 @@ end
 -- перепаковка нет-пакета созданного скриптом рестрикта
 ----------
 function rewrite_restrictor(obj, custom_data, radius)
-    local pk = get_netpk(se_obj, 1)
-    ASSERT((pk and pk:isOk()), "can't read netpacket of %s", se_obj:name())
+    local pk = get_netpk(obj, 1)
+    ASSERT((pk and pk:isOk()), "can't read netpacket of %s", obj:name())
     local data = pk:get()
     data.shapes:addSphere(
         radius, vector():set(0, 0, 0)
@@ -1523,7 +1519,7 @@ end
 
 function set_jeka(sid)
     local obj = level_object_by_sid(9634)
-    if obj or obj:alive() then
+    if obj and obj:alive() then
         obj:set_relation(game_object.enemy, db.actor)
     end
 end
@@ -1872,7 +1868,7 @@ end
 
 function set_relation_jila(sid)
     local obj = level_object_by_sid(9642)
-    if obj or obj:alive() then
+    if obj and obj:alive() then
         obj:set_character_community("stalker", 0, 0)
     end
 end
@@ -2082,8 +2078,9 @@ end
 
 function knyaz_set()
     for a, obj in alife():objects() do
-	if obj and string.find(obj:name(), "razbor_ban") then
-            obj:set_character_community("killer", 0, 0)
+        local sobj = level.object_by_id(obj)
+	    if sobj and sobj:alive() and string.find(sobj:name(), "razbor_ban") then
+            sobj:set_character_community("killer", 0, 0)
         end
     end
 end
@@ -2095,7 +2092,8 @@ end
 
 function knyaz_set_nazad()
     for a, obj in alife():objects() do
-        if obj and string.find(obj:name(), "esc_krest_ohr") then
+        local sobj = level.object_by_id(obj)
+        if sobj and sobj:alive() and string.find(sobj:name(), "esc_krest_ohr") then
             obj:set_character_community("bratok", 0, 0)
         end
     end
@@ -2222,7 +2220,7 @@ end
 
 function set_fedya(sid)
     local obj = level_object_by_sid(9628)
-    if obj or obj:alive() then
+    if obj and obj:alive() then
         obj:set_relation(game_object.enemy, db.actor)
     end
 end
@@ -2314,7 +2312,7 @@ function spawn_mervin()
 end
 
 function kogot_rukzak_spawn()
-    local obj = alife():create("prov_ruk", vector():set(142.93045043945, 5.8323435783386, -245.087890625), 341121, 966)
+    local sobj = alife():create("prov_ruk", vector():set(142.93045043945, 5.8323435783386, -245.087890625), 341121, 966)
     alife():assign_story_id(sobj.id, 32669)
 end
 

@@ -1,11 +1,12 @@
 --[[ -----------------------------------------------------------------------------------------------
-File : mini_games.script
+ File           : mini_games.script
  Description    : Мини игры
-Copyright : 2011 © Stalk15
-Author : Stalk15
-Last edit : 26.02.2011
+ Copyright      : 2011 © Stalk15 
+ Author         : Stalk15
+ Last edit      : 14.04.2012 
 
 --]] -----------------------------------------------------------------------------------------------
+---///////////////////////////////////////// Игра "21 Очко"/////////////////////////////////////////---
 local tCards = {
     [6.001] = "card_six_c",
     [6.002] = "card_six_p",
@@ -53,12 +54,9 @@ local tCards = {
     [11.004] = "card_tuz_k"
 }
 
----///////////////////////////////////////// Игра "21 Очко"/////////////////////////////////////////---
-
 local Btn1, Btn2, Btn3, Btn4, Btn5
-local ActorPoints, NpcPoints = 0, 0
+local ActorPoints, NpcPoints, Stavka = 0, 0, 100
 local tNpcCards = {}
-local Stavka = 100
 
 local xml = CScriptXmlInit()
 class "card_game_21p"(CUIScriptWnd)
@@ -81,7 +79,7 @@ function card_game_21p:InitControls()
     xml:InitStatic("card_game_21p:picture_21p", self)
     xml:InitStatic("card_game_21p:txt_stavka", self)
     self.edit_stavka = xml:InitEditBox("card_game_21p:edit_box", self)
-    --/Кнопки   
+    -- /Кнопки   
     self:Register(xml:Init3tButton("card_game_21p:btn_start_game", self), "btn_start_game")
     self:Register(xml:Init3tButton("card_game_21p:take_card", self), "take_card")
     self:Register(xml:Init3tButton("card_game_21p:perevod_hoda", self), "perevod_hoda")
@@ -106,51 +104,49 @@ function card_game_21p:InitCallBacks()
     self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.on_quit, self)
 end
 
+function card_game_21p:OnKeyboard(dik, keyboard_action)
+    CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+    if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+        if dik == DIK_keys.DIK_ESCAPE then
+            self:ClearCallbacks()
+        end
+    end
+end
+
+local tPosCards = {
+    [1] = {55, 280},
+    [2] = {145, 280},
+    [3] = {235, 280},
+    [4] = {325, 280},
+    [5] = {415, 280},
+    [6] = {55, 40},
+    [7] = {145, 40},
+    [8] = {235, 40},
+    [9] = {325, 40},
+    [10] = {415, 40}
+}
+
 function card_game_21p:card_game_21_start()
-    local text = self.edit_stavka:GetText()
-    if tonumber(text) > 5000 or tonumber(text) < 500 or db.actor:money() < tonumber(text) then
-        level.start_stop_menu(mini_games.GameMessege("Минимальная ставка - 500, максимальная - 5000.", "Не корректная ставка или у Вас нет таких денег!"), true)
+    Stavka = tonumber(self.edit_stavka:GetText())
+    if Stavka > 5000 or Stavka < 500 or db.actor:money() < Stavka then
+        Btn1:Enable(true)
+        level.start_stop_menu(mini_games.GameMessege(game.translate_string("minigames_bets_info_5000_text"), game.translate_string("minigames_incorrect_bet_text")), true)
         return false
     end
-    Stavka = tonumber(text)
     local NpcCard1, NpcCard2 = 0, 0
-    local ActorCard1 = GetRndItemFromTable(tCards)
-    local ActorCard2 = GetRndItemFromTable(tCards)
-    local card = xml:InitStatic("card_game_21p:" .. ActorCard1, self)
-    card:SetWindowName("ActorCards")
-    card:SetWndPos(50, 280)
-    card = xml:InitStatic("card_game_21p:" .. ActorCard2, self)
-    card:SetWindowName("ActorCards")
-    card:SetWndPos(140, 280)
-
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("ActorNilCard1")
-    card:SetWndPos(230, 280)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("ActorNilCard2")
-    card:SetWndPos(320, 280)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("ActorNilCard3")
-    card:SetWndPos(410, 280)
+    local ActorCard1, ActorCard2 = GetRndItemFromTable(tCards), GetRndItemFromTable(tCards)
+    self:InitStaticCard("card_game_21p:" .. ActorCard1, "ActorCards", 1)
+    self:InitStaticCard("card_game_21p:" .. ActorCard2, "ActorCards", 2)
+    for i = 1, 3 do
+        self:InitStaticCard("card_game_21p:card_rubaha", "ActorNilCard" .. i, i + 2)
+    end
     NpcCard1 = GetRndItemFromTable(tCards)
     NpcCard2 = GetRndItemFromTable(tCards)
     table.insert(tNpcCards, NpcCard1)
     table.insert(tNpcCards, NpcCard2)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("NpcNilCard1")
-    card:SetWndPos(50, 40)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("NpcNilCard2")
-    card:SetWndPos(140, 40)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("NpcNilCard3")
-    card:SetWndPos(230, 40)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("NpcNilCard4")
-    card:SetWndPos(320, 40)
-    card = xml:InitStatic("card_game_21p:card_rubaha", self)
-    card:SetWindowName("NpcNilCard5")
-    card:SetWndPos(410, 40)
+    for j = 1, 5 do
+        self:InitStaticCard("card_game_21p:card_rubaha", "NpcNilCard" .. j, j + 5)
+    end
     ActorPoints = math.floor(CardToNum(ActorCard1) + CardToNum(ActorCard2))
     NpcPoints = math.floor(CardToNum(NpcCard1) + CardToNum(NpcCard2))
     Btn2:Enable(true)
@@ -160,31 +156,36 @@ function card_game_21p:card_game_21_start()
     Btn5:Enable(false)
 end
 
+function card_game_21p:InitStaticCard(StaticXmlName, StaticWndName, WndPos)
+    local card = xml:InitStatic(StaticXmlName, self)
+    card:SetWindowName(StaticWndName)
+    card:SetWndPos(unpack(tPosCards[WndPos]))
+end
+
 function card_game_21p:take_card()
+    local static1, static2, static3 = self:GetStatic("ActorNilCard1"), self:GetStatic("ActorNilCard2"), self:GetStatic("ActorNilCard3")
+    if static1 == nil and static2 == nil and static3 == nil then
+        self:perevod_hoda()
+        return false
+    end
     local ActorCard = GetRndItemFromTable(tCards)
     ActorPoints = math.floor(ActorPoints + CardToNum(ActorCard))
-    local static1, static2, static3 = self:GetStatic("ActorNilCard1"), self:GetStatic("ActorNilCard2"), self:GetStatic("ActorNilCard3")
     if static1 ~= nil then
         self:DetachChild(static1)
-        card = xml:InitStatic("card_game_21p:" .. ActorCard, self)
-        card:SetWindowName("ActorCards")
-        card:SetWndPos(230, 280)
+        self:InitStaticCard("card_game_21p:" .. ActorCard, "ActorCards", 3)
     elseif static2 ~= nil then
         self:DetachChild(static2)
-        card = xml:InitStatic("card_game_21p:" .. ActorCard, self)
-        card:SetWindowName("ActorCards")
-        card:SetWndPos(320, 280)
+        self:InitStaticCard("card_game_21p:" .. ActorCard, "ActorCards", 4)
     elseif static3 ~= nil then
         self:DetachChild(static3)
-        card = xml:InitStatic("card_game_21p:" .. ActorCard, self)
-        card:SetWindowName("ActorCards")
-        card:SetWndPos(410, 280)
+        self:InitStaticCard("card_game_21p:" .. ActorCard, "ActorCards", 5)
     end
 end
 
 function card_game_21p:next_tur()
     self:Reset21()
-    Btn1:Enable(true)
+    self:card_game_21_start()
+    --	Btn1:Enable(true)
     Btn5:Enable(false)
 end
 
@@ -192,29 +193,19 @@ function card_game_21p:add_npc_card(NpcCard)
     local static1, static2, static3, static4, static5 = self:GetStatic("NpcNilCard1"), self:GetStatic("NpcNilCard2"), self:GetStatic("NpcNilCard3"), self:GetStatic("NpcNilCard4"), self:GetStatic("NpcNilCard5")
     if static1 ~= nil then
         self:DetachChild(static1)
-        self.NpcCard1 = xml:InitStatic("card_game_21p:" .. NpcCard, self)
-        self.NpcCard1:SetWindowName("ActorCards")
-        self.NpcCard1:SetWndPos(50, 40)
+        self:InitStaticCard("card_game_21p:" .. NpcCard, "ActorCards", 6)
     elseif static2 ~= nil then
         self:DetachChild(static2)
-        NpcCard2 = xml:InitStatic("card_game_21p:" .. NpcCard, self)
-        NpcCard2:SetWindowName("ActorCards")
-        NpcCard2:SetWndPos(140, 40)
+        self:InitStaticCard("card_game_21p:" .. NpcCard, "ActorCards", 7)
     elseif static3 ~= nil then
         self:DetachChild(static3)
-        NpcCard3 = xml:InitStatic("card_game_21p:" .. NpcCard, self)
-        NpcCard3:SetWindowName("ActorCards")
-        NpcCard3:SetWndPos(230, 40)
+        self:InitStaticCard("card_game_21p:" .. NpcCard, "ActorCards", 8)
     elseif static4 ~= nil then
         self:DetachChild(static4)
-        NpcCard4 = xml:InitStatic("card_game_21p:" .. NpcCard, self)
-        NpcCard4:SetWindowName("ActorCards")
-        NpcCard4:SetWndPos(320, 40)
+        self:InitStaticCard("card_game_21p:" .. NpcCard, "ActorCards", 9)
     elseif static5 ~= nil then
         self:DetachChild(static5)
-        NpcCard5 = xml:InitStatic("card_game_21p:" .. NpcCard, self)
-        NpcCard5:SetWindowName("ActorCards")
-        NpcCard5:SetWndPos(410, 40)
+        self:InitStaticCard("card_game_21p:" .. NpcCard, "ActorCards", 10)
     end
 end
 
@@ -244,12 +235,12 @@ function card_game_21p:perevod_hoda()
         self:add_npc_card(tNpcCards[i])
     end
     if ActorPoints == NpcPoints or ActorPoints > 21 and NpcPoints > 21 then
-        level.start_stop_menu(mini_games.GameMessege("Ваши очки: " ..math.floor(ActorPoints).. " . Очки соперника: ".. math.floor(NpcPoints), "Ничья!"), true)
+        level.start_stop_menu(mini_games.GameMessege(string.format(game.translate_string("minigames_blackjack_pattern_1_text"), math.floor(ActorPoints), math.floor(NpcPoints)), game.translate_string("minigames_draw_text")), true)
     elseif ActorPoints > NpcPoints and ActorPoints < 22 or NpcPoints > 21 and ActorPoints < 22 then
-        level.start_stop_menu(mini_games.GameMessege("Ваши очки: " ..math.floor(ActorPoints).. " . Очки соперника: ".. math.floor(NpcPoints).. ". Получены деньги:"..Stavka, "Вы выиграли!"), true)
+        level.start_stop_menu(mini_games.GameMessege(string.format(game.translate_string("minigames_blackjack_pattern_2_text"), math.floor(ActorPoints), math.floor(NpcPoints), Stavka), game.translate_string("minigames_win_text")), true)
         db.actor:give_money(Stavka)
     elseif ActorPoints < NpcPoints and NpcPoints < 22 or ActorPoints > 21 and NpcPoints < 22 then
-        level.start_stop_menu(mini_games.GameMessege("Ваши очки: " ..math.floor(ActorPoints).. " . Очки соперника: ".. math.floor(NpcPoints).. ". Потеряны деньги:"..Stavka, "Вы проиграли!"), true)
+        level.start_stop_menu(mini_games.GameMessege(string.format(game.translate_string("minigames_blackjack_pattern_3_text"), math.floor(ActorPoints), math.floor(NpcPoints), Stavka), game.translate_string("minigames_lose_text")), true)
         db.actor:give_money(-Stavka)
     end
     Btn4:Enable(true)
@@ -261,6 +252,7 @@ end
 function card_game_21p:on_quit()
     self:Reset21()
     self:GetHolder():start_stop_menu(self, true)
+    self:ClearCallbacks()
 end
 
 function card_game_21p:Reset21()
@@ -269,22 +261,14 @@ function card_game_21p:Reset21()
         stati = self:GetStatic("ActorCards")
         self:DetachChild(stati)
     end
-    stati = self:GetStatic("NpcNilCard1")
-    self:DetachChild(stati)
-    stati = self:GetStatic("NpcNilCard2")
-    self:DetachChild(stati)
-    stati = self:GetStatic("NpcNilCard3")
-    self:DetachChild(stati)
-    stati = self:GetStatic("NpcNilCard4")
-    self:DetachChild(stati)
-    stati = self:GetStatic("NpcNilCard5")
-    self:DetachChild(stati)
-    stati = self:GetStatic("ActorNilCard1")
-    self:DetachChild(stati)
-    stati = self:GetStatic("ActorNilCard2")
-    self:DetachChild(stati)
-    stati = self:GetStatic("ActorNilCard3")
-    self:DetachChild(stati)
+    for i = 1, 5 do
+        stati = self:GetStatic("NpcNilCard" .. i)
+        self:DetachChild(stati)
+        stati = self:GetStatic("ActorNilCard" .. i)
+        if stati then
+            self:DetachChild(stati)
+        end
+    end
     ActorPoints, NpcPoints = 0, 0
     this.ttInit()
     tNpcCards = {}
@@ -354,262 +338,7 @@ function game_21p_start()
     level.start_stop_menu(mini_games.card_game_21p(), true)
 end
 
-
----------------------------------------------- Игра "Вопросы" ---------------------------------------------------------
-local tQuestions = {
-    [1] = {"question_1", "Собака", "Кровосос", "Псевдопес", "Кабан"},
-    [2] = {"question_2", "Трамплин", "Воронка", "Жгучий пух", "Электра"},
-    [3] = {"question_3", "Жгучий пух", "Трамплин", "Холодец", "Неизвестно"},
-    [4] = {"question_4", "4", "3", "2", "1"},
-    [5] = {"question_5", "Слизь", "Слюда", "Каменный цветок", "Ни какой"},
-    [6] = {"question_6", "Золотая рыбка", "Лунный свет", "Нет такого", "Колобок"},
-    [7] = {"question_7", "Бульдог", "Кабан", "Теленок", "Свинья"},
-    [8] = {"question_8", "Собак", "Свиней", "Зайцев", "Волков"},
-    [9] = {"question_9", "Оба правы", "2-ой Сталкер", "Ни кто не прав", "1-ый Сталкер"},
-    [10] = {"question_10", "Лифт", "Машина времени", "Ржавые волосы", "Гейзер"},
-    [11] = {"question_11", "Душа", "Морской еж", "Колобок", "Лунный свет"},
-    [12] = {"question_12", "Жгучий пух", "Холодец", "Карусель", "Электра"},
-    [13] = {"question_13", "1", "2", "3", "4"},
-    [14] = {"question_14", "Воронка", "Ржавые волосы", "Карусель", "Трамплин"},
-    [15] = {"question_15", "Монолит", "Экологи", "Военные", "Наемники"},
-    [16] = {"question_16", "Боров", "Клык", "Макс", "Призрак"},
-    [17] = {"question_17", "Призрак", "Швид", "Семецкий", "Клык"},
-    [18] = {"question_18", "Абакан", "ГП37", "ИЛ86", "'Гроза'"},
-    [19] = {"question_19", "Винторез", "СВД", "ФТ 200М", "СВУ"},
-    [20] = {"question_20", "Ласточка", "Нет названия", "Крепление 'П-1'", "Планка 'Пикатини'"},
-    [21] = {"question_21", "1", "2", "3", "4"},
-    [22] = {"question_22", "МИ-28", "МИ-24", "МИ-6", "МИ-8"},
-    [23] = {"question_23", "M203", "ПСО-1", "Вопрос не верен", "ГП-25 'Костёр'"},
-    [24] = {"question_24", "1950", "1952", "1986", "1974"},
-    [25] = {"question_25", "ПМм", "Фора-12Мк2", "Кора-919", "Марта"},
-    [26] = {"question_26", "Черный ястреб", "ХПСС-1м", "Кора-919", "Фора-12Мк2"},
-    [27] = {"question_27", "УДП Компакт", "Кора-919", "Марта", "ХПСС-1м"},
-    [28] = {"question_28", "Сталкеры-Одиночки", "Экологи", "Бандиты", "Свобода"},
-    [29] = {"question_29", "1", "4", "5", "3"},
-    [30] = {"question_30", "Трамплин", "Воронка", "Холодец", "Карусель"}
-}
-
-local WinSumma, NowQueFromAll = 0, 0
-local SelectQuestion = 1
-local tUsedQuestions = {}
-local CoefUpWinSumma = 1.25 --/Коефицент, увеличивающий выигрыш при каждом правильном ответе
-class "game_voprosy"(CUIScriptWnd)
-function game_voprosy:__init()
-    super()
-    self:InitControls()
-    self:InitCallBacks()
-end
-
-function game_voprosy:__finalize()
-end
-
-local btn_otvet_1, btn_otvet_2, btn_otvet_3, btn_otvet_4, btn_QstartG, btn_next_que, btn_quit_q
-function game_voprosy:InitControls()
-    self:SetWndRect(Frect():set(200, 177, 1000, 1000))
-    xml:ParseFile("script_wnd\\ui_mini_games.xml")
-    self.wind_v = xml:InitStatic("game_voprosy:background", self)
-    xml:InitStatic("game_voprosy:caption", self)
-
-    self:Register(xml:Init3tButton("game_voprosy:btn_start", self), "btn_start")
-    self:Register(xml:Init3tButton("game_voprosy:btn_otvet_1", self), "btn_otvet_1")
-    self:Register(xml:Init3tButton("game_voprosy:btn_otvet_2", self), "btn_otvet_2")
-    self:Register(xml:Init3tButton("game_voprosy:btn_otvet_3", self), "btn_otvet_3")
-    self:Register(xml:Init3tButton("game_voprosy:btn_otvet_4", self), "btn_otvet_4")
-    self:Register(xml:Init3tButton("game_voprosy:btn_next_que", self), "btn_next_que")
-    self:Register(xml:Init3tButton("game_voprosy:btn_quit", self), "btn_quit")
-
-    btn_otvet_1 = self:GetButton("btn_otvet_1")
-    btn_otvet_2 = self:GetButton("btn_otvet_2")
-    btn_otvet_3 = self:GetButton("btn_otvet_3")
-    btn_otvet_4 = self:GetButton("btn_otvet_4")
-    btn_QstartG = self:GetButton("btn_start")
-    btn_next_que = self:GetButton("btn_next_que")
-    btn_quit_q = self:GetButton("btn_quit")
-    btn_otvet_1:Show(false)
-    btn_otvet_2:Show(false)
-    btn_otvet_3:Show(false)
-    btn_otvet_4:Show(false)
-    btn_next_que:Show(false)
-end
-
-function game_voprosy:InitCallBacks()
-    self:AddCallback("btn_start", ui_events.BUTTON_CLICKED, self.btn_start, self)
-    self:AddCallback("btn_otvet_1", ui_events.BUTTON_CLICKED, self.btn_otvet_1, self)
-    self:AddCallback("btn_otvet_2", ui_events.BUTTON_CLICKED, self.btn_otvet_2, self)
-    self:AddCallback("btn_otvet_3", ui_events.BUTTON_CLICKED, self.btn_otvet_3, self)
-    self:AddCallback("btn_otvet_4", ui_events.BUTTON_CLICKED, self.btn_otvet_4, self)
-    self:AddCallback("btn_next_que", ui_events.BUTTON_CLICKED, self.btn_next_que, self)
-    self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.on_quit_voprosy, self)
-end
-
-function GetQuestion()
-    SelectQuestion = math.random(#tQuestions)
-    if #tUsedQuestions ~= #tQuestions then
-        while is_not_used_question(SelectQuestion) do
-            SelectQuestion = math.random(#tQuestions)
-        end
-    end
-    if #tUsedQuestions == #tQuestions then
-        btn_quit_q:Enable(true)
-        btn_next_que:Enable(false)
-        db.actor:give_money(WinSumma)
-        level.start_stop_menu(mini_games.GameMessege("Победа! Получены деньги: "..WinSumma, "Вы выиграли!"), true)
-        return false
-    end
-    if #tUsedQuestions < #tQuestions then
-        table.insert(tUsedQuestions, SelectQuestion)
-    end
-    local Question = tQuestions[SelectQuestion][1]
-    local value_1 = tQuestions[SelectQuestion][2]
-    local value_2 = tQuestions[SelectQuestion][3]
-    local value_3 = tQuestions[SelectQuestion][4]
-    local value_4 = tQuestions[SelectQuestion][5]
-    if Question and value_1 and value_2 and value_3 and value_4 then
-        return Question, value_1, value_2, value_3, value_4
-    end
-end
-
-function is_not_used_question(Q)
-    local n = 0
-    local TLen = #tUsedQuestions
-    for k = 1, TLen do
-        if tUsedQuestions[k] == Q then
-            break
-        end
-        n = n + 1
-    end
-    if n ~= TLen then
-        return true
-    end
-end
-
-function game_voprosy:btn_start()
-    btn_otvet_1:Show(true)
-    btn_otvet_2:Show(true)
-    btn_otvet_3:Show(true)
-    btn_otvet_4:Show(true)
-    btn_next_que:Show(true)
-    btn_QstartG:Enable(false)
-    btn_next_que:Enable(false)
-    btn_quit_q:Enable(false)
-    self:set_question()
-end
-
-function game_voprosy:btn_next_que()
-    self:set_question()
-end
-
-function game_voprosy:set_question()
-    local Question, value_1, value_2, value_3, value_4 = GetQuestion()
-    if NowQueFromAll > 0 then
-        self:DetachChild(self.text_q)
-        if WinSumma < 1 then
-            WinSumma = 500
-        end
-    end
-    if not Question then
-        return false
-    end
-    btn_next_que:Enable(false)
-    local tN = {value_1, value_2, value_3, value_4}
-    self.text_q = xml:InitStatic("game_voprosy:" .. Question, self)
-
-    NowQueFromAll = NowQueFromAll + 1
-    WinSumma = math.floor(WinSumma * CoefUpWinSumma)
-    local d1 = math.random(1, 4)
-    local d2 = math.random(1, 3)
-    local d3 = math.random(1, 2)
-
-    local q1 = tN[d1]
-    table.remove(tN, d1)
-    local q2 = tN[d2]
-    table.remove(tN, d2)
-    local q3 = tN[d3]
-    table.remove(tN, d3)
-    local q4 = tN[1]
-
-    btn_otvet_1:SetText(q1)
-    btn_otvet_2:SetText(q2)
-    btn_otvet_3:SetText(q3)
-    btn_otvet_4:SetText(q4)
-    btn_otvet_1:Enable(true)
-    btn_otvet_2:Enable(true)
-    btn_otvet_3:Enable(true)
-    btn_otvet_4:Enable(true)
-    self:on_game_info()
-end
-
-function game_voprosy:on_game_info()
-    if NowQueFromAll > 1 then
-        self.wind_v:DetachChild(self.text_GInfo1)
-        self.wind_v:DetachChild(self.text_GInfo2)
-    end
-    self.text_GInfo1 = CUIStatic()
-    self.text_GInfo1:Init(-190, 400, 650, 30)
-    self.text_GInfo1:SetText("Текущий выигрыш: "..WinSumma)
-    self.text_GInfo1:SetFont(GetFontGraffiti22Russian())
-    self.text_GInfo1:SetTextAlign(2)
-    self.wind_v:AttachChild(self.text_GInfo1)
-
-    self.text_GInfo2 = CUIStatic()
-    self.text_GInfo2:Init(-200, 375, 650, 30)
-    self.text_GInfo2:SetText("Текущий вопрос:".." "..NowQueFromAll.." ".."из 30")
-    self.text_GInfo2:SetFont(GetFontGraffiti22Russian())
-    self.text_GInfo2:SetTextAlign(2)
-    self.wind_v:AttachChild(self.text_GInfo2)
-end
-
-function game_voprosy:btn_otvet_1()
-    self:on_otvet(btn_otvet_1)
-end
-
-function game_voprosy:btn_otvet_2()
-    self:on_otvet(btn_otvet_2)
-end
-
-function game_voprosy:btn_otvet_3()
-    self:on_otvet(btn_otvet_3)
-end
-
-function game_voprosy:btn_otvet_4()
-    self:on_otvet(btn_otvet_4)
-end
-
-function game_voprosy:on_otvet(Btn)
-    btn_otvet_1:Enable(false)
-    btn_otvet_2:Enable(false)
-    btn_otvet_3:Enable(false)
-    btn_otvet_4:Enable(false)
-    local text = Btn:GetText()
-    if tostring(text) == tostring(tQuestions[SelectQuestion][5]) then
-        btn_next_que:Enable(true)
-    else
-        btn_quit_q:Enable(true)
-        level.start_stop_menu(mini_games.GameMessege("Неудача!", "Вы проиграли!"), true)
-        self:DetachChild(self.text_q)
-    end
-end
-
-function game_voprosy:on_quit_voprosy()
-    self.wind_v:DetachChild(self.text_GInfo1)
-    self.wind_v:DetachChild(self.text_GInfo2)
-    btn_otvet_1:Show(false)
-    btn_otvet_2:Show(false)
-    btn_otvet_3:Show(false)
-    btn_otvet_4:Show(false)
-    btn_next_que:Show(false)
-    btn_QstartG:Enable(true)
-    SelectQuestion = nil
-    tUsedQuestions = {}
-    WinSumma, NowQueFromAll = 0, 0
-    self:GetHolder():start_stop_menu(self, true)
-end
-
-function game_questions_start()
-    level.start_stop_menu(mini_games.game_voprosy(), true)
-end
-
----------------------------------------------- Игра "Угадай, где шарик" ---------------------------------------------------------
+---///////////////////////////////////////// Игра "Угадай, где шарик" /////////////////////////////////////////---
 local tPosBall = {
     [1] = {110, 130},
     [2] = {240, 130},
@@ -618,8 +347,7 @@ local tPosBall = {
 local SelectedPosBall, StavkaWBG = 0, 0
 
 class "MGame_WhereBall"(CUIScriptWnd)
-function MGame_WhereBall:__init()
-    super()
+function MGame_WhereBall:__init() super()
     self:InitControls()
     self:InitCallBacks()
 end
@@ -665,12 +393,12 @@ function MGame_WhereBall:InitCallBacks()
 end
 
 function MGame_WhereBall:btn_start()
-    local text = self.edit_stavka:GetText()
-    if tonumber(text) < 500 or tonumber(text) > 1000 or db.actor:money() < tonumber(text) then
+    StavkaWBG = tonumber(self.edit_stavka:GetText())
+    if not StavkaWBG or StavkaWBG < 500 or StavkaWBG > 2000 or db.actor:money() < StavkaWBG then
         self:error_stavka()
+        btn_start_WB:Enable(true)
         return false
     end
-    StavkaWBG = tonumber(text)
     btn_select_ball_1:Show(true)
     btn_select_ball_2:Show(true)
     btn_select_ball_3:Show(true)
@@ -688,7 +416,7 @@ function MGame_WhereBall:btn_start()
 end
 
 function MGame_WhereBall:error_stavka()
-    level.start_stop_menu(mini_games.GameMessege("Минимальная ставка - 500, максимальная - 1000.", "Не корректная ставка или у Вас нет таких денег!"), true)
+    level.start_stop_menu(mini_games.GameMessege(game.translate_string("minigames_bets_info_2000_text"), game.translate_string("minigames_incorrect_bet_text")), true)
 end
 
 function MGame_WhereBall:btn_select_ball_1()
@@ -705,10 +433,10 @@ end
 
 function MGame_WhereBall:select_ball(n)
     if SelectedPosBall == n then
-        level.start_stop_menu(mini_games.GameMessege("Вы угадали! Получены деньги: ".." "..StavkaWBG, "Вы выиграли!"), true)
+        level.start_stop_menu(mini_games.GameMessege(string.format(game.translate_string("minigames_katala_pattern_1_text"), tostring(StavkaWBG)), game.translate_string("minigames_win_text")), true)
         db.actor:give_money(StavkaWBG)
     else
-        level.start_stop_menu(mini_games.GameMessege("Вы не угадали! Потеряны деньги: ".." "..StavkaWBG, "Вы проиграли!"), true)
+        level.start_stop_menu(mini_games.GameMessege(string.format(game.translate_string("minigames_katala_pattern_2_text"), tostring(StavkaWBG)), game.translate_string("minigames_lose_text")), true)
         db.actor:give_money(-StavkaWBG)
     end
     btn_play_else:Enable(true)
@@ -719,9 +447,10 @@ function MGame_WhereBall:select_ball(n)
 end
 
 function MGame_WhereBall:btn_play_else()
-    btn_start_WB:Enable(true)
+    --	btn_start_WB:Enable(true)
     btn_play_else:Enable(false)
     self:Reset()
+    self:btn_start()
 end
 
 function MGame_WhereBall:Reset()
@@ -747,207 +476,43 @@ end
 function MGame_WhereBall:btn_quit()
     self:Reset()
     self:GetHolder():start_stop_menu(self, true)
+    self:ClearCallbacks()
 end
 
 function game_where_ball_start()
     level.start_stop_menu(mini_games.MGame_WhereBall(), true)
 end
 
----------------------------------------------- Игра "Угадай число" ---------------------------------------------------------
-local GuessedNum, MessGuessedNum, PGuessNum, CPUPGuessNum, StavkaWN = 0, false, 0, 0, 0
-
-class "MGame_WhatNum"(CUIScriptWnd)
-function MGame_WhatNum:__init()
-    super()
-    self:InitControls()
-    self:InitCallBacks()
+function init_mini_games_dialog_dlg(dlg)
+    phr0 = dlg:AddPhrase("mini_games_dialog_0", "0", "", -10000)
+    phr1 = dlg:AddPhrase("mini_games_dialog_1", "1", "0", -10000)
+    phr2 = dlg:AddPhrase("mini_games_dialog_2", "2", "1", -10000)
+    phr3 = dlg:AddPhrase("mini_games_dialog_3", "3", "1", -10000)
+    phr3:GetPhraseScript():AddAction("dialogs.break_dialog")
+    phr3:GetPhraseScript():AddAction("mini_games.game_21p_start")
+    phr4 = dlg:AddPhrase("mini_games_dialog_4", "4", "2", -10000)
+    phr5 = dlg:AddPhrase("mini_games_dialog_5", "5", "4", -10000)
+    phr5:GetPhraseScript():AddAction("dialogs.break_dialog")
+    phr5:GetPhraseScript():AddAction("mini_games.game_21p_start")
+    phr6 = dlg:AddPhrase("mini_games_dialog_6", "6", "4", -10000)
+    phr7 = dlg:AddPhrase("mini_games_dialog_7", "7", "6", -10000)
 end
 
-function MGame_WhatNum:__finalize()
+function init_mini_games_1_dialog_dlg(dlg)
+    phr0 = dlg:AddPhrase("mini_games_1_dialog_0", "0", "", -10000)
+    phr1 = dlg:AddPhrase("mini_games_1_dialog_1", "1", "0", -10000)
+    phr2 = dlg:AddPhrase("mini_games_1_dialog_2", "2", "1", -10000)
+    phr2:GetPhraseScript():AddAction("mini_games.game_where_ball_start")
+    phr3 = dlg:AddPhrase("mini_games_1_dialog_3", "3", "1", -10000)
+    phr4 = dlg:AddPhrase("mini_games_1_dialog_4", "4", "1", -10000)
+    phr5 = dlg:AddPhrase("mini_games_1_dialog_5", "5", "3", -10000)
+    phr4_1 = dlg:AddPhrase("mini_games_1_dialog_4", "4", "5", -10000)
+
+    phr6 = dlg:AddPhrase("mini_games_dialog_7", "6", "4", -10000)
+    phr7 = dlg:AddPhrase("mini_games_dialog_5", "7", "5", -10000)
+    phr7:GetPhraseScript():AddAction("mini_games.game_where_ball_start")
 end
 
-local btn_start_WN, btn_guess_num, btn_play_else_WN, btn_on_guess_num
-function MGame_WhatNum:InitControls()
-    self:SetWndRect(Frect():set(200, 177, 1000, 1000))
-    xml:ParseFile("script_wnd\\ui_mini_games.xml")
-    self.Wind_WhatNum = xml:InitStatic("MGame_WhatNum:background", self)
-    xml:InitStatic("MGame_WhatNum:caption", self)
-    xml:InitStatic("MGame_WhatNum:txt_stavka", self)
-    self.GuessNumEB = xml:InitEditBox("MGame_WhatNum:edit_box", self)
-    self.GuessNumEB:Show(false)
-    self.edit_stavka = xml:InitEditBox("MGame_WhatNum:edit_box_stavka", self)
-    self:Register(xml:Init3tButton("MGame_WhatNum:btn_start", self), "btn_start")
-    self:Register(xml:Init3tButton("MGame_WhatNum:btn_guess_num", self), "btn_guess_num")
-    self:Register(xml:Init3tButton("MGame_WhatNum:btn_on_guess_num", self), "btn_on_guess_num")
-    self:Register(xml:Init3tButton("MGame_WhatNum:btn_play_else", self), "btn_play_else")
-    self:Register(xml:Init3tButton("MGame_WhatNum:btn_quit", self), "btn_quit")
-
-    btn_start_WN = self:GetButton("btn_start")
-    btn_guess_num = self:GetButton("btn_guess_num")
-    btn_play_else_WN = self:GetButton("btn_play_else")
-    btn_on_guess_num = self:GetButton("btn_on_guess_num")
-    btn_guess_num:Enable(false)
-    btn_play_else_WN:Enable(false)
-    btn_on_guess_num:Enable(false)
-end
-
-function MGame_WhatNum:InitCallBacks()
-    self:AddCallback("btn_start", ui_events.BUTTON_CLICKED, self.btn_start, self)
-    self:AddCallback("btn_guess_num", ui_events.BUTTON_CLICKED, self.btn_guess_num, self)
-    self:AddCallback("btn_on_guess_num", ui_events.BUTTON_CLICKED, self.btn_on_guess_num, self)
-    self:AddCallback("btn_play_else", ui_events.BUTTON_CLICKED, self.btn_play_else, self)
-    self:AddCallback("btn_quit", ui_events.BUTTON_CLICKED, self.btn_quit, self)
-end
-
-function MGame_WhatNum:btn_start()
-    local GNum = tonumber(self.edit_stavka:GetText())
-    if GNum > 2000 or GNum < 500 or db.actor:money() < GNum then
-        level.start_stop_menu(mini_games.GameMessege("Минимальная ставка - 500, максимальная - 2000.", "Не корректная ставка или у Вас нет таких денег!"), true)
-        return false
-    else
-        StavkaWN = GNum
-    end
-    GuessedNum = math.random(1, 100)
-    btn_start_WN:Enable(false)
-    self:on_game_info()
-    self.GuessNumEB:Show(true)
-    btn_guess_num:Enable(true)
-end
-
-function MGame_WhatNum:btn_guess_num()
-    PGuessNum = PGuessNum + 1
-    self:on_game_info()
-    local GNum = tonumber(self.GuessNumEB:GetText())
-    if GNum == GuessedNum then
-        btn_guess_num:Enable(false)
-        btn_on_guess_num:Enable(true)
-        self.Wind_WhatNum:DetachChild(self.Help)
-        self.Help = CUIStatic()
-        self.Help:Init(-50, 120, 650, 30)
-        self.Help:SetText("Введите число и нажмите 'Загадать'")
-        self.Help:SetFont(GetFontLetterica18Russian())
-        self.Help:SetTextAlign(2)
-        self.Wind_WhatNum:AttachChild(self.Help)
-        return false
-    end
-    if GNum < GuessedNum then
-        level.start_stop_menu(mini_games.GameMessege("Нужно число побольше!", "Неправильно!"), true)
-    else
-        level.start_stop_menu(mini_games.GameMessege("Нужно число поменьше!", "Неправильно!"), true)
-    end
-end
-
-function MGame_WhatNum:btn_on_guess_num()
-    CPUPGuessNum = math.random(math.random(2, 5), math.random(6, 9))
-    local Txt = "Ваши попытки:".." "..PGuessNum..", соперника:".." "..CPUPGuessNum
-    if CPUPGuessNum < PGuessNum then
-        level.start_stop_menu(mini_games.GameMessege(Txt.." Потеряны деньги:"..StavkaWN, "Вы проиграли!"), true)
-        db.actor:give_money(-StavkaWN)
-    elseif CPUPGuessNum > PGuessNum then
-        level.start_stop_menu(mini_games.GameMessege(Txt.." Получены деньги:"..StavkaWN, "Вы выиграли!"), true)
-        db.actor:give_money(StavkaWN)
-    else
-        level.start_stop_menu(mini_games.GameMessege(Txt, "Ничья!"), true)
-    end
-    btn_on_guess_num:Enable(false)
-    btn_play_else_WN:Enable(true)
-end
-
-function MGame_WhatNum:btn_play_else()
-    self:Reset()
-    btn_start_WN:Enable(true)
-    btn_play_else_WN:Enable(false)
-end
-
-function MGame_WhatNum:btn_quit()
-    self:Reset()
-    self:GetHolder():start_stop_menu(self, true)
-end
-
-function MGame_WhatNum:Reset()
-    if MessGuessedNum then
-        self.Wind_WhatNum:DetachChild(self.NumGuessed)
-        self.Wind_WhatNum:DetachChild(self.Help)
-    end
-    if PGuessNum > 0 then
-        self.Wind_WhatNum:DetachChild(self.text_GInfo2)
-    end
-    btn_guess_num:Enable(false)
-    btn_start_WN:Enable(true)
-    self.GuessNumEB:Show(false)
-    btn_on_guess_num:Enable(false)
-    GuessedNum, MessGuessedNum, PGuessNum, CPUPGuessNum = 0, false, 0, 0
-end
-
-function MGame_WhatNum:on_game_info()
-    if MessGuessedNum then
-        self.Wind_WhatNum:DetachChild(self.NumGuessed)
-    end
-    if not MessGuessedNum then
-        self.NumGuessed = CUIStatic()
-        self.NumGuessed:Init(-170, 385, 650, 30)
-        self.NumGuessed:SetText("Число загадано")
-        self.NumGuessed:SetFont(GetFontGraffiti32Russian())
-        self.NumGuessed:SetTextAlign(2)
-        self.Wind_WhatNum:AttachChild(self.NumGuessed)
-
-        self.Help = CUIStatic()
-        self.Help:Init(-50, 120, 650, 30)
-        self.Help:SetText("Введите число и нажмите 'Угадать'")
-        self.Help:SetFont(GetFontLetterica18Russian())
-        self.Help:SetTextAlign(2)
-        self.Wind_WhatNum:AttachChild(self.Help)
-
-        MessGuessedNum = true
-    else
-        self.Wind_WhatNum:DetachChild(self.text_GInfo2)
-        self.text_GInfo2 = CUIStatic()
-        self.text_GInfo2:Init(-200, 375, 650, 30)
-        self.text_GInfo2:SetText("Использовано".." "..PGuessNum.." ".."попыток")
-        self.text_GInfo2:SetFont(GetFontGraffiti22Russian())
-        self.text_GInfo2:SetTextAlign(2)
-        self.Wind_WhatNum:AttachChild(self.text_GInfo2)
-    end
-end
-
-function game_what_num_start()
-    level.start_stop_menu(mini_games.MGame_WhatNum(), true)
-end
--- ======================================================================================--
-local mini_games_phr_0, mini_games_phr_1, mini_games_phr_2, mini_games_phr_3, mini_games_phr_4, mini_games_phr_5, mini_games_phr_6, mini_games_phr_7, mini_games_phr_8 =
-    "Сыграем во что-нибудь?",
-    "Могу предложить тебе несколько игр на деньги: '21 очко', 'Угадай, где шарик', 'Угадай число'.",
-    "Давай сыграем в '21 очко'.",
-    "'Тест на знание зоны'. Давай-ка я попробую ответить.",
-    "'Угадай, где шарик'.",
-    "'Угадай число'.",
-    "Хорошо, но сначала ты должен заплатить одну тысячу за эту игру.",
-    "Нет проблем, держи деньги.",
-    "Я передумал."
-
-function init_mini_games_phr_dlg(dlg)
-    phr0 = dlg:AddPhrase(mini_games_phr_0, "0", "", -10000)
-    phr1 = dlg:AddPhrase(mini_games_phr_1, "1", "0", -10000)
-    phr2 = dlg:AddPhrase(mini_games_phr_2, "2", "1", -10000)
-    phr2:GetPhraseScript():AddAction("mini_games.game_21p_start")
-    -- phr3 = dlg:AddPhrase(mini_games_phr_3, "3", "1", -10000)
-    phr4 = dlg:AddPhrase(mini_games_phr_4, "4", "1", -10000)
-    phr4:GetPhraseScript():AddAction("mini_games.game_where_ball_start")
-    phr5 = dlg:AddPhrase(mini_games_phr_5, "5", "1", -10000)
-    phr5:GetPhraseScript():AddAction("mini_games.game_what_num_start")
-    -- phr6 = dlg:AddPhrase(mini_games_phr_6, "6", "3", -10000)
-    -- phr7 = dlg:AddPhrase(mini_games_phr_7, "7", "6", -10000)
-    -- phr7:GetPhraseScript():AddPrecondition("mini_games.have_actor_1000")
-    -- phr7:GetPhraseScript():AddAction("mini_games.give1000tonpc")
-    -- phr7:GetPhraseScript():AddAction("mini_games.game_questions_start")
-    -- dlg:AddPhrase(mini_games_phr_8, "8", "6", -10000)
-    dlg:AddPhrase(mini_games_phr_8, "8", "1", -10000)
-end
-
-function give1000tonpc(actor, npc)
-    dialogs.relocate_money(npc, 1000, "out")
-end
-
-function have_actor_1000(actor, npc)
-    return actor:money() >= 1000
+function tutu(n)
+    db.actor:give_money(500000)
 end

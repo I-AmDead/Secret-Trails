@@ -19,12 +19,20 @@ float random(float2 p)
     return frac(cos(dot(p, K1)) * 12345.6789f);
 }
 
+float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
+
 float4 main(v2p I) : SV_Target
 {
 	float4 t_base = s_base.Sample(smp_base, I.tc0);
+	t_base.rgb = t_base.rgb * 0.9;
 
 	// ЛЦУ глючит при выбросе
 	float mig = 1.0f - (m_affects.x * 2.f);
+
+	float noise = get_noise(I.tc0 * timers.z) * 0.25 * 0.25 * 15;
+	t_base.r += noise;
+	t_base.g += noise;
+	t_base.b += noise;
 
 	return float4(t_base.r, t_base.g, t_base.b, laser_params.w > 0.f ? (random(timers.xz) > mig ? 0.f : t_base.a) : 0.f);
 }

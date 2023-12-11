@@ -226,20 +226,25 @@ function send_task(actor, type, task, objective)
 
     -- цвет сообщения
     local text_color
+    local texture_color = {255, 255, 255, 0}
     if type == "fail" then
         text_color = "%c[255,255,0,0]"
+        texture_color = {255, 255, 0, 0}
     elseif type == "complete" then
         text_color = "%c[255,0,255,38]"
+        texture_color = {255, 0, 255, 38}
     elseif type == "update" then
         text_color = "%c[255,0,38,255]"
+        texture_color = {255, 0, 38, 255}
     elseif type == "new" then
-        text_color = "%c[255,0,255,38]"
+        text_color = "%c[255,255,255,0]"
+        texture_color = {255, 255, 255, 0}
     else
-        text_color = "%c[default]"
+        text_color = "%c[255,255,255,0]"
+        texture_color = {255, 255, 255, 0}
     end
 
-    local news_text = text_color .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" ..
-                          game.translate_string(task:get_title())
+    local news_text = text_color .. game.translate_string(task:get_title())
     if db.actor:is_talking() then
         db.actor:give_talk_message(news_text, task_texture, task_rect, "other_iconed_answer_item")
     end
@@ -248,8 +253,6 @@ function send_task(actor, type, task, objective)
         if task:get_objectives_cnt() == objective:get_idx() + 1 then
             return
         end
-        news_text = text_color .. game.translate_string(action_descr_by_type[type]) .. "\\n" .. "%c[default]" ..
-                        game.translate_string(task:get_title())
     end
     --------------------------------------------------------------------------
     local task_title = task:get_title()
@@ -277,10 +280,10 @@ function send_task(actor, type, task, objective)
         end
     end
 
-    local hud = get_hud()
-    hud:AddCustomStatic("main_task", true)
-    hud:GetCustomStatic("main_task"):wnd():SetTextST(news_text)
-    hud:GetCustomStatic("main_task").m_endTime = time_global() / 1000 + 10
+    local main_task_static = get_hud():AddCustomStatic("main_task", true)
+    main_task_static:wnd():SetColor(GetARGB(texture_color[1], texture_color[2], texture_color[3], texture_color[4]))
+    main_task_static:wnd():SetTextST(news_text)
+    main_task_static.m_endTime = time_global() / 1000 + 10
 end
 
 function autosave(text)

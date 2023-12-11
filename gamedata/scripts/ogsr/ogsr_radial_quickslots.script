@@ -1,0 +1,145 @@
+---==================================================================================================================---
+---                                                                                                                  ---
+---    Original Author(s) : NLTP_ASHES                                                                               ---
+---    Edited : N/A                                                                                                  ---
+---    Date : 05/12/2023                                                                                             ---
+---    License : Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)           ---
+---                                                                                                                  ---
+---    Script used to show a radial menu to access the different slots of the inventory.                             ---
+---                                                                                                                  ---
+---==================================================================================================================---
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- Constants, global variables and imported functions
+-- ---------------------------------------------------------------------------------------------------------------------
+
+-- Singleton
+GUI                          = nil                    -- instance, don't touch
+
+-- Constants
+SLOTS_DATA                   = {                      -- table to store slots data (ids, titles & descriptions)
+    ["rq_knife"]             = {
+        id                   = 0,
+        title                = game.translate_string("st_rq_knife_title"),
+        descr                = game.translate_string("st_rq_knife_descr")
+    },
+    ["rq_secondary"]         = {
+        id                   = 1,
+        title                = game.translate_string("st_rq_secondary_title"),
+        descr                = game.translate_string("st_rq_secondary_descr")
+    },
+    ["rq_primary"]           = {
+        id                   = 2,
+        title                = game.translate_string("st_rq_primary_title"),
+        descr                = game.translate_string("st_rq_primary_descr")
+    },
+    ["rq_grenade"]           = {
+        id                   = 3,
+        title                = game.translate_string("st_rq_grenade_title"),
+        descr                = game.translate_string("st_rq_grenade_descr")
+    },
+    ["rq_binoculars"]        = {
+        id                   = 4,
+        title                = game.translate_string("st_rq_binoculars_title"),
+        descr                = game.translate_string("st_rq_binoculars_descr")
+    },
+    ["rq_bolts"]             = {
+        id                   = 5,
+        title                = game.translate_string("st_rq_bolts_title"),
+        descr                = game.translate_string("st_rq_bolts_descr")
+    },
+    ["rq_pda"]               = {
+        id                   = 7,
+        title                = game.translate_string("st_rq_pda_title"),
+        descr                = game.translate_string("st_rq_pda_descr")
+    },
+}
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- General functions
+-- ---------------------------------------------------------------------------------------------------------------------
+function get_ui()
+    local GUI = arm.UIRadialMenu()
+
+    -- Secondary slot
+    local rq_secondary = arm.OptionData("rq_secondary", "ui_rq_secondary")
+    rq_secondary:SetText(get_slot_info("rq_secondary"))
+    GUI:AddOption(rq_secondary)
+    GUI:RegisterCallback("rq_secondary", function(flags) this.activate_slot(SLOTS_DATA["rq_secondary"].id) end)
+
+    -- Knife slot
+    local rq_knife = arm.OptionData("rq_knife", "ui_rq_knife")
+    rq_knife:SetText(get_slot_info("rq_knife"))
+    GUI:AddOption(rq_knife)
+    GUI:RegisterCallback("rq_knife", function(flags) this.activate_slot(SLOTS_DATA["rq_knife"].id) end)
+
+    -- Grenade slot
+    local rq_grenade = arm.OptionData("rq_grenade", "ui_rq_grenade")
+    rq_grenade:SetText(get_slot_info("rq_grenade"))
+    GUI:AddOption(rq_grenade)
+    GUI:RegisterCallback("rq_grenade", function(flags) this.activate_slot(SLOTS_DATA["rq_grenade"].id) end)
+
+    -- PDA slot
+    local rq_pda = arm.OptionData("rq_pda", "ui_rq_pda")
+    rq_pda:SetText(get_slot_info("rq_pda"))
+    GUI:AddOption(rq_pda)
+    GUI:RegisterCallback("rq_pda", function(flags) this.activate_slot(SLOTS_DATA["rq_pda"].id) end)
+
+    -- Binoculars slot
+    local rq_binoculars = arm.OptionData("rq_binoculars", "ui_rq_binoculars")
+    rq_binoculars:SetText(get_slot_info("rq_binoculars"))
+    GUI:AddOption(rq_binoculars)
+    GUI:RegisterCallback("rq_binoculars", function(flags) this.activate_slot(SLOTS_DATA["rq_binoculars"].id) end)
+
+    -- Bolts slot
+    local rq_bolts = arm.OptionData("rq_bolts", "ui_rq_bolts")
+    rq_bolts:SetText(get_slot_info("rq_bolts"))
+    GUI:AddOption(rq_bolts)
+    GUI:RegisterCallback("rq_bolts", function(flags) this.activate_slot(SLOTS_DATA["rq_bolts"].id) end)
+
+    -- Primary slot
+    local rq_primary = arm.OptionData("rq_primary", "ui_rq_primary")
+    rq_primary:SetText(get_slot_info("rq_primary"))
+    GUI:AddOption(rq_primary)
+    GUI:RegisterCallback("rq_primary", function(flags) this.activate_slot(SLOTS_DATA["rq_primary"].id) end)
+
+    -- Draw options
+    GUI:DrawOptions()
+
+    return GUI
+end
+
+function activate_slot(slot_id)
+    local active_slot = db.actor:active_slot()
+
+    if (not active_slot) or (active_slot ~= slot_id) then
+        db.actor:activate_slot(slot_id)
+        GUI = nil
+    end
+end
+
+function get_slot_info(slot_name)
+    -- Get name of item in slot
+    local obj = db.actor:item_in_slot(SLOTS_DATA[slot_name].id)
+    local obj_name = obj and get_string(obj:section(), "inv_name", "st_rq_unknown_slot") or "st_rq_empty_slot"
+    return {
+        title = SLOTS_DATA[slot_name].title,
+        description = game.translate_string(obj_name)
+    }
+end
+
+function on_key_down(key, bind)
+    if bind ~= key_bindings.kRADIAL then return end
+
+    if (not GUI) then
+        GUI = this.get_ui()
+    end
+    
+    if GUI and not GUI:IsShown() then
+        level.start_stop_menu(GUI, true)
+    end
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_key_down", fun = this.on_key_down})
+end

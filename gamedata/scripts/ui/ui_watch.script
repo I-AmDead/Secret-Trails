@@ -69,16 +69,17 @@ end
 
 -- Радиация
 function radiation_level()
-    if arc_radiation.get_radiation_dose() > 100 and arc_radiation.get_radiation_dose() < 150 then
+    local radiation = has_alife_info("pre_blowout") and math.random(0, 400) or arc_radiation.get_radiation_dose()
+    if radiation > 100 and radiation < 150 then
         return "green"
     end
-    if arc_radiation.get_radiation_dose() > 150 and arc_radiation.get_radiation_dose() < 250 then
+    if radiation > 150 and radiation < 250 then
         return "yellow"
     end
-    if arc_radiation.get_radiation_dose() > 250 and arc_radiation.get_radiation_dose() < 300 then
+    if radiation > 250 and radiation < 300 then
         return "orange"
     end
-    if arc_radiation.get_radiation_dose() > 300 then
+    if radiation > 300 then
         return "red"
     end
     return "nil"
@@ -86,16 +87,17 @@ end
 
 -- Кровотечения
 function bleeding_level()
-    if db.actor:get_bleeding() > 0.01 and db.actor:get_bleeding() < 0.25 then
+    local bleeding = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor:get_bleeding()
+    if bleeding > 0.01 and bleeding < 0.25 then
         return "green"
     end
-    if db.actor:get_bleeding() > 0.25 and db.actor:get_bleeding() < 0.5 then
+    if bleeding > 0.25 and bleeding < 0.5 then
         return "yellow"
     end
-    if db.actor:get_bleeding() > 0.5 and db.actor:get_bleeding() < 0.75 then
+    if bleeding > 0.5 and bleeding < 0.75 then
         return "orange"
     end
-    if db.actor:get_bleeding() > 0.75 then
+    if bleeding > 0.75 then
         return "red"
     end
     return "nil"
@@ -103,16 +105,17 @@ end
 
 -- Пси
 function psy_level()
-    if db.actor.psy_health < 0.9 and db.actor.psy_health >= 0.7 then
+    local psy_health = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.psy_health
+    if psy_health < 0.9 and psy_health >= 0.7 then
         return "green"
     end
-    if db.actor.psy_health < 0.7 and db.actor.psy_health >= 0.5 then
+    if psy_health < 0.7 and psy_health >= 0.5 then
         return "yellow"
     end
-    if db.actor.psy_health < 0.5 and db.actor.psy_health >= 0.3 then
+    if psy_health < 0.5 and psy_health >= 0.3 then
         return "orange"
     end
-    if db.actor.psy_health < 0.3 then
+    if psy_health < 0.3 then
         return "red"
     end
     return "nil"
@@ -120,16 +123,17 @@ end
 
 -- Голод
 function hunger_level()
-    if db.actor.satiety < 0.9 and db.actor.satiety >= 0.7 then
+    local satiety = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.satiety
+    if satiety < 0.9 and db.actor.satiety >= 0.7 then
         return "green"
     end
-    if db.actor.satiety < 0.7 and db.actor.satiety >= 0.5 then
+    if satiety < 0.7 and db.actor.satiety >= 0.5 then
         return "yellow"
     end
-    if db.actor.satiety < 0.5 and db.actor.satiety >= 0.3 then
+    if satiety < 0.5 and db.actor.satiety >= 0.3 then
         return "orange"
     end
-    if db.actor.satiety < 0.3 then
+    if satiety < 0.3 then
         return "red"
     end
     return "nil"
@@ -137,7 +141,7 @@ end
 
 -- Перевес
 function overweight_level()
-    local inv_weight = db.actor:get_inventory_weight()
+    local inv_weight = has_alife_info("pre_blowout") and math.random(99, db.actor:get_max_weight()) or db.actor:get_inventory_weight()
     local max_weight = db.actor:get_max_weight()
     local max_walk_weight = db.actor:get_max_walk_weight()
     local yellow_over = max_weight + (max_walk_weight - max_weight) * 0.6
@@ -242,8 +246,8 @@ function UIWatch:UpdateClock()
 
     local game_time = c2t(game.get_game_time())
     local time = {
-        h = string.format("%02d", tostring(game_time.h)),
-        m = string.format("%02d", tostring(game_time.m))
+        h = string.format("%02d", has_alife_info("pre_blowout") and tostring(math.random(0, 23)) or tostring(game_time.h)),
+        m = string.format("%02d", has_alife_info("pre_blowout") and tostring(math.random(0, 59)) or tostring(game_time.m))
     }
 
     for k, v in pairs(time) do
@@ -260,7 +264,7 @@ function UIWatch:UpdateRad()
 
     local rad_level = arc_radiation.get_radiation_dose() or 0000
     local rad = {
-        level = string.format("%04d", tostring(rad_level))
+        level = string.format("%04d", has_alife_info("pre_blowout") and tostring(math.random(0, 9999)) or tostring(rad_level))
     }
 
     for k, v in pairs(rad) do
@@ -276,8 +280,11 @@ function UIWatch:UpdateHealth()
     self:ShowHealth(true)
 
     local cond = db.actor.health
-
-    self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * cond, 0.0018)
+    if has_alife_info("pre_blowout") then
+        self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * math.random(10, 100) * 0.01, 0.0018)
+    else
+        self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * cond, 0.0018)
+    end
 end
 
 function UIWatch:ShowClock(vis)
@@ -332,35 +339,35 @@ function UIWatch:UpdateIndicators()
 
     if bleeding_level() ~= "nil" then
         self.indik_blood:Show(true)
-        self.indik_blood:InitTextureEx("ui_inGame2_circle_bloodloose_" .. bleeding_level(), "hud\\p3d")
+        self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood_" .. bleeding_level(), "hud\\p3d")
     else
         self.indik_blood:Show(false)
     end
 
     if hunger_level() ~= "nil" then
         self.indik_hunger:Show(true)
-        self.indik_hunger:InitTextureEx("ui_inGame2_circle_hunger_" .. hunger_level(), "hud\\p3d")
+        self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety_" .. hunger_level(), "hud\\p3d")
     else
         self.indik_hunger:Show(false)
     end
 
     if radiation_level() ~= "nil" then
         self.indik_radiation:Show(true)
-        self.indik_radiation:InitTextureEx("ui_inGame2_circle_radiation_" .. radiation_level(), "hud\\p3d")
+        self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad_" .. radiation_level(), "hud\\p3d")
     else
         self.indik_radiation:Show(false)
     end
 
     if psy_level() ~= "nil" then
         self.indik_psy:Show(true)
-        self.indik_psy:InitTextureEx("ui_inGame2_circle_psy_" .. psy_level(), "hud\\p3d")
+        self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy_" .. psy_level(), "hud\\p3d")
     else
         self.indik_psy:Show(false)
     end
 
     if overweight_level() ~= "nil" then
         self.indik_overweight:Show(true)
-        self.indik_overweight:InitTextureEx("ui_inGame2_circle_Overweight_" .. overweight_level(), "hud\\p3d")
+        self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight_" .. overweight_level(), "hud\\p3d")
     else
         self.indik_overweight:Show(false)
     end
@@ -371,10 +378,20 @@ function UIWatch:UpdateBoosterIndicators()
         return
     end
 
-    for idx = 1, 8 do
-        if laucer_item_special_effect["booster_type" .. idx] then
-            self[laucer_item_special_effect["booster_type" .. idx]]:Show(
-                laucer_item_special_effect["booster_state" .. idx])
+    if has_alife_info("pre_blowout") then
+        self.indicator_booster_psy:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_rad:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_health:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_power:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_rad_cleanup:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_psy_cleanup:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_wound:Show(math.random(0, 100) > 50 and true or false)
+        self.indicator_booster_weight:Show(math.random(0, 100) > 50 and true or false)
+    else
+        for idx = 1, 8 do
+            if laucer_item_special_effect["booster_type" .. idx] then
+                self[laucer_item_special_effect["booster_type" .. idx]]:Show(laucer_item_special_effect["booster_state" .. idx])
+            end
         end
     end
 end

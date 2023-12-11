@@ -13,9 +13,8 @@ function init(obj)
     end
     local has_light_config = ini:section_exist("light_config")
     local has_logic = ini:section_exist("logic")
-    local has_fade_params = ini:section_exist("fade_params")
-    if has_light_config or has_logic or has_fade_params then
-        local new_binder = light_binder(obj, has_light_config, has_logic, has_fade_params)
+    if has_light_config or has_logic then
+        local new_binder = light_binder(obj, has_light_config, has_logic)
         obj:bind_object(new_binder)
     end
 end
@@ -23,13 +22,12 @@ end
 -------------------------------------------------------------------------------
 class "light_binder"(object_binder)
 -- MARKER: __init 
-function light_binder:__init(obj, has_light_config, has_logic, has_fade_params)
+function light_binder:__init(obj, has_light_config, has_logic)
     super(obj)
     self.initialized = false
     self.loaded = false
     self.has_light_config = has_light_config
     self.has_logic = has_logic
-    self.has_fade_params = has_fade_params
 end
 -- MARKER: reload
 function light_binder:reload(section)
@@ -137,16 +135,6 @@ function light_binder:update(delta)
                 end
             end
             -- log1("light initialization complete: "..self.object:name())
-        end
-        if self.has_fade_params then
-            local lamp = self.object:get_hanging_lamp()
-            if lamp then
-                local ini = self.object:spawn_ini()
-                local lsf_speed = ini:r_float("fade_params", "speed")
-                local lsf_amount = ini:r_float("fade_params", "amount")
-                local lsf_jitter = ini:r_float("fade_params", "smap_jitter")
-                lamp:set_lsf_params(lsf_speed, lsf_amount, lsf_jitter)
-            end
         end
         if self.object:is_projector() then
             self:set_projector_angles(xr_logic.pstor_retrieve(self.object, "current_yaw", 0.0),
