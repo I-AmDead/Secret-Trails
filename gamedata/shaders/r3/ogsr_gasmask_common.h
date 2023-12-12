@@ -2,15 +2,15 @@
 #define GASMASK_COMMON_H
 
 /*
-	Gasmask overlay shader
-	
-	Credits: ZHC (visor reflection)
-	/////////////////
-	Anomaly Team 2020
-	/////////////////
+    Gasmask overlay shader
+
+    Credits: ZHC (visor reflection)
+    /////////////////
+    Anomaly Team 2020
+    /////////////////
 */
 
-//Main gasmask textures
+// Main gasmask textures
 Texture2D s_mask_nm_1;
 Texture2D s_mask_nm_2;
 Texture2D s_mask_nm_3;
@@ -22,22 +22,22 @@ Texture2D s_mask_nm_8;
 Texture2D s_mask_nm_9;
 Texture2D s_mask_nm_10;
 
-//Vignette masks
+// Vignette masks
 Texture2D s_mask_v_1;
 Texture2D s_mask_v_2;
 Texture2D s_mask_v_3;
 
-//Condensation droplets texture
+// Condensation droplets texture
 Texture2D s_mask_droplets;
 
-//Breath noise texture
+// Breath noise texture
 Texture2D s_breath_noise;
 
-//RT including drops
+// RT including drops
 Texture2D s_image_blurred;
 
-//Constants from engine
-float4 mask_control; 
+// Constants from engine
+float4 mask_control;
 float3 drops_control;
 
 uniform float breath_size;
@@ -48,48 +48,49 @@ uniform float3 device_inertia;
 uniform float3 eye_direction;
 uniform float4 m_cam_inertia_smooth;
 
-//Gasmask settings
-#define GM_DIST_INT 0.05 //Refraction intensity
-#define GM_DIFF_INT 0.25 //Diffuse cracks intensity
-#define GM_VIG_INT 0.5 //Vignette intensity
+// Gasmask settings
+#define GM_DIST_INT 0.05 // Refraction intensity
+#define GM_DIFF_INT 0.25 // Diffuse cracks intensity
+#define GM_VIG_INT 0.5 // Vignette intensity
 
+// Raindrops settings
+#define GM_DROPS_TURBSIZE 15.0 // Turbulence power
+#define GM_DROPS_TURBSHIFT float4(0.35, 1.0, 0.0, 1.0) // Turbulence offset
+#define GM_DROPS_TURBTIME sin(0.1 / 3.0)
+#define GM_DROPS_TURBCOF 0.33 // Turbulence intensity
 
-//Raindrops settings
-#define GM_DROPS_TURBSIZE 15.0 //Turbulence power
-#define GM_DROPS_TURBSHIFT float4(0.35, 1.0, 0.0, 1.0) //Turbulence offset
-#define GM_DROPS_TURBTIME sin(0.1/3.0) 
-#define GM_DROPS_TURBCOF 0.33 //Turbulence intensity
+// Glass reflections settings
+#define GM_VIS_NUM 16 // Reflection quality
+#define GM_VIS_RADIUS 0.45 // Reflection radius
+#define GM_VIS_INTENSITY 0.5 // Reflection intensity
 
-//Glass reflections settings
-#define GM_VIS_NUM 16 //Reflection quality
-#define GM_VIS_RADIUS 0.45 //Reflection radius
-#define GM_VIS_INTENSITY 0.5 //Reflection intensity
-
-
-float2 rotate(float2 v, float2 o, float a) {
+float2 rotate(float2 v, float2 o, float a)
+{
     float s = sin(a);
     float c = cos(a);
     float2x2 m = float2x2(c, -s, s, c);
     return mul(m, (v - o)) + o;
 }
 
-float3 rotateZ(float3 v, float3 o, float a) {
+float3 rotateZ(float3 v, float3 o, float a)
+{
     float s = sin(a);
     float c = cos(a);
     float2x2 m = float2x2(c, -s, s, c);
     return float3(mul(m, (v.xy - o.xy) + o.xy), v.z);
 }
 
-float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZRot) {
+float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZRot)
+{
     // First Rotate around Y axis
-    float2 RayDirection =  float2(uv.x, 0.0);
+    float2 RayDirection = float2(uv.x, 0.0);
     float2 A1 = float2(0.0, -1.0);
     float2 B1 = RayDirection - A1;
     float2 C1 = rotate(float2(-1.0, 0.0), float2(center.x, 0.0), YRot);
     float2 D1 = rotate(float2(1.0, 0.0), float2(center.x, 0.0), YRot) - C1;
 
     // calculate intersection point
-    float u = ( (C1.y + 1.0) * D1.x - C1.x * D1.y ) / (D1.x*B1.y-D1.y*B1.x);
+    float u = ((C1.y + 1.0) * D1.x - C1.x * D1.y) / (D1.x * B1.y - D1.y * B1.x);
 
     // position on the XY plane after Y-axis rotation
     float sx = u * B1.x;
@@ -102,10 +103,10 @@ float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZR
     float2 D2 = rotate(float2(1.0, 0.0), float2(center.y, 0.0), XRot) - C2;
 
     // calculate intersection point
-    float v = ( (C2.y + 1.0) * D2.x - C2.x * D2.y ) / (D2.x*B2.y-D2.y*B2.x);
+    float v = ((C2.y + 1.0) * D2.x - C2.x * D2.y) / (D2.x * B2.y - D2.y * B2.x);
 
-	// the position after x and y rotations
-    float3 pos = float3(v * sx, v * B2.x, 0.0 );
+    // the position after x and y rotations
+    float3 pos = float3(v * sx, v * B2.x, 0.0);
 
     // Now rotate the position around Z axis
     float3 finalPos = rotateZ(pos, center, ZRot);

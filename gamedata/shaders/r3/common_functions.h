@@ -528,12 +528,12 @@ inline bool isSecondVPActive() { return (m_blender_mode.z == 1.f); }
 inline bool IsSVPFrame() { return (m_blender_mode.y == 1.f); }
 //////////////////////////////////////////////////////////////////////////////////////////
 
-float2 aspect_ratio_correction (float2 tc)
+float2 aspect_ratio_correction(float2 tc)
 {
     tc.x -= 0.5f;
     tc.x *= (screen_res.x / screen_res.y);
     tc.x += 0.5f;
-	return tc;
+    return tc;
 }
 
 //#define SKY_WITH_DEPTH // sky renders with

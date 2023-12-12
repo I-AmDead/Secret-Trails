@@ -1,21 +1,21 @@
 //////////////////////////////////////////////////////////////////////////////////////////
-//NV Shader by LVutner (basing on yaz NV)
-//Last edit: 5:12 (22.05.19)
+// NV Shader by LVutner (basing on yaz NV)
+// Last edit: 5:12 (22.05.19)
 //////////////////////////////////////////////////////////////////////////////////////////
 
-//defines
+// defines
 #define NV_BRIGHTNESS 5.0 // NV_COLOR.w
 
-//effects
+// effects
 #define NV_FLICKERING
 #define NV_NOISE
 #define NV_VIGNETTE
 #define NV_SCANLINES
 
-//effect settings
+// effect settings
 #define FLICKERING_INTENSITY 0.0015
 #define FLICKERING_FREQ 60.0
-#define NOISE_INTENSITY 0.15      // NV_PARAMS.x
+#define NOISE_INTENSITY 0.15 // NV_PARAMS.x
 #define SCANLINES_INTENSITY 0.175 // NV_PARAMS.y
 #define VIGNETTE_RADIUS 1.0
 
@@ -35,20 +35,20 @@ float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233)
 
 float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float4 NV_PARAMS)
 {
-    float lum = dot(color.rgb, float3( 0.3f, 0.38f, 0.22f)*NV_COLOR.w );  //instead of float3 use LUMINANCE_floatTOR in stalker
-    color.rgb = NV_COLOR.xyz*lum;
+    float lum = dot(color.rgb, float3(0.3f, 0.38f, 0.22f) * NV_COLOR.w); // instead of float3 use LUMINANCE_floatTOR in stalker
+    color.rgb = NV_COLOR.xyz * lum;
 
     // cheap noise function
-    float noise  = get_noise(tc0 * timers.z) * m_affects.x * m_affects.x * 30;
+    float noise = get_noise(tc0 * timers.z) * m_affects.x * m_affects.x * 30;
 
     // glitch blowout
     float mig = 1.0f - (m_affects.x * 2.f);
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // scanlines
-    #ifdef NV_SCANLINES
+//////////////////////////////////////////////////////////////////////////////////////////
+// scanlines
+#ifdef NV_SCANLINES
     color += NV_PARAMS.y * sin(tc0.y * screen_res.y * 2.0);
-    #endif
+#endif
     //////////////////////////////////////////////////////////////////////////////////////////
 
     // узкая полоска искажений
@@ -65,24 +65,24 @@ float4 calc_night_vision_effect(float2 tc0, float4 color, float4 NV_COLOR, float
     // тряска влево-вправо в финальной стадии
     tc0.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0;
 
-    // noise
-    #ifdef NV_NOISE
+// noise
+#ifdef NV_NOISE
     if (m_affects.y > 0)
         color += noise;
     else
         color += noise * NV_PARAMS.x;
-    #endif
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // screen flickering
-    #ifdef NV_FLICKERING
-    color += FLICKERING_INTENSITY * sin(timers.x*FLICKERING_FREQ);
-    #endif
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // vignette
-    #ifdef NV_VIGNETTE
+#endif
+//////////////////////////////////////////////////////////////////////////////////////////
+// screen flickering
+#ifdef NV_FLICKERING
+    color += FLICKERING_INTENSITY * sin(timers.x * FLICKERING_FREQ);
+#endif
+//////////////////////////////////////////////////////////////////////////////////////////
+// vignette
+#ifdef NV_VIGNETTE
     color *= VIGNETTE_RADIUS - (distance(tc0.xy, float2(0.5f, 0.5f)));
     color *= smoothstep(0.55f, 0.4f, distance(tc0.xy, float2(0.5f, 0.5f)));
-    #endif
+#endif
 
     // blowout device off
     color = random(timers.xz) > mig ? 0 : color;

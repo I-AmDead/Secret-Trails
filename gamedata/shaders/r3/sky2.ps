@@ -2,7 +2,7 @@
 #include "pbr_cubemap_check.h"
 
 #ifdef SSFX_BEEFS_NVG
-	#include "night_vision.h"
+#include "night_vision.h"
 #endif
 
 struct v2p
@@ -10,7 +10,7 @@ struct v2p
     float4 factor : COLOR0; // rgb tint
     float4 tc0 : TEXCOORD0; // tonemap in alpha
     float3 tc1 : TEXCOORD1;
-    float4 sv  : SV_Position;
+    float4 sv : SV_Position;
 };
 struct _out
 {
@@ -51,25 +51,27 @@ _out main(v2p I)
     float lua_param_nvg_gain_current = pnv_param_2.y;
     float lua_param_vignette_current = pnv_param_2.z;
 
-    if (pnv_param_1.z == 1.f && ((compute_lens_mask(aspect_ratio_correction(texturecoord), lua_param_nvg_num_tubes) == 1.0f || compute_lens_mask(aspect_ratio_correction(texturecoord_2), lua_param_nvg_num_tubes) == 1.0f))) //
+    if (pnv_param_1.z == 1.f &&
+        ((compute_lens_mask(aspect_ratio_correction(texturecoord), lua_param_nvg_num_tubes) == 1.0f ||
+          compute_lens_mask(aspect_ratio_correction(texturecoord_2), lua_param_nvg_num_tubes) == 1.0f))) //
     {
-    	o.low.r = dot(o.low.rgb * 5.0f, luma_conversion_coeff);
-    	o.high.r = dot(o.high.rgb * 5.0f, luma_conversion_coeff);
+        o.low.r = dot(o.low.rgb * 5.0f, luma_conversion_coeff);
+        o.high.r = dot(o.high.rgb * 5.0f, luma_conversion_coeff);
 
-    	o.low.gb = 0.0f;
-    	o.high.gb = 0.0f;
+        o.low.gb = 0.0f;
+        o.high.gb = 0.0f;
 
-    	o.low *= lua_param_nvg_gain_current * sky_brightness_factor;
-    	o.high *= lua_param_nvg_gain_current * sky_brightness_factor;
+        o.low *= lua_param_nvg_gain_current * sky_brightness_factor;
+        o.high *= lua_param_nvg_gain_current * sky_brightness_factor;
 
-    	o.high = clamp(o.high,0.0,1.0);
-    	o.low= clamp(o.low,0.0,1.0);
+        o.high = clamp(o.high, 0.0, 1.0);
+        o.low = clamp(o.low, 0.0, 1.0);
 
-    	float vignette = calc_vignette(lua_param_nvg_num_tubes, texturecoord, lua_param_vignette_current);
-    	float vignette_2 = calc_vignette(lua_param_nvg_num_tubes, texturecoord_2, lua_param_vignette_current);
-    	o.low *= (vignette * vignette_2);
-    	o.high *= (vignette * vignette_2);
-	}
+        float vignette = calc_vignette(lua_param_nvg_num_tubes, texturecoord, lua_param_vignette_current);
+        float vignette_2 = calc_vignette(lua_param_nvg_num_tubes, texturecoord_2, lua_param_vignette_current);
+        o.low *= (vignette * vignette_2);
+        o.high *= (vignette * vignette_2);
+    }
 #endif
 
     return o;
