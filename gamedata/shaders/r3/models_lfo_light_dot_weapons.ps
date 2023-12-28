@@ -3,6 +3,14 @@
 uniform float4 m_hud_params;
 uniform float4 m_affects;
 
+struct v2p
+{
+    float2 tc0 : TEXCOORD0; // base
+    float3 tc1 : TEXCOORD1; // environment
+    float4 c0 : COLOR0; // sun.(fog*fog)
+    float4 pos2d : SV_Position;
+};
+
 float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
 
 // https://stackoverflow.com/a/10625698
@@ -16,25 +24,25 @@ float random(float2 p)
 
 float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
 
-float4 main(p_flat I, float4 pos2d : SV_Position, float2 tc0 : TEXCOORD0) : SV_Target
+float4 main(v2p I) : SV_Target
 {
     float factor = screen_res.y / 1480.0;
     factor = factor * (1.0 / (m_hud_params.z / 0.45)) * 0.75;
     float size = 512.0 * factor;
 
-    pos2d.x = pos2d.x - (screen_res.x - size) / 2.0;
-    pos2d.y = pos2d.y - (screen_res.y - size) / 2.0;
-    pos2d.x = resize(pos2d.x, factor, 0);
-    pos2d.y = resize(pos2d.y, factor, 0);
+    I.pos2d.x = I.pos2d.x - (screen_res.x - size) / 2.0;
+    I.pos2d.y = I.pos2d.y - (screen_res.y - size) / 2.0;
+    I.pos2d.x = resize(I.pos2d.x, factor, 0);
+    I.pos2d.y = resize(I.pos2d.y, factor, 0);
 
     // Коллиматоры глючат при выбросе
     float mig = 1.0f - (m_affects.x * 2.f);
 
-    float4 final = s_base.Load(pos2d.xyz) * m_hud_params.x;
+    float4 final = s_base.Load(I.pos2d.xyz) * m_hud_params.x;
 
     final.rgb = final.rgb * 0.8;
 
-    float noise = get_noise(tc0 * timers.z) * 0.25 * 0.25 * 25;
+    float noise = get_noise(I.tc0 * timers.z) * 0.25 * 0.25 * 25;
     final.r += noise;
     final.g += noise;
     final.b += noise;

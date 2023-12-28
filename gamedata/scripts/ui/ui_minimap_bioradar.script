@@ -1,21 +1,21 @@
 
-------------- Ð‘Ð˜ÐžÐ ÐÐ”ÐÐ  -------------
--- DÐµÑ‚ÐµÐºÑ‚Ð¾Ñ€ Ð¶Ð¸Ð²Ñ‹Ñ… Ñ„Ð¾Ñ€Ð¼, Ð±ÑƒÐ´ÑŒ Ð¾Ð½ Ð½ÐµÐ»Ð°Ð´ÐµÐ½.
--- ÐÐ²Ñ‚Ð¾Ñ€ Charsi
+------------- ÁÈÎÐÀÄÀÐ -------------
+-- Dåòåêòîð æèâûõ ôîðì, áóäü îí íåëàäåí.
+-- Àâòîð Charsi
 -- Data 29.11.2012
--- Ð¿ÐµÑ€ÐµÑ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð´Ð»Ñ OGSE KamikaZze 2012-2014
--- ÐžÐ¿Ñ‚Ð¸Ð¼Ð¸Ð·Ð°Ñ†Ð¸Ñ, Ð¸ÑÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¾ÑˆÐ¸Ð±Ð¾Ðº: KRodin (c) 2016
--- Ð’Ð¾Ð»Ð½Ð°, Ð·Ð°Ñ‚ÑƒÑ…Ð°Ð½Ð¸Ðµ Ñ‚Ð¾Ñ‡ÐµÐº Ð¸ Ð·Ð²ÑƒÐº Ð²Ñ‹ÐºÐ»ÑŽÑ‡ÐµÐ½Ñ‹, Ð¿Ð¾Ñ‚Ð¾Ð¼Ñƒ Ñ‡Ñ‚Ð¾ 1.)ÑÑ‚Ð¾ Ð³Ð»ÑŽÑ‡Ð½Ð¾ 2.)Ð½ÐµÐºÑ€Ð°ÑÐ¸Ð²Ð¾
+-- ïåðåðàáîòêà äëÿ OGSE KamikaZze 2012-2014
+-- Îïòèìèçàöèÿ, èñïðàâëåíèå îøèáîê: KRodin (c) 2016
+-- Âîëíà, çàòóõàíèå òî÷åê è çâóê âûêëþ÷åíû, ïîòîìó ÷òî 1.)ýòî ãëþ÷íî 2.)íåêðàñèâî
 
-------------- ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ ------------
-local max_dist = 60 -- ÐœÐ°ÐºÑ. Ñ€Ð°ÑÑÑ‚Ð¾ÑÐ½Ð¸Ðµ Ð´Ð¾ Ñ†ÐµÐ»Ð¸ Ð² Ð¸Ð³Ñ€Ð¾Ð²Ñ‹Ñ… Ð¼ÐµÑ‚Ñ€Ð°Ñ…
-local d = 128 -- KRodin: ÐŸÑƒÑÑ‚ÑŒ Ñ‚Ð°Ðº Ð¸ Ð±ÑƒÐ´ÐµÑ‚, Ð½Ðµ Ñ‚Ñ€Ð¾Ð³Ð°Ñ‚ÑŒ!
-local screen_max_dist = 85 -- Ð¨Ð¸Ñ€Ð¸Ð½Ð° Ð¸Ð¼ÐµÐ½Ð½Ð¾ Ñ€Ð°Ð´Ð°Ñ€Ð° (ÐÐµ Ñ‚ÐµÐºÑÑ‚ÑƒÑ€Ñ‹!) Ð² Ð¿Ð¸ÐºÑÐµÐ»ÑÑ…
-local dot_size = 3 -- Ð Ð°Ð·Ð¼ÐµÑ€ Ñ‚Ð¾Ñ‡ÐºÐ¸ (Ñ‡ÐµÐ¼ Ð±Ð¾Ð»ÑŒÑˆÐµ - Ñ‚ÐµÐ¼ Ñ‚Ð¾Ñ‡ÐºÐ° ÐºÑ€ÑƒÐ¿Ð½ÐµÐµ)
+------------- Íàñòðîéêè ------------
+local max_dist = 60 -- Ìàêñ. ðàññòîÿíèå äî öåëè â èãðîâûõ ìåòðàõ
+local d = 128 -- KRodin: Ïóñòü òàê è áóäåò, íå òðîãàòü!
+local screen_max_dist = 85 -- Øèðèíà èìåííî ðàäàðà (Íå òåêñòóðû!) â ïèêñåëÿõ
+local dot_size = 3 -- Ðàçìåð òî÷êè (÷åì áîëüøå - òåì òî÷êà êðóïíåå)
 -------------------------------------
-local biomap_sweep_enabled = true -- I am dead: Ð’ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ Ð¸ Ð²Ñ‹ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ Ð²Ð¾Ð»Ð½Ñ‹.
-local biomap_sweep_dots_enabled = false -- I am dead: Ð’ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ Ð¸ Ð²Ñ‹ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ ÑƒÐ³Ð°ÑÐ°Ð½Ð¸Ðµ Ñ‚Ð¾Ñ‡ÐµÐº.
-local step_angle = 3 / 180 -- ÑˆÐ°Ð³ Ð·Ð° Ð°Ð¿Ð´ÐµÐ¹Ñ‚ (ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¿Ð¾Ð²Ð¾Ñ€Ð¾Ñ‚Ð°)
+local biomap_sweep_enabled = true -- I am dead: Âêëþ÷åíèå è âûêëþ÷åíèå âîëíû.
+local biomap_sweep_dots_enabled = false -- I am dead: Âêëþ÷åíèå è âûêëþ÷åíèå óãàñàíèå òî÷åê.
+local step_angle = 3 / 180 -- øàã çà àïäåéò (ñêîðîñòü ïîâîðîòà)
 local angle = 0
 local lim_angle = 1000 * 2 * math.pi
 local biomap
@@ -89,7 +89,7 @@ function on_item_to_slot(obj)
 end
 
 function on_item_to_ruck(obj)
-    if obj:section() == "bioradar" then -- Ð±Ð¸Ð¾Ñ€Ð°Ð´Ð°Ñ€ Ð² Ð—Ð¾Ð½Ðµ ÐµÑÑ‚ÑŒ Ð² ÐµÐ´Ð¸Ð½ÑÑ‚Ð²ÐµÐ½Ð½Ð¾Ð¼ ÑÐºÐ·ÐµÐ¼Ð¿Ð»ÑÑ€Ðµ, Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÑƒ Ð¿Ð¾ id Ð½Ðµ Ð´ÐµÐ»Ð°Ð».
+    if obj:section() == "bioradar" then -- áèîðàäàð â Çîíå åñòü â åäèíñòâåííîì ýêçåìïëÿðå, ïîýòîìó ïðîâåðêó ïî id íå äåëàë.
         unsubscribe()
     end
 end
@@ -202,7 +202,7 @@ function set_position_offset(x, y)
 end
 
 local firmware_item =
-    { -- [Ð¡ÐµÐºÑ†Ð¸Ñ Ð¿Ñ€Ð¾ÑˆÐ¸Ð²ÐºÐ¸] = { [Ð¸Ð½Ñ„Ð¾Ð¿Ð¾Ñ€ÑˆÐµÐ½] = { [ÐºÐ»Ð°ÑÑ ÑÑƒÑ‰ÐµÑÑ‚Ð², ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ñ… Ð¸Ð½Ñ„Ð¾Ð¿Ð¾Ñ€ÑˆÐµÐ½ Ñ€Ð°Ð·Ñ€ÐµÑˆÐ°ÐµÑ‚ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶Ð°Ñ‚ÑŒ Ð½Ð° Ð±Ð¸Ð¾Ñ€Ð°Ð´Ð°Ñ€Ðµ] = {Ñ†Ð²ÐµÑ‚ Ð² Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ðµ Ñ‚Ð°Ð±Ð»Ð¸Ñ†Ñ‹ r,g,b} } }
+    { -- [Ñåêöèÿ ïðîøèâêè] = { [èíôîïîðøåí] = { [êëàññ ñóùåñòâ, êîòîðûõ èíôîïîðøåí ðàçðåøàåò îòîáðàæàòü íà áèîðàäàðå] = {öâåò â ôîðìàòå òàáëèöû r,g,b} } }
         ['firmware_krovosos'] = {
             ['bioradar_krovosos'] = {
                 [clsid.bloodsucker_s] = {255, 0, 120}
@@ -283,11 +283,11 @@ local firmware_item =
         }
     }
 
-local need_show_by_sect = {} -- Ð”Ð»Ñ Ð±Ñ‹ÑÑ‚Ñ€Ð¾Ð³Ð¾ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð° Ð¿Ð¾ ÐºÐ»ÑŽÑ‡Ñƒ
+local need_show_by_sect = {} -- Äëÿ áûñòðîãî äîñòóïà ïî êëþ÷ó
 
 function on_first_update()
     local bio_marked =
-        { -- ÐšÐ¾Ð³Ð¾ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ. I am dead: Ð’ÐºÐ»ÑŽÑ‡Ð¸Ð» Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ Ð¿Ð¾ÐºÐ°Ð· Ð²ÑÐµÑ… ÑÑƒÑ‰ÐµÑÑ‚Ð².
+        { -- Êîãî ïîêàçûâàòü ïî óìîë÷àíèþ. I am dead: Âêëþ÷èë ïî óìîë÷àíèþ ïîêàç âñåõ ñóùåñòâ.
             ["bioradar_krovosos"] = true,
             ["bioradar_chimera"] = true,
             ["bioradar_burer"] = true,
@@ -327,7 +327,7 @@ function on_first_update()
     end
 end
 
-class "dot" -- ÐšÐ»Ð°ÑÑ Ñ‚Ð¾Ñ‡ÐºÐ¸ Ð¾Ð±ÑŠÐµÐºÑ‚Ð°
+class "dot" -- Êëàññ òî÷êè îáúåêòà
 function dot:__init(o, clsid, color)
     self.o_id = o:id()
     -- log3("[%s] Adding dot with id [%s] for [%s]", script_name(), self.o_id, o:name())
@@ -338,7 +338,7 @@ function dot:__init(o, clsid, color)
     self.st = CUIStatic()
     self.st:Init(1024, 0, dot_size * get_current_kx(), dot_size)
     self.st:SetStretchTexture(true)
-    -- self.st:EnableHeading(true)  -- Ñ‚Ð°Ðº Ð½Ðµ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚, Ñ‚Ð¾Ñ‡ÐºÐ¸ Ð½Ð°Ñ‡Ð¸Ð½Ð°ÑŽÑ‚ ÑÐ´Ð²Ð¸Ð³Ð°Ñ‚ÑŒÑÑ
+    -- self.st:EnableHeading(true)  -- òàê íå ðàáîòàåò, òî÷êè íà÷èíàþò ñäâèãàòüñÿ
 
     if self.alive then
         self.st:InitTexture("biomap\\white_dot")
@@ -352,7 +352,7 @@ function dot:__init(o, clsid, color)
     biomap:AttachChild(self.st)
 end
 
-function dot:draw(dir, obj_alive) -- ÐÐ°Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒ Ñ‚Ð¾Ñ‡ÐºÑƒ	
+function dot:draw(dir, obj_alive) -- Íàðèñîâàòü òî÷êó	
     if self.alive and not obj_alive then
         self.alive = false
         self.st:InitTexture("biomap\\white_cross")
@@ -360,8 +360,8 @@ function dot:draw(dir, obj_alive) -- ÐÐ°Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒ Ñ‚Ð¾Ñ‡ÐºÑƒ
     end
     local vx, vz = dir.x / max_dist * screen_max_dist, -dir.z / max_dist * screen_max_dist
     local x, y = (vx * c - vz * s) * get_current_kx(), vx * s + vz * c
-    self.st:SetWndPos(((x + d) + sweep_add_x) - 1, (y + d) + sweep_add_y - 1) -- -1 Ñ‚ÑƒÑ‚ ÑÐ¿ÐµÑ†Ð¾Ð¼, Ð¸Ð½Ð°Ñ‡Ðµ Ñ‚Ð¾Ñ‡ÐºÐ¸ ÑÐ´Ð²Ð¸Ð½ÑƒÑ‚Ñ‹ Ð²Ð½Ð¸Ð· Ð¸ Ð²Ð¿Ñ€Ð°Ð²Ð¾ Ð½Ð° 1 Ð¿Ð¸ÑÐºÐµÐ»ÑŒ
-    -------- ÑƒÐ³Ð°ÑÐ°Ð½Ð¸Ðµ Ñ‚Ð¾Ñ‡ÐµÐº -------
+    self.st:SetWndPos(((x + d) + sweep_add_x) - 1, (y + d) + sweep_add_y - 1) -- -1 òóò ñïåöîì, èíà÷å òî÷êè ñäâèíóòû âíèç è âïðàâî íà 1 ïèñêåëü
+    -------- óãàñàíèå òî÷åê -------
     if biomap_sweep_dots_enabled then
         local u = math.atan2(y, x) * (180 / math.pi) + 180
         if (xa > u and xa - u or u - xa) < 1.5 then
@@ -374,7 +374,7 @@ function dot:draw(dir, obj_alive) -- ÐÐ°Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒ Ñ‚Ð¾Ñ‡ÐºÑƒ
     ---------------------------------
 end
 
-function dot:hide() -- Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ‚Ð¾Ñ‡ÐºÑƒ
+function dot:hide() -- Ñêðûòü òî÷êó
     local parent = biomap
     if parent then
         parent:DetachChild(self.st)
@@ -382,7 +382,7 @@ function dot:hide() -- Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ‚Ð¾Ñ‡ÐºÑƒ
     self.st = nil
     dots[self.o_id] = nil
 end
--- Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¿Ð¾Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ Ñ‚Ð¾Ñ‡ÐµÐº Ð¸/Ð¸Ð»Ð¸ Ð²Ð¾Ð»Ð½Ñ‹
+-- îáíîâëåíèå ïîëîæåíèÿ òî÷åê è/èëè âîëíû
 function update(parent)
     if not biomap then
         cleanup_dots()
@@ -416,7 +416,7 @@ function update(parent)
             sweep_add_x = -(biomap_sweep_width - biomap_width) / 2
             sweep_add_y = -(biomap_sweep_heigth - biomap_heigth) / 2
 
-            biomap_sweep:SetColor(GetARGB(100, 199, 2, 28)) -- ÑƒÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÐ¼ Ñ†Ð²ÐµÑ‚
+            biomap_sweep:SetColor(GetARGB(100, 199, 2, 28)) -- óñòàíàâëèâàåì öâåò
             biomap_sweep:SetWndPos(biomap_x + sweep_add_x, biomap_y + sweep_add_y)
 
             if biomap_sweep_enabled then
@@ -438,7 +438,7 @@ function update(parent)
     end
 
     if biomap_sweep_enabled then
-        biomap_sweep:SetHeading(angle) -- Ð¿Ð¾Ð²Ð¾Ñ€Ð°Ñ‡Ð¸Ð²Ð°ÐµÐ¼ ÑÑ‚Ð°Ñ‚Ð¸Ðº
+        biomap_sweep:SetHeading(angle) -- ïîâîðà÷èâàåì ñòàòèê
     end
 
     if biomap_sweep_dots_enabled then
@@ -450,7 +450,7 @@ function update(parent)
         local o = level.object_by_id(id)
         if o then
             local clsid = o:clsid()
-            local color = need_show_by_sect[clsid] -- Ð•ÑÐ»Ð¸ Ð² Ñ‚Ð°Ð±Ð»Ð¸Ñ†Ðµ ÐµÑÑ‚ÑŒ Ñ†Ð²ÐµÑ‚ Ð´Ð»Ñ ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð°ÑÑÐ° - Ð¼Ð¾Ð¶Ð½Ð¾ Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð¾Ð±ÑŠÐµÐºÑ‚ Ð½Ð° Ð±Ð¸Ð¾Ñ€Ð°Ð´Ð°Ñ€Ðµ.
+            local color = need_show_by_sect[clsid] -- Åñëè â òàáëèöå åñòü öâåò äëÿ ýòîãî êëàññà - ìîæíî ïîêàçàòü îáúåêò íà áèîðàäàðå.
             if dots[id] or color then
                 local dir = o:position():sub(device().cam_pos)
                 if (dir:magnitude() / max_dist) <= 1 then
@@ -505,7 +505,7 @@ function ui_map_viewer:__init()
     map:Init()
     map:SetColor(GetARGB(255, 255, 255, 255))
 
-    map:Zoom(0.82) -- Ð¿Ð¾Ð´Ð¾Ð±Ñ€Ð°Ð½Ð½Ñ‹Ð¹ Ð·ÑƒÐ¼ Ñ‡Ñ‚Ð¾ Ð± ÑÐ¾Ð²Ð¿Ð°Ð´Ð°Ð» Ñ Ñ€Ð°Ð´Ð°Ñ€Ð¾Ð¼. Ð½Ð°Ð²ÐµÑ€Ð½Ð¾ Ð¼Ð¾Ð¶Ð½Ð¾ Ñ€Ð°ÑÑ‰Ð¸Ñ‚Ð°Ñ‚ÑŒ Ð½Ð¾ Ð»ÐµÐ½ÑŒ Ð´ÑƒÐ¼Ð°Ñ‚ÑŒ )
+    map:Zoom(0.82) -- ïîäîáðàííûé çóì ÷òî á ñîâïàäàë ñ ðàäàðîì. íàâåðíî ìîæíî ðàñùèòàòü íî ëåíü äóìàòü )
 
     self.map = map
 

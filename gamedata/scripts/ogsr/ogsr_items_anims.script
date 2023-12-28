@@ -87,15 +87,7 @@ local function play_item_use(item)
         end
     end
 
-    local anim =
-        (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and
-            "anm_use_alt" or "anm_use"
-
-    if level.get_inventory_wnd():IsShown() then
-        level.start_stop_menu(level.get_inventory_wnd(), true)
-    elseif level.get_car_body_wnd():IsShown() then
-        level.start_stop_menu(level.get_car_body_wnd(), true)
-    end
+    local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and "anm_use_alt" or "anm_use"
 
     level.only_allow_movekeys(true)
     level.set_actor_allow_ladder(false)
@@ -103,9 +95,8 @@ local function play_item_use(item)
     local prev_active_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
 
-    dsh.wait_condition(function()
-        return not db.actor:active_item()
-    end, function()
+    dsh.wait_condition(function() return not db.actor:active_item() end, 
+    function()
         snd_in_use = sound_object(snd)
         snd_in_use:play(db.actor, 0, sound_object.s2d)
 
@@ -133,9 +124,7 @@ local function on_actor_before_use(obj, sobj)
         local hud = get_string(sect, "hud") or get_string(sect, "hud_exo")
         local slot_was_blocked = db.actor.inventory:is_active_slot_blocked()
         if hud and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
-            if db.actor:has_info("ui_inventory") then
-                level.start_stop_menu(level.main_input_receiver(), true)
-            end
+
             obj:zero_effects()
             play_item_use(sect)
         elseif hud and db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником

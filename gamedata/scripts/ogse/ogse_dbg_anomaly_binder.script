@@ -1,6 +1,6 @@
 
 subscribed_anoms = {} -- ключи - id радиоактивных аномалий, которые возможно подписать на сигналы, значения - подписана ли аномалия на апдейт (true/false)
-autosubscribe = false -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
+autosubscribe = true -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
 
 local radzone_sect = {
 	["zone_radioactive"] = { warn = 1, last_warn = 4,  alarm = 8 },
@@ -10,7 +10,9 @@ local radzone_sect = {
 	["zone_radioactive_killing"] = { warn = 1, last_warn = 4,  alarm = 8 },
 	["handmade_zone_radioactive"] = { warn = 1, last_warn = 4,  alarm = 8 },
 }
+
 local radzone_deeps = {}
+local estimate_size = {}
 
 function init(obj)
     local new_binder = anomaly_binder(obj)
@@ -87,7 +89,7 @@ end
 
 local geiger_warn = 15
 local actor_radlevel = 0
-local estimate_size = {}
+
 function anomaly_binder:get_rad_intensity()
     local intencity = radzone_sect[self.object:section()]
     if not intencity then
@@ -96,57 +98,63 @@ function anomaly_binder:get_rad_intensity()
     local actor_pos = db.actor:position()
     local dist_to_actor = self.object:position():distance_to(actor_pos)
     local o_id = self.object:id()
-    if self.object:inside(actor_pos) and dist_to_actor > geiger_warn then
-        --- актор внутри радзоны, но дальше радиуса предупреждения - большая зона, считаем по крайним значениям
-        local low = intencity.warn
+    if self.object:inside(actor_pos) then
         local high = intencity.alarm
-        if not estimate_size[o_id] then
-            estimate_size[o_id] = dist_to_actor
-        end
+        estimate_size[o_id] = dist_to_actor
         local radius = estimate_size[o_id]
-        local step = radius / high
-        local rad_level = math.ceil(radius / step)
-        if rad_level > high then
-            rad_level = high
+        if dist_to_actor > geiger_warn then --- актор внутри радзоны, но дальше радиуса предупреждения - большая зона, считаем по крайним значениям
+            local low = intencity.warn
+            local step = radius / high
+            local rad_level = math.ceil(radius / step)
+            if rad_level > high then
+                rad_level = high
+            end
+            radzone_deeps[o_id] = rad_level
+        else --- актор внутри радзоны, и меньше радиуса предупреждения - актор вошел внутрь, считаем по верхним значениям
+            local low = intencity.last_warn
+            local div = high - low
+            local step = radius / div
+            local deep = high - (dist_to_actor / step)
+            local rad_level = math.ceil(deep)
+            if rad_level > high then
+                rad_level = high
+            end
+            radzone_deeps[o_id] = rad_level
         end
-        radzone_deeps[o_id] = rad_level
-    elseif self.object:inside(actor_pos) and dist_to_actor < geiger_warn then
-        --- актор внутри радзоны, и меньше радиуса предупреждения - актор вошел внутрь, считаем по верхним значениям
-        local low = intencity.last_warn
-        local high = intencity.alarm
-        if not estimate_size[o_id] then
+    else
+        if dist_to_actor < geiger_warn then
+            --- актор снаружи радзоны, и меньше радиуса предупреждения - актор рядом, считаем по нижним значениям
+            local low = intencity.warn
+            local high = intencity.last_warn
+            local radius = geiger_warn
+            local div = high - low
+            local step = radius / div
+            local deep = high - (dist_to_actor / step)
+            local rad_level = math.ceil(deep)
+            if rad_level > high then
+                rad_level = high
+            end
+            radzone_deeps[o_id] = rad_level
             estimate_size[o_id] = dist_to_actor
-        end
-        local radius = estimate_size[o_id]
-        local div = high - low
-        local step = radius / div
-        local deep = high - (dist_to_actor / step)
-        local rad_level = math.ceil(deep)
-        if rad_level > high then
-            rad_level = high
-        end
-        radzone_deeps[o_id] = rad_level
-    elseif dist_to_actor < geiger_warn then
-        --- актор снаружи радзоны, и меньше радиуса предупреждения - актор рядом, считаем по нижним значениям
-        local low = intencity.warn
-        local high = intencity.last_warn
-        local radius = geiger_warn
-        local div = high - low
-        local step = radius / div
-        local deep = high - (dist_to_actor / step)
-        local rad_level = math.ceil(deep)
-        if rad_level > high then
-            rad_level = high
-        end
-        radzone_deeps[o_id] = rad_level
-    elseif dist_to_actor > geiger_warn then
-        if radzone_deeps[o_id] then
-            radzone_deeps[o_id] = nil
-        end
-        self.sm:reschedule((dist_to_actor < geiger_warn * 2 and 200) or
+        else
+            if radzone_deeps[o_id] then
+                radzone_deeps[o_id] = nil
+            end
+            self.sm:reschedule((dist_to_actor < geiger_warn * 2 and 200) or
                                (dist_to_actor < geiger_warn * 3 and math.random(1000, 1500)) or
                                (dist_to_actor < geiger_warn * 4 and math.random(2500, 3000)) or math.random(4000, 5000))
+        end
+    end	
+end
+
+function get_ditance_to_radzone()
+    local distance = 0
+    for k, v in pairs(estimate_size) do
+        if v > distance then
+            distance = v
+        end
     end
+    return distance
 end
 
 function get_max_radlevel()
@@ -173,32 +181,7 @@ function anomaly_binder:net_destroy()
     object_binder.net_destroy(self)
 end
 
-local hud = get_hud()
-
 function anomaly_binder:on_enter(zone, obj)
-    if obj:is_actor() and obj:alive() then
-
-        if string.find(zone:section(), "zone_radioactive") then
-            hud:RemoveCustomStatic("indicator_rad")
-            hud:AddCustomStatic("indicator_rad", true)
-        end
-
-        if string.find(zone:section(), "zone_field_acidic") then
-            hud:RemoveCustomStatic("indicator_acid")
-            hud:AddCustomStatic("indicator_acid", true)
-        end
-
-        if string.find(zone:section(), "zone_field_psychic") then
-            hud:RemoveCustomStatic("indicator_psi")
-            hud:AddCustomStatic("indicator_psi", true)
-        end
-
-        if string.find(zone:section(), "zone_field_thermal") then
-            hud:RemoveCustomStatic("indicator_thermal")
-            hud:AddCustomStatic("indicator_thermal", true)
-        end
-    end
-
     local is_anomaly = get_bool(zone:section(), "is_anomaly", false)
 
     if is_anomaly and obj:is_artefact() then
@@ -207,23 +190,4 @@ function anomaly_binder:on_enter(zone, obj)
 end
 
 function anomaly_binder:on_exit(zone, obj)
-    if not obj:is_actor() and obj:alive() then
-        return
-    end
-
-    if string.find(zone:section(), "zone_radioactive") then
-        hud:RemoveCustomStatic("indicator_rad")
-    end
-
-    if string.find(zone:section(), "zone_field_acidic") then
-        hud:RemoveCustomStatic("indicator_acid")
-    end
-
-    if string.find(zone:section(), "zone_field_psychic") then
-        hud:RemoveCustomStatic("indicator_psi")
-    end
-
-    if string.find(zone:section(), "zone_field_thermal") then
-        hud:RemoveCustomStatic("indicator_thermal")
-    end
 end

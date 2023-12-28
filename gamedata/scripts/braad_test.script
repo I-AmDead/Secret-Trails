@@ -79,17 +79,15 @@ local function on_take(obj, sobj)
         end
     elseif level.name() == "aver" then
         if obj:section() == "mandra" then
-            local sim = alife()
-            for a, obj in alife():objects() do
-                if obj:section_name() == "mandra" then
-                    level.map_remove_object_spot(obj.id, "crlc_big")
-                    break
-                end
-            end
+            level.map_remove_object_spot(obj:id(), "crlc_big")
+        elseif obj:section() == "zahar_box" then
+            level.map_remove_object_spot(obj:id(), "crlc_big")
         end
     elseif level.name() == "predbannik" then
         if db.actor:has_info("nato_enemy") and not has_alife_info("nato_zasada") then
             db.actor:give_info_portion("nato_zasada")
+        elseif obj:section() == "box_vano" then
+            level.map_remove_object_spot(obj:id(), "crlc_big")
         end
     elseif level.name() == "l03_agroprom" then
         if obj:section() == "af_agro" and not has_alife_info("pauk_agro_spawn") then
@@ -110,7 +108,7 @@ local function on_take(obj, sobj)
             not db.actor:has_info("mil_klyak_help_start") then
             klyak_mil_spawn()
         elseif obj:section() == "new_plan" then
-            remove_metka_ucen()
+            level.map_remove_object_spot(obj:id(), "red_location")
         end
     elseif level.name() == "l10_radar" then
         if obj:section() == "amulet_5" and not has_alife_info("pauk_les_spawn") then
@@ -129,11 +127,11 @@ local function on_take(obj, sobj)
         end
     elseif level.name() == "l12_stancia_2" then
         if obj:section() == "aes_case1" then
-            remove_spot1()
+            level.map_remove_object_spot(obj:id(), "crlc_big")
         elseif obj:section() == "aes_case2" then
-            remove_spot2()
+            level.map_remove_object_spot(obj:id(), "crlc_big")
         elseif obj:section() == "aes_case3" then
-            remove_spot3()
+            level.map_remove_object_spot(obj:id(), "crlc_big")
         end
     elseif level.name() == "l12u_sarcofag" then
         if obj:section() == "amk_zapiska" then
@@ -141,10 +139,12 @@ local function on_take(obj, sobj)
             alife():release(sobj)
         end
     elseif obj:section() == "flash_ban" and db.actor:has_info("voronin_nychka_jila") then
-        remove_spot_ban()
+        level.map_remove_object_spot(obj:id(), "blue_location")
         alife():release(sobj)
     elseif obj:section() == "volk_pda" and db.actor:has_info("volk_tainik_have") then
-        remove_volk_tainik()
+        level.map_remove_object_spot(obj:id(), "blue_location")
+    elseif obj:section() == "doc_peredatchik" then
+        level.map_remove_object_spot(obj:id(), "crlc_big")
     end
 end
 
@@ -796,7 +796,7 @@ function add_new_lc(levch, levchn, levchm, info)
     end
 
     if obj then
-        level.map_add_object_spot(obj.id, "level_changer", levchm)
+        level.map_add_object_spot_ser(obj.id, "level_changer", levchm)
         db.actor:give_info_portion(info)
         info_received()
     end
@@ -852,19 +852,19 @@ end
 
 function spawn_case()
     local obj = alife():create("aes_case1", vector():set(355.64077, 0.005, 447.625), 123439, 2608)
-    level.map_add_object_spot(obj.id, "crlc_big", "case1")
+    level.map_add_object_spot_ser(obj.id, "crlc_big", "case1")
 
     local obj = alife():create("aes_case2", vector():set(425.37, 8.510, 158.4013), 143120, 2599)
-    level.map_add_object_spot(obj.id, "crlc_big", "case2")
+    level.map_add_object_spot_ser(obj.id, "crlc_big", "case2")
 
     local obj = alife():create("aes_case3", vector():set(243.843, 50.035, 133.903), 89174, 2574)
-    level.map_add_object_spot(obj.id, "crlc_big", "case3")
+    level.map_add_object_spot_ser(obj.id, "crlc_big", "case3")
 end
 
 function add_spot()
     local obj = alife():story_object(32669)
     if obj then
-        level.map_add_object_spot(obj.id, "level_changer", game.translate_string("l12u_control_monolith"))
+        level.map_add_object_spot_ser(obj.id, "level_changer", game.translate_string("l12u_control_monolith"))
     end
 end
 
@@ -1072,33 +1072,6 @@ function solomon_mono_spawn()
     local obj = alife():create("solomon_mono3", vector():set(25.721918106079, 5.06846, 83.836639404297), 36376, 2530)
     local obj = alife():create("solomon_mono4", vector():set(33.805053710938, 4.9988, 103.37216186523), 39952, 2529)
     local obj = alife():create("solomon_mono5", vector():set(-3.7105083465576, 4.10073, 121.14627838135), 22428, 2519)
-end
-
-function remove_spot1()
-    for a, obj in alife():objects() do
-        if obj:name() == "aes_case2" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
-end
-
-function remove_spot2()
-    for a, obj in alife():objects() do
-        if obj:name() == "aes_case2" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
-end
-
-function remove_spot3()
-    for a, obj in alife():objects() do
-        if obj:name() == "aes_case3" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
 end
 
 local out_object
@@ -1603,17 +1576,7 @@ function set_metka_ucen()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj:section_name() == "new_plan" then
-            level.map_add_object_spot(obj.id, "red_location", game.translate_string("set_metka_ucen"))
-            break
-        end
-    end
-end
-
-function remove_metka_ucen()
-    local sim = alife()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "new_plan" then
-            level.map_remove_object_spot(obj.id, "red_location")
+            level.map_add_object_spot_ser(obj.id, "red_location", game.translate_string("set_metka_ucen"))
             break
         end
     end
@@ -1729,7 +1692,7 @@ function set_chimera_ucen_prov()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj:section() == "electro_chimera" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_chimera_ucen"))
+            level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_chimera_ucen"))
             break
         end
     end
@@ -1739,7 +1702,7 @@ function set_chimera_ucen()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj and obj:name() == "electro_chimera_ucen" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_chimera_ucen"))
+            level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_chimera_ucen"))
             break
         end
     end
@@ -1749,7 +1712,7 @@ function set_gigant_ucen()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj and obj:name() == "gigant_strong_ucen" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_gigant_ucen"))
+            level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_gigant_ucen"))
             break
         end
     end
@@ -1759,7 +1722,7 @@ function set_bloodsucker_ucen()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj and obj:name() == "bloodsucker_strong_ucen" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_bloodsucker_ucen"))
+            level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_bloodsucker_ucen"))
             break
         end
     end
@@ -1820,7 +1783,7 @@ end
 
 function nychka_spawn()
     local obj = alife():create("new_box_inv", vector():set(34.903102874756, 9.980658531189, -64.443084716797), 218595, 1077)
-    set_spot_ban()
+    level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_spot_ban"))
 end
 
 function dan_zombi()
@@ -1844,26 +1807,6 @@ function voronin_snork()
     local obj = alife():create("snork_voronin10", vector():set(156.37007141113, 5.8319, -259.7184753418), 355922, 964)
     local obj = alife():create("snork_voronin11", vector():set(156.37007141113, 5.8319, -259.7184753418), 355922, 964)
     local obj = alife():create("snork_voronin12", vector():set(156.37007141113, 5.8319, -259.7184753418), 355922, 964)
-end
-
-function set_spot_ban()
-    local sim = alife()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "flash_ban" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_spot_ban"))
-            break
-        end
-    end
-end
-
-function remove_spot_ban()
-    local sim = alife()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "flash_ban" then
-            level.map_remove_object_spot(obj.id, "blue_location")
-            break
-        end
-    end
 end
 
 function set_relation_jila(sid)
@@ -2051,7 +1994,7 @@ end
 
 function volk_tainik_spawn()
     local obj = alife():create("volk_inv", vector():set(142.15008544922, 3.3007357120514, 339.77737426758), 447128, 232)
-    level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_volk_tainik"))
+    level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_volk_tainik"))
     local obj = alife():create("pseudodog_volk", vector():set(135.34928894043, 0.19664749, 347.77938842773), 439897, 233)
     local obj = alife():create("pseudodog_volk", vector():set(135.34928894043, 0.19664749, 347.77938842773), 439897, 233)
     local obj = alife():create("pseudodog_volk", vector():set(135.34928894043, 0.19664749, 347.77938842773), 439897, 233)
@@ -2059,16 +2002,6 @@ function volk_tainik_spawn()
     local obj = alife():create("psy_dog_volk", vector():set(138.53645324707, -0.22224108874798, 331.59295654297), 443529, 235)
     local obj = alife():create("psy_dog_volk", vector():set(138.53645324707, -0.22224108874798, 331.59295654297), 443529, 235)
     set_volk_tainik()
-end
-
-function remove_volk_tainik()
-    local sim = alife()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "volk_pda" then
-            level.map_remove_object_spot(obj.id, "blue_location")
-            break
-        end
-    end
 end
 
 function knyaz_razborka()
@@ -2547,7 +2480,7 @@ function set_povodyr()
     local sim = alife()
     for a, obj in alife():objects() do
         if obj:section_name() == "dog_povodyr" then
-            level.map_add_object_spot(obj.id, "blue_location", game.translate_string("set_povodyr"))
+            level.map_add_object_spot_ser(obj.id, "blue_location", game.translate_string("set_povodyr"))
             return
         end
     end
@@ -3071,6 +3004,18 @@ function spawn_ai_location(spawn_obj, pos, lvid, gvid)
     local obj = alife():create(spawn_obj, pos, lvid, gvid)
     local sobj = alife():object(obj.id)
     alife():use_ai_locations(sobj, false)
+end
+
+function give_supplies_to_actor(first_speaker, second_speaker)
+	if not db.actor:object("device_torch") then
+		dialogs.relocate_item_section(first_speaker, "device_torch", "in")
+	end
+	if not db.actor:object("wpn_knife") then
+		dialogs.relocate_item_section(first_speaker, "wpn_knife", "in")
+	end
+	if not db.actor:object("wpn_binoc") then
+		dialogs.relocate_item_section(first_speaker, "wpn_binoc", "in")
+	end
 end
 
 function attach(sm)

@@ -1,29 +1,13 @@
 function attach(sm)
-    sm:subscribe({ signal = "on_spawn",    fun = this.on_spawn	  })
-    --sm:subscribe({ signal = "on_key_down", fun = this.on_key_down })
 end
 
 local GUI
 
 local watch_mode = "actor_hud"
-local minimap_static, back_static, frame_static, compass_static
 watch_ui_show = ogse.load_var("watch_ui_show", true)
 
-function on_spawn()
-    local wnd = get_main_window()
-
-    -- log1("init_hand_minimap")
-
-    minimap_static = wnd:GetStatic("minimap")
-    back_static = wnd:GetStatic("minimap:background")
-    frame_static = wnd:GetStatic("minimap:level_frame")
-    compass_static = wnd:GetStatic("minimap:compass")
-
-    frame_static:Show(false)
-    minimap_static:Show(false)
-    compass_static:Show(false)
-    back_static:Show(false)
-end
+local delay = 0
+local health_progress
 
 function on_key_down(key, bind)
     if bind == key_bindings.kBIOMAP_SWITCH then
@@ -56,6 +40,8 @@ function c2t(ct)
     end
     local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
     Y, M, D, h, m, s, ms = ct:get(Y, M, D, h, m, s, ms)
+    shader_set_custom_param("game_date", Y, M, D)
+    shader_set_custom_param("game_time", h, m, s, ms)
     return {
         Y = Y,
         M = M,
@@ -72,14 +58,11 @@ function radiation_level()
     local radiation = has_alife_info("pre_blowout") and math.random(0, 400) or arc_radiation.get_radiation_dose()
     if radiation > 100 and radiation < 150 then
         return "green"
-    end
-    if radiation > 150 and radiation < 250 then
+    elseif radiation > 150 and radiation < 250 then
         return "yellow"
-    end
-    if radiation > 250 and radiation < 300 then
+    elseif radiation > 250 and radiation < 300 then
         return "orange"
-    end
-    if radiation > 300 then
+    elseif radiation > 300 then
         return "red"
     end
     return "nil"
@@ -90,14 +73,11 @@ function bleeding_level()
     local bleeding = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor:get_bleeding()
     if bleeding > 0.01 and bleeding < 0.25 then
         return "green"
-    end
-    if bleeding > 0.25 and bleeding < 0.5 then
+    elseif bleeding > 0.25 and bleeding < 0.5 then
         return "yellow"
-    end
-    if bleeding > 0.5 and bleeding < 0.75 then
+    elseif bleeding > 0.5 and bleeding < 0.75 then
         return "orange"
-    end
-    if bleeding > 0.75 then
+    elseif bleeding > 0.75 then
         return "red"
     end
     return "nil"
@@ -108,14 +88,11 @@ function psy_level()
     local psy_health = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.psy_health
     if psy_health < 0.9 and psy_health >= 0.7 then
         return "green"
-    end
-    if psy_health < 0.7 and psy_health >= 0.5 then
+    elseif psy_health < 0.7 and psy_health >= 0.5 then
         return "yellow"
-    end
-    if psy_health < 0.5 and psy_health >= 0.3 then
+    elseif psy_health < 0.5 and psy_health >= 0.3 then
         return "orange"
-    end
-    if psy_health < 0.3 then
+    elseif psy_health < 0.3 then
         return "red"
     end
     return "nil"
@@ -124,16 +101,13 @@ end
 -- Голод
 function hunger_level()
     local satiety = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.satiety
-    if satiety < 0.9 and db.actor.satiety >= 0.7 then
+    if satiety < 0.9 and satiety >= 0.7 then
         return "green"
-    end
-    if satiety < 0.7 and db.actor.satiety >= 0.5 then
+    elseif satiety < 0.7 and satiety >= 0.5 then
         return "yellow"
-    end
-    if satiety < 0.5 and db.actor.satiety >= 0.3 then
+    elseif satiety < 0.5 and satiety >= 0.3 then
         return "orange"
-    end
-    if satiety < 0.3 then
+    elseif satiety < 0.3 then
         return "red"
     end
     return "nil"
@@ -156,63 +130,55 @@ function overweight_level()
     elseif (inv_weight >= max_weight and inv_weight <= yellow_over) then
         return "green"
     end
-
     return "nil"
 end
 
 class "UIWatch"(CUIScriptWnd)
 
-function UIWatch:__init()
-    super()
+function UIWatch:__init() super()
     self:Show(true)
     self:Enable(true)
     self:SetAutoDelete(true)
+	
+    self.xml = CScriptXmlInit()
+    self.xml:ParseFile("script_wnd\\ui_watch.xml")
 
-    local xml = CScriptXmlInit()
-    self.xml = xml
-
-    xml:ParseFile("script_wnd\\ui_watch.xml")
-    xml:InitWindow("display", 0, self)
+    self.xml:InitWindow("display", 0, self)
 
     self.clock = {}
     self.clock.h = {}
     self.clock.m = {}
-    self.clock_colon = xml:InitStatic("display:colon", self)
-
-    self.line = {}
-    for i = 1, 4 do
-        self.line[i] = xml:InitStatic("display:line_" .. i, self)
-    end
+    self.clock_colon = self.xml:InitStatic("display:colon", self)
 
     self.rad = {}
     self.rad.level = {}
 
     for i = 1, 2 do
-        self.clock.h[i] = xml:InitStatic("display:clock_h_" .. i, self)
-        self.clock.m[i] = xml:InitStatic("display:clock_m_" .. i, self)
+        self.clock.h[i] = self.xml:InitStatic("display:clock_h_" .. i, self)
+        self.clock.m[i] = self.xml:InitStatic("display:clock_m_" .. i, self)
     end
 
     for i = 1, 4 do
-        self.rad.level[i] = xml:InitStatic("display:rad_level_" .. i, self)
+        self.rad.level[i] = self.xml:InitStatic("display:rad_level_" .. i, self)
     end
 
-    self.health_static = xml:InitStatic("display:static_health", self)
-    self.health_progress = xml:InitStatic("display:health_progress", self)
+    self.health_static = self.xml:InitStatic("display:static_health", self)
+    self.health_progress = self.xml:InitStatic("display:health_progress", self.health_static)
 
-    self.indik_blood = xml:InitStatic("display:indik_blood", self)
-    self.indik_hunger = xml:InitStatic("display:indik_hunger", self)
-    self.indik_radiation = xml:InitStatic("display:indik_radiation", self)
-    self.indik_psy = xml:InitStatic("display:indik_psy", self)
-    self.indik_overweight = xml:InitStatic("display:indik_overweight", self)
+    self.indik_blood = self.xml:InitStatic("display:indik_blood", self)
+    self.indik_hunger = self.xml:InitStatic("display:indik_hunger", self)
+    self.indik_radiation = self.xml:InitStatic("display:indik_radiation", self)
+    self.indik_psy = self.xml:InitStatic("display:indik_psy", self)
+    self.indik_overweight = self.xml:InitStatic("display:indik_overweight", self)
 
-    self.indicator_booster_psy = xml:InitStatic("display:indicator_booster_psy", self)
-    self.indicator_booster_rad = xml:InitStatic("display:indicator_booster_rad", self)
-    self.indicator_booster_health = xml:InitStatic("display:indicator_booster_health", self)
-    self.indicator_booster_power = xml:InitStatic("display:indicator_booster_power", self)
-    self.indicator_booster_rad_cleanup = xml:InitStatic("display:indicator_booster_rad_cleanup", self)
-    self.indicator_booster_psy_cleanup = xml:InitStatic("display:indicator_booster_psy_cleanup", self)
-    self.indicator_booster_wound = xml:InitStatic("display:indicator_booster_wound", self)
-    self.indicator_booster_weight = xml:InitStatic("display:indicator_booster_weight", self)
+    self.indicator_booster_psy = self.xml:InitStatic("display:indicator_booster_psy", self)
+    self.indicator_booster_rad = self.xml:InitStatic("display:indicator_booster_rad", self)
+    self.indicator_booster_health = self.xml:InitStatic("display:indicator_booster_health", self)
+    self.indicator_booster_power = self.xml:InitStatic("display:indicator_booster_power", self)
+    self.indicator_booster_rad_cleanup = self.xml:InitStatic("display:indicator_booster_rad_cleanup", self)
+    self.indicator_booster_psy_cleanup = self.xml:InitStatic("display:indicator_booster_psy_cleanup", self)
+    self.indicator_booster_wound = self.xml:InitStatic("display:indicator_booster_wound", self)
+    self.indicator_booster_weight = self.xml:InitStatic("display:indicator_booster_weight", self)
 end
 
 function UIWatch:__finalize()
@@ -220,8 +186,9 @@ function UIWatch:__finalize()
 end
 
 function UIWatch:Update()
+    if has_alife_info("pre_blowout") and time_global() < delay then return end
+    delay = time_global() + 120
     CUIScriptWnd.Update(self)
-    self:ShowLine(false)
     self:ShowClock(false)
     self:ShowRad(false)
     self:ShowHealth(false)
@@ -229,11 +196,10 @@ function UIWatch:Update()
     self:ShowIndicators(false)
     if watch_ui_show then
     	self:UpdateTopPanel()
-    end	
+    end
 end
 
 function UIWatch:UpdateTopPanel()
-    self:ShowLine(true)
     self:UpdateClock()
     self:UpdateRad()
     self:UpdateHealth()
@@ -278,12 +244,11 @@ end
 
 function UIWatch:UpdateHealth()
     self:ShowHealth(true)
-
     local cond = db.actor.health
     if has_alife_info("pre_blowout") then
-        self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * math.random(10, 100) * 0.01, 0.0018)
+        self.health_progress:SetWndRect(1, 1, 228 * math.random(0, 100) * 0.01, 18)
     else
-        self.health_progress:SetWndRect(0.0057, 0.0130, 0.0228 * cond, 0.0018)
+        self.health_progress:SetWndRect(1, 1, 228 * cond, 18)
     end
 end
 
@@ -292,7 +257,6 @@ function UIWatch:ShowClock(vis)
         self.clock.h[i]:Show(vis)
         self.clock.m[i]:Show(vis)
     end
-
     self.clock_colon:Show(vis)
 end
 
@@ -305,12 +269,6 @@ end
 function UIWatch:ShowHealth(vis)
     self.health_static:Show(vis)
     self.health_progress:Show(vis)
-end
-
-function UIWatch:ShowLine(vis)
-    for i = 1, 4 do
-        self.line[i]:Show(vis)
-    end
 end
 
 function UIWatch:ShowBoosterIndicators(vis)
@@ -337,37 +295,43 @@ function UIWatch:UpdateIndicators()
         return
     end
 
-    if bleeding_level() ~= "nil" then
+    local bleeding = bleeding_level()
+    local hunger = hunger_level()
+    local radiation = radiation_level()
+    local psy = psy_level()
+    local overweight = overweight_level()
+
+    if bleeding ~= "nil" then
         self.indik_blood:Show(true)
-        self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood_" .. bleeding_level(), "hud\\p3d")
+        self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood_" .. bleeding, "hud\\p3d")
     else
         self.indik_blood:Show(false)
     end
 
-    if hunger_level() ~= "nil" then
+    if hunger ~= "nil" then
         self.indik_hunger:Show(true)
-        self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety_" .. hunger_level(), "hud\\p3d")
+        self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety_" .. hunger, "hud\\p3d")
     else
         self.indik_hunger:Show(false)
     end
 
-    if radiation_level() ~= "nil" then
+    if radiation ~= "nil" then
         self.indik_radiation:Show(true)
-        self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad_" .. radiation_level(), "hud\\p3d")
+        self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad_" .. radiation, "hud\\p3d")
     else
         self.indik_radiation:Show(false)
     end
 
-    if psy_level() ~= "nil" then
+    if psy ~= "nil" then
         self.indik_psy:Show(true)
-        self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy_" .. psy_level(), "hud\\p3d")
+        self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy_" .. psy, "hud\\p3d")
     else
         self.indik_psy:Show(false)
     end
 
-    if overweight_level() ~= "nil" then
+    if overweight ~= "nil" then
         self.indik_overweight:Show(true)
-        self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight_" .. overweight_level(), "hud\\p3d")
+        self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight_" .. overweight, "hud\\p3d")
     else
         self.indik_overweight:Show(false)
     end

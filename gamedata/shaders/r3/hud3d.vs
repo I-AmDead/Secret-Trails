@@ -18,7 +18,7 @@ ui_vert_out main(ui_vert_in v)
     ui_vert_out O;
 
     O.tc0 = v.uv;
-    O.P = v.P;
+    O.P = v.P / 10000;
     O.P.w = 1;
     O.P = mul(m_WVP, O.P);
     return O;

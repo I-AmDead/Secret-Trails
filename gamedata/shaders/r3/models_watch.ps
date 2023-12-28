@@ -3,39 +3,103 @@
 #include "screenspace_hud_raindrops.h"
 
 uniform float4 m_affects;
+uniform float4 game_time;
+
+float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
+
+#define PI 3.14159265359
+#define TPI 6.28318530718
+
+float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
 
 f_deffer main(p_flat I)
 {
     f_deffer O;
 
-    // HUD Rain drops - SSS Update 17
-    // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
+    // узкая полоска искажений
+    float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x)) *2;
+    I.tcdh.x += (m_affects.x > 0.09 && I.tcdh.y > problems - 0.01 && I.tcdh.y < problems) ? sin((I.tcdh.y - problems) * 5 * m_affects.y * 2) : 0;
 
-    float4 drops = 0; // xy = Normal | z = Overall str | w = reflection str
+    // широкая полоска искажений
+    problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
+    float AMPL = 0.13;
+    I.tcdh.x -= (m_affects.x > 0.15 && I.tcdh.y > problems - AMPL && I.tcdh.y < problems + AMPL) ?
+        (cos(4.71 * (I.tcdh.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tcdh.y - problems)) / AMPL) : 0;
 
-    if (ssfx_hud_drops_1.y > 0)
-    {
-        // Calc droplets
-        drops.xyz = ssfx_hud_raindrops(s_hud_rain, I.RDrops.xyz, 1.0f);
-
-        // Only apply to facing up surfaces [ World Y+ ]
-        drops.xyz *= saturate(I.RDrops.w);
-
-        // Intensity from script ( Cover + Rain intensity )
-        drops.xyz *= ssfx_hud_drops_1.y;
-
-        // Refraction
-        I.tcdh.xy = saturate(I.tcdh.xy + drops.xy * ssfx_hud_drops_1.w * 0.1f);
-
-        // Reflection adjustments
-        drops.w = ssfx_hud_drops_1.z * dot(L_hemi_color, SSFX_HUD_LIGHTVECTOR);
-        drops.w = max(drops.w * 0.1f, 3.0f);
-    }
-
-    float gloss = drops.z * ssfx_hud_drops_2.w * 0.25f;
+    // тряска влево-вправо в финальной стадии
+    I.tcdh.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0;
 
     // diffuse
     float3 D = tbase(I.tcdh); // IN:  rgb.a
+
+    // Шум при выбросе
+    float noise = get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 20;
+    D.x += noise;
+    D.y += noise;
+    D.z += noise;
+
+// Изменение размера текстурных координат
+I.tcdh.x = resize(I.tcdh.x, screen_res.x / screen_res.y, 0.0);
+
+// Коррекция текстурных координат и преобразование их в координаты экрана
+float2 p = I.tcdh;
+p -= 0.5;
+p.x *= screen_res.x * screen_res.w;
+
+// Получение текущего времени игры
+float time = game_time.z;
+
+// Расчет угла поворота на основе времени
+float angle = (time * 1.0 / 60.0) * 2.0 * PI;
+
+// Создание матрицы поворота 2x2
+float2x2 rot = float2x2(cos(angle), sin(angle), -sin(angle), cos(angle));
+
+// Применение поворота к текстурным координатам и масштабирование на 0.73
+p = mul(rot, p) * 0.73;
+
+// Установка базового цвета в черный
+float3 color_base = float3(0.0, 0.0, 0.0);
+
+// Расчет расстояния от центра экрана
+float L = length(p);
+
+// Инициализация переменной для наложения
+float f = 0.;
+
+// Использование smoothstep для создания плавного перехода в наложении
+f = smoothstep(L - 0.005, L, 0.35);
+f -= smoothstep(L, L + 0.005, 0.33);
+
+// Коррекция времени для анимации и установка пороговых углов
+float t = fmod(time, TPI) - PI;
+float t1 = -PI;
+float t2 = PI;
+float t3 = PI - 6.1;
+
+// Расчет угла на основе текстурных координат
+float a = atan2(p.x, p.y);
+
+// Наложение на основе угла и порогов
+float f_final = f * step(a, t3);
+f = f * step(a, t2);
+
+// Использование линейной интерполяции для смешивания цветов на основе расчетных факторов
+float3 col2 = lerp(color_base, float3(0.21, 0.21, 0.21), f);
+float3 col3 = lerp(color_base, float3(cos(timers.x), cos(timers.x + TPI / 3.0), cos(timers.x + 2.0 * TPI / 3.0)), f_final);
+
+// Установка значений альфа для выходных цветов
+float4 fragColor1 = float4(col2, 0.0);
+float4 fragColor2 = float4(col3, 0.0);
+
+// Применение дополнительной прозрачности на основе интенсивности цвета
+if (fragColor1.r > 0.2 || fragColor1.g > 0.2 || fragColor1.b > 0.2)
+    fragColor1.a = 0.5;
+
+if (fragColor2.r > 0.3 || fragColor2.g > 0.3 || fragColor2.b > 0.3)
+    fragColor2.a = 0.8;
+
+D += fragColor1.rgb + fragColor2.rgb;
 
     if (m_affects.x > 0.41)
         D = 0.1f;
@@ -64,8 +128,8 @@ f_deffer main(p_flat I)
 #endif
 
     // 2. Standart output
-    float4 Ne = float4(normalize((float3)I.N.xyz + float3(drops.xy * drops.w, 0.0f)), h);
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, gloss)); // OUT: rgb.gloss
+    float4 Ne = float4(normalize((float3)I.N.xyz), h);
+    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, 1.0)); // OUT: rgb.gloss
 
     return O;
 }

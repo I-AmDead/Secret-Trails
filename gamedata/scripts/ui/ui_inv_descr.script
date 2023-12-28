@@ -43,7 +43,7 @@ local conditions_params = {
 	{ prop = "bleeding_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_bleeding")),	    tex = "bleeding"	},
 	{ prop = "satiety_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_satiety")),		tex = "satiety"		},
 	{ prop = "power_restore_speed",		text = string.format("%s:", game.translate_string("ui_inv_power")),	    	tex = "power"		},
-	{ prop = "radiation_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_radiation")),		tex = "radiation_2", unit = "Ки"	},
+	{ prop = "radiation_restore_speed",	text = string.format("%s:", game.translate_string("ui_inv_radiation")),		tex = "radiation_2", unit = game.translate_string("ui_inv_actor_rad_unit")	},
 }
 -- Типы хитов и соответствующие им текстуры и названия
 local hit_types = {
@@ -710,8 +710,8 @@ function CUIDescriptionWnd:OnMouseWheel(mode)
 end
 
 function need_show_condition(item)
-	local b = sys_ini:r_bool(item:section(), "show_condition", nil)
-	return ( ( item:is_weapon() or item:is_outfit() ) and b ~= false ) or b == true
+	local b = get_bool(item:section(), "inv_show_condition", false)
+	return (( item:is_weapon() or item:is_outfit()) and b) or b
 end
 
 function get_cur_wpn_ammo_section(wpn)

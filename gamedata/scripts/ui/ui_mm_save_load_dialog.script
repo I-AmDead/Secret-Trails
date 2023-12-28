@@ -21,8 +21,7 @@ function fill_savedgames_list(wnd)
         list_box:SetSelectedItem(-1)
     end
     --
-    local flist = getFS():file_list_open_ex("$game_saves$",
-        FS.FS_ListFiles + FS.FS_ClampExt + FS.FS_RootOnly + FS.FS_NoLower, "*.sav")
+    local flist = getFS():file_list_open_ex("$game_saves$", FS.FS_ListFiles + FS.FS_ClampExt + FS.FS_RootOnly + FS.FS_NoLower, "*.sav")
     flist:Sort(FS.FS_sort_by_modif_down)
     for file in flist:GetAll() do
         wnd:AddItemToList(file:NameFull(), file:Modif())
@@ -49,11 +48,9 @@ local function file_data(fname)
     if getFS():exist("$game_saves$", fname .. ".sav") then
         local sg = CSavedGameWrapper(fname)
         local y, m, d, h, min, sec, ms = sg:game_time():get()
-        local date_time = AddTimeDigit(h) .. ":" .. AddTimeDigit(min) .. " " .. AddTimeDigit(m) .. "/" ..
-                              AddTimeDigit(d) .. "/" .. y
+        local date_time = AddTimeDigit(h) .. ":" .. AddTimeDigit(min) .. " " .. AddTimeDigit(m) .. "/" .. AddTimeDigit(d) .. "/" .. y
         local health = string.format("\\n%s %d%%", game.translate_string("ui_inv_health"), sg:actor_health() * 100)
-        return game.translate_string("st_level") .. ": " .. game.translate_string(sg:level_name()) .. "\\n" ..
-                   game.translate_string("ui_inv_time") .. ": " .. date_time .. health
+        return game.translate_string("st_level") .. ": " .. game.translate_string(sg:level_name()) .. "\\n" .. game.translate_string("ui_inv_time") .. ": " .. date_time .. health
     else
         return "no file data"
     end
@@ -155,6 +152,8 @@ function save_load_dialog:InitControlsLoad()
     xml:InitStatic("form:caption", self.form)
 
     xml:InitStatic("form:picture", self.form):SetWindowName("static_pict")
+    local picture = self:GetStatic("static_pict")
+    picture:SetNoShaderCache(true)
 
     xml:InitStatic("form:file_info", self.form)
 

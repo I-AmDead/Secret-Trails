@@ -468,11 +468,6 @@ end
 	<smart_terrain_name1> = <condlist1>
 	<smart_terrain_name2> = <condlist2>
 	...
---[[ подходит ли гулаг объекту?
-у объекта в custom data прописаны условия для некоторых smart_terrains:
-	<smart_terrain_name1> = <condlist1>
-	<smart_terrain_name2> = <condlist2>
-	...
 Если для какого-то smart_terrain условие выполнилось, он называется эксклюзивным.
 Если у объекта появился хоть один эксклюзивный smart terrain, то он будет согласен идти только в него.
 Если не появилось ни одного эксклюзивного, то он согласен идти в любой.
@@ -834,68 +829,6 @@ function se_smart_terrain:call_respawn()
     if self.gparams.respawn then
         se_respawn.spawn(self.gparams.respawn)
     end
-end
-
--- ���������� ������ � ������������ ������������� � �������
--- возвращает строку с принимаемыми группировками и рангами
-function se_smart_terrain:stat_get_accepted_communities() -- отладочная, только для информации!!
-    local comms = {}
-
-    -- from preset
-    local ltx = dsh.cached_ini_file("misc\\" .. self.gparams.type .. ".ltx")
-    local preset_name = self.gparams.preset_name
-
-    if ltx and ltx:section_exist(preset_name) then
-        local result, field, str
-        local n = ltx:line_count(preset_name)
-
-        for i = 0, n - 1 do
-            result, field, str = ltx:r_line(preset_name, i)
-
-            if not self.accepted_communities or self.accepted_communities[field] then
-                comms[field] = str
-            end
-        end
-    end
-
-    -- from custom data
-    if self.accepted_communities then
-        for comm, v in pairs(self.accepted_communities) do
-            if not comms[comm] then
-                comms[comm] = "all"
-            end
-        end
-    end
-
-    -- prepare return
-    local s = ""
-
-    for comm, ranks in pairs(comms) do
-        s = s .. comm .. "(" .. ranks .. "),"
-    end
-
-    return s
-end
-
--- вывод статистики смарта
-function se_smart_terrain:stat() -- отладочная, только для информации!!
-    local s = object_level_name(self) .. " " .. self:name()
-
-    local pop = self.gulag:get_population()
-    local cap = self.gulag.capacity
-
-    local avail = self:is_gulag_available()
-
-    if avail then
-        s = s .. " enabled "
-    else
-        s = s .. " disabled "
-    end
-
-    s = s .. pop .. " " .. cap .. " " .. self:stat_get_accepted_communities()
-
-    log3(s)
-    return avail, pop, cap
 end
 
 -- Обновление.

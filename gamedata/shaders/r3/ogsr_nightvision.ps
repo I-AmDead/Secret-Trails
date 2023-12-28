@@ -21,6 +21,8 @@
 #include "night_vision.h"
 #include "ogsr_gasmask_common.h"
 
+uniform float4 m_affects;
+
 float3 bokeh_pass_3(float image, float2 tc)
 {
     float Pi = 6.28318530718;
@@ -44,9 +46,8 @@ float3 bokeh_pass_3(float image, float2 tc)
                 light_avgs += 1.0f;
             }
             else
-            {
                 light_avgs += 0.5;
-            }
+
             color_average += color;
         }
     }
@@ -61,6 +62,22 @@ float4 main(p_screen I) : SV_Target
     ///////////////////////////////////////////////////////
 
     I.tc0 = applyInertiaDev(I.tc0);
+
+
+    // узкая полоска искажений
+    float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
+    I.tc0.x += (m_affects.x > 0.09 && I.tc0.y > problems - 0.01 && I.tc0.y < problems) ? sin((I.tc0.y - problems) * 5 * m_affects.y) : 0;
+
+    // широкая полоска искажений
+    problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
+    float AMPL = 0.13;
+    I.tc0.x -= (m_affects.x > 0.15 && I.tc0.y > problems - AMPL && I.tc0.y < problems + AMPL) ?
+        cos(4.71 * (I.tc0.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tc0.y - problems)) / AMPL :
+        0;
+
+    // тряска влево-вправо в финальной стадии
+    I.tc0.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0.0;
+
 
     // TC vars
     float2 corrected_texturecoords = aspect_ratio_correction(I.tc0);
@@ -97,23 +114,18 @@ float4 main(p_screen I) : SV_Target
 
         // image.r = lerp(half_res_blur.r,image.r,0.6f);
         image = pow(image, 0.85);
-
         image = lerp(image, half_res_blur, clamp(1 - smoothstep(0, 15, depth), 0.2, 1)); // NEAR BLUR
 
         if (depth < 1000)
         {
             float light_att = pow(1.0f - (smoothstep(5, 300, depth)), 0.5); // Distance from full brightness to full black
             if ((image.r + image.g) < 0.9f)
-            {
                 image.r *= (light_att + 0.1f); // Apply light attenuation (plus offset to prevent sky turning black)
-            }
         }
 
         // GLITCH EFFECT -- TO DO
         if (lua_param_glitch_power > 0.0f)
-        {
             image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power), 0.9);
-        }
 
         // APPLY BLOOM / WASHOUT
         float addon = bokeh_pass_3((eighth_res_bloom.g + quarter_res_bloom.g), I.tc0);
@@ -131,16 +143,12 @@ float4 main(p_screen I) : SV_Target
 
         // APPLY SCINTILLATION EFFECT
         if (jitter.z > (pnv_param_3.z - ((1.0 - pnv_param_3.z) * (lua_param_nvg_gain_current - 1.0f))))
-        {
             image.r = 1.0f;
-        }
 
         // APPLY IMAGE COLOR CORRECTION AND MAKE BRIGHT SPOTS WHITE
         image.rgb = saturate(image.r) * pnv_color.rgb;
         if (image.g >= 0.95)
-        {
             image.rgb = pow(image.ggg, 2);
-        }
 
         // APPLY VIGNETTE
         float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
@@ -162,17 +170,11 @@ float4 main(p_screen I) : SV_Target
             image = clamp(image, 0.0, 1.0);
         }
         else if (abs(lua_param_nvg_mode - 1.0) <= 0.01) // mode 1 - black
-        {
             image = float3(0.0, 0.0, 0.0);
-        }
         else if (abs(lua_param_nvg_mode - 2.0) <= 0.01) // mode 2 - image overlay
-        {
             image = clamp(image, 0.0, 1.0);
-        }
         else if (abs(lua_param_nvg_mode - 3.0) <= 0.01) // mode 3 - no changes (clear vision)
-        {
             image = clamp(image, 0.0, 1.0);
-        }
 
         // RETURN THE RESULTING IMAGE
         return float4(image, 1.0);

@@ -3,10 +3,9 @@
 
 struct vf
 {
-    float4 hpos : POSITION;
     float2 tc0 : TEXCOORD0; // base
-    float4 pos2d : TEXCOORD1;
     float4 c0 : COLOR0; // color
+    float4 hpos : SV_Position;
 };
 
 vf _main(v_model v)
@@ -14,9 +13,8 @@ vf _main(v_model v)
     vf o;
 
     o.hpos = mul(m_WVP, v.P); // xform, input in world coords
+
     o.tc0 = v.tc.xy; // copy tc
-    o.pos2d = convert_to_screen_space(o.hpos); // translate to screenspace
-    o.pos2d.xyz = o.pos2d.xyz / o.pos2d.w;
 
     // calculate fade
     float3 dir_v = normalize(mul(m_WV, v.P));

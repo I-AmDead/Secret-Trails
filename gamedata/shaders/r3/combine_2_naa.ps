@@ -1,6 +1,7 @@
 #include "common.h"
 #include "mblur.h"
 #include "img_corrections.h"
+#include "ogsr_radiation_effect.h"
 
 // Check Screen Space Shaders modules
 #include "check_screenspace.h"
@@ -110,6 +111,8 @@ c2_out main(v2p_aa_AA I)
     float3 blurred = bloom * def_hdr;
     img = lerp(img, blurred, distort.z);
 #endif
+
+    img.rgb += rad_effect(img.rgb, I.Tex0);
 
     res.Color = float4(img, 1.0);
 

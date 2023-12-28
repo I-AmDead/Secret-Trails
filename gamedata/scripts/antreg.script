@@ -843,7 +843,7 @@ end
 
 function doctor_kostolom_spawn()
     local obj = alife():create("doctor_kostolom", vector():set(-118.073, 5.558, -66.173), 888830, 3000)
-    local obj = alife():create("metka_kostolom", vector():set(-118.453, 5.573, -61.617), 888836, 3000)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
 end
 
 function spider_kostolom_spawn()
@@ -875,18 +875,9 @@ function spawn_sar_pauki()
     local obj = alife():create("spider_sar", vector():set(54.570, 16.848, 29.505), 9177, 2462)
 end
 
-function set_metka_kostolom()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "metka_kostolom" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
-            break
-        end
-    end
-end
-
 function remove_metka_kostolom()
     for a, obj in alife():objects() do
-        if obj:section_name() == "metka_kostolom" then
+        if obj:section_name() == "doctor_kostolom" then
             level.map_remove_object_spot(obj.id, "crlc_big")
             break
         end
@@ -894,10 +885,7 @@ function remove_metka_kostolom()
 end
 
 function doctor_kostolom_have(task, info)
-    if db.actor and db.actor:has_info("doctor_kostolom_dead") then
-        return db.actor:give_info_portion("doctor_kostolom_have")
-    end
-    return false
+    return db.actor and db.actor:has_info("doctor_kostolom_dead")
 end
 
 function doctor_kostolom_done(first_speaker, second_speaker)
@@ -1190,7 +1178,6 @@ function brown_aptechki(first_speaker, second_speaker)
 end
 
 function razvedka_spawn()
-    local obj = alife():create("metka_fab", vector():set(-31.601, 9.273, -239.918), 893467, 2929)
     local obj = alife():create("fab_zombi1", vector():set(-19.829, -3.000, -232.376), 912530, 2930)
     local obj = alife():create("fab_zombi1", vector():set(-19.829, -3.000, -232.376), 912530, 2930)
     local obj = alife():create("fab_zombi2", vector():set(-19.829, -3.000, -232.376), 912530, 2930)
@@ -1211,22 +1198,14 @@ end
 
 function spawn_fab_trup()
     local obj = alife():create("fab_trup", vector():set(-31.601, 8.965, -239.918), 893467, 2929)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_fab"))
     alife():assign_story_id(obj.id, 30201)
     obj:set_health(0)
 end
 
-function set_metka_fab()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "metka_fab" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_fab"))
-            break
-        end
-    end
-end
-
 function remove_metka_fab()
     for a, obj in alife():objects() do
-        if obj:section_name() == "metka_fab" then
+        if obj:section_name() == "fab_trup" then
             level.map_remove_object_spot(obj.id, "crlc_big")
             break
         end
@@ -1454,7 +1433,7 @@ end
 function remove_metka_povodyr()
     local obj = alife():story_object(story_ids.dog_povodyr)
     if obj then
-        level.map_remove_object_spot(obj.id, "blue_location")
+        level.map_remove_object_spot(obj:id(), "blue_location")
     end
 end
 
@@ -1857,6 +1836,7 @@ end
 
 function spawn_doc_voda()
     local obj = alife():create("doc_peredatchik", vector():set(60.143, 1.970, -223.177), 1277551, 3008)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_reciever"))
     local sobj = alife():object(obj.id)
     alife():use_ai_locations(sobj, false)
 
@@ -1876,24 +1856,6 @@ end
 
 function doctor_peredatchik_done(first_speaker, second_speaker)
     dialogs.relocate_item_section(first_speaker, "doc_peredatchik", "out", 1)
-end
-
-function set_metka_reciver()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "doc_peredatchik" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_reciever"))
-            break
-        end
-    end
-end
-
-function remove_metka_reciver()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "doc_peredatchik" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
 end
 
 function del_doc_voda1()
@@ -1918,27 +1880,9 @@ function del_doc_voda3()
 end
 
 ------------------------------zahar_vodyanoy--------------------------------
-
-function set_metka_zahar()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "zahar_box" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_zahar"))
-            break
-        end
-    end
-end
-
-function del_metka_zahar()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "zahar_box" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
-end
-
 function spawn_les_vodyanoy()
     local obj = alife():create("zahar_box", vector():set(67.838, -44.250, 254.405), 987491, 2988)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_zahar"))
     local sobj = alife():object(obj.id)
     alife():use_ai_locations(sobj, false)
 
@@ -2019,30 +1963,13 @@ function spawn_vodyanoy_mk()
     local obj = alife():create("mk_vodyanoy", vector():set(-271.019, 1.875, 136.469), 522147, 2884)
     alife():assign_story_id(obj.id, story_ids.mk_vodyanoy)
     local obj = alife():create("box_vano", vector():set(-274.156, -1.085, 116.411), 516799, 2884)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_vano"))
     local sobj = alife():object(obj.id)
     alife():use_ai_locations(sobj, false)
 end
 
 function vano_box_have(first_speaker, second_speaker)
     return new_dialog.count_item("box_vano", 1)
-end
-
-function set_metka_vano()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "box_vano" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_vano"))
-            break
-        end
-    end
-end
-
-function del_metka_vano()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "box_vano" then
-            level.map_remove_object_spot(obj.id, "crlc_big")
-            break
-        end
-    end
 end
 
 function vano_otdal(first_speaker, second_speaker)
@@ -2122,15 +2049,7 @@ function spawn_nato_outfit()
     local obj = alife():create("mirotvor_outfit", vector():set(-460.831, 1.255, -153.199), 237560, 2839)
     local obj = alife():create("mirotvor_outfit", vector():set(-461.840, 5.195, -140.353), 235547, 2841)
     local obj = alife():create("brown_mafon", vector():set(-459.497, 1.960, -155.965), 238570, 2839)
-end
-
-function set_metka_nato()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "brown_mafon" then
-            level.map_add_object_spot(obj.id, "crlc_small", game.translate_string("metka_nato"))
-            break
-        end
-    end
+    level.map_add_object_spot_ser(obj.id, "crlc_small", game.translate_string("metka_nato"))
 end
 
 function del_metka_nato()
@@ -2234,14 +2153,14 @@ end
 function set_metka_maloy()
     local obj = alife():story_object(story_ids.maroder_yang)
     if obj then
-        level.map_add_object_spot(obj.id, "crlc_small", game.translate_string("metka_maloy"))
+        level.map_add_object_spot_ser(obj.id, "crlc_small", game.translate_string("metka_maloy"))
     end
 end
 
 function del_metka_maloy()
     local obj = alife():story_object(story_ids.maroder_yang)
     if obj then
-        level.map_remove_object_spot(obj.id, "crlc_small")
+        level.map_remove_object_spot(obj:id(), "crlc_small")
     end
 end
 
@@ -2385,6 +2304,7 @@ end
 -- спавним корень Мандрагоры
 function spawn_mandra()
     local obj = alife():create("mandra", vector():set(-238.432, -55.750, -211.401), 463003, 2981)
+    level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_mandra"))
 end
 
 function lesnik_dal_stvol(first_speaker, second_speaker)
@@ -2424,17 +2344,6 @@ function nagrad_mandra(first_speaker, second_speaker)
     dialogs.relocate_item_section(second_speaker, "kolbasa", "in", 1)
     dialogs.relocate_item_section(second_speaker, "bread", "in", 1)
     dialogs.relocate_item_section(second_speaker, "antirad", "in", 2)
-end
-
-----------------------------ставим метку на корень---------------------------------
-
-function set_metka_m() -- ставим метку
-    for a, obj in alife():objects() do
-        if obj:section_name() == "mandra" then
-            level.map_add_object_spot(obj.id, "crlc_big", game.translate_string("metka_mandra"))
-            break
-        end
-    end
 end
 
 function del_saha()

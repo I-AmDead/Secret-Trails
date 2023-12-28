@@ -1,5 +1,5 @@
 function normal		(shader, t_base, t_second, t_detail)
-	shader:begin	("stub_notransform_t","yuv2rgb")
+	shader:begin	("stub_notransform_t","hud_movie")
 			: fog		(false)
 			: zb 		(false,false)
 --	TODO: DX10: Setup samplers

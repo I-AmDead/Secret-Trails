@@ -1,0 +1,53 @@
+function dof_enable()
+    if db.actor:dont_has_info("ui_pda") then
+        set_dof_params(1.0, 1.0, 1.0, 1.1)
+    else
+        set_dof_params(0.0, 0.0, 0.0, 0.0)
+    end
+end
+
+function dof_disable()
+    set_dof_params(0.0, 0.0, 0.0, 0.0)
+end
+
+function on_first_update()
+    cmd("ssfx_wpn_dof_2 0.5")
+    set_dof_params(0.0, 0.0, 0.0, 0.0)
+    shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
+end
+
+function on_actor_before_hit(obj, hit_data)
+    if hit_data.hit_type == hit.radiation then
+        if hit_data.power > 0 then
+            log3("rad hit = %s", hit_data.power)
+            local who = level.object_by_id(hit_data.who_id)
+            if who and string.find(who:section(), "zone_radioactive") then
+                shader_set_custom_param("radiation_effect", hit_data.power * 1000, 0, 0, 0)
+            end
+        else
+            shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
+        end
+    end
+end
+
+local rad_effect
+function update_rad_effect()
+    local rads = ogse_dbg_anomaly_binder.get_max_radlevel()
+    local distance = ogse_dbg_anomaly_binder.get_ditance_to_radzone()
+    if rads > 0 then
+        shader_set_custom_param("radiation_effect", rads * 0.1, distance, 0, 0)
+        rad_effect = true
+    else
+        if rad_effect then
+            shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
+            rad_effect = false
+        end	
+    end
+end
+
+function attach(sm)
+    sm:subscribe({ signal = "on_first_update",     fun = this.on_first_update })
+    sm:subscribe({ signal = "ui_on_dialog_show",   fun = this.dof_enable })
+    sm:subscribe({ signal = "ui_on_dialog_hide",   fun = this.dof_disable })
+    sm:subscribe({ signal = "on_update",	   fun = this.update_rad_effect })
+end

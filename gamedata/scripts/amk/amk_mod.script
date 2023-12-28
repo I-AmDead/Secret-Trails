@@ -64,12 +64,12 @@ function check_spawn()
 
     local obj = alife():story_object(6001)
     if obj then
-        level.map_add_object_spot(obj.id, "level_changer", "to_pripyat")
+        level.map_add_object_spot_ser(obj.id, "level_changer", "to_pripyat")
     end
 
     local obj = alife():story_object(6002)
     if obj then
-        level.map_add_object_spot(obj.id, "level_changer", "to_darkvalley")
+        level.map_add_object_spot_ser(obj.id, "level_changer", "to_darkvalley")
     end
 
     local obj = alife():story_object(6000)
@@ -271,10 +271,8 @@ function af_transform_universal_end(params)
             local sobj = alife():create(v, vector():set(anom_pos.x, anom_pos.y + 1, anom_pos.z), params.lv, params.gv)
             alife():use_ai_locations(sobj, false)
             if params.actor_signal then
-                level.map_add_object_spot(sobj.id, "red_location",
-                    game.translate_string("trans_finished_title") .. "%c[red]" .. from_comp)
-                news_manager.send_tip(db.actor,
-                    game.translate_string("trans_finished_title") .. "%c[255,255,0,0]" .. from_comp)
+                level.map_add_object_spot_ser(sobj.id, "red_location", game.translate_string("trans_finished_title") .. "%c[red]" .. from_comp)
+                news_manager.send_tip(db.actor, game.translate_string("trans_finished_title") .. "%c[255,255,0,0]" .. from_comp)
             end
             archievements.acv_count_event("acv_art", 100, game.translate_string("acv_art"))
         end

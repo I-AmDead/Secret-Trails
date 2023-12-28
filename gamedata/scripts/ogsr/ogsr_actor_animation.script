@@ -1,7 +1,6 @@
 
 function attach(sm)
     sm:subscribe({signal = "on_first_update",		fun = this.animation_off})
-    -- sm:subscribe({ signal = "on_update",		fun = this.sprint_no_item})
     sm:subscribe({signal = "on_key_down",		fun = this.on_key_down})
     sm:subscribe({signal = "on_key_up",			fun = this.on_key_up})
     sm:subscribe({signal = "on_item_before_pickup",	fun = this.on_item_before_pickup})
@@ -65,9 +64,9 @@ function on_key_down(key, bind)
         if get_con_string("r2_rain_drops_control") == "off" then return end
         swipe_mask()
     elseif torch and bind == key_bindings.kHEADLAMP then
-        torch_switcher()
+        torch_and_nvg_switch(false)
     elseif pnv and bind == key_bindings.kNIGHT_VISION then
-        nv_switcher()
+        torch_and_nvg_switch(true)
     elseif bind == key_bindings.kWATCH then
         key_release = false
         watch_wide()
@@ -84,123 +83,66 @@ function on_key_up(key, bind)
     end
 end
 
-local is_sprinting
-function sprint_no_item()
-    if db.actor:active_item() then
-        return
-    end
+function get_anm_settings(def_name, def_length, name, length)
+    local anm_name = def_name
+    local anm_additional_length = def_length
+    local itm = db.actor:active_item()
 
-    local body_sprint = get_actor_obj():is_actor_sprinting()
-    if body_sprint then
-        is_sprinting = true
-        -- game.play_hud_motion(2, "anim_sprint", "anm_sprint_start", true, 0.5)
-        game.play_hud_motion(2, "anim_sprint", "anm_sprint", true, 1.0)
-    else
-        if is_sprinting then
-            is_sprinting = nil
-            game.play_hud_motion(2, "anim_sprint", "anm_sprint_end", true, 1.0)
+    if itm then
+        local kind = get_string(itm:section(), "kind")
+        local class = get_string(itm:section(), "class")
+        if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
+            anm_name = name
+            anm_additional_length = length
         end
     end
+
+    return anm_name, anm_additional_length
 end
 
 -- EMULATION SWIPE RAIN DROPS
 function swipe_mask()
-    local anm_name = "script\\gasmask.anm"
-    local anm_additional_length = 0.45
-    local itm = db.actor:active_item()
-    local mc_anm_sec = "anim_mask_clean"
+    local anm_sec = "anim_mask_clean"
+    local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\lower.anm", 0.75)
 
-    if itm then
-        local kind = get_string(itm:section(), "kind")
-        local class = get_string(itm:section(), "class")
-        if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-            anm_name = "script\\lower.anm"
-            anm_additional_length = 0.75
-        end
-    end
-
-    local mc_anm_time_1 = game.get_motion_length(mc_anm_sec, "anm_hide_hand", hide_hand_speed)
-    local mc_anm_time_2 = game.get_motion_length(mc_anm_sec, "anm_wipe", 1)
-    if db.actor:active_item() then
-        game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
-    end
+    local anm_time_1 = game.play_hud_motion(1, anm_sec, "anm_hide_hand", true, hide_hand_speed)
+    local anm_time_2 = game.get_motion_length(anm_sec, "anm_wipe", 1)
     game.play_hud_anm(anm_name, 0, 1, 1, false)
-    local new_speed = game.set_hud_anm_time(anm_name, ((mc_anm_time_1 + mc_anm_time_2) / 1000) + anm_additional_length)
+    local new_speed = game.set_hud_anm_time(anm_name, (anm_time_1 + anm_time_2) / 1000 + anm_additional_length)
     animation_on()
 
-    dsh.timeout(mc_anm_time_1, function()
-        game.play_hud_motion(db.actor:active_item() and 1 or 2, mc_anm_sec, "anm_wipe", false, 1)
+    dsh.timeout(anm_time_1, function()
+        game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_wipe", false, 1)
         snd_gasmask:play(db.actor, 0, sound_object.s2d)
         level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
-        dsh.timeout(mc_anm_time_2 - 400, function()
+        dsh.timeout(anm_time_2 - 400, function()
             if new_speed then
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
             end
             rain_drops_restart()
-            dsh.timeout(mc_anm_time_2 + anm_additional_length, animation_off)
+            dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
         end)
     end)
 end
 
--- EMULATION TORCH SWITCH
-function torch_switcher()
-    local anm_name = "script\\headlamp.anm"
-    local anm_additional_length = 0.45
-    local itm = db.actor:active_item()
-    local torch_anm_sec = "anim_headlamp"
+-- EMULATION TORCH AND NVG SWITCH
+function torch_and_nvg_switch(nvg)
+    local anm_sec = "anim_headlamp"
+    local anm_name, anm_additional_length = get_anm_settings("script\\headlamp.anm", 0.45, "script\\headlamp.anm", 0.75)
 
-    if itm then
-        local kind = get_string(itm:section(), "kind")
-        local class = get_string(itm:section(), "class")
-        if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-            anm_name = "script\\headlamp.anm"
-            anm_additional_length = 0.75
-        end
-    end
-
-    local torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1.2)
+    local torch_anm_time_1 = game.get_motion_length(anm_sec, "anm_switch", 1.2)
     animation_on()
     game.play_hud_anm(anm_name, 0, 1, 1, false)
     local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-    game.play_hud_motion(db.actor:active_item() and 1 or 2, torch_anm_sec, "anm_switch", false, 1.4)
+    game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_switch", false, 1.4)
     snd_torch:play(db.actor, 0, sound_object.s2d)
     level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
     dsh.timeout(torch_anm_time_1 - 800, function()
-        ogse_torch.on_switch()
-        dsh.timeout(torch_anm_time_1 - 750, function()
-            if new_speed then
-                game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
-            end
-        end)
-        dsh.timeout(torch_anm_time_1, animation_off)
-    end)
-end
-
--- EMULATION NV SWITCH
-function nv_switcher()
-    local anm_name = "script\\headlamp.anm"
-    local anm_additional_length = 0.45
-    local itm = db.actor:active_item()
-    local torch_anm_sec = "anim_headlamp"
-
-    if itm then
-        local kind = get_string(itm:section(), "kind")
-        local class = get_string(itm:section(), "class")
-        if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-            anm_name = "script\\lower.anm"
-            anm_additional_length = 0.7
+        if nvg then
+            ogsr_night_vision.call_pnv()
+        else
+            ogse_torch.on_switch()
         end
-    end
-
-    local torch_anm_time_1 = game.get_motion_length(torch_anm_sec, "anm_switch", 1.2)
-    animation_on()
-    game.play_hud_anm(anm_name, 0, 1, 1, false)
-    local new_speed = game.set_hud_anm_time(anm_name, (torch_anm_time_1 / 1000) + anm_additional_length)
-    game.play_hud_motion(db.actor:active_item() and 1 or 2, torch_anm_sec, "anm_switch", false, 1.4)
-    snd_torch:play(db.actor, 0, sound_object.s2d)
-    level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-    dsh.timeout(torch_anm_time_1 - 800, function()
-        ogsr_night_vision.call_pnv()
         dsh.timeout(torch_anm_time_1 - 750, function()
             if new_speed then
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
@@ -339,9 +281,7 @@ end
 function rain_drops_restart()
     level.only_allow_movekeys(false)
     cmd("r2_rain_drops_control off")
-    dsh.timeout(10, function()
-        cmd("r2_rain_drops_control on")
-    end)
+    dsh.timeout(10, function() cmd("r2_rain_drops_control on") end)
 end
 
 local force_crouch = false
@@ -370,18 +310,7 @@ end
 
 -- EMULATION SWIPE RAIN DROPS
 function watch_wide()
-    local anm_name = "script\\gasmask.anm"
-    local anm_additional_length = 0.45
-    local itm = db.actor:active_item()
-
-    if itm then
-        local kind = get_string(itm:section(), "kind")
-        local class = get_string(itm:section(), "class")
-        if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-            anm_name = "script\\gasmask.anm"
-            anm_additional_length = 0.75
-        end
-    end
+    local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\gasmask.anm", 0.75)
 
     if not anim_plays and allow_animation() then
         local anm_start = 0
@@ -395,7 +324,6 @@ function watch_wide()
             end
         end
         local watch_anm_time
-        local watch2_anm_time
         local function play_anim()
             local time_g = time_global()
             if mc_anm_state == 1 then
@@ -410,20 +338,20 @@ function watch_wide()
                     game.set_hud_anm_time(anm_name, 10000000)
                     game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
                 else
-                    watch2_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
+                    watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
                     mc_anm_state = 3
                 end
                 anm_start = time_g
         	anim_plays = true
         	animation_on()
                 ui_minimap_bioradar.hud_hide()
-            elseif mc_anm_state == 3 and time_g > anm_start + watch2_anm_time then
+            elseif mc_anm_state == 3 and time_g > anm_start + watch_anm_time then
                 game.stop_hud_motion()
-                watch3_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
-                game.set_hud_anm_time(anm_name, (watch3_anm_time + 200) / 1000)
+                watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
+                game.set_hud_anm_time(anm_name, (watch_anm_time + 200) / 1000)
                 mc_anm_state = 4
                 ui_minimap_bioradar.hud_show()
-            elseif mc_anm_state == 4 and time_g > anm_start + watch3_anm_time then
+            elseif mc_anm_state == 4 and time_g > anm_start + watch_anm_time then
                 anim_plays = false
                 if anm_subscribed then
                     ogsr_signals.get_mgr():unsubscribe(anm_subscribed)
