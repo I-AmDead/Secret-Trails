@@ -1,17 +1,18 @@
 /**
  * @ Version: SCREEN SPACE SHADERS - UPDATE 19
  * @ Description: Wind Main File
- * @ Modified time: 2023-12-09 05:34
+ * @ Modified time: 2023-12-23 16:05
  * @ Author: https://www.moddb.com/members/ascii1457
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
-// wind_direction wind_velocity E.m_fTreeAmplitudeIntensity
 uniform float4 wind_params;
 
-uniform float4 ssfx_wind; // X: Wind intensity - Y: North Dir - Z: South Dir
-uniform float4 ssfx_wind_gust; // X: Intensity - Y: Anim Speed - Z: Freq
+uniform float4 ssfx_wsetup_grass; // Anim Speed - Turbulence - Push - Wave
+uniform float4 ssfx_wsetup_trees; // Branches Speed - Trunk Speed - Bending - Min Wind Speed
 uniform float4 ssfx_wind_anim;
+
+uniform float is_bugged_flora;
 
 Texture2D s_waves;
 sampler smp_linear2;
@@ -34,34 +35,25 @@ struct wind_setup
 
 wind_setup ssfx_wind_setup()
 {
-    // wind : [x:time] [y:TreeAmplitudeIntensity] [z:gust] [w:ExtraPerlin]
     wind_setup wsetup;
 
-    // Direction, speed and wind gust.
-    wsetup.direction = normalize(ssfx_wind.yz);
+    // Direction. Radians to Vector
+    float r = -wind_params.x + 1.57079f;
+    wsetup.direction = float2(cos(r), sin(r));
 
-    if (ssfx_wind.y == 0 && ssfx_wind.z == 0)
-    {
-        // Radians to Vector
-        float r = -wind_params.x + 1.57079f;
-        wsetup.direction = float2(cos(r),sin(r));
-    }
-
-    wsetup.speed = saturate(ssfx_wind.x);
-
-    if (wsetup.speed <= 0)
-        wsetup.speed = saturate(wind_params.y * 0.001);
-
+    // Wind Speed
+    wsetup.speed = max(ssfx_wsetup_trees.w, saturate(wind_params.y * 0.001));
     wsetup.sqrt_speed = saturate(sqrt(wsetup.speed * 1.66f));
 
-    wsetup.trees_animspeed = 11.0f;
-    wsetup.trees_trunk_animspeed = 0.15f;
-    wsetup.trees_bend = 0.5f;
+    // Setup
+    wsetup.grass_animspeed = ssfx_wsetup_grass.x;
+    wsetup.grass_turbulence = ssfx_wsetup_grass.y;
+    wsetup.grass_push = ssfx_wsetup_grass.z;
+    wsetup.grass_wave = ssfx_wsetup_grass.w;
 
-    wsetup.grass_animspeed = 9.5;
-    wsetup.grass_turbulence = 1.4f;
-    wsetup.grass_push = 1.5f;
-    wsetup.grass_wave = 0.4f;
+    wsetup.trees_animspeed = ssfx_wsetup_trees.x;
+    wsetup.trees_trunk_animspeed = ssfx_wsetup_trees.y;
+    wsetup.trees_bend = ssfx_wsetup_trees.z;
 
     return wsetup;
 }
@@ -101,8 +93,9 @@ float3 ssfx_wind_tree_trunk(float3 pos, float Tree_H, wind_setup W)
     float Phase = m_xform._24 + ssfx_wind_anim.z * W.trees_trunk_animspeed;
 
     // Trunk wave
-    float TWave = (cos(Phase) * sin(Phase * 5.0f) + 0.5f) * ssfx_wind_gust.x * W.trees_bend;
+    float TWave = (cos(Phase) * sin(Phase * 5.0f) + 0.5f) * W.trees_bend;
 
+    // Wind speed
     float WSpeed = saturate(W.sqrt_speed * 1.5f);
 
     // Base wind speed displacement
@@ -129,7 +122,10 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     float3 Flow2 = s_waves.SampleLevel(smp_linear2, (pos.xz + Offset * 0.2f) * 0.1f, 0);
 
     // Branch motion [ -1.0 ~ 1.0 ]
-    float3 branchMotion = float3(Flow.x, Flow2.y, Flow.y) * 2.0f - 1.0f;
+    float3 branchMotion = 0;
+
+    if (!is_bugged_flora)
+        branchMotion = float3(Flow.x, Flow2.y, Flow.y) * 2.0f - 1.0f;
 
     // Trunk position
     float3 Trunk = ssfx_wind_tree_trunk(pos, Tree_H, W);
@@ -138,13 +134,15 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     branchMotion.xz *= Trunk.z * clamp(Tree_H * 0.1f, 1.0f, 2.5f);
 
     // Add wind direction
-    branchMotion.xz += Flow2.z * W.direction;
+    if (!is_bugged_flora)
+        branchMotion.xz += Flow2.z * W.direction;
 
     // Add wind gust
     branchMotion.y *= saturate(Tree_H * 0.1f);
 
     // Everything is limited by the UV and wind speed
-    branchMotion *= (1.0f - tc_y) * W.speed;
+    if (!is_bugged_flora)
+        branchMotion *= (1.0f - tc_y) * W.speed;
 
     // Add trunk animation
     branchMotion.xz += Trunk.xy;
