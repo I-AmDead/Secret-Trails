@@ -23,7 +23,7 @@ function HeliManager:__init()
 end
 
 function HeliManager:initialize(sid, path, patrol_speed, attack_speed)
-    self.heli = escape_heli.get_level_object_by_sid(sid)
+    self.heli = get_level_object_by_sid(sid)
     self.heliObject = self.heli:get_helicopter()
 
     --	self.heli:AddEventCallback( CHelicopter.on_point, self, "HeliOnPoint" )
@@ -235,4 +235,13 @@ function HeliManager:on_enter(zone, obj)
         zone_attack_probability then
         self:set_enemy(obj)
     end
+end
+
+function get_level_object_by_sid(sid)
+    local obj = alife():story_object(sid)
+    if obj then
+        return get_level_object_by_id(obj.id)
+    end
+
+    return nil
 end
