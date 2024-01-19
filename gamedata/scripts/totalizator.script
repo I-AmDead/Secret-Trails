@@ -9,39 +9,18 @@ Last edit : 25.09.2010
 --]] -----------------------------------------------------------------------------------------------
 
 function attach(sm)
-	sm:subscribe({ signal = "on_update", fun = this.update })
 	sm:subscribe({ signal = "on_spawn", fun = this.on_spawn })
 	sm:subscribe({ signal = "on_save", fun = this.on_save })
 end
 
-local constanta = 60 * 1000
-local last_time_info = 0
-local last_time_send = 0
-local last_time_dolg = 0
-local last_time_deposit = 0
-local last_time_news = 0
+local minute = 60 * 10
 local dolg = 0
 local bank = 0
 local deposit = 0
-local pause = 2
-local time_send_prize = 720
-local time_send_dolg = constanta * 6
-local time_index_dolg = constanta * 6 * 12
-local time_index_deposit = constanta * 6 * 24
-local Timer_Info
-local Timer_News
-local gameTime_0
-local gameTime_1
-local gameTime_2
+local time_send_dolg = minute * 6
+local time_index_dolg = minute * 6 * 12
+local time_index_deposit = minute * 6 * 24
 local text_news = ""
-
-function update()
-    timer_infoportion()
-    timer_deposit()
-    timer_dolg()
-    timer_send()
-    timer_news()
-end
 
 local ts = {
     sums_1 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 500, 500,
@@ -176,11 +155,7 @@ function transfer_stavka(npc, actor)
                 dolg = dolg + s
                 talk_message(4, s)
                 talk_message(6, dolg)
-            elseif money == s then
-                actor:transfer_money(s, npc)
-                talk_message(3, s)
-                talk_message(6, dolg)
-            elseif money > s then
+            elseif money >= s then
                 actor:transfer_money(s, npc)
                 talk_message(3, s)
                 talk_message(6, dolg)
@@ -191,14 +166,16 @@ function transfer_stavka(npc, actor)
 end
 
 function totalizator(actor, npc)
-    local sums
     local summa = 0
+
     for s, v in ipairs(portion) do
         if actor:has_info(v) then
-            sums = ts["sums_" .. s]
+            local sums = ts["sums_" .. s]
             summa = sums[math.random(#sums)]
+            break
         end
     end
+
     for _, v in ipairs(prize) do
         if summa == v then
             bank = summa
@@ -207,36 +184,42 @@ function totalizator(actor, npc)
     end
 
     disable_portion()
-    if dolg == 0 and bank == 0 then
-        text_news = game.translate_string("type_frase_result1")
-    elseif dolg == 0 and bank > 0 then
-        text_news = game.translate_string("type_frase_result2") .. " " .. tostring(bank) .. " " ..
-                        game.translate_string("type_frase_result3")
-    elseif dolg > 0 and bank == 0 then
-        text_news = game.translate_string("type_frase_result4") .. " " .. tostring(dolg) .. " " ..
-                        game.translate_string("type_frase_result5")
-    elseif dolg > 0 and bank > 0 then
-        if dolg < bank then
-            text_news = game.translate_string("type_frase_result6") .. " " .. tostring(bank) .. " " ..
+
+    if dolg > 0 then
+        if bank > 0 then
+            if dolg < bank then
+                text_news = game.translate_string("type_frase_result6") .. " " .. tostring(bank) .. " " ..
                             game.translate_string("type_frase_result7") .. " " .. tostring(dolg) .. " " ..
                             game.translate_string("type_frase_result8") .. " " .. tostring(bank - dolg) .. " " ..
                             game.translate_string("type_frase_result3")
-            bank = bank - dolg
-            dolg = 0
-        elseif dolg == bank then
-            text_news = game.translate_string("type_frase_result9") .. " " .. tostring(bank) .. " " ..
+                bank = bank - dolg
+                dolg = 0
+            elseif dolg == bank then
+                text_news = game.translate_string("type_frase_result9") .. " " .. tostring(bank) .. " " ..
                             game.translate_string("type_frase_result10")
-            dolg = 0
-            bank = 0
-        elseif dolg > bank then
-            dolg = dolg - bank
-            text_news = game.translate_string("type_frase_result11") .. " " .. tostring(bank) .. " " ..
+                dolg = 0
+                bank = 0
+            elseif dolg > bank then
+                dolg = dolg - bank
+                text_news = game.translate_string("type_frase_result11") .. " " .. tostring(bank) .. " " ..
                             game.translate_string("type_frase_result12") .. " " .. tostring(dolg) .. " " ..
                             game.translate_string("type_frase_result13")
-            bank = 0
+                bank = 0
+            end
+        else
+            text_news = game.translate_string("type_frase_result4") .. " " .. tostring(dolg) .. " " ..
+            game.translate_string("type_frase_result5")
+        end
+    else
+        if bank > 0 then
+            text_news = game.translate_string("type_frase_result2") .. " " .. tostring(bank) .. " " ..
+                        game.translate_string("type_frase_result3")
+        else
+            text_news = game.translate_string("type_frase_result1")
         end
     end
-    start_timer_infoportion(time_send_prize + pause)
+
+    ogse_st_mgr.start_gtimer("totalizator_bet_result", math.random(50000, 80000), "totalizator.bet_result")
 end
 
 function give_prize(actor, npc)
@@ -308,110 +291,28 @@ function transfer_deposit(npc, actor)
     end
 end
 
-function timer_news()
+function bet_result()
     if text_news and text_news ~= "" then
-        if Timer_News == nil then
-            if last_time_news ~= 0 then
-                Timer_News = time_global() + last_time_news
-            else
-                Timer_News = time_global() + 1000 * time_send_prize
-            end
+        news_manager.send_tip(db.actor, text_news, 0, "default", 15000)
+        text_news = ""
+        if has_alife_info("totalizator") then
+            db.actor:disable_info_portion("totalizator")
         end
-        last_time_news = Timer_News - time_global()
-        if Timer_News < time_global() then
-            Timer_News = nil
-            last_time_news = 0
-            set_message()
-        end
-    end
-end
 
-function start_timer_infoportion(seconds)
-    Timer_Info = time_global() + seconds * 1000
-end
+        if dolg > 0 then
+            ogse_st_mgr.start_gtimer("totalizator_send_dolg", time_send_dolg + math.random(1000, 5000), "totalizator.send")
+            ogse_st_mgr.start_gtimer("totalizator_percent_dolg", time_index_dolg, "totalizator.percent_dolg")
+        end
 
-function timer_infoportion()
-    if not Timer_Info then
-        if last_time_info ~= 0 then
-            Timer_Info = time_global() + last_time_info
+        if deposit > 0 then
+            ogse_st_mgr.start_gtimer("totalizator_percent_deposit", time_index_deposit, "totalizator.percent_deposit")
         end
-    else
-        last_time_info = Timer_Info - time_global()
-        if Timer_Info < time_global() then
-            enable_dialog()
-            Timer_Info = nil
-            last_time_info = 0
-        end
-    end
-end
-
-function timer_send()
-    if dolg ~= 0 then
-        if not gameTime_0 then
-            if last_time_send ~= 0 then
-                gameTime_0 = time_global() + last_time_send
-            else
-                gameTime_0 = time_global() + time_send_dolg
-            end
-        end
-        last_time_send = gameTime_0 - time_global()
-        if gameTime_0 < time_global() then
-            send()
-            gameTime_0 = nil
-            last_time_send = 0
-        end
-    else
-        gameTime_0 = nil
-        last_time_send = 0
-    end
-end
-
-function timer_dolg()
-    if dolg ~= 0 then
-        if not gameTime_1 then
-            if last_time_dolg ~= 0 then
-                gameTime_1 = time_global() + last_time_dolg
-            else
-                gameTime_1 = time_global() + time_index_dolg
-            end
-        end
-        last_time_dolg = gameTime_1 - time_global()
-        if gameTime_1 < time_global() then
-            percent_dolg()
-            gameTime_1 = nil
-            last_time_dolg = 0
-        end
-    else
-        gameTime_1 = nil
-        last_time_dolg = 0
-    end
-end
-
-function timer_deposit()
-    if deposit ~= 0 then
-        if not gameTime_2 then
-            if last_time_deposit ~= 0 then
-                gameTime_2 = time_global() + last_time_deposit
-            else
-                gameTime_2 = time_global() + time_index_deposit
-            end
-        end
-        last_time_deposit = gameTime_2 - time_global()
-        if gameTime_2 < time_global() then
-            percent_deposit()
-            gameTime_2 = nil
-            last_time_deposit = 0
-        end
-    else
-        gameTime_2 = nil
-        last_time_deposit = 0
     end
 end
 
 function percent_deposit()
-    if deposit == 0 then
-        return
-    elseif deposit > 0 and deposit < 50000 then
+    if deposit == 0 then return end
+    if deposit > 0 and deposit < 50000 then
         deposit = math.ceil(deposit + deposit / 100 * math.random(5, 8))
         news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(deposit) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
@@ -428,28 +329,29 @@ function percent_deposit()
         news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(deposit) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     end
+    ogse_st_mgr.start_gtimer("totalizator_percent_deposit", time_index_deposit, "totalizator.percent_deposit")
 end
 
 function percent_dolg()
-    if dolg == 0 then
-        return
-    elseif dolg > 0 and dolg < 50000 then
+    if dolg == 0 then return end
+    if dolg > 0 and dolg < 50000 then
         dolg = math.ceil(dolg + dolg / 100 * 10)
-        news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(dolg) .. " " ..
+        news_manager.send_tip(db.actor, game.translate_string("deposit_minus") .. " " .. tostring(dolg) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     elseif dolg > 50000 and dolg < 100000 then
         dolg = math.ceil(dolg + dolg / 100 * 30)
-        news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(dolg) .. " " ..
+        news_manager.send_tip(db.actor, game.translate_string("deposit_minus") .. " " .. tostring(dolg) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     elseif dolg > 100000 and dolg < 300000 then
         dolg = math.ceil(dolg + dolg / 100 * 50)
-        news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(dolg) .. " " ..
+        news_manager.send_tip(db.actor, game.translate_string("deposit_minus") .. " " .. tostring(dolg) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     elseif dolg > 300000 then
         dolg = math.ceil(dolg + dolg / 100 * 70)
-        news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(dolg) .. " " ..
+        news_manager.send_tip(db.actor, game.translate_string("deposit_minus") .. " " .. tostring(dolg) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     end
+    ogse_st_mgr.start_gtimer("totalizator_percent_dolg", time_index_dolg, "totalizator.percent_dolg")
 end
 
 function send()
@@ -476,6 +378,7 @@ function send()
     elseif dolg > 500000 then
         news_manager.send_tip(db.actor, "dolg_10", 0, "killer", 5000)
     end
+    ogse_st_mgr.start_gtimer("totalizator_send_dolg", time_send_dolg + math.random(1000, 5000), "totalizator.send")
 end
 
 function precond()
@@ -515,14 +418,7 @@ function talk_message(id, num)
     else
         task_texture, task_rect = get_texture_info("ui_iconsTotal_found_money")
     end
-    db.actor:give_talk_message(type_frase[id] .. " " .. tostring(num) .. " rur.", task_texture, task_rect,
-        "actor_iconed_answer_item")
-end
-
-function enable_dialog()
-    if has_alife_info("totalizator") then
-        db.actor:disable_info_portion("totalizator")
-    end
+    db.actor:give_talk_message(type_frase[id] .. " " .. tostring(num) .. " rur.", task_texture, task_rect, "actor_iconed_answer_item")
 end
 
 function disable_portion()
@@ -533,27 +429,10 @@ function disable_portion()
     end
 end
 
-function set_message()
-    if text_news and text_news ~= "" then
-        news_manager.send_tip(db.actor, text_news, 0, "default", 15000)
-        text_news = ""
-    end
-end
-
-function SendMessage(text)
-    news_manager.send_tip(db.actor, text, 0, "default", 10000)
-end
-
--- // сохранение и загрузка табличных и прочих данных - так как фонарик всегда в онлайне  - очень удобно использовать
 function on_save()
     ogse.save_var("totalizator.dolg", dolg)
     ogse.save_var("totalizator.bank", bank)
     ogse.save_var("totalizator.deposit", deposit)
-    ogse.save_var("totalizator.last_time_dolg", last_time_dolg)
-    ogse.save_var("totalizator.last_time_deposit", last_time_deposit)
-    ogse.save_var("totalizator.last_time_send", last_time_send)
-    ogse.save_var("totalizator.last_time_info", last_time_info)
-    ogse.save_var("totalizator.last_time_news", last_time_news)
     ogse.save_var("totalizator.text_news", text_news)
 end
 
@@ -561,10 +440,5 @@ function on_spawn()
     dolg = ogse.load_var("totalizator.dolg", 0)
     bank = ogse.load_var("totalizator.bank", 0)
     deposit = ogse.load_var("totalizator.deposit", 0)
-    last_time_dolg = ogse.load_var("totalizator.last_time_dolg", 0)
-    last_time_deposit = ogse.load_var("totalizator.last_time_deposit", 0)
-    last_time_send = ogse.load_var("totalizator.last_time_send", 0)
-    last_time_info = ogse.load_var("totalizator.last_time_info", 0)
-    last_time_news = ogse.load_var("totalizator.last_time_news", 0)
     text_news = ogse.load_var("totalizator.text_news", "")
 end
