@@ -22,28 +22,29 @@ local function on_take(obj, sobj)
         db.actor:give_info_portion("semeckii_treasure_part8")
         alife():release(sobj)
     elseif obj:section() == "money_gg" then
-        money_gg()
+        local money_actor = ogse.load_var("money_actor", 0)
+        db.actor:give_money(money_actor)
         alife():release(sobj)
     elseif obj:section() == "money5" then
-        money_5()
+        db.actor:give_money(5000)
         alife():release(sobj)
     elseif obj:section() == "money10" then
-        money_10()
+        db.actor:give_money(10000)
         alife():release(sobj)
     elseif obj:section() == "money15" then
-        money_15()
+        db.actor:give_money(15000)
         alife():release(sobj)
     elseif obj:section() == "money20" then
-        money_20()
+        db.actor:give_money(20000)
         alife():release(sobj)
     elseif obj:section() == "money25" then
-        money_25()
+        db.actor:give_money(25000)
         alife():release(sobj)
     elseif obj:section() == "money30" then
-        money_30()
+        db.actor:give_money(30000)
         alife():release(sobj)
     elseif obj:section() == "money50" then
-        money_50()
+        db.actor:give_money(50000)
         alife():release(sobj)
     elseif obj:section() == "af_snake_eye" and not has_alife_info("snake_dialog_have") then
         db.actor:give_info_portion("snake_dialog_have")
@@ -1189,46 +1190,13 @@ end
 
 function maroder_money()
     local money_actor = db.actor:money()
-    ogse.save_var("money_actor", money_actor, "u8")
+    ogse.save_var("money_actor", money_actor)
     db.actor:give_money(-money_actor)
 end
 
 function mervin_money()
     local money_actor = db.actor:money()
     db.actor:give_money(-money_actor)
-end
-
-function money_gg()
-    local money_actor = ogse.load_var("money_actor", 0)
-    db.actor:give_money(money_actor)
-end
-
-function money_5()
-    db.actor:give_money(5000)
-end
-
-function money_10()
-    db.actor:give_money(10000)
-end
-
-function money_15()
-    db.actor:give_money(15000)
-end
-
-function money_20()
-    db.actor:give_money(20000)
-end
-
-function money_25()
-    db.actor:give_money(25000)
-end
-
-function money_30()
-    db.actor:give_money(30000)
-end
-
-function money_50()
-    db.actor:give_money(50000)
 end
 
 function set_solomon(sid)
@@ -1251,62 +1219,12 @@ function enemyactor(community1, community2)
     relation_registry.set_community_goodwill("monolith", "actor", -5000)
 end
 
-----------
--- чтение формы из нет-пакета
-----------
-function r_shape(packet)
-    local s
-    local st = {}
-    st.count = packet:r_u8()
-    st.shapes = {}
-    for i = 1, st.count do
-        s = {}
-        s.type = packet:r_u8()
-        if s.type == 0 then
-            s.center = packet:r_vec3()
-            s.radius = packet:r_float()
-        else
-            s.axis_x = packet:r_vec3()
-            s.axis_y = packet:r_vec3()
-            s.axis_z = packet:r_vec3()
-            s.offset = packet:r_vec3()
-        end
-        st.shapes[i] = s
-    end
-    return st
-end
-
-----------
--- запись формы в нет-пакет
-----------
-function w_shape(packet, st)
-    local s
-    packet:w_u8(st.count)
-    for i = 1, st.count do
-        s = st.shapes[i]
-        packet:w_u8(s.type)
-        if s.type == 0 then
-            packet:w_vec3(s.center)
-            packet:w_float(s.radius)
-        else
-            packet:w_vec3(s.axis_x)
-            packet:w_vec3(s.axis_y)
-            packet:w_vec3(s.axis_z)
-            packet:w_vec3(s.offset)
-        end
-    end
-end
-
-----------
 -- перепаковка нет-пакета созданного скриптом рестрикта
-----------
 function rewrite_restrictor(obj, custom_data, radius)
     local pk = get_netpk(obj, 1)
     ASSERT((pk and pk:isOk()), "can't read netpacket of %s", obj:name())
     local data = pk:get()
-    data.shapes:addSphere(
-        radius, vector():set(0, 0, 0)
-    )
+    data.shapes:addSphere(radius, vector():set(0, 0, 0))
     data.custom_data:setString(custom_data)
     pk:set(data)
 end
@@ -1317,54 +1235,6 @@ end
 
 function friendbratva(community1, community2)
     relation_registry.set_community_goodwill("bratok", "actor", 50)
-end
-
-function actor_has_money_2000()
-    return db.actor:money() >= 2000
-end
-
-function actor_not_money_2000()
-    return db.actor:money() < 2000
-end
-
-function actor_has_money_3000()
-    return db.actor:money() >= 3000
-end
-
-function actor_not_money_3000()
-    return db.actor:money() < 3000
-end
-
-function actor_has_money_100000()
-    return db.actor:money() >= 100000
-end
-
-function actor_not_money_100000()
-    return db.actor:money() < 100000
-end
-
-function give_money_2000(t1, t2)
-    local npc = t1
-    if npc:id() == db.actor:id() then
-        npc = t2
-    end
-    dialogs.relocate_money(npc, 2000, "out")
-end
-
-function give_money_3000(t1, t2)
-    local npc = t1
-    if npc:id() == db.actor:id() then
-        npc = t2
-    end
-    dialogs.relocate_money(npc, 3000, "out")
-end
-
-function give_money_100000(t1, t2)
-    local npc = t1
-    if npc:id() == db.actor:id() then
-        npc = t2
-    end
-    dialogs.relocate_money(npc, 100000, "out")
 end
 
 function bratva_vrag(actor, npc)
@@ -1436,18 +1306,6 @@ function lab_doc_spawn()
     spawn_ai_location("labx10_computer", vector():set(6.570677280426, -7.800, -15.11957), 7638, 2693)
 end
 
-function actor_has_money_10000()
-    return db.actor:money() >= 10000
-end
-
-function give_money_10000(t1, t2)
-    local npc = t1
-    if npc:id() == db.actor:id() then
-        npc = t2
-    end
-    dialogs.relocate_money(npc, 10000, "out")
-end
-
 function actor_na_mest()
     db.actor:give_info_portion("sveeblov_predatel_begin") -- работает
     news_manager.send_tip(db.actor, game.translate_string("actor_na_mest"))
@@ -1495,18 +1353,6 @@ function set_jeka(sid)
     if obj and obj:alive() then
         obj:set_relation(game_object.enemy, db.actor)
     end
-end
-
-function actor_has_money_15000()
-    return db.actor:money() >= 15000
-end
-
-function give_money_15000(t1, t2)
-    local npc = t1
-    if npc:id() == db.actor:id() then
-        npc = t2
-    end
-    dialogs.relocate_money(npc, 15000, "out")
 end
 
 local points = {{
@@ -3004,6 +2850,66 @@ function give_supplies_to_actor(first_speaker, second_speaker)
 	if not db.actor:object("wpn_binoc") then
 		dialogs.relocate_item_section(first_speaker, "wpn_binoc", "in")
 	end
+end
+
+function actor_has_money_2000()
+    return db.actor:money() >= 2000
+end
+
+function actor_has_money_3000()
+    return db.actor:money() >= 3000
+end
+
+function actor_has_money_10000()
+    return db.actor:money() >= 10000
+end
+
+function actor_has_money_15000()
+    return db.actor:money() >= 15000
+end
+
+function actor_has_money_100000()
+    return db.actor:money() >= 100000
+end
+
+function give_money_2000(t1, t2)
+    local npc = t1
+    if npc:id() == db.actor:id() then
+        npc = t2
+    end
+    dialogs.relocate_money(npc, 2000, "out")
+end
+
+function give_money_3000(t1, t2)
+    local npc = t1
+    if npc:id() == db.actor:id() then
+        npc = t2
+    end
+    dialogs.relocate_money(npc, 3000, "out")
+end
+
+function give_money_10000(t1, t2)
+    local npc = t1
+    if npc:id() == db.actor:id() then
+        npc = t2
+    end
+    dialogs.relocate_money(npc, 10000, "out")
+end
+
+function give_money_15000(t1, t2)
+    local npc = t1
+    if npc:id() == db.actor:id() then
+        npc = t2
+    end
+    dialogs.relocate_money(npc, 15000, "out")
+end
+
+function give_money_100000(t1, t2)
+    local npc = t1
+    if npc:id() == db.actor:id() then
+        npc = t2
+    end
+    dialogs.relocate_money(npc, 100000, "out")
 end
 
 function attach(sm)
