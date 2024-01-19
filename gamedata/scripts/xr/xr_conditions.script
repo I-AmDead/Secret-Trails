@@ -234,22 +234,6 @@ function npc_profile(actor, npc, p)
 
 end
 
--- Проверка того что удар был нанесен кем-то из npc указанных в списке.
--- Параметры это story_id персонажей. Можно задавать несколько story_id.
-function hitted_by(actor, npc, p)
-    local npc1
-    local t = db.storage[npc:id()].hit
-    if t then
-        for i, v in pairs(p) do
-            npc1 = level_object_by_sid(v)
-            if npc1 and t.who == npc1:id() then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 -- Проверка, что лучшее оружие персонажа - пистолет
 function best_pistol(actor, npc)
     local pistol = npc:item_in_slot(1)
@@ -771,17 +755,6 @@ function dist_to_enemy_le(actor, npc, p)
     return d and enemy and enemy:position():distance_to_sqr(npc:position()) <= d * d
 end
 
-function esc_tutorial_flesh_died_in_anomaly(actor, npc)
-    local t = db.storage[npc:id()].death
-    if t and t.killer_name then
-        if t.killer_name == "esc_tutorial_mincer_02" or t.killer_name == "esc_tutorial_mosquito_bald_01" or
-            t.killer_name == "esc_tutorial_mincer_01" then
-            return true
-        end
-    end
-    return false
-end
-
 ------------------------------------------------------------------------------------
 -- Special functions for Garbage
 ------------------------------------------------------------------------------------
@@ -802,38 +775,6 @@ function val_fighting_captive(actor, npc)
     else
         return false
     end
-end
-
-function val_hit_by_nap1(actor, npc)
-    local nap1 = level_object_by_sid(406)
-    if nap1 == nil then
-        return false
-    end
-    local t = db.storage[npc:id()].hit
-    local hit_by_nap1 = (t ~= nil and t.who == nap1:id())
-    return hit_by_nap1
-end
-
-function val_hit_by_guard(actor, npc)
-    local g1 = level_object_by_sid(407)
-    local g2 = level_object_by_sid(408)
-    if g1 == nil and g2 == nil then
-        return false
-    end
-    local t = db.storage[npc:id()].hit
-    local hit_by_guard = (t ~= nil and ((g1 ~= nil and t.who == g1:id()) or (g2 ~= nil and t.who == g2:id())))
-    return hit_by_guard
-end
-
-function val_actor_has_key_to_underground(actor, npc)
-    if xr_conditions_impl.actor_has_object(actor, "val_key_to_underground") then
-        return true
-    end
-    return false
-end
-
-function actor_wears_bandit_outfit(actor, npc)
-    return xr_conditions_impl.actor_has_object(actor, "bandit_outfit")
 end
 
 ------------------------------------------------------------------------------------
@@ -860,22 +801,11 @@ end
 ------------------------------------------------------------------------------------
 -- Special functions for Escape
 ------------------------------------------------------------------------------------
-function esc_vagon_all_dead(actor, npc)
-    return xr_conditions_impl.esc_vagon_all_dead()
-end
-
 function esc_blokpost_night(actor, npc)
     if xr_gulag.getGulagState("esc_blokpost") == 1 then
         return true
     end
     return false
-end
-
-------------------------------------------------------------------------------------
--- Special functions for LabX18
-------------------------------------------------------------------------------------
-function dar_actor_has_a_key2(actor, npc)
-    return xr_conditions_impl.actor_has_object(actor, "krot_flash")
 end
 
 ------------------------------------------------------------------------------------
@@ -895,14 +825,6 @@ function is_courier_time(actor, npc)
     return level.get_time_hours() >= 22 and level.get_time_hours() < 23
 end
 
-function is_controller_dead(actor, npc)
-    local c = level_object_by_sid(729)
-    if c == nil then
-        return false
-    end
-    return not c:alive()
-end
-
 function bar_actor_rank_stalker(actor, npc)
     local actor = db.actor
     if actor:character_rank() > 300 then
@@ -917,61 +839,9 @@ function bar_actor_rank_veteran(actor, npc)
     end
 end
 
-------------------------------------------------------------------------------------
--- Special functions for Military
-------------------------------------------------------------------------------------
-function mil_actor_enemy(actor, npc)
-    local npc = level_object_by_sid(707)
-    if npc == nil or npc:alive() == false then
-        npc = level_object_by_sid(702)
-        if npc == nil or npc:alive() == false then
-            npc = level_object_by_sid(728)
-            if npc == nil then
-                return
-            end
-        end
-    end
-    return npc:relation(actor) == game_object.enemy
-end
-
-function mil_actor_enemy_freedom(actor, npc)
-    if relation_registry.community_goodwill("freedom", actor:id()) < -500 then
-        return true
-    end
-    return false
-end
-
-------------------------------------------------------------------------------------
--- Special functions for Deadcity
-------------------------------------------------------------------------------------
-function cit_combat_ignore(actor, npc, p)
-    local enemy_st = db.storage[npc:id()].enemy
-    local valid, enemy = validate_enemy_object(enemy_st)
-    if valid == false then
-        return false
-    end
-    if enemy and enemy:alive() then
-        if enemy:id() == actor:id() then
-            return p[1] ~= nil and not has_alife_info(p[1])
-        elseif enemy:story_id() == 1200 then
-            return true
-        else
-            local g = xr_gulag.get_npc_gulag(enemy)
-            local gulags = {
-                cit_kanaliz1 = 1,
-                cit_kanaliz2 = 1,
-                cit_kanaliz3 = 1
-            }
-            return g ~= nil and gulags[g] == 1
-        end
-    end
-    return false
-end
-
 -------------------------------------------------------------------------------------
 -- Special for Agroprom
 -------------------------------------------------------------------------------------
-
 function agr_boars_nest_dead(actor, npc) -- название функции
     local g = xr_gulag.fraction["agr_boar_nest"] -- имя гулага
     return (not g) or (g:get_population() == 0)
@@ -988,27 +858,14 @@ function rostok_dist_to_actor_le(actor, npc, p)
     end
     return false
 end
+
 function see_actor_and_kruglov(actor, npc)
     local kruglov = level_object_by_sid(503)
     return npc:see(actor) or npc:see(kruglov)
 end
+
 function has_ghost_pda()
     return db.actor:object("yantar_ghost_pda") ~= nil
-end
-
--------------------------------------------------------------------------------------
--- Special for Radar
--------------------------------------------------------------------------------------
-function rad_pass_time(actor, npc)
-    return true
-    --    return level.get_time_hours() >= 10 and level.get_time_hours() < 11
-end
-
--------------------------------------------------------------------------------------
--- Special for Sarcofag
--------------------------------------------------------------------------------------
-function actor_has_decoder(actor, npc)
-    return actor:object("decoder") ~= nil
 end
 
 -------------------------------------------------------------------------------------
@@ -1052,6 +909,7 @@ function actor_in_dolg(actor, npc)
     end
     return false
 end
+
 function actor_in_freedom(actor, npc)
     if db.actor then
         return db.actor:character_community() == "actor_freedom"
