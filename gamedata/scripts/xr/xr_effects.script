@@ -617,44 +617,6 @@ function mil_actor_enemy_reset(actor, npc)
     -- xr_gulag.setGulagRelation ("mil_freedom", game_object.neutral, db.actor)    
 end
 
-function mil_bomb_explode(actor, npc)
-    local source
-
-    local obj = alife():story_object(723)
-    if obj then
-        source = level.object_by_id(obj.id)
-    end
-
-    if not source then
-        -- 'abort ("Bomb with story id MIL_BOMB not found")
-        return
-    end
-
-    local h = hit();
-    h.power = 1000000;
-    h.direction = vector():set(1, 0, 0);
-    h.impulse = 1;
-    h.draftsman = source;
-    h.type = hit.chemical_burn;
-    source:hit(h);
-
-    source:explode(0)
-end
-
-function sar2_monolith_explode(actor, npc)
-    local monolith = level_object_by_sid(1305)
-    if monolith == nil then
-        abort("Object MONOLITH with SID 1305 not found")
-    end
-    local h = hit();
-    h.power = 1000;
-    h.direction = vector():set(1, 0, 0);
-    h.impulse = 1;
-    h.draftsman = actor;
-    h.type = hit.chemical_burn;
-    monolith:hit(h);
-end
-
 function set_stalker_enemy(sid, draftsman)
     local npc = level_object_by_sid(sid)
     if npc == nil or npc:alive() == false then
@@ -1071,10 +1033,6 @@ end
 function oso_init_dialod()
     -- local oso = level_object_by_sid(1307)
     -- db.actor:run_talk_dialog(oso)
-end
-
-function on_tutor_gameover_stop()
-    ui_death.death_screen()
 end
 
 -- // ускоряет время  - вызов из рестриктора

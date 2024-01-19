@@ -216,7 +216,7 @@ function speedSaver()
 end
 
 function reset(gizmosArr, force)
-	if debugMode or force then
+	if force then
 		if gizmosArr then
 			for i = 1, #gizmosArr do
 				local gizmo = gizmosArr[i]
@@ -257,12 +257,13 @@ function getMinClimbHeight()
 	return 1.4
 end
 
-function isWall(position, direction, targetAngle)
+function isWall(position, direction, targetAngle, initialRay)
 	targetAngle = targetAngle or 10
 
 	local normal = dgr.get_surface_normal(
 		position,
-		direction
+		direction,
+		initialRay
 	)
 	if not normal then return end
 
@@ -270,17 +271,16 @@ function isWall(position, direction, targetAngle)
     return angle < targetAngle, normal
 end
 
-function isFlat(position, direction, targetAngle)
-	targetAngle = targetAngle or 30
-
+function isFlat(position, direction, initialRay)
 	local normal = dgr.get_surface_normal(
 		position,
-		direction
+		direction,
+		initialRay
 	)
 	if not normal then return end
 
 	local angle = math.abs(math.deg(math.acos(normal.y)))
-    return angle < targetAngle, normal
+	return angle < 30, normal
 end
 
 function getClimbPathEndPoints(actorPos, collisionPos, interPos, climbPos)
@@ -376,7 +376,7 @@ function checkLedgeGrabbing()
 		pos.y = maxY
 		local res = ray:get(pos, dir)
 		if res.success then
-			local flat, normal = isFlat(pos, dir)
+			local flat, normal = isFlat(pos, dir, res)
 			if normal then
 				if not collisionPos then
 					collisionPos = results[j - 1][1]
@@ -385,53 +385,79 @@ function checkLedgeGrabbing()
 
 				if flat then
 
-					-- Player height check on climbPos
-					-- If height is not enough - stop checking next position, assume that you cant move further
-					local function posCheck(res)
-						local ray = geometry_ray({
-							ray_range = 1.4,
-							flags = rq_target.rqtStatic,
-							ignore_object = db.actor
-						})
-						local heightRes = ray:get(res.position, vector():set(0,1,0))
-						return not heightRes.success
+					-- Player width check
+					local playerWidthCheck = true
+					local pos = vector():mad(res.position, actorDir, 0.08)
+					pos.y = maxY
+					local ray = geometry_ray({
+						ray_range = rayRange,
+						flags = rq_target.rqtStatic,
+						ignore_object = db.actor
+					})
+					local r = ray:get(pos, dir)
+					if not r.success then
+						playerWidthCheck = true
+					else
+						playerWidthCheck = similar(res.position.y, r.position.y, 0.1)
 					end
+					if playerWidthCheck then
+						-- Player height check on climbPos
+						-- If height is not enough - stop checking next position, assume that you cant move further
+						local function posCheck(res)
+							local ray = geometry_ray({
+								ray_range = savedCamY,
+								flags = rq_target.rqtStatic,
+								ignore_object = db.actor
+							})
+							local heightRes = ray:get(res.position, vector():set(0,1,0))
+							return not heightRes.success
+						end
 
-					local valid = posCheck(res)
+						local valid = posCheck(res)
 
-					validCollisionPos = valid
-					climbPos = res.position
-					climbNormal = normal
+						-- Material check
+						local result = res.result
+						if res.result then
+					        	local mtl = res.mtl
+		
+					        	if mtl and mtl.m_Name and (string.find(mtl.m_Name, "bush") or string.find(mtl.m_Name, "water")) then
+								valid = false
+							end
+						end
+						validCollisionPos = valid
+						climbPos = res.position
+						climbNormal = normal
 
-					if not validCollisionPos then break end
+						if not validCollisionPos then break end
 
-					-- Advance position a bit further and check it as well for better result
-					-- If successfull - use that, otherwise use result
-					for _, v in ipairs({0.05, 0.025}) do
-						local pos = vector():mad(actorPos, actorDir, i + v)
-						pos.y = maxY
+						-- Advance position a bit further and check it as well for better result
+						-- If successfull - use that, otherwise use result
+						for _, v in ipairs({0.05, 0.025}) do
+							local pos = vector():mad(actorPos, actorDir, i + v)
+							pos.y = maxY
 
-						local ray = geometry_ray({
-							ray_range = rayRange,
-							flags = 2,
-							ignore_object = db.actor
-						})
+							local ray = geometry_ray({
+								ray_range = rayRange,
+								flags = 2,
+								ignore_object = db.actor
+							})
 
-						local res = ray:get(pos, dir)
-						if res.success then
-							local flat, normal = isFlat(pos, dir)
-							if normal and flat then
-								local valid = posCheck(res)
-								if valid then
-									climbPos = res.position
-									climbNormal = normal
-									break
+							local res = ray:get(pos, dir)
+							if res.success then
+								local flat, normal = isFlat(pos, dir, res)
+								if normal and flat then
+									local valid = posCheck(res)
+									if valid then
+										climbPos = res.position
+										climbNormal = normal
+										break
+									end
 								end
 							end
 						end
-					end
 
-					break
+						break
+					end
 				end
 			else
 				results[j] = {res.position, vector():set(dir):invert()}
@@ -482,7 +508,7 @@ function checkLedgeGrabbing()
     adjActorPos.y = adjActorPos.y + 0.02
     local posToInterVec = vector():set(interPos):sub(adjActorPos)
     local collisionCheckRay = geometry_ray({
-    	ray_range = posToInterVec:magnitude(),
+		ray_range = posToInterVec:magnitude(),
 		flags = rq_target.rqtStatic,
 		ignore_object = db.actor
     })
@@ -490,7 +516,25 @@ function checkLedgeGrabbing()
 	local pos = adjActorPos
 	local dir = vector():set(posToInterVec):normalize()
 	local res = collisionCheckRay:get(pos, dir)
-	local collisionCheck = res.distance == posToInterVec:magnitude()
+	local collisionCheck = not res.success
+
+	if collisionCheck then
+		-- Collision check for climb path - ray cast to climbPos from interPos
+		local posToInterVec = vector():set(
+			climbPos.x,
+			math.max(interPos.y, climbPos.y + 0.05),
+			climbPos.z
+		):sub(interPos)
+	    local collisionCheckRay = geometry_ray({
+	    	ray_range = posToInterVec:magnitude(),
+			flags = rq_target.rqtStatic,
+			ignore_object = db.actor
+	    })
+		local pos = interPos
+		local dir = vector():set(posToInterVec):normalize()
+		local res = collisionCheckRay:get(pos, dir)
+		collisionCheck = not res.success
+	end
 
 	if not collisionCheck then
 		savedClimbPos = nil
@@ -582,7 +626,7 @@ function dup_table(original)
     return duplicate
 end
 
-function tryToClimb()
+function tryToClimb(fromStanding)
 	if climbActive then return end
 	if not savedClimbPos then return end
 
@@ -697,7 +741,10 @@ function tryToClimb()
 
 	local CubicEaseInOut = drf.CubicEaseInOut
 	local QuadraticEaseIn = drf.QuadraticEaseIn
+	local QuadraticEaseOut = drf.QuadraticEaseOut
 	local QuadraticEaseInOut = drf.QuadraticEaseInOut
+	local SineEaseOut = drf.SineEaseOut
+	local camSmoothing = fromStanding and CubicEaseInOut or SineEaseOut
 
 	-- Set actor properties
 	level.only_allow_movekeys(true)
@@ -802,7 +849,7 @@ function tryToClimb()
 			k = normalize(time_global(), startTime, endTime)
 			k = math.min(1, k)
 
-			local cameraPos2 = cubicBezier(p1, p2, p3, p4, CubicEaseInOut(k))
+			local cameraPos2 = cubicBezier(p1, p2, p3, p4, camSmoothing(k))
 
 			-- Interpolate between procedural and animation camera in animInTime
 			local animInK = math.min(1, normalize(animTime, 0, animInTime))
@@ -949,14 +996,14 @@ function checkJump(pressed)
 	if pressed == true then
 		-- If savedClimbPos is similar to camera height or below it - init climb immediately
 		if savedClimbPos and (savedClimbPos.y < device().cam_pos.y or similar(savedClimbPos.y, device().cam_pos.y, 0.35)) then
-			if tryToClimb() then
+			if tryToClimb(true) then
 				if sub_jump then
 					ogsr_signals.get_mgr():unsubscribe(sub_jump)
 					sub_jump = nil
 				end
 			end
 		elseif savedClimbPos and onScreenCheck() then
-	    		if tryToClimb() then
+	    		if tryToClimb(true) then
 				if sub_jump then
 					ogsr_signals.get_mgr():unsubscribe(sub_jump)
 					sub_jump = nil
@@ -967,7 +1014,7 @@ function checkJump(pressed)
 		-- Otherwise try after sometime
 		if (time_global() - savedJumpPressedTime)  > settings.jumpTriggerTime then
 			if savedSpeed.y > -0.005 then
-				if tryToClimb() then
+				if tryToClimb(savedSpeed.y < 0.001) then
 					if sub_jump then
 						ogsr_signals.get_mgr():unsubscribe(sub_jump)
 						sub_jump = nil
@@ -995,6 +1042,7 @@ end
 -- Тут ивенты всякие
 function on_key_down(key, bind)
 	if bind == key_bindings.kJUMP then
+		tryToClimb(savedSpeed.y < 0.001)
 		savedJumpPressedTime = time_global()
 
 		checkJump(true)

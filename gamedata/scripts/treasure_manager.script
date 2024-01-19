@@ -11,6 +11,16 @@ function on_treasure_use(obj, who)
     if obj:is_inventory_box() and obj:story_id() then
         get_treasure_manager():treasure_empty(obj, obj:story_id())
     end
+
+    if not ogse.var_exists("DED_SKELET") and string.find(obj:name(), "dead_city_secret") then
+        local sobj = alife():create("skelet_crash", vector():set(-92.634651, -1.824595, -23.353546), 314645, 3061)
+        sobj.angle = vector():set(0, 0.7, 0)
+        local sobj = alife():create("skelet_crash", vector():set(-92.634651, -1.824595, -23.353546), 314645, 3061)
+        sobj.angle = vector():set(0, 0.7, 0)
+        local snd = sound_object("intriga")
+        snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
+	ogse.save_var("DED_SKELET", true)
+    end
 end
 
 function on_npc_use(obj)
@@ -27,7 +37,7 @@ function on_npc_use(obj)
         sobj.treasure_processed = true
 
         if string.find(obj:name(), "maroder_boss") then
-            local treasure = alife():story_object(32668)
+            local treasure = alife():story_object(story_ids.razuvaev_taynik)
             level.map_add_object_spot_ser(treasure.id, "red_location", game.translate_string("raz_treasure"))
             news_manager.send_tip(db.actor, "%c[255,255,0,0]" .. game.translate_string("raz_treasure_news"))
         end

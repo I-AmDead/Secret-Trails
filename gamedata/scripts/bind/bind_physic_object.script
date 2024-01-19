@@ -22,18 +22,15 @@ function init(obj)
     ----------------------------------------------------------------------------------------
 
     -- Биндить предмет нет смысла, если у него нет секции logic
-    if not ini or not ini:section_exist("logic") then
-        -- Прожектор нужно биндить даже без logic
-        if ini and not ini:section_exist("drop_box") then
-            if obj:clsid() ~= clsid.projector then
-                return
-            end
-        end
+    if (ini and (ini:section_exist("drop_box") or ini:section_exist("logic")))
+        or obj:clsid() == clsid.projector
+        or obj:clsid() == clsid.inventory_box
+    then
+        --log1("init bind id="..obj:id())
+        db.storage[obj:id()] = {}
+        local new_binder = generic_physics_binder(obj)
+        obj:bind_object(new_binder)
     end
-
-    db.storage[obj:id()] = {}
-    local new_binder = generic_physics_binder(obj)
-    obj:bind_object(new_binder)
 end
 
 ---------------------------------------------------------------------------------------------

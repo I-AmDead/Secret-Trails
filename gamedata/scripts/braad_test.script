@@ -862,13 +862,6 @@ function spawn_case()
     level.map_add_object_spot_ser(obj.id, "crlc_big", "case3")
 end
 
-function add_spot()
-    local obj = alife():story_object(32669)
-    if obj then
-        level.map_add_object_spot_ser(obj.id, "level_changer", game.translate_string("l12u_control_monolith"))
-    end
-end
-
 function controller_tubeman()
     local obj = alife():create("bloodsucker_strong", vector():set(36.4134292602539, -34.488639831543, -36.8335), 3787, 2475)
 end
@@ -2029,28 +2022,21 @@ function levsha_bioradar()
     spawn_ai_location("bioradar", vector():set(-260.860, 0.015, 26.480), 6331, 1395)
 end
 
-local mina_band_particle = particles_object("explosions\\explosion_fuelcan")
-local mina_band_sound = sound_object([[weapons\t_rgd5_explosion]])
 function mina_band()
-    local obj = alife():story_object(levch)
-    if obj then
-        local posit = obj:position()
-        mina_band_particle:play_at_pos(posit)
-        mina_band_sound:play_at_pos(obj, posit, 0)
-        local dist = db.actor:position():distance_to(obj:position())
-        if dist < 30 then
-            local h = hit()
-            h.draftsman = db.actor
-            h.direction = vector():set(0, 0, 0)
-            h:bone("bip01_spine")
-            h.type = hit.explosion
-            h.power = 0.6
-            h.impulse = 500
-            db.actor:hit(h)
-            level.add_pp_effector("amk_shoot.ppe", 2011, false)
-        end
-        alife():release(obj)
-    end
+    local h = hit()
+    local posit = db.actor:position()
+    local mina_band_particle = particles_object("explosions\\explosion_fuelcan")
+    local mina_band_sound = sound_object([[weapons\t_rgd5_explosion]])
+    mina_band_particle:play_at_pos(posit)
+    mina_band_sound:play_at_pos(db.actor, posit, 0)
+    h.draftsman = db.actor
+    h.direction = vector():set(0, 0, 0)
+    h:bone("bip01_spine")
+    h.type = hit.explosion
+    h.power = 0.6
+    h.impulse = 500
+    db.actor:hit(h)
+    level.add_pp_effector("amk_shoot.ppe", 2011, false)
 end
 
 ----------------------------------------------------------РАДИАЦИЯ ARC-----------------------------------------------

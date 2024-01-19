@@ -156,10 +156,6 @@ local function on_first_update()
     end
 
     if level.name() == "l11_pripyat" then
-        if not has_alife_info("tushkanchiki_new") then
-            db.actor:give_info_portion("tushkanchiki_new")
-        end
-
         if not has_alife_info("mervin_anim") then
             db.actor:give_info_portion("mervin_anim")
         end
@@ -290,16 +286,6 @@ local function on_info()
         end
     end
 
-    if level.name() == "l11_pripyat" then
-        if has_alife_info("mathon_naem_done") and not has_alife_info("tushkanchiki_midle") then
-            db.actor:give_info_portion("tushkanchiki_midle")
-        end
-
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("tushkanchiki_last") then
-            db.actor:give_info_portion("tushkanchiki_last")
-        end
-    end
-
     if level.name() == "l12_stancia_2" then
         if has_alife_info("monolit_pogovorils") and not has_alife_info("monolit_final") then
             db.actor:give_info_portion("monolit_final")
@@ -351,21 +337,11 @@ function enemy_monolith(community1, community2)
     relation_registry.set_community_goodwill("monolith", "actor", -5000)
 end
 
-local action = false
-
 local function distance_check()
-    if has_alife_info("skit_start_dialog_done") and not has_alife_info("skit_prishli") then
-        local postovoy = level_object_by_sid(30162)
-        if distance_between(postovoy, db.actor) > 10 and postovoy and action == false then
-            db.actor:give_info_portion("enemy_skit")
-            action = true
-        end
-    end
-    if has_alife_info("skit_start_dialog_done") and not has_alife_info("skit_prishli") then
-        local postovoy = level_object_by_sid(30162)
-        if distance_between(postovoy, db.actor) < 10 and action == true then
-            action = false
-        end
+    if (not has_alife_info("skit_start_dialog_done") and has_alife_info("skit_prishli")) or has_alife_info("enemy_skit") then return end
+    local postovoy = level_object_by_sid(30162)
+    if postovoy and distance_between(postovoy, db.actor) > 10 then
+        db.actor:give_info_portion("enemy_skit")
     end
 end
 
@@ -394,7 +370,7 @@ function hit_fist()
 end
 
 function del_lesnik()
-    local obj = alife():story_object(30159)
+    local obj = alife():story_object(story_ids.lesnik)
     if obj then
         alife():release(obj, true)
     end
@@ -659,13 +635,6 @@ function spawn_dolg_attak()
     local obj = alife():create("bratok_attak3", vector():set(131.289, 0.097, 54.954), 36252, 1227)
 end
 
-function del_borov()
-    local obj = alife():story_object(500)
-    if obj then
-        alife():release(obj, true)
-    end
-end
-
 function spawn_voronin_ohr()
     local obj = alife():create("voronin_ohr1", vector():set(376.873, 13.478, -162.466), 83313, 1285)
     local obj = alife():create("voronin_ohr2", vector():set(379.691, 14.389, -171.443), 84345, 1285)
@@ -701,14 +670,14 @@ function voronin_bar_dialog_done(first_speaker, second_speaker)
 end
 
 function del_voronin()
-    local obj = alife():story_object(9635)
+    local obj = alife():story_object(story_ids.dolg_leader)
     if obj then
         alife():release(obj, true)
     end
 end
 
 function del_barman_dolg()
-    local obj = alife():story_object(30192)
+    local obj = alife():story_object(story_ids.barman_dolg)
     if obj then
         alife():release(obj, true)
     end
@@ -733,7 +702,7 @@ function spawn_pripyat()
 end
 
 function del_grig()
-    local obj = alife():story_object(30171)
+    local obj = alife():story_object(story_ids.grig)
     if obj then
         alife():release(obj, true)
     end
@@ -827,7 +796,7 @@ function spawn_zahar()
 end
 
 function del_zahar()
-    local obj = alife():story_object(30195)
+    local obj = alife():story_object(story_ids.zahar)
     if obj then
         alife():release(obj, true)
     end
@@ -925,7 +894,7 @@ function spawn_bookmaker()
 end
 
 function del_lesnik2()
-    local obj = alife():story_object(30160)
+    local obj = alife():story_object(story_ids.lesnik2)
     if obj then
         alife():release(obj, true)
     end
@@ -1095,21 +1064,21 @@ function spawn_foster_dogs()
 end
 
 function del_foster()
-    local obj = alife():story_object(30186)
+    local obj = alife():story_object(story_ids.foster)
     if obj then
         alife():release(obj, true)
     end
 end
 
 function del_grek()
-    local obj = alife():story_object(30188)
+    local obj = alife():story_object(story_ids.grek)
     if obj then
         alife():release(obj, true)
     end
 end
 
 function del_lesnik3()
-    local obj = alife():story_object(30196)
+    local obj = alife():story_object(story_ids.lesnik3)
     if obj then
         alife():release(obj, true)
     end
@@ -1313,7 +1282,7 @@ function spawn_karina2()
 end
 
 function del_karina()
-    local obj = alife():story_object(30189)
+    local obj = alife():story_object(story_ids.karina)
     if obj then
         alife():release(obj, true)
     end
@@ -1344,14 +1313,14 @@ function voronin_pismo2_done(first_speaker, second_speaker)
 end
 
 function del_barman_start()
-    local obj = alife():story_object(3)
+    local obj = alife():story_object(story_ids.Escape_Trader)
     if obj then
         alife():release(obj, true)
     end
 end
 
 function del_sidor_mir()
-    local obj = alife():story_object(30175)
+    local obj = alife():story_object(story_ids.sidor)
     if obj then
         alife():release(obj, true)
     end
@@ -1363,14 +1332,14 @@ function spawn_sidor_ohr()
 end
 
 function del_barman_stalker()
-    local obj = alife():story_object(30190)
+    local obj = alife():story_object(story_ids.barman_stalker)
     if obj then
         alife():release(obj, true)
     end
 end
 
 function del_sidor_stalker()
-    local obj = alife():story_object(30191)
+    local obj = alife():story_object(story_ids.sidor_stalker)
     if obj then
         alife():release(obj, true)
     end
@@ -1426,14 +1395,8 @@ end
 function del_povodyr()
     local obj = alife():story_object(story_ids.dog_povodyr)
     if obj then
-        alife():release(obj, true)
-    end
-end
-
-function remove_metka_povodyr()
-    local obj = alife():story_object(story_ids.dog_povodyr)
-    if obj then
         level.map_remove_object_spot(obj.id, "blue_location")
+        alife():release(obj, true)
     end
 end
 
@@ -1578,7 +1541,7 @@ function spawn_sled2()
 end
 
 function del_nevidimka()
-    local obj = alife():story_object(30210)
+    local obj = alife():story_object(story_ids.nevidimka)
     if obj then
         alife():release(obj, true)
     end
@@ -1713,7 +1676,7 @@ function spawn_rad_soldaty()
 end
 
 function del_klyk()
-    local obj = alife():story_object(9610)
+    local obj = alife():story_object(story_ids.pri_kliyk)
     if obj then
         alife():release(obj, true)
     end
@@ -1726,23 +1689,10 @@ function spawn_klyk()
 end
 
 function del_klychara()
-    local obj = alife():story_object(30211)
+    local obj = alife():story_object(story_ids.klychara)
     if obj then
         alife():release(obj, true)
     end
-end
-
-function spawn_tushkanchiki()
-    local obj = alife():create("tushkano_new", vector():set(40.900, 1.570, 421.626), 152068, 2270)
-    local obj = alife():create("tushkano_new", vector():set(40.900, 1.570, 421.626), 152068, 2270)
-    local obj = alife():create("tushkano_new", vector():set(40.900, 1.570, 421.626), 152068, 2270)
-    local obj = alife():create("tushkano_new", vector():set(40.900, 1.570, 421.626), 152068, 2270)
-    local obj = alife():create("tushkano_new", vector():set(40.900, 1.570, 421.626), 152068, 2270)
-    local obj = alife():create("tushkano_new", vector():set(7.635, 1.571, 416.993), 111674, 2266)
-    local obj = alife():create("tushkano_new", vector():set(7.635, 1.571, 416.993), 111674, 2266)
-    local obj = alife():create("tushkano_new", vector():set(7.635, 1.571, 416.993), 111674, 2266)
-    local obj = alife():create("tushkano_new", vector():set(7.635, 1.571, 416.993), 111674, 2266)
-    local obj = alife():create("tushkano_new", vector():set(7.635, 1.571, 416.993), 111674, 2266)
 end
 
 --------------------------------------tt2_patch_01-------------------------------------
@@ -2122,24 +2072,24 @@ function spawn_iuda()
 end
 
 function spawn_maloy()
-    local obj = alife():create("maroder_yang", vector():set(83.291, 3.776, 133.175), 436219, 3079)
+    local obj = alife():create("maroder_yang", vector():set(87.226, 1.060, 3.691), 439319, 3083)
     alife():assign_story_id(obj.id, story_ids.maroder_yang)
 
-    local obj = alife():create("maroder_mg1", vector():set(82.901, 3.888, 136.069), 435685, 3079)
+    local obj = alife():create("maroder_mg1", vector():set(84.724, 1.045, 5.000), 437175, 3083)
     alife():assign_story_id(obj.id, story_ids.maroder_mg1)
 
-    local obj = alife():create("maroder_mg2", vector():set(87.740, 4.136, 133.793), 439457, 3079)
+    local obj = alife():create("maroder_mg2", vector():set(84.153, 1.038, 8.396), 436644, 3083)
     alife():assign_story_id(obj.id, story_ids.maroder_mg2)
 
-    local obj = alife():create("maroder_mg3", vector():set(85.695, 3.910, 132.266), 437827, 3079)
+    local obj = alife():create("maroder_mg3", vector():set(87.226, 1.038, 11.156), 439330, 3083)
     alife():assign_story_id(obj.id, story_ids.maroder_mg3)
 
-    local obj = alife():create("maroder_mg4", vector():set(86.823, 4.172, 137.286), 438914, 3079)
+    local obj = alife():create("maroder_mg4", vector():set(90.333, 1.067, 7.666), 441557, 3083)
     alife():assign_story_id(obj.id, story_ids.maroder_mg4)
 end
 
 function spawn_maloy_mafon()
-    local obj = alife():create("maloy_mafon", vector():set(84.874, 3.969, 134.196), 437297, 3079)
+    local obj = alife():create("maloy_mafon", vector():set(93.584, 2.420, 6.550), 443262, 3083)
 end
 
 function leila_give_money(first_speaker, second_speaker)
@@ -2219,11 +2169,11 @@ function spawn_lesnik_mafon()
 end
 
 function spawn_maloy2()
-    local obj = alife():create("maroder_yang1", vector():set(83.291, 3.776, 133.175), 436219, 3079)
-    local obj = alife():create("maroder_mg11", vector():set(82.901, 3.888, 136.069), 435685, 3079)
-    local obj = alife():create("maroder_mg22", vector():set(87.740, 4.136, 133.793), 439457, 3079)
-    local obj = alife():create("maroder_mg33", vector():set(85.695, 3.910, 132.266), 437827, 3079)
-    local obj = alife():create("maroder_mg44", vector():set(86.823, 4.172, 137.286), 438914, 3079)
+    local obj = alife():create("maroder_yang1", vector():set(87.226, 1.060, 3.691), 439319, 3083)
+    local obj = alife():create("maroder_mg11", vector():set(84.724, 1.045, 5.000), 437175, 3083)
+    local obj = alife():create("maroder_mg22", vector():set(84.153, 1.038, 8.396), 436644, 3083)
+    local obj = alife():create("maroder_mg33", vector():set(87.226, 1.038, 11.156), 439330, 3083)
+    local obj = alife():create("maroder_mg44", vector():set(90.333, 1.067, 7.666), 441557, 3083)
 end
 
 function elchimera_spawn()
@@ -2287,7 +2237,7 @@ end
 
 -- удаляем Васильева из леса
 function del_vas()
-    local obj = alife():story_object(30148)
+    local obj = alife():story_object(story_ids.aver_ecolog)
     if obj then
         alife():release(obj, true)
     end
@@ -2340,8 +2290,15 @@ function nagrad_mandra(first_speaker, second_speaker)
     dialogs.relocate_item_section(second_speaker, "antirad", "in", 2)
 end
 
+function del_borov()
+    local obj = alife():story_object(story_ids.bar_Barman)
+    if obj then
+        alife():release(obj, true)
+    end
+end
+
 function del_saha()
-    local obj = alife():story_object(9625)
+    local obj = alife():story_object(story_ids.esc_saha)
     if obj then
         alife():release(obj, true)
     end

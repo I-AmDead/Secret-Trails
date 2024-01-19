@@ -145,7 +145,7 @@ local function generate_orthonormal_basis_normalized(d)
 end
 
 -- Get surface normals by Aoldri, edited by demonized
-function get_surface_normal(pos, dir, ray_props)
+function get_surface_normal(pos, dir, ray_props, initial_ray)
     local get_geometry_ray = geometry_ray({
         ray_range = ray_props and ray_props.ray_range or 1000, 
         flags = ray_props and ray_props.flags or rq_target.rqtBoth,
@@ -165,10 +165,21 @@ function get_surface_normal(pos, dir, ray_props)
     pos02 = pos02:add(pos0)
 
     -- Get positions of intersections of rays around pos0
+    local pos1
+    local res
+    if initial_ray then
+        pos1 = initial_ray.position
+        res = initial_ray
+    else
+        local ray = get_geometry_ray
+        res = ray:get(pos0, angle1)
+        pos1 = res.position
+    end
+
     local ray = get_geometry_ray
-    local res = ray:get(pos0, angle1)
-    local pos1 = res.position
     local pos2 = ray:get(pos01, angle1).position
+
+    local ray = get_geometry_ray
     local pos3 = ray:get(pos02, angle1).position
 
     if not res.success then
