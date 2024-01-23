@@ -1,4 +1,4 @@
-function case_0_1_4(shader, t_base, t_second, t_detail, ps_shader)
+function case_0_1_4(shader, t_base, t_second, t_detail)
 	shader:begin("accum_sun", "accum_sun_near")
 		:fog(false)
 		:zb(true, false)
