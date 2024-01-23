@@ -1,5 +1,5 @@
 function case_0_1_4(shader, t_base, t_second, t_detail, ps_shader)
-	shader:begin("accum_sun", ps_shader)
+	shader:begin("accum_sun", "accum_sun_near")
 		:fog(false)
 		:zb(true, false)
 		:blend(false, blend.one, blend.zero)
@@ -23,15 +23,15 @@ function case_0_1_4(shader, t_base, t_second, t_detail, ps_shader)
 end
 
 function element_0(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail, "accum_sun_near_nominmax")
+	case_0_1_4(shader, t_base, t_second, t_detail)
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail, "accum_sun_near_nominmax")
+	case_0_1_4(shader, t_base, t_second, t_detail)
 end
 
 function element_4(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail, "accum_sun_near_minmax")
+	case_0_1_4(shader, t_base, t_second, t_detail)
 end
 
 function element_2(shader, t_base, t_second, t_detail)
