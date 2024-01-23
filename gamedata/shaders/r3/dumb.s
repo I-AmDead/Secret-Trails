@@ -15,7 +15,7 @@ end
 
 function element_2(shader, t_base, t_second, t_detail)
 	local opt = shader:dx10Options()
-	local w_mask = opt:msaa_enable() and 126 or 254
+	local w_mask = opt:msaa_enable() == 1 and 126 or 254
 	shader:begin("stub_notransform_t", "dumb")
 		:fog(false)
 		:zb(false, false)
