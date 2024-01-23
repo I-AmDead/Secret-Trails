@@ -1,6 +1,6 @@
 function normal		(shader, t_base, t_second, t_detail)
 	local opt = shader:dx10Options()
-	local t_sbase = opt:msaa_enable() == 1 and "$user$generic" or "$user$albedo"
+	local t_sbase = opt:msaa_enable() and "$user$generic" or "$user$albedo"
 	shader:begin	("stub_notransform_postpr","postprocess")
 			: fog	(false)
 			: zb 	(false,false)
@@ -14,7 +14,7 @@ end
 
 function l_special      (shader, t_base, t_second, t_detail)
 	local opt = shader:dx10Options()
-	local t_sbase = opt:msaa_enable() == 1 and "$user$generic" or "$user$albedo"
+	local t_sbase = opt:msaa_enable() and "$user$generic" or "$user$albedo"
 	shader:begin	("stub_notransform_postpr","postprocess_CM")
 			: fog	(false)
 			: zb 	(false,false)
