@@ -23,10 +23,10 @@ function element_0(shader, t_base, t_second, t_detail)
 	shader:dx10sampler("smp_rtlinear")
 end
 
-function element_1(shader, t_base, t_second, t_detail)
+function elements(shader, t_base, t_second, t_detail, ps_shader)
 	local opt = shader:dx10Options()
 	local t_sdist = opt:msaa_enable() and "$user$generic1_r" or "$user$generic1"
-	shader:begin("stub_notransform_aa_AA", "combine_2_NAA")
+	shader:begin("stub_notransform_aa_AA", ps_shader)
 		:fog(false)
 		:zb(false, opt:msaa_enable())
 	shader:dx10texture("s_position", "$user$position")
@@ -39,18 +39,10 @@ function element_1(shader, t_base, t_second, t_detail)
 	shader:dx10sampler("smp_rtlinear")
 end
 
-function element_2(shader, t_base, t_second, t_detail)
-	local opt = shader:dx10Options()
-	local t_sdist = opt:msaa_enable() and "$user$generic1_r" or "$user$generic1"
-	shader:begin("stub_notransform_aa_AA", "combine_2_NAA_D")
-		:fog(false)
-		:zb(false, opt:msaa_enable())
-	shader:dx10texture("s_position", "$user$position")
-	shader:dx10texture("s_normal", "$user$normal")
-	shader:dx10texture("s_image", "$user$generic0")
-	shader:dx10texture("s_bloom", "$user$bloom1")
-	shader:dx10texture("s_distort", t_sdist)
+function element_1(shader, t_base, t_second, t_detail)
+	elements(shader, t_base, t_second, t_detail, "combine_2_naa")
+end
 
-	shader:dx10sampler("smp_nofilter")
-	shader:dx10sampler("smp_rtlinear")
+function element_2(shader, t_base, t_second, t_detail)
+	elements(shader, t_base, t_second, t_detail, "combine_2_naa_d")
 end
