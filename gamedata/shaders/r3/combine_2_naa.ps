@@ -2,6 +2,7 @@
 #include "mblur.h"
 #include "img_corrections.h"
 #include "ogsr_radiation_effect.h"
+#include "effects_flare.h"
 
 // Check Screen Space Shaders modules
 #include "check_screenspace.h"
@@ -113,6 +114,8 @@ c2_out main(v2p_aa_AA I)
 #endif
 
     img.rgb += rad_effect(img.rgb, I.Tex0);
+
+    img += generate_ghosts(I.Tex0);
 
     res.Color = float4(img, 1.0);
 

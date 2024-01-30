@@ -9,7 +9,6 @@ struct v2p
 {
     float3 lightToPos : TEXCOORD0; // light center to plane vector
     float3 vPos : TEXCOORD1; // position in camera space
-    float fDensity : TEXCOORD2; // plane density along Z axis
 };
 
 float4 m_lmap[2];
@@ -49,7 +48,7 @@ float4 main(v2p I, uint iSample : SV_SAMPLEINDEX) : SV_Target
     t_noise = t_noise * 0.5f + 0.5f;
 
     // out
-    float3 result = I.fDensity * s * att;
+    float3 result = 1.0h / 40.0h * s * att;
     result *= lightmap;
     result *= Ldynamic_color * t_noise;
 
