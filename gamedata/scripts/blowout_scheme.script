@@ -40,18 +40,18 @@ function evaluator_blowout:evaluate()
     if amk_hideouts.blowout_type() > 0 or xr_wounded.is_wounded(npc) then
         return false
     end
-    if self.prevblow == 3 and not has_alife_info("surge_process_stage_7") then
+    if self.prevblow == 3 and ogse_surge_mgr.is_surge_started and not ogse_surge_mgr.is_surge_raskolbas then
         self.prevblow = blowout
         npc.health = 1
     end
-    if not has_alife_info("blowout") then
+    if not ogse_surge_mgr.is_surge_started then
         if self.st.out_rest then
             npc:add_restrictions(self.st.out_rest, "")
             self.st.out_rest = nil
             self.st.in_rest = nil
         end
         self.st.need_run = false
-    elseif has_alife_info("surge_process_stage_7") then
+    elseif ogse_surge_mgr.is_surge_started and ogse_surge_mgr.is_surge_raskolbas then
         if (not self.hittime) or self.hittime < time_global() then
             self.hittime = time_global() + 1000
             if amk_mod.on_blowout_hit(npc) then
@@ -65,7 +65,7 @@ function evaluator_blowout:evaluate()
     if self.st.washitat and self.st.washitat > time_global() then
         return false
     end
-    if has_alife_info("surge_process_stage_3") and (not self.st.nohide) then
+    if (ogse_surge_mgr.is_surge_started or (ogse_surge_mgr.is_surge_started and ogse_surge_mgr.is_surge_raskolbas)) and (not self.st.nohide) then
         if self:is_in_any_hide() then
             return false
         end
@@ -106,7 +106,7 @@ function evaluator_monolith_blowout:evaluate()
     if amk_hideouts.blowout_type() > 0 then
         return false
     end
-    return has_alife_info("surge_process_stage_7")
+    return ogse_surge_mgr.is_surge_started and ogse_surge_mgr.is_surge_raskolbas
 end
 
 class "evaluator_preblowout"(property_evaluator)
@@ -121,7 +121,7 @@ function evaluator_preblowout:evaluate()
         return false
     end
     local npc = self.object
-    if has_alife_info("surge_process_stage_1") then
+    if has_alife_info("surge_process_stage_1") or has_alife_info("surge_process_stage_2") then
         if self:is_in_any_hide() then
             return false
         end
@@ -170,7 +170,7 @@ function evaluator_outside:evaluate()
     if amk_hideouts.blowout_type() > 0 then
         return false
     end
-    if has_alife_info("surge_process_stage_3") then
+    if ogse_surge_mgr.is_surge_started or (ogse_surge_mgr.is_surge_started and ogse_surge_mgr.is_surge_raskolbas) then
         if self.st.nohide then
             -- Если укрытие невозможно найти, то игнорируем выброс
             return false

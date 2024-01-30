@@ -422,7 +422,12 @@ end
 
 -- Определяем находится ли ГГ в определенной зоне
 function check_npc_in_box(npc, p1, p2)
-    local pos = npc:position()
+    local pos
+    if npc.name then
+        pos = npc:position()
+    else
+        pos = npc
+    end
     return is_point_inside_interval(pos.x, p1.x, p2.x) and is_point_inside_interval(pos.y, p1.y, p2.y) and
                is_point_inside_interval(pos.z, p1.z, p2.z)
 end

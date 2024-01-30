@@ -1,31 +1,10 @@
-function attach(sm)
-    sm:subscribe({ signal = "on_spawn",    fun = this.on_spawn	  })
-    --sm:subscribe({ signal = "on_key_down", fun = this.on_key_down })
-end
-
 local GUI
 
 local watch_mode = "actor_hud"
-local minimap_static, back_static, frame_static, compass_static
 watch_ui_show = ogse.load_var("watch_ui_show", true)
 
 local delay = 0
-
-function on_spawn()
-    local wnd = get_main_window()
-
-    -- log1("init_hand_minimap")
-
-    minimap_static = wnd:GetStatic("minimap")
-    back_static = wnd:GetStatic("minimap:background")
-    frame_static = wnd:GetStatic("minimap:level_frame")
-    compass_static = wnd:GetStatic("minimap:compass")
-
-    frame_static:Show(false)
-    minimap_static:Show(false)
-    compass_static:Show(false)
-    back_static:Show(false)
-end
+local health_progress
 
 function on_key_down(key, bind)
     if bind == key_bindings.kBIOMAP_SWITCH then
@@ -151,52 +130,50 @@ end
 
 class "UIWatch"(CUIScriptWnd)
 
-function UIWatch:__init()
-    super()
+function UIWatch:__init() super()
     self:Show(true)
     self:Enable(true)
     self:SetAutoDelete(true)
 
-    local xml = CScriptXmlInit()
-    self.xml = xml
+    self.xml = CScriptXmlInit()
+    self.xml:ParseFile("script_wnd\\ui_watch_exo.xml")
 
-    xml:ParseFile("script_wnd\\ui_watch_exo.xml")
-    xml:InitWindow("display", 0, self)
+    self.xml:InitWindow("display", 0, self)
 
     self.clock = {}
     self.clock.h = {}
     self.clock.m = {}
-    self.clock_colon = xml:InitStatic("display:colon", self)
+    self.clock_colon = self.xml:InitStatic("display:colon", self)
 
     self.rad = {}
     self.rad.level = {}
 
     for i = 1, 2 do
-        self.clock.h[i] = xml:InitStatic("display:clock_h_" .. i, self)
-        self.clock.m[i] = xml:InitStatic("display:clock_m_" .. i, self)
+        self.clock.h[i] = self.xml:InitStatic("display:clock_h_" .. i, self)
+        self.clock.m[i] = self.xml:InitStatic("display:clock_m_" .. i, self)
     end
 
     for i = 1, 4 do
-        self.rad.level[i] = xml:InitStatic("display:rad_level_" .. i, self)
+        self.rad.level[i] = self.xml:InitStatic("display:rad_level_" .. i, self)
     end
 
-    self.health_static = xml:InitStatic("display:static_health", self)
-    self.health_progress = xml:InitStatic("display:health_progress", self)
+    self.health_static = self.xml:InitStatic("display:static_health", self)
+    self.health_progress = self.xml:InitStatic("display:health_progress", self.health_static)
 
-    self.indik_blood = xml:InitStatic("display:indik_blood", self)
-    self.indik_hunger = xml:InitStatic("display:indik_hunger", self)
-    self.indik_radiation = xml:InitStatic("display:indik_radiation", self)
-    self.indik_psy = xml:InitStatic("display:indik_psy", self)
-    self.indik_overweight = xml:InitStatic("display:indik_overweight", self)
+    self.indik_blood = self.xml:InitStatic("display:indik_blood", self)
+    self.indik_hunger = self.xml:InitStatic("display:indik_hunger", self)
+    self.indik_radiation = self.xml:InitStatic("display:indik_radiation", self)
+    self.indik_psy = self.xml:InitStatic("display:indik_psy", self)
+    self.indik_overweight = self.xml:InitStatic("display:indik_overweight", self)
 
-    self.indicator_booster_psy = xml:InitStatic("display:indicator_booster_psy", self)
-    self.indicator_booster_rad = xml:InitStatic("display:indicator_booster_rad", self)
-    self.indicator_booster_health = xml:InitStatic("display:indicator_booster_health", self)
-    self.indicator_booster_power = xml:InitStatic("display:indicator_booster_power", self)
-    self.indicator_booster_rad_cleanup = xml:InitStatic("display:indicator_booster_rad_cleanup", self)
-    self.indicator_booster_psy_cleanup = xml:InitStatic("display:indicator_booster_psy_cleanup", self)
-    self.indicator_booster_wound = xml:InitStatic("display:indicator_booster_wound", self)
-    self.indicator_booster_weight = xml:InitStatic("display:indicator_booster_weight", self)
+    self.indicator_booster_psy = self.xml:InitStatic("display:indicator_booster_psy", self)
+    self.indicator_booster_rad = self.xml:InitStatic("display:indicator_booster_rad", self)
+    self.indicator_booster_health = self.xml:InitStatic("display:indicator_booster_health", self)
+    self.indicator_booster_power = self.xml:InitStatic("display:indicator_booster_power", self)
+    self.indicator_booster_rad_cleanup = self.xml:InitStatic("display:indicator_booster_rad_cleanup", self)
+    self.indicator_booster_psy_cleanup = self.xml:InitStatic("display:indicator_booster_psy_cleanup", self)
+    self.indicator_booster_wound = self.xml:InitStatic("display:indicator_booster_wound", self)
+    self.indicator_booster_weight = self.xml:InitStatic("display:indicator_booster_weight", self)
 end
 
 function UIWatch:__finalize()
@@ -237,7 +214,7 @@ function UIWatch:UpdateClock()
     for k, v in pairs(time) do
         local i = 1
         v:gsub(".", function(c)
-            self.clock[k][i]:InitTextureEx("watch_exo_" .. c .. "_big", "hud\\p3d")
+            self.clock[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
             i = i + 1
         end)
     end
@@ -254,7 +231,7 @@ function UIWatch:UpdateRad()
     for k, v in pairs(rad) do
         local i = 1
         v:gsub(".", function(c)
-            self.rad[k][i]:InitTextureEx("watch_exo_" .. c, "hud\\p3d")
+            self.rad[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
             i = i + 1
         end)
     end
@@ -265,9 +242,9 @@ function UIWatch:UpdateHealth()
 
     local cond = db.actor.health
     if has_alife_info("pre_blowout") then
-        self.health_progress:SetWndRect(-0.0005, 0.0221, 0.0330 * math.random(10, 100) * 0.01, 0.0036)
+        self.health_progress:SetWndRect(-3, 221, (330 * cond) + math.random(-500, 500) * 0.01, 36)
     else
-        self.health_progress:SetWndRect(-0.0005, 0.0221, 0.0330 * cond, 0.0036)
+        self.health_progress:SetWndRect(-3, 221, 330 * cond, 36)
     end
 end
 
@@ -276,7 +253,6 @@ function UIWatch:ShowClock(vis)
         self.clock.h[i]:Show(vis)
         self.clock.m[i]:Show(vis)
     end
-
     self.clock_colon:Show(vis)
 end
 
