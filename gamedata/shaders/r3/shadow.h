@@ -14,8 +14,6 @@ Texture2D<float> s_smap_minmax; // 2D/cube shadowmap
 SamplerComparisonState smp_smap; //	Special comare sampler
 sampler smp_jitter;
 
-uniform float4 ssfx_shadow_bias;
-
 Texture2D jitter0;
 Texture2D jitter1;
 Texture2D jitterMipped;
@@ -172,16 +170,14 @@ float shadow_pcss(float4 tc)
 
 #else // No blocker search ( Penumbra ), just filter
 
-    float fRatio = 4.0f / float(SMAP_size);
+    float fRatio = max(PCSS_PIXEL_MIN, 0.5f * float(PCSS_PIXEL)) / float(SMAP_size);
 
     float s = 0.0;
     [unroll] for (uint i = 0; i < PCSS_NUM_SAMPLES; ++i)
     {
         float2 offset = poissonDisk[i] * fRatio;
-        float test = s_smap.SampleCmpLevelZero(smp_smap, tc.xy + offset, tc.z).x;
-        s += test;
+        s += s_smap.SampleCmpLevelZero(smp_smap, tc.xy + offset, tc.z).x;
     }
-
     return s / PCSS_NUM_SAMPLES;
 
 #endif
@@ -266,12 +262,22 @@ float shadow_rain(float4 tc, float2 tcJ) // jittered sampling
 
 //////////////////////////////////////////////////////////////////////////////////////////
 uniform float3x4 m_sunmask; // ortho-projection
-
 #ifdef USE_SUNMASK
+float4 sun_shafts_intensity;
+
 float sunmask(float4 P)
 {
-    float2 tc = mul(m_sunmask, P); //
-    return s_lmap.SampleLevel(smp_linear, tc, 0).w; // Hemi map - ambient occlusion
+    float2 tc = mul(m_sunmask, P);
+    float sunmask = s_lmap.SampleLevel(smp_linear, tc, 0).w;
+    float sunmask_correction;
+
+    const float intensity = 0.6, ss_bebuff = 10;
+
+    sunmask = sunmask * intensity + (1.0 - intensity);
+    sunmask_correction = saturate(sun_shafts_intensity.x * ss_bebuff);
+
+    sunmask = lerp(sunmask, 1.0h, sunmask_correction);
+    return sunmask;
 }
 #else
 float sunmask(float4 P) { return 1.0; } //

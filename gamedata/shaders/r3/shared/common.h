@@ -6,8 +6,8 @@
 #define SHARED_COMMON_H
 
 //	Used by VS
-cbuffer dynamic_transforms
-{
+//cbuffer dynamic_transforms
+//{
     uniform float4x4 m_WVP; //	World View Projection composition
     uniform float3x4 m_WV;
     uniform float3x4 m_W;
@@ -17,12 +17,14 @@ cbuffer dynamic_transforms
     uniform float4 hemi_cube_pos_faces;
     uniform float4 hemi_cube_neg_faces;
     uniform float4 dt_params; //	Detail params
-}
+//}
 
-cbuffer shader_params { float m_AlphaRef; }
+//cbuffer shader_params { 
+    uniform float m_AlphaRef;
+// }
 
-cbuffer static_globals
-{
+//cbuffer static_globals
+//{
     uniform float3x4 m_V;
     uniform float3x4 m_inv_V;
     uniform float4x4 m_P;
@@ -47,9 +49,10 @@ cbuffer static_globals
     uniform float4 parallax;
     uniform float4 rain_params; // x = raindensity, y = wetness
     uniform float4 screen_res; // Screen resolution (x-Width,y-Height, zw - 1/resolution)
+
     uniform float4 pp_img_corrections;
     uniform float4 pp_img_cg;
-}
+//}
 
 float calc_cyclic(float x)
 {

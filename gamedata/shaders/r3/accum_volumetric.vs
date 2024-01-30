@@ -1,11 +1,8 @@
 #include "common.h"
 
-cbuffer VolumetricLights
-{
-    float3 vMinBounds;
-    float3 vMaxBounds;
-    float4 FrustumClipPlane[6];
-}
+
+float3 vMinBounds;
+float3 vMaxBounds;
 
 struct v2p
 {
