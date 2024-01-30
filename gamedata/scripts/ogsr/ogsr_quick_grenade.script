@@ -1,0 +1,36 @@
+function attach(sm)
+    sm:subscribe({ signal = "on_key_down", fun = this.quickthrow })
+end
+
+function quickthrow(key, bind)
+    if key == bind_to_dik(key_bindings.kQUICK_THROW) then
+        if not db.actor:item_in_slot(3)
+        or level.main_input_receiver()
+        or level.only_movekeys_allowed()
+        or not game.hud_motion_allowed()
+        or not db.actor:alive() then
+            return
+        end
+        local prev_active_slot = db.actor:active_slot()
+        if db.actor:active_slot() ~= 3 then
+            game.set_next_hud_motion_speed(2, true)
+            db.actor:activate_slot(3)
+        end
+        dsh.wait_condition(function() return db.actor:active_slot() == 3 and db.actor:active_item():get_hud_item_state() == 0 end, 
+        function()
+            game.set_next_hud_motion_speed()
+	        level.only_allow_movekeys(true)
+	        level.set_actor_allow_ladder(false)
+	        get_actor_obj():press_action(key_bindings.kWPN_FIRE)
+            dsh.wait_condition(function() return not db.actor:active_item() or (db.actor:active_item() and db.actor:active_item():is_hud_item() and db.actor:active_item():get_hud_item_state() == 4) end,
+	        function()
+                level.only_allow_movekeys(false)
+                level.set_actor_allow_ladder(true)
+                if prev_active_slot == 3 or prev_active_slot == 255 then return end
+                game.set_next_hud_motion_speed(2, true)
+                db.actor:activate_slot(prev_active_slot)
+                game.set_next_hud_motion_speed()
+            end)
+        end)
+    end
+end
