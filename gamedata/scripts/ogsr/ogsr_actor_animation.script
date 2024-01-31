@@ -65,7 +65,7 @@ function on_key_down(key, bind)
         swipe_mask()
     elseif torch and bind == key_bindings.kHEADLAMP then
         torch_and_nvg_switch(false)
-    elseif pnv and bind == key_bindings.kNIGHT_VISION then
+    elseif pnv and bind == key_bindings.kNIGHT_VISION and not ogsr_night_vision.nvg_distortion_timer then
         torch_and_nvg_switch(true)
     elseif bind == key_bindings.kWATCH then
         key_release = false
@@ -138,7 +138,8 @@ function torch_and_nvg_switch(nvg)
     game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_switch", false, 1.4)
     snd_torch:play(db.actor, 0, sound_object.s2d)
     level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
-    dsh.timeout(torch_anm_time_1 - 800, function()
+    timer_sub = nvg and 900 or 800
+    dsh.timeout(torch_anm_time_1 - timer_sub, function()
         if nvg then
             ogsr_night_vision.call_pnv()
         else

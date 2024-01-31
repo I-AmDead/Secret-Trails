@@ -31,6 +31,32 @@ local snd_nv_work_subvolume = 0.3 -- громкость звука работа�
 local snd_nv_stop_subvolume = 1 -- громкость звука выключения ПНВ
 -- ====================================================================================================================================
 
+nvg_distortion_timer = nil
+local function start_nvg_distortion(min, max, off)
+    if nvg_distortion_timer then
+        nvg_distortion_timer:stop()
+        nvg_distortion_timer = nil
+    end
+
+    nvg_distortion_timer = dsh.wait_condition(function()
+        if off then
+        	min = min - 5
+	else
+        	min = min + 5
+	end
+        cmd("r_pnv_radius", min / 100)
+        cmd("r_pnv_position", min * 2)
+        return min == max
+    end, function()
+	if off then
+            cmd("r_pnv_mode", 0)
+	end
+        nvg_distortion_timer = nil
+    end, function()
+        ogsr_signals.get_mgr():reschedule(10)
+    end)
+end
+
 function is_nv_working() -- Проверка, включен ли ПНВ.
     return night_vision_fx_on
 end
@@ -78,7 +104,8 @@ function chek_drop_pnv(obj) -- Проверка выкладывания раб�
     local pnv_slot = db.actor:item_in_slot(11) -- предмет в слоте ПНВ
 
     if not pnv_slot and night_vision_fx_on then -- если выбросили/переместили в рюкзак действительно ПНВ, то отключаем пнв:
-        turn_off_nv_fx()
+        ogsr_actor_animation.torch_and_nvg_switch(true)
+        --turn_off_nv_fx()
     end
 end
 
@@ -113,7 +140,6 @@ function turn_on_nv_fx(nightvision_section) -- Старт ПНВ
         cmd("r_pnv_noise", get_float(nightvision_section, "r_pnv_noise"))
         cmd("r_pnv_scanlines", get_float(nightvision_section, "r_pnv_scanlines"))
         cmd("r_pnv_scintillation", get_float(nightvision_section, "r_pnv_scintillation"))
-        cmd("r_pnv_radius", get_float(nightvision_section, "r_pnv_radius"))
         cmd("r_pnv_num_tubes", get_float(nightvision_section, "r_pnv_num_tubes"))
         cmd("r_pnv_gain_current", get_float(nightvision_section, "r_pnv_gain_current"))
         cmd("r_pnv_gain_offset", get_float(nightvision_section, "r_pnv_gain_offset"))
@@ -122,6 +148,7 @@ function turn_on_nv_fx(nightvision_section) -- Старт ПНВ
         cmd("r_pnv_washout_thresh", get_float(nightvision_section, "r_pnv_washout_thresh"))
         cmd("r_pnv_glitch", get_float(nightvision_section, "r_pnv_glitch"))
         cmd("r_pnv_mode", r_pnv_mode)
+        start_nvg_distortion(0.0, get_float(nightvision_section, "r_pnv_radius") * 100, false)
     end
 
     night_vision_fx_on = true
@@ -132,7 +159,12 @@ function turn_off_nv_fx() -- Остановка ПНВ
     if not night_vision_fx_on then
         return
     end
-    cmd("r_pnv_mode", 0)
+    local nightvision_section = get_nightvision_section_for_nv_fx()
+    local nightvision_radius = 0.5
+    if nightvision_section then
+        nightvision_radius = get_float(nightvision_section, "r_pnv_radius")
+    end
+    start_nvg_distortion(nightvision_radius * 100, 0.0, true)
     night_vision_fx_on = false
     snd_fx_stop() -- звук выключения.
 end
