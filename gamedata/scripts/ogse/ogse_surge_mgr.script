@@ -279,7 +279,7 @@ function surge_db_init()
         },
         on_reinit = {
             call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
+                pda_off()
             end,
             if_surface = {
                 call2 = function()
@@ -315,7 +315,7 @@ function surge_db_init()
         },
         on_reinit = {
             call1 = function()
-                set_pda_params(vector():set(0.5, 0.2, 0.0))
+                pda_off()
             end,
             if_surface = {
                 call2 = function()
@@ -364,7 +364,7 @@ function surge_db_init()
             }
         },
         on_reinit = {
-            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
+            call1 = function() pda_off() end,
             if_surface = {
                 call1 = function()
                     is_surge_started = true
@@ -409,7 +409,7 @@ function surge_db_init()
             }
         },
         on_reinit = {
-            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
+            call1 = function() pda_off() end,
             if_surface = {
                 call2 = function()
                     is_surge_started = true
@@ -454,7 +454,7 @@ function surge_db_init()
             }
         },
         on_reinit = {
-            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
+            call1 = function() pda_off() end,
             if_surface = {
                 call2 = function()
                     is_surge_started = true
@@ -497,7 +497,7 @@ function surge_db_init()
             }
         },
         on_reinit = {
-            call1 = function() set_pda_params(vector():set(0.5, 0.2, 0.0)) end,
+            call1 = function() pda_off() end,
             if_surface = {
                 call1 = function()
                     is_surge_started = true
@@ -557,8 +557,6 @@ function on_surge_end()
     db.actor:disable_info_portion("pre_blowout2")
     db.actor:give_info_portion("net_signal") -- связь восстановлена
     set_pda_params(vector():set(0.1, 0.0, 1))
-    ui_watch.ui_show(true)
-    ui_watch_exo.ui_show(true)
     anim_playing = false
     ogsr_signals.get_mgr():call("on_after_blowout")
 end
@@ -726,6 +724,8 @@ end
 -- выполняем реинициализацию фазы выброса при перезагрузке
 function on_first_update() -- выполняем восстановление временных эффектов, флагов и т.п.
     set_pda_params(vector():set(0, 0, 0))
+    ui_watch.ui_show(true)
+    ui_watch_exo.ui_show(true)
     if db.actor:has_info("pre_blowout") then
         -- ищем текущую стадию выброса
         for stage_infoportion, stage_actions in pairs(surge_db) do

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "screenspace_hud_raindrops.h"
+#include "models_watch_effects.h"
 
 uniform float4 m_affects;
 uniform Texture2D s_vp2;
@@ -16,6 +17,11 @@ float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233)
 
 float4 problems_main(v2p I)
 {
+    // Растягиваем картинку под неправильные пропорции модели ганса
+    I.tc0.x = resize(I.tc0.x, screen_res.y / screen_res.x, 0.5);
+    I.tc0.x = resize(I.tc0.x, screen_res.x / screen_res.y, 0.5);
+    //I.tc0.x = resize(I.tc0.x, 1.25, 0.0); // Тут отмасштабировал под наш ui
+
     // узкая полоска искажений
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
     I.tc0.x += (m_affects.x > 0.09 && I.tc0.y > problems - 0.01 && I.tc0.y < problems) ? sin((I.tc0.y - problems) * 5 * m_affects.y) : 0;
@@ -38,8 +44,13 @@ float4 problems_main(v2p I)
     t_vp2.g += noise;
     t_vp2.b += noise;
 
+    t_vp2.rgb += pda_loading(I.tc0);
+
     //отключение экрана
     t_vp2.rgb = (m_affects.x > 0.41) ? 0 : t_vp2.rgb;
+
+    if (m_affects.a > 0 && m_affects.x >= 0.08)
+        t_vp2.rgb += pda_loading(I.tc0);
 
     return float4(t_vp2.r, t_vp2.g, t_vp2.b, m_affects.z);
 }
