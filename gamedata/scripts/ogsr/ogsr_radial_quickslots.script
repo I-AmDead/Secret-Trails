@@ -111,9 +111,12 @@ end
 
 function activate_slot(slot_id)
     local active_slot = db.actor:active_slot()
-
     if (not active_slot) or (active_slot ~= slot_id) then
-        db.actor:activate_slot(slot_id)
+        if slot_id == 7 then
+            get_actor_obj():press_action(key_bindings.kACTIVE_JOBS)
+        else
+            db.actor:activate_slot(slot_id)
+        end
         GUI = nil
     end
 end

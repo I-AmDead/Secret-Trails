@@ -1,6 +1,6 @@
-
 -- Movement manager
 -- Created by: Andrey Fidrya (Zmey), af@svitonline.com
+
 local dist_walk = 10 -- < dist_run
 local dist_run = 2500
 
@@ -127,8 +127,7 @@ function move_mgr:extrapolate_callback(npc)
     -- https://github.com/dsh2dsh/op2ogse/commit/aa47bc6f07ada7c477fe191b81f99d500f72d406
     -- https://github.com/dsh2dsh/op2ogse/commit/e78862f4ba544e6b2b28bf660236d7e89a7e4e2f
     self.object:set_start_point(self.current_point_index)
-    self.object:set_patrol_path(self.path_walk, (extrapolate_hack_type[self.path_walk] or patrol.next), patrol.continue,
-        true)
+    self.object:set_patrol_path(self.path_walk, (extrapolate_hack_type[self.path_walk] or patrol.next), patrol.continue, true)
     -- log3("~~[move_mgr:extrapolate_callback] patrol path for [%s] is [%s]", self.object:name(), self.path_walk)
 end
 
@@ -152,8 +151,7 @@ end
 -- ' Из move_cb вернуть true, чтобы приостановить работу схемы. Чтобы продолжить движение,
 -- ' нужно вызвать метод set_movement_state, который включит перемещение по вейпоинтам с нужной
 -- ' скоростью.
-function move_mgr:reset(path_walk, path_walk_info, path_look, path_look_info, team, suggested_state, move_cb_info,
-    no_validation, continue, use_default_sound)
+function move_mgr:reset(path_walk, path_walk_info, path_look, path_look_info, team, suggested_state, move_cb_info, no_validation, continue, use_default_sound)
 
     -- ' сколько ждать в точке, где играем анимацию 
     self.pt_wait_time = default_wait_time
@@ -168,14 +166,10 @@ function move_mgr:reset(path_walk, path_walk_info, path_look, path_look_info, te
         self.default_state_moving2 = default_state_moving2
         self.default_state_moving3 = default_state_moving3
     else
-        self.default_state_standing = if_then_else(suggested_state.standing, suggested_state.standing,
-            default_state_standing)
-        self.default_state_moving1 = if_then_else(suggested_state.moving1, suggested_state.moving1,
-            default_state_moving1)
-        self.default_state_moving2 = if_then_else(suggested_state.moving2, suggested_state.moving2,
-            default_state_moving2)
-        self.default_state_moving3 = if_then_else(suggested_state.moving3, suggested_state.moving3,
-            default_state_moving3)
+        self.default_state_standing = if_then_else(suggested_state.standing, suggested_state.standing, default_state_standing)
+        self.default_state_moving1 = if_then_else(suggested_state.moving1, suggested_state.moving1, default_state_moving1)
+        self.default_state_moving2 = if_then_else(suggested_state.moving2, suggested_state.moving2, default_state_moving2)
+        self.default_state_moving3 = if_then_else(suggested_state.moving3, suggested_state.moving3, default_state_moving3)
     end
 
     -- ' С момента включения схемы должна пройти как минимум секунда, прежде чем
@@ -279,22 +273,19 @@ local function validate_accessibility(npc, ppname)
             for _, anom in ipairs(nearest_anoms) do
                 local sobj = alife():object(anom.id)
                 if not ogse_anomaly.is_not_anomaly(sobj) and not ogse_anomaly.is_exclusion_anomaly(sobj) --[=[and not string.find(sobj:section_name(), "handmade_")--]=] then -- Всё таки аномалии, поставленные руками, тоже надо удалять, иначе получим вылет из за недоступности вертекса.
-                    log3("~~[%s]: removing anomaly [%s] on point [%s] for [%s]", script_name(), sobj:name(), ppname,
-                        npc:name())
+                    log3("~~[%s]: removing anomaly [%s] on point [%s] for [%s]", script_name(), sobj:name(), ppname, npc:name())
                     ogse_anomaly.set_anomaly_mode(anom.id, "anom_off")
                     alife():release(sobj)
                 end
             end
             ----------------------------------------
             if not npc:accessible(pp:level_vertex_id(i)) then
-                log3("!![%s] verifying point [%s] on path [%s] VTX [%s] for [%s] not accessible!", script_name(), i,
-                    ppname, pp:level_vertex_id(i), npc:name())
+                log3("!![%s] verifying point [%s] on path [%s] VTX [%s] for [%s] not accessible!", script_name(), i, ppname, pp:level_vertex_id(i), npc:name())
                 return false
             end
 
             if pp:level_vertex_id(i) > level.vertex_count() then
-                log3("!![%s]: wrong point [%s] on path [%s]: level_vertex_id = %s", script_name(), i, ppname,
-                    pp:level_vertex_id(i))
+                log3("!![%s]: wrong point [%s] on path [%s]: level_vertex_id = %s", script_name(), i, ppname, pp:level_vertex_id(i))
                 return false
             end
         end
@@ -469,8 +460,7 @@ function move_mgr:time_callback()
         self:update_movement_state() -- идти дальше
         local syn = self.path_look_info[self.last_look_index]["syn"]
         if syn then
-            abort("object '%s': path_walk '%s': syn flag used on non-terminal waypoint", self.object:name(),
-                self.path_walk)
+            abort("object '%s': path_walk '%s': syn flag used on non-terminal waypoint", self.object:name(), self.path_walk)
         end
     end
 end
@@ -632,9 +622,7 @@ function move_mgr:waypoint_callback(obj, action_type, index)
             else
                 local tm = tonumber(suggested_wait_time)
                 if tm ~= 0 and (tm < 1000 or tm > 30000) then
-                    abort(
-                        "object '%s': path_look '%s': flag 't': incorrect time specified (* or number in interval [1000, 30000] is expected)",
-                        self.object:name(), self.path_look)
+                    abort("object '%s': path_look '%s': flag 't': incorrect time specified (* or number in interval [1000, 30000] is expected)", self.object:name(), self.path_look)
                 end
                 self.pt_wait_time = tm
             end
