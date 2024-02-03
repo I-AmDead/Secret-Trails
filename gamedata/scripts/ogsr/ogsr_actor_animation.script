@@ -328,6 +328,15 @@ function watch_wide()
         local watch_anm_time
         local function play_anim()
             local time_g = time_global()
+            if not db.actor:alive() then
+                anim_plays = false
+                if anm_subscribed then
+                    ogsr_signals.get_mgr():unsubscribe(anm_subscribed)
+                    anm_subscribed = nil
+                end
+                animation_off()
+                return
+            end		
             if mc_anm_state == 1 then
                 anm_start = time_g
                 watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
