@@ -31,30 +31,28 @@ local snd_nv_work_subvolume = 0.3 -- громкость звука работа�
 local snd_nv_stop_subvolume = 1 -- громкость звука выключения ПНВ
 -- ====================================================================================================================================
 
-nvg_distortion_timer = nil
-local function start_nvg_distortion(min, max, off)
-    if nvg_distortion_timer then
-        nvg_distortion_timer:stop()
-        nvg_distortion_timer = nil
-    end
-
-    nvg_distortion_timer = dsh.wait_condition(function()
-        if off then
-        	min = min - 5
-	else
-        	min = min + 5
-	end
-        cmd("r_pnv_radius", min / 100)
-        cmd("r_pnv_position", min * 2)
-        return min == max
-    end, function()
-	if off then
-            cmd("r_pnv_mode", 0)
-	end
-        nvg_distortion_timer = nil
-    end, function()
-        ogsr_signals.get_mgr():reschedule(10)
-    end)
+local function lcalls(count, radius, sub)
+    local lcall
+    local add = 0
+    local cnt = count
+    nvg_distortion_timer = true
+    lcall = level.add_call(
+        function()
+            log3("condition")
+            cnt = cnt - 5
+            add = sub and cnt or add + 5
+            cmd("r_pnv_radius", radius * (add / count))
+            cmd("r_pnv_position", add)
+            lcall:set_pause(1)
+            return cnt == 0
+        end,
+        function()
+	    if sub then
+                cmd("r_pnv_mode", 0)
+	    end
+	    nvg_distortion_timer = nil
+        end
+    )
 end
 
 function is_nv_working() -- Проверка, включен ли ПНВ.
@@ -81,6 +79,7 @@ function on_info(npc, info_id) -- Выключение ПНВ в выброс
 end
 
 function try_to_restart_nv_fx() -- Попытаемся восстановить работу ПНВ после загрузки сейва
+    cmd("r_pnv_mode", 0)
     --------------------Выключение ПНВ в выброс-------------------------
     if db.actor:has_info("no_net_signal") then
         night_vision_surge_block = true
@@ -148,7 +147,7 @@ function turn_on_nv_fx(nightvision_section) -- Старт ПНВ
         cmd("r_pnv_washout_thresh", get_float(nightvision_section, "r_pnv_washout_thresh"))
         cmd("r_pnv_glitch", get_float(nightvision_section, "r_pnv_glitch"))
         cmd("r_pnv_mode", r_pnv_mode)
-        start_nvg_distortion(0.0, get_float(nightvision_section, "r_pnv_radius") * 100, false)
+        lcalls(100, get_float(nightvision_section, "r_pnv_radius"), false)
     end
 
     night_vision_fx_on = true
@@ -164,7 +163,7 @@ function turn_off_nv_fx() -- Остановка ПНВ
     if nightvision_section then
         nightvision_radius = get_float(nightvision_section, "r_pnv_radius")
     end
-    start_nvg_distortion(nightvision_radius * 100, 0.0, true)
+    lcalls(100, nightvision_radius, true)
     night_vision_fx_on = false
     snd_fx_stop() -- звук выключения.
 end
