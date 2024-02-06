@@ -94,7 +94,6 @@ float Saw(float b, float t) { return smoothstep(0., b, t) * smoothstep(1., b, t)
 
 float2 DropLayer2(float2 uv, float t)
 {
-    uv.y = 1. - uv.y; // KRodin: переворачиваем картинку, а то капли рендерятся вверх ногами (особенность OpenGL ?)
     float2 UV = uv;
 
     uv.y += t * .75;
@@ -157,6 +156,8 @@ float StaticDrops(float2 uv, float t)
 
 float2 Drops(float2 uv, float t, float l0, float l1, float l2)
 {
+    uv.y = 1. - uv.y; // KRodin: переворачиваем картинку, а то капли рендерятся вверх ногами (особенность OpenGL ?)
+    uv *= 1.5;
     float s = StaticDrops(lerp(uv, l_jh2(uv, GM_DROPS_TURBSHIFT, GM_DROPS_TURBTIME), GM_DROPS_TURBCOF), t) * l0;
     float2 m1 = DropLayer2(lerp(uv, l_jh2(uv, GM_DROPS_TURBSHIFT, GM_DROPS_TURBTIME), GM_DROPS_TURBCOF), t) * l1;
     float2 m2 = DropLayer2(lerp(uv, l_jh2(uv, GM_DROPS_TURBSHIFT, GM_DROPS_TURBTIME), GM_DROPS_TURBCOF) * 1.75, t) * l2;

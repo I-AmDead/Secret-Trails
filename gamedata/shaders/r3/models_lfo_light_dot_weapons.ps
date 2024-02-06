@@ -16,9 +16,7 @@ float resize(float input, float factor, float offset) { return (input - 0.5f + o
 // https://stackoverflow.com/a/10625698
 float random(float2 p)
 {
-    float2 K1 = float2(23.14069263277926f, // e^pi (Gelfond's constant)
-                       2.665144142690225f // 2^sqrt(2) (Gelfondâ€“Schneider constant)
-    );
+    float2 K1 = float2(23.14069263277926f, 2.665144142690225f);
     return frac(cos(dot(p, K1)) * 12345.6789f);
 }
 
@@ -30,22 +28,31 @@ float4 main(v2p I) : SV_Target
     factor = factor * (1.0 / (m_hud_params.z / 0.45)) * 0.75;
     float size = 512.0 * factor;
 
-    I.pos2d.x = I.pos2d.x - (screen_res.x - size) / 2.0;
-    I.pos2d.y = I.pos2d.y - (screen_res.y - size) / 2.0;
+    // Устанавливаем метку по центру экрана
+    I.pos2d.xy = I.pos2d.xy - (screen_res.xy - size) / 2.0;
+
+    // Поворачиваем метку под текущий наклон
+    I.pos2d.xy /= size;
+    float angle = m_hud_params.w;
+    float2x2 rot = float2x2(cos(angle), sin(angle), -sin(angle), cos(angle));
+    I.pos2d.xy = mul(I.pos2d.xy  - 0.5, rot) + 0.5;
+    I.pos2d.xy *= size;
+
+    // Масштабируем
     I.pos2d.x = resize(I.pos2d.x, factor, 0);
     I.pos2d.y = resize(I.pos2d.y, factor, 0);
 
-    // Коллиматоры глючат при выбросе
-    float mig = 1.0f - (m_affects.x * 2.f);
-
     float4 final = s_base.Load(I.pos2d.xyz) * m_hud_params.x;
 
+    // Noise
     final.rgb = final.rgb * 0.8;
-
     float noise = get_noise(I.tc0 * timers.z) * 0.25 * 0.25 * 25;
     final.r += noise;
     final.g += noise;
     final.b += noise;
+
+    // Коллиматоры глючат при выбросе
+    float mig = 1.0f - (m_affects.x * 2.f);
 
     return float4(final.r, final.g, final.b, random(timers.xz) > mig ? 0.f : final.a);
 }
