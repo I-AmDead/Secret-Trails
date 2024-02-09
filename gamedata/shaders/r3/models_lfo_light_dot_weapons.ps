@@ -1,17 +1,40 @@
+/*
+	=====================================================================
+	Addon      : Parallax Reflex Sights
+	Link       : https://www.moddb.com/mods/stalker-anomaly/addons/parallax-reflex-sights
+	Authors    : LVutner, party_50
+	Date       : 06.02.2024
+	Last Edit  : 06.02.2024
+	=====================================================================
+*/
+
 #include "common.h"
 
-uniform float4 m_hud_params;
+// Important:
+// In perfect world OFFSET constants should be 0, but most of reflex sight lenses
+// are not actually parallel to screen, so we compensate it. For PROJECT_DISTANCE=100
+// offset values should be at least 0.005 even for perfect models and position configs due
+// to normal vectors resolution.
+//
+// If you want the most realistic look, set PROJECT_DISTANCE to some high value (like 100.0),
+// increase SIZE_FACTOR to something like 20.0, set OFFSET_X and OFFSET_Y to 0.005.
+// Then you will have to adjust models so that mark texture point is exactly in center
+// and edit aim position in configs.
+
+#define OFFSET_X 0.01			// (default 0.004) Normal vector x coordinate max absolute value which is considered 0
+#define OFFSET_Y 0.01			// (default 0.05) Normal vector y coordinate max absolute value which is considered 0
+#define PROJECT_DISTANCE 1000.0	// (default 20.0) Distance to projected mark
+#define SIZE_FACTOR 100.0			// (default 4.0) Mark size factor
+
 uniform float4 m_affects;
 
-struct v2p
+// Vertex to Pixel struct
+struct vf
 {
-    float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
-    float4 c0 : COLOR0; // sun.(fog*fog)
-    float4 pos2d : SV_Position;
+    float2 tc0 : TEXCOORD0;
+    float3 v_pos : TEXCOORD1;
+    float3 v_nrm : TEXCOORD2;
 };
-
-float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
 
 // https://stackoverflow.com/a/10625698
 float random(float2 p)
@@ -20,39 +43,85 @@ float random(float2 p)
     return frac(cos(dot(p, K1)) * 12345.6789f);
 }
 
+float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
+
 float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
 
-float4 main(v2p I) : SV_Target
+// This gives us cotangent basis that can be used instead of TBN.
+// It is useful when tangents of your mesh are broken, or not available.
+// Source: http://www.thetenthplanet.de/archives/1180
+float3x3 cotangent_frame(float3 N, float3 P, float2 uv)
 {
-    float factor = screen_res.y / 1480.0;
-    factor = factor * (1.0 / (m_hud_params.z / 0.45)) * 0.75;
-    float size = 512.0 * factor;
+    // Get edge vectors of the pixel triangle
+    float3 dp1 = ddx(P);
+    float3 dp2 = ddy(P);
+    float2 duv1 = ddx(uv);
+    float2 duv2 = ddy(uv);
 
-    // Устанавливаем метку по центру экрана
-    I.pos2d.xy = I.pos2d.xy - (screen_res.xy - size) / 2.0;
+    // Solve the linear system
+    float3 dp2perp = cross(dp2, N);
+    float3 dp1perp = cross(N, dp1);
+    float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
 
-    // Поворачиваем метку под текущий наклон
-    I.pos2d.xy /= size;
-    float angle = m_hud_params.w;
-    float2x2 rot = float2x2(cos(angle), sin(angle), -sin(angle), cos(angle));
-    I.pos2d.xy = mul(I.pos2d.xy  - 0.5, rot) + 0.5;
-    I.pos2d.xy *= size;
+    // Construct a scale-invariant frame
+    float invmax = rsqrt(max(dot(T, T), dot(B, B)));
+    return float3x3(T * invmax, B * invmax, N);
+}
 
-    // Масштабируем
-    I.pos2d.x = resize(I.pos2d.x, factor, 0);
-    I.pos2d.y = resize(I.pos2d.y, factor, 0);
+// If N.xy vector is close to zero, make it zero
+float3 offset_normal(float3 N)
+{
+	if (N.x > 0)
+		N.x = max(N.x, OFFSET_X) - OFFSET_X;
+	else
+		N.x = min(N.x, -OFFSET_X) + OFFSET_X;
+	
+	if (N.y > 0)
+		N.y = max(N.y, OFFSET_Y) - OFFSET_Y;
+	else
+		N.y = min(N.y, -OFFSET_Y) + OFFSET_Y;
+		
+	return N;
+}
 
-    float4 final = s_base.Load(I.pos2d.xyz) * m_hud_params.x;
+float4 main(vf I): SV_Target
+{
+    // Derive view direction from view space position
+    float3 V = -I.v_pos;
+    
+    // Build cotangent frame
+    // Important: In theory, you don't need to do this. It should be possible to pass TBN straight from VS
+    float3x3 TBN = cotangent_frame(offset_normal(I.v_nrm), I.v_pos, I.tc0.xy);
+    
+    // Transform view direction to tangent space, and normalize (Just in case)
+    float3 V_tangent = normalize(float3(dot(V, TBN[0]), dot(V, TBN[1]), dot(V, TBN[2])));
+	
+    // Calculate texture coordinates used to fetch the mark texture
+    // Important: PROJECT_DISTANCE can be positive or negative, 0 = no projection at all
+    float2 parallax_tc = I.tc0 - V_tangent.xy * PROJECT_DISTANCE;
+
+	// Upscaling the texture
+	parallax_tc.x = (parallax_tc.x + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
+	parallax_tc.y = (parallax_tc.y + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
+
+    parallax_tc.x = resize(parallax_tc.x, screen_res.x / screen_res.y, 0);
+    parallax_tc.x = resize(parallax_tc.x, 0.7, 0);
+
+    // Fetch the mark texture
+    // Important: We do not want texture to repeat itself, so we use sampler with CLAMP address
+    // Important2: We do not want to sample mip levels of the mark texture, let's keep this thing sharp as fuck
+    float4 mark_texture = s_base.SampleLevel(smp_rtlinear, parallax_tc, 0.0);
 
     // Noise
-    final.rgb = final.rgb * 0.8;
-    float noise = get_noise(I.tc0 * timers.z) * 0.25 * 0.25 * 25;
-    final.r += noise;
-    final.g += noise;
-    final.b += noise;
+    mark_texture.rgb = mark_texture.rgb * 0.9;
+    float noise = get_noise(I.tc0 * timers.z) * 1.2;
+    mark_texture.r += noise;
+    mark_texture.g += noise;
+    mark_texture.b += noise;
 
     // Коллиматоры глючат при выбросе
     float mig = 1.0f - (m_affects.x * 2.f);
 
-    return float4(final.r, final.g, final.b, random(timers.xz) > mig ? 0.f : final.a);
+    return float4(mark_texture.rgb, random(timers.xz) > mig ? 0.f : mark_texture.a);
 }

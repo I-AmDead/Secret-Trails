@@ -1,10 +1,12 @@
 #include "common.h"
 #include "skin.h"
 
+// Vertex to Pixel struct
 struct vf
 {
-    float2 tc0 : TEXCOORD0; // base
-    float4 c0 : COLOR0; // color
+    float2 tc0 : TEXCOORD0;
+    float3 v_pos : TEXCOORD1;
+    float3 v_nrm : TEXCOORD2;
     float4 hpos : SV_Position;
 };
 
@@ -12,20 +14,16 @@ vf _main(v_model v)
 {
     vf o;
 
-    o.hpos = mul(m_WVP, v.P); // xform, input in world coords
+    o.hpos = mul(m_WVP, v.P); // Homogenous position
+    o.tc0 = v.tc.xy; //Texture coordinates
 
-    o.tc0 = v.tc.xy; // copy tc
-
-    // calculate fade
-    float3 dir_v = normalize(mul(m_WV, v.P));
-    float3 norm_v = normalize(mul(m_WV, v.N));
-    float fade = abs(dot(dir_v, norm_v));
-    o.c0 = fade;
+    o.v_pos = mul(m_WV, v.P).xyz; // Position in view space
+    o.v_nrm = mul(m_WV, v.N).xyz; // Normal in view space
 
     return o;
 }
 
-/////////////////////////////////////////////////////////////////////////
+//Skinning
 #ifdef SKIN_NONE
 vf main(v_model v) { return _main(v); }
 #endif
