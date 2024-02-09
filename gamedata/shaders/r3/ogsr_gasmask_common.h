@@ -64,6 +64,8 @@ uniform float4 m_cam_inertia_smooth;
 #define GM_VIS_RADIUS 0.45 // Reflection radius
 #define GM_VIS_INTENSITY 0.5 // Reflection intensity
 
+float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
+
 float2 rotate(float2 v, float2 o, float a)
 {
     float s = sin(a);
@@ -118,6 +120,8 @@ float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZR
 float2 applyInertia(float2 texcoord)
 {
     float2 uv = (-1.0 + 2.0 * texcoord);
+    uv.x = resize(uv.x, 1.1, 0);
+    uv.y = resize(uv.y, 1.1, 0);
     float3 pivotPoint = float3(0.0, 0.0, 0.0);
     float R_X = m_cam_inertia_smooth.y * gasmask_inertia.y;
     float R_Y = m_cam_inertia_smooth.x * gasmask_inertia.x;
@@ -131,6 +135,8 @@ float2 applyInertia(float2 texcoord)
 float2 applyInertiaDev(float2 texcoord)
 {
     float2 uv = (-1.0 + 2.0 * texcoord);
+    uv.x = resize(uv.x, 1.1, 0);
+    uv.y = resize(uv.y, 1.1, 0);
     float3 pivotPoint = float3(0.0, 0.0, 0.0);
     float R_X = m_cam_inertia_smooth.y * device_inertia.y;
     float R_Y = m_cam_inertia_smooth.x * device_inertia.x;
