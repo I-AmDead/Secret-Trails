@@ -42,9 +42,6 @@ float4 main(p_screen I) : SV_Target
     // STEP 0 - LOCAL DEFINITIONS
     ///////////////////////////////////////////////////////
 
-    I.tc0 = applyInertiaDev(I.tc0);
-
-
     // узкая полоска искажений
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
     I.tc0.x += (m_affects.x > 0.09 && I.tc0.y > problems - 0.01 && I.tc0.y < problems) ? sin((I.tc0.y - problems) * 5 * m_affects.y) : 0;
@@ -131,7 +128,11 @@ float4 main(p_screen I) : SV_Target
         }
 
         // APPLY VIGNETTE
-        float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
+
+        float2 uv = I.tc0;
+        uv = applyInertiaDev(I.tc0);
+
+        float vignette = calc_vignette(lua_param_nvg_num_tubes, uv, lua_param_vignette_current);
         image = clamp(image, 0.0, 1.0);
         image *= vignette;
 
