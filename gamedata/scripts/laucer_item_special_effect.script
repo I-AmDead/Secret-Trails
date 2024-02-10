@@ -17,6 +17,7 @@ local boosters = {
     ["boost_radiation_restore"] = false,
     ["boost_bleeding_restore"] = false,
     ["boost_psy_health_restore"] = false,
+    ["boost_alcohol_restore"] = false,
     ["boost_fire_wound_protection"] = false,
     ["boost_max_weight"] = false,
     ["boost_radiation_protection"] = false,
@@ -87,8 +88,7 @@ function on_save()
 end
 
 function on_item_use(section)
-    local boost_time = has_alife_info("acv_nar") and get_float(section, "boost_time", 0) - 5.0 or
-                           get_float(section, "boost_time", 0)
+    local boost_time = has_alife_info("acv_nar") and get_float(section, "boost_time", 0) - 5.0 or get_float(section, "boost_time", 0)
     if boost_time <= 0 then -- not a booster
         return
     end
@@ -172,6 +172,8 @@ function set_boost(type, value, state)
         get_actor_obj().condition.wound_incarnation_v = get_actor_obj().condition.wound_incarnation_v + value
     elseif type == "boost_psy_health_restore" then
         get_actor_obj().condition.psy_health_v = get_actor_obj().condition.psy_health_v + value
+    elseif type == "boost_alcohol_restore" then
+        get_actor_obj().condition.alcohol_v = get_actor_obj().condition.alcohol_v + (has_alife_info("acv_alk") and value - 0.0005 or value)
     elseif type == "boost_max_weight" then
         local curr_max = db.actor:get_actor_max_weight()
         db.actor:set_actor_max_weight(curr_max + value)
