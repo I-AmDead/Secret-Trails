@@ -23,10 +23,14 @@ function on_key_down(key, bind)
         local wpn = db.actor:active_item()
         if not wpn then return end
 
+        local dots_number = 0
         local scope_name = get_string(wpn:section(), "scope_name")
-        if not scope_name or (scope_name and scope_name == "wpn_addon_scope") then return end
-
-        local dots_number = get_u32(scope_name, "dots_number")
+        if scope_name and scope_name ~= "wpn_addon_scope" then
+            dots_number = get_u32(scope_name, "dots_number")
+        else
+            dots_number = get_u32(wpn:section(), "dots_number")
+        end
+        if dots_number < 1 then return end
         switch_mark(false, dots_number, scope_name)
     end
 end
@@ -43,6 +47,8 @@ function on_dots_update()
         local scope_name = get_string(wpn:section(), "scope_name")
         if scope_name and scope_name ~= "wpn_addon_scope" then
             dots_number = get_u32(scope_name, "dots_number")
+        else
+            dots_number = get_u32(wpn:section(), "dots_number")
         end
         switch_mark(true, dots_number, scope_name)
     end
