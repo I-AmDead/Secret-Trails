@@ -23,15 +23,16 @@ function on_key_down(key, bind)
         local wpn = db.actor:active_item()
         if not wpn then return end
 
-        local dots_number = 0
-        local scope_name = get_string(wpn:section(), "scope_name")
+        local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
+        local dots_number = get_u32(wpn:section(), "dots_number", 0)
         if scope_name and scope_name ~= "wpn_addon_scope" then
-            dots_number = get_u32(scope_name, "dots_number")
+            dots_number = get_u32(scope_name, "dots_number", 0)
         else
-            dots_number = get_u32(wpn:section(), "dots_number")
+            scope_name = wpn:section()
         end
-        if dots_number < 1 then return end
-        switch_mark(false, dots_number, scope_name)
+        if dots_number and dots_number > 0 then
+            switch_mark(false, dots_number, scope_name)
+        end
     end
 end
 
@@ -43,14 +44,16 @@ function on_dots_update()
 
     if not last_weapon_id or last_weapon_id ~= wpn:id() then
         last_weapon_id = wpn:id()
-        local dots_number = 0
-        local scope_name = get_string(wpn:section(), "scope_name")
+        local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
+        local dots_number = get_u32(wpn:section(), "dots_number", 0)
         if scope_name and scope_name ~= "wpn_addon_scope" then
-            dots_number = get_u32(scope_name, "dots_number")
+            dots_number = get_u32(scope_name, "dots_number", 0)
         else
-            dots_number = get_u32(wpn:section(), "dots_number")
+            scope_name = wpn:section()
         end
-        switch_mark(true, dots_number, scope_name)
+        if dots_number and dots_number > 0 then
+            switch_mark(true, dots_number, scope_name)
+        end
     end
 end
 
