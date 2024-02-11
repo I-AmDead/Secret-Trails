@@ -16,6 +16,54 @@ function on_first_update()
     shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
 end
 
+function on_key_down(key, bind)
+    if bind == key_bindings.kSWITCH_MARK then
+        if not (db.actor and db.actor:alive()) then return end
+
+        local wpn = db.actor:active_item()
+        if not wpn then return end
+
+        local scope_name = get_string(wpn:section(), "scope_name")
+        if not scope_name or (scope_name and scope_name == "wpn_addon_scope") then return end
+
+        local dots_number = get_u32(scope_name, "dots_number")
+        switch_mark(false, dots_number, scope_name)
+    end
+end
+
+function on_dots_update()
+    if not (db.actor and db.actor:alive()) then return end
+
+    local wpn = db.actor:active_item()
+    if not wpn then return end
+
+    if not last_weapon_id or last_weapon_id ~= wpn:id() then
+        last_weapon_id = wpn:id()
+        local dots_number = 0
+        local scope_name = get_string(wpn:section(), "scope_name")
+        if scope_name and scope_name ~= "wpn_addon_scope" then
+            dots_number = get_u32(scope_name, "dots_number")
+        end
+        switch_mark(true, dots_number, scope_name)
+    end
+end
+
+local last_weapon_id
+local snd_adjust = sound_object('interface\\mark_adjust')
+
+function switch_mark(update, dots_number, scope_name)
+    local value = ogse.load_var("mark_number" .. scope_name, 0)
+    log3("mark current %s, dots number %s, scope_name %s", value, dots_number, scope_name)
+    if not update then
+        value = value < dots_number - 1 and value + 1 or 0
+        log3("mark current %s, dots number %s", value, dots_number)
+        ogse.save_var("mark_number" .. scope_name, value)
+        game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
+        snd_adjust:play(db.actor, 0, sound_object.s2d)
+    end
+    shader_set_custom_param("mark_number", value, dots_number, 0, 0)
+end
+
 function on_actor_before_hit(obj, hit_data)
     if hit_data.hit_type == hit.radiation then
         if hit_data.power > 0 then
@@ -45,9 +93,15 @@ function update_rad_effect()
     end
 end
 
+function on_actor_update()
+    update_rad_effect()
+    on_dots_update()
+end
+
 function attach(sm)
     sm:subscribe({ signal = "on_first_update",     fun = this.on_first_update })
     sm:subscribe({ signal = "ui_on_dialog_show",   fun = this.dof_enable })
     sm:subscribe({ signal = "ui_on_dialog_hide",   fun = this.dof_disable })
-    sm:subscribe({ signal = "on_update",	   fun = this.update_rad_effect })
+    sm:subscribe({ signal = "on_update",	       fun = this.on_actor_update })
+    sm:subscribe({ signal = "on_key_down",         fun = this.on_key_down })
 end

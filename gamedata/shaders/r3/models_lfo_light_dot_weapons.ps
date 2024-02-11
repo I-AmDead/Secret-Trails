@@ -27,6 +27,7 @@
 #define SIZE_FACTOR 100.0			// (default 4.0) Mark size factor
 
 uniform float4 m_affects;
+uniform float4 mark_number;
 
 // Vertex to Pixel struct
 struct vf
@@ -46,6 +47,21 @@ float random(float2 p)
 float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
 
 float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
+
+float2 mark_adjust(float2 pos)
+{
+	int current_mark = int(mark_number.x);
+	int mark_count = int(mark_number.y);
+	
+	int sides = 1;
+	while (sides * sides < mark_count)
+		sides += 1;
+
+    float2 d = float2(current_mark % sides, current_mark / sides);
+    float2 p = clamp(d + pos, d, d + 1) / sides;
+
+    return float2(p);
+}
 
 // This gives us cotangent basis that can be used instead of TBN.
 // It is useful when tangents of your mesh are broken, or not available.
@@ -89,24 +105,28 @@ float4 main(vf I): SV_Target
 {
     // Derive view direction from view space position
     float3 V = -I.v_pos;
-    
+    V.x = -V.x;
+
     // Build cotangent frame
     // Important: In theory, you don't need to do this. It should be possible to pass TBN straight from VS
     float3x3 TBN = cotangent_frame(offset_normal(I.v_nrm), I.v_pos, I.tc0.xy);
     
     // Transform view direction to tangent space, and normalize (Just in case)
     float3 V_tangent = normalize(float3(dot(V, TBN[0]), dot(V, TBN[1]), dot(V, TBN[2])));
-	
+
     // Calculate texture coordinates used to fetch the mark texture
     // Important: PROJECT_DISTANCE can be positive or negative, 0 = no projection at all
     float2 parallax_tc = I.tc0 - V_tangent.xy * PROJECT_DISTANCE;
 
-	// Upscaling the texture
-	parallax_tc.x = (parallax_tc.x + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
-	parallax_tc.y = (parallax_tc.y + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
-
+    // Upscaling the texture
+    parallax_tc.xy = (parallax_tc.xy + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
     parallax_tc.x = resize(parallax_tc.x, screen_res.x / screen_res.y, 0);
-    parallax_tc.x = resize(parallax_tc.x, 0.7, 0);
+    parallax_tc.x = resize(parallax_tc.x, 0.75, 0);
+
+    if (mark_number.y > 0)
+    {
+        parallax_tc = mark_adjust(parallax_tc);
+    }
 
     // Fetch the mark texture
     // Important: We do not want texture to repeat itself, so we use sampler with CLAMP address
@@ -115,7 +135,7 @@ float4 main(vf I): SV_Target
 
     // Noise
     mark_texture.rgb = mark_texture.rgb * 0.9;
-    float noise = get_noise(I.tc0 * timers.z) * 1.2;
+    float noise = get_noise(I.tc0 * timers.z) * 1.3;
     mark_texture.r += noise;
     mark_texture.g += noise;
     mark_texture.b += noise;
