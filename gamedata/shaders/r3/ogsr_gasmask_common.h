@@ -120,8 +120,6 @@ float2 TransformPlane(float2 uv, float3 center, float XRot, float YRot, float ZR
 float2 applyInertia(float2 texcoord)
 {
     float2 uv = (-1.0 + 2.0 * texcoord);
-    uv.x = resize(uv.x, 1.1, 0);
-    uv.y = resize(uv.y, 1.1, 0);
     float3 pivotPoint = float3(0.0, 0.0, 0.0);
     float R_X = m_cam_inertia_smooth.y * gasmask_inertia.y;
     float R_Y = m_cam_inertia_smooth.x * gasmask_inertia.x;
