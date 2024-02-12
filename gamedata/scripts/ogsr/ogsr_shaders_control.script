@@ -17,21 +17,25 @@ function on_first_update()
 end
 
 function on_key_down(key, bind)
-    if bind == key_bindings.kSWITCH_MARK then
-        if not (db.actor and db.actor:alive()) then return end
+    if not (bind == key_bindings.kSWITCH_MARK or bind == key_bindings.kSWITCH_MARK_COLOR) then return end
 
-        local wpn = db.actor:active_item()
-        if not wpn then return end
+    if not (db.actor and db.actor:alive()) then return end
 
-        local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
-        local dots_number = get_u32(wpn:section(), "dots_number", 0)
-        if scope_name and scope_name ~= "wpn_addon_scope" then
-            dots_number = get_u32(scope_name, "dots_number", 0)
-        else
-            scope_name = wpn:section()
-        end
-        if dots_number and dots_number > 0 then
+    local wpn = db.actor:active_item()
+    if not wpn then return end
+
+    local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
+    local dots_number = get_u32(wpn:section(), "dots_number", 0)
+    if scope_name and scope_name ~= "wpn_addon_scope" then
+        dots_number = get_u32(scope_name, "dots_number", 0)
+    else
+        scope_name = wpn:section()
+    end
+    if dots_number and dots_number > 0 then
+        if bind == key_bindings.kSWITCH_MARK then
             switch_mark(false, dots_number, scope_name)
+        else
+            switch_color_mark(false, scope_name)
         end
     end
 end
@@ -53,6 +57,7 @@ function on_dots_update()
         end
         if dots_number and dots_number > 0 then
             switch_mark(true, dots_number, scope_name)
+            switch_color_mark(true, scope_name)
         end
     end
 end
@@ -69,6 +74,25 @@ function switch_mark(update, dots_number, scope_name)
         snd_adjust:play(db.actor, 0, sound_object.s2d)
     end
     shader_set_custom_param("mark_number", value, dots_number, 0, 0)
+end
+
+function switch_color_mark(update, scope_name)
+    local value = ogse.load_var("mark_color" .. scope_name, 1)
+    if not update then
+        value = value < 3 and value + 1 or 1
+        ogse.save_var("mark_color" .. scope_name, value)
+        game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
+        snd_adjust:play(db.actor, 0, sound_object.s2d)
+    end
+    if value < 3 then
+        if value < 2 then
+            shader_set_custom_param("mark_color", 1, 0, 0)
+        else
+            shader_set_custom_param("mark_color", 0, 1, 0)
+        end
+    else
+        shader_set_custom_param("mark_color", 0, 0, 1)
+    end
 end
 
 function on_actor_before_hit(obj, hit_data)

@@ -28,6 +28,7 @@
 
 uniform float4 m_affects;
 uniform float4 mark_number;
+uniform float4 mark_color;
 
 // Vertex to Pixel struct
 struct vf
@@ -132,6 +133,8 @@ float4 main(vf I): SV_Target
     // Important: We do not want texture to repeat itself, so we use sampler with CLAMP address
     // Important2: We do not want to sample mip levels of the mark texture, let's keep this thing sharp as fuck
     float4 mark_texture = s_base.SampleLevel(smp_rtlinear, parallax_tc, 0.0);
+
+    mark_texture.rgb += mark_color.rgb;
 
     // Noise
     mark_texture.rgb = mark_texture.rgb * 0.9;
