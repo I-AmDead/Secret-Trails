@@ -81,6 +81,7 @@ local function fix_first()
     ded_secret()
     fix_leila_mafon()
     fix_fucking_stadium_lair()
+    fix_exit_to_agr_underground()
 end
 
 local function on_drag_drop(obj)
@@ -158,6 +159,18 @@ function fix_ac_level_changer_to_mg()
         lc.dest_position = vector():set(-427.113692, -13.161615, 378.632111)
         lc.dest_direction = vector():set(0.778361, -0.162817, 0.606337)
     end
+end
+
+function fix_exit_to_agr_underground()
+  if ogse.var_exists("fix_exit_to_agr_underground") then return end
+
+  local sobj = alife():object("exit_to_agr_underground_05")
+  if not sobj then return end
+
+  ogse.save_var("fix_exit_to_agr_underground", true)
+  log3("fix %s (%s)", sobj:name(), sobj.level_name)
+  sobj.position = vector():set(-38.883705, -2.702327, 40.002663)
+  --sobj.angle = vector():set(0, 0, 0)
 end
 
 function fix_leila_mafon()
