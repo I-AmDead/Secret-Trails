@@ -681,13 +681,14 @@ sys_ini = system_ini() --Из скриптов вызывать только sys
 local debug_ini = false
 
 -- служебные функции для чтения параметров из секций объектов
-function get_line_exist(section, ini, param)
+function get_line_exist(section, param, ini_file)
+	local ini = ini_file or sys_ini
 	return section and ini:section_exist(section) and ini:line_exist(section, param)
 end
 
 function get_string(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	if get_line_exist(section, ini, param) then
+	if get_line_exist(section, param, ini) then
 		return ini:r_string(section, param)
 	else
 		if def_val == nil and debug_ini then
@@ -699,7 +700,7 @@ end
 
 function get_string_wq(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	if get_line_exist(section, ini, param) then
+	if get_line_exist(section, param, ini) then
 		return ini:r_string_wq(section, param)
 	else
 		if def_val == nil and debug_ini then
@@ -711,7 +712,7 @@ end
 
 function get_u32(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	if get_line_exist(section, ini, param) then
+	if get_line_exist(section, param, ini) then
 		return ini:r_u32(section, param)
 	else
 		if def_val == nil and debug_ini then
@@ -723,7 +724,7 @@ end
 
 function get_bool(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	if get_line_exist(section, ini, param) then
+	if get_line_exist(section, param, ini) then
 		return ini:r_bool(section, param)
 	else
 		if def_val == nil and debug_ini then
@@ -735,7 +736,7 @@ end
 
 function get_float(section, param, def_val, ini_file)
 	local ini = ini_file or sys_ini
-	if get_line_exist(section, ini, param) then
+	if get_line_exist(section, param, ini) then
 		return ini:r_float(section, param)
 	else
 		if def_val == nil and debug_ini then
