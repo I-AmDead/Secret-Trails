@@ -53,15 +53,11 @@ function motivator_binder:net_spawn(sobject)
     local npc = self.object
 
     db.add_obj(self.object)
-    if not self.loaded then
-        local char_ini = self.object:spawn_ini() or ini_file("scripts\\dummy.ltx")
-        xr_info.loadInfo(self.object, char_ini)
-    end
-    --
+
     self.object:set_callback(callback.use_object, self.use_callback, self)
-    --
+
     self:subscribe_updaters()
-    --
+
     if not self.object:alive() then
         if rx_ai then
             rx_ai.corpse_net_spawn(self.object, self.loaded)
