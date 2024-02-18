@@ -15,7 +15,7 @@ uniform float4 ssfx_wind_anim;
 uniform float is_bugged_flora;
 
 Texture2D s_waves;
-sampler smp_linear2;
+
 
 struct wind_setup
 {
@@ -71,7 +71,7 @@ float3 ssfx_wind_grass(float3 pos, float H, wind_setup W)
     float2 Offset = -ssfx_wind_anim.xy * W.grass_animspeed;
 
     // Sample ( The scale defines the detail of the motion )
-    float3 Flow = s_waves.SampleLevel(smp_linear2, (pos.xz + Offset) * 0.018f, 0);
+    float3 Flow = s_waves.SampleLevel(smp_linear, (pos.xz + Offset) * 0.018f, 0);
 
     // Grass Motion ( -1.0 ~ 1.0 ). Turbulence.
     float2 GrassMotion = (Flow.xy * 2.0f - 1.0f) * W.grass_turbulence;
@@ -116,10 +116,10 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     float2 Offset = -ssfx_wind_anim.xy * W.trees_animspeed;
 
     // Sample flow map
-    float3 Flow = s_waves.SampleLevel(smp_linear2, (pos.xz + Offset) * 0.02f, 0);
+    float3 Flow = s_waves.SampleLevel(smp_linear, (pos.xz + Offset) * 0.02f, 0);
 
     // Sample 2, slower and detailed
-    float3 Flow2 = s_waves.SampleLevel(smp_linear2, (pos.xz + Offset * 0.2f) * 0.1f, 0);
+    float3 Flow2 = s_waves.SampleLevel(smp_linear, (pos.xz + Offset * 0.2f) * 0.1f, 0);
 
     // Branch motion [ -1.0 ~ 1.0 ]
     float3 branchMotion = 0;

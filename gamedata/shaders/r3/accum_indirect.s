@@ -7,7 +7,6 @@ function normal(shader, t_base, t_second, t_detail)
 		:blend(opt:fp16_blend_enable(), blend.one, dest)
 	shader:dx10texture("s_position", "$user$position")
 	shader:dx10texture("s_normal", "$user$normal")
-	shader:dx10texture("s_material", "$user$material")
 	shader:dx10texture("s_diffuse", "$user$albedo")
 	shader:dx10texture("s_accumulator", "$user$accum")
 
