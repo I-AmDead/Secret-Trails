@@ -815,8 +815,10 @@ function doctor_kostolom_spawn()
     level.map_add_object_spot_ser(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
 end
 
-function spider_kostolom_spawn()
-    local obj = alife():create("spider_kostolom", vector():set(-118.073, 5.575, -66.173), 888830, 3000)
+local function spider_kostolom_spawn(obj, amount, local_direction, who, bone_index)
+    if obj:section() == "doctor_kostolom" then
+        local obj = alife():create("spider_kostolom", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
+    end
 end
 
 local function spider_kostolom_dead()
@@ -2362,6 +2364,7 @@ function karina_idem()
 end
 
 function attach(sm)
+    sm:subscribe({signal = "on_monster_hit",	fun = spider_kostolom_spawn})
     sm:subscribe({signal = "on_update",         fun = distance_check})
     sm:subscribe({signal = "on_update",         fun = spider_kostolom_dead})
     sm:subscribe({signal = "on_first_update",   fun = storyline_mix})
