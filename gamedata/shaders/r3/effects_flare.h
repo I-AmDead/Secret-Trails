@@ -91,3 +91,35 @@ float4 generate_ghosts(float2 uv)
 
     return final;
 }
+
+#define LENS_FLARE_COLOR float3(0.35, 0.35, 1.0)
+#define fFlareLuminance 0.111
+#define fFlareBlur 100.0
+#define fFlareIntensity 0.15
+
+float3 BrightPass(float2 tex)
+{
+	float3 c = s_bloom.Sample(smp_rtlinear, tex).rgb;
+    float3 bC = max(c - float3(fFlareLuminance, fFlareLuminance, fFlareLuminance), 0.0);
+    float bright = dot(bC, 1.0);
+    bright = smoothstep(0.0f, 0.5, bright);
+    return lerp(0.0, c, bright);
+}
+
+float3 AnamorphicSample(int axis, float2 tex, float blur)
+{
+	tex = 2.0 * tex - 1.0;
+	if (!axis) tex.x /= -blur;
+	else tex.y /= -blur;
+	tex = 0.5 * tex + 0.5;
+	return BrightPass(tex);
+}
+
+float3 AnamorphicLens(float2 IN)
+{
+	float3 res;
+	float2 coord = IN.xy;
+	float3 anamFlare = AnamorphicSample(0, coord.xy, fFlareBlur) * LENS_FLARE_COLOR; //trichromatic Anamorphic Flare (adaptive)
+	res.rgb = anamFlare * fFlareIntensity;	
+	return res;
+}
