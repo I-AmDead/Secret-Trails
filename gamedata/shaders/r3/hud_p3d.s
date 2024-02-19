@@ -1,5 +1,5 @@
 function normal		(shader, t_base, t_second, t_detail)
-	shader:begin	("hud3d","hud3d")
+	shader:begin	("hud_p3d","hud_p3d")
 			: fog		(false)
 			: zb 		(true,false)
 			: blend		(true,blend.srcalpha,blend.invsrcalpha)
