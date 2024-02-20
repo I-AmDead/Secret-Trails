@@ -16,7 +16,7 @@ end
 
 local gameplay_params = {
     separator(""),
-    separator("GAMEPLAY"),
+    separator("sep_gameplay"),
     separator(""),
 
     { "g_game_difficulty",         "mm_opt_gameplay",     "list",  { "ui_mm_difficulty", hint_colors.white, "", "" } },
@@ -39,6 +39,18 @@ local gameplay_params = {
     { "g_mouse_wheel_switch_slot",   "mm_opt_gameplay",  "check", { "ui_mm_switch_slot", hint_colors.white, "", "" } },
 
     { "rs_always_active",            "mm_opt_gameplay",  "check", { "ui_mm_always_active", hint_colors.white, "", "" } },
+
+    separator(""),
+    separator("sep_fakescope"),
+    separator(""),
+
+    { "scope_params_1",              "mm_opt_gameplay",  "track", { "ui_fakescope_fog_interp", hint_colors.white, "", "" },                                                   { index = 0, step = 0.01} },
+    { "scope_params_1",              "mm_opt_gameplay",  "track", { "ui_fakescope_fog_travel", hint_colors.white, "", "" },                                                   { index = 1, step = 0.01} },
+    { "scope_params_3",              "mm_opt_gameplay",  "track", { "ui_fakescope_fog_attack", hint_colors.white, "", "" },                                                   { index = 1, step = 0.01} },
+    { "scope_params_3",              "mm_opt_gameplay",  "track", { "ui_fakescope_fog_mttack", hint_colors.white, "", "" },                                                   { index = 2, step = 0.01} },
+    { "scope_params_1",              "mm_opt_gameplay",  "track", { "ui_fakescope_outer_blur", hint_colors.white, "", "" },                                                   { index = 2, step = 0.01} },
+    { "scope_params_2",              "mm_opt_gameplay",  "track", { "ui_fakescope_inner_blur", hint_colors.white, "", "" },                                                   { index = 0, step = 0.01} },
+    { "scope_params_2",              "mm_opt_gameplay",  "track", { "ui_fakescope_brightness", hint_colors.white, "", "" },                                                   { index = 2, step = 0.01} },
 }
 
 local control_params = {
@@ -50,7 +62,7 @@ local control_params = {
 
 local audio_params = {
     separator(""),
-    separator("AUDIO"),
+    separator("sep_audio"),
     separator(""), 
 
     { "snd_device",                  "mm_opt_sound",     "list",  { "ui_mm_snd_device", hint_colors.white, "", "" },                                                          { depend = "restart" } },
@@ -62,7 +74,7 @@ local audio_params = {
 
 local video_params = {
     separator(""),
-    separator("VIDEO"),
+    separator("sep_video"),
     separator(""),
 
     { "vid_mode",                    "mm_opt_video",     "list",  { "ui_mm_resolution", hint_colors.white, "", "" },                                                         { depend = "restart" } },
@@ -83,7 +95,7 @@ local video_params = {
 --    { "rs_v_sync",      "mm_opt_video_adv", "check", { "ui_mm_vsync", hint_colors.green, "video_settings_name_16", "video_settings_desc_16" }, { depend = "vid" } },
 
     separator(""),
-    separator("VIDEO ADVANCED"),
+    separator("sep_video_adv"),
     separator(""),
 
     { "fov",                         "mm_opt_video_adv", "track", { "ui_mm_fov", hint_colors.green, "video_settings_name_61", "video_settings_desc_61" },                      { step = 1} },
@@ -105,7 +117,7 @@ local video_params = {
     { "r2_sun_details",              "mm_opt_video_adv", "check", { "ui_mm_r2_sun_details", hint_colors.red, "video_settings_name_12", "video_settings_desc_12" },             { depend = "restart" } },
     --
     { "r3_dynamic_wet_surfaces",     "mm_opt_video",     "check", { "ui_mm_r3_dynamic_wet_surfaces", hint_colors.yellow, "video_settings_name_49", "video_settings_desc_49" }, { depend = "vid" } },
-    { "r_sslr_enable",               "mm_opt_video_adv", "check", { "r_sslr_enable", hint_colors.yellow, "video_settings_name_51", "video_settings_desc_51" } },
+    { "r_sslr_enable",               "mm_opt_video_adv", "check", { "r_sslr_enable", hint_colors.yellow, "video_settings_name_51", "video_settings_desc_51" },                 { depend = "vid" } },
     --
     { "r4_enable_tessellation",      "mm_opt_video_adv", "check", { "ui_mm_r4_enable_tessellation", hint_colors.green, "video_settings_name_52", "video_settings_desc_52" },   { depend = "vid" } },
     --
@@ -113,10 +125,10 @@ local video_params = {
     { "r_terrain_parallax_enable",   "mm_opt_video_adv", "check", { "ui_mm_terrain_parallax", hint_colors.yellow, "video_settings_name_24", "video_settings_desc_24" },        { depend = "restart" } },
     --
 
-    { "g_dof_reload",                "mm_opt_video_adv", "check", { "ui_mm_r2_reload_dof", hint_colors.white, "video_settings_name_41", "video_settings_desc_41" },            { depend = "vid" } },
-    { "g_dof_zoom",                  "mm_opt_video_adv", "check", { "ui_mm_r2_zoom_dof", hint_colors.white, "video_settings_name_42", "video_settings_desc_42" },              { depend = "vid" } },
+    { "g_dof_reload",                "mm_opt_video_adv", "check", { "ui_mm_r2_reload_dof", hint_colors.white, "video_settings_name_41", "video_settings_desc_41" } },
+    { "g_dof_zoom",                  "mm_opt_video_adv", "check", { "ui_mm_r2_zoom_dof", hint_colors.white, "video_settings_name_42", "video_settings_desc_42" } },
     { "ssfx_wpn_dof_2",              "mm_opt_video_adv", "track", { "ui_mm_dof_zoom_param", hint_colors.white, "", "" },                                                       { step = 0.01} },
-    { "r2_mblur_enable",             "mm_opt_video",     "check", { "ui_mm_r2_mblur_enable", hint_colors.white, "", "" },                                                      { depend = "vid" } },
+    { "r2_mblur_enable",             "mm_opt_video",     "check", { "ui_mm_r2_mblur_enable", hint_colors.white, "", "" } },
     { "r2_mblur",                    "mm_opt_video",     "track", { "ui_mm_r2_mblur", hint_colors.white, "", "" },                                                             { step = 0.01} },
 
 
@@ -130,7 +142,7 @@ local video_params = {
     { "r3_volumetric_smoke",         "mm_opt_video_adv", "check", { "ui_mm_r3_volumetric_smoke", hint_colors.green, "video_settings_name_55", "video_settings_desc_55" } },
 
     separator(""),
-    separator("ASYNCHRONY"),
+    separator("sep_asynchrony"),
     separator(""),
 
     { "r_mt_texload",                "mm_opt_video_adv", "check", { "ui_mm_mt_texload", hint_colors.white, "", "" },                                                            { depend = "restart" } },
