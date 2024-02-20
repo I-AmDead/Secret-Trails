@@ -1,0 +1,33 @@
+--[[-------------------------- опции ----------------------------]]
+opt_test               = false -- Оффлайн война offwar, по умолчанию 0
+
+
+-- новое сохранение настроек
+local file_name                     = "secret_trails_settings.ltx" -- имя файла
+local full_name                     = getFS():update_path("$app_data_root$", file_name)
+
+log1("full_name=" .. full_name)
+
+function read_if_exists(setting_ini, section, p, def)
+    if setting_ini:section_exist(section) and setting_ini:line_exist(section, p) then
+        return setting_ini:r_bool(section, p)
+    else
+        return def
+    end
+end
+
+function init()
+    local setting_ini = ini_file(full_name, false) -- false тут нужен, значит файл будет искать как указано, без привязки к configs
+
+    offwar = read_if_exists(setting_ini, "setting", "option_test", opt_test)
+end
+
+function save()
+    local setting_ini = ini_file(full_name, false) -- false тут нужен, значит файл будет искать как указано, без привязки к configs
+    setting_ini.readonly = false                   -- обязательно при сохранении
+
+    -- пишем как обычно для ini
+    setting_ini:w_bool("setting", "option_test", opt_test)
+
+    setting_ini:save() -- сохраняем
+end

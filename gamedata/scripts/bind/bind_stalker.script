@@ -382,6 +382,10 @@ function actor_binder:on_actor_jump(obj, power)
 end
 
 function actor_binder:on_key(key, bind)
+    if key == DIK_keys.DIK_DELETE then
+        self:show_ingame_options()
+    end
+
     self.am:call("on_key_down", key, bind)
 end
 
@@ -540,4 +544,14 @@ end
 
 function restore_weapon()
     weapon_hide = false
+end
+
+function actor_binder:show_ingame_options()
+    if not self.opt_dlg then
+        self.opt_dlg = ui_mm_opt_main.options_dialog()
+        self.opt_dlg.ignore_dof = true
+    end
+
+    self.opt_dlg:UpdateOptValues()
+    level.start_stop_menu(self.opt_dlg, false)
 end

@@ -151,10 +151,10 @@ end
 
 function main_menu:OnButton_options_clicked()
     if not self.opt_dlg then
-        self.opt_dlg = ui_mm_opt_main.options_dialog()
-        self.opt_dlg.owner = self
+        self.opt_dlg = ui_mm_opt_main.options_dialog(self)
     end
 
+    self.opt_dlg:UpdateOptValues()
     self:GetHolder():start_stop_menu(self.opt_dlg, true)
     self:Show(false)
 end
@@ -205,9 +205,6 @@ function main_menu:close_and_delete_menu()
         self.load_dlg = nil
     end
     if self.opt_dlg then
-        if self.opt_dlg.dlg_video_adv then
-            self.opt_dlg.dlg_video_adv = nil
-        end
         self.opt_dlg:ClearCallbacks()
         self.opt_dlg = nil
     end

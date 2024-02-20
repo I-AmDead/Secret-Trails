@@ -1,12 +1,163 @@
--- Меню настроек для Теней Чернобыля.
+-- ���� �������� ��� ����� ���������.
 -- KRodin (c) 2018
--- Вырезал поддержку загрузки патчей, первого рендера (т.к. он не поддерживается движком) и прочий мусор.
--- Сделано специально для использования с движком OGSR.
+-- ������� ��������� �������� ������, ������� ������� (�.�. �� �� �������������� �������) � ������ �����.
+-- ������� ���������� ��� ������������� � ������� OGSR.
 
-class "options_dialog"(CUIScriptWnd)
-function options_dialog:__init()
+local hint_colors = {
+    ["white"]  = { 255, 215, 195, 170 },
+    ["green"]  = { 255, 0, 128, 0 },
+    ["yellow"] = { 255, 186, 149, 0 },
+    ["red"]    = { 255, 255, 0, 0 },
+}
+
+local function separator(text)
+    return { "", "", "separator", { text, hint_colors.yellow } }
+end
+
+local gameplay_params = {
+    separator(""),
+    separator("GAMEPLAY"),
+    separator(""),
+
+    { "g_game_difficulty",         "mm_opt_gameplay",     "list",  { "ui_mm_difficulty", hint_colors.green, "", "" } },
+
+    { "crosshair_color",           "mm_opt_video_adv",    "track", { "ui_mm_crosshair_color_r", hint_colors.white, "", "" },       { index = 0, step = 0.01, min = 0, max = 1 } },
+    { "crosshair_color",           "mm_opt_video_adv",    "track", { "ui_mm_crosshair_color_g", hint_colors.white, "", "" },       { index = 1, step = 0.01, min = 0, max = 1 } },
+    { "crosshair_color",           "mm_opt_video_adv",    "track", { "ui_mm_crosshair_color_b", hint_colors.white, "", "" },       { index = 2, step = 0.01, min = 0, max = 1 } },
+
+    { "keypress_on_start",         "mm_opt_gameplay",     "check", { "ui_mm_keypress_on_start", hint_colors.white, "", "" } },
+    { "wpn_aim_toggle",            "mm_opt_gameplay",     "check", { "ui_mm_aim_toggle", hint_colors.white, "", "" } },
+    { "g_mouse_wheel_switch_slot", "mm_opt_gameplay",     "check", { "ui_mm_switch_slot", hint_colors.white, "", "" } },
+
+    { "hud_crosshair",             "mm_opt_gameplay",     "check", { "ui_mm_show_crosshair", hint_colors.white, "", "" } },
+    { "cl_dynamiccrosshair",       "mm_opt_gameplay",     "check", { "ui_mm_dyn_crosshair", hint_colors.white, "", "" } },
+    { "hud_info",                  "mm_opt_gameplay",     "check", { "ui_mm_tips", hint_colors.white, "", "" } },
+
+    { "hud_crosshair_dist",        "mm_opt_gameplay",     "check", { "ui_mm_crosshair_distance", hint_colors.white, "", "" } },
+    { "hud_crosshair_build",       "mm_opt_gameplay",     "check", { "ui_mm_build_crosshair", hint_colors.white, "", "" } },
+
+    { "rs_always_active",          "mm_opt_gameplay",     "check", { "ui_mm_always_active", hint_colors.white, "", "" } },
+
+    { "fakescope_enable",          "mm_opt_gameplay",     "check", { "ui_mm_fakescope", hint_colors.white, "", "" } },
+    { "g_3d_pda",                  "mm_opt_gameplay",     "check", { "ui_mm_3d_pda", hint_colors.white, "", "" } },
+}
+
+local control_params = {
+    separator("INPUT"),
+
+    { "mouse_sens",   "mm_opt_controls", "track", { "ui_mm_mouse_sense", hint_colors.green, "", "" }, { step = 0.01, min = 0.0, max = 10.0 } },
+    { "mouse_invert", "mm_opt_controls", "check", { "ui_mm_invert_mouse", hint_colors.white, "", "" } },
+}
+
+local audio_params = {
+    separator(""),
+    separator("AUDIO"),
+    separator(""), 
+
+    { "snd_device",       "mm_opt_sound",    "list",  { "ui_mm_snd_device", hint_colors.white, "", "" },     { depend = "restart" } },
+    { "snd_volume_eff",   "mm_opt_sound",    "track", { "ui_mm_master_volume", hint_colors.green, "", "" },  { step = 0.01, min = 0, max = 1 } },
+    { "snd_volume_music", "mm_opt_sound",    "track", { "ui_mm_music_volume", hint_colors.green, "", "" },   { step = 0.01, min = 0, max = 1 } },
+
+    { "snd_efx",          "mm_opt_sound",    "check", { "ui_mm_efx", hint_colors.white, "", "" } },
+
+    { "g_music_tracks",   "mm_opt_gameplay", "check", { "ui_mm_ambient", hint_colors.white, "", "" },        { depend = "restart" } },
+}
+
+local video_params = {
+    separator(""),
+    separator("VIDEO"),
+    separator(""),
+
+    { "vid_mode",                  "mm_opt_video",        "list",  { "ui_mm_resolution", hint_colors.white, "", "" },                                                        { depend = "restart" } },
+    { "_preset",                   "mm_opt_video_preset", "list",  { "ui_mm_quality_presets", hint_colors.white, "", "" },                                                   { id = "combo_preset", depend = "restart" } },
+    { "r_fps_lock",                "mm_opt_video",        "list",  { "ui_mm_fps_lock", hint_colors.white, "", "" } },
+
+    { "ssfx_saturation",             "mm_opt_video",     "track", { "ui_mm_gamma", hint_colors.white, "", "" },                                                               { step = 0.01, min = 0, max = 1.5 } },
+    { "ssfx_exposure",               "mm_opt_video",     "track", { "ui_mm_contrast", hint_colors.white, "", "" },                                                            { step = 0.01, min = 0, max = 1.5 } },
+    { "ssfx_gamma",                  "mm_opt_video",     "track", { "ui_mm_brightness", hint_colors.white, "", "" },                                                          { step = 0.01, min = 0, max = 1.5 } },
+
+    { "ssfx_color_grading",          "mm_opt_video_adv", "track", { "ui_mm_r2_color_grading_r", hint_colors.white, "", "" },                                                  { index = 0, step = 0.01, min = 0, max = 1 } },
+    { "ssfx_color_grading",          "mm_opt_video_adv", "track", { "ui_mm_r2_color_grading_g", hint_colors.white, "", "" },                                                  { index = 1, step = 0.01, min = 0, max = 1 } },
+    { "ssfx_color_grading",          "mm_opt_video_adv", "track", { "ui_mm_r2_color_grading_b", hint_colors.white, "", "" },                                                  { index = 2, step = 0.01, min = 0, max = 1 } },
+
+    { "g_font_scale_x",              "mm_opt_video",     "track", { "ui_mm_font_scale_x", hint_colors.white, "", "" },                                                        { step = 0.01, min = 0.5, max = 2 } },
+    { "g_font_scale_y",              "mm_opt_video",     "track", { "ui_mm_font_scale_y", hint_colors.white, "", "" },                                                        { step = 0.01, min = 0.5, max = 2 } },
+
+--    { "rs_v_sync",      "mm_opt_video_adv", "check", { "ui_mm_vsync", hint_colors.green, "video_settings_name_16", "video_settings_desc_16" }, { depend = "vid" } },
+
+    separator(""),
+    separator("VIDEO ADVANCED"),
+    separator(""),
+
+    { "r2_ls_squality",              "mm_opt_video_adv", "track", { "ui_mm_sun_quality", hint_colors.yellow, "video_settings_name_15", "", },                                  { step = 0.1, min = 0.5, max = 3 } },
+    --
+    { "fov",                         "mm_opt_video_adv", "track", { "ui_mm_fov", hint_colors.green, "video_settings_name_61", "video_settings_desc_61" },                      { step = 1, min = 50, max = 120 } },
+    { "hud_fov",                     "mm_opt_video_adv", "track", { "ui_mm_hud_fov", hint_colors.green, "video_settings_name_62", "video_settings_desc_62" },                  { step = 0.01, min = 0, max = 0.99 } },
+    { "r__detail_radius",            "mm_opt_video_adv", "track", { "ui_mm_detail_distance", hint_colors.red, "video_settings_name_5", "video_settings_desc_5" },              { is_integer = true, step = 1, min = 49, max = 300, smooth = false } },
+    { "r__detail_density",           "mm_opt_video_adv", "track", { "ui_mm_detail_density", hint_colors.red, "video_settings_name_4", "video_settings_desc_4" },               { step = 0.01, invert = true, min = 0.1, max = 1.0, smooth = false } },
+    { "r__detail_scale",             "mm_opt_video_adv", "track", { "ui_mm_detail_scale", hint_colors.yellow, "", "" },                                                        { step = 0.01, min = 0.1, max = 1.0, smooth = false } },
+    --
+    { "r_aa_mode",                   "mm_opt_video_adv", "list",  { "ui_mm_r_aa_mode", hint_colors.green, "video_settings_name_18", "video_settings_desc_18" },                { depend = "restart" } },
+    { "r3_msaa",                     "mm_opt_video_adv", "list",  { "ui_mm_msaa", hint_colors.red, "video_settings_name_19", "video_settings_desc_19" },                       { depend = "restart" } },
+    { "r_ao_mode",                   "mm_opt_video_adv", "list",  { "ui_mm_ao_mode", hint_colors.red, "video_settings_name_38", "video_settings_desc_38" },                    { depend = "restart" } },
+    { "r2_ssao",                     "mm_opt_video_adv", "list",  { "ui_mm_ssao_quality", hint_colors.red, "video_settings_name_37", "video_settings_desc_37" },               { depend = "restart" } },
+    --
+    { "r__smap_size",                "mm_opt_video_adv", "list",  { "ui_mm_r__smap_size", hint_colors.red, "video_settings_name_59", "video_settings_desc_59" },               { depend = "vid" } },
+    { "r2_sun_quality",              "mm_opt_video",     "list",  { "ui_mm_r2_sun_quality", hint_colors.red, "", "" },                                                         { depend = "vid" } },
+    { "r_sunshafts_mode",            "mm_opt_video",     "list",  { "ui_mm_r2_sunshafts_mode", hint_colors.yellow, "video_settings_name_29", "video_settings_desc_29" },       { depend = "vid" } },
+    { "r__actor_shadow",             "mm_opt_video_adv", "check", { "ui_mm_r2_actor_shadow", hint_colors.green, "video_settings_name_56", "" } },
+    { "r2_sun",                      "mm_opt_video",     "check", { "ui_mm_r2_sun", hint_colors.red, "video_settings_name_11", "video_settings_desc_11" } },
+    { "r2_sun_details",              "mm_opt_video_adv", "check", { "ui_mm_r2_sun_details", hint_colors.red, "video_settings_name_12", "video_settings_desc_12" } },
+    --
+    { "r3_dynamic_wet_surfaces",     "mm_opt_video",     "check", { "ui_mm_r3_dynamic_wet_surfaces", hint_colors.yellow, "video_settings_name_49", "video_settings_desc_49" }, { depend = "vid" } },
+    { "r_sslr_enable",               "mm_opt_video_adv", "check", { "r_sslr_enable", hint_colors.yellow, "video_settings_name_51", "video_settings_desc_51" } },
+    --
+    { "r4_enable_tessellation",      "mm_opt_video_adv", "check", { "ui_mm_r4_enable_tessellation", hint_colors.green, "video_settings_name_52", "video_settings_desc_52" },   { depend = "vid" } },
+    --
+    { "r2_steep_parallax",           "mm_opt_video",     "check", { "ui_mm_r2_steep_parallax", hint_colors.yellow, "video_settings_name_39", "video_settings_desc_39" } },
+    { "r_terrain_parallax_enable",   "mm_opt_video_adv", "check", { "ui_mm_terrain_parallax", hint_colors.yellow, "video_settings_name_24", "video_settings_desc_24" },        { depend = "restart" } },
+    --
+
+    { "g_dof_reload",                "mm_opt_video_adv", "check", { "ui_mm_r2_reload_dof", hint_colors.white, "video_settings_name_41", "video_settings_desc_41" },            { depend = "vid" } },
+    { "g_dof_zoom",                  "mm_opt_video_adv", "check", { "ui_mm_r2_zoom_dof", hint_colors.white, "video_settings_name_42", "video_settings_desc_42" },              { depend = "vid" } },
+    { "ssfx_wpn_dof_2",              "mm_opt_video_adv", "track", { "ui_mm_dof_zoom_param", hint_colors.white, "", "" },                                                       { step = 0.01, min = 0.01, max = 1.0} },
+    { "r2_mblur_enable",             "mm_opt_video",     "check", { "ui_mm_r2_mblur_enable", hint_colors.white, "", "" },                                                      { depend = "vid" } },
+    { "r2_mblur",                    "mm_opt_video",     "track", { "ui_mm_r2_mblur", hint_colors.white, "", "" },                                                             { step = 0.01, min = 0.01, max = 1.0} },
+
+
+    { "r2_mask",                     "mm_opt_video_adv", "check", { "ui_mm_r2_mask", hint_colors.green, "video_settings_name_64", "video_settings_desc_64" } },
+    { "r2_visor_refl",               "mm_opt_video_adv", "check", { "ui_mm_r2_visor_refl", hint_colors.green, "video_settings_name_65", "", } },
+    { "r2_rain_drops",               "mm_opt_video_adv", "check", { "ui_mm_r2_rain_drops", hint_colors.green, "video_settings_name_47", "video_settings_desc_47" } },
+
+
+    { "r2_volumetric_lights",        "mm_opt_video_adv", "check", { "ui_mm_volumetric_light", hint_colors.yellow, "video_settings_name_50", "video_settings_desc_50" } },
+    { "ai_use_torch_dynamic_lights", "mm_opt_video_adv", "check", { "ui_mm_npc_torch", hint_colors.yellow, "video_settings_name_14", "video_settings_desc_14" } },
+    { "r3_volumetric_smoke",         "mm_opt_video_adv", "check", { "ui_mm_r3_volumetric_smoke", hint_colors.green, "video_settings_name_55", "video_settings_desc_55" } },
+
+    separator(""),
+    separator("ASYNCHRONY"),
+    separator(""),
+
+    { "r_mt_texload",                "mm_opt_video_adv", "check", { "ui_mm_mt_texload", hint_colors.white, "", "" },                                                            { depend = "restart" } },
+    { "r_mt_details",                "mm_opt_video_adv", "check", { "ui_mm_mt_details", hint_colors.white, "", "" },                                                            { depend = "restart" } },
+    { "r_mt_rain",                   "mm_opt_video_adv", "check", { "ui_mm_mt_rain",    hint_colors.white, "", "" },                                                            { depend = "restart" } },
+    { "r_mt_sun",                    "mm_opt_video_adv", "check", { "ui_mm_mt_sun",     hint_colors.white, "", "" },                                                            { depend = "restart" } },
+    { "g_prefetch",                  "mm_opt_gameplay",  "check", { "g_prefetch",       hint_colors.red,   "", "" },                                                            { depend = "restart" } },
+}
+
+--local adv_opt_params = {}
+
+--function append_opt(t)
+--    for _, v in ipairs(t) do
+--        table.insert(adv_opt_params, v)
+--    end
+--end
+
+class "options_dialog" (CUIScriptWnd)
+function options_dialog:__init(owner)
     super()
     self:SetFont(GetFontMedium())
+    self.owner = owner
 
     self.hint_name = nil
     self.hint_caption = nil
@@ -14,56 +165,69 @@ function options_dialog:__init()
 
     self:InitControls()
     self:InitCallBacks()
-    self:UpdateOptValues()
+
+    self:SetPage(1)
 end
 
 function options_dialog:__finalize()
-    -- log1("--options_dialog:__finalize() called!")
+    --log1("--options_dialog:__finalize() called!")
 end
 
 function options_dialog:InitControls()
-    local screen = device()
-    screen_aspect_ratio = screen.width / screen.height
-
     self:Init(0, 0, 1024, 768)
     self:Enable(true)
 
     local xml = CScriptXmlInit()
     xml:ParseFile("script_wnd\\ui_mm_opt.xml")
 
-    self.bg_st = xml:InitStatic("back_movie", self)
+    if self.owner then
+        xml:InitStatic("background", self)
+    end
     self.dialog = xml:InitStatic("main_dialog:dialog", self)
 
-    xml:InitFrame("frame_hint", self)
-    self.hint_name = xml:InitStatic("hint_name", self)
-    self.hint_caption = xml:InitStatic("hint_caption", self)
-    self.current_view = 1
+    self.scroll_buttons = xml:InitScrollView("main_dialog:scroll_buttons", self)
 
-    xml:InitStatic("main_dialog:cap_options", self.dialog)
+    local pages = {}
 
-    self.dlg_video = ui_mm_opt_video.opt_video()
-    self.dlg_video:InitControls(55, 74, xml, self)
-    self.dialog:AttachChild(self.dlg_video)
+    function add_page(title, control)
+        control.title = game.translate_string(title)
+        table.insert(pages, control)
+    end
 
-    self.dlg_sound = ui_mm_opt_sound.opt_sound()
-    self.dlg_sound:InitControls(55, 74, xml, self)
-    self.dlg_sound:Show(false)
-    self.dialog:AttachChild(self.dlg_sound)
+    local live_mode = not self.owner
 
-    self.dlg_gameplay = ui_mm_opt_gameplay.opt_gameplay()
-    self.dlg_gameplay:InitControls(55, 74, xml, self)
-    self.dlg_gameplay:Show(false)
-    self.dialog:AttachChild(self.dlg_gameplay)
+    --add_page("VIDEO", ui_mm_opt_adv.opt_adv(adv_opt_params, live_mode))
+    add_page("VIDEO", ui_mm_opt_adv.opt_adv(video_params, live_mode))
+    add_page("AUDIO", ui_mm_opt_adv.opt_adv(audio_params, live_mode))
+    add_page("GAMEPLAY", ui_mm_opt_adv.opt_adv(gameplay_params, live_mode))
+    if not live_mode then
+        add_page("CONTROLS", ui_mm_opt_controls.opt_controls())
+    end
+    --add_page("SSS", ui_mm_opt_adv.opt_adv(sss_params, live_mode))
 
-    self.dlg_controls = ui_mm_opt_controls.opt_controls()
-    self.dlg_controls:InitControls(55, 74, xml, self)
-    self.dlg_controls:Show(false)
-    self.dialog:AttachChild(self.dlg_controls)
+    self.pages = pages
 
-    self.dlg_video_adv = ui_mm_opt_video_adv.opt_video_adv()
-    self.dlg_video_adv:InitControls(55, 74, xml, self)
-    self.dlg_video_adv:Show(false)
-    self.dialog:AttachChild(self.dlg_video_adv)
+    for i, v in ipairs(self.pages) do
+        v:Init(55, 74, 700, 680)
+        v:SetAutoDelete(true)
+        v:InitControls(xml, self)
+        v:Show(false)
+        self.dialog:AttachChild(v)
+
+        local btn = xml:Init3tButton("main_dialog:btn_item", self.scroll_buttons)
+        btn:SetText(v.title)
+        v.button = btn
+
+        local goToPage = function() self:SetPage(i) end
+
+        self:Register(btn, "btn_to_controls_" .. i)
+        self:AddCallback("btn_to_controls_" .. i, ui_events.BUTTON_CLICKED, goToPage)
+    end
+
+    if not live_mode and db.actor then
+        local btn = xml:Init3tButton("main_dialog:btn_ingame", self.dialog)
+        self:Register(btn, "btn_ingame")
+    end
 
     local btn = xml:Init3tButton("main_dialog:btn_accept", self.dialog)
     self:Register(btn, "btn_accept")
@@ -71,17 +235,22 @@ function options_dialog:InitControls()
     btn = xml:Init3tButton("main_dialog:btn_cancel", self.dialog)
     self:Register(btn, "btn_cancel")
 
-    self.tab = xml:InitTab("main_dialog:tab", self.dialog)
-    self:Register(self.tab, "tab")
+    xml:InitFrame("frame_hint", self)
+    self.hint_name = xml:InitStatic("hint_name", self)
+    self.hint_caption = xml:InitStatic("hint_caption", self)
 
     self.message_box = CUIMessageBoxEx()
     self.message_box:Init("message_box_restart_game")
 end
 
-function options_dialog:UpdateOptValues(flag) -- true - применить настройки, false - отменить настройки, nil - просто обновить дефолтные значения
+local opt_tbl = { "mm_opt_video_preset", "mm_opt_video", "mm_opt_video_adv", "mm_opt_gameplay", "mm_opt_sound", "mm_opt_controls", "key_binding" }
+
+function options_dialog:UpdateOptValues(flag) --true - ��������� ���������, false - �������� ���������, nil - ������ �������� ��������� ��������
+    if flag == false then
+        game_options.init()
+    end
+
     local OptMgr = COptionsManager()
-    local opt_tbl = {"mm_opt_video_preset", "mm_opt_video", "mm_opt_video_adv", "mm_opt_gameplay", "mm_opt_sound",
-                     "mm_opt_controls", "key_binding"}
     for _, opt_name in ipairs(opt_tbl) do
         if flag == true then
             OptMgr:SaveValues(opt_name)
@@ -96,103 +265,103 @@ function options_dialog:UpdateOptValues(flag) -- true - применить на�
         OptMgr:SetCurrentValues(opt_name)
         OptMgr:SaveBackupValues(opt_name)
     end
+
+    for _, v in ipairs(self.pages) do
+        if flag == true and v.script_save then
+            v:script_save()
+        elseif v.script_load then
+            v:script_load()
+        end
+    end
+
+    if flag == true then
+        game_options.save()
+    end
 end
 
 function options_dialog:InitCallBacks()
-    self:AddCallback("tab", ui_events.TAB_CHANGED, self.OnTabChange, self)
-    self:AddCallback("btn_advanced_graphic", ui_events.BUTTON_CLICKED, self.OnBtnAdvGraphic, self)
+    self:AddCallback("combo_preset", ui_events.LIST_ITEM_SELECT, self.OnPresetChanged, self)
+
+    self:AddCallback("btn_ingame", ui_events.BUTTON_CLICKED, self.OpenInGame, self)
     self:AddCallback("btn_accept", ui_events.BUTTON_CLICKED, self.OnBtnAccept, self)
     self:AddCallback("btn_cancel", ui_events.BUTTON_CLICKED, self.OnBtnCancel, self)
-    self:AddCallback("combo_preset", ui_events.LIST_ITEM_SELECT, self.OnPresetChanged, self)
-    self:AddCallback("btn_simply_graphic", ui_events.BUTTON_CLICKED, self.OnSimplyGraphic, self)
-    self:AddCallback("btn_keyb_default", ui_events.BUTTON_CLICKED, self.Onbtn_keyb_default, self)
-    self:AddCallback("btn_advanced_graphic", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
+    self:AddCallback("btn_default", ui_events.BUTTON_CLICKED, self.OnBtnDefault, self)
+
     self:AddCallback("btn_accept", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
     self:AddCallback("btn_cancel", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-    self:AddCallback("btn_default_graphic", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-    self:AddCallback("btn_default_sound", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-    self:AddCallback("btn_simply_graphic", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
+    self:AddCallback("btn_default", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
+end
+
+function options_dialog:OpenInGame()
+    get_console():execute("main_menu off")
+    if db.actor then
+        local binder = db.actor:binded_object()
+        binder:show_ingame_options()
+    end
 end
 
 function options_dialog:HintRefresh()
     self.hint_name:SetText(game.translate_string("hint_name_text"))
-    if self.current_view == 1 then
-        self.hint_caption:SetText(game.translate_string("hint_caption_text"))
-    else
-        self.hint_caption:SetText(game.translate_string("hint_caption_adv_text"))
-    end
+    self.hint_caption:SetText(game.translate_string("hint_caption_adv_text"))
 end
 
-function options_dialog:Onbtn_keyb_default()
+function options_dialog:OnBtnDefault()
     cmd("unbindall")
 
     local opt = COptionsManager()
-    opt:SetCurrentValues("mm_opt_controls")
     opt:SetCurrentValues("key_binding")
 end
 
+local need_restart = false
+
 function options_dialog:OnPresetChanged()
     local opt = COptionsManager()
+
     opt:SetCurrentValues("mm_opt_video")
     opt:SetCurrentValues("mm_opt_video_adv")
+
     self:show_need_restart_wnd()
 end
 
 function options_dialog:OnBtnAccept()
+    if need_restart then
+        self:GetHolder():start_stop_menu(self.message_box, true)
+        need_restart = false
+    end
+
     self:UpdateOptValues(true)
 
     self:GetHolder():start_stop_menu(self, true)
-    self.owner:Show(true)
+    if self.owner then
+        self.owner:Show(true)
+    end
 
     self:HintRefresh()
 
-    cmd("cfg_save") -- сохраняем файл настроек на диск
+    cmd("cfg_save") -- ��������� ���� �������� �� ����
 end
 
 function options_dialog:OnBtnCancel()
     self:UpdateOptValues(false)
 
     self:GetHolder():start_stop_menu(self, true)
-    self.owner:Show(true)
-
-    self:HintRefresh()
-end
-
-function options_dialog:OnTabChange()
-    self.dlg_video:Show(false)
-    self.dlg_sound:Show(false)
-    self.dlg_gameplay:Show(false)
-    self.dlg_controls:Show(false)
-    self.dlg_video_adv:Show(false)
-    self.current_view = 1
-
-    self:HintRefresh()
-
-    local i = self.tab:GetActiveIndex()
-    if i == 0 then
-        self.dlg_video:Show(true)
-    elseif i == 1 then
-        self.dlg_sound:Show(true)
-    elseif i == 2 then
-        self.dlg_gameplay:Show(true)
-    elseif i == 3 then
-        self.dlg_controls:Show(true)
+    if self.owner then
+        self.owner:Show(true)
     end
-end
 
-function options_dialog:OnBtnAdvGraphic()
-    self.dlg_video:Show(false)
-    self.dlg_video_adv:Show(true)
-
-    self.current_view = 2
     self:HintRefresh()
 end
 
-function options_dialog:OnSimplyGraphic()
-    self.dlg_video:Show(true)
-    self.dlg_video_adv:Show(false)
+function options_dialog:SetPage(index)
+    for _, v in ipairs(self.pages) do
+        v:Show(false)
+        v.button:SetCheck(false)
+    end
 
-    self.current_view = 1
+    self.current_view = index
+    self.pages[index]:Show(true)
+    self.pages[index].button:SetCheck(true)
+
     self:HintRefresh()
 end
 
@@ -202,14 +371,7 @@ function options_dialog:OnKeyboard(dik, keyboard_action)
     end
     if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
         if dik_to_bind(dik) == key_bindings.kQUIT then
-            if self.dlg_video_adv:IsShown() then
-                self.dlg_video_adv:Show(false)
-                self.dlg_video:Show(true)
-                self.current_view = 1
-            else
-                self:OnBtnCancel() -- KRodin: мне кажется при нажатии esc - делать отмену настроек правильно. А то они не сбросятся.
-            end
-            self:HintRefresh()
+            self:OnBtnCancel()
         end
         return true
     end
@@ -218,5 +380,5 @@ function options_dialog:OnKeyboard(dik, keyboard_action)
 end
 
 function options_dialog:show_need_restart_wnd()
-    self:GetHolder():start_stop_menu(self.message_box, true)
+    need_restart = true
 end
