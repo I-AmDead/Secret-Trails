@@ -86,8 +86,6 @@ local video_params = {
     separator("VIDEO ADVANCED"),
     separator(""),
 
-    { "r2_ls_squality",              "mm_opt_video_adv", "track", { "ui_mm_sun_quality", hint_colors.yellow, "video_settings_name_15", "", },                                  { step = 0.1} },
-    --
     { "fov",                         "mm_opt_video_adv", "track", { "ui_mm_fov", hint_colors.green, "video_settings_name_61", "video_settings_desc_61" },                      { step = 1} },
     { "hud_fov",                     "mm_opt_video_adv", "track", { "ui_mm_hud_fov", hint_colors.green, "video_settings_name_62", "video_settings_desc_62" },                  { step = 0.01} },
     { "r__detail_radius",            "mm_opt_video_adv", "track", { "ui_mm_detail_distance", hint_colors.red, "video_settings_name_5", "video_settings_desc_5" },              { is_integer = true, step = 1, smooth = false } },
@@ -180,7 +178,14 @@ function options_dialog:InitControls()
     if self.owner then
         xml:InitStatic("background", self)
     end
-    self.dialog = xml:InitStatic("main_dialog:dialog", self)
+
+    local live_mode = not self.owner
+
+    if live_mode then
+        self.dialog = xml:InitStatic("main_dialog:dialog_ingame", self)
+    else
+        self.dialog = xml:InitStatic("main_dialog:dialog", self)
+    end
 
     self.scroll_buttons = xml:InitScrollView("main_dialog:scroll_buttons", self)
 
@@ -190,8 +195,6 @@ function options_dialog:InitControls()
         control.title = game.translate_string(title)
         table.insert(pages, control)
     end
-
-    local live_mode = not self.owner
 
     --add_page("VIDEO", ui_mm_opt_adv.opt_adv(adv_opt_params, live_mode))
     add_page("VIDEO", ui_mm_opt_adv.opt_adv(video_params, live_mode))
