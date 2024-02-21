@@ -1,4 +1,4 @@
-function dof_enable()
+local function dof_enable()
     if db.actor:dont_has_info("ui_pda") then
         set_dof_params(1.0, 1.0, 1.0, 1.1)
     else
@@ -6,38 +6,24 @@ function dof_enable()
     end
 end
 
-function dof_disable()
+local function dof_disable()
     set_dof_params(0.0, 0.0, 0.0, 0.0)
 end
 
-function on_first_update()
+local function on_first_update()
     cmd("ssfx_wpn_dof_2 0.5")
     set_dof_params(0.0, 0.0, 0.0, 0.0)
     shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
 end
 
-function on_key_down(key, bind)
+local function on_key_down(key, bind)
     if not (bind == key_bindings.kSWITCH_MARK or bind == key_bindings.kSWITCH_MARK_COLOR) then return end
 
     if not (db.actor and db.actor:alive()) then return end
 
     local wpn = db.actor:active_item()
     if not wpn then return end
-
-    local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
-    local dots_number = get_u32(wpn:section(), "dots_number", 0)
-    if scope_name and get_line_exist(scope_name, "dots_number") then
-        dots_number = get_u32(scope_name, "dots_number", 0)
-    else
-        scope_name = wpn:section()
-    end
-    if dots_number and dots_number > 0 then
-        if bind == key_bindings.kSWITCH_MARK then
-            switch_mark(false, dots_number, scope_name)
-        else
-            switch_color_mark(false, scope_name)
-        end
-    end
+    mark_control(wpn, false, bind)
 end
 
 function on_dots_update()
@@ -46,68 +32,60 @@ function on_dots_update()
     local wpn = db.actor:active_item()
     if not wpn then return end
 
-    if not last_weapon_id or last_weapon_id ~= wpn:id() then
-        last_weapon_id = wpn:id()
-        local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
-        local dots_number = get_u32(wpn:section(), "dots_number", 0)
-        if scope_name and get_line_exist(scope_name, "dots_number") then
-            dots_number = get_u32(scope_name, "dots_number", 0)
-        else
-            scope_name = wpn:section()
+    if last_weapon_id and last_weapon_id == wpn:id() then return end
+    last_weapon_id = wpn:id()
+    mark_control(wpn, true)
+end
+
+function mark_control(wpn, force, bind)
+    local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
+    local dots_number = get_u32(wpn:section(), "dots_number", 0)
+    if scope_name and get_line_exist(scope_name, "dots_number") then
+        dots_number = get_u32(scope_name, "dots_number", 0)
+    else
+        scope_name = wpn:section()
+    end
+    if not force then
+        if dots_number and dots_number > 0 then
+            if bind == key_bindings.kSWITCH_MARK then
+                settings_mark(false, dots_number, "mark_number", scope_name)
+            else
+                settings_mark(false, 3, "mark_color", scope_name)
+            end
         end
-        switch_mark(true, dots_number, scope_name)
-        switch_color_mark(true, scope_name)
+    else
+        settings_mark(true, dots_number, "mark_number", scope_name)
+        settings_mark(true, 3, "mark_color", scope_name)
     end
 end
 
 local last_weapon_id
 local snd_adjust = sound_object('interface\\mark_adjust')
-
-function switch_mark(update, dots_number, scope_name)
-    local value = ogse.load_var("mark_number" .. scope_name, 0)
+function settings_mark(update, max_value, value_name, scope_name)
+    local value = ogse.load_var(value_name .. scope_name, 0)
     if not update then
-        value = value < dots_number - 1 and value + 1 or 0
-        ogse.save_var("mark_number" .. scope_name, value)
+        value = value < max_value - 1 and value + 1 or 0
+        ogse.save_var(value_name .. scope_name, value)
         game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
         snd_adjust:play(db.actor, 0, sound_object.s2d)
     end
-    shader_set_custom_param("mark_number", value, dots_number, 0, 0)
-end
-
-function switch_color_mark(update, scope_name)
-    local value = ogse.load_var("mark_color" .. scope_name, 1)
-    if not update then
-        value = value < 3 and value + 1 or 1
-        ogse.save_var("mark_color" .. scope_name, value)
-        game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
-        snd_adjust:play(db.actor, 0, sound_object.s2d)
-    end
-    if value < 3 then
+    if value_name == "mark_color" then
         if value < 2 then
-            shader_set_custom_param("mark_color", 1, 0, 0)
-        else
-            shader_set_custom_param("mark_color", 0, 1, 0)
-        end
-    else
-        shader_set_custom_param("mark_color", 0, 0, 1)
-    end
-end
-
-function on_actor_before_hit(obj, hit_data)
-    if hit_data.hit_type == hit.radiation then
-        if hit_data.power > 0 then
-            local who = level.object_by_id(hit_data.who_id)
-            if who and string.find(who:section(), "zone_radioactive") then
-                shader_set_custom_param("radiation_effect", hit_data.power * 1000, 0, 0, 0)
+            if value < 1 then
+                shader_set_custom_param(value_name, 1, 0, 0)
+            else
+                shader_set_custom_param(value_name, 0, 1, 0)
             end
         else
-            shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
+            shader_set_custom_param(value_name, 0, 0, 1)
         end
+    else
+        shader_set_custom_param(value_name, value, max_value, 0)
     end
 end
 
 local rad_effect
-function update_rad_effect()
+local function update_rad_effect()
     local rads = ogse_dbg_anomaly_binder.get_max_radlevel()
     local distance = ogse_dbg_anomaly_binder.get_ditance_to_radzone()
     if rads > 0 then
@@ -127,9 +105,9 @@ function on_actor_update()
 end
 
 function attach(sm)
-    sm:subscribe({ signal = "on_first_update",     fun = this.on_first_update })
-    sm:subscribe({ signal = "ui_on_dialog_show",   fun = this.dof_enable })
-    sm:subscribe({ signal = "ui_on_dialog_hide",   fun = this.dof_disable })
-    sm:subscribe({ signal = "on_update",	       fun = this.on_actor_update })
-    sm:subscribe({ signal = "on_key_down",         fun = this.on_key_down })
+    sm:subscribe({ signal = "on_first_update",     fun = on_first_update })
+    sm:subscribe({ signal = "ui_on_dialog_show",   fun = dof_enable })
+    sm:subscribe({ signal = "ui_on_dialog_hide",   fun = dof_disable })
+    sm:subscribe({ signal = "on_update",           fun = on_actor_update })
+    sm:subscribe({ signal = "on_key_down",         fun = on_key_down })
 end
