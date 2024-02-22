@@ -180,69 +180,42 @@ end
 
 -- EMULATION HARVEST
 function harvest(on_take)
-    if not anim_plays and allow_animation() then
-        local anm_start = 0
-        local prev_active_slot = 255
-        local anm_subscribed = false
-        level.disable_input()
+    if allow_animation() then
         local harvest_anm_sec = "anim_harvest"
         local loot_anm_sec = "anim_loot"
-        local harvest_anm_time
-        local loot_anm_time
-        anim_plays = true
 
-        local function play_anim()
-            local time_g = time_global()
-            if mc_anm_state == 1 then
-                local prev_slot = db.actor:active_slot()
-                if prev_active_slot == 255 then
-                    prev_active_slot = prev_slot
-                end
-                db.actor:activate_slot(255)
-                mc_anm_state = 2
-                toggle_force_crouch()
-            elseif mc_anm_state == 2 and not db.actor:active_item() then
-                speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
-                level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
-                level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
-                level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false, "")
-                snd_harvest:play(db.actor, 0, sound_object.s2d)
-                snd_harvest.frequency = speed_k
-                anm_start = time_g
-                harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
-                mc_anm_state = 3
-            elseif mc_anm_state == 3 and time_g > anm_start + harvest_anm_time + 100 then -- Пусть немного затупит прежде чем бросать мясо
+        local prev_slot = db.actor:active_slot()
+        db.actor:activate_slot(255)
+
+        dsh.wait_condition(function() return not db.actor:active_item() end, 
+        function()
+            speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
+            level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
+            level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
+            level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false, "")
+            level.disable_input()
+            animation_on()
+            toggle_force_crouch()
+            snd_harvest:play(db.actor, 0, sound_object.s2d)
+            snd_harvest.frequency = speed_k
+            local harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
+            dsh.timeout(harvest_anm_time + 100, function()
                 level.add_cam_effector("script\\harvest_loot.anm", 9000, false, "")
                 snd_loot:play(db.actor, 0, sound_object.s2d)
                 snd_loot.frequency = speed_k
-                anm_start = time_g
-                loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
-                mc_anm_state = 4
-            elseif mc_anm_state == 4 and time_g > anm_start + loot_anm_time - 500 then
-                toggle_force_crouch()
-                on_take()
-                level.enable_input()
-                mc_anm_state = 5
-                archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
-            elseif mc_anm_state == 5 and time_g > anm_start + loot_anm_time then
-                db.actor:activate_slot(prev_active_slot)
-                anim_plays = false
-                if anm_subscribed then
-                    ogsr_signals.get_mgr():unsubscribe(anm_subscribed)
-                    anm_subscribed = nil
-                end
-
-                mc_anm_state = 1
-            end
-        end
-
-        anm_subscribed = {
-            signal = "on_update",
-            fun = function()
-                play_anim()
-            end
-        }
-        ogsr_signals.get_mgr():subscribe(anm_subscribed)
+                local loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
+                dsh.timeout(loot_anm_time - 500, function()
+                    toggle_force_crouch()
+                    on_take()
+                    level.enable_input()
+                    archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
+                end)
+                dsh.timeout(loot_anm_time, function()
+                    animation_off()
+                    db.actor:activate_slot(prev_slot)
+                end)
+            end)
+        end)
     end
 end
 
@@ -312,73 +285,31 @@ end
 
 -- EMULATION SWIPE RAIN DROPS
 function watch_wide()
-    local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\gasmask.anm", 0.75)
-
-    if not anim_plays and allow_animation() then
-        local anm_start = 0
-        local anm_subscribed = false
+    if allow_animation() then
+        local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\gasmask.anm", 0.75)
         local watch_anm_sec = "anim_watch"
         local outfit = db.actor:item_in_slot(6)
-        if outfit then
-            exo = get_string(outfit:section(), "exo")
-            if exo then
-                watch_anm_sec = "anim_exo_watch"
-            end
+        if outfit and get_bool(outfit:section(), "exo", false) then
+            watch_anm_sec = "anim_exo_watch"
         end
-        local watch_anm_time
-        local function play_anim()
-            local time_g = time_global()
-            if not db.actor:alive() then
-                anim_plays = false
-                if anm_subscribed then
-                    ogsr_signals.get_mgr():unsubscribe(anm_subscribed)
-                    anm_subscribed = nil
-                end
-                animation_off()
-                return
-            end		
-            if mc_anm_state == 1 then
-                anm_start = time_g
-                watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
-                game.play_hud_anm(anm_name, 0, 0.5, 1, false)
-        	anim_plays = true
-        	animation_on()
-                mc_anm_state = 2
-            elseif mc_anm_state == 2 and time_g > anm_start + watch_anm_time then
-                if not key_release then
-                    game.set_hud_anm_time(anm_name, 10000000)
-                    game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
-                else
-                    watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
-                    mc_anm_state = 3
-                end
-                anm_start = time_g
-        	anim_plays = true
-        	animation_on()
-                ui_minimap_bioradar.hud_hide()
-            elseif mc_anm_state == 3 and time_g > anm_start + watch_anm_time then
+
+        local watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
+        game.play_hud_anm(anm_name, 0, 0.5, 1, false)
+        animation_on()
+        ui_minimap_bioradar.hud_hide()
+        dsh.timeout(watch_anm_time, function()
+            game.set_hud_anm_time(anm_name, 10000000)
+            game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
+            dsh.wait_condition(function() return key_release end, 
+            function()
                 game.stop_hud_motion()
                 watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
                 game.set_hud_anm_time(anm_name, (watch_anm_time + 200) / 1000)
-                mc_anm_state = 4
                 ui_minimap_bioradar.hud_show()
-            elseif mc_anm_state == 4 and time_g > anm_start + watch_anm_time then
-                anim_plays = false
-                if anm_subscribed then
-                    ogsr_signals.get_mgr():unsubscribe(anm_subscribed)
-                    anm_subscribed = nil
-                end
-                mc_anm_state = 1
-                animation_off()
-            end
-        end
-
-        anm_subscribed = {
-            signal = "on_update",
-            fun = function()
-                play_anim()
-            end
-        }
-        ogsr_signals.get_mgr():subscribe(anm_subscribed)
+                dsh.timeout(watch_anm_time, function()
+                    animation_off()
+                end)
+            end)
+        end)
     end
 end
