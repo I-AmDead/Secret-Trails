@@ -1648,7 +1648,7 @@ function set_community_jila(actor, npc)
 end
 
 function spawn_caterpillar()
-    local position = db.actor:position(x, y, z)
+    local position = db.actor:position()
     position.x = position.x + 5
     position.y = position.y + 5
     position.z = position.z
@@ -1656,150 +1656,11 @@ function spawn_caterpillar()
     local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
-function check_caterpillar_new()
-    if db.actor and db.actor:dont_has_info("kruglov_art_spawn") then
+function check_caterpillar(actor, npc, info)
+    if db.actor and db.actor:dont_has_info(info) then
         spawn_caterpillar()
-        db.actor:give_info_portion("kruglov_art_spawn")
-    end
-end
-
-function check_caterpillar1()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info1") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info1")
-    end
-end
-
-function check_caterpillar2()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info2") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info2")
-    end
-end
-
-function check_caterpillar3()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info3") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info3")
-    end
-end
-
-function check_caterpillar4()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info4") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info4")
-    end
-end
-
-function check_caterpillar5()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info5") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info5")
-    end
-end
-
-function check_caterpillar6()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info6") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info6")
-    end
-end
-
-function check_caterpillar7()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info7") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info7")
-    end
-end
-
-function check_caterpillar8()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info8") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info8")
-    end
-end
-
-function check_caterpillar9()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info9") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info9")
-    end
-end
-
-function check_caterpillar10()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info10") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info10")
-    end
-end
-
-function check_caterpillar11()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info11") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info11")
-    end
-end
-
-function check_caterpillar12()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info12") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info12")
-    end
-end
-
-function check_caterpillar13()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info13") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info13")
-    end
-end
-
-function check_caterpillar14()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info14") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info14")
-    end
-end
-
-function check_caterpillar15()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info15") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info15")
-    end
-end
-
-function check_caterpillar16()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info16") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info16")
-    end
-end
-
-function check_caterpillar17()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info17") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info17")
-    end
-end
-
-function check_caterpillar18()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info18") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info18")
-    end
-end
-
-function check_caterpillar19()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info19") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info19")
-    end
-end
-
-function check_caterpillar20()
-    if db.actor and db.actor:dont_has_info("spawn_caterpillar_info20") then
-        spawn_caterpillar()
-        db.actor:give_info_portion("spawn_caterpillar_info20")
+        db.actor:give_info_portion(info)
+        log3("art spawn done")
     end
 end
 
@@ -1875,19 +1736,19 @@ end
 
 function spawn_check_kontr()
     local position = db.actor:position()
-    position.x = position.x + 20
+    position.x = position.x + 10
     local obj = alife():create("m_controller_old", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function spawn_check_krovosos()
     local position = db.actor:position()
-    position.x = position.x + 50
+    position.x = position.x + 10
     local obj = alife():create("bloodsucker_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function spawn_check_burer()
     local position = db.actor:position()
-    position.x = position.x + 50
+    position.x = position.x + 10
     local obj = alife():create("burer_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
