@@ -163,16 +163,11 @@ local function on_first_update()
 
     if level.name() == "l02_garbage" then
         if not db.actor:has_info("art_garbage_spawn") then
-            spawn_ai_location("af_electra_flash", vector():set(-12.316145896912, 18.28110504, 117.60050964355), 170444,
-                354)
-            spawn_ai_location("af_electra_flash", vector():set(-75.99243927002, 20.78828811, 112.10626220703), 170444,
-                354)
-            spawn_ai_location("af_rusty_kristall", vector():set(-195.3737487793, 3.43506217, 208.96646118164), 32824,
-                345)
-            spawn_ai_location("af_ameba_slug", vector():set(-255.01333618164, 2.5012269020081, 97.402565002441), 7662,
-                339)
-            spawn_ai_location("af_rusty_sea-urchin", vector():set(-182.67608642578, 1.77206, -321.47311401367), 53729,
-                689)
+            spawn_ai_location("af_electra_flash", vector():set(-12.316145896912, 18.28110504, 117.60050964355), 170444, 354)
+            spawn_ai_location("af_electra_flash", vector():set(-75.99243927002, 20.78828811, 112.10626220703), 170444, 354)
+            spawn_ai_location("af_rusty_kristall", vector():set(-195.3737487793, 3.43506217, 208.96646118164), 32824, 345)
+            spawn_ai_location("af_ameba_slug", vector():set(-255.01333618164, 2.5012269020081, 97.402565002441), 7662, 339)
+            spawn_ai_location("af_rusty_sea-urchin", vector():set(-182.67608642578, 1.77206, -321.47311401367), 53729, 689)
             db.actor:give_info_portion("art_garbage_spawn")
         end
 
@@ -1872,11 +1867,11 @@ end
 
 function mina_band()
     local h = hit()
-    local posit = db.actor:position()
+    local pos = db.actor:position()
     local mina_band_particle = particles_object("explosions\\explosion_fuelcan")
     local mina_band_sound = sound_object([[weapons\t_rgd5_explosion]])
-    mina_band_particle:play_at_pos(posit)
-    mina_band_sound:play_at_pos(db.actor, posit, 0)
+    mina_band_particle:play_at_pos(pos)
+    mina_band_sound:play_at_pos(db.actor, pos, 0)
     h.draftsman = db.actor
     h.direction = vector():set(0, 0, 0)
     h:bone("bip01_spine")
@@ -1893,21 +1888,15 @@ local inv_arts_radiation = 0
 local time_previous = time_global()
 local time_step = 287
 
-function change_inv_arts_radiation(delta)
-    inv_arts_radiation = inv_arts_radiation + delta
-end
-
 local function on_update()
+    if not db.actor:object("box_black") then return end
+
     local time_current = time_global() + 5500
     local time_delta = time_current - time_previous
 
     if time_delta >= time_step then
         local delta_radiation = inv_arts_radiation * math.min(5, time_delta / time_step)
-
-        -- прибавляем чуть-чуть радиации от box_black
-        if db.actor:object("box_black") then
-            delta_radiation = delta_radiation + 0.004 -- подобрать экспериментальным путем
-        end
+        delta_radiation = delta_radiation + 0.004
 
         if delta_radiation > 0 then
             db.actor.radiation = delta_radiation
@@ -1915,7 +1904,6 @@ local function on_update()
         time_previous = time_current
     end
 end
-
 ---------------------------------------------------------РАДИАЦИЯ ARC-----------------------------------------------
 
 function spawn_mervin()
@@ -1934,8 +1922,10 @@ function pda_priz_spawn()
 end
 
 function mina_sclad()
-    local apos = db.actor:position()
     local h = hit()
+    local pos = db.actor:position()
+    local mina_sclad_particle = particles_object("explosions\\explosion_fuelcan")
+    local mina_sclad_sound = sound_object([[weapons\t_rgd5_explosion]])
     h.draftsman = db.actor
     h.direction = vector():set(0, 0, 0)
     h:bone("bip01_spine")
@@ -1943,108 +1933,17 @@ function mina_sclad()
     h.power = 0.6
     h.impulse = 500
     db.actor:hit(h)
-    local mina_sclad_particle = particles_object("explosions\\explosion_fuelcan")
-    local mina_sclad_sound = sound_object([[weapons\t_rgd5_explosion]])
-    mina_sclad_particle:play_at_pos(apos)
-    mina_sclad_sound:play_at_pos(db.actor, apos, 0)
+    mina_sclad_particle:play_at_pos(pos)
+    mina_sclad_sound:play_at_pos(db.actor, pos, 0)
     level.add_pp_effector("amk_shoot.ppe", 2011, false)
 end
 
 function spawn_military_tech()
     if level.name() == "l01_escape" and not db.actor:has_info("krest_work_spawn") then
-        spawn_military_tech_new(alife():create("helicopter", vector():set(-160.0, -40.0, -610.0), 128298, 11), "helicopter1")
+        amk_mod.spawn_military_tech_pack(alife():create("helicopter", vector():set(-160.0, -40.0, -610.0), 128298, 11), "vehicle_btr", "scripts\\new\\helicopter1.ltx")
         db.actor:give_info_portion("krest_work_spawn")
+        news_manager.send_tip(db.actor, "Пипец мужики, Вертолёт")
     end
-end
-
-function spawn_military_tech_new(obj, spawn_item)
-    local packet = net_packet()
-    obj:STATE_Write(packet)
-
-    -- свойства cse_alife_object
-    local game_vertex_id = packet:r_u16()
-    local cse_alife_object__unk1_f32 = packet:r_float()
-    local cse_alife_object__unk2_s32 = packet:r_s32()
-    local level_vertex_id = packet:r_s32()
-    local object_flags = packet:r_s32()
-    local custom_data = packet:r_stringZ()
-    local story_id = packet:r_s32()
-    local cse_alife_object__unk3_s32 = packet:r_s32()
-
-    -- свойства cse_visual
-    local model_visual = packet:r_stringZ()
-    local cse_visual__unk1_u8 = packet:r_u8()
-    local motion_name
-    if spawn_item == "helicopter" or "helicopter1" or "helicopter2" then
-        -- свойства cse_motion
-        motion_name = packet:r_stringZ()
-    end
-
-    -- свойства cse_ph_skeleton
-    local skeleton_name = packet:r_stringZ()
-    local cse_ph_skeleton__unk1_u8 = packet:r_u8()
-    local cse_ph_skeleton__unk2_u16 = packet:r_u16()
-    local health
-    local cse_alife_helicopter__unk1_sz
-    local engine_sound
-
-    if spawn_item == "helicopter" or "helicopter1" or "helicopter2" then
-        -- свойства cse_alife_helicopter
-        cse_alife_helicopter__unk1_sz = packet:r_stringZ()
-        engine_sound = packet:r_stringZ()
-    elseif spawn_item == "vehicle_btr" then
-        health = packet:r_float()
-    end
-
-    -- теперь заполняем нужные параметры
-    -- свойства cse_alife_object
-    packet:w_begin(game_vertex_id)
-    packet:w_float(cse_alife_object__unk1_f32)
-    packet:w_s32(cse_alife_object__unk2_s32)
-    packet:w_s32(level_vertex_id)
-    object_flags = bit_not(5) -- ~5 = 0xfffffffa
-    packet:w_s32(object_flags)
-    if spawn_item == "helicopter1" then
-        packet:w_stringZ("[logic]\ncfg = scripts\\new\\helicopter1.ltx")
-    elseif spawn_item == "helicopter" then
-        packet:w_stringZ("[logic]\ncfg = scripts\\esc\\esc_blockpost_heli.ltx")
-    elseif spawn_item == "helicopter2" then
-        packet:w_stringZ("[logic]\ncfg = scripts\\new\\helicopter2.ltx")
-    elseif spawn_item == "vehicle_btr" then
-        packet:w_stringZ("[logic]\ncfg = scripts\\new\\vehicle_btr.ltx")
-    end
-    packet:w_s32(-1)
-    packet:w_s32(cse_alife_object__unk3_s32)
-
-    -- свойства cse_visual
-    packet:w_stringZ(model_visual)
-    packet:w_u8(cse_visual__unk1_u8)
-
-    if spawn_item == "helicopter" or "helicopter1" or "helicopter2" then
-        packet:w_stringZ(motion_name)
-    end
-
-    -- свойства cse_ph_skeleton
-    skeleton_name = "idle"
-    packet:w_stringZ(skeleton_name)
-    packet:w_u8(cse_ph_skeleton__unk1_u8)
-    packet:w_u16(cse_ph_skeleton__unk2_u16)
-
-    if spawn_item == "helicopter" or "helicopter1" or "helicopter2" then
-        -- свойства cse_alife_helicopter
-        cse_alife_helicopter__unk1_sz = "idle"
-        engine_sound = "alexmx\\helicopter"
-        packet:w_stringZ(cse_alife_helicopter__unk1_sz)
-        packet:w_stringZ(engine_sound)
-    elseif spawn_item == "vehicle_btr" then
-        health = 1
-        packet:w_float(health)
-    end
-    -- считываем скорректированные параметры
-    packet:r_seek(0)
-    obj:STATE_Read(packet, packet:w_tell())
-
-    news_manager.send_tip(db.actor, "Пипец мужики, Вертолёт")
 end
 
 function create_car_restr()
