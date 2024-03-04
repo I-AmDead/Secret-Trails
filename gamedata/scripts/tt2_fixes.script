@@ -112,6 +112,21 @@ local function on_drag_drop(obj)
     end
 end
 
+function fix_stancia_level_changer_to_pripyat()
+    if ogse.var_exists("fix_stancia_level_changer_to_pripyat") then
+        return
+    end
+    local sobj = alife():object("exit_to_pripyat_from_st1")
+    if not sobj then return end
+    local lc = sobj:get_level_changer()
+    lc.dest_game_vertex_id = 2270
+    lc.dest_level_vertex_id = 142097
+    lc.dest_position = vector():set(31.301964, 1.033930, 411.079102)
+    lc.dest_direction = vector():set(-0.0000249865606747335, 3.14000010490417, -0.0000128936753753806)
+    log3("~~[%s]: fix %s (%s) (%s %s %s)", script_name(), sobj:name(), sobj.level_name, lc.dest_direction.x, lc.dest_direction.y, lc.dest_direction.z)
+    ogse.save_var("fix_stancia_level_changer_to_pripyat", true)
+end
+
 -- Фикс Радара - Склады, чтобы dest_position была не в геометрии
 function fix_radar_level_changer_to_ac()
     if ogse.var_exists("fix_exit_to_military_01") then
@@ -212,6 +227,7 @@ function fix_garbage_levsha() --Телепорт торгаша бандитов
 end
 
 function on_spawn()
+    fix_stancia_level_changer_to_pripyat() 
     fix_radar_level_changer_to_ac()
     fix_ac_level_changer_to_mg()
 end
