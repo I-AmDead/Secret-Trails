@@ -889,10 +889,45 @@ function WeatherManager:__init()
         local res = os.remove(wreset_marker_path)
         ogse_surge_mgr.surge_log("removing marker: %s", tostring(res))
         self.reset_weather = true
+    elseif string.find(command_line(), "-wreset") then
+        ogse_surge_mgr.surge_log("reset via command line -wreset flag is set")
+        self.reset_weather = true
     elseif always_reset then
         ogse_surge_mgr.surge_log("forced reset flag is set")
         self.reset_weather = true
     end
+
+    local weather_cfg = {}
+
+    -- проверка совместимсоти циклов погоды в сохранке и конфиге
+    local sect          = script_name() .. ".weather_dynamic"
+    local cycles_number = sys_ini:line_count(sect)
+    for i = 0, cycles_number - 1 do
+        local res, wn, cycle_ltx = sys_ini:r_line(sect, i, "", "")
+        weather_cfg[wn] = cycle_ltx
+    end
+
+    local function same_tbl(a, b)
+        for k,v in pairs(a) do
+            if b[k] ~= v then return false end
+        end
+        for k,v in pairs(b) do
+            if a[k] ~= v then return false end
+        end
+        return true
+    end
+
+    if ogse.var_exists("WeatherManager_cfg") then
+        local weather_cfg_save = ogse.load_var("WeatherManager_cfg")
+        if not same_tbl(weather_cfg, weather_cfg_save) then
+            ogse_surge_mgr.surge_log("reset weather due to different config")
+            self.reset_weather = true
+        end
+    end
+
+    log3("weather reset %s", self.reset_weather and "true" or "false")
+
+    ogse.save_var("WeatherManager_cfg", weather_cfg)
 
     self.forecasts = {} -- таблица со всеми прогнозами
     -- создаём соответствующие прогнозы
