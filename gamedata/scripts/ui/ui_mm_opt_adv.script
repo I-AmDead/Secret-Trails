@@ -1,6 +1,5 @@
--- Меню расширенных настроек для OGSR Engine
--- начальная идея KRodin (c) 2019
-
+-- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ OGSR Engine
+-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ KRodin (c) 2019
 local control_init_funs = {
     ["track"] = function(xml, parent, control_params)
         local ctr = xml:InitTrackBar("option_adv:track_item", parent)
@@ -26,7 +25,7 @@ local control_init_funs = {
         end
         return ctr
     end,
-    ["list"]  = function(xml, parent, control_params)
+    ["list"] = function(xml, parent, control_params)
         local ctr = xml:InitComboBox("option_adv:list_item", parent)
         if control_params then
             if control_params.always_show_scroll then
@@ -41,10 +40,10 @@ local control_init_funs = {
     ["check"] = function(xml, parent, control_params)
         local ctr = xml:InitCheck("option_adv:check_item", parent)
         return ctr
-    end,
+    end
 }
 
-class "opt_adv" (CUIWindow)
+class "opt_adv"(CUIWindow)
 function opt_adv:__init(options, live_mode)
     super()
     self.options = options
@@ -53,7 +52,7 @@ function opt_adv:__init(options, live_mode)
 end
 
 function opt_adv:__finalize()
-    --log1("--opt_adv:__finalize() called!")
+    -- log1("--opt_adv:__finalize() called!")
 end
 
 function opt_adv:script_load()
@@ -71,12 +70,12 @@ end
 local dbg_tooltip = true
 
 function opt_adv:InitControls(xml, handler)
-    --xml:InitFrame("frame", self)
+    -- xml:InitFrame("frame", self)
     self.scroll_v = xml:InitScrollView("option_adv:scroll_v", self)
 
-    -- перебираем с конца, поскольку в настройках scroll view в xml стоит параметр flip_vert="1",
-    -- который инвертирует порядок элементов, что в свою очередь сделано для того, чтобы визуально первые элементы
-    -- добавлялись последними, что в свою очередь позволяет раскрывающимся спискам перекрывать элементы, расположенные ниже по списку
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ scroll view пїЅ xml пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ flip_vert="1",
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    -- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     for i = #self.options, 1, -1 do
         local opt, group, ctr_type, desc, control_params = unpack(self.options[i])
         local label, color, hint_caption, hint_string = unpack(desc)
@@ -99,20 +98,6 @@ function opt_adv:InitControls(xml, handler)
                 hint_caption = label
             end
 
-            handler:Register(item, "option_adv_cap_" .. opt_key)
-            handler:AddCallback(
-                "option_adv_cap_" .. opt_key,
-                ui_events.STATIC_FOCUS_RECEIVED,
-                function()
-                    if (hint_caption and #hint_caption > 0) or (hint_string and #hint_string > 0) then
-                        handler.hint_name:SetText(hint_caption and game.translate_string(hint_caption) or "")
-                        handler.hint_caption:SetText(hint_string and game.translate_string(hint_string) or "")
-                    else
-                        handler:HintRefresh()
-                    end
-                end
-            )
-
             if ctr_type == "separator" then
                 local caption = xml:InitStatic("option_adv:sep_item", item)
                 caption:SetTextST(label)
@@ -129,19 +114,44 @@ function opt_adv:InitControls(xml, handler)
                     caption:SetTextColor(unpack(color))
                 end
 
+                handler:Register(caption, "option_adv_cap_" .. opt_key)
+                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:HintRefresh() end)
+                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function()
+                    if (hint_caption and #hint_caption > 0) or (hint_string and #hint_string > 0) then
+                        local settings_name = hint_caption and game.translate_string(hint_caption) or ""
+                        local settings_description = hint_string and game.translate_string(hint_string) or ""
+                        handler.hint_name:SetText(settings_name .. "\\n" .. settings_description)
+                        handler.hint_name:AdjustHeightToText()
+                        handler.hint_frame:Show(true)
+                        handler.hint_frame:SetWndSize(handler.hint_name:GetWidth() + 10, handler.hint_name:GetHeight() + 10)
+                        local cr = handler:GetMousePosX()
+                        if cr >= 512 then
+                            cr = cr - handler.hint_frame:GetWidth()
+                        else
+                            cr = cr + 40
+                        end
+                        handler.hint_frame:SetWndPos(cr, math.min(handler:GetMousePosY(),
+                            768 - handler.hint_frame:GetHeight()))
+                    else
+                        handler:HintRefresh()
+                    end
+                end)
+
                 local need_restart = control_params.depend and control_params.depend == "restart"
                 local ctl = control_init_funs[ctr_type](xml, item, control_params)
 
                 handler:Register(ctl, "option_adv:" .. ctr_type .. "_" .. opt_key)
 
                 if group == "script" then
-                    table.insert(self.script_ctrs, { ["control"] = ctl, ["option"] = opt })
+                    table.insert(self.script_ctrs, {
+                        ["control"] = ctl,
+                        ["option"] = opt
+                    })
 
-                    handler:AddCallback(
-                        "option_adv:" .. ctr_type .. "_" .. opt_key,
-                        ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED,
-                        function() game_options[opt] = ctl:GetCheck() end
-                    )
+                    handler:AddCallback("option_adv:" .. ctr_type .. "_" .. opt_key,
+                        ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED, function()
+                            game_options[opt] = ctl:GetCheck()
+                        end)
                 else
                     ctl:OptionItemRegister(opt, group)
 
@@ -158,11 +168,9 @@ function opt_adv:InitControls(xml, handler)
                 end
 
                 if need_restart == 1 then
-                    handler:AddCallback(
-                        "option_adv:" .. ctr_type .. "_" .. opt_key,
+                    handler:AddCallback("option_adv:" .. ctr_type .. "_" .. opt_key,
                         ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED,
-                        handler.show_need_restart_wnd, handler
-                    )
+                        handler.show_need_restart_wnd, handler)
                 end
             end
         end

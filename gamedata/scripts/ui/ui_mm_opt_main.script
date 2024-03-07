@@ -169,7 +169,6 @@ function options_dialog:__init(owner)
     self.owner = owner
 
     self.hint_name = nil
-    self.hint_caption = nil
     self.current_view = nil
 
     self:InitControls()
@@ -201,11 +200,11 @@ function options_dialog:InitControls()
         self.dialog = xml:InitStatic("main_dialog:dialog", self)
     end
 
-    self.scroll_buttons = xml:InitScrollView("main_dialog:scroll_buttons", self)
+    self.frame_buttons = xml:InitFrame("main_dialog:frame_buttons", self)
 
     local pages = {}
 
-    function add_page(title, control)
+    local function add_page(title, control)
         control.title = game.translate_string(title)
         table.insert(pages, control)
     end
@@ -214,22 +213,22 @@ function options_dialog:InitControls()
     add_page("VIDEO", ui_mm_opt_adv.opt_adv(video_params, live_mode))
     add_page("AUDIO", ui_mm_opt_adv.opt_adv(audio_params, live_mode))
     add_page("GAMEPLAY", ui_mm_opt_adv.opt_adv(gameplay_params, live_mode))
-    if not live_mode then
-        add_page("CONTROLS", ui_mm_opt_controls.opt_controls())
-    end
+    add_page("CONTROLS", ui_mm_opt_controls.opt_controls())
+
     --add_page("SSS", ui_mm_opt_adv.opt_adv(sss_params, live_mode))
 
     self.pages = pages
 
     for i, v in ipairs(self.pages) do
-        v:Init(55, 74, 700, 680)
+        v:Init(270, 74, 500, 640)
         v:SetAutoDelete(true)
         v:InitControls(xml, self)
         v:Show(false)
         self.dialog:AttachChild(v)
 
-        local btn = xml:Init3tButton("main_dialog:btn_item", self.scroll_buttons)
+        local btn = xml:Init3tButton("main_dialog:btn_item", self.frame_buttons)
         btn:SetText(v.title)
+        btn:SetWndPos((i - 1) * btn:GetWidth(), 0)
         v.button = btn
 
         local goToPage = function() self:SetPage(i) end
@@ -238,20 +237,14 @@ function options_dialog:InitControls()
         self:AddCallback("btn_to_controls_" .. i, ui_events.BUTTON_CLICKED, goToPage)
     end
 
-    if not live_mode and db.actor then
-        local btn = xml:Init3tButton("main_dialog:btn_ingame", self.dialog)
-        self:Register(btn, "btn_ingame")
-    end
-
     local btn = xml:Init3tButton("main_dialog:btn_accept", self.dialog)
     self:Register(btn, "btn_accept")
 
     btn = xml:Init3tButton("main_dialog:btn_cancel", self.dialog)
     self:Register(btn, "btn_cancel")
 
-    xml:InitFrame("frame_hint", self)
-    self.hint_name = xml:InitStatic("hint_name", self)
-    self.hint_caption = xml:InitStatic("hint_caption", self)
+    self.hint_frame = xml:InitFrame("frame_hint", self)
+    self.hint_name = xml:InitStatic("hint_description", self.hint_frame)
 
     self.message_box = CUIMessageBoxEx()
     self.message_box:Init("message_box_restart_game")
@@ -315,8 +308,7 @@ function options_dialog:OpenInGame()
 end
 
 function options_dialog:HintRefresh()
-    self.hint_name:SetText(game.translate_string("hint_name_text"))
-    self.hint_caption:SetText(game.translate_string("hint_caption_adv_text"))
+    self.hint_frame:Show(false)
 end
 
 function options_dialog:OnBtnDefault()
