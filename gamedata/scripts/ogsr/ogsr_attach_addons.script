@@ -1,0 +1,15 @@
+function attach(sm)
+    sm:subscribe({ signal = "on_drag_drop", fun = this.on_drag_drop })
+end
+
+local snd_attach = sound_object("interface\\inv_attach_addon")
+local snd_detach = sound_object("interface\\inv_detach_addon")
+
+function on_drag_drop(obj, drop_on_obj)
+    local addon_item = obj:get_inventory_item()
+    local wm = drop_on_obj:get_weapon_m()
+    if wm and wm:can_attach_addon(addon_item) then
+        snd_attach:play(db.actor, 0, sound_object.s2d)
+        wm:attach_addon(addon_item, true)
+    end
+end

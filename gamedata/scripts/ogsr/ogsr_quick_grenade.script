@@ -19,15 +19,16 @@ function quickthrow(key, bind)
         dsh.wait_condition(function() return db.actor:active_slot() == 3 and db.actor:active_item():get_hud_item_state() == 0 end, 
         function()
             game.set_next_hud_motion_speed()
-	        level.only_allow_movekeys(true)
-	        level.set_actor_allow_ladder(false)
-	        get_actor_obj():press_action(key_bindings.kWPN_FIRE)
-            dsh.wait_condition(function() return not db.actor:active_item() or (db.actor:active_item() and db.actor:active_item():is_hud_item() and db.actor:active_item():get_hud_item_state() == 4) end,
-	        function()
+	    level.only_allow_movekeys(true)
+	    level.set_actor_allow_ladder(false)
+	    get_actor_obj():press_action(key_bindings.kWPN_FIRE)
+            local id = db.actor:active_item():id()
+            dsh.wait_condition(function() return not level.object_by_id(id) end,
+	    function()
+                game.set_next_hud_motion_speed(2, true)
                 level.only_allow_movekeys(false)
                 level.set_actor_allow_ladder(true)
                 if prev_active_slot == 3 or prev_active_slot == 255 then return end
-                game.set_next_hud_motion_speed(2, true)
                 db.actor:activate_slot(prev_active_slot)
                 game.set_next_hud_motion_speed()
             end)
