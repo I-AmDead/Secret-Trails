@@ -23,9 +23,10 @@ Texture2D s_mask_nm_9;
 Texture2D s_mask_nm_10;
 
 // Vignette masks
-Texture2D s_mask_v_1;
-Texture2D s_mask_v_2;
-Texture2D s_mask_v_3;
+Texture2D s_mask_smear_1;
+Texture2D s_mask_smear_2;
+Texture2D s_mask_smear_3;
+Texture2D s_mask_smear_4;
 
 // Condensation droplets texture
 Texture2D s_mask_droplets;
@@ -44,6 +45,7 @@ uniform float breath_size;
 uniform float breath_idx;
 uniform float3 gasmask_inertia;
 uniform float3 device_inertia;
+uniform float4 raindrop_restart;
 
 uniform float3 eye_direction;
 uniform float4 m_cam_inertia_smooth;

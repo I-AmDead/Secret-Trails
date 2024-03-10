@@ -252,10 +252,39 @@ function animation_off()
     level.set_actor_allow_ladder(true)
 end
 
+local random_swear = 1
+
+local function lcalls(count, radius, sub)
+    local lcall
+    local add = 0
+    local cnt = count
+    raindrop_timer = true
+    lcall = level.add_call(
+        function()
+            log3("condition")
+            cnt = cnt - 1
+            add = sub and cnt or add + 1
+            shader_set_custom_param("raindrop_restart", add / 100, random_swear, 0, 0)
+            lcall:set_pause(1)
+            return cnt == 0
+        end,
+        function()
+	    if sub then
+                cmd("r_pnv_mode", 0)
+	    end
+	    raindrop_timer = nil
+        end
+    )
+end
+
 -- RAIN DROPS RESTART
 function rain_drops_restart()
     level.only_allow_movekeys(false)
     cmd("r2_rain_drops_control off")
+    if get_con_float("r2_rain_drops_factor") > 0.2 then
+        random_swear = math.random(1, 4)
+        lcalls(100, 1, true)
+    end
     dsh.timeout(10, function() cmd("r2_rain_drops_control on") end)
 end
 
