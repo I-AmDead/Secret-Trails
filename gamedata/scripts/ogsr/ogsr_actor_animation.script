@@ -1,9 +1,9 @@
-
 function attach(sm)
-    sm:subscribe({signal = "on_first_update",		fun = this.animation_off})
-    sm:subscribe({signal = "on_key_down",		fun = this.on_key_down})
-    sm:subscribe({signal = "on_key_up",			fun = this.on_key_up})
-    sm:subscribe({signal = "on_item_before_pickup",	fun = this.on_item_before_pickup})
+    sm:subscribe({signal = "on_first_update",       fun = this.on_first_update})
+    sm:subscribe({signal = "on_key_down",           fun = this.on_key_down})
+    sm:subscribe({signal = "on_key_up",             fun = this.on_key_up})
+    sm:subscribe({signal = "on_item_before_pickup", fun = this.on_item_before_pickup})
+    sm:subscribe({signal = "on_update",             fun = this.on_sprint})
 end
 
 --------------------------------------------------------------
@@ -45,17 +45,17 @@ local lowered_anm_classes = {
 
 function allow_animation()
     local active_item = db.actor:active_item()
+    local allow_all = game.hud_motion_allowed() and not level.only_allow_movekeys()
     if active_item then
-        return active_item:get_hud_item_state() == 0 and game.hud_motion_allowed() and not level.only_allow_movekeys()
+        local aim_allow = active_item:is_weapon_magazined() and not ogse_wpn_utils.is_aiming_complete(active_item)
+        return active_item:get_hud_item_state() == 0 and (aim_allow or not active_item:is_weapon_magazined()) and allow_all
     else
-        return game.hud_motion_allowed() and not level.only_allow_movekeys()
+        return allow_all
     end
 end
 
 function on_key_down(key, bind)
-    if level.main_input_receiver() or not db.actor:alive() or not allow_animation() then
-        return
-    end
+    if level.main_input_receiver() or not db.actor:alive() or not allow_animation() or get_actor_obj():is_actor_sprinting() then return end
 
     local torch = db.actor:item_in_slot(9)
     local pnv = db.actor:item_in_slot(11)
@@ -74,9 +74,7 @@ function on_key_down(key, bind)
 end
 
 function on_key_up(key, bind)
-    if level.main_input_receiver() or not db.actor:alive() then
-        return
-    end
+    if level.main_input_receiver() or not db.actor:alive() then return end
 
     if bind == key_bindings.kWATCH then
         key_release = true
@@ -111,12 +109,14 @@ function swipe_mask()
     local new_speed = game.set_hud_anm_time(anm_name, (anm_time_1 + anm_time_2) / 1000 + anm_additional_length)
     animation_on()
 
-    dsh.timeout(anm_time_1, function()
+    dsh.timeout(anm_time_1, 
+    function()
         game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_wipe", false, 0.8)
         snd_gasmask:play(db.actor, 0, sound_object.s2d)
         snd_gasmask.frequency = 0.8
         level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
-        dsh.timeout(anm_time_2 - 400, function()
+        dsh.timeout(anm_time_2 - 400, 
+        function()
             if new_speed then
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
             end
@@ -139,13 +139,15 @@ function torch_and_nvg_switch(nvg)
     snd_torch:play(db.actor, 0, sound_object.s2d)
     level.add_cam_effector("camera_effects\\headlamp.anm", 7539, false, "", 0, false)
     timer_sub = nvg and 1000 or 800
-    dsh.timeout(torch_anm_time_1 - timer_sub, function()
+    dsh.timeout(torch_anm_time_1 - timer_sub, 
+    function()
         if nvg then
             ogsr_night_vision.call_pnv()
         else
             ogse_torch.on_switch()
         end
-        dsh.timeout(torch_anm_time_1 - 750, function()
+        dsh.timeout(torch_anm_time_1 - 750, 
+        function()
             if new_speed then
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
             end
@@ -156,67 +158,68 @@ end
 
 -- EMULATION PICKUP
 function on_item_before_pickup(obj)
+    if not allow_animation() or get_actor_obj():is_actor_sprinting() then return end
+
     local pickup_anm_sec = "anim_pickup"
     local cam_pos = device().cam_pos
     local cam_pos_y = cam_pos.y - 0.7
     local obj_pos = obj:position()
     local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
-    if not anim_plays and allow_animation() then
+    if not anim_plays then
         animation_on()
         local pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", true, 1.4)
         game.play_hud_anm(anm_name, 0, 1.4, 1, false)
         if obj_pos.y <= cam_pos_y then
             toggle_force_crouch()
-            dsh.timeout(pickup_anm_time - 100, function()
-                toggle_force_crouch()
-            end)
+            dsh.timeout(pickup_anm_time - 100, function() toggle_force_crouch() end)
         end
-        dsh.timeout(pickup_anm_time - 300, function()
-            take_delay(obj)
-        end)
+        dsh.timeout(pickup_anm_time - 300, function() take_delay(obj) end)
         anim_plays = true
     end
 end
 
 -- EMULATION HARVEST
 function harvest(on_take)
-    if allow_animation() then
-        local harvest_anm_sec = "anim_harvest"
-        local loot_anm_sec = "anim_loot"
+    if not allow_animation() or get_actor_obj():is_actor_sprinting() then return end
 
-        local prev_slot = db.actor:active_slot()
-        db.actor:activate_slot(255)
+    local harvest_anm_sec = "anim_harvest"
+    local loot_anm_sec = "anim_loot"
 
-        dsh.wait_condition(function() return not db.actor:active_item() end, 
+    local prev_slot = db.actor:active_slot()
+    db.actor:activate_slot(255)
+
+    dsh.wait_condition(function() return not db.actor:active_item() end, 
+    function()
+        speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
+        level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
+        level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
+        level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false, "")
+        level.disable_input()
+        animation_on()
+        toggle_force_crouch()
+        snd_harvest:play(db.actor, 0, sound_object.s2d)
+        snd_harvest.frequency = speed_k
+        local harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
+        dsh.timeout(harvest_anm_time + 100, 
         function()
-            speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
-            level.add_cam_effector("itemuse_anm_effects\\harvest_loot.anm", 8997, false, "")
-            level.add_cam_effector("itemuse_anm_effects\\harvest_skin_use.anm", 8998, false, "")
-            level.add_cam_effector("camera_effects\\weapon\\harvest_lean_down_main.anm", 8999, false, "")
-            level.disable_input()
-            animation_on()
-            toggle_force_crouch()
-            snd_harvest:play(db.actor, 0, sound_object.s2d)
-            snd_harvest.frequency = speed_k
-            local harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
-            dsh.timeout(harvest_anm_time + 100, function()
-                level.add_cam_effector("script\\harvest_loot.anm", 9000, false, "")
-                snd_loot:play(db.actor, 0, sound_object.s2d)
-                snd_loot.frequency = speed_k
-                local loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
-                dsh.timeout(loot_anm_time - 500, function()
-                    toggle_force_crouch()
-                    on_take()
-                    level.enable_input()
-                    archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
-                end)
-                dsh.timeout(loot_anm_time, function()
-                    animation_off()
-                    db.actor:activate_slot(prev_slot)
-                end)
+            level.add_cam_effector("script\\harvest_loot.anm", 9000, false, "")
+            snd_loot:play(db.actor, 0, sound_object.s2d)
+            snd_loot.frequency = speed_k
+            local loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
+            dsh.timeout(loot_anm_time - 500, 
+            function()
+                toggle_force_crouch()
+                on_take()
+                level.enable_input()
+                archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
+            end)
+            dsh.timeout(loot_anm_time, 
+            function()
+                animation_off()
+                db.actor:activate_slot(prev_slot)
             end)
         end)
-    end
+    end)
 end
 
 function take_delay(obj)
@@ -252,6 +255,11 @@ function animation_off()
     level.set_actor_allow_ladder(true)
 end
 
+function on_first_update()
+    animation_off()
+    shader_set_custom_param("raindrop_restart", 0, 1, 0, 0)
+end
+
 local random_swear = 1
 
 local function lcalls(count, radius, sub)
@@ -260,24 +268,23 @@ local function lcalls(count, radius, sub)
     local cnt = count
     raindrop_timer = true
     lcall = level.add_call(
-        function()
-            cnt = cnt - 1
-            add = sub and cnt or add + 1
-            shader_set_custom_param("raindrop_restart", add / 100, random_swear, 0, 0)
-            lcall:set_pause(1)
-            return cnt == 0
-        end,
-        function()
-	        raindrop_timer = nil
-        end
-    )
+    function()
+        cnt = cnt - 2.5
+        add = sub and cnt or add + 2.5
+        shader_set_custom_param("raindrop_restart", add / 100, random_swear, 0, 0)
+        lcall:set_pause(1)
+        return cnt == 0
+    end, 
+    function()
+        raindrop_timer = nil
+    end)
 end
 
 -- RAIN DROPS RESTART
 function rain_drops_restart()
     level.only_allow_movekeys(false)
     cmd("r2_rain_drops_control off")
-    if get_con_float("r2_rain_drops_factor") > 0.2 then
+    if get_con_float("r2_rain_drops_factor") > 0.25 then
         random_swear = math.random(1, 4)
         lcalls(100, 1, true)
     end
@@ -310,31 +317,45 @@ end
 
 -- EMULATION SWIPE RAIN DROPS
 function watch_wide()
-    if allow_animation() then
-        local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\gasmask.anm", 0.75)
-        local watch_anm_sec = "anim_watch"
-        local outfit = db.actor:item_in_slot(6)
-        if outfit and get_bool(outfit:section(), "exo", false) then
-            watch_anm_sec = "anim_exo_watch"
-        end
+    if not allow_animation() or get_actor_obj():is_actor_sprinting() then return end
 
-        local watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
-        game.play_hud_anm(anm_name, 0, 0.5, 1, false)
-        animation_on()
-        ui_minimap_bioradar.hud_hide()
-        dsh.timeout(watch_anm_time, function()
-            game.set_hud_anm_time(anm_name, 10000000)
-            game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
-            dsh.wait_condition(function() return key_release end, 
-            function()
-                game.stop_hud_motion()
-                watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
-                game.set_hud_anm_time(anm_name, (watch_anm_time + 200) / 1000)
-                ui_minimap_bioradar.hud_show()
-                dsh.timeout(watch_anm_time, function()
-                    animation_off()
-                end)
-            end)
+    local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\gasmask.anm", 0.75)
+    local watch_anm_sec = "anim_watch"
+    local outfit = db.actor:item_in_slot(6)
+    if outfit and get_bool(outfit:section(), "exo", false) then
+        watch_anm_sec = "anim_exo_watch"
+    end
+
+    local watch_anm_time = game.play_hud_motion(1, watch_anm_sec, "anm_in", true, 1)
+    game.play_hud_anm(anm_name, 0, 0.5, 1, false)
+    animation_on()
+    ui_minimap_bioradar.hud_hide()
+    dsh.timeout(watch_anm_time, function()
+        game.set_hud_anm_time(anm_name, 10000000)
+        game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_idle", true, 1)
+        dsh.wait_condition(function() return key_release end, 
+        function()
+            game.stop_hud_motion()
+            watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, "anm_out", true, 1)
+            game.set_hud_anm_time(anm_name, (watch_anm_time + 200) / 1000)
+            ui_minimap_bioradar.hud_show()
+            dsh.timeout(watch_anm_time, function() animation_off() end)
         end)
+    end)
+end
+
+local sprint_anim = false
+function on_sprint()
+    if allow_animation() and not sprint_anim then
+        if db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then return end
+        game.play_hud_motion(2, "anim_sprint_no_hand", "anm_sprint", true, 1)
+        --animation_on()
+        sprint_anim = true
+    end
+
+    if sprint_anim and (db.actor:active_item() or not get_actor_obj():is_actor_sprinting()) then
+        game.stop_hud_motion()
+        --animation_off()
+        sprint_anim = false
     end
 end
