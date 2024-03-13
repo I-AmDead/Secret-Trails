@@ -135,7 +135,7 @@ function CUIDescriptionWnd:subscribe()
       { signal = "on_cell_item_focus", fun = self.OnItemFocus, self = self },
       { signal = "on_cell_item_focus_lost", fun = self.OnItemFocusLost, self = self },
       { signal = "on_key_down", fun = self.OnKeyPress, self = self },
-      --{ signal = "on_wheel", fun = self.OnMouseWheel, self = self },
+      { signal = "on_wheel", fun = self.OnMouseWheel, self = self },
       { signal = "on_update",  fun = self.OnUpdate, self = self },
     }
     local sm = ogsr_signals.get_mgr()
@@ -163,6 +163,19 @@ end
 
 function CUIDescriptionWnd:HideDescription()
 	if self.frame:IsShown() then self.frame:Show(false) end
+end
+
+function CUIDescriptionWnd:OnMouseWheel(mode)
+	if not self.frame:IsShown() then return end
+	if self.frame:GetHeight() < 768 then return end
+
+	local n = mode > 0 and -40 or 40 
+log3("mouse wheel1 %s", n)
+	local mx = self.scroll_v:GetMaxScrollPos()
+	if mx > self.scroll_height then mx = mx - self.scroll_height end
+	self.scrollPos = math.clamp(self.scrollPos + n, 0, mx)
+	self.scroll_v:SetScrollPos(self.scrollPos)
+log3("mouse wheel2 %s", n)
 end
 
 function CUIDescriptionWnd:ShowProps(tbl)
@@ -622,14 +635,17 @@ function CUIDescriptionWnd:ShowOutfitParams()
 		val = math.floor(val * self.condition * 100 + 0.5)
 		if outfit and outfit:id() ~= self.item:id() then
 			local val2 = math.floor(get_float(outfit:section(), t.prop.."_protection") * outfit:condition() * 100 + 0.5)
-			val2 = val - val2
-			txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val).."%c[gray2] / "..(val2 < 0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val2)
+			if val > 0.0 or val2 > 0.0 then
+				val2 = val - val2
+				txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val).."%c[gray2] / "..(val2 < 0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val2)
+				table.insert( params, {t.prop, txt} )
+			end
 		else
 			if val > 0.0 then
 				txt = t.text.." "..(val<0 and "%c[red]" or "%c[green]+")..string.format("%d%%", val)
+				table.insert( params, {t.prop, txt} )
 			end
 		end
-		table.insert( params, {t.prop, txt} )
 	end
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
@@ -639,13 +655,14 @@ function CUIDescriptionWnd:ShowOutfitParams()
 			if val > 0.0 or val2 > 0.0 then
 				val2 = val - val2
 				txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val > 0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg")).."%c[gray2] / "..(val2 > 0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val2, game.translate_string("descr_kg"))
+				table.insert( params, {"additional_weight", txt} )
 			end
 		else
 			if val > 0.0 then
 				txt = string.format("%s: ", game.translate_string("descr_weight_power"))..(val>0 and "%c[green]+" or "%c[red]")..string.format("%.1f %s", val, game.translate_string("descr_kg"))
+				table.insert( params, {"additional_weight", txt} )
 			end
 		end
-		table.insert( params, {"additional_weight", txt} )
 	end
 
 	if #params > 0 then
@@ -681,7 +698,7 @@ function CUIDescriptionWnd:OnUpdate( delta ) --Если сюда передал�
 		if self.itemInFocus and ( self.itemInFocus > 65535 or alife():object( self.itemInFocus ) ) then
 			self:ShowDescription( level.object_by_id(self.itemInFocus) )
 		end
-		self.shift_tmr = 1 --А может обновлять всегда когда есть фокус?
+		self.shift_tmr = nil
 	end
 end
 
@@ -697,18 +714,7 @@ function CUIDescriptionWnd:OnKeyPress(key, bind)
 	end
 end
 
-function CUIDescriptionWnd:OnMouseWheel(mode)
-	log3("OnMouseWheel 0")
-    if not self.frame:IsShown() then return end
-	log3("OnMouseWheel 1")
-    if self.frame:GetHeight() < 768 then return end
-	log3("OnMouseWheel 2")
-    local n = mode and -40 or 40 
-    local mx = self.scroll_v:GetMaxScrollPos()
-    if mx > self.scroll_height then mx = mx - self.scroll_height end
-    self.scrollPos = math.clamp(self.scrollPos + n, 0, mx)
-    self.scroll_v:SetScrollPos(self.scrollPos)
-end
+
 
 function need_show_condition(item)
 	local b = get_bool(item:section(), "inv_show_condition", false)
