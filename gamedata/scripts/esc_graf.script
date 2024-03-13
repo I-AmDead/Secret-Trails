@@ -183,6 +183,7 @@ end
 
 function spawn_esc_gromov()
     local obj = alife():create("esc_gromov", vector():set(9.355, -34.305, 13.147), 2414, 2513)
+    alife():assign_story_id(obj.id, story_ids.esc_gromov)
     local obj = alife():create("esc_osoz1", vector():set(12.393, -34.482, 11.700), 2596, 2513)
     local obj = alife():create("esc_osoz2", vector():set(18.666, -34.486, 11.701), 3020, 2514)
     local obj = alife():create("esc_osoz3", vector():set(12.627, -34.487, 14.684), 2555, 2513)
@@ -1915,15 +1916,10 @@ function spawn_gromov1()
 end
 
 function delete_gromov()
-    dsh.timeout(100, function()
-        for a = 1, 65534 do
-            local obj = alife():object(a)
-            if obj and string.find(obj:name(), "esc_gromov") then
-                alife():release(obj, true)
-                break
-            end
-        end
-    end)
+    local obj = alife():story_object(story_ids.esc_gromov)
+    if obj then
+        alife():release(obj, true)
+    end
 end
 
 function delete_osoz()
