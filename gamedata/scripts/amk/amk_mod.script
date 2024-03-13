@@ -479,6 +479,7 @@ function respawned(obj, respawner)
 end
 
 local respawners = {}
+local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
 
 function spawn_unspawned_respawners()
     for a = 1, 65534 do
@@ -494,7 +495,6 @@ function spawn_unspawned_respawners()
         end
     end
 
-    local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
     local dv = {}
 
     if sini:section_exist("default_values") then
@@ -518,6 +518,7 @@ function spawn_unspawned_respawners()
 
         for _, v in ipairs(tmp) do
             local flag = get_bool("amk_respawns", v, false, sini)
+            log3("amk respawns %s %s", v, flag)
             if not respawners[v] and flag then
                 local t = get_section_keys_and_values(v, sini)
                 local xyzlg = string.explode(",", t.xyzlg, true)
@@ -530,19 +531,10 @@ function spawn_unspawned_respawners()
                 local pk = get_netpk(respawner, 1)
                 ASSERT((pk and pk:isOk()), "can't read netpacket of %s", respawner:name())
                 local data = pk:get()
-                data.custom_data:setTable({
-                    respawn = t
-                })
+                data.custom_data:setTable({respawn = t})
                 pk:set(data)
 
                 se_respawn.reinit_spawner_params(respawner:name())
-            end
-
-            if not flag then
-                local o = se_respawn.get_respawner_by_name(v)
-                if o then
-                    alife():release(o)
-                end
             end
         end
     end

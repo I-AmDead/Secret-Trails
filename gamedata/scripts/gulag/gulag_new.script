@@ -1271,39 +1271,6 @@ function load_job(sj, gname, type, squad, groups)
         }
         table.insert(sj, t)
     end
-    -- ЗАХАР
-    if type == "atp_zahar_lager" then
-        t = {
-            section = "logic@zahar_offline",
-            idle = 0,
-            prior = 25,
-            state = {0},
-            online = false,
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-        t = {
-            section = "logic@zahar_wound",
-            idle = 0,
-            prior = 25,
-            state = {1},
-            online = true,
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-        t = {
-            section = "logic@zahar_barman",
-            idle = 0,
-            prior = 25,
-            state = {2},
-            online = true,
-            in_rest = "",
-            out_rest = ""
-        }
-        table.insert(sj, t)
-    end
     -- ЛУКАШ И КО ЖДУТ АКТЕРА
     if type == "mil_freedom_wait" then
         t = {
@@ -2526,18 +2493,6 @@ function load_states(gname, type)
             return 0
         end
     end
-    if type == "atp_zahar_lager" then
-        return function(gulag)
-            local actor = db.actor
-            if not has_alife_info("atp_zahar_help_start") then
-                return 0 -- оффлайн
-            elseif has_alife_info("atp_zahar_help_done") then
-                return 2 -- онлайн
-            else
-                return 1 -- раненый
-            end
-        end
-    end
     if type == "mil_voen_lager" then
         return function(gulag)
             return 0
@@ -2620,9 +2575,6 @@ function checkStalker(npc_community, gulag_type, npc_rank, se_obj)
     end
     if gulag_type == "pripyat_naemnik" then
         return npc_community == "killer"
-    end
-    if gulag_type == "atp_zahar_lager" then
-        return se_obj:profile_name() == "atp_zahar"
     end
     if gulag_type == "mil_voen_lager" then
         return npc_community == "military"
