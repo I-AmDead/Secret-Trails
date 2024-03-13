@@ -42,22 +42,18 @@ local function start_breath_distortion(min, max)
         breath_distortion_timer = nil
     end
 
-    breath_distortion_timer = dsh.wait_condition(function()
-        local size = shader_get_custom_param("breath_size")
-        size = min / 10000
-        shader_set_custom_param("breath_size", size)
+    breath_distortion_timer = dsh.wait_condition(
+    function()
+        min = min > max and min - 100 or min + 100
+        breath_size = min
+        shader_set_custom_param("breath_size", game_options.opt_breath and min / 10000 or 0.0)
         shader_set_custom_param("breath_idx", breath_rnd)
-        if min > max then
-            min = min - 100
-            breath_size = min
-        else
-            min = min + 100
-            breath_size = min
-        end
         return min == max
-    end, function()
+    end, 
+    function()
         breath_distortion_timer = nil
-    end, function()
+    end, 
+    function()
         ogsr_signals.get_mgr():reschedule(time_distortion)
     end)
 end

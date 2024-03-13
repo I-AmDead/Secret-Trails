@@ -1,10 +1,8 @@
---[[-------------------------- опции ----------------------------]]
-opt_test               = false -- Оффлайн война offwar, по умолчанию 0
+opt_breath = true
 
-
--- новое сохранение настроек
-local file_name                     = "secret_trails_settings.ltx" -- имя файла
-local full_name                     = getFS():update_path("$app_data_root$", file_name)
+-- РЅРѕРІРѕРµ СЃРѕС…СЂР°РЅРµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє
+local file_name = "secret_trails_settings.ltx" -- РёРјСЏ С„Р°Р№Р»Р°
+local full_name = getFS():update_path("$app_data_root$", file_name)
 
 log1("full_name=" .. full_name)
 
@@ -17,17 +15,20 @@ function read_if_exists(setting_ini, section, p, def)
 end
 
 function init()
-    local setting_ini = ini_file(full_name, false) -- false тут нужен, значит файл будет искать как указано, без привязки к configs
+    local setting_ini = ini_file(full_name, false) -- false С‚СѓС‚ РЅСѓР¶РµРЅ, Р·РЅР°С‡РёС‚ С„Р°Р№Р» Р±СѓРґРµС‚ РёСЃРєР°С‚СЊ РєР°Рє СѓРєР°Р·Р°РЅРѕ, Р±РµР· РїСЂРёРІСЏР·РєРё Рє configs
 
-    offwar = read_if_exists(setting_ini, "setting", "option_test", opt_test)
+    opt_breath = read_if_exists(setting_ini, "setting", "option_breath", opt_breath)
+    log3("init() opt breath %s", opt_breath)
 end
 
 function save()
-    local setting_ini = ini_file(full_name, false) -- false тут нужен, значит файл будет искать как указано, без привязки к configs
-    setting_ini.readonly = false                   -- обязательно при сохранении
+    local setting_ini = ini_file(full_name, false) -- false С‚СѓС‚ РЅСѓР¶РµРЅ, Р·РЅР°С‡РёС‚ С„Р°Р№Р» Р±СѓРґРµС‚ РёСЃРєР°С‚СЊ РєР°Рє СѓРєР°Р·Р°РЅРѕ, Р±РµР· РїСЂРёРІСЏР·РєРё Рє configs
+    setting_ini.readonly = false -- РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё
 
-    -- пишем как обычно для ini
-    setting_ini:w_bool("setting", "option_test", opt_test)
+    -- РїРёС€РµРј РєР°Рє РѕР±С‹С‡РЅРѕ РґР»СЏ ini
+    setting_ini:w_bool("setting", "option_breath", opt_breath)
 
-    setting_ini:save() -- сохраняем
+    log3("save() opt breath %s", opt_breath)
+
+    setting_ini:save() -- СЃРѕС…СЂР°РЅСЏРµРј
 end
