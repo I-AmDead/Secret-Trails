@@ -1,4 +1,3 @@
-
 function init(obj)
     xr_motivator.AddToMotivator(obj)
 end
@@ -61,20 +60,20 @@ function actor_binder:net_spawn(data)
 
 -----------------------------------------------------------
     if not ogse.var_exists("ES_GRAPHICS_SETTINGS") then
-        cmd("r2_sun_lumscale 2.")
-        cmd("r2_sun_lumscale_amb 0.8")
-        cmd("r2_sun_lumscale_hemi 0.8")
+        cmd("r2_sun_lumscale 1.5")
+        cmd("r2_sun_lumscale_amb 1.0")
+        cmd("r2_sun_lumscale_hemi 1.5")
         cmd("r2_ls_bloom_kernel_b 0.7")
         cmd("r2_ls_bloom_kernel_b 3.0")
-        cmd("r2_ls_bloom_kernel_scale 0.55")
+        cmd("r2_ls_bloom_kernel_scale 0.7")
         cmd("r2_ls_bloom_speed 100.0")
-        cmd("r2_ls_bloom_threshold 0.0001")
+        cmd("r2_ls_bloom_threshold 0.00001")
 
         cmd("r2_tonemap on")
-        cmd("r2_tonemap_adaptation 1.")
-        cmd("r2_tonemap_amount 0.5")
-        cmd("r2_tonemap_lowlum 0.8")
-        cmd("r2_tonemap_middlegray 1.")
+        cmd("r2_tonemap_adaptation 1.0")
+        cmd("r2_tonemap_amount 0.7")
+        cmd("r2_tonemap_lowlum 0.0001")
+        cmd("r2_tonemap_middlegray 1.0")
 
         cmd("r3_dynamic_wet_surfaces_far 100.")
         cmd("ssfx_wetsurfaces_1 1.700000, 1.400000, 0.700000, 2.000000")
@@ -104,9 +103,9 @@ function actor_binder:net_spawn(data)
         cmd("ssfx_gloss_minmax 0.6, 0.8, 0.15")
         cmd("r2_ls_bloom_kernel_b 0.7")
         cmd("r2_ls_bloom_kernel_b 3.0")
-        cmd("r2_ls_bloom_kernel_scale 0.55")
+        cmd("r2_ls_bloom_kernel_scale 0.7")
         cmd("r2_ls_bloom_speed 100.0")
-        cmd("r2_ls_bloom_threshold 0.0001")
+        cmd("r2_ls_bloom_threshold 0.00001")
         ogse.save_var("CBT_GRAPHICS_SETTINGS", true)
     end
 -----------------------------------------------------------
@@ -159,6 +158,7 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_footstep, nil)
     self.object:set_callback(callback.on_actor_land, nil)
     self.object:set_callback(callback.on_actor_jump, nil)
+    self.object:set_callback(callback.on_level_map_click, nil)
 
     if ui_grenade_marks then
         ui_grenade_marks.remove_grenade_marks()
@@ -211,6 +211,7 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_footstep, self.on_footstep, self)
     self.object:set_callback(callback.on_actor_land, self.on_actor_land, self)
     self.object:set_callback(callback.on_actor_jump, self.on_actor_jump, self)
+    self.object:set_callback(callback.on_level_map_click, self.on_level_map_click, self)
 
     self.am:call("on_reinit")
 end
@@ -385,6 +386,15 @@ function actor_binder:on_key(key, bind)
     if key == DIK_keys.DIK_DELETE then
         self:show_ingame_options()
     end
+    if key == DIK_keys.DIK_INSERT then
+        if ogse.check_game() then
+            if not _sdata.GlobalEnable then
+                _sdata.subscribe()
+            else
+                _sdata.unsubscribe()
+            end
+        end
+    end
 
     self.am:call("on_key_down", key, bind)
 end
@@ -555,4 +565,19 @@ function actor_binder:show_ingame_options()
     ogsr_shaders_control.ignore_dof = true
     level.start_stop_menu(self.opt_dlg, false)
     ogsr_shaders_control.ignore_dof = false
+end
+
+function actor_binder:on_level_map_click(point, level_name, level_position)
+    if not _sdata.GlobalEnable then return end
+
+    log2(" ~on_level_map_click level=%s x=%f y=%f z=%f", level_name, level_position.x, level_position.y, level_position.z)
+
+    level_position.y = 50
+
+    local rq = level.ray_query(level_position, vector():set(0, -1, 0), 100, rq_target.rqtStatic, db.actor)
+    if rq.result then
+        level_position.y = 50 - rq.range + 0.5
+    end
+
+    self.object:set_actor_position(level_position)
 end
