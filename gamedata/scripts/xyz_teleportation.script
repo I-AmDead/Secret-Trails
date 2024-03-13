@@ -28,17 +28,20 @@ function on_load()
 end
 
 function teleport_actor(lvid, gvid, pos, dir)
-    level.add_pp_effector("black.ppe", 2006, false)
-    if type(pos) == "table" then
-        pos = vector():set(unpack(pos))
-    end
-    if not dir then
-        dir = vector():set(0, 0, 0)
-    elseif type(dir) == "table" then
-        dir = vector():set(unpack(dir))
-    end
-    dsh.timeout(1000, function()
-        level.change_level(gvid, lvid, pos, dir)
+    dsh.wait_condition(function() return db.actor:dont_has_info("ui_talk") end, 
+    function()
+        level.add_pp_effector("black.ppe", 2006, false)
+        if type(pos) == "table" then
+            pos = vector():set(unpack(pos))
+        end
+        if not dir then
+            dir = vector():set(0, 0, 0)
+        elseif type(dir) == "table" then
+            dir = vector():set(unpack(dir))
+        end
+        dsh.timeout(1000, function()
+            level.change_level(gvid, lvid, pos, dir)
+        end)
     end)
 end
 
