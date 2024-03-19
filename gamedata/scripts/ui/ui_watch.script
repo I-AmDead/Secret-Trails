@@ -1,31 +1,29 @@
-local GUI
-
-local watch_mode = "actor_hud"
-watch_ui_show = ogse.load_var("watch_ui_show", true)
-
-local delay = 0
-local health_progress
-
-function on_key_down(key, bind)
-    if bind == key_bindings.kBIOMAP_SWITCH then
-        if watch_mode == "actor_hud" then
-            watch_mode = "weapon_hud"
-        else
-            watch_mode = "map_hud"
-        end
-        ogse.save_var("watch_mode", watch_mode)
-        log3("watch mode %s", watch_mode)
-    end
+function attach(sm)
+	sm:subscribe({signal = "on_key_down", fun = this.on_key_down})
 end
 
-function ui_show(show)
-	watch_ui_show = show
-	ogse.save_var("watch_ui_show", watch_ui_show)	
+local GUI
+
+local watch_mode = ogse.load_var("watch_mode", 1)
+local delay = 0
+
+function on_key_down(key, bind)
+    if bind == key_bindings.kWATCH_MODE then
+        if watch_mode == 1 then
+            watch_mode = 2
+        elseif watch_mode == 2 then
+            watch_mode = 3
+        else
+            watch_mode = 1
+        end
+        ogse.save_var("watch_mode", watch_mode)
+    end
 end
 
 function get_instance()
     if (not GUI) then
         GUI = UIWatch()
+        watch_mode = ogse.load_var("watch_mode", 1)
     end
 
     return GUI
@@ -37,8 +35,6 @@ function c2t(ct)
     end
     local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
     Y, M, D, h, m, s, ms = ct:get(Y, M, D, h, m, s, ms)
-    shader_set_custom_param("game_date", Y, M, D)
-    shader_set_custom_param("game_time", h, m, s, ms)
     return {
         Y = Y,
         M = M,
@@ -142,26 +138,6 @@ function UIWatch:__init() super()
 
     self.xml:InitWindow("display", 0, self)
 
-    self.clock = {}
-    self.clock.h = {}
-    self.clock.m = {}
-    self.clock_colon = self.xml:InitStatic("display:colon", self)
-
-    self.rad = {}
-    self.rad.level = {}
-
-    for i = 1, 2 do
-        self.clock.h[i] = self.xml:InitStatic("display:clock_h_" .. i, self)
-        self.clock.m[i] = self.xml:InitStatic("display:clock_m_" .. i, self)
-    end
-
-    for i = 1, 4 do
-        self.rad.level[i] = self.xml:InitStatic("display:rad_level_" .. i, self)
-    end
-
-    self.health_static = self.xml:InitStatic("display:static_health", self)
-    self.health_progress = self.xml:InitStatic("display:health_progress", self.health_static)
-
     self.indik_blood = self.xml:InitStatic("display:indik_blood", self)
     self.indik_hunger = self.xml:InitStatic("display:indik_hunger", self)
     self.indik_radiation = self.xml:InitStatic("display:indik_radiation", self)
@@ -186,86 +162,24 @@ function UIWatch:Update()
     if has_alife_info("pre_blowout") and time_global() < delay then return end
     delay = time_global() + 120
     CUIScriptWnd.Update(self)
-    self:ShowClock(false)
-    self:ShowRad(false)
-    self:ShowHealth(false)
     self:ShowBoosterIndicators(false)
     self:ShowIndicators(false)
-    if watch_ui_show then
+
+    local game_time = c2t(game.get_game_time())
+    shader_set_custom_param("game_time", game_time.h, game_time.m)
+    shader_set_custom_param("watch_actor_params", db.actor.health, db.actor.power, arc_radiation.get_radiation_dose(), watch_mode)
+    if has_alife_info("pre_blowout") then
+        shader_set_custom_param("watch_actor_params", math.random(0.1, 1.0), math.random(0.1, 1.0), math.random(0, 9999), math.random(1, 3))
+        shader_set_custom_param("game_time", math.random(0, 23), math.random(0, 59))
+    end
+    if watch_mode == 3 and not has_alife_info("pre_blowout") then
     	self:UpdateTopPanel()
     end
 end
 
 function UIWatch:UpdateTopPanel()
-    self:UpdateClock()
-    self:UpdateRad()
-    self:UpdateHealth()
     self:UpdateIndicators()
     self:UpdateBoosterIndicators()
-end
-
-function UIWatch:UpdateClock()
-    self:ShowClock(true)
-
-    local game_time = c2t(game.get_game_time())
-    local time = {
-        h = string.format("%02d", has_alife_info("pre_blowout") and tostring(math.random(0, 23)) or tostring(game_time.h)),
-        m = string.format("%02d", has_alife_info("pre_blowout") and tostring(math.random(0, 59)) or tostring(game_time.m))
-    }
-
-    for k, v in pairs(time) do
-        local i = 1
-        v:gsub(".", function(c)
-            self.clock[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
-            i = i + 1
-        end)
-    end
-end
-
-function UIWatch:UpdateRad()
-    self:ShowRad(true)
-
-    local rad_level = arc_radiation.get_radiation_dose() or 0000
-    local rad = {
-        level = string.format("%04d", has_alife_info("pre_blowout") and tostring(math.random(0, 9999)) or tostring(rad_level))
-    }
-
-    for k, v in pairs(rad) do
-        local i = 1
-        v:gsub(".", function(c)
-            self.rad[k][i]:InitTextureEx("watch_" .. c .. "_big", "hud\\p3d")
-            i = i + 1
-        end)
-    end
-end
-
-function UIWatch:UpdateHealth()
-    self:ShowHealth(true)
-    local cond = db.actor.health
-    if has_alife_info("pre_blowout") then
-        self.health_progress:SetWndRect(1, 1, (228 * cond) + math.random(-500, 500) * 0.01, 18)
-    else
-        self.health_progress:SetWndRect(1, 1, 228 * cond, 18)
-    end
-end
-
-function UIWatch:ShowClock(vis)
-    for i = 1, 2 do
-        self.clock.h[i]:Show(vis)
-        self.clock.m[i]:Show(vis)
-    end
-    self.clock_colon:Show(vis)
-end
-
-function UIWatch:ShowRad(vis)
-    for i = 1, 4 do
-        self.rad.level[i]:Show(vis)
-    end
-end
-
-function UIWatch:ShowHealth(vis)
-    self.health_static:Show(vis)
-    self.health_progress:Show(vis)
 end
 
 function UIWatch:ShowBoosterIndicators(vis)
@@ -298,41 +212,48 @@ function UIWatch:UpdateIndicators()
     local psy = psy_level()
     local overweight = overweight_level()
 
-    if bleeding ~= "nil" then
-        self.indik_blood:Show(true)
-        self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood_" .. bleeding, "hud\\p3d")
-    else
-        self.indik_blood:Show(false)
-    end
+    local texture_indik = bleeding ~= "nil" and ("ui\\watch_ui\\indik_blood_" .. bleeding) or "ui\\watch_ui\\indik_blood"
+    self.indik_blood:Show(bleeding ~= "nil")
+    self.indik_blood:InitTextureEx(texture_indik, "hud\\p3d")
 
-    if hunger ~= "nil" then
-        self.indik_hunger:Show(true)
-        self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety_" .. hunger, "hud\\p3d")
-    else
-        self.indik_hunger:Show(false)
-    end
+    texture_indik = hunger ~= "nil" and ("ui\\watch_ui\\indik_satiety_" .. hunger) or "ui\\watch_ui\\indik_satiety"
+    self.indik_hunger:Show(hunger ~= "nil")
+    self.indik_hunger:InitTextureEx(texture_indik, "hud\\p3d")
 
-    if radiation ~= "nil" then
-        self.indik_radiation:Show(true)
-        self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad_" .. radiation, "hud\\p3d")
-    else
-        self.indik_radiation:Show(false)
-    end
+    texture_indik = radiation ~= "nil" and ("ui\\watch_ui\\indik_rad_" .. radiation) or "ui\\watch_ui\\indik_rad"
+    self.indik_radiation:Show(radiation ~= "nil")
+    self.indik_radiation:InitTextureEx(texture_indik, "hud\\p3d")
 
-    if psy ~= "nil" then
-        self.indik_psy:Show(true)
-        self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy_" .. psy, "hud\\p3d")
-    else
-        self.indik_psy:Show(false)
-    end
+    texture_indik = psy ~= "nil" and ("ui\\watch_ui\\indik_psy_" .. psy) or "ui\\watch_ui\\indik_psy"
+    self.indik_psy:Show(psy ~= "nil")
+    self.indik_psy:InitTextureEx(texture_indik, "hud\\p3d")
 
-    if overweight ~= "nil" then
-        self.indik_overweight:Show(true)
-        self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight_" .. overweight, "hud\\p3d")
-    else
-        self.indik_overweight:Show(false)
-    end
+    texture_indik = overweight ~= "nil" and ("ui\\watch_ui\\indik_weight_" .. overweight) or "ui\\watch_ui\\indik_weight"
+    self.indik_overweight:Show(overweight ~= "nil")
+    self.indik_overweight:InitTextureEx(texture_indik, "hud\\p3d")
 end
+
+function UIWatch:UpdateIndicatorsTest()
+    if not db.actor:alive() then
+        return
+    end
+
+    self.indik_blood:Show(true)
+    self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood", "hud\\p3d")
+
+    self.indik_hunger:Show(true)
+    self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety", "hud\\p3d")
+
+    self.indik_radiation:Show(true)
+    self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad", "hud\\p3d")
+
+    self.indik_psy:Show(true)
+    self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy", "hud\\p3d")
+
+    self.indik_overweight:Show(true)
+    self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight", "hud\\p3d")
+end
+
 
 function UIWatch:UpdateBoosterIndicators()
     if not db.actor:alive() then

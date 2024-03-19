@@ -597,8 +597,6 @@ function surge_final()
     dsh_cop_weather.get_weather_mgr():prepare_new_surge()-- тут вставляем перезапуск выброса в погодном менеджере
     dsh.timeout(10000, news_manager.autosave, game.translate_string("save_surge") .. game.translate_string(level.name()))
     set_pda_params(vector():set(0, 0, 0))
-    ui_watch.ui_show(true)
-    ui_watch_exo.ui_show(true)
     archievements.acv_count_event("acv_blow", 5, game.translate_string("acv_blow"))
 end
 
@@ -724,8 +722,6 @@ end
 -- выполняем реинициализацию фазы выброса при перезагрузке
 function on_first_update() -- выполняем восстановление временных эффектов, флагов и т.п.
     set_pda_params(vector():set(0, 0, 0))
-    ui_watch.ui_show(true)
-    ui_watch_exo.ui_show(true)
     if db.actor:has_info("pre_blowout") then
         -- ищем текущую стадию выброса
         for stage_infoportion, stage_actions in pairs(surge_db) do
@@ -855,8 +851,6 @@ end
 
 function pda_off()
     set_pda_params(vector():set(0.5, 0.2, 0.0))
-    ui_watch.ui_show(false)
-    ui_watch_exo.ui_show(false)
     if db.actor:dont_has_info("no_net_signal") then return end
     if db.actor:active_slot() == 7 and ogsr_actor_animation.allow_animation() and not anim_playing then
         dsh.timeout(500, function()

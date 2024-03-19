@@ -92,14 +92,11 @@ local rad_effect
 local function update_rad_effect()
     local rads = ogse_dbg_anomaly_binder.get_max_radlevel()
     local distance = ogse_dbg_anomaly_binder.get_ditance_to_radzone()
+    local rad_level = arc_radiation.get_radiation_dose() or 0000
     if rads > 0 then
-        shader_set_custom_param("radiation_effect", rads * 0.1, distance, 0, 0)
-        rad_effect = true
+        shader_set_custom_param("radiation_effect", rads * 0.1, distance, rad_level, 0)
     else
-        if rad_effect then
-            shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
-            rad_effect = false
-        end
+        shader_set_custom_param("radiation_effect", 0, 0, rad_level, 0)
     end
 end
 

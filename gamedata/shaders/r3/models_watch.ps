@@ -34,13 +34,21 @@ f_deffer main(p_flat I)
     D.y += noise;
     D.z += noise;
 
-    if (m_affects.x < 0.08)
-        D += watch_seconds(I.tcdh);
-
     if (m_affects.x > 0.41)
     {
         D += glitch_cube(I.tcdh);
         //D = 0.1f;
+    }
+    else
+    {
+        if (m_affects.a == 0)
+        {        
+            //D += watch_seconds(I.tcdh);
+            if (watch_actor_params.w == 2)
+                D += CardioGraph2(I.tcdh);
+            else
+                D += NixieTime(I.tcdh);
+        }
     }
 
     if (m_affects.a > 0 && m_affects.x >= 0.08)
