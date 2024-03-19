@@ -231,7 +231,7 @@ function send_task(actor, type, task, objective)
         text_color = "%c[255,255,0,0]"
         texture_color = {255, 255, 0, 0}
     elseif type == "complete" then
-        text_color = "%c[255,0,255,38]"
+        text_color = "%c[255,255,255,0]"
         texture_color = {255, 0, 255, 38}
     elseif type == "update" then
         text_color = "%c[255,0,38,255]"
@@ -280,10 +280,18 @@ function send_task(actor, type, task, objective)
         end
     end
 
-    local main_task_static = get_hud():AddCustomStatic("main_task", true)
-    main_task_static:wnd():SetColor(GetARGB(texture_color[1], texture_color[2], texture_color[3], texture_color[4]))
-    main_task_static:wnd():SetTextST(news_text)
-    main_task_static.m_endTime = time_global() / 1000 + 10
+    local main_task_static
+    if type == "new" or type == "complete" then
+        main_task_static = get_hud():AddCustomStatic("main_task_new", true)
+    else    
+        main_task_static = get_hud():AddCustomStatic("main_task", true)
+    end
+
+    if main_task_static then
+        --main_task_static:wnd():SetColor(GetARGB(texture_color[1], texture_color[2], texture_color[3], texture_color[4]))
+        main_task_static:wnd():SetTextST(news_text)
+        main_task_static.m_endTime = time_global() / 1000 + 10
+    end
 end
 
 function autosave(text)
