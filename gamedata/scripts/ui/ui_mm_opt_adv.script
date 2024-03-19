@@ -7,6 +7,12 @@ local control_init_funs = {
             if control_params.invert then
                 ctr:SetInvert(true)
             end
+            if control_params.is_token then
+                ctr:SetToken(true)
+            end
+            if control_params.is_bool then
+                ctr:SetBool(true)
+            end
             if control_params.is_integer then
                 ctr:SetFloat(false)
             end
@@ -43,6 +49,18 @@ local control_init_funs = {
     end
 }
 
+function script_get_value(ctrl)
+    return ctrl.GetCheck and ctrl:GetCheck() or ctrl:GetTrackValue() == 1
+end
+
+function script_set_value(ctrl, v)
+    if ctrl.SetCheck then
+        ctrl:SetCheck(v)
+    else
+        ctrl:SetTrackValue(v and 1 or 0)
+    end
+end
+
 class "opt_adv"(CUIWindow)
 function opt_adv:__init(options, live_mode)
     super()
@@ -57,13 +75,13 @@ end
 
 function opt_adv:script_load()
     for _, v in ipairs(self.script_ctrs) do
-        v.control:SetCheck(game_options[v.option])
+        script_set_value(v.control, game_options[v.option])
     end
 end
 
 function opt_adv:script_save()
     for _, v in ipairs(self.script_ctrs) do
-        game_options[v.option] = v.control:GetCheck()
+        game_options[v.option] = script_get_value(v.control)
     end
 end
 
@@ -105,7 +123,9 @@ function opt_adv:InitControls(xml, handler)
                     caption:SetTextColor(unpack(color))
                 end
             elseif control_init_funs[ctr_type] then
-                local caption = xml:InitStatic("option_adv:cap_item", item)
+                local caption = xml:InitStatic("option_adv:cap_item_back", item)
+                caption = xml:InitStatic("option_adv:cap_key_back", item)
+                caption = xml:InitStatic("option_adv:cap_item", item)
                 caption:SetText(game.translate_string(label) .. (control_params.depend and "*" or ""))
                 if dbg_tooltip then
                     caption:SetHint(opt .. (index and ":" .. index or ""))
@@ -113,7 +133,6 @@ function opt_adv:InitControls(xml, handler)
                 if color then
                     caption:SetTextColor(unpack(color))
                 end
-
                 handler:Register(caption, "option_adv_cap_" .. opt_key)
                 handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:HintRefresh() end)
                 handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function()
@@ -148,9 +167,15 @@ function opt_adv:InitControls(xml, handler)
                         ["option"] = opt
                     })
 
+                    if ctr_type == "track" then
+                        ctl:SetStep(1)
+                        ctl:SetMin(0)
+                        ctl:SetMax(1)
+                    end
+
                     handler:AddCallback("option_adv:" .. ctr_type .. "_" .. opt_key,
                         ctr_type == "list" and ui_events.LIST_ITEM_SELECT or ui_events.BUTTON_CLICKED, function()
-                            game_options[opt] = ctl:GetCheck()
+                            script_get_value(ctl)
                         end)
                 else
                     ctl:OptionItemRegister(opt, group)
