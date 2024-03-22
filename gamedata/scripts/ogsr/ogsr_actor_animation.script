@@ -17,6 +17,7 @@ local snd_case = sound_object('interface\\item_usage\\container_case_open')
 local snd_inventory = sound_object('interface\\item_usage\\container_pouch_open')
 local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
+local snd_hand_bore = sound_object('interface\\item_usage\\outfit_inspect')
 local hide_hand_speed = 1.5
 local anim_plays
 local speed_k = 1.0
@@ -70,6 +71,8 @@ function on_key_down(key, bind)
     elseif bind == key_bindings.kWATCH then
         key_release = false
         watch_wide()
+    elseif bind == key_bindings.kBORE then
+        hand_wide()
     end
 end
 
@@ -352,5 +355,16 @@ function on_sprint()
         game.stop_hud_motion()
         --animation_off()
         sprint_anim = false
+    end
+end
+
+function hand_wide()
+    if allow_animation() then
+        if db.actor:active_item() then return end
+        local anm_time = game.play_hud_motion(2, "anim_hand_bore", "anm_bore", true, 1)
+        level.add_cam_effector("camera_effects\\weapon\\liz_outfit_inspect.anm", 7538, false, "", 0, false)
+        snd_hand_bore:play(db.actor, 0, sound_object.s2d)
+        animation_on()
+        dsh.timeout(anm_time, animation_off)
     end
 end
