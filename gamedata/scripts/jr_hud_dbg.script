@@ -1,0 +1,212 @@
+local dbg_last_top_wnd = nil
+local captured = nil
+
+local init_wnd_pos = nil
+local init_wnd_size = nil
+
+local delta = 0.2
+
+function log_wnd_parems(wnd)
+    local heading = "0"
+    local stretch = "0"
+    local static = wnd:GetCUIStatic()
+    if static then
+        heading = static:Heading() and "1" or "0"
+        stretch = static:GetStretchTexture() and "1" or "0"
+    end
+    local pos = dbg_last_top_wnd:GetWndPos()
+    local size = dbg_last_top_wnd:GetWndSize()
+    return (wnd:WindowName() or "wnd") ..
+        " x=\"" ..
+        pos.x ..
+        "\" y=\"" ..
+        pos.y ..
+        "\" width=\"" ..
+        size.x .. "\" height=\"" .. size.y .. "\" stretch=\"" .. stretch .. "\" heading=\"" .. heading .. "\""
+end
+
+function on_before_keyboard(dik, type)
+    --log1("dik="..dik .. " type="..type)
+
+    if type == "press" then
+        return on_before_keyboard_press(dik)
+    elseif type == "hold" and not GetAlt() then
+        return on_before_keyboard_hold(dik)
+    end
+
+    return captured
+end
+
+function process_move(dik)
+    if GetControl() then
+        return
+    end
+    if GetShift() then
+        if dik == DIK_keys.DIK_RIGHT then
+            local wpos = dbg_last_top_wnd:GetWndSize()
+            dbg_last_top_wnd:SetWndSize(wpos.x + delta, wpos.y)
+        end
+
+        if dik == DIK_keys.DIK_LEFT then
+            local wpos = dbg_last_top_wnd:GetWndSize()
+            dbg_last_top_wnd:SetWndSize(wpos.x - delta, wpos.y)
+        end
+
+        if dik == DIK_keys.DIK_DOWN then
+            local wpos = dbg_last_top_wnd:GetWndSize()
+            dbg_last_top_wnd:SetWndSize(wpos.x, wpos.y + delta)
+        end
+
+        if dik == DIK_keys.DIK_UP then
+            local wpos = dbg_last_top_wnd:GetWndSize()
+            dbg_last_top_wnd:SetWndSize(wpos.x, wpos.y - delta)
+        end
+    else
+        if dik == DIK_keys.DIK_RIGHT then
+            local wpos = dbg_last_top_wnd:GetWndPos()
+            dbg_last_top_wnd:SetWndPos(wpos.x + delta, wpos.y)
+        end
+
+        if dik == DIK_keys.DIK_LEFT then
+            local wpos = dbg_last_top_wnd:GetWndPos()
+            dbg_last_top_wnd:SetWndPos(wpos.x - delta, wpos.y)
+        end
+
+        if dik == DIK_keys.DIK_DOWN then
+            local wpos = dbg_last_top_wnd:GetWndPos()
+            dbg_last_top_wnd:SetWndPos(wpos.x, wpos.y + delta)
+        end
+
+        if dik == DIK_keys.DIK_UP then
+            local wpos = dbg_last_top_wnd:GetWndPos()
+            dbg_last_top_wnd:SetWndPos(wpos.x, wpos.y - delta)
+        end
+    end
+end
+
+function on_before_keyboard_hold(dik)
+    if captured then
+        if not dbg_last_top_wnd then
+            captured = false
+            return false
+        end
+
+        process_move(dik)
+
+        return true
+    end
+end
+
+function on_before_keyboard_press(dik)
+    if captured then
+        if not dbg_last_top_wnd then
+            captured = false
+            return false
+        end
+
+        if GetAlt() then
+            process_move(dik)
+        elseif dik == DIK_keys.DIK_RETURN then
+            log1("release wnd")
+            log1("wnd params:....")
+
+            local wpos = dbg_last_top_wnd:GetWndPos()
+            local wsize = dbg_last_top_wnd:GetWndSize()
+
+            log1("new " .. log_wnd_parems(dbg_last_top_wnd))
+
+            dbg_last_top_wnd = nil
+            set_dbg_select_wnd(dbg_last_top_wnd)
+
+            captured = false
+        elseif dik == DIK_keys.DIK_ESCAPE then
+            if GetShift() then
+                local parent = dbg_last_top_wnd:GetParent()
+                if parent then
+                    log1("Capture parent...")
+                    dbg_last_top_wnd = parent
+                    set_dbg_select_wnd(dbg_last_top_wnd)
+
+                    init_wnd_pos = dbg_last_top_wnd:GetWndPos()
+                    init_wnd_size = dbg_last_top_wnd:GetWndSize()
+
+                    log1("curr " .. log_wnd_parems(dbg_last_top_wnd))
+                else
+                    log1("No parent...")
+                end
+            else
+                log1("release wnd")
+                log1("restore wnd params...")
+
+                dbg_last_top_wnd:SetWndPos(init_wnd_pos.x, init_wnd_pos.y)
+                dbg_last_top_wnd:SetWndSize(init_wnd_size.x, init_wnd_size.y)
+
+                dbg_last_top_wnd = nil
+                set_dbg_select_wnd(dbg_last_top_wnd)
+
+                captured = false
+            end
+        elseif dik == DIK_keys.DIK_S then
+            log1("flip StretchTexture")
+            local static = dbg_last_top_wnd:GetCUIStatic()
+            if static then
+                static:SetStretchTexture(not static:GetStretchTexture())
+            end
+        elseif dik == DIK_keys.DIK_H then
+            log1("flip Heading")
+            local static = dbg_last_top_wnd:GetCUIStatic()
+            if static then
+                static:EnableHeading(not static:Heading())
+            end
+        elseif GetControl() and dik == DIK_keys.DIK_C then
+            log1("copy text to clipboard")
+            local static = dbg_last_top_wnd:GetCUIStatic()
+            if static then
+                game.copy_to_clipboard(static:GetText(), true)
+            end
+        elseif dik == DIK_keys.DIK_C then
+            log1("flip TextComplexMode")
+            local static = dbg_last_top_wnd:GetCUIStatic()
+            if static then
+                static:SetTextComplexMode(not static:GetTextComplexMode())
+            end
+        elseif GetControl() and dik == DIK_keys.DIK_DOWN then
+            if delta > 1 then
+                delta = delta - 1
+                log1("chande DOWN delta... " .. delta)
+            end
+        elseif GetControl() and dik == DIK_keys.DIK_UP then
+            if delta < 50 then
+                delta = delta + 1
+                log1("chande UP delta... " .. delta)
+            end
+        end
+
+        return true
+    end
+
+    local wnd = get_dbg_last_top_wnd()
+    if wnd then
+        dbg_last_top_wnd = wnd
+
+        if dik == DIK_keys.DIK_RETURN then
+            set_dbg_select_wnd(dbg_last_top_wnd)
+
+            log1("captured wnd")
+            captured = true
+
+            init_wnd_pos = dbg_last_top_wnd:GetWndPos()
+            init_wnd_size = dbg_last_top_wnd:GetWndSize()
+
+            log1("curr " .. log_wnd_parems(dbg_last_top_wnd))
+
+            return true
+        elseif dik == DIK_keys.DIK_I then
+            log1("wnd under cursor " .. log_wnd_parems(dbg_last_top_wnd))
+        end
+    else
+        dbg_last_top_wnd = nil
+        set_dbg_select_wnd(dbg_last_top_wnd)
+    end
+    return false
+end
