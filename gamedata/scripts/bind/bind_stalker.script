@@ -145,6 +145,7 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_before_use_item, nil)
     self.object:set_callback(callback.on_actor_weapon_zoom_in, nil)
     self.object:set_callback(callback.on_actor_weapon_zoom_out, nil)
+    self.object:set_callback(callback.on_actor_weapon_zoom_switch, nil)
     self.object:set_callback(callback.on_actor_weapon_reload, nil)
     self.object:set_callback(callback.on_actor_weapon_reload_end, nil)
     self.object:set_callback(callback.on_throw_grenade, nil)
@@ -198,6 +199,7 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_before_use_item, self.before_use, self)
     self.object:set_callback(callback.on_actor_weapon_zoom_in, self.on_actor_weapon_zoom_in, self)
     self.object:set_callback(callback.on_actor_weapon_zoom_out, self.on_actor_weapon_zoom_out, self)
+    self.object:set_callback(callback.on_actor_weapon_zoom_switch, self.on_actor_weapon_zoom_switch, self)
     self.object:set_callback(callback.on_actor_weapon_reload, self.on_actor_weapon_reload, self)
     self.object:set_callback(callback.on_actor_weapon_reload_end, self.on_actor_weapon_reload_end, self)
     self.object:set_callback(callback.on_throw_grenade, self.on_throw_grenade, self)
@@ -469,6 +471,10 @@ end
 
 function actor_binder:on_actor_weapon_zoom_out(obj)
     self.am:call("on_actor_weapon_zoom_out", obj)
+end
+
+function actor_binder:on_actor_weapon_zoom_switch(obj)
+    self.am:call("on_actor_weapon_zoom_switch", obj)
 end
 
 function actor_binder:on_throw_grenade(obj)
