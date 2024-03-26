@@ -1,0 +1,27 @@
+#include "common.h"
+
+uniform float4 m_affects;
+
+float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
+
+float4 main(p_flat I) : SV_Target
+{
+    I.tcdh.x = resize(I.tcdh.x, screen_res.x / screen_res.y, 0);
+    I.tcdh.y = resize(I.tcdh.y, (screen_res.x / screen_res.y) * 1.2, 0.5);
+
+    // diffuse
+    float4 D = s_base.Sample(smp_base, I.tcdh); // IN:  rgb.a
+
+    float Y = D.b;
+    float U = D.g;
+    float V = D.r;
+
+    float c = 1.16406f;
+    float3 _Y = float3(c, c, c) * Y;
+    float3 _U = float3(0, -0.390625f, +2.01562f) * U;
+    float3 _V = float3(+1.59765f, -0.8125f, 0) * V;
+    float3 _S = float3(-0.86961f, +0.53076f, -1.0786f);
+
+    float brightness = D.a - m_affects.x - m_affects.x;
+    return float4(SRGBToLinear(_Y + _U + _V + _S), brightness);
+}
