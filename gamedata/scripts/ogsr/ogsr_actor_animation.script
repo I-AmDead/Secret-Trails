@@ -21,7 +21,10 @@ local snd_hand_bore = sound_object('interface\\item_usage\\outfit_inspect')
 local hide_hand_speed = 1.5
 local anim_plays
 local speed_k = 1.0
+
 local key_release = false
+local sprint_blocked
+local sprint_anim
 
 local lowered_anm_kinds = {
     ["w_sniper"] = true,
@@ -251,11 +254,13 @@ end
 function animation_on()
     level.only_allow_movekeys(true)
     level.set_actor_allow_ladder(false)
+    sprint_blocked = true
 end
 
 function animation_off()
     level.only_allow_movekeys(false)
     level.set_actor_allow_ladder(true)
+    sprint_blocked = nil
 end
 
 function on_first_update()
@@ -342,29 +347,30 @@ function watch_wide()
     end)
 end
 
-local sprint_anim = false
 function on_sprint()
-    if allow_animation() and not sprint_anim then
-        if db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then return end
+    if sprint_blocked then return end
+    if not sprint_anim then
+        if not allow_animation or db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then return end
         game.play_hud_motion(2, "anim_sprint_no_hand", "anm_sprint", true, 1)
         --animation_on()
         sprint_anim = true
-    end
-
-    if sprint_anim and (db.actor:active_item() or not get_actor_obj():is_actor_sprinting()) then
-        game.stop_hud_motion()
-        --animation_off()
-        sprint_anim = false
+        log3("test anim 1")
+    else
+        log3("test anim 2")
+        if db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then
+            game.stop_hud_motion()
+            --animation_off()
+            sprint_anim = nil
+            log3("test anim 3")
+        end
     end
 end
 
 function hand_wide()
-    if allow_animation() then
-        if db.actor:active_item() then return end
-        local anm_time = game.play_hud_motion(2, "anim_hand_bore", "anm_bore", true, 1)
-        level.add_cam_effector("camera_effects\\weapon\\liz_outfit_inspect.anm", 7538, false, "", 0, false)
-        snd_hand_bore:play(db.actor, 0, sound_object.s2d)
-        animation_on()
-        dsh.timeout(anm_time, animation_off)
-    end
+    if db.actor:active_item() or not allow_animation() then return end
+    local anm_time = game.play_hud_motion(2, "anim_hand_bore", "anm_bore", true, 1)
+    level.add_cam_effector("camera_effects\\weapon\\liz_outfit_inspect.anm", 7538, false, "", 0, false)
+    snd_hand_bore:play(db.actor, 0, sound_object.s2d)
+    animation_on()
+    dsh.timeout(anm_time, animation_off)
 end

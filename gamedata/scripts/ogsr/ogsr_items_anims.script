@@ -89,8 +89,13 @@ local function play_item_use(item)
 
     local anim = (string.find(item, "^bandage") or (not exo and string.find(item, "^medkit"))) and math.random() > 0.5 and "anm_use_alt" or "anm_use"
 
-    level.only_allow_movekeys(true)
-    level.set_actor_allow_ladder(false)
+    if level.get_inventory_wnd():IsShown() then
+        level.start_stop_menu(level.get_inventory_wnd(), true)
+    elseif level.get_car_body_wnd():IsShown() then
+        level.start_stop_menu(level.get_car_body_wnd(), true)			
+    end
+
+    ogsr_actor_animation.animation_on()
 
     local prev_active_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
@@ -109,9 +114,7 @@ local function play_item_use(item)
         end)
 
         local tmr = dsh.timeout(anm_duration, function()
-            level.only_allow_movekeys(false)
-            level.set_actor_allow_ladder(true)
-
+            ogsr_actor_animation.animation_off()
             db.actor:activate_slot(prev_active_slot)
         end)
     end)
