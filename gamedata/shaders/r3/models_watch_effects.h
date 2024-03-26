@@ -215,10 +215,15 @@ float3 NixieTime(float2 uv)
 	
 	float shade = 0.004 / (dist);
 	
-	color += (game_time.x > 21 || game_time.x < 5 ? float3(0.0, 0.9, 0.2) : float3(0.2, 0.2, 0.6)) * shade;
+	color += watch_color_params.rgb * shade;
 #if GLOWPULSE
-	color += (game_time.x > 21 || game_time.x < 5 ? float3(0.0, 0.2, 0.5) : float3(0.2, 0.2, 0.2)) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5, 0.0));
+	color += (watch_color_params.rgb * 0.5) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5, 0.0));
 #endif
+
+//	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.9, 0.2) : float3(0.9, 0.2, 0.0)) * shade;
+//#if GLOWPULSE
+//	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.2, 0.5) : float3(0.9, 0.2, 0.0)) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5, 0.0));
+//#endif
 
 #ifdef SHOW_GRID
     float grid = 0.5 - max(abs(fmod(uva.x * 64.0, 1.0) -0.3), abs(fmod(uva.y * 64.0, 1.0) -0.3));
