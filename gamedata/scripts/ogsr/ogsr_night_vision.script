@@ -43,12 +43,20 @@ local function lcalls(count, radius, sub)
             add = sub and cnt or add + 5
             cmd("r_pnv_radius", radius * (add / count))
             cmd("r_pnv_position", add)
+            if add == 50 then
+            	cmd("r_pnv_alfa_vignete", 2)
+            end
+            if add == 90 then
+            	cmd("r_pnv_alfa_vignete", 0)
+            end
             lcall:set_pause(1)
             return cnt == 0
         end,
         function()
 	    if sub then
                 cmd("r_pnv_mode", 0)
+	    else
+                cmd("r_pnv_alfa_vignete", 1)
 	    end
 	    nvg_distortion_timer = nil
         end
