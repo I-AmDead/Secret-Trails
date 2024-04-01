@@ -52,24 +52,24 @@ function mark_control(wpn, force, bind)
     if not force then
         if dots_number and dots_number > 0 then
             if bind == key_bindings.kSWITCH_MARK then
-                settings_mark(false, dots_number, "mark_number", scope_name)
+                settings_mark(false, dots_number, "mark_number", scope_name, wpn)
             else
-                settings_mark(false, 3, "mark_color", scope_name)
+                settings_mark(false, 3, "mark_color", scope_name, wpn)
             end
         end
     else
-        settings_mark(true, dots_number, "mark_number", scope_name)
-        settings_mark(true, 3, "mark_color", scope_name)
+        settings_mark(true, dots_number, "mark_number", scope_name, wpn)
+        settings_mark(true, 3, "mark_color", scope_name, wpn)
     end
 end
 
 local last_weapon_id
 local snd_adjust = sound_object('interface\\mark_adjust')
-function settings_mark(update, max_value, value_name, scope_name)
-    local value = ogse.load_var(value_name .. scope_name, 0)
+function settings_mark(update, max_value, value_name, scope_name, wpn)
+    local value = ogse.load_var(value_name .. scope_name .. wpn:section(), 0)
     if not update then
         value = value < max_value - 1 and value + 1 or 0
-        ogse.save_var(value_name .. scope_name, value)
+        ogse.save_var(value_name .. scope_name .. wpn:section(), value)
         game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
         snd_adjust:play(db.actor, 0, sound_object.s2d)
     end
