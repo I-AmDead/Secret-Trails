@@ -1,41 +1,10 @@
-
 --************************************************* Инициализация расширений движка ************************************************
 log1("--LUA version: ["..(jit.version or _VERSION).."]")
 log1("--MOD version: "..system_ini():r_string_wq("mod_ver", "mod_ver").." "..stdfs.path(getFS():update_path( "$fs_root$",  "gamedata.db_base_configs" )).last_write_time_string_short)
 --==============================================================================================
 FFI = require('ffi') --Делать только здесь и только один раз!
 --==============================================================================================
---===================[string.lower и string.upper с поддержкой русских букв]====================
---[=[--KRodin: Из-за setlocale могут возникать проблемы.
-os.setlocale("", "ctype") --Для старых версий LuaJIT достаточно установить правильную локаль.
-if jit.version_num >= 20000 then --В новых версиях установки локали недостаточно
-	FFI.cdef[[
-		int tolower( int code );
-		int toupper( int code );
-	]]
-	string.lower = function(s)
-		return s:gsub('.', function(x)
-			return string.char( FFI.C.tolower( x:byte() ) )
-		end)
-	end
-	string.upper = function(s)
-		return s:gsub('.', function(x)
-			return string.char( FFI.C.toupper( x:byte() ) )
-		end)
-	end
-end
---]=]
-do
-	local lower = string.lower
-	string.lower = function(s)
-		return lower(s:gsub("([А-Я])",function(c) return string.char(c:byte()+32) end):gsub("Ё", "ё"))
-	end
-	--
-	local upper = string.upper
-	string.upper = function(s)
-		return upper(s:gsub("([а-я])",function(c) return string.char(c:byte()-32) end):gsub("ё", "Ё"))
-	end
-end
+prefetch("ansi_functions")
 --=======================================[Константы]============================================
 NO_ACTIVE_SLOT = 255
 BI_NONE = 65535
@@ -933,7 +902,7 @@ local tostring_all_tbl = {
 	["boolean"] =	function(v) return tostring(v) end,
 	["nil"] =		function(v) return tostring(v) end,
 	["function"] =	function() return "[[FUNCTION]]" end, --Function, Userdata и Thread распечатать нельзя, просто заменим на строки
-	["userdata"] =	function() return "[[USERDATA]]" end,
+	["userdata"] =	function(v) return tostring(v) or "[[USERDATA]]" end,
 	["thread"] =	function() return "[[THREAD]]" end,
 }
 --Конвертирование чего угодно в строку. Использовать только для вывода в лог!
