@@ -70,7 +70,11 @@ local function spawn_sverhprovodnik()
 end
 
 function start_quest()
-    ogse_st_mgr.start_visual_timer(nil, 17 * 60, script_name() .. ".quest_fail")
+    ogse_st_mgr.start_conditional_visual_timer(nil, 17 * 60, script_name() .. ".quest_complete", script_name() .. ".quest_fail")
+end
+
+function quest_complete()
+    return has_alife_info("pobeg_finish")
 end
 
 function quest_fail()
