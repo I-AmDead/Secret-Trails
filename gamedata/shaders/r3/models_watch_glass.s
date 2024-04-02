@@ -8,5 +8,6 @@ function normal   (shader, t_base, t_second, t_detail)
 		: distort		(true)
 	shader:dx10texture	("s_base",	t_base)
 	shader:dx10texture	("s_hud_rain",	"fx\\hud_rain")
+	shader:dx10texture	("s_glass_distortion",	"watch\\watch_glass_distortion")
 	shader:dx10sampler	("smp_base")
 end
