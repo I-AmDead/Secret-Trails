@@ -25,6 +25,8 @@ float4 permute(float4 x) { return mod289(((x * 34.0) + 1.0) * x); }
 /// <summary>
 /// 2D Noise by Ian McEwan, Ashima Arts.
 /// <summary>
+Texture2D<float4> s_mask_wipe;
+
 float snoise_2D(float2 v)
 {
     const float4 C = float4(0.211324865405187, // (3.0-sqrt(3.0))/6.0
@@ -187,6 +189,15 @@ float4 main(p_screen _in) : SV_Target
     float cx = Drops(uv + e, t, staticDrops, layer1, layer2).x;
     float cy = Drops(uv + e.yx, t, staticDrops, layer1, layer2).x;
     float2 n = float2(cx - c.x, cy - c.x); // expensive normals
+
+    //this is just a scrolling texture. 0.18 is an offset to compensate for anim length etc
+    float2 uv_restart = uv + float2(raindrop_restart.x == 0.0 ? 0.0 : -0.18, 0.0) + float2(1.0-raindrop_restart.x, 0.0);
+    float4 fetched_tex = s_mask_wipe.SampleLevel(smp_rtlinear, uv_restart, 0);
+    fetched_tex.xy = fetched_tex.xy * 2.0 - 1.0;
+    fetched_tex.xy *= rainAmount * fetched_tex.z * fetched_tex.w;
+    fetched_tex *= 1.-smoothstep(0.0, 1.0, uv.x-0.45);
+    n += fetched_tex.xy; //add smudges
+    n *= (1.0-raindrop_restart.x); //falloff allat
 
     float3 col = s_image.Sample(smp_nofilter, uv + n);
 

@@ -52,7 +52,7 @@ float4 main(p_screen I) : SV_Target
     // Prepare refracted texcoord
     float2 gasmask_tc = (gasmask_tex.xy * 2.0 - 1.0) * GM_DIST_INT;
     float2 swear_tc = ((smear_tex.xy * 2.0 - 1.0) * GM_DIST_INT / 4.0) * raindrop_restart.x;
-    float2 refr_tc = I.tc0.xy + gasmask_tc + swear_tc;
+    float2 refr_tc = I.tc0.xy + gasmask_tc;
 
     // Sample scene with refracted texcoord
     float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
@@ -71,7 +71,7 @@ float4 main(p_screen I) : SV_Target
     float smear_tex_alpha = smear_tex.w * GM_DIFF_INT / 4.0;
 
     // Mix gasmask cracks with image
-    image += (gasmask_tex_alpha + smear_tex_alpha) * image;
+    image += (gasmask_tex_alpha ) * image;
 
     // Output
     return float4(image, 1.0);
