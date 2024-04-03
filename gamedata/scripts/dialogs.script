@@ -67,11 +67,11 @@ end
 
 function transfer_medkit(first_speaker, second_speaker)
     if first_speaker:object("medkit") then
-        dialogs.relocate_item_section(second_speaker, "medkit", "out")
+        dialogs.relocate_item_section_special(second_speaker, "medkit", "out")
     elseif first_speaker:object("medkit_army") ~= nil then
-        dialogs.relocate_item_section(second_speaker, "medkit_army", "out")
+        dialogs.relocate_item_section_special(second_speaker, "medkit_army", "out")
     else
-        dialogs.relocate_item_section(second_speaker, "medkit_scientic", "out")
+        dialogs.relocate_item_section_special(second_speaker, "medkit_scientic", "out")
     end
 
     local obj_community = second_speaker:character_community()
@@ -130,7 +130,7 @@ function clear_smart_terrain_conditions(sobj)
 end
 
 function transfer_bandage(first_speaker, second_speaker)
-    dialogs.relocate_item_section(second_speaker, "bandage", "out")
+    dialogs.relocate_item_section_special(second_speaker, "bandage", "out")
     second_speaker:set_relation(game_object.friend, first_speaker)
 end
 function kill_yourself(npc, actor)
@@ -159,6 +159,23 @@ function relocate_item_section(victim, section, type, n)
             end
         elseif type == "out" then
             ogse.remove_inv_items_by_section(section, n)
+        end
+        news_manager.relocate_item(db.actor, type, section)
+    end
+end
+
+function relocate_item_section_special(victim, section, type)
+    if db.actor and victim then
+        if type == "in" then
+            -- Трансферить нужно только квестовые предметы.
+            if quest_section[section] and victim:object(section) then
+                victim:transfer_item(victim:object(section), db.actor)
+            else
+                alife():create(section, db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id(),
+                    db.actor:id())
+            end
+        elseif type == "out" then
+            db.actor:transfer_item(db.actor:object(section), victim)
         end
         news_manager.relocate_item(db.actor, type, section)
     end
