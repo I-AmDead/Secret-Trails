@@ -159,6 +159,7 @@ local video_params = {
 class "options_dialog" (CUIScriptWnd)
 function options_dialog:__init(owner)
     super()
+    mm = _G.main_menu.get_main_menu()
     self:SetFont(GetFontMedium())
     self.owner = owner
 
@@ -306,6 +307,7 @@ function options_dialog:HintRefresh()
 end
 
 function options_dialog:OnBtnDefault()
+    mm:PlaySound("interface\\button_1")
     cmd("unbindall")
 
     local opt = COptionsManager()
@@ -324,6 +326,8 @@ function options_dialog:OnPresetChanged()
 end
 
 function options_dialog:OnBtnAccept()
+    mm:PlaySound("interface\\button_1")
+
     if need_restart then
         self:GetHolder():start_stop_menu(self.message_box, true)
         need_restart = false
@@ -342,6 +346,7 @@ function options_dialog:OnBtnAccept()
 end
 
 function options_dialog:OnBtnCancel()
+    mm:PlaySound("interface\\button_1")
     self:UpdateOptValues(false)
 
     self:GetHolder():start_stop_menu(self, true)
@@ -353,6 +358,7 @@ function options_dialog:OnBtnCancel()
 end
 
 function options_dialog:SetPage(index)
+    mm:PlaySound("interface\\button_1")
     for _, v in ipairs(self.pages) do
         v:Show(false)
         v.button:SetCheck(false)

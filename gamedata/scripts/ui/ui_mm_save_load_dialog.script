@@ -97,6 +97,7 @@ end
 class "save_load_dialog"(CUIScriptWnd)
 function save_load_dialog:__init(is_save_dlg)
     super()
+    mm = _G.main_menu.get_main_menu()
     self.is_save_dlg = is_save_dlg
     if self.is_save_dlg then
         self:InitControlsSave()
@@ -195,6 +196,7 @@ function save_load_dialog:InitCallBacks()
     self:AddCallback("list_window", ui_events.LIST_ITEM_CLICKED, self.OnListItemClicked, self)
     self:AddCallback("button_del", ui_events.BUTTON_CLICKED, self.OnButton_del_clicked, self)
     self:AddCallback("message_box", ui_events.MESSAGE_BOX_YES_CLICKED, self.OnMsgYes, self)
+    self:AddCallback("message_box", ui_events.MESSAGE_BOX_NO_CLICKED, self.OnMsgNo, self)
     if self.is_save_dlg then
         self:AddCallback("button_ok", ui_events.BUTTON_CLICKED, self.OnButton_ok_clicked, self)
         self:AddCallback("button_cancel", ui_events.BUTTON_CLICKED, self.OnButton_back_clicked, self)
@@ -207,6 +209,7 @@ function save_load_dialog:InitCallBacks()
 end
 
 function save_load_dialog:OnListItemClicked()
+    mm:PlaySound("interface\\button_1")
     if self.is_save_dlg then
         self:OnListItemClickedSave()
     else
@@ -269,7 +272,13 @@ function save_load_dialog:OnListItemClickedLoad()
     end
 end
 
+function save_load_dialog:OnMsgNo()
+    mm:PlaySound("interface\\button_1")
+    self.msgbox_id = 0
+end
+
 function save_load_dialog:OnMsgYes()
+    mm:PlaySound("interface\\button_1")
     if self.is_save_dlg then
         if self.msgbox_id == 1 then
             self:SaveFile(self.new_save)
@@ -339,6 +348,7 @@ function save_load_dialog:SaveFile(fileName)
 end
 
 function save_load_dialog:OnButton_ok_clicked()
+    mm:PlaySound("interface\\button_1")
     if self.is_save_dlg then
         self:OnButton_save_clicked()
     else
@@ -404,11 +414,13 @@ function save_load_dialog:OnButton_load_clicked()
 end
 
 function save_load_dialog:OnButton_back_clicked()
+    mm:PlaySound("interface\\button_1")
     self:GetHolder():start_stop_menu(self, true)
     self.owner:Show(true)
 end
 
 function save_load_dialog:OnButton_del_clicked()
+    mm:PlaySound("interface\\button_1")
     local list = self:GetListWnd("list_window")
 
     if list:GetSize() == 0 then
