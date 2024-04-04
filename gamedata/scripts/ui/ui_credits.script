@@ -25,10 +25,12 @@ function ui_credits:InitUI()
 
 	self.background = xml:InitStatic("background", self)
 	self.credits_area = xml:InitScrollView("credits_area", self)
+	self.darkside_logo = xml:InitStatic("darkside_logo", self)
 	self.vignette = xml:InitStatic("vignette", self)
 	self.vignette_fade = xml:InitStatic("vignette_fade", self)
 
 	self.background:SetColor(GetARGB(0,255,255,255))
+	self.darkside_logo:SetColor(GetARGB(0,255,255,255))
 	self.vignette:SetColor(GetARGB(0,255,255,255))
 	self.vignette_fade:SetColor(GetARGB(0,255,255,255))
 end
@@ -66,9 +68,12 @@ function ui_credits:UpdateWnd()
 		SPEED = 0
 	else
 		fade_background = fade_background + 5
-		self.vignette:SetColor(GetARGB(fade_background >= 250 and 255 or fade_background, 255, 255, 255))
-		self.background:SetColor(GetARGB(fade_background >= 250 and 255 or fade_background,255,255,255))
+		local alpha_color = fade_background >= 250 and 255 or fade_background
+		self.vignette:SetColor(GetARGB(alpha_color, 255, 255, 255))
+		self.background:SetColor(GetARGB(alpha_color,255,255,255))
+		self.darkside_logo:SetColor(GetARGB(alpha_color,255,255,255))
 		self.credits_area:SetWndPos(pos.x, pos.y - SPEED)
+		self.darkside_logo:SetWndPos(pos.x, (pos.y - 768) - SPEED)
 	end
 
 	if self.music:playing() and time_global() - fade_timer > self.music:length() - 7000 then
