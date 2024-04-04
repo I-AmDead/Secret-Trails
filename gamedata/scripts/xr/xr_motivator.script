@@ -1,4 +1,3 @@
-
 local particles = {}
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -50,8 +49,6 @@ function motivator_binder:net_spawn(sobject)
         return false
     end
 
-    local npc = self.object
-
     db.add_obj(self.object)
 
     self.object:set_callback(callback.use_object, self.use_callback, self)
@@ -74,11 +71,6 @@ function motivator_binder:net_spawn(sobject)
     self.object:set_callback(callback.on_item_take, self.on_item_take, self)
     self.object:set_callback(callback.on_footstep, self.on_footstep, self)
     self.object:set_enemy_callback(self.enemy_callback, self)
-    self.am:call("on_npc_before_spawn", self.object, self)
-    if not self.object:alive() then
-        self.am:call("on_npc_spawn", self.object, self)
-        return true
-    end
     local manager = self.object:motivation_action_manager()
     manager:remove_evaluator(stalker_ids.property_anomaly)
     manager:add_evaluator(stalker_ids.property_anomaly, property_evaluator_const(false))
@@ -87,6 +79,17 @@ function motivator_binder:net_spawn(sobject)
     manager:add_evaluator(blowout_scheme.evid_outside, property_evaluator_const(false))
     manager:add_evaluator(blowout_scheme.evid_blowout, property_evaluator_const(false))
     manager:add_evaluator(blowout_scheme.evid_preblowout, property_evaluator_const(false))
+
+    if not self.loaded then
+        self.loaded = xr_logic.load_logic_online(self.object)
+        local st = self.st
+        st.loaded_ini_filename = st.ini_filename
+        st.loaded_section_logic = st.section_logic
+        st.loaded_active_section = st.active_section
+        st.loaded_gulag_name = st.gulag_name
+    end
+
+    self.am:call("on_npc_before_spawn", self.object, self)
     xr_gulag.setup_gulag_and_logic_on_spawn(self.object, self.st, sobject, modules.stype_stalker, self.loaded)
 
     local particle_param = get_string(self.object:section(), "bones_particles", nil)
@@ -143,6 +146,8 @@ function motivator_binder:net_destroy()
         rx_ai.npc_net_destroy(self.object)
     end
 
+    xr_logic.save_logic_online(self.object)
+
     if table.getn(self.particles) > 0 then
         for kk, vv in pairs(self.particles) do
             if not vv:is_finished() then
@@ -174,7 +179,6 @@ function motivator_binder:net_destroy()
 
     object_binder.net_destroy(self)
 
-    -- АМК. Очистка рестрикторов
     local id = self.object:id()
     local sobj = alife():object(id)
     if sobj then
@@ -207,27 +211,24 @@ function motivator_binder:before_hit_callback(hit_data)
     end
 
     dsh.copy_hit_data(hit_data, self.last_hit_data)
+    self.am:call("on_npc_before_hit", self.object, hit_data, self)
 end
 
 function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_index)
     if self.st.active_section then
-        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount,
-            local_direction, who, bone_index)
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
 
     if self.st.combat_ignore then
-        xr_logic.issue_event(self.object, self.st.combat_ignore, "hit_callback", self.object, amount, local_direction,
-            who, bone_index)
+        xr_logic.issue_event(self.object, self.st.combat_ignore, "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
 
     if self.st.combat then
-        xr_logic.issue_event(self.object, self.st.combat, "hit_callback", self.object, amount, local_direction, who,
-            bone_index)
+        xr_logic.issue_event(self.object, self.st.combat, "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
 
     if self.st.hit then
-        xr_logic.issue_event(self.object, self.st.hit, "hit_callback", self.object, amount, local_direction, who,
-            bone_index)
+        xr_logic.issue_event(self.object, self.st.hit, "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
 
     sr_territory.issue_event(self.object, "hit_callback", self.object, amount, local_direction, who, bone_index)
@@ -250,7 +251,7 @@ function motivator_binder:death_callback(victim, who)
         rx_ai.npc_death(self.object, who)
     end
 
-    xr_statistic.addKillCount(who, self.object) -- Добавление опыта за убийство
+    xr_statistic.addKillCount(who, self.object)
 
     if self.st.death then
         xr_logic.issue_event(self.object, self.st.death, "death_callback", self.object, who)
@@ -323,10 +324,10 @@ function motivator_binder:update(delta)
         db.actor:position():distance_to(self.object:position()) < 150 then
         enemy_see_actor(self.object, "npc")
     end
+
     sr_light.check_light(self.object)
     self.object:info_clear()
 
-    self.am:call("on_npc_update", self.object, delta)
     self.am:call("on_npc_update." .. self.object:id(), self.object, delta)
 end
 
@@ -379,8 +380,7 @@ function motivator_binder:on_item_drop(obj)
         return
     end
     local sobj = alife():object(obj:id())
-    -- if not sobj then return end --XRKRODIN: Это важно, чтобы правильно обновлять оружейный менежжер при удалении оружия из инвентаря нпс, не раскомментировать!
-
+    -- if not sobj then return end
     if rx_ai then
         rx_ai.npc_item_drop(self.object, obj)
     end
@@ -409,7 +409,6 @@ function motivator_binder:on_item_take(obj)
     end
 
     self.am:call("on_npc_item_take", self.object, obj, sobj)
-    self.am:call("on_npc_item_take." .. self.object:id(), self.object, obj, sobj)
 end
 
 function motivator_binder:on_footstep(obj, power)
@@ -423,13 +422,13 @@ function motivator_binder:on_footstep(obj, power)
     self.am:call("on_npc_foot_step", self.object, obj, sobj)
 end
 
--- Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
--- Если вернёт false - объект не будет вступать в бой.
--- Вызывается:
--- Одноименным калбеком из движка (для движковой боёвки)
--- Из xr_danger
--- Из xr_camper.action_patrol:process_danger()
--- Из функции check_sound в мотиваторе
+--Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚, РјРѕР¶РµС‚ Р»Рё РѕР±СЉРµРєС‚ РІСЃС‚СѓРїР°С‚СЊ РІ Р±РѕР№ СЃ РїСЂРµРґРїРѕР»Р°РіР°РµРјС‹Рј РїСЂРѕС‚РёРІРЅРёРєРѕРј (enemy_st).
+--Р•СЃР»Рё РІРµСЂРЅС‘С‚ false - РѕР±СЉРµРєС‚ РЅРµ Р±СѓРґРµС‚ РІСЃС‚СѓРїР°С‚СЊ РІ Р±РѕР№.
+--Р’С‹Р·С‹РІР°РµС‚СЃСЏ:
+--РћРґРЅРѕРёРјРµРЅРЅС‹Рј РєР°Р»Р±РµРєРѕРј РёР· РґРІРёР¶РєР° (РґР»СЏ РґРІРёР¶РєРѕРІРѕР№ Р±РѕС‘РІРєРё)
+--РР· xr_danger
+--РР· xr_camper.action_patrol:process_danger()
+--РР· С„СѓРЅРєС†РёРё check_sound РІ РјРѕС‚РёРІР°С‚РѕСЂРµ
 local enemy_callback_freq = 1000
 function motivator_binder:enemy_callback(obj, enemy_st)
     local valid, enemy = validate_enemy_object(enemy_st)
@@ -473,7 +472,7 @@ function AddToMotivator(npc)
     end
 end
 
--- Эвалюаторы, которые имеют высший приоритет, и, соответственно, перебивают остальные скрипты собой
+-- Р­РІР°Р»СЋР°С‚РѕСЂС‹, РєРѕС‚РѕСЂС‹Рµ РёРјРµСЋС‚ РІС‹СЃС€РёР№ РїСЂРёРѕСЂРёС‚РµС‚, Рё, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ, РїРµСЂРµР±РёРІР°СЋС‚ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЃРєСЂРёРїС‚С‹ СЃРѕР±РѕР№
 function addCommonPrecondition(action)
     action:add_precondition(world_property(xr_evaluators_id.stohe_meet_base + 1, false))
     action:add_precondition(world_property(xr_evaluators_id.sidor_wounded_base + 0, false))
