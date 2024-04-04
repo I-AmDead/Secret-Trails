@@ -1,14 +1,6 @@
-
--- минимальная и максимальная амплитуда раскачки ходьбы
-local BOBBING_MIN = 1.5
-local BOBBING_MAX = 6
-
 function attach( sm ) -- для менеджера сигналов
-    if get_con_string("g_god ") == "off" then
-        sm:subscribe({signal = "on_first_update",           fun = this.on_first_update   })
-        sm:subscribe({signal = "on_mm_return_game",         fun = this.on_mm_return_game })
-        sm:subscribe({signal = "update_artefacts_on_belt",  fun = this.update_artefacts_on_belt, [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"})
-    end
+    sm:subscribe({signal = "on_first_update",           fun = this.on_first_update   })
+    sm:subscribe({signal = "update_artefacts_on_belt",  fun = this.update_artefacts_on_belt, [ "script_name" ] = "ogse_actor_conditions_mgr.update_artefacts_on_belt"})
 end
 
 -- читаем глобальные параметры эффектов здоровья
@@ -40,10 +32,6 @@ local overweight_walk_k = get_float("actor_condition", "overweight_walk_k")
 local jump_speed = get_float("actor", "jump_speed")
 local cur_jump_speed = jump_speed
 local override_jump_speed
-
-local limp_amp = get_float("bobbing_effector", "limp_amplitude")
-local run_amp = get_float("bobbing_effector", "run_amplitude")
-local walk_amp = get_float("bobbing_effector", "walk_amplitude")
 
 local cur_cam_inert, new_cam_inert
 local health_t, satiety_t
@@ -89,6 +77,8 @@ local ext = {
 }
 
 function update_artefacts_on_belt(dt)
+    if get_con_string("g_god ") == "on" or get_con_string("g_god ") == "1" then return end
+
     for k, v in pairs(ext) do
         ext[k] = 0
     end
@@ -241,7 +231,6 @@ function apply_conds()
     if has_overweight and use_overweight then
         local k2 = 1 - overweight_k
         cur_walk_accel = cur_walk_accel * k2
-        new_cam_inert = overweight_k
         if k2 < 0.1 then
             override_power = 0.1
         else
@@ -249,14 +238,9 @@ function apply_conds()
         end
     else
         override_power = 1
-        new_cam_inert = 0
     end
 
     if act.power < 0.8 then
-        local power_inert = 1 - act.power / 0.8
-        if power_inert > new_cam_inert then
-            new_cam_inert = power_inert
-        end
         if act.power < 0.3 then
             cur_walk_accel = cur_walk_accel * (act.power / 0.3)
         end
@@ -270,12 +254,6 @@ function apply_conds()
     end
     if act.health < 0.9 and health_t < time_global() then
         cur_jump_power = cur_jump_power + ((0.4 - cur_jump_power) * (1 - (act.health / 0.9)))
-        if act.health < 0.8 then
-            local health_inert = 0.8 - act.health
-            if health_inert > new_cam_inert then
-                new_cam_inert = health_inert
-            end
-        end
     end
 
     set_sprint_factor(cur_sprint_koef * want_sleep_k)
@@ -287,28 +265,6 @@ function apply_conds()
     end
     set_jump_power(cur_jump_power)
     set_stand_power(cur_stand_power * want_sleep_k)
-
-    if new_cam_inert ~= cur_cam_inert then
-        local bobbing_eff = level.get_effector_bobbing()
-        if bobbing_eff then
-            if new_cam_inert > 0 then
-                local k = BOBBING_MIN + new_cam_inert * (BOBBING_MAX - BOBBING_MIN)
-                bobbing_eff.limp_amplitude = limp_amp * k
-                bobbing_eff.run_amplitude = run_amp * k
-                bobbing_eff.walk_amplitude = walk_amp * k
-                cur_cam_inert = new_cam_inert
-            else
-                bobbing_eff.limp_amplitude = limp_amp
-                bobbing_eff.run_amplitude = run_amp
-                bobbing_eff.walk_amplitude = walk_amp
-                cur_cam_inert = 0
-            end
-        end
-    end
-end
-
-function on_mm_return_game()
-    cur_cam_inert = 0
 end
 
 function get_satiety_v()

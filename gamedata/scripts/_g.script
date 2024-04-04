@@ -1308,6 +1308,74 @@ if false then
 		return _getn(t, ...)
 	end
 end
---*****************************************************************************************************************
 
 game_options.init()
+
+-- получение некоторых значений с плавающей запятой
+-- параметры бега
+function get_walk_accel()         return get_actor_obj().walk_accel end
+function get_jump_speed()         return get_actor_obj().jump_speed end
+function get_run_factor()         return get_actor_obj().run_coef end
+function get_run_back_factor()    return get_actor_obj().run_back_coef end
+function get_walk_back_factor()   return get_actor_obj().walk_back_coef end
+function get_crouch_factor()      return get_actor_obj().crouch_coef end
+function get_climb_factor()       return get_actor_obj().climb_coef end
+function get_sprint_factor()      return get_actor_obj().sprint_koef end
+function get_walk_strafe_factor() return get_actor_obj().walk_strafe_coef end
+function get_run_strafe_factor()  return get_actor_obj().run_strafe_coef end
+-- параметры стрельбы
+function get_disp_base()          return get_actor_obj().disp_base end -- в радианах
+function get_disp_aim()           return get_actor_obj().disp_aim end -- в радианах
+function get_disp_vel_factor()    return get_actor_obj().disp_vel_factor end
+function get_disp_accel_factor()  return get_actor_obj().disp_accel_factor end
+function get_disp_crouch_factor() return get_actor_obj().disp_crouch_factor end
+function get_disp_crouch_no_accel_factor()  return get_actor_obj().disp_crouch_no_acc_factor end
+-- получение некоторых целых и логических значений
+-- режим прицеливания
+function zoom_mode() return db.actor:zoom_mode() end -- возвращает true/false
+
+-- установка некоторых значений
+-- параметры бега
+function set_sprint_factor(v)      get_actor_obj().sprint_koef = v end
+function set_jump_speed(v)         get_actor_obj().jump_speed = v end
+function set_walk_accel(v)         get_actor_obj().walk_accel = v end
+function set_run_factor(v)         get_actor_obj().run_coef = v end
+function set_run_back_factor(v)    get_actor_obj().run_back_coef = v end
+function set_walk_back_factor(v)   get_actor_obj().walk_back_coef = v end
+function set_crouch_factor(v)      get_actor_obj().crouch_coef = v end
+function set_climb_factor(v)       get_actor_obj().climb_coef = v end
+function set_walk_strafe_factor(v) get_actor_obj().walk_strafe_coef = v end
+function set_run_strafe_factor(v)  get_actor_obj().run_strafe_coef = v end
+-- параметры стрельбы
+function set_disp_base(v)          get_actor_obj().disp_base = v end -- в радианах
+function set_disp_aim( v )         get_actor_obj().disp_aim = v end
+
+function set_jump_power( v )
+  get_actor_obj().condition.jump_power = v
+end
+function set_jump_weight_power( v )
+  get_actor_obj().condition.jump_weight_power = v
+end
+function set_overweight_jump_k( v )
+  get_actor_obj().condition.overweight_jump_k = v
+end
+
+function set_stand_power( v )
+  get_actor_obj().condition.stand_power = v
+end
+function set_walk_power( v )
+  get_actor_obj().condition.walk_power = v
+end
+function set_walk_weight_power( v )
+  get_actor_obj().condition.walk_weight_power = v
+end
+function set_overweight_walk_k( v )
+  get_actor_obj().condition.overweight_walk_k = v
+end
+
+function get_actor_power_max()
+  return db.actor.conditions.power_max
+end
+function set_actor_power_max( v )
+  db.actor.conditions.power_max = v
+end
