@@ -22,12 +22,6 @@ Texture2D s_mask_nm_8;
 Texture2D s_mask_nm_9;
 Texture2D s_mask_nm_10;
 
-// Vignette masks
-Texture2D s_mask_smear_1;
-Texture2D s_mask_smear_2;
-Texture2D s_mask_smear_3;
-Texture2D s_mask_smear_4;
-
 // Condensation droplets texture
 Texture2D s_mask_droplets;
 

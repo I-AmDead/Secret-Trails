@@ -1,41 +1,10 @@
-
 --************************************************* Инициализация расширений движка ************************************************
 log1("--LUA version: ["..(jit.version or _VERSION).."]")
 log1("--MOD version: "..system_ini():r_string_wq("mod_ver", "mod_ver").." "..stdfs.path(getFS():update_path( "$fs_root$",  "gamedata.db_base_configs" )).last_write_time_string_short)
 --==============================================================================================
 FFI = require('ffi') --Делать только здесь и только один раз!
 --==============================================================================================
---===================[string.lower и string.upper с поддержкой русских букв]====================
---[=[--KRodin: Из-за setlocale могут возникать проблемы.
-os.setlocale("", "ctype") --Для старых версий LuaJIT достаточно установить правильную локаль.
-if jit.version_num >= 20000 then --В новых версиях установки локали недостаточно
-	FFI.cdef[[
-		int tolower( int code );
-		int toupper( int code );
-	]]
-	string.lower = function(s)
-		return s:gsub('.', function(x)
-			return string.char( FFI.C.tolower( x:byte() ) )
-		end)
-	end
-	string.upper = function(s)
-		return s:gsub('.', function(x)
-			return string.char( FFI.C.toupper( x:byte() ) )
-		end)
-	end
-end
---]=]
-do
-	local lower = string.lower
-	string.lower = function(s)
-		return lower(s:gsub("([А-Я])",function(c) return string.char(c:byte()+32) end):gsub("Ё", "ё"))
-	end
-	--
-	local upper = string.upper
-	string.upper = function(s)
-		return upper(s:gsub("([а-я])",function(c) return string.char(c:byte()-32) end):gsub("ё", "Ё"))
-	end
-end
+prefetch("ansi_functions")
 --=======================================[Константы]============================================
 NO_ACTIVE_SLOT = 255
 BI_NONE = 65535
@@ -933,7 +902,7 @@ local tostring_all_tbl = {
 	["boolean"] =	function(v) return tostring(v) end,
 	["nil"] =		function(v) return tostring(v) end,
 	["function"] =	function() return "[[FUNCTION]]" end, --Function, Userdata и Thread распечатать нельзя, просто заменим на строки
-	["userdata"] =	function() return "[[USERDATA]]" end,
+	["userdata"] =	function(v) return tostring(v) or "[[USERDATA]]" end,
 	["thread"] =	function() return "[[THREAD]]" end,
 }
 --Конвертирование чего угодно в строку. Использовать только для вывода в лог!
@@ -1339,6 +1308,74 @@ if false then
 		return _getn(t, ...)
 	end
 end
---*****************************************************************************************************************
 
 game_options.init()
+
+-- получение некоторых значений с плавающей запятой
+-- параметры бега
+function get_walk_accel()         return get_actor_obj().walk_accel end
+function get_jump_speed()         return get_actor_obj().jump_speed end
+function get_run_factor()         return get_actor_obj().run_coef end
+function get_run_back_factor()    return get_actor_obj().run_back_coef end
+function get_walk_back_factor()   return get_actor_obj().walk_back_coef end
+function get_crouch_factor()      return get_actor_obj().crouch_coef end
+function get_climb_factor()       return get_actor_obj().climb_coef end
+function get_sprint_factor()      return get_actor_obj().sprint_koef end
+function get_walk_strafe_factor() return get_actor_obj().walk_strafe_coef end
+function get_run_strafe_factor()  return get_actor_obj().run_strafe_coef end
+-- параметры стрельбы
+function get_disp_base()          return get_actor_obj().disp_base end -- в радианах
+function get_disp_aim()           return get_actor_obj().disp_aim end -- в радианах
+function get_disp_vel_factor()    return get_actor_obj().disp_vel_factor end
+function get_disp_accel_factor()  return get_actor_obj().disp_accel_factor end
+function get_disp_crouch_factor() return get_actor_obj().disp_crouch_factor end
+function get_disp_crouch_no_accel_factor()  return get_actor_obj().disp_crouch_no_acc_factor end
+-- получение некоторых целых и логических значений
+-- режим прицеливания
+function zoom_mode() return db.actor:zoom_mode() end -- возвращает true/false
+
+-- установка некоторых значений
+-- параметры бега
+function set_sprint_factor(v)      get_actor_obj().sprint_koef = v end
+function set_jump_speed(v)         get_actor_obj().jump_speed = v end
+function set_walk_accel(v)         get_actor_obj().walk_accel = v end
+function set_run_factor(v)         get_actor_obj().run_coef = v end
+function set_run_back_factor(v)    get_actor_obj().run_back_coef = v end
+function set_walk_back_factor(v)   get_actor_obj().walk_back_coef = v end
+function set_crouch_factor(v)      get_actor_obj().crouch_coef = v end
+function set_climb_factor(v)       get_actor_obj().climb_coef = v end
+function set_walk_strafe_factor(v) get_actor_obj().walk_strafe_coef = v end
+function set_run_strafe_factor(v)  get_actor_obj().run_strafe_coef = v end
+-- параметры стрельбы
+function set_disp_base(v)          get_actor_obj().disp_base = v end -- в радианах
+function set_disp_aim( v )         get_actor_obj().disp_aim = v end
+
+function set_jump_power( v )
+  get_actor_obj().condition.jump_power = v
+end
+function set_jump_weight_power( v )
+  get_actor_obj().condition.jump_weight_power = v
+end
+function set_overweight_jump_k( v )
+  get_actor_obj().condition.overweight_jump_k = v
+end
+
+function set_stand_power( v )
+  get_actor_obj().condition.stand_power = v
+end
+function set_walk_power( v )
+  get_actor_obj().condition.walk_power = v
+end
+function set_walk_weight_power( v )
+  get_actor_obj().condition.walk_weight_power = v
+end
+function set_overweight_walk_k( v )
+  get_actor_obj().condition.overweight_walk_k = v
+end
+
+function get_actor_power_max()
+  return db.actor.conditions.power_max
+end
+function set_actor_power_max( v )
+  db.actor.conditions.power_max = v
+end

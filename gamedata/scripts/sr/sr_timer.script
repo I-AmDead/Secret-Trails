@@ -9,6 +9,7 @@ function action_timer:__init(obj, storage)
     self.object = obj
     self.st = storage
 end
+
 function action_timer:update(delta)
     local actor = db.actor
     if xr_logic.try_switch_to_another_section(self.object, self.st, actor) then
@@ -43,15 +44,13 @@ function action_timer:update(delta)
         end
     end
 end
+
 function action_timer:deactivate(delta)
     self.st.ui:RemoveCustomStatic(self.st.timer_id)
     if self.st.string ~= nil then
         self.st.ui:RemoveCustomStatic("hud_timer_text")
     end
 end
--- function action_timer:save()
---	xr_logic.pstor_store( self.object, "timer_value", self.state )	
--- end
 
 function time2str(n)
     if n >= 10 then
@@ -65,6 +64,7 @@ function add_to_binder(obj, ini, scheme, section, storage)
     local action = action_timer(obj, storage)
     xr_logic.subscribe_action_for_events(obj, storage, action)
 end
+
 function set_scheme(obj, ini, scheme, section, gulag_name)
     local st = xr_logic.assign_storage_and_bind(obj, ini, scheme, section)
     st.logic = xr_logic.cfg_get_switch_conditions(ini, section, obj)

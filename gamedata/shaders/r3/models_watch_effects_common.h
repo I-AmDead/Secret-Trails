@@ -1,5 +1,6 @@
 uniform float4 game_time;
 uniform float4 watch_actor_params;
+uniform float4 watch_color_params;
 
 #define PI 3.14159265359
 #define TPI 6.28318530718

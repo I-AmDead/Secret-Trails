@@ -21,7 +21,10 @@ local snd_hand_bore = sound_object('interface\\item_usage\\outfit_inspect')
 local hide_hand_speed = 1.5
 local anim_plays
 local speed_k = 1.0
+
 local key_release = false
+local sprint_blocked
+local sprint_anim
 
 local lowered_anm_kinds = {
     ["w_sniper"] = true,
@@ -62,7 +65,7 @@ function on_key_down(key, bind)
     local pnv = db.actor:item_in_slot(11)
 
     if bind == key_bindings.kSWIPE_MASK then
-        if get_con_string("r2_rain_drops_control") == "off" then return end
+        if not get_con_bool("r2_rain_drops_control") then return end
         swipe_mask()
     elseif torch and bind == key_bindings.kHEADLAMP then
         torch_and_nvg_switch(false)
@@ -118,12 +121,15 @@ function swipe_mask()
         snd_gasmask:play(db.actor, 0, sound_object.s2d)
         snd_gasmask.frequency = 0.8
         level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
-        dsh.timeout(anm_time_2 - 400, 
+        dsh.timeout(anm_time_2 - 750, 
+        function()
+            rain_drops_restart()
+        end)
+        dsh.timeout(anm_time_2 - 300, 
         function()
             if new_speed then
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
             end
-            rain_drops_restart()
             dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
         end)
     end)
@@ -251,11 +257,13 @@ end
 function animation_on()
     level.only_allow_movekeys(true)
     level.set_actor_allow_ladder(false)
+    sprint_blocked = true
 end
 
 function animation_off()
     level.only_allow_movekeys(false)
     level.set_actor_allow_ladder(true)
+    sprint_blocked = nil
 end
 
 function on_first_update()
@@ -272,26 +280,24 @@ local function lcalls(count, radius, sub)
     raindrop_timer = true
     lcall = level.add_call(
     function()
-        cnt = cnt - 2.5
-        add = sub and cnt or add + 2.5
+        cnt = cnt - 5
+        add = sub and cnt or add + 5
         shader_set_custom_param("raindrop_restart", add / 100, random_swear, 0, 0)
         lcall:set_pause(1)
         return cnt == 0
     end, 
     function()
+        shader_set_custom_param("raindrop_restart", 0, random_swear, 0, 0)
+        cmd("r2_rain_drops_control off")
+        dsh.timeout(10, function() cmd("r2_rain_drops_control on") end)
         raindrop_timer = nil
     end)
 end
 
 -- RAIN DROPS RESTART
 function rain_drops_restart()
-    level.only_allow_movekeys(false)
-    cmd("r2_rain_drops_control off")
-    if get_con_float("r2_rain_drops_factor") > 0.25 then
-        random_swear = math.random(1, 4)
-        lcalls(100, 1, true)
-    end
-    dsh.timeout(10, function() cmd("r2_rain_drops_control on") end)
+    random_swear = math.random(1, 4)
+    lcalls(100, 1, false)
 end
 
 local force_crouch = false
@@ -342,29 +348,30 @@ function watch_wide()
     end)
 end
 
-local sprint_anim = false
 function on_sprint()
-    if allow_animation() and not sprint_anim then
-        if db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then return end
+    if sprint_blocked then return end
+    if not sprint_anim then
+        if not allow_animation or db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then return end
         game.play_hud_motion(2, "anim_sprint_no_hand", "anm_sprint", true, 1)
         --animation_on()
         sprint_anim = true
-    end
-
-    if sprint_anim and (db.actor:active_item() or not get_actor_obj():is_actor_sprinting()) then
-        game.stop_hud_motion()
-        --animation_off()
-        sprint_anim = false
+        log3("test anim 1")
+    else
+        log3("test anim 2")
+        if db.actor:active_item() or not get_actor_obj():is_actor_sprinting() then
+            game.stop_hud_motion()
+            --animation_off()
+            sprint_anim = nil
+            log3("test anim 3")
+        end
     end
 end
 
 function hand_wide()
-    if allow_animation() then
-        if db.actor:active_item() then return end
-        local anm_time = game.play_hud_motion(2, "anim_hand_bore", "anm_bore", true, 1)
-        level.add_cam_effector("camera_effects\\weapon\\liz_outfit_inspect.anm", 7538, false, "", 0, false)
-        snd_hand_bore:play(db.actor, 0, sound_object.s2d)
-        animation_on()
-        dsh.timeout(anm_time, animation_off)
-    end
+    if db.actor:active_item() or not allow_animation() then return end
+    local anm_time = game.play_hud_motion(2, "anim_hand_bore", "anm_bore", true, 1)
+    level.add_cam_effector("camera_effects\\weapon\\liz_outfit_inspect.anm", 7538, false, "", 0, false)
+    snd_hand_bore:play(db.actor, 0, sound_object.s2d)
+    animation_on()
+    dsh.timeout(anm_time, animation_off)
 end

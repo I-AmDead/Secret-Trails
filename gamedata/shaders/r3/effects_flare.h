@@ -1,12 +1,28 @@
 #include "ogse_functions.h"
 
 Texture2D s_noise;
+Texture2D s_mask_flare_1;
+Texture2D s_mask_flare_2;
 
 #define uGhostCount 6
-#define uGhostSpacing 0.35
+#define uGhostSpacing 0.4
 #define uGhostThreshold 0.7
-#define uHaloRadius 0.35
-#define uHaloThickness 0.065
+#define uHaloRadius 0.3
+#define uHaloThickness 0.165
+
+float4 blendSoftLight(float4 a, float4 b)
+{
+    float4 c = 2 * a * b + a * a * (1 - 2 * b);
+    float4 d = sqrt(a) * (2 * b - 1) + 2 * a * (1 - b);
+
+    return (b < 0.5) ? c : d;
+}
+
+float Window_Cubic(float x, float center, float radius)
+{
+    x = min(abs(x - center) / radius, 1.0);
+    return 1.0 - x * x * (3.0 - 2.0 * x);
+}
 
 float4 get_sun_uv()
 {
@@ -18,25 +34,26 @@ float4 get_sun_uv()
     float4 sun_pos_projected = mul(m_VP, float4(sun_pos_world, 1.0f));
     float4 sun_pos_screen = proj_to_screen(sun_pos_projected) / sun_pos_projected.w;
 
-	return sun_pos_screen;
+    return sun_pos_screen;
 }
 
-float3 fetch_lf(float2 uv, float size)
+float4 mainImageA(float2 uv)
 {
+
     uv -= 0.5;
     uv *= float2(screen_res.x * screen_res.w, 1.0);
 
-    float2 circle_pos = get_sun_uv().xy; //see above
+    float2 circle_pos = get_sun_uv().xy;
     circle_pos -= 0.5;
     circle_pos *= float2(screen_res.x * screen_res.w, 1.0);
  
-    float circle = smoothstep(size, 0.0, length(uv+circle_pos));
-    return float3(1.0,0.656,0.3) * circle;
+    float circle = smoothstep(0.025, 0.0, length(uv+circle_pos));
+    return float4(1.0, 0.656, 0.3, 1.0) * circle;
 }
 
 float generate_starburst(float2 uv)
 {
-    uv *= float2(screen_res.x /screen_res.y, 1.0);
+    uv *= float2(screen_res.x /screen_res.y, 1.0).xy;
     float angle = atan(uv.y / uv.x);
     float2 sb_uv = float2(cos(angle), sin(angle)) / 3.14;
     float sb_tex = s_noise.Sample(smp_linear, sb_uv * 64.).x;
@@ -44,82 +61,89 @@ float generate_starburst(float2 uv)
 }
 
 //generate ghosts n shit
-float4 generate_ghosts(float2 uv)
+float3 generate_ghosts(float2 uv)
 {
     //Draw multiple 'ghosts'
-    float3 accumulated_ghosts = (float3)0.0;
+    float3 accumulated_ghosts = float3(0.0, 0.0, 0.0);
     {
         uv = 1.0 - uv;
         float2 ghostVec = (0.5 - uv) * uGhostSpacing;
 
-        //initial flare (directly on the sun)
-        //replace it with something else maybe
-        accumulated_ghosts += fetch_lf(uv, 0.055).xyz;
-
-        //additional ghosts
-        for (int i = 1; i < uGhostCount; ++i) 
+        for (int i = 0; i < uGhostCount; ++i) 
         {
-            float2 suv = uv + ghostVec * float(i);
+            float2 suv = frac(uv + ghostVec * float2(i, i));
             float ghost_intensity = float(i) / float(uGhostCount);
             ghost_intensity = pow(ghost_intensity, 2.0); //so each subsequent ghost has different intensity
             float d = distance(suv, 0.5);
             float weight = 1.0 - smoothstep(0.0, 0.75, d);
-            accumulated_ghosts += fetch_lf(suv, 0.025).xyz * weight;
+            accumulated_ghosts += mainImageA(suv).xyz * weight;
         }
     }
     
     //Create simple halo
-    float3 accumulated_halo = (float3)0.0;
+    float3 accumulated_halo = float3(0.0, 0.0, 0.0);
     {
         float2 haloVec = 0.5 - uv;
-        haloVec.x /= screen_res.y * screen_res.z;
+        haloVec.x /= screen_res.y / screen_res.x;
         haloVec = normalize(haloVec);
-        haloVec.x *= screen_res.y * screen_res.z;
+        haloVec.x *= screen_res.y / screen_res.x;
+        float2 wuv = (uv - float2(0.5, 0.0)) / float2(screen_res.y / screen_res.x, 1.0) + float2(0.5, 0.0);
+        float d = distance(wuv, 0.5);
+        float haloWeight = Window_Cubic(d, uHaloRadius, uHaloThickness); // cubic window function
         haloVec *= uHaloRadius;
-        accumulated_halo += fetch_lf(uv + haloVec, uHaloThickness).xyz * generate_starburst(uv);
+        accumulated_halo += mainImageA(uv + haloVec).xyz * haloWeight;
+        
+        //add starburst
+        accumulated_halo *= generate_starburst(uv);
     }
 
-    uv = 1. - uv;
-    float dep = s_position.Load(int3(get_sun_uv() * screen_res.xy, 0), 0).z;
 
     //Add all shit together
-    float4 final = float4((accumulated_ghosts + accumulated_halo) * L_sun_color, 1.0);
+    return (accumulated_ghosts + accumulated_halo);
+}
 
-    float visibility = 1.0 - dep;
-    if (visibility < 1.0)
-        final *= 0.0;
+float4 mainImageB(float2 uv)
+{
+    float3 col = generate_ghosts(uv);
+    return float4(col,1.0);
+}
+
+float4 mainImageC(float2 uv)
+{
+    float ca_offset = distance(uv, 0.5) * 0.0085;
+    float3 col;
+    col.x = mainImageB(uv + ca_offset).x;
+    col.y = mainImageB(uv).y;
+    col.z = mainImageB(uv - ca_offset).z;
+ 
+    return float4(col,1.0);
+}
+
+float4 generate_flare(float2 uv)
+{
+    float3 col = mainImageA(uv).xyz * 25.0;
+ 
+    float3 lf_col = mainImageC(uv).xyz ;
+    col += lf_col;
+   
+    col /= 1.0 + col;
+    col = pow(col, float3(0.5, 0.5, 0.5));
+
+
+
+    float4 dep = s_mask_flare_1.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
+    dep += s_mask_flare_2.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
+
+
+    float4 final = float4(col * L_sun_color, (1.0 - dep.a) * L_sun_color.r);
+    //float4 final = saturate((pre_final) / (pre_final + 1.0));
+
+    //final *= 0.9 - (dep.a * 1.7);
+    //final.rgb *= (dep.r - dep.a * 0.5);
+    final.a *= dep.a * 0.5;
+    final *= dep * 0.5;
+
+    final *= 0.5;
 
     return final;
-}
-
-#define LENS_FLARE_COLOR float3(0.35, 0.35, 1.0)
-#define fFlareLuminance 0.111
-#define fFlareBlur 100.0
-#define fFlareIntensity 0.15
-
-float3 BrightPass(float2 tex)
-{
-	float3 c = s_bloom.Sample(smp_rtlinear, tex).rgb;
-    float3 bC = max(c - float3(fFlareLuminance, fFlareLuminance, fFlareLuminance), 0.0);
-    float bright = dot(bC, 1.0);
-    bright = smoothstep(0.0f, 0.5, bright);
-    return lerp(0.0, c, bright);
-}
-
-float3 AnamorphicSample(int axis, float2 tex, float blur)
-{
-	tex = 2.0 * tex - 1.0;
-	if (!axis) tex.x /= -blur;
-	else tex.y /= -blur;
-	tex = 0.5 * tex + 0.5;
-	return BrightPass(tex);
-}
-
-float3 AnamorphicLens(float2 IN)
-{
-	float3 res;
-	float2 coord = IN.xy;
-	float3 anamFlare = AnamorphicSample(0, coord.xy, fFlareBlur) * LENS_FLARE_COLOR; //trichromatic Anamorphic Flare (adaptive)
-	res.rgb = anamFlare * fFlareIntensity;	
-	return res;
 }

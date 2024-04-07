@@ -4,9 +4,10 @@
 
 
 function attach(sm)
-    sm:subscribe({ signal = "on_actor_weapon_zoom_out", fun = this.actor_on_weapon_zoom_out   })
-    sm:subscribe({ signal = "on_actor_weapon_zoom_in",  fun = this.actor_on_weapon_zoom_in    })
-    sm:subscribe({ signal = "on_actor_death",           fun = this.actor_on_before_death      })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_out",		fun = this.actor_on_weapon_zoom_out    })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_in",  	fun = this.actor_on_weapon_zoom_in     })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_switch",	fun = this.actor_on_weapon_zoom_switch })
+    sm:subscribe({ signal = "on_actor_death",			fun = this.actor_on_before_death       })
 end
 
 local pnv_mode_save
@@ -16,6 +17,26 @@ local zooming_t
 function actor_on_weapon_zoom_out()
     apply_pnv()
     cmd("scope_params_4 0.0, 1.25, 4.0")
+end
+
+function actor_on_weapon_zoom_switch()
+    apply_pnv()
+    cmd("scope_params_4 0.0, 1.25, 4.0")
+
+    if (get_con_string("fake_scope_enable") == "off" or get_con_string("fake_scope_enable") == "0") and
+        (db.actor and db.actor:alive()) then
+        return
+    end
+
+    local wpn = db.actor:active_item()
+    if not (wpn) then
+        return
+    end
+
+    local wpn_w = wpn:get_weapon()
+    if wpn_w and wpn_w:UseScopeTexture() then
+        updateScope(wpn)
+    end
 end
 
 function actor_on_weapon_zoom_in()
@@ -45,37 +66,39 @@ local scopeBaseFactors = {}
 
 function updateScope(wpn)
     local scope_section
-    if wpn then
-        local scopeName = nil
-        if ogse_wpn_utils.get_scope_status(wpn) == 2 and ogse_wpn_utils.get_scope_flag(wpn) then
-            local scope_section = get_string(wpn:section(), "scope_name")
-            scopeName = get_string(scope_section, "scope_texture")
-            nv_enable = get_bool(scope_section, "scope_night_vision")
-        elseif ogse_wpn_utils.get_scope_status(wpn) == 1 then
-            scopeName = get_string(wpn:section(), "scope_texture")
-            nv_enable = get_bool(wpn:section(), "scope_night_vision")
-        end
+    if not wpn then return end
+    local scopeName = nil
+    if ogse_wpn_utils.get_scope_status(wpn) == 2 and ogse_wpn_utils.get_scope_flag(wpn) then
+        local scope_section = get_string(wpn:section(), "scope_name")
+        scopeName = get_string(scope_section, "scope_texture")
+        nv_enable = get_bool(scope_section, "scope_night_vision")
+    elseif ogse_wpn_utils.get_scope_status(wpn) == 1 then
+        scopeName = get_string(wpn:section(), "scope_texture")
+        nv_enable = get_bool(wpn:section(), "scope_night_vision")
+    end
 
-        if scopeName and fake_scope_radius.scope_radius[scopeName] then
-            scope_radius = fake_scope_radius.scope_radius[scopeName]
-            cmd("scope_params_4 " .. scope_radius .. ", 1.25" .. ", 10")
-            local scope_section = get_string(wpn:section(), "scope_name")
-            if nv_enable then
-                zooming_t = dsh.wait_condition(function()
-                    local wpn = db.actor:active_item()
-                    if wpn and wpn.get_weapon then
-                        return not (wpn:get_weapon().zoom_rotation_factor < 1)
-                    else
-                        return true -- что б если пушка куда то пропала - не ждать вечно
-                    end
-                end, function()
-                    zooming_t = nil
-                    if pnv_mode_save == "1" then
-                        cmd("r_pnv_mode", 0)
-                    end
-                    apply_pnv(scope_section)
-                end)
-            end
+    if scopeName and fake_scope_radius.scope_radius[scopeName] then
+        scope_radius = fake_scope_radius.scope_radius[scopeName]
+        cmd("scope_params_4 " .. scope_radius .. ", 1.25" .. ", 10")
+        local scope_section = get_string(wpn:section(), "scope_name")
+        if nv_enable then
+            zooming_t = dsh.wait_condition(
+            function()
+                local wpn = db.actor:active_item()
+                if wpn and wpn.get_weapon then
+                    return not (wpn:get_weapon().zoom_rotation_factor < 1)
+                else
+                    return true -- что б если пушка куда то пропала - не ждать вечно
+                end
+            end,
+
+            function()
+                zooming_t = nil
+                if pnv_mode_save == "1" then
+                    cmd("r_pnv_mode", 0)
+                end
+                apply_pnv(scope_section)
+            end)
         end
     end
 end

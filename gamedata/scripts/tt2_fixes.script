@@ -70,7 +70,11 @@ local function spawn_sverhprovodnik()
 end
 
 function start_quest()
-    ogse_st_mgr.start_visual_timer(nil, 17 * 60, script_name() .. ".quest_fail")
+    ogse_st_mgr.start_conditional_visual_timer(nil, 17 * 60, script_name() .. ".quest_complete", script_name() .. ".quest_fail")
+end
+
+function quest_complete()
+    return has_alife_info("pobeg_finish")
 end
 
 function quest_fail()
@@ -244,6 +248,7 @@ function on_spawn()
     fix_stancia_level_changer_to_pripyat() 
     fix_radar_level_changer_to_ac()
     fix_ac_level_changer_to_mg()
+    fix_freedom_position()
 end
 
 function swamp_secret()
@@ -343,6 +348,54 @@ function spawn_zharts()
     alife():create("af_caterpillar", vector():set(-30.788, 0.000, 694.339), 178968, 2618)
     alife():create("af_caterpillar", vector():set(-30.405, 0.000, 692.153), 178968, 2618)
 end
+
+function fix_freedom_position()
+    if ogse.var_exists("fix_freedom_position") then return end
+
+    for id, sobj in alife():objects() do
+        if sobj:name() == "mil_lucash" then
+            local patrol = patrol("mil_freedom_wait_leader_walk")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+
+        if sobj:name() == "mil_master_max" 
+        or sobj:name() == "mil_blockpost_leader" 
+        or sobj:name() == "mil_master_ugrumiy" 
+        or sobj:name() == "mil_cook" then
+            local patrol = patrol("mil_freedom_wait_wait_centr_alt")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+
+        if sobj:name() == "mil_boec1" then
+            local patrol = patrol("mil_freedom_wait_boec1_walk")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+
+        if sobj:name() == "mil_boec2" then
+            local patrol = patrol("mil_freedom_wait_boec2_walk")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+
+        if sobj:name() == "mil_boec3" then
+            local patrol = patrol("mil_freedom_wait_boec3_walk")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+
+        if sobj:name() == "mil_boec4" then
+            local patrol = patrol("mil_freedom_wait_boec4_walk")
+            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
+        end
+    end
+
+    ogse.save_var("fix_freedom_position", true)
+end
+
 
 function death_npc_item(npc)
     if npc:name() == "esc_shilo_band" then

@@ -24,6 +24,10 @@ local gameplay_params = {
     { "crosshair_color",             "mm_opt_gameplay",  "track", { "ui_mm_crosshair_color_g", hint_colors.white, "", "" },                                                   { index = 1, step = 0.01, min = 0, max = 1 } },
     { "crosshair_color",             "mm_opt_gameplay",  "track", { "ui_mm_crosshair_color_b", hint_colors.white, "", "" },                                                   { index = 2, step = 0.01, min = 0, max = 1 } },
 
+    { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_r", hint_colors.white, "", "" },                                                       { index = 0, step = 0.01, min = 0, max = 1 } },
+    { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_g", hint_colors.white, "", "" },                                                       { index = 1, step = 0.01, min = 0, max = 1 } },
+    { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_b", hint_colors.white, "", "" },                                                       { index = 2, step = 0.01, min = 0, max = 1 } },
+
     { "hud_crosshair",               "mm_opt_gameplay",  "track", { "ui_mm_show_crosshair", hint_colors.white, "", "" },                                                      { is_bool = true} },
     { "cl_dynamiccrosshair",         "mm_opt_gameplay",  "track", { "ui_mm_dyn_crosshair", hint_colors.white, "", "" },                                                       { is_bool = true} },
     { "hud_crosshair_build",         "mm_opt_gameplay",  "track", { "ui_mm_build_crosshair", hint_colors.white, "", "" },                                                     { is_bool = true} },
@@ -121,7 +125,7 @@ local video_params = {
     { "g_dof_reload",                "mm_opt_video_adv", "track", { "ui_mm_r2_reload_dof", hint_colors.white, "video_settings_name_41", "video_settings_desc_41" },            { is_bool = true} },
     { "g_dof_zoom",                  "mm_opt_video_adv", "track", { "ui_mm_r2_zoom_dof", hint_colors.white, "video_settings_name_42", "video_settings_desc_42" },              { is_bool = true} },
     { "ssfx_wpn_dof_2",              "mm_opt_video_adv", "track", { "ui_mm_dof_zoom_param", hint_colors.white, "", "" },                                                       { step = 0.01} },
-    { "r2_mblur_enable",             "mm_opt_video_adv", "track", { "ui_mm_r2_mblur_enable", hint_colors.white, "", "" },                                                      { is_bool = true} },
+    { "r2_mblur_enabled",            "mm_opt_video_adv", "track", { "ui_mm_r2_mblur_enable", hint_colors.white, "", "" },                                                      { is_bool = true} },
     { "r2_mblur",                    "mm_opt_video_adv", "track", { "ui_mm_r2_mblur", hint_colors.white, "", "" },                                                             { step = 0.01} },
 
 
@@ -155,6 +159,7 @@ local video_params = {
 class "options_dialog" (CUIScriptWnd)
 function options_dialog:__init(owner)
     super()
+    mm = _G.main_menu.get_main_menu()
     self:SetFont(GetFontMedium())
     self.owner = owner
 
@@ -302,6 +307,7 @@ function options_dialog:HintRefresh()
 end
 
 function options_dialog:OnBtnDefault()
+    mm:PlaySound("interface\\button_1")
     cmd("unbindall")
 
     local opt = COptionsManager()
@@ -320,6 +326,8 @@ function options_dialog:OnPresetChanged()
 end
 
 function options_dialog:OnBtnAccept()
+    mm:PlaySound("interface\\button_1")
+
     if need_restart then
         self:GetHolder():start_stop_menu(self.message_box, true)
         need_restart = false
@@ -338,6 +346,7 @@ function options_dialog:OnBtnAccept()
 end
 
 function options_dialog:OnBtnCancel()
+    mm:PlaySound("interface\\button_1")
     self:UpdateOptValues(false)
 
     self:GetHolder():start_stop_menu(self, true)
@@ -349,6 +358,7 @@ function options_dialog:OnBtnCancel()
 end
 
 function options_dialog:SetPage(index)
+    mm:PlaySound("interface\\button_1")
     for _, v in ipairs(self.pages) do
         v:Show(false)
         v.button:SetCheck(false)

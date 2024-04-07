@@ -19,11 +19,6 @@ function element_0(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_mask_nm_9", "shaders\\gasmasks\\mask_nm_9")
 	shader:dx10texture("s_mask_nm_10", "shaders\\gasmasks\\mask_nm_10")
 
-	shader:dx10texture("s_mask_smear_1", "shaders\\gasmasks\\mask_smear_1")
-	shader:dx10texture("s_mask_smear_2", "shaders\\gasmasks\\mask_smear_2")
-	shader:dx10texture("s_mask_smear_3", "shaders\\gasmasks\\mask_smear_3")
-	shader:dx10texture("s_mask_smear_4", "shaders\\gasmasks\\mask_smear_4")
-
 	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")

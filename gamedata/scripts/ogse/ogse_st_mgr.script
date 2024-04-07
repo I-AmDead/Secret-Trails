@@ -151,7 +151,7 @@ function on_save()
             table.insert(tclasses, t.class)
         end
     end
-    ogse.save_var(script_name() .. ".timers", tclasses, "array_template", {"string"})
+    ogse.save_var(script_name() .. ".timers", tclasses)
     local t_cnt = 0
     for tclass, tlist in pairs(timers) do
         local st, template = {}, {"string"}
@@ -170,7 +170,7 @@ function on_save()
             ASSERT(#t == #template, "[%s] unexpected table size: t: %s, template: %s", tclass, t, template)
             t_cnt = t_cnt + 1
         end
-        ogse.save_var(("%s.timers.%s"):format(script_name(), tclass), st, "array_template", template)
+        ogse.save_var(("%s.timers.%s"):format(script_name(), tclass), st)
         log3("[%s]: %s: %s timers saved", script_name(), tclass, #st)
     end
     log3("[%s]: %s all timers saved", script_name(), t_cnt)

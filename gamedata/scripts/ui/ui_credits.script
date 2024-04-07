@@ -1,0 +1,137 @@
+class "ui_credits" (CUIScriptWnd)
+
+local SPEED = 0.95
+local DEFAULT_SPEED = 0.5
+
+local fade_background, fade_vignette = 0, 0
+local fade_timer
+local snd_volume_eff
+
+ui_credits_window = nil
+
+function ui_credits:__init() super()
+	self:InitUI()
+	self:InitMusic()
+end
+
+function ui_credits:__finalize()
+end
+
+function ui_credits:InitUI()
+	self:SetWndRect(Frect():set(0,0,1024,768))
+
+	local xml = CScriptXmlInit()
+	xml:ParseFile("script_wnd\\ui_credits.xml")
+
+	self.background = xml:InitStatic("background", self)
+	self.credits_area = xml:InitScrollView("credits_area", self)
+	self.darkside_logo = xml:InitStatic("darkside_logo", self)
+	self.vignette = xml:InitStatic("vignette", self)
+	self.vignette_fade = xml:InitStatic("vignette_fade", self)
+
+	self.background:SetColor(GetARGB(0,255,255,255))
+	self.darkside_logo:SetColor(GetARGB(0,255,255,255))
+	self.vignette:SetColor(GetARGB(0,255,255,255))
+	self.vignette_fade:SetColor(GetARGB(0,255,255,255))
+end
+
+function ui_credits:InitMusic()
+	self.music = sound_object('music\\credits', 128, 1)
+    self.music:play(db.actor, 0, sound_object.s2d)
+    self.music.volume = 1.0
+end
+
+function ui_credits:StopMusic()
+	if self.music and self.music:playing() then
+		self.music:stop()
+	end
+end
+
+function ui_credits:Close()
+	cmd("snd_volume_eff", tostring(snd_volume_eff))
+	self:StopMusic()
+	ui_credits_window:ShowDialog(false)
+	ui_credits_window = nil
+	get_console():execute("disconnect")
+end
+
+function ui_credits:UpdateWnd()
+	if not ui_credits_window then return end
+
+	if not self.music:playing() then
+		self:Close()
+		return
+	end
+
+	local pos = self.credits_area:GetWndPos()
+	if pos.y < -5525 then
+		SPEED = 0
+	else
+		fade_background = fade_background + 5
+		local alpha_color = fade_background >= 250 and 255 or fade_background
+		self.vignette:SetColor(GetARGB(alpha_color, 255, 255, 255))
+		self.background:SetColor(GetARGB(alpha_color,255,255,255))
+		self.darkside_logo:SetColor(GetARGB(alpha_color,255,255,255))
+		self.credits_area:SetWndPos(pos.x, pos.y - SPEED)
+		self.darkside_logo:SetWndPos(pos.x, (pos.y - 768) - SPEED)
+	end
+
+	if self.music:playing() and time_global() - fade_timer > self.music:length() - 7000 then
+		fade_vignette = fade_vignette + 1
+		self.vignette_fade:SetColor(GetARGB(fade_vignette >= 250 and 255 or fade_vignette, 255, 255, 255))
+	end
+
+	--log3("update wnd, pos = x %s, y %s - time global = %s, fade_timer = %s, music length = %s", pos.x, pos.y, time_global(), fade_timer, self.music:length() - 270)
+end
+
+function ui_credits:Update()
+	CUIScriptWnd.Update(self)
+
+	ui_credits_window:UpdateWnd()
+end
+
+function ui_credits:OnKeyboard(dik, keyboard_action)
+	CUIScriptWnd.OnKeyboard(self, dik, keyboard_action)
+
+	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
+		if dik == DIK_keys.DIK_ESCAPE then
+			self:Close()
+			return
+		end
+
+		if dik == DIK_keys.DIK_1 then
+			SPEED = SPEED + DEFAULT_SPEED
+		elseif dik == DIK_keys.DIK_2 then
+			SPEED = SPEED - DEFAULT_SPEED
+		elseif dik == DIK_keys.DIK_3 then
+			SPEED = 0
+		elseif dik == DIK_keys.DIK_4 then
+			SPEED = DEFAULT_SPEED
+		end
+	end
+
+	return true
+end
+
+function ui_credits:OnMouse(x, y, mouse_action)
+	return CUIScriptWnd.OnMouse(self, x, y, mouse_action)
+end
+
+function StartCredits(no_game)
+	if ui_credits_window then
+		ui_credits_window:Close()
+	end
+
+	SPEED = DEFAULT_SPEED
+
+	fade_timer = time_global()
+
+	ui_credits_window = ui_credits()
+	ui_credits_window:ShowDialog(true)
+    snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
+    cmd("snd_volume_eff", 0.0)
+end
+
+function attach(sm)
+    sm:subscribe({ signal = "on_update", fun = self.UpdateWnd, self = self })
+end
