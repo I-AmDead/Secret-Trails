@@ -362,8 +362,7 @@ function StaticForecast:save()
             time2string(point_data.time), point_data.surge_start and "surge_start" or "",
             point_data.surge_frame and "surge_frame" or "")
     end
-    ogse.save_var(string.format("%s.StaticForecast.%s", script_name(), self.name), data, "array_template",
-        {"string", "u16", "u8", "time"})
+    ogse.save_var(string.format("%s.StaticForecast.%s", script_name(), self.name), data)
     log2("[%s]: StaticForecast: %s saved: %s items", script_name(), self.name, table.getn(data))
     ogse_surge_mgr.surge_log("StaticForecast:on_save - END")
 end
@@ -786,7 +785,7 @@ function DynamicForecast:save()
     end
     local prefix = string.format("%s.DynamicForecast.%s.", script_name(), self.name)
     ogse.save_var(prefix .. "last_weather_time", self.last_weather_time, "float")
-    ogse.save_var(prefix .. "cycles", t, "array_template", {"string", "s16"})
+    ogse.save_var(prefix .. "cycles", t)
     log2("[%s]: DynamicForecast: %s saved: %s items", script_name(), self.name, table.getn(t))
     -- пишем данные текушего прогноза
     -- остаток делаем базовым классом
