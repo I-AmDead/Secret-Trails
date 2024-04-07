@@ -72,7 +72,7 @@ end
 local function play_item_use(item)
     local exo = nil
     local item_hud = get_string(item, "hud")
-    local cam_effect = get_string(item, "cam_effect")
+    local cam_effect = get_string(item, "cam_effect", nil)
     local used_time = get_u32(item, "item_used_timing")
     local snd = get_string(item, "snd_use_anm")
     local outfit = db.actor:item_in_slot(6)
@@ -107,7 +107,9 @@ local function play_item_use(item)
 
         local anm_start = time_global()
         local anm_duration = game.play_hud_motion(2, item_hud, anim, false, 1, true)
-        level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
+        if cam_effect then
+            level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
+        end
 
         dsh.timeout(used_time, function()
             apply_item(item)
