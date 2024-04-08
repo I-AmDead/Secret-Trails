@@ -18,7 +18,7 @@ uniform float4 watch_color_params;
 #define aa 2.0 / min(screen_res.x, screen_res.y)
 
 // Hearthbeat
-#define SCALE 2
+#define SCALE 1.5
 #define LINES_WIDTH 0.05
 #define DOT_SPEED_LIMITER 3
 #define MAX_TRAIL_ITEMS 600
