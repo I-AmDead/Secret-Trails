@@ -36,7 +36,9 @@ function elements(shader, t_base, t_second, t_detail, ps_shader)
 	shader:dx10texture("s_bloom", "$user$bloom1")
 	shader:dx10texture("s_distort", t_sdist)
 	shader:dx10texture("s_noise", "fx\\blue_noise")
+	shader:dx10texture("s_flares", "$user$flares")
 
+	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
 end

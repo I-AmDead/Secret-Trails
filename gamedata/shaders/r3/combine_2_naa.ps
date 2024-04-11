@@ -23,6 +23,8 @@
 #include "screenspace_il.h"
 #endif
 
+Texture2D s_flares;
+
 //////////////////////////////////////////////////////////////////////////////////////////
 #define EPSDEPTH 0.001
 
@@ -102,6 +104,8 @@ c2_out main(v2p_aa_AA I)
     {
         img = blend_soft(img, bloom.xyz * bloom.w);
         img += generate_flare(I.Tex0);
+        float4 flares = s_flares.Sample(smp_rtlinear, center);
+        img += flares.xyz * flares.a;
     }
 #else
     img = blend_soft(img, bloom.xyz * bloom.w);
