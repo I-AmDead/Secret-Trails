@@ -111,11 +111,7 @@ function count_item(section, number)
             count = count + 1
         end
     end)
-    if count >= number then
-        return true
-    else
-        return false
-    end
+    return count >= number
 end
 
 function af_cristall_flower_have()
@@ -888,20 +884,11 @@ function bes_help_levsha_done(first_speaker, second_speaker)
 end
 
 function levsha_need_outfit_have(task, objective)
-    if db.actor then
-        if db.actor:object("merc_scientific_outfit") and db.actor:object("merc_scientific_outfit"):condition()
-        and db.actor:object("merc_scientific_outfit"):condition() > 0.95 then
-            return true
-        end
-    end
-    return false
+    return db.actor and db.actor:object("merc_scientific_outfit") and db.actor:object("merc_scientific_outfit"):condition() > 0.95
 end
 
 function levsha_need_groza_have(task, objective)
-    if db.actor and db.actor:object("wpn_groza") and db.actor:object("wpn_groza"):condition() > 0.95 then
-        return true
-    end
-    return false
+    return db.actor and db.actor:object("wpn_groza") and db.actor:object("wpn_groza"):condition() > 0.95
 end
 
 function levsha_done(first_speaker, second_speaker)
@@ -1689,7 +1676,7 @@ end
 
 function krest_work_done(first_speaker, second_speaker)
     item = nagrad.level_3[math.random(table.getn(nagrad.level_3))]
-    dialogs.relocate_item_section(first_speaker, item, "in", count)
+    dialogs.relocate_item_section(first_speaker, item, "in", 1)
 end
 
 function actor_bad_detector_have()
