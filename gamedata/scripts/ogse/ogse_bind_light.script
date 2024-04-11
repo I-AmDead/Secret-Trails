@@ -332,10 +332,11 @@ function light_binder:use_callback(obj, who)
 end
 -- MARKER: hit_callback
 function light_binder:hit_callback(obj, amount, local_direction, who, bone_index)
-    -- log3("--[%s] Called hit_callback for [%s]. Who: [%s], amount: [%s]", script_name(), self.object:name(), who:name(), amount)
+    --log3("--[%s] Called hit_callback for [%s]. Who: [%s], amount: [%s]", script_name(), self.object:name(), who:name(), amount)
+    self.particle = particles_object("destroy_fx\\destroy_el_box")
+    self.particle:play_at_pos(self.object:bone_position("bone_lamp"))
     if self.st.active_section then
-        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", obj, amount, local_direction,
-            who, bone_index)
+        xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", obj, amount, local_direction, who, bone_index)
     end
     if self.has_light_config then
         if self.is_broken then
