@@ -65,17 +65,26 @@ ph_skel_shot_up_factor        = 0.25
 
 ; speed factors     linear | angular_real | angular_path | min   |  max
 Velocity_Stand      = 0,    1.4,      1.4,    1,    1 
-Velocity_RunFwdNormal = 6.0,   3.5,      3.5,    0.4,  1 
-Velocity_RunFwdDamaged  = 5.0,    3.0,      3.0,    0.2,  1
-Velocity_WalkFwdDamaged = 3.0,    2.5,      2.5,    0.2,  2.0 
-Velocity_WalkFwdNormal  = 4.5,   2.5,      2.5,    0.02, 3.0 
-Velocity_Drag     = -1.0,   1.0,      1.0,    1,    1
-Velocity_Steal      = 1.5,    3.0,      3.0,    1,    1
+Velocity_RunFwdNormal 	  = 2.9,      3.5,          3.5,        0.4,  	  1 
+Velocity_RunFwdDamaged    = 2.9,      3.0,          3.0,        0.2,  	  1
+Velocity_WalkFwdDamaged	  = 2.9,      2.5,          2.5,        0.2,  	  2.0 
+Velocity_WalkFwdNormal    = 2.9,      2.5,          2.5,        0.02, 	  3.0 
+Velocity_Drag     	  = 2.9,      1.0,          1.0,        1,    	  1
+Velocity_Steal      	  = 2.9,      3.0,          3.0,        1,    	  1
+
+; speed factors          linear | angular_real | angular_path | min   |  max
+Velocity_Stand      	  = 0,        1.4,          1.4,        1,    	  1 
+Velocity_RunFwdNormal 	  = 2.9,      3.5,          3.5,        0.4,  	  1 
+Velocity_RunFwdDamaged    = 2.9,      3.0,          3.0,        0.2,  	  1
+Velocity_WalkFwdDamaged	  = 2.9,      2.5,          2.5,        0.2,  	  2.0 
+Velocity_WalkFwdNormal    = 2.9,      2.5,          2.5,        0.02, 	  3.0 
+Velocity_Drag     	  = 2.9,      1.0,          1.0,        1,    	  1
+Velocity_Steal      	  = 2.9,      3.0,          3.0,        1,    	  1
 
 ; acceleration
 Accel_Generic     = 1.5
 Accel_Calm        = 2.5
-Accel_Aggressive    = 6.5
+Accel_Aggressive  = 15.0
 
 ;------------------------------------------------------------------------
 ; Attack
@@ -97,6 +106,19 @@ Melee_Rotation_Factor = 2.2
 hit_type        = wound       ; type of attack
 
 
+;------------------------------------------------------------------------
+; Attack On Move
+;------------------------------------------------------------------------
+
+aom_enabled								=	1
+aom_animation_left         				=	stand_attack_run_left_
+aom_animation_right       				=	stand_attack_run_right_
+aom_far_radius							=	8
+aom_max_go_close_time					=	8
+aom_prepare_time						=	4
+aom_attack_radius						=	1
+aom_update_side_period					=	3
+aom_prediction_factor					=	1.2
 ;------------------------------------------------------------------------
 ; Conditions
 ;------------------------------------------------------------------------
@@ -140,23 +162,23 @@ satiety_threshold   = 0.5             ; below this value monster fill hunger
 ; Sound
 ;------------------------------------------------------------------------
 
-sound_idle = monsters\pauk\pauk_idle_            ; idle_
-sound_eat = monsters\pauk\pauk_eat_              ; eat_
-sound_aggressive = monsters\pauk\pauk_aggressive ; attack_
-sound_attack_hit = monsters\pauk\pauk_attack
-sound_take_damage = monsters\pauk\pauk_pain      ; hit_
-sound_die = monsters\pauk\pauk_death             ; die_
-sound_bkgnd = monsters\biting\def_
-sound_threaten = monsters\pauk\pauk_threaten
-sound_landing = monsters\pauk\pauk_death
-sound_steal = monsters\biting\def_
-sound_panic = monsters\pauk\pauk_panic 
-sound_growling = monsters\biting\def_
-sound_die_in_anomaly = monsters\pauk\pauk_anomaly_deat
+sound_idle				= monsters\pauk\pauk_idle_			; idle_
+sound_eat				= monsters\pauk\pauk_eat_			; eat_
+sound_aggressive		= monsters\pauk\pauk_aggressive	; attack_
+sound_attack_hit		= monsters\pauk\pauk_attack_0
+sound_take_damage		= monsters\pauk\spider_ded_		; hit_
+sound_die				= monsters\pauk\spider_ded_1			; die_
+sound_bkgnd				= monsters\biting\def_
+sound_threaten			= monsters\pauk\pauk_threaten
+sound_landing			= monsters\pauk\spider_ded_3
+sound_steal				= monsters\biting\def_
+sound_panic				= monsters\pauk\ded_2
+sound_growling			= monsters\pauk\pauk_attack_1
+sound_die_in_anomaly	= monsters\pauk\pauk_anomaly_deat
 
 killer_clsids       = Z_MINCER,Z_GALANT,ZS_BFUZZ,ZS_MBALD,ZS_GALAN,ZS_MINCE
 
-sound_distant_idle		= monsters\pauk\pauk_idle_dis
+sound_distant_idle			= monsters\pauk\pauk_idle_dist
 distant_idle_sound_delay  = 80000
 distant_idle_sound_range  = 100.0 
 
@@ -167,22 +189,6 @@ attack_sound_delay    = 4000
 
 SoundThreshold      = 0.06             ; range [0..1]
 max_hear_dist     = 60
-
-;------------------------------------------------------------------------
-; Vision
-;------------------------------------------------------------------------
-eye_fov           = 110 ;130
-eye_range         = 40  ;60 
-
-min_view_distance       = 0.5       ; коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance     = 1.0       ; коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold    = 100.0       ; значение, при достижении суммой которого объект считается видимым
-always_visible_distance   = 0.3
-time_quant          = 0.001
-decrease_value        = 0.01        ; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor         = 0.5
-luminocity_factor     = 0.5         ; фактор освещения (только для Актёра)
-transparency_threshold    = 0.25
 
 ;-------------------------------------------------------------------------
 ; Morale
@@ -253,6 +259,22 @@ DynamicObjectsCount   = 32
 ;species of monster
 species       = boar
 
+;------------------------------------------------------------------------
+; Vision
+;------------------------------------------------------------------------
+eye_fov           = 110 ;130
+eye_range         = 40  ;60 
+
+min_view_distance       = 0.5       ; коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance     = 1.0       ; коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold    = 100.0       ; значение, при достижении суммой которого объект считается видимым
+always_visible_distance   = 0.3
+time_quant          = 0.001
+decrease_value        = 0.01        ; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor         = 0.5
+luminocity_factor     = 0.5         ; фактор освещения (только для Актёра)
+transparency_threshold    = 0.25
+
 ;===========================================================================
 ; ATTACK PARAMS
 ;===========================================================================
@@ -261,12 +283,15 @@ species       = boar
 ;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =	  	0.15,		0.70,	      100,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,					  3.2
+stand_attack_0 =	  	0.10,		5.15,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Bite2
-stand_attack_1 =	  	0.20,		0.65,	      130,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,					  3.2
+stand_attack_1 =	  	0.10,		5.35,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Right Leg Attack
-stand_attack_2 =	  	0.20,		0.70,	      150,        0.0, 1.0, 2.0,	 -0.6, 0.6, -0.6, 0.6,					  3.2
-stand_attack_run_0 =            0.10,		0.75,	      180,        1.0, 0.0, 1.0,	 -0.6, 0.6, -0.6, 0.6,	
+stand_attack_2 =	  	0.10,		5.35,	      200,        0.0, 1.0, 2.0,	 -0.6, 0.6, -0.6, 0.6,	3.2
+
+stand_attack_run_0	=    0.10,		5.35,	      350,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_left_0  =   0.10,		5.15,	      350,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
+stand_attack_run_right_0 =   0.10,		5.15,	      350,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
 
 ;===========================================================================
 ; SPECIAL EFFECTORS
@@ -298,67 +323,66 @@ ce_power      = 2.5; 2.0      ; power
 ;=================================================================================
 [spider_damage]
 ;bone_name		 = <hit_scale>,-1,<wound_scale>
-;<hit_scale>	- коэфф. изменения хита (уменьшения здоровья) 
+;<hit_scale>	- коэфф. изменения хита (уменьшения здоровья)
 ;<wound_scale>	- коэфф. изменения величины открытой раны
 
-default			= 1, -1, 0.3
+default			= 0.9, -1, 0.3
 
 bip01_pelvis 		= 1, -1, 0.3
 bip01_spine 		= 1, -1, 0.3
-bip01_spine1 		= 1, -1, 0.3
 bip01_head 		= 2, -1, 0.3, 10
 
 [spider_critical_wound_bones_head]
-bip01_pelvis
+bip01_head
+bip01_l_calf01
+bip01_l_calf02
+bip01_l_calf03
+bip01_l_calf04
+bip01_l_foot01
+bip01_l_foot02
+bip01_l_foot03
+bip01_l_foot04
 bip01_l_leg
 bip01_l_leg01
 bip01_l_leg02
 bip01_l_thigh01
-bip01_l_calf01
-bip01_l_foot01
+bip01_l_thigh02
+bip01_l_thigh03
+bip01_l_thigh04
 bip01_l_toe02
 bip01_l_toe03
-bip01_l_thigh04
-bip01_l_calf04
-bip01_l_foot04
-bip01_l_toe09
+bip01_l_toe04
+bip01_l_toe05
+bip01_l_toe06
+bip01_l_toe07
 bip01_l_toe08
+bip01_l_toe09
+bip01_pelvis
+bip01_r_calf01
+bip01_r_calf02
+bip01_r_calf03
+bip01_r_calf04
+bip01_r_foot01
+bip01_r_foot02
+bip01_r_foot03
+bip01_r_foot04
 bip01_r_leg
 bip01_r_leg01
 bip01_r_leg02
 bip01_r_thigh01
-bip01_r_calf01
-bip01_r_foot01
+bip01_r_thigh02
+bip01_r_thigh03
+bip01_r_thigh04
 bip01_r_toe02
 bip01_r_toe03
-bip01_r_thigh04
-bip01_r_calf04
-bip01_r_foot04
-bip01_r_toe09
-bip01_r_toe08
-bip01_spine
-bip01_spine1
-bip01_head
-bip01_l_thigh02
-bip01_l_calf02
-bip01_l_foot02
-bip01_l_toe04
-bip01_l_toe05
-bip01_l_thigh03
-bip01_l_calf03
-bip01_l_foot03
-bip01_l_toe06
-bip01_l_toe07
-bip01_r_thigh02
-bip01_r_calf02
-bip01_r_foot02
 bip01_r_toe04
 bip01_r_toe05
-bip01_r_thigh03
-bip01_r_calf03
-bip01_r_foot03
 bip01_r_toe06
 bip01_r_toe07
+bip01_r_toe08
+bip01_r_toe09
+bip01_spine
+bip01_spine1
 bip01_tail1
 bip01_tail2
 bip01_tail3
@@ -380,14 +404,14 @@ bip01_tail3
 [m_spider_step_params]
    
 ;-------------------------------------------------------------------------------------------------------------
-; anim      | Cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
+;	anim			| Cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
 ;-------------------------------------------------------------------------------------------------------------
-stand_walk_fwd_0  =   5,    0.01,   1,     0.5,     0.7,    0.15,   1.0,     0.5,   1.0
-stand_walk_dmg_0  =     4,  0.2,    1,       0.25,    0.7,    0.5,    1.0,     0.7,   1.0
-stand_run_fwd_0   =     1,  0.01,   1,       0.05,    0.7,    0.2,    1.0,     0.2,   0.2
-stand_run_dmg_0   =   4,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
-stand_steal_0   =   1,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
-stand_drag_0    =   1,  0.2,    1,       0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_walk_fwd_0 	=	  5,    0.01,   1,           0.5,     0.7,    0.15,   1.0,     0.5,   1.0
+stand_walk_fwd_dmg_0	=  	  4,	0.2,    1,	     0.25,    0.7,    0.5,    1.0,     0.7,   1.0
+stand_run_fwd_0	 	=  	  1,	0.01,   1,	     0.05,    0.7,    0.2,    1.0,     0.2,   0.2
+stand_run_dmg_0		=	  4,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_steal_0		=	  1,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
+stand_drag_0		=	  1,	0.2,    1,	     0.25,    0.7,    0.7,    1.0,     0.7,   1.0
 
 
 ;===========================================================================
@@ -406,7 +430,7 @@ fire_wound_immunity   = 0.015
 
 [spider_mini]:spider_weak
 ;$spawn         = "monsters\boars\spider_mini"
-visual        = monsters\spider\minispider
+visual        = monsters\spider\spider_mini
 
 Spawn_Inventory_Item_Section = spider_leg
 Spawn_Inventory_Item_Probability = 0.0
@@ -417,6 +441,18 @@ attack_params	    = minispider_attack_params
 
 spec_rank     = weak
 community     = boar
+
+;------------------------------------------------------------------------
+; Movement
+;------------------------------------------------------------------------
+; speed factors         linear | angular_real | angular_path | min   |  max
+Velocity_Stand      	= 0,    	1.4,            1.4,        1,    	1 
+Velocity_RunFwdNormal 	= 1.9,   	3.5,            3.5,        0.4,  	1 
+Velocity_RunFwdDamaged  = 1.9,    	3.0,            3.0,        0.2,  	1
+Velocity_WalkFwdDamaged	= 1.9,    	2.5,            2.5,        0.2,  	2.0 
+Velocity_WalkFwdNormal  = 1.9,   	2.5,            2.5,        0.02, 	3.0 
+Velocity_Drag     		= 1.9,   	1.0,            1.0,        1,    	1
+Velocity_Steal      	= 1.9,    	3.0,            3.0,        1,    	1
 
 ;===========================================================================
 ; IMMUNITIES
@@ -440,24 +476,12 @@ fire_wound_immunity   = 0.25
 ;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, bottom, top ) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Bite
-stand_attack_0 =	  	0.15,		0.30,	      70,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,					  3.2
+stand_attack_0 =	  	0.20,		3.15,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Bite2
-stand_attack_1 =	  	0.20,		0.25,	      80,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,					  3.2
+stand_attack_1 =	  	0.20,		3.35,	      150,        0.0, 0.5, 0.5,	 -0.6, 0.6, -0.6, 0.6,	3.2
 ;Right Leg Attack
-stand_attack_2 =	  	0.20,		0.30,	      75,        0.0, 1.0, 2.0,	 -0.6, 0.6, -0.6, 0.6,					  3.2
-stand_attack_run_0 =            0.10,		0.35,	      85,        1.0, 0.0, 1.0,	 -0.6, 0.6, -0.6, 0.6,
+stand_attack_2 =	  	0.20,		3.35,	      300,        0.0, 1.0, 2.0,	 -0.6, 0.6, -0.6, 0.6,	3.2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+stand_attack_run_0	=    0.20,		3.35,	      350,        0.0, 1.0, 2.0,	 -1.0, 1.0, -1.0, 1.0,	3.2
+stand_attack_run_left_0  =   0.20,		2.15,	      350,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
+stand_attack_run_right_0 =   0.20,		2.15,	      350,        0.0, 1.0, 2.0,	 -1.4, 1.4, -1.4, 1.4,	3.2
