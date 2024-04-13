@@ -1,0 +1,45 @@
+local function on_actor_conditions_update(ext)
+    local outfit = db.actor:item_in_slot(6)
+    if not outfit then return end
+    local jump_speed = get_float(outfit:section(), "jump_speed", 0)
+    local sprint_koef = get_float(outfit:section(), "sprint_koef", 0)
+    ext.jump_speed_add = ext.jump_speed_add + jump_speed
+    ext.sprint_koef_add = ext.sprint_koef_add + sprint_koef
+end
+
+local function check_my_suit_hud()
+    local outfit = db.actor:item_in_slot(6)
+    if outfit then
+        local outfitname = outfit:section()
+        local control = get_string(outfitname, "control")
+        local intensity = get_string(outfitname, "intensity")
+
+        cmd("r2_mask_control " .. control)
+        cmd("r2_visor_refl_control " .. control)
+        cmd("r2_visor_refl_intensity " .. intensity)
+        cmd("r2_rain_drops_control " .. control)
+        cmd("gasmask_inertia 0.6, 0.6, 0.6, 0.0")
+    else
+        cmd("r2_mask_control 0")
+        cmd("r2_visor_refl_control 0")
+        cmd("r2_visor_refl_intensity 0")
+        cmd("r2_rain_drops_control 0")
+    end
+end
+
+local function off_shader_effects()
+    cmd("r2_mask_control 0")
+    cmd("r2_visor_refl_control 0")
+    cmd("r2_visor_refl_intensity 0")
+    cmd("r2_rain_drops_control 0")
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_before_actor_conditions_update", fun = on_actor_conditions_update})
+    sm:subscribe({signal = "on_spawn",                          fun = off_shader_effects})
+    sm:subscribe({signal = "on_actor_death",                    fun = off_shader_effects})
+    sm:subscribe({signal = "on_first_update",                   fun = check_my_suit_hud})
+    sm:subscribe({signal = "on_item_to_slot",                   fun = check_my_suit_hud})
+    sm:subscribe({signal = "on_item_to_ruck",                   fun = check_my_suit_hud})
+    sm:subscribe({signal = "on_drop",                           fun = check_my_suit_hud})
+end
