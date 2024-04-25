@@ -84,6 +84,65 @@ function quest_fail()
     end
 end
 
+local gas_lamp_list = {}
+local function gas_light_flare()
+    if ogse.var_exists("gas_lamp_list") then
+        gas_lamp_list = ogse.load_var("gas_lamp_list")
+    else
+        for a = 1, 65534 do
+            local obj = level.object_by_id(a)
+            if obj and string.find(obj:name(), "light_gas_r2") then
+                table.insert(gas_lamp_list, a)
+            end
+        end
+    end
+
+    for _, id in pairs(gas_lamp_list) do
+        local obj = level.object_by_id(id)
+        if obj then
+            obj:get_hanging_lamp():set_flare(false)
+        end
+    end
+
+    ogse.save_var("gas_lamp_list", gas_lamp_list)
+end
+
+local uglovaya_lamp_list = {}
+local function uglovaya_light_params()
+    if ogse.var_exists("uglovaya_lamp_list") then
+        uglovaya_lamp_list = ogse.load_var("uglovaya_lamp_list")
+    else
+        for a = 1, 65534 do
+            local obj = level.object_by_id(a)
+            if obj and string.find(obj:name(), "light_uglovaya_1") then
+                table.insert(uglovaya_lamp_list, a)
+            end
+        end
+    end
+
+    for _, id in pairs(uglovaya_lamp_list) do
+        local obj = level.object_by_id(id)
+        if obj then
+            local pk = get_netpk(obj, 1)
+            ASSERT(pk and pk:isOk(), "can't read netpacket of %s", obj:name())
+            local data = pk:get()
+            local props =
+            {
+                [ "main_color"          ] = tonumber("0xffffffff", 16),
+                [ "main_brightness"     ] = 0.3,
+                [ "light_flags"         ] = tonumber("0x2a", 16)
+            }
+            log3("obj %s props %s", obj:name(), props)
+            for k, v in pairs(props) do
+                data[k] = v
+            end
+            pk:set(data)
+        end
+    end
+
+    ogse.save_var("uglovaya_lamp_list", uglovaya_lamp_list)
+end
+
 local function fix_first()
     fix_recept()
     del_phobj()
@@ -94,6 +153,8 @@ local function fix_first()
     fix_fucking_stadium_lair()
     fix_exit_to_agr_underground()
     fix_garbage_levsha()
+    gas_light_flare()
+    uglovaya_light_params()
 end
 
 local function on_drag_drop(obj)
@@ -189,23 +250,23 @@ function fix_ac_level_changer_to_mg()
 end
 
 function fix_exit_to_agr_underground()
-  if ogse.var_exists("fix_exit_to_agr_underground") then return end
+    if ogse.var_exists("fix_exit_to_agr_underground") then return end
 
-  local sobj = alife():object("exit_to_agr_underground_05")
-  if not sobj then return end
+    local sobj = alife():object("exit_to_agr_underground_05")
+    if not sobj then return end
 
-  ogse.save_var("fix_exit_to_agr_underground", true)
-  log3("fix %s (%s)", sobj:name(), sobj.level_name)
-  sobj.position = vector():set(-38.883705, -3.402327, 40.002663)
-  --sobj.angle = vector():set(0, 0, 0)
+    ogse.save_var("fix_exit_to_agr_underground", true)
+    log3("fix %s (%s)", sobj:name(), sobj.level_name)
+    sobj.position = vector():set(-38.883705, -3.402327, 40.002663)
+    --sobj.angle = vector():set(0, 0, 0)
 
-  local sobj = alife():object("exit_to_agroprom_06")
-  if not sobj then return end
-  local lc = sobj:get_level_changer()
-  lc.dest_game_vertex_id = 700
-  lc.dest_level_vertex_id = 203745
-  lc.dest_position = vector():set(-37.213341, -0.030679, 39.963734)
-  lc.dest_direction = vector():set(0.990331, -0.03567, -0.135313)
+    local sobj = alife():object("exit_to_agroprom_06")
+    if not sobj then return end
+    local lc = sobj:get_level_changer()
+    lc.dest_game_vertex_id = 700
+    lc.dest_level_vertex_id = 203745
+    lc.dest_position = vector():set(-37.213341, -0.030679, 39.963734)
+    lc.dest_direction = vector():set(0.990331, -0.03567, -0.135313)
 end
 
 function fix_leila_mafon()
@@ -487,10 +548,11 @@ function death_npc_item(npc)
     end
 end
 
+
 function attach(sm)
-    sm:subscribe({signal = "on_spawn",          fun = on_spawn})
-    sm:subscribe({signal = "on_first_update",   fun = fix_first})
-    sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
+    --sm:subscribe({signal = "on_spawn",          fun = on_spawn})
+    --sm:subscribe({signal = "on_first_update",   fun = fix_first})
+    --sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
     sm:subscribe({signal = "on_fake_drag_drop", fun = on_drag_drop})
-    sm:subscribe({signal = "on_npc_death",	fun = this.death_npc_item})
+    sm:subscribe({signal = "on_npc_death",      fun = this.death_npc_item})
 end
