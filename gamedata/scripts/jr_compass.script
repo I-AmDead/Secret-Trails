@@ -2,40 +2,43 @@ function attach(sm)
     sm:subscribe({ signal = "on_first_update", fun = this.actor_on_first_update })
     sm:subscribe({ signal = "on_update", fun = this.actor_on_update })
     sm:subscribe({ signal = "on_destroy", fun = this.actor_on_net_destroy })
-	sm:subscribe({ signal = "on_key_down", fun = this.actor_on_key_down })
+    sm:subscribe({ signal = "on_key_down", fun = this.actor_on_key_down })
 
     sm:subscribe({ signal = "gameobject_on_destroy", fun = this.gameobject_on_destroy })
---    sm:subscribe({ signal = "on_save", fun = this.actor_on_save })
---    sm:subscribe({ signal = "on_load", fun = this.actor_on_load })
 end
 
 local compass_objects = {}
 
-local compass_t = 32
+local compass_y = 32
 local compass_w = 512
+local compass_h = 32
 
 local enemy_color = GetARGB(255, 255, 60, 60)
-local quest_color = GetARGB(255, 245, 150, 42)
-local friend_color = GetARGB(255, 60, 255, 60)
-local neutral_color = GetARGB(255, 255, 229, 0)
+local quest_color = GetARGB(255, 255, 180, 70)
+local friend_color = GetARGB(255, 59, 255, 124)
+local neutral_color = GetARGB(255, 250, 252, 86)
 local def_color = GetARGB(255, 255, 255, 255)
 
-local user_spot_color = {
-    ["treasure"] = GetARGB(255, 245, 150, 42),
-    ["red_location"] = GetARGB(255, 255, 60, 60),
-    ["blue_location"] = GetARGB(255, 60, 255, 60),
-    ["level_changer"] = GetARGB(255, 68, 0, 255)
-}
+local spot_settings = {
+    ["treasure"] = {"treasure", "bar_secret_0005_name", GetARGB(255, 255, 180, 70)},
+    ["red_location"] = {"red_location", nil, GetARGB(255, 255, 60, 60)},
+    ["blue_location"] = {"blue_location", nil, GetARGB(255, 59, 255, 124)},
+    ["level_changer"] = {"level_changer", nil, GetARGB(255, 70, 180, 255)},
+    ["crlc_big"] = {"crlc_big", nil, GetARGB(255, 255, 180, 70)},
+    ["crlc_small"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
 
-anomaly_spot = {
-    [clsid.zone_bfuzz_s] = {"zone_bfuzz", GetARGB(255, 255, 60, 60)},
-    [clsid.zone_buzz_s] = {"zone_buzz", GetARGB(255, 2, 191, 8)},
-    [clsid.zone_mbald_s] = {"zone_mbald", GetARGB(255, 255, 60, 60)},
-    [clsid.zone_galant_s] = {"zone_galantine", GetARGB(255, 255, 60, 60)},
-    [clsid.zone_mincer_s] = {"zone_mincer", GetARGB(255, 255, 60, 60)},
-    [clsid.zone_zharka_s] = {"zone_zharka", GetARGB(255, 255, 60, 60)},
-    [clsid.zone_electra_s] = {"zone_electra", GetARGB(255, 68, 0, 255)},
-    [clsid.zone_ice_s] = {"zone_ice", GetARGB(255, 255, 255, 255)}
+    [clsid.zone_bfuzz_s] = {"zone_bfuzz", "Fuzz", GetARGB(255, 255, 60, 60)},                   -- Жгучий пух
+    [clsid.zone_buzz_s] = {"zone_buzz", "Ameba", GetARGB(255, 59, 255, 124)},                   -- Холодец
+    [clsid.zone_mbald_s] = {"zone_mbald", "Bald", GetARGB(255, 255, 60, 60)},                   -- Трамлин
+    [clsid.zone_galant_s] = {"zone_galantine", "Gravi", GetARGB(255, 255, 60, 60)},             -- Воронка
+    [clsid.zone_mincer_s] = {"zone_mincer", "Meat", GetARGB(255, 255, 60, 60)},                 -- Карусель
+    [clsid.zone_zharka_s] = {"zone_zharka", "Zharka", GetARGB(255, 255, 60, 60)},               -- Жарка
+    [clsid.zone_electra_s] = {"zone_electra", "Electra", GetARGB(255, 70, 180, 255)},            -- Электра
+    [clsid.zone_ice_s] = {"zone_ice", "Ice", GetARGB(255, 70, 180, 255)},                        -- Морозилка
+    [clsid.zone_radiation_s] = {"zone_radiation", "Radioactive", GetARGB(255, 255, 180, 70)},   -- Радиация
+    [clsid.zone_thermal_s] = {"zone_thermal", "ThermalField", GetARGB(255, 255, 60, 60)},       -- Термический очаг
+    [clsid.zone_acidic_s] = {"zone_acidic", "AcidicField", GetARGB(255, 59, 255, 124)},         -- Химический очаг
+    [clsid.zone_psy_s] = {"zone_psy", "PsyField", GetARGB(255, 70, 180, 255)}                    -- Пси зона
 }
 
 local dev = device()
@@ -46,7 +49,6 @@ UI_BASE_HEIGHT = 768.0
 local bio_showing = ogse.load_var("biomap_show", true)
 
 function get_current_kx()
-    local dev = device()
     return (dev.height / dev.width) / (UI_BASE_HEIGHT / UI_BASE_WIDTH)
 end
 
@@ -72,14 +74,14 @@ function ui_compass:__init()
     st:InitTexture("ui\\compas\\compas")
     st:SetStretchTexture(true)
     st:SetColor(GetARGB(100, 128, 128, 128)) -- устанавливаем цвет фона
-    st:SetWndPos(512 - compass_w / 2, compass_t)
-    st:SetWndSize(compass_w, 16)
+    st:SetWndPos(512 - compass_w / 2, compass_y)
+    st:SetWndSize(compass_w, compass_h)
 
     self.panel:AttachChild(st)
 
     self.dir = CUIStatic()
     self.dir:SetAutoDelete(true)
-    self.dir:SetWndPos(512 - 64 / 2, compass_t - 8)
+    self.dir:SetWndPos(512 - 64 / 2, compass_y)
     self.dir:SetWndSize(64, 25)
     self.dir:SetTextAlign(CGameFont.alCenter)
     self.dir:SetVTextAlign(CGameFont.valCenter)
@@ -106,63 +108,43 @@ function ui_compass:direction(vis_h)
     self.dir:SetText(string.format("%d", vis_h))
 end
 
-local active_target
-local pos
-
 function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type)
     if not self.points[id] then
         local st = CUIStatic()
         st:SetAutoDelete(true)
-        st:SetFont(GetFontCustom("ui_font_saar16"))
+        st:SetStretchTexture(true)
+        st:SetWndSize(18 * get_current_kx(), 16)
 
-        st:SetText(id)
+        st:SetFont(GetFontCustom("ui_font_saar16"))
         st:AdjustWidthToText()
+        st:SetTextAlign(CGameFont.alCenter)
         st:SetVTextAlign(CGameFont.valCenter)
-        st:SetTextY(st:GetWndPos().y + 8)
+        st:SetTextY(st:GetWndPos().y)
+        st:SetText(id)
 
         self.panel:AttachChild(st)
         self.points[id] = st
-
-        if spot_type == "target" then
-            active_target = id
-        end
     end
 
     local st = self.points[id]
 
     if title and st:GetText() ~= title then
-        pos = st:GetWndPos()
-        st:SetWndSize(18 * get_current_kx(), 16)
-        if spot_type then
-            st:InitTexture("ui\\compas\\" .. spot_type)
-        end
-        st:SetWndPos(pos.x, pos.y)
-        st:SetStretchTexture(true)
         st:SetText(title)
-        st:SetTextY(pos.y)
-        st:SetTextAlign(CGameFont.alCenter)
-        --st:AdjustWidthToText()
     end
 
-    --st:SetTextColorEx(color or def_color)
-    --st:SetTextComplexMode(true)
+    if spot_type then
+        st:InitTexture("ui\\compas\\" .. spot_type)
+    end
+
     st:SetVTextAlign(CGameFont.valCenter)
     st:SetTextColorEx(color or def_color)
     st:SetColor(color or def_color)
 
-    st:SetWndPos(512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_t + (delta_y or 0))
-    st:Show(active_target ~= id and (show_always or (x >= 0 and x <= 1)))
+    st:SetWndPos(512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0))
+    st:Show(show_always or (x >= 0 and x <= 1))
 
     if spot_type then
-        if x >= 0.42 and x <= 0.57 then
-            if title and st:GetText() ~= title then
-                st:SetText(title)
-            end
-        else
-            st:SetText("")
-        end
-
-        local pos_x, pos_y = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_t + (delta_y or 0)
+        local pos_x, pos_y = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0)
         if x <= 0.5 then
             local scale = x * 10
             st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
@@ -172,6 +154,10 @@ function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_t
             st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
             st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
         end
+    end
+
+    if x < 0.35 or x > 0.65 then
+        st:SetColorA(x < 0.35 and 255 * (0.3 + (x * 2)) or 255 * (2.3 - (x * 2)))
     end
 
     return st
@@ -184,8 +170,10 @@ function ui_compass:Update()
 
     if not level.game_indicators_shown()
         or level.main_input_receiver()
+        or not db.actor
         or db.actor:is_talking()
         or db.actor:zoom_mode()
+        or device():is_paused()
     then
         self.panel:Show(false)
         return
@@ -201,7 +189,7 @@ function ui_compass:Update()
     local h = dev.cam_dir:getH()
 
     local cam_h = h - pi / 2
-    local vis_h = h * (90 / math.pi)
+    local vis_h = h * (180 / math.pi)
 
     self:direction(vis_h >= 0 and vis_h or (360 + vis_h))
 
@@ -213,10 +201,6 @@ function ui_compass:Update()
     function get_x_static(dir_h)
         local cam_h_real = cam_h
 
-        -- dir_h / cam_h from -Pi to +Pi
-        -- костыль при переходе любого из них через границу -3,14|+3,14
-        -- наверно можно сделать лучше но я хз как
-
         if (dir_h + ep >= -pi and dir_h - ep <= -pi / 2) then
             if (cam_h_real + ep >= pi / 2 and cam_h_real - ep <= pi) then
                 cam_h_real = cam_h_real - 2 * pi
@@ -227,37 +211,32 @@ function ui_compass:Update()
             end
         end
 
-        return 0.5 + (cam_h_real - dir_h) / pi   -- от 0 до 1
+        return 0.5 + (cam_h_real - dir_h) / (pi * 1/2)   -- от 0 до 1
     end
 
-    self:show_point("N", get_x_static(- pi / 2), nil, def_color):SetPriority(-100)
-    self:show_point("S", get_x_static(  pi / 2), nil, def_color):SetPriority(-100)
-    self:show_point("W", get_x_static(       0), nil, def_color):SetPriority(-100)
-    self:show_point("E", get_x_static(- pi    ), nil, def_color):SetPriority(-100)
-
-    --local d = (2 * pi) / 24
-    --local s = -pi
-    --for i = 1, 24 do
-    --   if i ~= 1 and i - 1 ~= 6 and i - 1 ~= 12 and i - 1 ~= 18 then
-    --        self:show_point("mark_"..i, get_x_static(s), "|", grey_color):SetPriority(-120)
-    --    end
-    --    s = s + d
-    --end
+    self:show_point("N", get_x_static(- pi / 2), nil, def_color, 13):SetPriority(100)
+    self:show_point("S", get_x_static(  pi / 2), nil, def_color, 13):SetPriority(100)
+    self:show_point("W", get_x_static(       0), nil, def_color, 13):SetPriority(100)
+    self:show_point("E", get_x_static(- pi    ), nil, def_color, 13):SetPriority(100)
 
     for i, v in ipairs(compass_objects) do
         local pos = v.obj and v.obj:position() or v.position
         local x = get_x(pos)
 
-        local st = self:show_point(v.id, x, v.text, v.color, 0, v.show_always, v.spot)
+        local st = self:show_point(v.id, x, "", v.color, 13, v.show_always, v.spot)
 
         st.position = pos
         st.x = x
+        st.text = v.text
+        st.color = v.color
 
         local pr = ((1 - (math.abs(x - 0.5) * 2)) * 1000)
         st:SetPriority(v.priority or pr)
 
-        if pr > self.highest_pr then
-            self.highest_pr = pr
+        local priority = (v.priority and v.priority > pr) and v.priority or pr
+
+        if priority > self.highest_pr and (x >= 0 and x <= 1)then
+            self.highest_pr = priority
             self.highest_st = st
         end
     end
@@ -265,9 +244,35 @@ function ui_compass:Update()
     if self.highest_st and self.highest_st.position then
         local dist = self.highest_st.position:distance_to(dev_pos)
 
-        local st = self:show_point("compass_dist", self.highest_st.x, string.format("%dм", dist), def_color, 16)
+        local st = self:show_point("compass_dist", self.highest_st.x, string.format("%dм", dist), def_color, 32)
         st:SetPriority(100)
-        st:SetFont(GetFontLetterica16Russian())
+        st:SetTextY(40)
+
+        if self.highest_st.text then
+            local st = self:show_point("compass_name", self.highest_st.x, self.highest_st.text, self.highest_st.color, 32)
+            st:SetPriority(200)
+            st:SetTextY(10)
+        else
+            st:SetTextY(10)
+        end
+
+        local hidden_a = 50
+        local h_x1 = self.highest_st:GetPosLeft()
+        local h_x2 = h_x1 + self.highest_st:GetWidth()
+
+        -- проверим те точки что перекрываются центральной и сделаем их прозрачными
+        for i, v in pairs(self.points) do
+            if v ~= self.highest_st and v.position then
+               local x1 = v:GetPosLeft()
+               local x2 = x1 + v:GetWidth()
+
+               local overlap = ((h_x1 <= x2) and (h_x2 >= x1))
+               if overlap then
+                    v:SetColorA(hidden_a)
+                    v:SetTextColorA(hidden_a)
+               end
+            end
+        end
     end
 
     self.panel:SortByPriority()
@@ -291,103 +296,77 @@ end
 
 local last_target_gv_id
 local last_target_lc_id
+local active_target_id
+
+function map_spot_limit(obj)
+    return not (IsStalker(obj) or obj:clsid() == clsid.script_trader)
+end
 
 function actor_on_update()
     compass_objects = {}
 
     if not wnd then return end
 
-    -- дин точки
+    local bio_radar = db.actor:item_in_slot(12) and bio_showing
 
-    local f = 35 * 35
+    -- дин точки
+    local f = 50 * 50
     local m = 20 * 20
     local dev_pos = dev.cam_pos
 
     for id, obj in pairs(db.creatures) do
-        if IsStalker(obj) and obj:alive() and obj:id() ~= db.actor:id() then
-            local pos = obj:position()
-            local enemy = obj:relation(db.actor) == game_object.enemy
-            local neutral = obj:relation(db.actor) == game_object.neutral
-            local friend = obj:relation(db.actor) == game_object.friend
+        if (IsStalker(obj) or obj:clsid() == clsid.script_trader) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
+            local pos = obj:center()
+            local enemy = obj:alive() and obj:relation(db.actor) == game_object.enemy
+            local neutral = obj:alive() and obj:relation(db.actor) == game_object.neutral
+            local friend = obj:alive() and obj:relation(db.actor) == game_object.friend
             local quest = ogse.is_quest_npc(obj)
-            if pos:distance_to_sqr(dev_pos) < ((quest and f) or m) and (not enemy or db.actor:see(obj)) then
+            local distance = quest and f or (bio_radar and m * 2 or (enemy and db.actor:see(obj) and m or m))
+            if pos:distance_to_sqr(dev_pos) < distance then
                 table.insert(compass_objects,
                 {
                     obj = obj,
                     id = obj:id(),
-                    text = quest and obj:character_name() or "",
+                    text = quest and obj:character_name() or nil,
                     color = (quest and quest_color) or (friend and friend_color) or (neutral and neutral_color) or (enemy and enemy_color) or nil,
-                    show_always = db.actor:item_in_slot(12) and bio_showing,
-                    spot = "alive_dot"
+                    show_always = bio_radar,
+                    spot = obj:alive() and "alive_dot" or "corpse_dot"
                 })
             end
-        elseif db.actor:item_in_slot(12) and bio_showing and IsMonster(obj) and obj:alive() and obj:id() ~= db.actor:id() then
-            local pos = obj:position()
+        elseif bio_radar and IsMonster(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
+            local pos = obj:center()
             if pos:distance_to_sqr(dev_pos) < m * 2 then
                 table.insert(compass_objects,
                 {
                     obj = obj,
                     id = obj:id(),
-                    text = "",
-                    color = enemy_color,
+                    text = nil,
+                    color = obj:alive() and enemy_color or nil,
                     show_always = true,
-                    spot = "alive_dot"
+                    spot = obj:alive() and "alive_dot" or "corpse_dot"
                 })
             end
         end
     end
 
-    if db.trader and db.trader:alive() and db.trader:id() ~= db.actor:id() then
-        local pos = db.trader:position()
-        if pos:distance_to_sqr(dev_pos) < m then
-            table.insert(compass_objects,
-            {
-                obj = db.trader,
-                id = db.trader:id(),
-                text = db.trader:character_name(),
-                color = quest_color,
-                show_always = db.actor:item_in_slot(12) and bio_showing,
-                spot = "alive_dot"
-            })
-        end
-    end
-
-    for i, spot in ipairs(level_tasks.compas_spot) do
-        local obj = level.object_by_id(spot.obj_id)
-        if obj and obj:id() ~= db.actor:id() then
-            local pos = obj:position()
-            if pos:distance_to_sqr(dev_pos) < f then
+    level.iterate_map_spots(function(spot)
+        local obj = level.object_by_id(spot.object_id)
+        if obj and map_spot_limit(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
+            local pos = obj:center()
+            local distance = IsAnomaly(obj) and m * 2 or f
+            if pos:distance_to_sqr(dev_pos) < distance then
+                local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
                 table.insert(compass_objects,
                 {
                     obj = obj,
                     id = obj:id(),
-                    text = spot.type == "treasure" and game.translate_string("bar_secret_0005_name") or game.translate_string(spot.title),
-                    color = user_spot_color[spot.type] or def_color,
-                    spot = spot.type
+                    text = game.translate_string(spot_settings[spot_type][2] or spot.hint) or nil,
+                    color = spot_settings[spot_type][3] or def_color,
+                    spot = spot_settings[spot_type][1]
                 })
             end
         end
-    end
-
-    local detector = db.actor:object("detector_elite")
-    if detector and db.actor:is_on_belt(detector) then
-        for id, spot in pairs(ogse_anomaly.anom_list) do
-            local obj = level.object_by_id(id)
-            if obj and IsAnomaly(obj) and obj:id() ~= db.actor:id() then
-                local pos = obj:position()
-                if pos:distance_to_sqr(dev_pos) < m * 0.5 then
-                    table.insert(compass_objects,
-                    {
-                        obj = obj,
-                        id = obj:id(),
-                        text = "",
-                        color = anomaly_spot[get_clsid(obj)][2] or def_color,
-                        spot = anomaly_spot[get_clsid(obj)][1]
-                    })
-                end
-            end
-        end
-    end
+    end)
 
     local target_obj
 
@@ -400,7 +379,7 @@ function actor_on_update()
     if target_obj then
         local compass_obj =
         {
-            text = objection and objection:get_description() or "",
+            text = objection and game.translate_string(objection:get_description()) or "",
             color = quest_color,
             spot = "target",
             show_always = true,
@@ -432,6 +411,10 @@ function actor_on_update()
                 table.insert(compass_objects, compass_obj)
             end
         end
+
+        active_target_id = compass_obj.id
+    else
+        active_target_id = nil
     end
 
     ogsr_signals.get_mgr():reschedule(200)

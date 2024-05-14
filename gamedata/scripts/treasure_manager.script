@@ -38,7 +38,7 @@ function on_npc_use(obj)
 
         if string.find(obj:name(), "maroder_boss") then
             local treasure = alife():story_object(story_ids.razuvaev_taynik)
-            level.map_add_object_spot_ser(treasure.id, "red_location", game.translate_string("raz_treasure"))
+            level_tasks.add_location_by_id(treasure.id, "red_location", game.translate_string("raz_treasure"))
             news_manager.send_tip(db.actor, "%c[255,255,0,0]" .. game.translate_string("raz_treasure_news"))
         end
     end
@@ -236,7 +236,8 @@ function CTreasure:give_treasure(k)
     local v = self.treasure_info[k]
     -- log3("~~[CTreasure:give_treasure] treasure_info of [%s] is %s", k, v)
     local sobj = alife():story_object(v.target)
-    ASSERT(sobj, "!!Can't find treasure_box with story_id: [%s]", v.target)
+    if not sobj then return end
+    --ASSERT(sobj, "!!Can't find treasure_box with story_id: [%s]", v.target)
     local text =
         opt.need_text == 0 and "%c[255,238,155,23]" .. game.translate_string(v.name) .. "\\n" .. "%c[default]" ..
             game.translate_string(v.description) or "%c[255,238,155,23]" .. game.translate_string(v.name) .. "\\n" ..

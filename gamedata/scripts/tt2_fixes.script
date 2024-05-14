@@ -50,26 +50,6 @@ function delete_obj(name)
     end
 end
 
-local function spawn_sverhprovodnik()
-    if db.actor:has_info("sverhprovodnik_dialog_done") or db.actor:dont_has_info("sverhprovodnik_dialog_start") or db.actor:object("sverhprovodnik") then return end
-
-    local time = level.get_time_hours()
-
-    if time >= 1 and time < 2 and db.actor:dont_has_info("sverhprovodnik_spawn") then
-        local obj = alife():create("sverhprovodnik", vector():set(-268.297, -18.055, -25.109), 69438, 1683)
-        alife():assign_story_id(obj.id, story_ids.sverhprovodnik)
-        db.actor:give_info_portion("sverhprovodnik_spawn")
-    end
-
-    if db.actor:has_info("sverhprovodnik_spawn") and time >= 2 then
-        local obj = alife():story_object(story_ids.sverhprovodnik)
-        if obj then
-            alife():release(obj, true)
-            db.actor:disable_info_portion("sverhprovodnik_spawn")
-        end
-    end
-end
-
 function start_quest()
     ogse_st_mgr.start_conditional_visual_timer(nil, 17 * 60, script_name() .. ".quest_complete", script_name() .. ".quest_fail")
 end
@@ -143,18 +123,79 @@ local function uglovaya_light_params()
     ogse.save_var("uglovaya_lamp_list", uglovaya_lamp_list)
 end
 
-local function fix_first()
-    fix_recept()
-    del_phobj()
-    swamp_secret()
-    ded_luck()
-    ded_secret()
-    fix_leila_mafon()
-    fix_fucking_stadium_lair()
-    fix_exit_to_agr_underground()
-    fix_garbage_levsha()
-    gas_light_flare()
-    uglovaya_light_params()
+local function fix_lc_pripyat_aes()
+    if ogse.var_exists("fix_lc_pripyat_aes") then
+        return
+    end
+
+    local obj = alife():story_object(832)
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 2399
+        lc.dest_level_vertex_id = 414957
+        lc.dest_position = vector():set(918.561, -0.102, -393.141)
+        ogse.save_var("fix_lc_pripyat_aes", true)
+    end
+end
+
+local function fix_lc_radar_millitary()
+    if ogse.var_exists("fix_lc_radar_millitary") then
+        return
+    end
+
+    local obj = alife():story_object(1008)
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 1808
+        lc.dest_level_vertex_id = 357153
+        lc.dest_position = vector():set(81.863, -12.047, 405.985)
+        ogse.save_var("fix_lc_radar_millitary", true)
+    end
+end
+
+local function fix_lc_garbage_escape()
+    if ogse.var_exists("fix_lc_garbage_escape") then
+        return
+    end
+
+    local obj = alife():story_object(193)
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 208
+        lc.dest_level_vertex_id = 322877
+        lc.dest_position = vector():set(15.150, 16.441, 684.726)
+        ogse.save_var("fix_lc_garbage_escape", true)
+    end
+end
+
+local function fix_lc_escape_garbage()
+    if ogse.var_exists("fix_lc_escape_garbage") then
+        return
+    end
+
+    local obj = alife():story_object(91)
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 252
+        lc.dest_level_vertex_id = 195803
+        lc.dest_position = vector():set(36.650, 2.137, -303.579)
+        ogse.save_var("fix_lc_escape_garbage", true)
+    end
+end
+
+local function fix_agr_und_agr()
+    if ogse.var_exists("fix_agr_und_agr") then
+        return
+    end
+
+    local obj = alife():object("exit_to_agroprom_06")
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 677
+        lc.dest_level_vertex_id = 165171
+        lc.dest_position = vector():set(-38.928, -0.024, 37.570)
+        ogse.save_var("fix_agr_und_agr", true)
+    end
 end
 
 local function on_drag_drop(obj)
@@ -184,7 +225,7 @@ local function on_drag_drop(obj)
     end
 end
 
-function fix_stancia_level_changer_to_pripyat()
+local function fix_stancia_level_changer_to_pripyat()
     if ogse.var_exists("fix_stancia_level_changer_to_pripyat") then
         return
     end
@@ -200,7 +241,7 @@ function fix_stancia_level_changer_to_pripyat()
 end
 
 -- Фикс Радара - Склады, чтобы dest_position была не в геометрии
-function fix_radar_level_changer_to_ac()
+local function fix_radar_level_changer_to_ac()
     if ogse.var_exists("fix_exit_to_military_01") then
         return
     end
@@ -223,7 +264,7 @@ function fix_radar_level_changer_to_ac()
     ogse.save_var("fix_exit_to_military_01", true)
 end
 
-function fix_ac_level_changer_to_mg()
+local function fix_ac_level_changer_to_mg()
     local sobj = alife():story_object(story_ids.ac_mg)
     if sobj and not ogse.var_exists("fix_ac_level_changer_to_mg") then
         ogse.save_var("fix_ac_level_changer_to_mg", true)
@@ -249,7 +290,7 @@ function fix_ac_level_changer_to_mg()
     end
 end
 
-function fix_exit_to_agr_underground()
+local function fix_exit_to_agr_underground()
     if ogse.var_exists("fix_exit_to_agr_underground") then return end
 
     local sobj = alife():object("exit_to_agr_underground_05")
@@ -269,7 +310,7 @@ function fix_exit_to_agr_underground()
     lc.dest_direction = vector():set(0.990331, -0.03567, -0.135313)
 end
 
-function fix_leila_mafon()
+local function fix_leila_mafon()
     if ogse.var_exists("fix_leila_mafon") then return end
     for id, sobj in alife():objects() do
         if string.find(sobj:name(), "leila_mafon") then
@@ -281,7 +322,7 @@ function fix_leila_mafon()
     end
 end
 
-function fix_fucking_stadium_lair()
+local function fix_fucking_stadium_lair()
     local number = 0
     for a = 1, 65534 do
         local obj = alife():object(a)
@@ -295,7 +336,7 @@ function fix_fucking_stadium_lair()
     end
 end
 
-function fix_garbage_levsha() --Телепорт торгаша бандитов на место.
+local function fix_garbage_levsha()
     if ogse.var_exists("garbage_levsha") then return end
     local obj = alife():story_object(story_ids.garbage_levsha)
     --if obj then
@@ -306,20 +347,61 @@ function fix_garbage_levsha() --Телепорт торгаша бандитов
     --end
 end
 
-function on_spawn()
-    fix_stancia_level_changer_to_pripyat() 
-    fix_radar_level_changer_to_ac()
-    fix_ac_level_changer_to_mg()
-    fix_freedom_position()
+local function fix_first()
+    del_phobj()
+    swamp_secret()
+    ded_luck()
+    ded_secret()
+    fix_leila_mafon()
+    fix_fucking_stadium_lair()
+    fix_exit_to_agr_underground()
+    fix_garbage_levsha()
+    gas_light_flare()
+    uglovaya_light_params()
 end
 
-function swamp_secret()
+local function fix_new_first()
+    fix_recept()
+    fix_lc_pripyat_aes()
+    fix_lc_radar_millitary()
+    fix_lc_garbage_escape()
+    fix_lc_escape_garbage()
+    fix_agr_und_agr()
+end
+
+local function spawn_sverhprovodnik()
+    if db.actor:has_info("sverhprovodnik_dialog_done") or db.actor:dont_has_info("sverhprovodnik_dialog_start") or db.actor:object("sverhprovodnik") then return end
+
+    local time = level.get_time_hours()
+
+    if time >= 1 and time < 2 and db.actor:dont_has_info("sverhprovodnik_spawn") then
+        local obj = alife():create("sverhprovodnik", vector():set(-268.297, -18.055, -25.109), dsh.find_random_lvid_in_radius(69438, 1))
+        alife():assign_story_id(obj.id, story_ids.sverhprovodnik)
+        db.actor:give_info_portion("sverhprovodnik_spawn")
+    end
+
+    if db.actor:has_info("sverhprovodnik_spawn") and time >= 2 then
+        local obj = alife():story_object(story_ids.sverhprovodnik)
+        if obj then
+            alife():release(obj, true)
+            db.actor:disable_info_portion("sverhprovodnik_spawn")
+        end
+    end
+end
+
+local function on_spawn()
+    --fix_stancia_level_changer_to_pripyat() 
+    --fix_radar_level_changer_to_ac()
+    --fix_ac_level_changer_to_mg()
+end
+
+local function swamp_secret()
 	if ogse.var_exists("SWAMP_SECRET") then return end
 	local sobj = alife():create("swamp_secret", vector():set(-252.122940, -5.423657, 53.645744), 646368, 2999)
 	ogse.save_var("SWAMP_SECRET", true)
 end
 
-function ded_luck()
+local function ded_luck()
 	if ogse.var_exists("DED_LUCK") then return end
 	local sobj = alife():create("ded_luck_pick", vector():set(-208.8692169189, 1.197435021400, 69.33975982666), 128618, 3031)
 	local sobj = alife():create("ded_luck_pick", vector():set(-117.8301162719, 1.408857345581, 5.6683926582336), 222398, 3046)
@@ -333,7 +415,7 @@ function ded_luck()
 	ogse.save_var("DED_LUCK", true)
 end
 
-function ded_secret()
+local function ded_secret()
 	if ogse.var_exists("DED_SECRET") then return end
 
 	-- Тайник
@@ -390,7 +472,7 @@ function ded_secret()
 	ogse.save_var("DED_SECRET", true)
 end
 
-function spawn_ostrov_zone()
+local function spawn_ostrov_zone()
     ogsr_cop_zone.spawn_anomaly('zone_ostrov', vector():set(-25.971, 0.061, 724.767), 178968, 2618, 1, 1)
     ogsr_cop_zone.spawn_anomaly('zone_monolit', vector():set(-25.913, 0.005, 693.582), 178968, 2618, 1, 1)
     ogsr_cop_zone.spawn_anomaly('zone_zharka_new', vector():set(-30.974, 0.002, 693.734), 178968, 2618, 1, 1)
@@ -402,7 +484,7 @@ function spawn_ostrov_zone()
     ogsr_cop_zone.spawn_anomaly('zone_zharka_new', vector():set(-22.360, 0.000, 689.950), 178968, 2618, 1, 1)
 end
 
-function spawn_zharts()
+local function spawn_zharts()
     alife():create("af_caterpillar", vector():set(-21.454, 0.000, 691.907), 178968, 2618)
     alife():create("af_caterpillar", vector():set(-21.387, 0.000, 695.361), 178968, 2618)
     alife():create("af_caterpillar", vector():set(-23.613, 0.000, 697.631), 178968, 2618)
@@ -411,55 +493,7 @@ function spawn_zharts()
     alife():create("af_caterpillar", vector():set(-30.405, 0.000, 692.153), 178968, 2618)
 end
 
-function fix_freedom_position()
-    if ogse.var_exists("fix_freedom_position") then return end
-
-    for id, sobj in alife():objects() do
-        if sobj:name() == "mil_lucash" then
-            local patrol = patrol("mil_freedom_wait_leader_walk")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-
-        if sobj:name() == "mil_master_max" 
-        or sobj:name() == "mil_blockpost_leader" 
-        or sobj:name() == "mil_master_ugrumiy" 
-        or sobj:name() == "mil_cook" then
-            local patrol = patrol("mil_freedom_wait_wait_centr_alt")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-
-        if sobj:name() == "mil_boec1" then
-            local patrol = patrol("mil_freedom_wait_boec1_walk")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-
-        if sobj:name() == "mil_boec2" then
-            local patrol = patrol("mil_freedom_wait_boec2_walk")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-
-        if sobj:name() == "mil_boec3" then
-            local patrol = patrol("mil_freedom_wait_boec3_walk")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-
-        if sobj:name() == "mil_boec4" then
-            local patrol = patrol("mil_freedom_wait_boec4_walk")
-            alife():teleport_object(id, patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-            log3("--I am dead: %s teleported to pos = {%s, %s, %s}, lvid = %s, gvid = %s", sobj:name(), patrol:point(0).x, patrol:point(0).y, patrol:point(0).z, patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-    end
-
-    ogse.save_var("fix_freedom_position", true)
-end
-
-
-function death_npc_item(npc)
+local function death_npc_item(npc)
     if npc:name() == "esc_shilo_band" then
         ogse.spawn_item_in_inv("part6", npc)
         ogse.spawn_item_in_inv("money_gg", npc)
@@ -482,39 +516,6 @@ function death_npc_item(npc)
     end
     if string.find(npc:name(), "mil_blockpost_leader") then
         db.actor:give_info_portion("mil_blockpost_leader_dead")
-    end
-    if string.find(npc:name(), "mil_soldat_one") then
-        db.actor:give_info_portion("mil_voen_one")
-    end
-    if string.find(npc:name(), "mil_soldat_two") then
-        db.actor:give_info_portion("mil_voen_two")
-    end
-    if string.find(npc:name(), "mil_soldat_tri") then
-        db.actor:give_info_portion("mil_voen_tri")
-    end
-    if string.find(npc:name(), "mil_soldat_four") then
-        db.actor:give_info_portion("mil_voen_four")
-    end
-    if string.find(npc:name(), "mil_soldat_five") then
-        db.actor:give_info_portion("mil_voen_five")
-    end
-    if string.find(npc:name(), "dark_komandir_belchuk") then
-        db.actor:give_info_portion("mil_voen_six")
-    end
-    if string.find(npc:name(), "mil_barier_one") then
-        db.actor:give_info_portion("mil_barier_one")
-    end
-    if string.find(npc:name(), "mil_barier_two") then
-        db.actor:give_info_portion("mil_barier_two")
-    end
-    if string.find(npc:name(), "mil_barier_tri") then
-        db.actor:give_info_portion("mil_barier_tri")
-    end
-    if string.find(npc:name(), "mil_barier_four") then
-        db.actor:give_info_portion("mil_barier_four")
-    end
-    if string.find(npc:name(), "mil_komandir_sidorchuk") then
-        db.actor:give_info_portion("mil_barier_five")
     end
     if string.find(npc:name(), "mil_stukach") then
         db.actor:give_info_portion("mil_stukach_dead")
@@ -551,8 +552,8 @@ end
 
 function attach(sm)
     --sm:subscribe({signal = "on_spawn",          fun = on_spawn})
-    --sm:subscribe({signal = "on_first_update",   fun = fix_first})
-    --sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
+    sm:subscribe({signal = "on_first_update",   fun = fix_new_first})
+    sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
     sm:subscribe({signal = "on_fake_drag_drop", fun = on_drag_drop})
-    sm:subscribe({signal = "on_npc_death",      fun = this.death_npc_item})
+    sm:subscribe({signal = "on_npc_death",      fun = death_npc_item})
 end

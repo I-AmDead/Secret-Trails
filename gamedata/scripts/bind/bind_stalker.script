@@ -275,6 +275,7 @@ local info2call = {
 }
 
 function actor_binder:info_callback(npc, info_id)
+    log3("give info portion %s", info_id) 	
     self.am:call("on_info", npc, info_id)
     local sc = info2call[info_id]
     if sc then
@@ -355,11 +356,11 @@ function actor_binder:update(delta)
     if update_was_never_called then
         -------------------------------------------------------------------
         if not has_alife_info("storyline_actor_start") then
+            level_tasks.add_lchanger_location()
             self.object:give_info_portion("global_dialogs")
             self.am:call("on_storyline_start")
             self.object:give_info_portion("storyline_actor_start")
         end
-        level_tasks.add_lchanger_location()
         -------------------------------------------------------------------
         self.am:call("on_first_update")
         update_was_never_called = false
