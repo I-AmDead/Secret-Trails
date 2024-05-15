@@ -399,18 +399,18 @@ function CUIDescriptionWnd:ShowDescription(item)
 		self:ShowOutfitParams()
 	-- knife
 	elseif item:is_knife() then
-		local d = get_float(self.section, 'fire_distance')
+		local d = get_float(self.section, 'fire_distance', 0.0)
 		self:ShowProps({{"fire_distance", game.translate_string("descr_knife_distance"), string.format("%.2f %s", d, game.translate_string("descr_meters")), {255, 255, 255, 255}}}, false)
 	-- grenade
 	elseif item:is_grenade() then
-		local fr = get_float(self.section, 'frags_r')
-		local br =  get_float(self.section, 'blast_r')
+		local fr = get_float(self.section, 'frags_r', 0.0)
+		local br =  get_float(self.section, 'blast_r', 0.0)
 		self:ShowProps({{"explosion", game.translate_string("descr_radius"), string.format("%.1f %s", (fr + br) / 2, game.translate_string("descr_meters")), {255, 255, 255, 255}}}, false)
 	-- ammo
 	elseif item:is_ammo() and not item:is_grenade() then
 		if not forbidden_ammo[self.section] then
-			local kh = get_float(self.section, 'k_hit')
-			local bs = get_float(self.section, 'buck_shot')
+			local kh = get_float(self.section, 'k_hit', 0.0)
+			local bs = get_float(self.section, 'buck_shot', 0.0)
 			self:ShowProps({{"hit_power", game.translate_string("descr_damage_ammo"), string.format("%.1f", kh * bs), {255, 255, 255, 255}}}, false)
 		end
 	end
@@ -472,16 +472,16 @@ function CUIDescriptionWnd:ShowEatableParams()
 		end
 	end
 
-	local tm = get_float(self.section, 'boost_time')
+	local tm = get_float(self.section, 'boost_time', 0.0)
 	if tm then
 		local txt = string.format("%.0f %s", tm, game.translate_string("descr_seconds"))
 		table.insert(params, {"time", game.translate_string("descr_time"), txt, {255, 0, 255, 0}})
 	end
 
 	if sys_ini:line_exist(self.section, "boost_max_weight") then
-		local val = get_float(self.section, "boost_max_weight")
+		local val = get_float(self.section, "boost_max_weight", 0.0)
 		if val ~= 0.0 then
-			local txt = val > 0.0 and "%c[green]+" or "%c[red]" .. string.format("%.0f %s", val, game.translate_string("descr_kg"))
+			local txt = (val > 0.0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val, game.translate_string("descr_kg"))
 			table.insert(params, {"additional_weight", game.translate_string("descr_weight_power"), txt, {255, 255, 255, 255}})
 		end
 	end
@@ -582,7 +582,7 @@ function CUIDescriptionWnd:ShowAfParams()
 	local params = {}
 
 	for i,t in ipairs(conditions_params) do
-		local val = get_float(self.section, t.prop, 0)
+		local val = get_float(self.section, t.prop, 0.0)
 		if val ~= 0 then
 			local txt = ""
 			val = val * 100 / conditions[t.prop]
@@ -603,7 +603,7 @@ function CUIDescriptionWnd:ShowAfParams()
 
 	local hit_absorbation_sect = sys_ini:r_string(self.section, "hit_absorbation_sect")
 	for i,t in ipairs(hit_types) do
-		local val = get_float(hit_absorbation_sect, t.prop.."_immunity")
+		local val = get_float(hit_absorbation_sect, t.prop.."_immunity", 0.0)
 		if val ~= 1 then
 			val = 100-val*100
 			local txt = (val < 0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val)
@@ -612,7 +612,7 @@ function CUIDescriptionWnd:ShowAfParams()
 	end
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
-		local val = get_float(self.section, "additional_inventory_weight2")
+		local val = get_float(self.section, "additional_inventory_weight2", 0.0)
 		if val ~= 0 then
 			local txt = (val > 0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val, game.translate_string("descr_kg"))
 			table.insert(params, {"additional_weight", game.translate_string("descr_weight_power"), txt, val > 0 and color_green or color_red})
@@ -629,35 +629,35 @@ function CUIDescriptionWnd:ShowOutfitParams()
 	local outfit = db.actor:item_in_slot(6)
 	local params = {}
 	for i,t in ipairs(hit_types) do
-		local val = get_float(self.section, t.prop .. "_protection")
+		local val = get_float(self.section, t.prop .. "_protection", 0.0)
 		val = math.floor(val * self.condition * 100 + 0.5)
 		if outfit and outfit:id() ~= self.item:id() then
-			local val2 = math.floor(get_float(outfit:section(), t.prop.."_protection") * outfit:condition() * 100 + 0.5)
-			if val > 0.0 or val2 > 0.0 then
+			local val2 = math.floor(get_float(outfit:section(), t.prop.."_protection", 0.0) * outfit:condition() * 100 + 0.5)
+			if val ~= 0.0 or val2 ~= 0.0 then
 				val2 = val - val2
-				local txt = (val < 0.0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val) .. "%c[gray2] / " .. (val2 < 0.0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val2)
+				local txt = (val < 0.0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val) .. "%c[gray2] | " .. (val2 < 0.0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val2)
 				table.insert(params, {t.prop, t.text, txt, val > 0 and color_green or color_red})
 			end
 		else
-			if val > 0.0 then
-				local txt = val < 0.0 and "%c[red]" or "%c[green]+" .. string.format("%.0f%%", val)
+			if val ~= 0.0 then
+				local txt = (val < 0.0 and "%c[red]" or "%c[green]+") .. string.format("%.0f%%", val)
 				table.insert(params, {t.prop, t.text, txt, val > 0 and color_green or color_red})
 			end
 		end
 	end
 
 	if sys_ini:line_exist(self.section, "additional_inventory_weight2") then
-		local val = get_float(self.section, "additional_inventory_weight2")
+		local val = get_float(self.section, "additional_inventory_weight2", 0.0)
 		if outfit and outfit:id() ~= self.item:id() then
-			local val2 = get_float(outfit:section(), "additional_inventory_weight2")
-			if val > 0.0 or val2 > 0.0 then
+			local val2 = get_float(outfit:section(), "additional_inventory_weight2", 0.0)
+			if val ~= 0.0 or val2 ~= 0.0 then
 				val2 = val - val2
-				local txt = val > 0 and "%c[green]+" or "%c[red]" .. string.format("%.0f %s", val, game.translate_string("descr_kg")).."%c[gray2] / " .. (val2 > 0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val2, game.translate_string("descr_kg"))
+				local txt = (val > 0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val, game.translate_string("descr_kg")) .. "%c[gray2] | " .. (val2 > 0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val2, game.translate_string("descr_kg"))
 				table.insert(params, {"additional_weight", game.translate_string("descr_weight_power"), txt, val > 0 and color_green or color_red})
 			end
 		else
-			if val > 0.0 then
-				local txt = val>0 and "%c[green]+" or "%c[red]" .. string.format("%.0f %s", val, game.translate_string("descr_kg"))
+			if val ~= 0.0 then
+				local txt = (val > 0 and "%c[green]+" or "%c[red]") .. string.format("%.0f %s", val, game.translate_string("descr_kg"))
 				table.insert(params, {"additional_weight", game.translate_string("descr_weight_power"), txt, val > 0 and color_green or color_red})
 			end
 		end
@@ -666,15 +666,15 @@ function CUIDescriptionWnd:ShowOutfitParams()
 	for i,t in ipairs(script_params) do
 		local val = get_float(self.section, t.prop, 0.0)
 		if outfit and outfit:id() ~= self.item:id() then
-			local val2 = get_float(self.section, t.prop, 0.0)
+			local val2 = get_float(outfit:section(), t.prop, 0.0)
 			if val ~= 0.0 or val2 ~= 0.0 then
 				val2 = val - val2
-				local txt = val < 0 and "%c[red]" or "%c[green]+" .. string.format("%.0f", val).."%c[gray2] / " .. (val2 < 0 and "%c[red]" or "%c[green]+") .. string.format("%.0f", val2)
+				local txt = (val < 0 and "%c[red]" or "%c[green]+") .. string.format("%.1f", val) .. "%c[gray2] | " .. (val2 < 0 and "%c[red]" or "%c[green]+") .. string.format("%.1f", val2)
 				table.insert(params, {t.prop, t.text, txt, val > 0 and color_green or color_red})
 			end
 		else
 			if val ~= 0.0 then
-				local txt = val < 0 and "%c[red]" or "%c[green]+" .. string.format("%.0f", val)
+				local txt = (val < 0 and "%c[red]" or "%c[green]+") .. string.format("%.1f", val)
 				table.insert(params, {t.prop, t.text, txt, val > 0 and color_green or color_red})
 			end
 		end
