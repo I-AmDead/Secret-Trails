@@ -12,8 +12,7 @@ end
 function treasure_create(obj)
     local section = obj:section()
     if section == "treasure_item" then
-        local sobj = alife():create("m_inventory_box", db.actor:position(), db.actor:level_vertex_id(),
-            db.actor:game_vertex_id())
+        local sobj = alife():create("m_inventory_box", db.actor:position(), db.actor:level_vertex_id(), db.actor:game_vertex_id())
         sobj = alife():object(sobj.id)
         sobj.custom_data = "[logic]\ncfg = scripts\\treasure_inventory_box.ltx\n"
         sobj:used_ai_locations(false)
@@ -31,8 +30,8 @@ function first_run()
 
     ogse.spawn_item_in_inv("matras")
 
-    alife():create("x18_zapiska_ruk", vector():set(21.6, -5.64, -18.28), 5991, 1140)
-    alife():create("x16_zapiska_ruk", vector():set(-128.0, 22.5, -30.0), 35, 1529)
+    alife_create("x18_zapiska_ruk", vector():set(21.6, -5.64, -18.28), "l04u_labx18")
+    alife_create("x16_zapiska_ruk", vector():set(-128.0, 22.5, -30.0), "l08u_brainlab")
 
     spawn_military_btr()
 
@@ -179,8 +178,7 @@ function check_af_transform(obj, anom, lv, gv)
         -- если компонент есть в рецепте
         if component_sect_string == obj:section() then
             -- устанавливаем все параметры для рецепта, возможно из умолчаний
-            local result_sect, luck = af_select_result(lucky_percent, bad_percent, bad_sect_string, lucky_sect_string,
-                component_sect_string)
+            local result_sect, luck = af_select_result(lucky_percent, bad_percent, bad_sect_string, lucky_sect_string, component_sect_string)
 
             if not lucky_sect_string or not lucky_percent or not bad_percent or not bad_sect_string or not time_vector or
                 anomaly_remove_bool == nil or (not lucky_sect_string and not anomaly_remove_bool) or lucky_percent +
@@ -213,8 +211,7 @@ function check_af_transform(obj, anom, lv, gv)
                     level.add_pp_effector("teleport.ppe", 1524, false)
                 end
             end
-            dsh.start_gtimerDHMS("af_transform", time_vector.x, time_vector.y, time_vector.z, 0,
-                "amk_mod.af_transform_universal_end", t)
+            dsh.start_gtimerDHMS("af_transform", time_vector.x, time_vector.y, time_vector.z, 0, "amk_mod.af_transform_universal_end", t)
 
             -- удаляем из игры компоненты рецепта
             alife():release(alife():object(obj:id()))
@@ -276,8 +273,9 @@ function af_transform_universal_end(params)
     -- удаляем аномалии, если нужно и она не в исключениях
     if params.remove_anomaly then
         local sobj = alife():object(params.remove_anomaly_id)
-        if sobj and game_graph():valid_vertex_id(sobj.m_game_vertex_id) and is_generated_anomaly(sobj) then
-            dsh_anomaly_detector.remove_restriction(sobj.id)
+        if sobj and game_graph():valid_vertex_id(sobj.m_game_vertex_id) then
+            ogse_anomaly.set_anomaly_mode(params.remove_anomaly_id, "anom_off")
+            alife():release(sobj, true)
         end
     end
 
