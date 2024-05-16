@@ -163,10 +163,10 @@ local function on_first_update()
 
     if level.name() == "l02_garbage" then
         if not db.actor:has_info("art_garbage_spawn") then
-            spawn_ai_location("af_electra_flash", vector():set(-12.316145896912, 18.28110504, 117.60050964355), dsh.find_random_lvid_in_radius(170444, 3))
-            spawn_ai_location("af_rusty_sea-urchin", vector():set(-75.99243927002, 20.78828811, 112.10626220703), dsh.find_random_lvid_in_radius(170444, 3))
-            spawn_ai_location("af_rusty_kristall", vector():set(-195.3737487793, 3.43506217, 208.96646118164), dsh.find_random_lvid_in_radius(32824, 3))
-            spawn_ai_location("af_ameba_slug", vector():set(-255.01333618164, 2.5012269020081, 97.402565002441), dsh.find_random_lvid_in_radius(7662, 3))
+            spawn_ai_location("af_electra_flash", vector():set(-12.316145896912, 18.28110504, 117.60050964355), "l02_garbage")
+            spawn_ai_location("af_rusty_sea-urchin", vector():set(-75.99243927002, 20.78828811, 112.10626220703), "l02_garbage")
+            spawn_ai_location("af_rusty_kristall", vector():set(-195.3737487793, 3.43506217, 208.96646118164), "l02_garbage")
+            spawn_ai_location("af_ameba_slug", vector():set(-255.01333618164, 2.5012269020081, 97.402565002441), "l02_garbage")
             db.actor:give_info_portion("art_garbage_spawn")
         end
 
@@ -247,10 +247,6 @@ local function on_first_update()
         if db.actor:has_info("mil_klyak_lab_start") and not has_alife_info("mil_klyak_lab_spawn") then
             db.actor:give_info_portion("mil_klyak_lab_spawn")
         end
-
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("izlom_x18_spawn") then
-            db.actor:give_info_portion("izlom_x18_spawn")
-        end
     end
 
     if level.name() == "l05_bar" then
@@ -297,21 +293,21 @@ local function on_first_update()
 
     if level.name() == "l07_military" then
         if not has_alife_info("actor_na_scladah") then
-            local obj = spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
-            local obj = spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
+            spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
+            spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
+            spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_ambush", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_specnaz", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
+            spawn_patrol("dark_military_sniper", "mil_voen_lager_voen17_walk")
             db.actor:give_info_portion("actor_na_scladah")
         end
 
@@ -460,8 +456,8 @@ local function on_first_update()
         end
 
         if not db.actor:has_info("esc_serious_talk") then
-            local obj = alife():create("sar_zapiska_ruk", vector():set(-18.311, 52.612, 10.153), "l12u_sarcofag")
-            local obj = alife():create("rad_zapiska_ruk", vector():set(-18.195, -23.519, -11.307), "l10u_bunker")
+            alife_create("sar_zapiska_ruk", "l12u_sarcofag", vector():set(-18.311, 52.612, 10.153))
+            alife_create("rad_zapiska_ruk", "l10u_bunker", vector():set(-18.195, -23.519, -11.307))
 
             spawn_ai_location("gold_art", vector():set(-234.881, 8.371, 177.889), "l06_rostok")
             spawn_ai_location("gold_art", vector():set(-234.881, 8.371, 177.889), "l06_rostok")
@@ -532,12 +528,6 @@ local function on_info(npc, info_id)
     if level.name() == "l05_bar" then
         if has_alife_info("dolg_attak_dialog_start") and not has_alife_info("sledopyt_delete") then
             db.actor:give_info_portion("sledopyt_delete")
-        end
-    end
-
-    if level.name() == "l10_radar" then
-        if has_alife_info("sveeblov_predatel_done") and not has_alife_info("strannik_spawn") then
-            db.actor:give_info_portion("strannik_spawn")
         end
     end
 
@@ -700,23 +690,9 @@ local function on_info(npc, info_id)
 end
 
 local haronp = {
-    {
-        position = {x = 23.153, y = -4.680, z = 3.578},
-        gv = 2424,
-        lv = 4684
-    },
-
-    {
-        position = {x = 18.936, y = -0.405, z = 13.346},
-        gv = 2424,
-        lv = 4699
-    },
-
-    {
-        position = {x = 20.920, y = -3.425, z = 13.356},
-        gv = 2424,
-        lv = 4699
-    }
+    [1] = {x = 23.153, y = -4.680, z = 3.578},
+    [2] = {x = 18.936, y = -0.405, z = 13.346},
+    [3] = {x = 20.920, y = -3.425, z = 13.356}
 }
 
 function first_burer()
@@ -738,17 +714,17 @@ function first_burer()
     local obj = spawn_patrol("burer_normal", "sar_burer2_walk")
     obj.custom_data = "[logic]\ncfg = scripts\\new\\burer6.ltx"
 
-    local a = haronp[math.random(table.getn(haronp))]
-    local obj = alife():create("pribor_haron", vector():set(a.position.x, a.position.y, a.position.z), dsh.find_random_lvid_in_radius(a.lv, 1))
+    local a = haronp[math.random(1, 3)]
+    local obj = alife_create("pribor_haron", "l12u_sarcofag", vector():set(a.x, a.y, a.z))
 end
 
 function spawn_aes()
-    local obj = spawn_patrol("chaes_master1", "aes_master1_walk")
-    local obj = spawn_patrol("chaes_master2", "aes_master2_walk")
-    local obj = spawn_patrol("chaes_master3", "aes_master3_walk")
-    local obj = spawn_patrol("chaes_master4", "aes_master4_walk")
-    local obj = spawn_patrol("chaes_master5", "aes_master5_walk")
-    local obj = spawn_patrol("chaes_master6", "aes_master6_walk")
+    spawn_patrol("chaes_master1", "aes_master1_walk")
+    spawn_patrol("chaes_master2", "aes_master2_walk")
+    spawn_patrol("chaes_master3", "aes_master3_walk")
+    spawn_patrol("chaes_master4", "aes_master4_walk")
+    spawn_patrol("chaes_master5", "aes_master5_walk")
+    spawn_patrol("chaes_master6", "aes_master6_walk")
 end
 
 function set_relation(sid)
@@ -778,61 +754,61 @@ function max_comp(i1, i2) -- возвращает true если i1 меньше 
 end
 
 function spawn_case()
-    local obj = alife():create("aes_case1", vector():set(376.254, 0.005, 383.164), dsh.find_random_lvid_in_radius(367320, 2))
+    local obj = alife_create("aes_case1", "l12_stancia_2", vector():set(376.254, 0.005, 383.164))
     level_tasks.add_location_by_id(obj.id, "crlc_big", "case1")
 
-    local obj = alife():create("aes_case2", vector():set(429.707, 10.132, 152.705), dsh.find_random_lvid_in_radius(413803, 2))
+    local obj = alife_create("aes_case2", "l12_stancia_2", vector():set(429.707, 10.132, 152.705))
     level_tasks.add_location_by_id(obj.id, "crlc_big", "case2")
 
-    local obj = alife():create("aes_case3", vector():set(228.192, 50.010, 134.980), dsh.find_random_lvid_in_radius(242079, 2))
+    local obj = alife_create("aes_case3", "l12_stancia_2", vector():set(228.192, 50.010, 134.980))
     level_tasks.add_location_by_id(obj.id, "crlc_big", "case3")
 end
 
 function controller_tubeman()
-    local obj = spawn_patrol("bloodsucker_strong", "kon_kontr_strong1_walk")
+    spawn_patrol("bloodsucker_strong", "kon_kontr_strong1_walk")
 end
 
 function naem_baza()
-    local obj = spawn_patrol("naem_haron1", "naem_haron1_walk")
-    local obj = spawn_patrol("naem_haron2", "naem_haron2_walk")
-    local obj = spawn_patrol("naem_haron3", "naem_haron3_walk")
-    local obj = spawn_patrol("naem_haron4", "naem_haron4_walk")
-    local obj = spawn_patrol("naem_haron5", "naem_haron5_walk")
-    local obj = spawn_patrol("naem_haron6", "naem_haron6_walk")
-    local obj = spawn_patrol("naem_haron7", "naem_haron7_walk")
-    local obj = spawn_patrol("naem_haron8", "naem_haron8_walk")
-    local obj = spawn_patrol("naem_haron9", "naem_haron9_walk")
-    local obj = spawn_patrol("naem_haron10", "naem_haron10_walk")
-    local obj = spawn_patrol("naem_haron11", "naem_haron11_walk")
-    local obj = spawn_patrol("naem_haron12", "naem_haron12_walk")
-    local obj = spawn_patrol("naem_haron13", "naem_haron13_walk")
-    local obj = spawn_patrol("naem_haron14", "naem_haron14_walk")
-    local obj = spawn_patrol("naem_haron15", "naem_haron15_walk")
-    local obj = spawn_patrol("naem_haron16", "naem_haron_big")
-    local obj = spawn_patrol("naem_haron17", "naem_haron_big")
-    local obj = spawn_patrol("naem_haron18", "naem_haron_big")
-    local obj = spawn_patrol("naem_haron19", "naem_haron_small")
-    local obj = spawn_patrol("naem_haron20", "naem_haron_small")
+    spawn_patrol("naem_haron1", "naem_haron1_walk")
+    spawn_patrol("naem_haron2", "naem_haron2_walk")
+    spawn_patrol("naem_haron3", "naem_haron3_walk")
+    spawn_patrol("naem_haron4", "naem_haron4_walk")
+    spawn_patrol("naem_haron5", "naem_haron5_walk")
+    spawn_patrol("naem_haron6", "naem_haron6_walk")
+    spawn_patrol("naem_haron7", "naem_haron7_walk")
+    spawn_patrol("naem_haron8", "naem_haron8_walk")
+    spawn_patrol("naem_haron9", "naem_haron9_walk")
+    spawn_patrol("naem_haron10", "naem_haron10_walk")
+    spawn_patrol("naem_haron11", "naem_haron11_walk")
+    spawn_patrol("naem_haron12", "naem_haron12_walk")
+    spawn_patrol("naem_haron13", "naem_haron13_walk")
+    spawn_patrol("naem_haron14", "naem_haron14_walk")
+    spawn_patrol("naem_haron15", "naem_haron15_walk")
+    spawn_patrol("naem_haron16", "naem_haron_big")
+    spawn_patrol("naem_haron17", "naem_haron_big")
+    spawn_patrol("naem_haron18", "naem_haron_big")
+    spawn_patrol("naem_haron19", "naem_haron_small")
+    spawn_patrol("naem_haron20", "naem_haron_small")
 end
 
 function naem_len()
-    local obj = spawn_patrol("naem_mathon1", "naem_mathon1_walk")
-    local obj = spawn_patrol("naem_mathon2", "naem_mathon2_walk")
-    local obj = spawn_patrol("naem_mathon3", "naem_mathon3_walk")
-    local obj = spawn_patrol("naem_mathon4", "naem_mathon4_walk")
-    local obj = spawn_patrol("naem_mathon5", "naem_mathon5_walk")
-    local obj = spawn_patrol("naem_mathon6", "naem_mathon6_walk")
-    local obj = spawn_patrol("naem_mathon7", "naem_mathon7_walk")
-    local obj = spawn_patrol("naem_mathon8", "naem_mathon8_walk")
-    local obj = spawn_patrol("naem_mathon9", "naem_mathon9_walk")
-    local obj = spawn_patrol("naem_mathon10", "naem_mathon10_walk")
+    spawn_patrol("naem_mathon1", "naem_mathon1_walk")
+    spawn_patrol("naem_mathon2", "naem_mathon2_walk")
+    spawn_patrol("naem_mathon3", "naem_mathon3_walk")
+    spawn_patrol("naem_mathon4", "naem_mathon4_walk")
+    spawn_patrol("naem_mathon5", "naem_mathon5_walk")
+    spawn_patrol("naem_mathon6", "naem_mathon6_walk")
+    spawn_patrol("naem_mathon7", "naem_mathon7_walk")
+    spawn_patrol("naem_mathon8", "naem_mathon8_walk")
+    spawn_patrol("naem_mathon9", "naem_mathon9_walk")
+    spawn_patrol("naem_mathon10", "naem_mathon10_walk")
 end
 
 function dyak_spawn()
-    local obj = spawn_patrol("dyak_monolit1", "dyak_aes_lager_aesmon1_camp_walk")
-    local obj = spawn_patrol("dyak_monolit1", "dyak_aes_lager_aesmon1_camp_walk")
-    local obj = spawn_patrol("dyak_monolit2", "dyak_aes_lager_aesmon1_camp_walk")
-    local obj = spawn_patrol("dyak_monolit2", "dyak_aes_lager_aesmon1_camp_walk")
+    spawn_patrol("dyak_monolit1", "dyak_aes_lager_aesmon1_camp_walk")
+    spawn_patrol("dyak_monolit1", "dyak_aes_lager_aesmon1_camp_walk")
+    spawn_patrol("dyak_monolit2", "dyak_aes_lager_aesmon1_camp_walk")
+    spawn_patrol("dyak_monolit2", "dyak_aes_lager_aesmon1_camp_walk")
 end
 
 local kons = {
@@ -924,23 +900,23 @@ function good_shlem()
 end
 
 function mono_prizrak_spawn()
-    local obj = spawn_patrol("mono_prizrak1", "mono_prizrak1_walk")
-    local obj = spawn_patrol("mono_prizrak2", "mono_prizrak2_walk")
-    local obj = spawn_patrol("mono_prizrak3", "mono_prizrak3_walk")
-    local obj = spawn_patrol("mono_prizrak4", "mono_prizrak4_walk")
-    local obj = spawn_patrol("mono_prizrak5", "mono_prizrak5_walk")
-    local obj = spawn_patrol("mono_prizrak6", "mono_prizrak6_walk")
+    spawn_patrol("mono_prizrak1", "mono_prizrak1_walk")
+    spawn_patrol("mono_prizrak2", "mono_prizrak2_walk")
+    spawn_patrol("mono_prizrak3", "mono_prizrak3_walk")
+    spawn_patrol("mono_prizrak4", "mono_prizrak4_walk")
+    spawn_patrol("mono_prizrak5", "mono_prizrak5_walk")
+    spawn_patrol("mono_prizrak6", "mono_prizrak6_walk")
 end
 
 function mono_patrol()
-    local obj = spawn_patrol("mono_patrol1", "mono_patrol1_walk")
-    local obj = spawn_patrol("mono_patrol2", "mono_patrol2_walk")
-    local obj = spawn_patrol("mono_patrol3", "mono_patrol3_walk")
-    local obj = spawn_patrol("mono_patrol4", "mono_patrol4_walk")
-    local obj = spawn_patrol("mono_patrol5", "mono_patrol5_walk")
-    local obj = spawn_patrol("mono_patrol6", "mono_patrol6_walk")
-    local obj = spawn_patrol("mono_patrol7", "mono_patrol7_walk")
-    local obj = spawn_patrol("mono_patrol8", "mono_patrol8_walk")
+    spawn_patrol("mono_patrol1", "mono_patrol1_walk")
+    spawn_patrol("mono_patrol2", "mono_patrol2_walk")
+    spawn_patrol("mono_patrol3", "mono_patrol3_walk")
+    spawn_patrol("mono_patrol4", "mono_patrol4_walk")
+    spawn_patrol("mono_patrol5", "mono_patrol5_walk")
+    spawn_patrol("mono_patrol6", "mono_patrol6_walk")
+    spawn_patrol("mono_patrol7", "mono_patrol7_walk")
+    spawn_patrol("mono_patrol8", "mono_patrol8_walk")
 end
 
 function sheme_bunker_spawn()
@@ -954,10 +930,10 @@ function solomon_grabs()
 end
 
 function solomon_mono_spawn()
-    local obj = spawn_patrol("solomon_mono2", "solomon_mono2_walk")
-    local obj = spawn_patrol("solomon_mono3", "solomon_mono3_walk")
-    local obj = spawn_patrol("solomon_mono4", "solomon_mono4_walk")
-    local obj = spawn_patrol("solomon_mono5", "solomon_mono5_walk")
+    spawn_patrol("solomon_mono2", "solomon_mono2_walk")
+    spawn_patrol("solomon_mono3", "solomon_mono3_walk")
+    spawn_patrol("solomon_mono4", "solomon_mono4_walk")
+    spawn_patrol("solomon_mono5", "solomon_mono5_walk")
 end
 
 local out_object
@@ -1030,7 +1006,7 @@ function switch_online(id)
 end
 
 function mervin_vzyal(actor, npc)
-    local obj = alife():create("mervin_taynik", vector():set(107.665, 3.997, 130.162), dsh.find_random_lvid_in_radius(219441, 1))
+    local obj = alife_create("mervin_taynik", "l11_pripyat", vector():set(107.665, 3.997, 130.162))
     alife():use_ai_locations(obj, false)
     alife():assign_story_id(obj.id, story_ids.mervin_taynik)
     dsh.wait_condition(function() return level_object_by_sid(story_ids.mervin_taynik) end, 
@@ -1055,8 +1031,8 @@ function money_out(t1, t2)
 end
 
 function maroder_grab(actor, npc)
-    local sobj = alife():create("mervin_taynik", vector():set(0.365974, 17.918257, 35.545025), dsh.find_random_lvid_in_radius(946218, 1))
-    alife():assign_story_id(sobj.id, story_ids.razuvaev_taynik)
+    local obj = alife_create("mervin_taynik", "predbannik", vector():set(0.365974, 17.918257, 35.545025))
+    alife():assign_story_id(obj.id, story_ids.razuvaev_taynik)
     dsh.wait_condition(function() return level_object_by_sid(story_ids.razuvaev_taynik) end, 
     function()
         local inv_box_1 = level_object_by_sid(story_ids.razuvaev_taynik)
@@ -1140,51 +1116,17 @@ function winchester_knyaz()
     spawn_ai_location("af_dummy_spring", vector():set(37.87, 1.65, -219.83), "l04_darkvalley")
 end
 
-local docs = {{
-    position = {
-        x = -82.109,
-        y = -12.900,
-        z = 55.553
-    },
-    gv = 1610,
-    lv = 230182
-}, {
-    position = {
-        x = 80.545,
-        y = -12.490,
-        z = 61.700
-    },
-    gv = 1558,
-    lv = 377701
-}, {
-    position = {
-        x = -9.516,
-        y = -11.670,
-        z = 47.759
-    },
-    gv = 1579,
-    lv = 297300
-}, {
-    position = {
-        x = 115.012,
-        y = -9.170,
-        z = 46.951
-    },
-    gv = 1558,
-    lv = 401225
-}, {
-    position = {
-        x = 97.952,
-        y = -4.300,
-        z = 46.210
-    },
-    gv = 1554,
-    lv = 393278
-}}
+local docs = {
+    [1] = {x = -82.109, y = -12.900, z = 55.553},
+    [2] = {x = 80.545, y = -12.490, z = 61.700},
+    [3] = {x = -9.516, y = -11.670, z = 47.759},
+    [4] = {x = 115.012, y = -9.170,z = 46.951},
+    [5] = {x = 97.952, y = -4.300, z = 46.210}
+}
 
 function informator_doc_spawn()
-    local a = docs[math.random(table.getn(docs))]
-    spawn_ai_location("informator_doc", vector():set(a.position.x, a.position.y, a.position.z), dsh.find_random_lvid_in_radius(a.lv, 1))
+    local a = docs[math.random(1, 5)]
+    spawn_ai_location("informator_doc", vector():set(a.x, a.y, a.z), "l07_military")
 end
 
 function lab_doc_spawn()
@@ -1204,21 +1146,21 @@ end
 
 function voronin_help()
     if level.name() == "l04_darkvalley" and not db.actor:has_info("dolg_leader_help_start") then
-        local obj = spawn_patrol("val_atak_bandit1", "dark_knyaz_larger_dark_knyaz_look")
-        local obj = spawn_patrol("val_atak_bandit2", "dark_knyaz_larger_dark_knyaz_look")
-        local obj = spawn_patrol("val_atak_bandit3", "dark_knyaz_larger_dark_knyaz_look")
-        local obj = spawn_patrol("val_atak_bandit4", "dark_knyaz_larger_dark_knyaz_look")
-        local obj = spawn_patrol("val_atak_bandit5", "dark_knyaz_larger_dark_knyaz_look")
-        local obj = spawn_patrol("val_atak_bandit6", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit7", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit8", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit9", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit10", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit11", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit12", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit13", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit14", "dark_random5")
-        local obj = spawn_patrol("val_atak_bandit15", "dark_random5")
+        spawn_patrol("val_atak_bandit1", "dark_knyaz_larger_dark_knyaz_look")
+        spawn_patrol("val_atak_bandit2", "dark_knyaz_larger_dark_knyaz_look")
+        spawn_patrol("val_atak_bandit3", "dark_knyaz_larger_dark_knyaz_look")
+        spawn_patrol("val_atak_bandit4", "dark_knyaz_larger_dark_knyaz_look")
+        spawn_patrol("val_atak_bandit5", "dark_knyaz_larger_dark_knyaz_look")
+        spawn_patrol("val_atak_bandit6", "dark_random5")
+        spawn_patrol("val_atak_bandit7", "dark_random5")
+        spawn_patrol("val_atak_bandit8", "dark_random5")
+        spawn_patrol("val_atak_bandit9", "dark_random5")
+        spawn_patrol("val_atak_bandit10", "dark_random5")
+        spawn_patrol("val_atak_bandit11", "dark_random5")
+        spawn_patrol("val_atak_bandit12", "dark_random5")
+        spawn_patrol("val_atak_bandit13", "dark_random5")
+        spawn_patrol("val_atak_bandit14", "dark_random5")
+        spawn_patrol("val_atak_bandit15", "dark_random5")
         local snd_obj = xr_sound.get_safe_sound_object([[characters_voice\scenario\bar\dolg_megafon\megaphone_duty_alarm]])
         snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
         db.actor:give_info_portion("dolg_leader_help_start")
@@ -1284,55 +1226,55 @@ function seredina_est()
 end
 
 function krugone_spawn()
-    local obj = spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("zombie_strong_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("zombie_strong_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("zombie_strong_und1", "agr_und_monster4_walk")
-    local obj = spawn_patrol("zombie_strong_und1", "agr_und_monster4_walk")
+    spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
+    spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
+    spawn_patrol("zombie_strong_und4", "agr_und_monster1_walk")
+    spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
+    spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
+    spawn_patrol("zombie_strong_und3", "agr_und_monster2_walk")
+    spawn_patrol("zombie_strong_und2", "agr_und_monster3_walk")
+    spawn_patrol("zombie_strong_und2", "agr_und_monster3_walk")
+    spawn_patrol("zombie_strong_und1", "agr_und_monster4_walk")
+    spawn_patrol("zombie_strong_und1", "agr_und_monster4_walk")
     aptec_spawn()
 end
 
 function krugtwo_spawn()
-    local obj = spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("snork_normal_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("snork_normal_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("snork_normal_und1", "agr_und_monster4_walk")
-    local obj = spawn_patrol("snork_normal_und1", "agr_und_monster4_walk")
+    spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("snork_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("snork_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("snork_normal_und2", "agr_und_monster3_walk")
+    spawn_patrol("snork_normal_und2", "agr_und_monster3_walk")
+    spawn_patrol("snork_normal_und1", "agr_und_monster4_walk")
+    spawn_patrol("snork_normal_und1", "agr_und_monster4_walk")
     aptec_spawn()
 end
 
 function krugtri_spawn()
-    local obj = spawn_patrol("bloodsucker_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("bloodsucker_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("bloodsucker_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("bloodsucker_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("bloodsucker_normal_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("bloodsucker_normal_und1", "agr_und_monster4_walk")
+    spawn_patrol("bloodsucker_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("bloodsucker_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("bloodsucker_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("bloodsucker_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("bloodsucker_normal_und2", "agr_und_monster3_walk")
+    spawn_patrol("bloodsucker_normal_und1", "agr_und_monster4_walk")
     aptec_spawn()
 end
 
 function krugfour_spawn()
-    local obj = spawn_patrol("burer_normal_und4", "agr_und_monster1_walk")
-    local obj = spawn_patrol("burer_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("burer_normal_und3", "agr_und_monster2_walk")
-    local obj = spawn_patrol("burer_normal_und2", "agr_und_monster3_walk")
-    local obj = spawn_patrol("burer_normal_und1", "agr_und_monster4_walk")
+    spawn_patrol("burer_normal_und4", "agr_und_monster1_walk")
+    spawn_patrol("burer_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("burer_normal_und3", "agr_und_monster2_walk")
+    spawn_patrol("burer_normal_und2", "agr_und_monster3_walk")
+    spawn_patrol("burer_normal_und1", "agr_und_monster4_walk")
     aptec_spawn()
 end
 
 function aptec_spawn()
-    spawn_ai_location("medkit_army", vector():set(-102.1484, -4.4490, -143.855), dsh.find_random_lvid_in_radius(1368, 2))
-    spawn_ai_location("bandage", vector():set(-102.1384, -4.4736, -143.7165), dsh.find_random_lvid_in_radius(1368, 2))
+    spawn_ai_location("medkit_army", vector():set(-102.1484, -4.4490, -143.855), "l03u_agr_underground")
+    spawn_ai_location("bandage", vector():set(-102.1384, -4.4736, -143.7165), "l03u_agr_underground")
 end
 
 function bes_zasada()
@@ -1435,8 +1377,8 @@ end
 
 function naem_sahar_spawn()
     if level.name() == "l04_darkvalley" and not db.actor:has_info("doronin_help_spawn") then
-        local obj = spawn_patrol("naem_sahar5", "naem_sahar1_walk")
-        local obj = spawn_patrol("naem_sahar6", "naem_sahar2_walk")
+        spawn_patrol("naem_sahar5", "naem_sahar1_walk")
+        spawn_patrol("naem_sahar6", "naem_sahar2_walk")
         db.actor:give_info_portion("doronin_help_spawn")
     end
     yan_wound_ucen()
@@ -1454,26 +1396,26 @@ function nychka_spawn()
 end
 
 function dan_zombi()
-    local obj = spawn_patrol("dan_zombied1", "dan_zombied1_walk")
-    local obj = spawn_patrol("dan_zombied2", "dan_zombied2_walk")
-    local obj = spawn_patrol("dan_zombied3", "dan_zombied3_walk")
-    local obj = spawn_patrol("dan_zombied4", "dan_zombied4_walk")
-    local obj = spawn_patrol("dan_zombied5", "dan_zombied5_walk")
+    spawn_patrol("dan_zombied1", "dan_zombied1_walk")
+    spawn_patrol("dan_zombied2", "dan_zombied2_walk")
+    spawn_patrol("dan_zombied3", "dan_zombied3_walk")
+    spawn_patrol("dan_zombied4", "dan_zombied4_walk")
+    spawn_patrol("dan_zombied5", "dan_zombied5_walk")
 end
 
 function voronin_snork()
-    local obj = spawn_patrol("snork_voronin1", "snork_voronin1_home")
-    local obj = spawn_patrol("snork_voronin2", "snork_voronin1_home")
-    local obj = spawn_patrol("snork_voronin3", "snork_voronin1_home")
-    local obj = spawn_patrol("snork_voronin4", "snork_voronin2_home")
-    local obj = spawn_patrol("snork_voronin5", "snork_voronin2_home")
-    local obj = spawn_patrol("snork_voronin6", "snork_voronin2_home")
-    local obj = spawn_patrol("snork_voronin7", "snork_voronin3_home")
-    local obj = spawn_patrol("snork_voronin8", "snork_voronin3_home")
-    local obj = spawn_patrol("snork_voronin9", "snork_voronin3_home")
-    local obj = spawn_patrol("snork_voronin10", "snork_voronin4_home")
-    local obj = spawn_patrol("snork_voronin11", "snork_voronin4_home")
-    local obj = spawn_patrol("snork_voronin12", "snork_voronin4_home")
+    spawn_patrol("snork_voronin1", "snork_voronin1_home")
+    spawn_patrol("snork_voronin2", "snork_voronin1_home")
+    spawn_patrol("snork_voronin3", "snork_voronin1_home")
+    spawn_patrol("snork_voronin4", "snork_voronin2_home")
+    spawn_patrol("snork_voronin5", "snork_voronin2_home")
+    spawn_patrol("snork_voronin6", "snork_voronin2_home")
+    spawn_patrol("snork_voronin7", "snork_voronin3_home")
+    spawn_patrol("snork_voronin8", "snork_voronin3_home")
+    spawn_patrol("snork_voronin9", "snork_voronin3_home")
+    spawn_patrol("snork_voronin10", "snork_voronin4_home")
+    spawn_patrol("snork_voronin11", "snork_voronin4_home")
+    spawn_patrol("snork_voronin12", "snork_voronin4_home")
 end
 
 function set_relation_jila(sid)
@@ -1489,11 +1431,11 @@ end
 
 function spawn_caterpillar()
     local position = db.actor:position()
-    position.x = position.x + 5
+    position.x = position.x
     position.y = position.y + 5
     position.z = position.z
     news_manager.send_tip(db.actor, game.translate_string("check_caterpillar"))
-    local obj = alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+    alife():create("af_caterpillar", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function check_caterpillar(actor, npc, info)
@@ -1513,10 +1455,10 @@ function contr_art_spawn()
 end
 
 function volk_ban_spawn()
-    local obj = spawn_patrol("volk_ban1", "volk_ban1_walk")
-    local obj = spawn_patrol("volk_ban2", "volk_ban2_walk")
-    local obj = spawn_patrol("volk_ban3", "volk_ban3_walk")
-    local obj = spawn_patrol("volk_ban4", "volk_ban4_walk")
+    spawn_patrol("volk_ban1", "volk_ban1_walk")
+    spawn_patrol("volk_ban2", "volk_ban2_walk")
+    spawn_patrol("volk_ban3", "volk_ban3_walk")
+    spawn_patrol("volk_ban4", "volk_ban4_walk")
 end
 
 function knyaz_razborka()
@@ -1550,19 +1492,19 @@ end
 function spawn_check_kontr()
     local position = db.actor:position()
     position.x = position.x + 10
-    local obj = alife():create("m_controller_old", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+    alife():create("m_controller_old", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function spawn_check_krovosos()
     local position = db.actor:position()
     position.x = position.x + 10
-    local obj = alife():create("bloodsucker_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+    alife():create("bloodsucker_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function spawn_check_burer()
     local position = db.actor:position()
     position.x = position.x + 10
-    local obj = alife():create("burer_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
+    alife():create("burer_strong", position, db.actor:level_vertex_id(), db.actor:game_vertex_id())
 end
 
 function new_logic()
@@ -1580,11 +1522,11 @@ function new_logic()
 end
 
 function mayor_yarofeev_spawn()
-    local obj = spawn_patrol("krevoshaev_specnaz1", "commander_krevoshaev_specnaz1_walk")
-    local obj = spawn_patrol("krevoshaev_specnaz2", "commander_krevoshaev_specnaz2_walk")
-    local obj = spawn_patrol("krevoshaev_specnaz3", "commander_krevoshaev_specnaz2_walk")
-    local obj = spawn_patrol("krevoshaev_specnaz4", "commander_krevoshaev_specnaz2_walk")
-    local obj = spawn_patrol("krevoshaev_specnaz5", "commander_krevoshaev_specnaz2_walk")
+    spawn_patrol("krevoshaev_specnaz1", "commander_krevoshaev_specnaz1_walk")
+    spawn_patrol("krevoshaev_specnaz2", "commander_krevoshaev_specnaz2_walk")
+    spawn_patrol("krevoshaev_specnaz3", "commander_krevoshaev_specnaz2_walk")
+    spawn_patrol("krevoshaev_specnaz4", "commander_krevoshaev_specnaz2_walk")
+    spawn_patrol("krevoshaev_specnaz5", "commander_krevoshaev_specnaz2_walk")
 end
 
 function sms_sidr()
@@ -1601,37 +1543,37 @@ function ohranik_spawn()
 end
 
 function klyak_lab_spawn()
-    local obj = spawn_patrol("lab_zasada1", "lab_zasada1_walk")
-    local obj = spawn_patrol("lab_zasada2", "lab_zasada2_walk")
-    local obj = spawn_patrol("lab_zasada3", "lab_zasada3_walk")
-    local obj = spawn_patrol("lab_zasada4", "lab_zasada4_walk")
-    local obj = spawn_patrol("lab_zasada5", "lab_zasada5_walk")
-    local obj = spawn_patrol("lab_zasada6", "lab_zasada6_walk")
-    local obj = spawn_patrol("lab_zasada7", "lab_zasada7_walk")
-    local obj = spawn_patrol("lab_zasada8", "lab_zasada8_walk")
+    spawn_patrol("lab_zasada1", "lab_zasada1_walk")
+    spawn_patrol("lab_zasada2", "lab_zasada2_walk")
+    spawn_patrol("lab_zasada3", "lab_zasada3_walk")
+    spawn_patrol("lab_zasada4", "lab_zasada4_walk")
+    spawn_patrol("lab_zasada5", "lab_zasada5_walk")
+    spawn_patrol("lab_zasada6", "lab_zasada6_walk")
+    spawn_patrol("lab_zasada7", "lab_zasada7_walk")
+    spawn_patrol("lab_zasada8", "lab_zasada8_walk")
 end
 
 function ban_kogot_spawn()
-    local obj = spawn_patrol("ban_kogot1", "ban_kogot1_walk")
-    local obj = spawn_patrol("ban_kogot2", "ban_kogot2_walk")
-    local obj = spawn_patrol("ban_kogot3", "ban_kogot3_walk")
-    local obj = spawn_patrol("ban_kogot4", "ban_kogot4_walk")
-    local obj = spawn_patrol("ban_kogot5", "ban_kogot5_walk")
-    local obj = spawn_patrol("ban_kogot6", "ban_kogot6_walk")
-    local obj = spawn_patrol("ban_kogot7", "ban_kogot_centr")
-    local obj = spawn_patrol("ban_kogot8", "ban_kogot_centr")
+    spawn_patrol("ban_kogot1", "ban_kogot1_walk")
+    spawn_patrol("ban_kogot2", "ban_kogot2_walk")
+    spawn_patrol("ban_kogot3", "ban_kogot3_walk")
+    spawn_patrol("ban_kogot4", "ban_kogot4_walk")
+    spawn_patrol("ban_kogot5", "ban_kogot5_walk")
+    spawn_patrol("ban_kogot6", "ban_kogot6_walk")
+    spawn_patrol("ban_kogot7", "ban_kogot_centr")
+    spawn_patrol("ban_kogot8", "ban_kogot_centr")
 end
 
 function klyak_mil_spawn()
     if level.name() == "l07_military" and not db.actor:has_info("mil_klyak_help_start") then
-        local obj = spawn_patrol("mil_naem1", "mil_naem1_walk")
-        local obj = spawn_patrol("mil_naem2", "mil_naem2_walk")
-        local obj = spawn_patrol("mil_naem3", "mil_naem3_walk")
-        local obj = spawn_patrol("mil_naem4", "mil_naem4_walk")
-        local obj = spawn_patrol("mil_naem5", "mil_naem5_walk")
-        local obj = spawn_patrol("mil_naem6", "mil_naem6_walk")
-        local obj = spawn_patrol("mil_naem7", "mil_naem7_walk")
-        local obj = spawn_patrol("mil_naem8", "mil_naem8_walk")
+        spawn_patrol("mil_naem1", "mil_naem1_walk")
+        spawn_patrol("mil_naem2", "mil_naem2_walk")
+        spawn_patrol("mil_naem3", "mil_naem3_walk")
+        spawn_patrol("mil_naem4", "mil_naem4_walk")
+        spawn_patrol("mil_naem5", "mil_naem5_walk")
+        spawn_patrol("mil_naem6", "mil_naem6_walk")
+        spawn_patrol("mil_naem7", "mil_naem7_walk")
+        spawn_patrol("mil_naem8", "mil_naem8_walk")
         db.actor:give_info_portion("mil_klyak_help_start")
     end
 end
@@ -1675,9 +1617,9 @@ function friendall(community1, community2)
 end
 
 function levsha_naem()
-    local obj = spawn_patrol("levsha_naem1", "levsha_naem1_walk")
-    local obj = spawn_patrol("levsha_naem2", "levsha_naem2_walk")
-    local obj = spawn_patrol("levsha_naem3", "levsha_naem3_walk")
+    spawn_patrol("levsha_naem1", "levsha_naem1_walk")
+    spawn_patrol("levsha_naem2", "levsha_naem2_walk")
+    spawn_patrol("levsha_naem3", "levsha_naem3_walk")
 end
 
 function levsha_bioradar()
@@ -1726,13 +1668,13 @@ end
 ---------------------------------------------------------РАДИАЦИЯ ARC-----------------------------------------------
 
 function spawn_mervin()
-    local obj = alife():create("esc_mervin", vector():set(-161.866, -1.748, 67.668), 634, 2141)
+    local obj = alife_create("esc_mervin", "l11_pripyat", vector():set(-161.866, -1.748, 67.668))
     obj.custom_data = "[logic]\ncfg = scripts\\new\\esc_mervin.ltx"
     alife():assign_story_id(obj.id, story_ids.esc_mervin)
 end
 
 function pda_priz_spawn()
-    spawn_ai_location("pda_priz", vector():set(-304.193, -27.575, 205.831), dsh.find_random_lvid_in_radius(39356, 1))
+    spawn_ai_location("pda_priz", vector():set(-304.193, -27.575, 205.831), "l07_military")
 end
 
 function mina_sclad()
@@ -1753,16 +1695,16 @@ function mina_sclad()
 end
 
 function spawn_desant()
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil_master", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil_master", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil_master", "heli_desant_move")
-    local obj = spawn_patrol("valet_mil_master", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil", "heli_desant_move")
+    spawn_patrol("valet_mil_master", "heli_desant_move")
+    spawn_patrol("valet_mil_master", "heli_desant_move")
+    spawn_patrol("valet_mil_master", "heli_desant_move")
+    spawn_patrol("valet_mil_master", "heli_desant_move")
 end
 
 function ucen_electro()
@@ -1800,14 +1742,14 @@ function super_krovosos_spawn()
 end
 
 function monach_spawn()
-    local obj = spawn_patrol("monach_flame1", "monach_flame_walk")
-    local obj = spawn_patrol("monach_flame2", "monach_flame_walk")
-    local obj = spawn_patrol("monach_flame3", "monach_flame_walk")
-    local obj = spawn_patrol("monach_flame4", "monach_flame_walk")
-    local obj = spawn_patrol("monach_tele1", "monach_tele_walk")
-    local obj = spawn_patrol("monach_tele2", "monach_tele_walk")
-    local obj = spawn_patrol("monach_tele3", "monach_tele_walk")
-    local obj = spawn_patrol("monach_tele4", "monach_tele_walk")
+    spawn_patrol("monach_flame1", "monach_flame_walk")
+    spawn_patrol("monach_flame2", "monach_flame_walk")
+    spawn_patrol("monach_flame3", "monach_flame_walk")
+    spawn_patrol("monach_flame4", "monach_flame_walk")
+    spawn_patrol("monach_tele1", "monach_tele_walk")
+    spawn_patrol("monach_tele2", "monach_tele_walk")
+    spawn_patrol("monach_tele3", "monach_tele_walk")
+    spawn_patrol("monach_tele4", "monach_tele_walk")
 end
 
 function black_box_spawn()
@@ -1930,7 +1872,7 @@ function create_postovoy_restr()
 end
 
 function create_pripyat_restr()
-    local obj = alife():create("space_restrictor", vector():set(181.414, -2.876, -51.635), dsh.find_random_lvid_in_radius(240601, 2))
+    local obj = alife_create("space_restrictor", "l09_deadcity", vector():set(181.414, -2.876, -51.635))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\pripyat_restr.ltx"
     rewrite_restrictor(obj, custom, 12.0)
 end
@@ -2048,7 +1990,7 @@ function create_brown_restr()
 end
 
 function foster_zvuk_restr()
-    local obj = alife():create("space_restrictor", vector():set(-270.069, 10.707, 220.042), dsh.find_random_lvid_in_radius(523335, 2))
+    local obj = alife_create("space_restrictor", "predbannik", vector():set(-270.069, 10.707, 220.042))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\foster_zvuk.ltx"
     rewrite_restrictor(obj, custom, 5.0)
 end
