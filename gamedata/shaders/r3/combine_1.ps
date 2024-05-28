@@ -62,6 +62,16 @@ _out main(_input I, uint iSample : SV_SAMPLEINDEX)
 #endif
 #endif
 
+#ifndef SSFX_NEWGLOSS
+    if (abs(P.w - MAT_FLORA) <= 0.05)
+    {
+        // Reapply distance factor to fix overtly glossy plants in distance
+        // Unfortunately some trees etc don't seem to use the same detail shader
+        float fAtten = 1 - smoothstep(0, 50, P.z);
+        D.a *= (fAtten * fAtten);
+    }
+#endif
+
     // static sun
     float mtl = P.w;
 

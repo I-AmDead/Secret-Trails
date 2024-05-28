@@ -17,10 +17,13 @@
 
 #ifdef SSFX_FOG
 #include "screenspace_fog.h"
+#include "settings_screenspace_FOG.h"
 #endif
 
 #ifdef SSFX_INDIRECT_LIGHT
 #include "screenspace_il.h"
+#else
+float4 fakescope_params3;
 #endif
 
 Texture2D s_flares;
@@ -90,15 +93,46 @@ c2_out main(v2p_aa_AA I)
     ssfx_il(I.Tex0, I.HPos, gbd.P, gbd.N, img, iSample);
 #endif
 
-// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
+#ifdef SSFX_FOG
+
+    // Calc Fog
+    float fogresult = SSFX_CALC_FOG(gbd.P);
+    fogresult *= fogresult;
+
+    // Fog Scattering -----------------------
+    #ifdef G_FOG_USE_SCATTERING
+        // Blur sample
+        float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
+
+        // Scopes
+        int disablefog = (fakescope_params3.x > 0.0 ? 0 : 1);
+
+        // NVGs
+        #ifdef SSFX_BEEFS_NVG
+            disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
+        #endif
+
+        // Blend
+        img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
+    #endif
+	// --------------------------------------
+#endif
+
 #ifdef SSFX_DEBAND
-    if (depth <= SKY_EPS)
-        img = ssfx_debanding(img, I.Tex0.xy);
+    #ifdef SSFX_FOG
+        float Debanding = depth <= SKY_EPS ? 1.0 : fogresult;
+    #else
+        float Debanding = depth <= SKY_EPS ? 1.0 : 0;
+    #endif
+
+    // Debanding  - SCREEN SPACE SHADERS - UPDATE 12.5
+    img = lerp(img, ssfx_debanding(img, I.Tex0.xy), Debanding);
 #endif
 
     float4 bloom = s_bloom.Sample(smp_rtlinear, center);
 
 #ifdef SSFX_BEEFS_NVG
+
     // NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
     if (pnv_param_1.z < 1.f)
     {
