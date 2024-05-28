@@ -5,46 +5,51 @@ trade = misc\trade\trade_generic.ltx
 
 [mob_trader@sit]
 anim_global = forester_sit
-on_timer = 100 | {~50} mob_trader@idle_see, mob_trader@beard
+on_timer = 1000 | {~50} mob_trader@idle_see, mob_trader@beard
 on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
 on_info2 = {=dist_to_actor_le(4) !talking} mob_trader@hello
 ;on_info2 = {=actor_out_zone(red_forester_restr)} mob_trader@idle_wait
-on_info1 = {+awr_m_lesnik_access} mob_trader@resting
-
-[mob_trader@resting]
-anim_global = forester_sit
-;can_talk = false
-on_timer = 2000 | mob_trader@sit %=awr_timer_msg_off%
 
 [mob_trader@idle_see]
 anim_global = forester_see
 anim_head = normal
 on_signal = animation_end | {~75} mob_trader@sit, {~25} mob_trader@beard
+on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
+on_info2 = {=dist_to_actor_le(4) !talking} mob_trader@hello
 
 [mob_trader@beard]
 anim_global = forester_beard
 anim_head = normal
 on_signal = animation_end | {~75} mob_trader@sit, {~25} mob_trader@idle_see, mob_trader@sit
+on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
+on_info2 = {=dist_to_actor_le(4) !talking} mob_trader@hello
 
 [mob_trader@hello]
 anim_global = forester_reaction
 anim_head = forester_reaction
 sound_phrase = red_forester_meet
+on_info = mob_trader@sit2
 on_signal = animation_end | mob_trader@sit2
 
 [mob_trader@sit2]
 anim_global = forester_sit
-on_timer = 100 | {~50} mob_trader@idle_see2, mob_trader@beard2
+on_timer = 1000 | {~50} mob_trader@idle_see2, mob_trader@beard2
+on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
+on_info2 = {=dist_to_actor_ge(4) !talking} mob_trader@sit
 
 [mob_trader@idle_see2]
 anim_global = forester_see
 anim_head = normal
 on_signal = animation_end | {~75} mob_trader@beard2, mob_trader@sit2
+on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
+on_info2 = {=dist_to_actor_ge(4) !talking} mob_trader@sit
 
 [mob_trader@beard2]
 anim_global = forester_beard
 anim_head = normal
 on_signal = animation_end | {~75} mob_trader@idle_see2, mob_trader@sit2
+on_info = {=talking ~35} mob_trader@talk1, {=talking ~35} mob_trader@talk2, {=talking} mob_trader@talk3
+on_info2 = {=dist_to_actor_ge(4) !talking} mob_trader@sit
 
 
 
