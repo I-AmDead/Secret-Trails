@@ -3,6 +3,7 @@
 Texture2D s_noise;
 Texture2D s_mask_flare_1;
 Texture2D s_mask_flare_2;
+Texture2D s_mask_flare_3;
 
 #define uGhostCount 6
 #define uGhostSpacing 0.4
@@ -133,7 +134,7 @@ float4 generate_flare(float2 uv)
 
     float4 dep = s_mask_flare_1.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
     dep += s_mask_flare_2.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
-
+    dep += s_mask_flare_3.Load(int3(get_sun_uv() * screen_res.xy, 0), 0) * 4.0;
 
     float4 final = float4(col * L_sun_color, (1.0 - dep.a) * L_sun_color.r);
     //float4 final = saturate((pre_final) / (pre_final + 1.0));
@@ -143,7 +144,7 @@ float4 generate_flare(float2 uv)
     final.a *= dep.a * 0.5;
     final *= dep * 0.5;
 
-    final *= 0.5;
+    final *= 0.7;
 
     return final;
 }
