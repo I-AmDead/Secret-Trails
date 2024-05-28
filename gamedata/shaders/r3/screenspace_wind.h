@@ -16,7 +16,6 @@ uniform float is_bugged_flora;
 
 Texture2D s_waves;
 
-
 struct wind_setup
 {
     float2 direction;
