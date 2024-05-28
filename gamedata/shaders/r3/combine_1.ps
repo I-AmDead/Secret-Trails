@@ -7,10 +7,6 @@
 #include "night_vision.h"
 #endif
 
-#ifdef SSFX_SSR
-#include "screenspace_reflections.h"
-#endif
-
 #ifdef SSFX_FOG
 #include "screenspace_fog.h"
 #endif
@@ -87,15 +83,17 @@ _out main(_input I, uint iSample : SV_SAMPLEINDEX)
 #ifdef GBUFFER_OPTIMIZATION
     int2 texCoord = I.pos2d;
 #else
-    int2 texCoord = int2(I.tc0 * pos_decompression_params2.xy);
+    int2 texCoord = int2(I.tc0 * screen_res.xy);
 #endif
 #endif
 
+    float3 occ = float3(1.0, 1.0, 1.0);
+
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
-    float3 occ = calc_gtao(P, N, I.tc0, ISAMPLE);
+    occ = calc_gtao(P, N, I.tc0, ISAMPLE);
 #else
-    float3 occ = calc_ssdo(P, N, I.tc0, I.pos2d, ISAMPLE);
+    occ = calc_ssdo(P, N, I.tc0, I.pos2d, ISAMPLE);
 #endif
     occ = compute_colored_ao(occ.x, D.xyz);
 #endif
@@ -117,14 +115,6 @@ _out main(_input I, uint iSample : SV_SAMPLEINDEX)
 
     float3 color = L.rgb + hdiffuse.rgb;
     color = LinearTosRGB(color); // gamma correct
-
-// SSR Implementation
-#ifdef SSFX_SSR
-#ifdef REFLECTIONS_ONLY_ON_TERRAIN
-    if (gbd.refl_flag)
-#endif
-        SSFX_ScreenSpaceReflections(I.tc0, P, N, D.a, color, ISAMPLE);
-#endif
 
 #ifdef SSFX_BEEFS_NVG
     //// SOME NVG SHIT ////

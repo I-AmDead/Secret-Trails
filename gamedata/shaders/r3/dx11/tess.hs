@@ -39,8 +39,7 @@ HS_CONSTANT_DATA_OUTPUT PatchConstantsHS(InputPatch<p_bumped, 3> ip, uint PatchI
 [domain("tri")][partitioning("pow2")][outputtopology("triangle_ccw")][outputcontrolpoints(3)][patchconstantfunc("PatchConstantsHS")] p_bumped
 main(InputPatch<p_bumped, 3> ip, uint i
      : SV_OutputControlPointID, uint PatchID
-     : SV_PrimitiveID)
-{
+     : SV_PrimitiveID) {
     p_bumped ouput;
 
     ouput.tcdh = ip[i].tcdh;
