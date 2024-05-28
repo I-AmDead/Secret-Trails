@@ -18,7 +18,11 @@ end
 
 local function on_torrid_spawn()
 
-    if not ogse.var_exists("torrid_spawn") then
+    if not ogse.var_exists("torrid_spawn") and level.name() ~= "fake_start" then
+        -- Predbannik
+        spawn_anomaly("fireball_electric_zone", vector():set(-341.45, 9.54, 513.49), 1201493, 2942, 5.5, "test_provoda_move_1.anm")
+        spawn_anomaly("fireball_electric_zone", vector():set(-341.45, 9.54, 513.49), 1201493, 2942, 5.5, "test_provoda_move_2.anm")
+
         -- Escape
         spawn_anomaly("fireball_acidic_zone", vector():set(344.510009765625, 18.9400005340576, 244.570007324219), 594270, 0, 2.5, "esc_locomotive_acid_fly.anm")
 
@@ -26,7 +30,6 @@ local function on_torrid_spawn()
 
         -- Agroprom
         spawn_anomaly("fireball_zone", vector():set(-130.199996948242, 1, -206.990005493164), 425955, 416, 2.5, "agroprom_up_down_fly.anm")
-        spawn_anomaly("fireball_electric_zone", vector():set(27.5014667510986, -1.53132355213165, -220.694671630859), 226060, 416, 2.5, "agroprom_zharka.anm")
 
         -- Darkvalley
         spawn_anomaly("fireball_acidic_zone", vector():set(-10.7600002288818, 2.86999988555908, -179.300003051758), 316473, 811, 2.5, "dar_korridor_swarmfly.anm")
@@ -40,11 +43,10 @@ local function on_torrid_spawn()
 
         -- Military
         spawn_anomaly("fireball_acidic_zone", vector():set(99.5008087158203, -12.0492277145386, 205.726104736328), 272, 1545, 2.5, "lestat_military1.anm")
-        spawn_anomaly("fireball_zone", vector():set(-259.704620361328, -22.5972309112549, 205.726104736328), 272, 1545, 2.5, "military_torrid1.anm")
-        spawn_anomaly("fireball_zone", vector():set(-10.7600002288818, 2.86999988555908, -179.300003051758), 272, 1545, 2.5, "military_fireball1.anm")
 
         -- Radar
         spawn_anomaly("fireball_acidic_zone", vector():set(571.35546875, -54.0999946594238, -251.17936706543), 197671, 1862, 2.5, "rad_mowing_fly.anm")
+
         -- Pripyat
 
         ogse.save_var("torrid_spawn", true)
@@ -52,7 +54,7 @@ local function on_torrid_spawn()
 end
 
 local function on_field_spawn()
-    if not ogse.var_exists("field_spawn") then
+    if not ogse.var_exists("field_spawn") and level.name() ~= "fake_start" then
         -- Escape
 
         -- Garbage
@@ -73,6 +75,7 @@ local function on_field_spawn()
         spawn_anomaly("zone_field_acidic_strong", vector():set(-20.7303066253662, -13.2373895645142, -233.176940917969), 57004, 1438, 9.3)
         spawn_anomaly("zone_field_psychic_weak", vector():set(-143.495956420898, 1.54538404941559, -129.092132568359), 16569, 1438, 17)
         spawn_anomaly("zone_field_thermal_average", vector():set(-174.881072998047, 2.15163588523865, -145.620483398438), 5463, 1438, 11.8)
+        spawn_anomaly("zone_field_psychic_strong", vector():set(-62.588707, 0.517456, 8.518841), 54989, 1480, 30)
 
         -- Military
         spawn_anomaly("zone_field_acidic_strong", vector():set(87.5686569213867, -12.4162139892578, 144.717971801758), 365604, 1545, 37.2)
@@ -85,11 +88,6 @@ local function on_field_spawn()
         -- Pripyat
 
         ogse.save_var("field_spawn", true)
-    end
-
-    if not ogse.var_exists("yantar_psycho") then
-        spawn_anomaly("zone_field_psychic_strong", vector():set(-62.588707, 0.517456, 8.518841), 54989, 1480, 30)
-        ogse.save_var("yantar_psycho", true)
     end
 end
 
