@@ -32,7 +32,7 @@ function del_mervin3()
 end
 
 function spawn_mervin_last()
-	db.actor:stop_talk()
+    db.actor:stop_talk()
     dsh.wait_condition(function() return not db.actor:is_talking() end, 
     function()
         alife():teleport_object(id_by_sid(story_ids.esc_mervin3), vector():set(185.683,30.780,8.400), dsh.find_random_lvid_in_radius(214337, 2))
@@ -1687,7 +1687,9 @@ function spawn_gromov1()
 end
 
 function delete_gromov()
-    dsh.timeout(100, function()
+    db.actor:stop_talk()
+    dsh.wait_condition(function() return not db.actor:is_talking() end, 
+    function()
         local obj = alife():story_object(story_ids.esc_gromov)
         if obj then
             alife():release(obj, true)
