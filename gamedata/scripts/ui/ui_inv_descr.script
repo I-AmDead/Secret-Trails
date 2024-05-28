@@ -23,23 +23,23 @@ local is_grenade={
 
 -- Пушки, для которых дополнительное описание не пишем
 local forbidden_wpns = {
-	['wpn_binoc']                   = true,		-- бинокль
+	["wpn_binoc"]       = true,		-- бинокль
 }
 
 local forbidden_ammo = {
-	['ammo_vog-25']		= true,
-	['ammo_vog-25p']	= true,
-	['ammo_m209']		= true,
-	['ammo_og-7b']	    = true,
+	["ammo_vog-25"]		= true,
+	["ammo_vog-25p"]	= true,
+	["ammo_m209"]		= true,
+	["ammo_og-7b"]	    = true,
 }
 
 -- Параметры актёра, по которым считаются некоторые параметры артефактов или костюмов
 local conditions = {
-	bleeding_restore_speed	= get_float('actor_condition', 'bleeding_v'),
-	health_restore_speed	= get_float('actor_condition', 'satiety_health_v'),
-	power_restore_speed		= get_float('actor_condition', 'satiety_power_v') * 100,
-	satiety_restore_speed	= get_float('actor_condition', 'satiety_v'),
-	radiation_restore_speed	= get_float('actor_condition', 'radiation_v') * 100
+	bleeding_restore_speed	= get_float("actor_condition", "bleeding_v"),
+	health_restore_speed	= get_float("actor_condition", "satiety_health_v"),
+	power_restore_speed		= get_float("actor_condition", "satiety_power_v") * 100,
+	satiety_restore_speed	= get_float("actor_condition", "satiety_v"),
+	radiation_restore_speed	= get_float("actor_condition", "radiation_v") * 100
 }
 -- параметры костюмов и артов
 local conditions_params = 
@@ -399,18 +399,18 @@ function CUIDescriptionWnd:ShowDescription(item)
 		self:ShowOutfitParams()
 	-- knife
 	elseif item:is_knife() then
-		local d = get_float(self.section, 'fire_distance', 0.0)
+		local d = get_float(self.section, "fire_distance", 0.0)
 		self:ShowProps({{"fire_distance", game.translate_string("descr_knife_distance"), string.format("%.2f %s", d, game.translate_string("descr_meters")), {255, 255, 255, 255}}}, false)
 	-- grenade
 	elseif item:is_grenade() then
-		local fr = get_float(self.section, 'frags_r', 0.0)
-		local br =  get_float(self.section, 'blast_r', 0.0)
+		local fr = get_float(self.section, "frags_r", 0.0)
+		local br =  get_float(self.section, "blast_r", 0.0)
 		self:ShowProps({{"explosion", game.translate_string("descr_radius"), string.format("%.1f %s", (fr + br) / 2, game.translate_string("descr_meters")), {255, 255, 255, 255}}}, false)
 	-- ammo
 	elseif item:is_ammo() and not item:is_grenade() then
 		if not forbidden_ammo[self.section] then
-			local kh = get_float(self.section, 'k_hit', 0.0)
-			local bs = get_float(self.section, 'buck_shot', 0.0)
+			local kh = get_float(self.section, "k_hit", 0.0)
+			local bs = get_float(self.section, "buck_shot", 0.0)
 			self:ShowProps({{"hit_power", game.translate_string("descr_damage_ammo"), string.format("%.1f", kh * bs), {255, 255, 255, 255}}}, false)
 		end
 	end
@@ -472,7 +472,7 @@ function CUIDescriptionWnd:ShowEatableParams()
 		end
 	end
 
-	local tm = get_float(self.section, 'boost_time', 0.0)
+	local tm = get_float(self.section, "boost_time")
 	if tm then
 		local txt = string.format("%.0f %s", tm, game.translate_string("descr_seconds"))
 		table.insert(params, {"time", game.translate_string("descr_time"), txt, {255, 0, 255, 0}})
@@ -525,28 +525,28 @@ function CUIDescriptionWnd:ShowWeaponParams()
 	st:SetTextColor(255, 0, 255, 110)
 
 	-- Боеприпасы
-	local s = sys_ini:r_string(self.section, 'ammo_class')
+	local s = sys_ini:r_string(self.section, "ammo_class")
 	local tbl = split_comma_separated_list(s)
 	table.sort(tbl)
 
 	self:ShowPropFromIni(tbl, #tbl > 1, "ammo")
 
-	local n1 = get_u32(self.section, 'scope_status')
+	local n1 = get_u32(self.section, "scope_status")
 
 	-- Прицелы
 	if n1 == 2 then
 		st = self.xml:InitStatic("props", self.scroll_v)
-		st:SetText(sys_ini:line_exist(self.section, 'scope_names') and game.translate_string("descr_scopes") or game.translate_string("descr_scope"))
+		st:SetText(sys_ini:line_exist(self.section, "scope_names") and game.translate_string("descr_scopes") or game.translate_string("descr_scope"))
 		st:SetTextColor(255, 0, 255, 110)
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
-		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, 'scope_names'))
+		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, "scope_names"))
 		table.sort(tbl)
 
 		self:ShowPropFromIni(tbl, #tbl > 1, "scope")
 	end
 
-	local n2 = get_u32(self.section, 'silencer_status')
+	local n2 = get_u32(self.section, "silencer_status")
 
 	-- Глушитель
 	if n2 == 2 then
@@ -555,13 +555,13 @@ function CUIDescriptionWnd:ShowWeaponParams()
 		st:SetTextColor(255, 0, 255, 110)
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
-		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, 'silencer_name'))
+		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, "silencer_name"))
 		table.sort(tbl)
 
 		self:ShowPropFromIni(tbl, #tbl > 1, "silencer")
 	end
 
-	local n3 = get_u32(self.section, 'grenade_launcher_status')
+	local n3 = get_u32(self.section, "grenade_launcher_status")
 
 	-- Подствольник
 	if n3 == 2 then
@@ -570,7 +570,7 @@ function CUIDescriptionWnd:ShowWeaponParams()
 		st:SetTextColor(255, 0, 255, 110)
 		local stH = st:GetHeight() + vert_interval
 		self.addH = self.addH + stH
-		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, 'grenade_launcher_name'))
+		local tbl = split_comma_separated_list(sys_ini:r_string(self.section, "grenade_launcher_name"))
 		table.sort(tbl)
 
 		self:ShowPropFromIni(tbl, #tbl > 1, "grenade_launcher")

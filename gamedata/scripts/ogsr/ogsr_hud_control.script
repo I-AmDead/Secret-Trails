@@ -64,10 +64,21 @@ local function alpha_static(static_name, alpha)
 	end
 end
 
+local quest_static_icon
+
 local function on_update()
     local active_objection = gametask.active_objection()
 	local quest_static = get_hud():GetCustomStatic("main_task_script") or get_hud():AddCustomStatic("main_task_script")
 	quest_static:wnd():SetText(active_objection and active_objection:get_description() or game.translate_string("st_no_active_task"))
+	if not quest_static_icon then
+		quest_static_icon = CUIStatic()
+		quest_static_icon:SetWndPos(8, 10)
+		quest_static_icon:SetWndSize(35, 35)
+		quest_static_icon:InitTexture("ui\\compas\\target")
+		quest_static_icon:SetColor(GetARGB(255, 255, 180, 70))
+		quest_static_icon:SetStretchTexture(true)
+		quest_static:wnd():AttachChild(quest_static_icon)
+	end
 
 	if hud_show then
 		hud_alpha = hud_alpha < 250 and hud_alpha + 5 or 255

@@ -48,7 +48,11 @@ local control_init_funs = {
 }
 
 function script_get_value(ctrl)
-    return ctrl.GetCheck and ctrl:GetCheck() or ctrl:GetTrackValue() == 1
+    if ctrl.GetCheck then
+        return ctrl:GetCheck()
+    else
+        return ctrl:GetTrackValue() == 1
+    end
 end
 
 function script_set_value(ctrl, v)
