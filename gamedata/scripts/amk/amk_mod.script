@@ -24,14 +24,14 @@ end
 -- '*******************************************************************************
 function first_run()
     -- На момент вызова этой функции актор уже доступен - переделано на поршень.
-    if has_alife_info("x_first_run") then
+    if has_alife_info("x_first_run") or level.name() == "fake_start" then
         return
     end
 
     ogse.spawn_item_in_inv("matras")
 
-    alife_create("x18_zapiska_ruk", vector():set(21.6, -5.64, -18.28), "l04u_labx18")
-    alife_create("x16_zapiska_ruk", vector():set(-128.0, 22.5, -30.0), "l08u_brainlab")
+    alife_create("x18_zapiska_ruk", "l04u_labx18", vector():set(21.6, -5.64, -18.28))
+    alife_create("x16_zapiska_ruk", "l08u_brainlab", vector():set(-128.0, 22.5, -30.0))
 
     spawn_military_btr()
 
@@ -53,7 +53,7 @@ function delete_new_lc(levch, info)
 end
 
 function check_spawn()
-    if ogse.var_exists("START_GAME") then return end
+    if ogse.var_exists("START_GAME") or level.name() == "fake_start" then return end
 
     spawn_unspawned_respawners()
 
@@ -312,8 +312,7 @@ function on_blowout_hit(npc, hide)
                 if o.zone then
                     for j, v in ipairs(o.zone) do
                         if v.p3 then
-                            tmp = ogse.check_npc_in_box_amk(npc, vector():set(unpack(v.p1)), vector():set(unpack(v.p2)),
-                                vector():set(unpack(v.p3)))
+                            tmp = ogse.check_npc_in_box_amk(npc, vector():set(unpack(v.p1)), vector():set(unpack(v.p2)), vector():set(unpack(v.p3)))
                         else
                             tmp = ogse.check_npc_in_box_amk(npc, vector():set(unpack(v.p1)), vector():set(unpack(v.p2)))
                         end
@@ -412,8 +411,8 @@ end
 
 -- БТР на блокпосту
 function spawn_military_btr()
-    spawn_military_tech_pack(alife():create("vehicle_btr", vector():set(-168.11, -29.71, -303.21), 81808, 38), "vehicle_btr", "scripts\\esc\\esc_blockpost_btr.ltx")
-    spawn_military_tech_pack(alife():create("vehicle_btr", vector():set(-237.85, -26.23, -378.81), 17147, 14), "vehicle_btr", "scripts\\esc\\esc_blockpost_btr.ltx")
+    spawn_military_tech_pack(alife_create("vehicle_btr", "l01_escape", vector():set(-168.11, -29.71, -303.21)), "vehicle_btr", "scripts\\esc\\esc_blockpost_btr.ltx")
+    spawn_military_tech_pack(alife_create("vehicle_btr", "l01_escape", vector():set(-237.85, -26.23, -378.81)), "vehicle_btr", "scripts\\esc\\esc_blockpost_btr.ltx")
 end
 
 function spawn_military_tech_pack(obj, spawn_item, spawn_item_logic)
