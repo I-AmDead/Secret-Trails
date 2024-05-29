@@ -84,7 +84,7 @@ local function on_take(obj, sobj)
         elseif obj:section() == "zahar_box" then
             level_tasks.remove_location_by_id(obj:id(), "crlc_big")
         end
-    elseif level.name() == "predbannik" then
+    elseif level.name() == "l13_deep" then
         if db.actor:has_info("nato_enemy") and not has_alife_info("nato_zasada") then
             db.actor:give_info_portion("nato_zasada")
         elseif obj:section() == "box_vano" then
@@ -718,6 +718,10 @@ function first_burer()
     local obj = alife_create("pribor_haron", "l12u_sarcofag", vector():set(a.x, a.y, a.z))
 end
 
+function foster_controller()
+    alife_create("contr_art1", "l13_deep", vector():set(177.26, 1.738, 590.68))
+end
+
 function spawn_aes()
     spawn_patrol("chaes_master1", "aes_master1_walk")
     spawn_patrol("chaes_master2", "aes_master2_walk")
@@ -1031,7 +1035,7 @@ function money_out(t1, t2)
 end
 
 function maroder_grab(actor, npc)
-    local obj = alife_create("mervin_taynik", "predbannik", vector():set(0.365974, 17.918257, 35.545025))
+    local obj = alife_create("mervin_taynik", "l13_deep", vector():set(5.66, 17.42, 521.82))
     alife():assign_story_id(obj.id, story_ids.razuvaev_taynik)
     dsh.wait_condition(function() return level_object_by_sid(story_ids.razuvaev_taynik) end, 
     function()
@@ -1920,7 +1924,8 @@ function create_voronin_restr()
 end
 
 function create_vstrecha_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-29.943, 1.811, -3.966))
+    local pp = patrol("barman_walk2")
+    local obj = alife():create("space_restrictor", pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
     local custom = [[[logic]
     active = sr_idle
     [sr_idle]
@@ -1966,12 +1971,6 @@ function create_tolik_restr()
     rewrite_restrictor(obj, custom, 10.0)
 end
 
-function create_kapral_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-227.092, 16.793, 237.678))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\kapral_restr.ltx"
-    rewrite_restrictor(obj, custom, 5.0)
-end
-
 function create_foster_restr()
     local pp = patrol("foster2_walk")
     local obj = alife():create("space_restrictor", pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
@@ -1990,7 +1989,8 @@ function create_brown_restr()
 end
 
 function foster_zvuk_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-270.069, 10.707, 220.042))
+    local pp = patrol("foster1_walk")
+    local obj = alife():create("space_restrictor", pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\foster_zvuk.ltx"
     rewrite_restrictor(obj, custom, 5.0)
 end
@@ -2060,12 +2060,6 @@ function create_prince_restr()
     rewrite_restrictor(obj, custom, 5.0)
 end
 
-function create_pekar_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(109.822, -19.864, -269.886))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\pekar_restr.ltx"
-    rewrite_restrictor(obj, custom, 2.0)
-end
-
 function create_monolit_restr()
     local obj = alife_create("space_restrictor", "l12_stancia_2", vector():set(-25.688, 0.001, 691.280))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\monolit_restr.ltx"
@@ -2133,7 +2127,8 @@ function create_sarfinal_restr()
 end
 
 function create_vano_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(84.903, -1.135, 74.312))
+    local pp = patrol("vano_walk")
+    local obj = alife():create("space_restrictor", pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\vano_restr.ltx"
     rewrite_restrictor(obj, custom, 5.0)
 end
@@ -2145,69 +2140,21 @@ function create_superfinal_restr()
 end
 
 function create_vhod_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(49.777, 3.935, 76.576))
+    local obj = alife_create("space_restrictor", "l13_deep", vector():set(-116.79, 1.37, 116.83))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\vhod_restr.ltx"
-    rewrite_restrictor(obj, custom, 2.0)
+    rewrite_restrictor(obj, custom, 30.0)
 end
 
 function create_maroder_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(2.004, 10.026, 42.733))
+    local obj = alife_create("space_restrictor", "l13_deep", vector():set(90.66, 1.67, 545.49))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\maroder_restr.ltx"
     rewrite_restrictor(obj, custom, 3.0)
 end
 
 function create_maroder2_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(49.777, 3.935, 76.576))
+    local obj = alife_create("space_restrictor", "l13_deep", vector():set(-109.97, 1.44, 112.49))
     local custom = "[logic]\ncfg = scripts\\new\\restr\\maroder2_restr.ltx"
     rewrite_restrictor(obj, custom, 2.0)
-end
-
-function create_nato_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-448.229, 1.730, -117.823))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 5.0)
-end
-
-function create_nato1_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-525.222, 1.256, -139.308))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 10.0)
-end
-
-function create_nato2_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-460.865, 0.784, -148.654))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 2.0)
-end
-
-function create_nato3_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-460.584, 5.152, -139.673))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 4.0)
-end
-
-function create_nato4_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-520.037, 0.415, -158.050))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 2.0)
-end
-
-function create_nato5_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-528.454, 2.805, -170.965))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 2.0)
-end
-
-function create_nato6_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-517.255, 0.124, -202.396))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 3.0)
-end
-
-function create_nato7_restr()
-    local obj = alife_create("space_restrictor", "predbannik", vector():set(-518.862, -0.783, -186.421))
-    local custom = "[logic]\ncfg = scripts\\new\\restr\\nato_restr.ltx"
-    rewrite_restrictor(obj, custom, 8.0)
 end
 
 function create_antirostok_restr()

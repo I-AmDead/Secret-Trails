@@ -90,9 +90,7 @@ function give_money(npc)
         --
         npc:give_money(-deadmoney)
         --
-        db.actor:give_game_news(game.translate_string("money_recieved") .. " " .. deadmoney .. " " ..
-                                    game.translate_string("currency_type"), "ui\\ui_iconsTotal",
-            Frect():set(0, 0, 83, 47), 0, 3000)
+        db.actor:give_game_news(game.translate_string("money_recieved") .. " " .. deadmoney .. " " .. game.translate_string("currency_type"), "ui\\ui_iconsTotal", Frect():set(0, 0, 83, 47), 0, 3000)
     end
 end
 -----------------------------------------------------------------
@@ -194,7 +192,7 @@ function CTreasure:use(npc)
         if not v.done then
             local treasure_prob = xr_logic.pick_section_from_condlist(db.actor, npc, v.condlist)
             treasure_prob = (not treasure_prob or treasure_prob == "") and 0 or tonumber(treasure_prob)
-            if treasure_prob >= 0 and not v.active then
+            if treasure_prob >= 0 and not v.active and level.name() ~= "l13_deep" then
                 if treasure_prob == 100 then
                     self:give_treasure(k)
                 else

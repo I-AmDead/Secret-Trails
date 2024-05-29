@@ -295,7 +295,7 @@ end
 
 function enemy_nato(community1, community2)
     if db.actor:dont_has_info("maroder_enemy") then
-        relation_registry.set_community_goodwill("usa", "actor", -5000)
+        relation_registry.set_community_goodwill("usa", "actor", -10000)
         db.actor:give_info_portion("nato_enemy")
     end
 end
@@ -1075,7 +1075,7 @@ function razvedka_spawn()
 end
 
 function spawn_fab_trup()
-    local obj = alife_create("fab_trup", "predbannik", vector():set(-17.596, 4.702, -238.653))
+    local obj = alife_create("fab_trup", "l13_deep", vector():set(-246.05, 10.54, 225.39))
     level_tasks.add_location_by_id(obj.id, "crlc_big", game.translate_string("metka_fab"))
     alife():assign_story_id(obj.id, story_ids.fab_trup)
     obj:set_health(0)
@@ -1904,19 +1904,9 @@ function spawn_maroder()
 end
 
 function spawn_nato_outfit()
-    braad_test.spawn_ai_location("mirotvor_outfit", vector():set(-460.831, 1.255, -153.199), "predbannik")
-    braad_test.spawn_ai_location("mirotvor_outfit", vector():set(-461.840, 5.195, -140.353), "predbannik")
-    braad_test.spawn_ai_location("brown_mafon", vector():set(-459.497, 1.960, -155.965), "predbannik")
-    level_tasks.add_location_by_id(obj.id, "crlc_small", game.translate_string("metka_nato"))
-end
-
-function del_metka_nato()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "brown_mafon" then
-            level_tasks.remove_location_by_id(obj.id, "crlc_small")
-            break
-        end
-    end
+    ogse.spawn_item_in_inv("mir_key", db.actor)
+    braad_test.spawn_ai_location("mirotvor_outfit", vector():set(-13.99, 6.00, 186.88), "l13_deep")
+    braad_test.spawn_ai_location("mirotvor_outfit", vector():set(-13.99, 6.00, 186.88), "l13_deep")
 end
 
 function nato_outfit_have()
