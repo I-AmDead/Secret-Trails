@@ -26,6 +26,10 @@
 float4 fakescope_params3;
 #endif
 
+#ifdef SSFX_LUT_INUSE
+#include "screenspace_lut.h"
+#endif
+
 Texture2D s_flares;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -99,31 +103,31 @@ c2_out main(v2p_aa_AA I)
     float fogresult = SSFX_CALC_FOG(gbd.P);
     fogresult *= fogresult;
 
-    // Fog Scattering -----------------------
-    #ifdef G_FOG_USE_SCATTERING
-        // Blur sample
-        float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
+// Fog Scattering -----------------------
+#ifdef G_FOG_USE_SCATTERING
+    // Blur sample
+    float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
 
-        // Scopes
-        int disablefog = (fakescope_params3.x > 0.0 ? 0 : 1);
+    // Scopes
+    int disablefog = (fakescope_params3.x > 0.0 ? 0 : 1);
 
-        // NVGs
-        #ifdef SSFX_BEEFS_NVG
-            disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
-        #endif
+// NVGs
+#ifdef SSFX_BEEFS_NVG
+    disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
+#endif
 
-        // Blend
-        img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
-    #endif
-	// --------------------------------------
+    // Blend
+    img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
+#endif
+    // --------------------------------------
 #endif
 
 #ifdef SSFX_DEBAND
-    #ifdef SSFX_FOG
-        float Debanding = depth <= SKY_EPS ? 1.0 : fogresult;
-    #else
-        float Debanding = depth <= SKY_EPS ? 1.0 : 0;
-    #endif
+#ifdef SSFX_FOG
+    float Debanding = depth <= SKY_EPS ? 1.0 : fogresult;
+#else
+    float Debanding = depth <= SKY_EPS ? 1.0 : 0;
+#endif
 
     // Debanding  - SCREEN SPACE SHADERS - UPDATE 12.5
     img = lerp(img, ssfx_debanding(img, I.Tex0.xy), Debanding);
@@ -150,6 +154,10 @@ c2_out main(v2p_aa_AA I)
 
     // Vanilla color grading ( Exposure, saturation and gamma )
     img = img_corrections(img);
+
+#ifdef SSFX_LUT_INUSE
+    img = ssfx_lut_pp(img);
+#endif
 
 #ifdef USE_DISTORT
     float3 blurred = bloom * def_hdr;

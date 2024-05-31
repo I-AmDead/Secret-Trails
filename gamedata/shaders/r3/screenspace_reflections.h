@@ -7,7 +7,7 @@
  */
 
 #ifndef SSFX_SSR_QUALITY
-	#define SSFX_SSR_QUALITY 0
+	#define SSFX_SSR_QUALITY 2
 #endif
 
 #include "screenspace_common.h"
@@ -241,7 +241,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 
 	// 'Beefs Shader Based NVGs' optional intensity adjustment
 #ifdef G_SSR_BEEFS_NVGs_ADJUSTMENT
-	refl_power *= saturate(1.0f - (1.0f - G_SSR_BEEFS_NVGs_ADJUSTMENT) * (shader_param_8.x > 0.0f));
+	refl_power *= saturate(1.0f - (1.0f - G_SSR_BEEFS_NVGs_ADJUSTMENT) * (pnv_param_1.z > 0.0f));
 #endif
 
 	// Fog Fix ( Render order problem... )

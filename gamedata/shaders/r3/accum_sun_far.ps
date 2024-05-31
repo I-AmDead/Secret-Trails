@@ -72,7 +72,15 @@ float4 main(v2p_volume I) : SV_Target
     float4 light = plight_infinity(m, _P, _N, _C, Ldynamic_dir);
 
     // ----- shadow
-    float4 P4 = float4(_P.x, _P.y, _P.z, 1.0);
+
+    // SHADOWS FIXES - SSS Update 19
+    // Normal Offset for biasing
+    float3 NormalOffset = 0;
+#ifdef SSFX_SHADOWS
+    NormalOffset = _N * ssfx_shadow_bias.y;
+#endif
+
+    float4 P4 = float4(_P.xyz + NormalOffset, 1.0);
     float4 PS = mul(m_shadow, P4);
 
     // SHADOWS FIXES - SSS Update 14.7
@@ -84,9 +92,9 @@ float4 main(v2p_volume I) : SV_Target
     float2 FadeUV = PS.xy / PS.w;
 
     // Fade calc
-    float4 fade = smoothstep(0.0f, 0.1f, float4(FadeUV.x, 1.0f - FadeUV.x, FadeUV.y, 1.0f - FadeUV.y));
+    float4 fade = smoothstep(0.f, 0.1f, float4(FadeUV.x, 1.f - FadeUV.x, FadeUV.y, 1.f - FadeUV.y));
     float f = fade.x * fade.y * fade.z * fade.w;
-    s += (1.0f - s) * (1.0f - f);
+    s += (1.f - s) * (1.f - f);
 
 #ifdef SSFX_SSS
     s *= SSFX_ScreenSpaceShadows_Far(_P, I.hpos, ISAMPLE);
@@ -96,10 +104,7 @@ float4 main(v2p_volume I) : SV_Target
     shadows *= s;
 
 #ifdef SSFX_ENHANCED_SHADERS
-    float3 result = SRGBToLinear(s);
-    result *= light * SRGBToLinear(Ldynamic_color.rgb);
-
-    return blend(float4(result, 0), I.tc);
+    return blend(float4(SRGBToLinear(Ldynamic_color.rgb * shadows.xxx), 1.f) * light, I.tc);
 #else
     return blend(Ldynamic_color * light * shadows, I.tc);
 #endif

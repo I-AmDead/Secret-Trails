@@ -14,6 +14,8 @@ Texture2D<float> s_smap_minmax; // 2D/cube shadowmap
 SamplerComparisonState smp_smap; //	Special comare sampler
 sampler smp_jitter;
 
+uniform float4 ssfx_shadow_bias;
+
 Texture2D jitter0;
 Texture2D jitter1;
 
@@ -72,7 +74,10 @@ bool cheap_reject(float3 tc, inout bool full_light)
             full_light = false;
             return true;
         }
-        else { return false; }
+        else
+        {
+            return false;
+        }
     }
     else // plane equation detected
     {
@@ -96,7 +101,10 @@ float shadow_dx10_1_sunshafts(float4 tc, float2 pos2d)
     bool umbra = ((minmax.x < 0) && (t.z > -minmax.x));
 
     [branch] if (umbra) { return 0.0; }
-    else { return shadow_hw(tc); }
+    else
+    {
+        return shadow_hw(tc);
+    }
 }
 #endif //	SM_MINMAX
 
@@ -221,7 +229,10 @@ float shadow_hw_hq(float4 tc)
         [branch] if (full_light == true) return 1.0;
         else return sample_hw_pcf(tc, (0).xxxx);
     }
-    else { return shadow_pcss(tc); }
+    else
+    {
+        return shadow_pcss(tc);
+    }
 #else //	SM_MINMAX
     return shadow_pcss(tc);
 #endif //	SM_MINMAX
@@ -262,21 +273,11 @@ float shadow_rain(float4 tc, float2 tcJ) // jittered sampling
 //////////////////////////////////////////////////////////////////////////////////////////
 uniform float3x4 m_sunmask; // ortho-projection
 #ifdef USE_SUNMASK
-float4 sun_shafts_intensity;
 
 float sunmask(float4 P)
 {
     float2 tc = mul(m_sunmask, P);
-    float sunmask = s_lmap.SampleLevel(smp_linear, tc, 0).w;
-    float sunmask_correction;
-
-    const float intensity = 0.6, ss_bebuff = 10;
-
-    sunmask = sunmask * intensity + (1.0 - intensity);
-    sunmask_correction = saturate(sun_shafts_intensity.x * ss_bebuff);
-
-    sunmask = lerp(sunmask, 1.0h, sunmask_correction);
-    return sunmask;
+    return s_lmap.SampleLevel(smp_linear, tc, 0).w;
 }
 #else
 float sunmask(float4 P) { return 1.0; } //

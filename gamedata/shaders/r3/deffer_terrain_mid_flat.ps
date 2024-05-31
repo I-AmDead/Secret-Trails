@@ -8,8 +8,6 @@
 
 #include "common.h"
 
-Texture2D s_lod_texture;
-
 static float2 terrain_lod_offset[4] = {float2(0.15f, 0.15f), float2(0.65f, 0.15f), float2(0.15f, 0.65f), float2(0.65f, 0.65f)};
 
 f_deffer main(p_flat I)
@@ -38,18 +36,12 @@ f_deffer main(p_flat I)
         }
     }
 
-    // Texture - TODO: Use partial derivative?
-    float3 lod_texture = s_lod_texture.Sample(smp_base, lod_uv).rgb * factor;
-
-    lod_texture += s_lod_texture.Sample(smp_linear, p_lod_uv).rgb * (1.0 - factor);
-
-    D.rgb = lerp(2 * D.rgb * lod_texture, D.rgb, saturate(-2.4f + length(I.position) * 0.013f));
+    D.rgb = lerp(2 * D.rgb, D.rgb, saturate(-2.4f + length(I.position) * 0.013f));
 
     float4 Ne = float4(normalize(N), D.w);
 
     // Standart output
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, 0.95f), // Pos & MatID
-                     float4(D.rgb, 0.001f)); // RGB & Gloss
+    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, 0.95f), float4(D.rgb, 0.001f)); // RGB & Gloss
 
     return O;
 }
