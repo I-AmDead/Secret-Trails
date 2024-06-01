@@ -7,6 +7,7 @@ local GUI
 watch_mode = ogse.load_var("watch_mode", 1)
 local delay = 0
 
+local snd_adjust = sound_object('interface\\mark_adjust')
 function on_key_down(key, bind)
     if bind == key_bindings.kWATCH_MODE and watch_mode < 4 then
         if watch_mode < 3 then
@@ -14,6 +15,8 @@ function on_key_down(key, bind)
         else
             watch_mode = 1
         end
+        game.play_hud_anm("script\\mark_adjust.anm", 1, 2, 1, false, false)
+        snd_adjust:play(db.actor, 0, sound_object.s2d)
         ogse.save_var("watch_mode", watch_mode)
     end
 end
