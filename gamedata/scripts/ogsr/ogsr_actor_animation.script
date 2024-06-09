@@ -3,7 +3,7 @@ function attach(sm)
     sm:subscribe({signal = "on_key_down",           fun = this.on_key_down})
     sm:subscribe({signal = "on_key_up",             fun = this.on_key_up})
     sm:subscribe({signal = "on_item_before_pickup", fun = this.on_item_before_pickup})
-    sm:subscribe({signal = "on_update",             fun = this.on_sprint})
+    --sm:subscribe({signal = "on_update",             fun = this.on_sprint})
 end
 
 --------------------------------------------------------------
@@ -112,14 +112,13 @@ function swipe_mask()
     local anm_sec = "anim_mask_clean"
     local anm_name, anm_additional_length = get_anm_settings("script\\gasmask.anm", 0.45, "script\\lower.anm", 0.75)
 
-    local anm_time_1 = game.play_hud_motion(1, anm_sec, "anm_hide_hand", true, hide_hand_speed)
+    --local anm_time_1 = game.play_hud_motion(1, anm_sec, "anm_hide_hand", true, hide_hand_speed)
     local anm_time_2 = game.get_motion_length(anm_sec, "anm_wipe", 0.8)
     game.play_hud_anm(anm_name, 0, 1, 1, false)
-    local new_speed = game.set_hud_anm_time(anm_name, (anm_time_1 + anm_time_2) / 1000 + anm_additional_length)
+    local new_speed = game.set_hud_anm_time(anm_name, (anm_time_2) / 1000 + anm_additional_length)
     animation_on()
 
-    dsh.timeout(anm_time_1, 
-    function()
+
         game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_wipe", false, 0.8)
         snd_gasmask:play(db.actor, 0, sound_object.s2d)
         snd_gasmask.frequency = 0.8
@@ -135,7 +134,7 @@ function swipe_mask()
             end
             dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
         end)
-    end)
+
 end
 
 -- EMULATION TORCH AND NVG SWITCH
