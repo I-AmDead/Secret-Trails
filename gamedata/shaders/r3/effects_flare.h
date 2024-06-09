@@ -6,7 +6,7 @@ Texture2D s_mask_flare_2;
 Texture2D s_mask_flare_3;
 
 #define uGhostCount 6
-#define uGhostSpacing 0.4
+#define uGhostSpacing 0.35
 #define uGhostThreshold 0.7
 #define uHaloRadius 0.3
 #define uHaloThickness 0.165
