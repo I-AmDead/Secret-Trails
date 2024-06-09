@@ -10,7 +10,6 @@ function case_0_1_4(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_accumulator", "$user$accum")
 	shader:dx10texture("s_lmap", "sunmask")
 	shader:dx10texture("s_smap", "$user$smap_depth")
-	shader:dx10texture("s_smap_minmax", "$user$smap_depth_minmax")
 	shader:dx10texture("s_diffuse", "$user$albedo")
 
 	jitter.jitter(shader)
