@@ -19,9 +19,9 @@ uniform float4 radiation_effect;
 #define aa 2.0 / min(screen_res.x, screen_res.y)
 
 // Hearthbeat
-#define SCALE 1.5
+#define SCALE 1.0
 #define LINES_WIDTH 0.05
-#define DOT_SPEED_LIMITER 3
+#define DOT_SPEED_LIMITER 2.4
 #define MAX_TRAIL_ITEMS 600
 
 // NixieTime
@@ -474,7 +474,7 @@ float spike(float x, float d, float w, float raiseBy)
 
 float generateEGC(float x)
 {
-    x -= .5 * SCALE;
+    x -= .7 * SCALE;
 
     float a = 0.4 * SCALE;
     float d = .3;
@@ -482,14 +482,14 @@ float generateEGC(float x)
 
     float f1 = a * spike(x, d, w, 2.);
     float f2 = 0.3 * spike(x, d - 0.02, 0.5 * w, 2.0);
-    float f3 = 0.2 * spike(x, d - 0.25, 0.004, 2.5);
-    float f4 = 0.07 * spike(x, d - 0.55, 0.009, 2.3);
+    float f3 = 0.1 * spike(x, d - 0.25, 0.0002, 2.5);
+    float f4 = 0.07 * spike(x, d - 0.55, 0.009, 1.5);
     float f5 = 0.1 * spike(x, d - 0.75, 0.001, 2.7);
 
     float f6 = a * spike(x, d - 1., 0.002, 2.);
     float f7 = 0.3 * spike(x, d - 1.025, 0.5 * w, 2.0);
-    float f8 = 0.2 * spike(x, d - 1.2, 0.004, 2.5);
-    float f9 = 0.07 * spike(x, d - 1.55, 0.009, 2.3);
+    float f8 = 0.1 * spike(x, d - 1.2, 0.0002, 2.5);
+    float f9 = 0.07 * spike(x, d - 1.55, 0.009, 1.3);
 
     return (f1 - f2 + f3 + f4 + f5 + f6 - f7 + f8 + f9) * watch_actor_params.x;
     ;
