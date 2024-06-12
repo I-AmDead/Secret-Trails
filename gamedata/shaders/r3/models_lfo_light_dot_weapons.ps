@@ -23,12 +23,13 @@
 
 #define OFFSET_X 0.005 // (default 0.004) Normal vector x coordinate max absolute value which is considered 0
 #define OFFSET_Y 0.005 // (default 0.05) Normal vector y coordinate max absolute value which is considered 0
-#define PROJECT_DISTANCE 1000.0 // (default 20.0) Distance to projected mark
+#define PROJECT_DISTANCE 350.0 // (default 20.0) Distance to projected mark
 #define SIZE_FACTOR 100.0 // (default 4.0) Mark size factor
 
 uniform float4 m_affects;
 uniform float4 mark_number;
 uniform float4 mark_color;
+uniform float4 m_hud_params;
 
 // Vertex to Pixel struct
 struct vf
@@ -119,10 +120,13 @@ float4 main(vf I) : SV_Target
     // Important: PROJECT_DISTANCE can be positive or negative, 0 = no projection at all
     float2 parallax_tc = I.tc0 - V_tangent.xy * PROJECT_DISTANCE;
 
+    float factor = screen_res.y / 2160.0;
+    factor = factor * (1.0 / (m_hud_params.z / 0.45));
+
     // Upscaling the texture
     parallax_tc.xy = (parallax_tc.xy + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
-    parallax_tc.x = resize(parallax_tc.x, screen_res.x / screen_res.y, 0);
-    parallax_tc.x = resize(parallax_tc.x, 0.75, 0);
+    parallax_tc.x = resize(parallax_tc.x, factor, 0);
+    parallax_tc.y = resize(parallax_tc.y, factor, 0);
 
     if (mark_number.y > 0)
     {
