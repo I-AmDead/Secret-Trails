@@ -22,13 +22,8 @@ float4 main(p_screen I) : SV_Target
     float2 Pos2D = I.hpos * ssr_setup.x;
 
     // Sample buffers
-#ifndef USE_MSAA
     float4 Pos = s_position.Sample(smp_nofilter, tc);
     float gloss = s_diffuse.Sample(smp_nofilter, tc).a;
-#else
-    float4 Pos = s_position.Load(int3(Pos2D, 0), 0);
-    float gloss = s_diffuse.Load(int3(Pos2D, 0), 0).a;
-#endif
 
     // Reconstruct Position, Normal and Material
     float3 P = float3(Pos.z * (Pos2D * pos_decompression_params.zw - pos_decompression_params.xy), Pos.z);

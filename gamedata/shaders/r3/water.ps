@@ -84,11 +84,7 @@ float4 main(vf I) : SV_Target
     float2 Refraction_UV = N_Scr * Refraction_Discard;
 
     // Shadows to do some tricks
-#ifndef USE_MSAA
     float water_shadows = saturate(s_accumulator.Sample(smp_nofilter, PosTc + Refraction_UV).r * 2000);
-#else
-    float water_shadows = saturate(s_accumulator.Load(int3((PosTc + Refraction_UV) * screen_res.xy, 0), 0).r * 2000);
-#endif
 
     float3 Nw = mul(float3x3(I.M1, I.M2, I.M3), Navg);
     Nw = normalize(Nw);
@@ -162,7 +158,7 @@ float4 main(vf I) : SV_Target
     float2 N_Tex = normalize(float3(basenormal.x * G_SSR_WATER_TEX_DISTORTION, basenormal.y * G_SSR_WATER_TEX_DISTORTION, basenormal.z));
 
     // Get Position with Refraction discard
-    float3 _P2 = SSFX_get_position(PosTc + Refraction_UV, 0); // Simp: тут не добавлял коррекцию позиции по taa jitter, потому что по виду багов с водой не наблюдаю
+    float3 _P2 = SSFX_get_position(PosTc + Refraction_UV, 0); // Simp: пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ taa jitter, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
     // 3d view space pos reconstruction math
     _P2 = float3(_P2.z * (I.hpos.xy * pos_decompression_params.zw - pos_decompression_params.xy), _P2.z);

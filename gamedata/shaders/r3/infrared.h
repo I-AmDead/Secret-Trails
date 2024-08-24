@@ -4,15 +4,7 @@
 #include "common.h"
 #include "night_vision.h"
 
-#ifdef USE_MSAA
-#ifndef SM_5
-Texture2DMS<float4, MSAA_SAMPLES> s_heat;
-#else
-Texture2DMS<float4> s_heat;
-#endif
-#else
 Texture2D s_heat;
-#endif
 
 uniform float4 heat_vision_steps;
 uniform float4 heat_vision_blurring;

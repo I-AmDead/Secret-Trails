@@ -38,7 +38,6 @@
 #else /// We are in stalker
 
 #define SLB_SAMPLER_LOAD(sampler_name, texture_coord)               sampler_name.Load(texture_coord)
-#define SLB_SAMPLER_LOAD_MSAA(sampler_name, texture_coord, iSample) sampler_name.Load(texture_coord, iSample)
 
 #define SLB_BRANCH [branch]
 #define SLB_UNROLL(x) [unroll(x)]

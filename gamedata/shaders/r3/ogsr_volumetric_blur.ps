@@ -8,15 +8,7 @@
 
 #include "common.h"
 
-#ifndef USE_MSAA
 Texture2D s_vollight;
-#else
-#ifndef SM_5
-Texture2DMS<float4, MSAA_SAMPLES> s_vollight;
-#else
-Texture2DMS<float4> s_vollight;
-#endif
-#endif
 
 uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offset size ]
 // uniform float4 shader_param_6;
@@ -24,8 +16,6 @@ uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offs
 float4 main(p_screen I) : SV_Target
 {
     float4 Blur = 0;
-
-#ifndef USE_MSAA
 
     // Scale sample to use the linear filtering
     float2 tc = I.tc0.xy * blur_setup.ww;
@@ -36,19 +26,6 @@ float4 main(p_screen I) : SV_Target
     offset = float2(-offset.x, offset.x);
     Blur += s_vollight.SampleLevel(smp_linear, tc + offset, 0);
     Blur += s_vollight.SampleLevel(smp_linear, tc - offset, 0);
-
-#else
-
-    float2 tc = I.tc0.xy;
-    float2 offset = ((blur_setup.zz + 0.5f) / blur_setup.xy); // * shader_param_6.x;
-
-    Blur += s_vollight.Load(int3((tc + offset) * blur_setup.xy, 0), 0);
-    Blur += s_vollight.Load(int3((tc - offset) * blur_setup.xy, 0), 0);
-    offset = float2(-offset.x, offset.x);
-    Blur += s_vollight.Load(int3((tc + offset) * blur_setup.xy, 0), 0);
-    Blur += s_vollight.Load(int3((tc - offset) * blur_setup.xy, 0), 0);
-
-#endif
 
     return Blur / 4.0f;
 }
