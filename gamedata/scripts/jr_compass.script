@@ -140,18 +140,18 @@ function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_t
     if spot_type then
         local pos_x, pos_y = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0)
         if x <= 0.5 then
-            local scale = x * (x > 0.48 and 15 or 10)
+            local scale = math.clamp(x * (x > 0.48 and 15 or 10), 0, 15)
             st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
             st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
         else
-            local scale = (1.0 - x) * (x < 0.52 and 15 or 10)
+            local scale = math.clamp((1.0 - x) * (x < 0.52 and 15 or 10), 0, 15)
             st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
             st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
         end
     end
 
-    if x < 0.35 or x > 0.65 then
-        local fade = x < 0.35 and 255 * (0.3 + (x * 2)) or 255 * (2.3 - (x * 2))
+    if (x < 0.35 or x > 0.65) and not show_always then
+        local fade = x < 0.35 and 255 * (1 / 0.35 * x) or 255 * (1 - (x - 0.65) / 0.35)
         st:SetColorA(fade)
         st:SetTextColorA(fade)
     end
@@ -229,11 +229,11 @@ function ui_compass:Update()
         self:show_point("compass_dot_"..i, get_x_static(s), ".", def_color, 16, nil, nil, "ui_font_roboto16"):SetPriority(-120)
     end
 
-    for i, v in ipairs(compass_objects) do
+    for i, v in pairs(compass_objects) do
         local pos = v.obj and v.obj:position() or v.position
         local x = get_x(pos)
 
-        local st = self:show_point(v.id, x, "", v.color, 13, v.show_always, v.spot)
+        local st = self:show_point(i, x, "", v.color, 13, v.show_always, v.spot)
 
         st.position = pos
         st.x = x
@@ -271,7 +271,7 @@ function ui_compass:Update()
         local h_x2 = h_x1 + self.highest_st:GetWidth()
 
         -- проверим те точки что перекрываются центральной и сделаем их прозрачными
-        for i, v in pairs(self.points) do
+        for _, v in pairs(self.points) do
             if v ~= self.highest_st and v.position then
                local x1 = v:GetPosLeft()
                local x2 = x1 + v:GetWidth()
@@ -322,6 +322,7 @@ local function actor_on_update()
     -- дин точки
     local f = 50 * 50
     local m = 20 * 20
+    local act_pos = db.actor:position()
     local dev_pos = dev.cam_pos
 
     for id, obj in pairs(db.creatures) do
@@ -333,28 +334,26 @@ local function actor_on_update()
             local quest = ogse.is_quest_npc(obj)
             local distance = quest and f or (bio_radar and m * 2 or (enemy and db.actor:see(obj) and m or m))
             if pos:distance_to_sqr(dev_pos) < distance then
-                table.insert(compass_objects,
+                compass_objects[obj:id()] =
                 {
                     obj = obj,
-                    id = obj:id(),
                     text = quest and obj:character_name() or nil,
                     color = (quest and quest_color) or (friend and friend_color) or (neutral and neutral_color) or (enemy and enemy_color) or nil,
                     show_always = bio_radar,
-                    spot = obj:alive() and "alive_dot" or "corpse_dot"
-                })
+                    spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
+                }
             end
         elseif bio_radar and IsMonster(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
             local pos = obj:center()
             if pos:distance_to_sqr(dev_pos) < m * 2 then
-                table.insert(compass_objects,
+                compass_objects[obj:id()] =
                 {
                     obj = obj,
-                    id = obj:id(),
                     text = nil,
                     color = obj:alive() and enemy_color or nil,
                     show_always = true,
-                    spot = obj:alive() and "alive_dot" or "corpse_dot"
-                })
+                    spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
+                }
             end
         end
     end
@@ -366,14 +365,13 @@ local function actor_on_update()
             local distance = IsAnomaly(obj) and m * 2 or f
             if pos:distance_to_sqr(dev_pos) < distance then
                 local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
-                table.insert(compass_objects,
+                compass_objects[obj:id()] =
                 {
                     obj = obj,
-                    id = obj:id(),
                     text = game.translate_string(spot_settings[spot_type][2] or spot.hint) or nil,
                     color = spot_settings[spot_type][3] or def_color,
                     spot = spot_settings[spot_type][1]
-                })
+                }
             end
         end
     end)
@@ -396,18 +394,20 @@ local function actor_on_update()
             priority = 2000
         }
 
+        local id = nil
+
         if target_obj.level_id == alife():level_id() then
             -- on current level
             local target = level.object_by_id(target_obj.id)
             if target then
-                compass_obj.id = target:id()
+                id = target:id()
                 compass_obj.obj = target
             else
-                compass_obj.id = target_obj.id
+                id = target_obj.id
                 compass_obj.position = target_obj.position
             end
 
-            table.insert(compass_objects, compass_obj)
+            compass_objects[id] = compass_obj
         else
             -- find nearest LC
             if target_obj.m_game_vertex_id ~= last_target_gv_id then
@@ -416,9 +416,9 @@ local function actor_on_update()
             end
             local lc = level.object_by_id(last_target_lc_id)
             if lc then
-                compass_obj.id = lc:id()
+                id = lc:id()
                 compass_obj.obj = lc
-                table.insert(compass_objects, compass_obj)
+                compass_objects[id] = compass_obj
             end
         end
 
@@ -431,11 +431,7 @@ local function actor_on_update()
 end
 
 local function gameobject_on_destroy(id)
-   for i = #compass_objects, 1, -1 do
-       if compass_objects[i].obj and compass_objects[i].obj:id() == id then
-           table.remove(compass_objects, i)
-       end
-   end
+    compass_objects[id] = nil
 end
 
 local function actor_on_key_down(key, bind)
