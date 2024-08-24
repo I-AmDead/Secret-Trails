@@ -10,6 +10,8 @@ struct vf
     float3 position : TEXCOORD0;
     float2 tc0 : TEXCOORD1; // base0
     float2 tc1 : TEXCOORD2; // base1
+    float4 hpos_curr : TEXCOORD3;
+    float4 hpos_old : TEXCOORD4;
     float4 af : COLOR1; // alpha&factor
     float4 hpos : SV_Position;
 };
@@ -95,12 +97,16 @@ f_deffer main(vf I)
 
     float3 N = normalize(H.xyz);
 
-    return pack_gbuffer(float4(N, H.w), float4(I.position + N * def_virtualh / 2.h, 0), float4(D.x, D.y, D.z, def_gloss)
+    f_deffer O = pack_gbuffer(float4(N, H.w), float4(I.position + N * def_virtualh / 2.h, 0), float4(D.x, D.y, D.z, def_gloss)
 #ifdef EXTEND_F_DEFFER
                                                                                             ,
                         mask
 #endif
     );
+
+    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+
+    return O;
 }
 
 #endif //	ATOC

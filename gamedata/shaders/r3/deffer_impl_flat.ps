@@ -253,14 +253,18 @@ f_deffer main(p_bumped I)
     float G = max(Sr.gloss + Sg.gloss + Sb.gloss + Sa.gloss, puddles);
 
     float3 _mix = Sr.normal + Sg.normal + Sb.normal + Sa.normal;
-    //_mix *= float3(G_SSR_TERRAIN_BUMP_INTENSITY, G_SSR_TERRAIN_BUMP_INTENSITY, 1); // Adjust bump strength
+    _mix *= float3(G_SSR_TERRAIN_BUMP_INTENSITY, G_SSR_TERRAIN_BUMP_INTENSITY, 1); // Adjust bump strength
 
     float3 N = mul(float3x3(I.M1, I.M2, I.M3), _mix);
     N = lerp(N, MirrorUp, puddles_N);
 
     float4 Ne = float4(normalize(N), C.w);
 
-    return pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.f, 0.95f), float4(C.rgb, G), puddles_limit > 0.01f);
+    f_deffer O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.f, 0.95f), float4(C.rgb, G), puddles_limit > 0.01f);
+
+    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+
+    return O;
 }
 
 #else
@@ -273,7 +277,11 @@ f_deffer main(p_flat I)
 
     float4 Ne = float4(normalize(N), D.w);
 
-    return pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, /*ms*/ 0.95f), float4(D.x, D.y, D.z, G));
+    f_deffer O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, /*ms*/ 0.95f), float4(D.x, D.y, D.z, G));
+
+    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+
+    return O;
 }
 
 #endif

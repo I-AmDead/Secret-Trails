@@ -18,6 +18,9 @@ v2p_bumped main(v_in I)
     v2p_bumped O;
     float3 Pe = mul(m_WV, w_pos);
     O.hpos = mul(m_WVP, w_pos);
+    O.hpos_curr = O.hpos;
+    O.hpos_old = mul(m_WVP_old, w_pos);
+    O.hpos.xy = get_taa_jitter(O.hpos);
     O.tcdh = float4(tc.xyyy);
     O.position = float4(Pe, hemi);
 

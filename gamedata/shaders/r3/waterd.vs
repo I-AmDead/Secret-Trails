@@ -51,6 +51,7 @@ vf main(v_vert v)
 #endif // RIVER_WATER
 
     o.hpos = mul(m_VP, P); // xform, input in world coords
+    o.hpos.xy = get_taa_jitter(o.hpos);
     o.fog = saturate(calc_fogging(v.P)); // Always do this for forward geometry (AMD)
 
 //	Igor: for additional depth dest

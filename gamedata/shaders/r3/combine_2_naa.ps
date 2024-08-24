@@ -32,61 +32,14 @@ float4 fakescope_params3;
 
 Texture2D s_flares;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-#define EPSDEPTH 0.001
-
-#ifndef USE_MSAA
-Texture2D s_distort;
-#else
-TEXTURE2DMS(float4, MSAA_SAMPLES) s_distort;
-#endif
-//////////////////////////////////////////////////////////////////////////////////////////
-// Pixel
-
-struct c2_out
+float4 main(p_screen I) : SV_Target
 {
-    float4 Color : SV_Target;
-#ifdef USE_MSAA
-    float Depth : SV_Depth;
-#endif
-};
-
-c2_out main(v2p_aa_AA I)
-{
-    c2_out res;
-    res.Color = float4(0, 0, 0, 0);
-
     int iSample = 0;
+    float2 center = I.tc0;
 
-#ifdef GBUFFER_OPTIMIZATION
-    gbuffer_data gbd = gbuffer_load_data(I.Tex0, I.HPos, iSample);
-#else
-    gbuffer_data gbd = gbuffer_load_data(I.Tex0, iSample);
-#endif
+    gbuffer_data gbd = gbuffer_load_data(center, I.hpos, iSample);
 
     float depth = gbd.P.z;
-
-#ifdef USE_DISTORT
-#ifndef USE_MSAA
-    float4 distort = s_distort.Sample(smp_nofilter, I.Tex0);
-#else // USE_MSAA
-    float4 distort = s_distort.Load(int3(I.Tex0 * screen_res.xy, 0), iSample);
-#endif // USE_MSAA
-    float2 offset = (distort.xy - (127.0h / 255.0h)) * def_distort; // fix newtral offset
-    float2 center = I.Tex0 + offset;
-
-#ifdef GBUFFER_OPTIMIZATION
-    gbuffer_data gbdx = gbuffer_load_data_offset(I.Tex0, center, I.HPos, iSample);
-#else
-    gbuffer_data gbdx = gbuffer_load_data_offset(I.Tex0, center, iSample);
-#endif
-
-    float depth_x = gbdx.P.z;
-    if ((depth_x + EPSDEPTH) < depth)
-        center = I.Tex0; // discard new sample
-#else // USE_DISTORT
-    float2 center = I.Tex0;
-#endif
 
     float3 img = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
 
@@ -94,7 +47,7 @@ c2_out main(v2p_aa_AA I)
 
 // Indirect light - SCREEN SPACE SHADERS - UPDATE 14
 #ifdef SSFX_INDIRECT_LIGHT
-    ssfx_il(I.Tex0, I.HPos, gbd.P, gbd.N, img, iSample);
+    ssfx_il(center, I.hpos, gbd.P, gbd.N, img, iSample);
 #endif
 
 #ifdef SSFX_FOG
@@ -130,24 +83,23 @@ c2_out main(v2p_aa_AA I)
 #endif
 
     // Debanding  - SCREEN SPACE SHADERS - UPDATE 12.5
-    img = lerp(img, ssfx_debanding(img, I.Tex0.xy), Debanding);
+    img = lerp(img, ssfx_debanding(img, center), Debanding);
 #endif
 
     float4 bloom = s_bloom.Sample(smp_rtlinear, center);
 
 #ifdef SSFX_BEEFS_NVG
-
     // NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
     if (pnv_param_1.z < 1.f)
     {
         img = blend_soft(img, bloom.xyz * bloom.w);
-        img += generate_flare(I.Tex0);
+        img += generate_flare(center);
         float4 flares = s_flares.Sample(smp_rtlinear, center);
         img += flares.xyz * flares.a;
     }
 #else
     img = blend_soft(img, bloom.xyz * bloom.w);
-    img += generate_flare(I.Tex0);
+    img += generate_flare(center);
     float4 flares = s_flares.Sample(smp_rtlinear, center);
     img += flares.xyz * flares.a;
 #endif
@@ -159,19 +111,7 @@ c2_out main(v2p_aa_AA I)
     img = ssfx_lut_pp(img);
 #endif
 
-#ifdef USE_DISTORT
-    float3 blurred = bloom * def_hdr;
-    img = lerp(img, blurred, distort.z);
-#endif
+    img.rgb += rad_effect(img.rgb, center);
 
-    img.rgb += rad_effect(img.rgb, I.Tex0);
-
-    res.Color = float4(img, 1.0);
-
-#ifdef USE_MSAA
-    float4 ptp = mul(m_P, float4(gbd.P, 1));
-    res.Depth = ptp.w == 0 ? 1 : ptp.z / ptp.w;
-#endif
-
-    return res;
+    return float4(img, 1.0);
 }
