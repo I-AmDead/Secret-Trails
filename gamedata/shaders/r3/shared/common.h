@@ -59,7 +59,7 @@ uniform float4 pp_img_cg;
 //}
 
 float2 get_taa_jitter(float4 hpos) { return hpos.xy + m_taa_jitter.xy * hpos.w; }
-	
+
 float2 get_motion_vector(float4 hpos_curr, float4 hpos_old)
 {
     if (m_taa_jitter.w > 0.f)

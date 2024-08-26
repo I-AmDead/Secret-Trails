@@ -34,14 +34,14 @@ float4 main(p_screen I) : SV_Target
 
         img.r *= 4.0f;
 
-//
+        //
         int iSample = 0;
         gbuffer_data gbd = gbuffer_load_data(center, I.hpos, iSample);
         float4 L = s_accumulator.Sample(smp_nofilter, center); // diffuse.specular
         L.rgb += L.a * SRGBToLinear(gbd.C.rgb); // illum in alpha
         // Turn s_accumulator data in to YUV and discard UV
         img.g = pow(dot(L.rgb, luma_conversion_coeff), 2.0f) * 1.3f;
-//
+        //
 
         // Turn albedo into YUV and discard UV
         img.b = dot(gbd.C.rgb, luma_conversion_coeff);
@@ -52,12 +52,12 @@ float4 main(p_screen I) : SV_Target
         float vignette = calc_vignette(lua_param_nvg_num_tubes, center, lua_param_vignette_current + 0.02);
 
         img = clamp(img, 0.0, 1.0);
-	
+
         img.rgb *= vignette;
     }
     else // NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
     {
-    img = tonemap(img, tm_scale);
+        img = tonemap(img, tm_scale);
     }
 #endif
 
