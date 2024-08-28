@@ -1,5 +1,5 @@
 ;------------------------------------------------------------------------------------------------
-[wpn_ar15_freedom]:identity_immunities,base_wpn_zoom,wpn_m4_sounds,hud_wpn_fx.fn2000,tactical_torch,green_laser
+[wpn_ar15_freedom]:identity_immunities,base_wpn_zoom,wpn_m4_sounds,hud_wpn_fx.fn2000,tactical_torch,red_laser
 GroupControlSection                      = spawn_group
 $npc                                     = on
 $prefetch                                = 8
@@ -19,12 +19,12 @@ single_handed                            = 0
 default_to_ruck                          = false
 sprint_allowed                           = true
 
-icons_texture                                       = ui\ui_icon_bas
+icons_texture                            = ui\ui_icon_bas
 
 inv_grid_width     = 5
 inv_grid_height    = 2
-inv_grid_x         = 3
-inv_grid_y         = 32
+inv_grid_x         = 15
+inv_grid_y         = 62
 
 inv_name                                 = st_wpn_ar15_freedom
 inv_name_short                           = st_wpn_ar15_freedom
@@ -37,7 +37,7 @@ repair_type                              = rifle_5
 weapon_class                             = assault_rifle
 
 hud                                      = wpn_ar15_freedom_hud
-visual                                   = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual                                   = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 
 
@@ -76,12 +76,12 @@ upgr_icon_height                         = 100
 
 fire_modes                               = 1, -1
 ammo_class                               = ammo_5.56x45_ap, ammo_5.56x45_ss190
-ammo_elapsed                             = 60
-ammo_mag_size                            = 60
+ammo_elapsed                             = 40
+ammo_mag_size                            = 40
 startup_ammo                             = 90
 
-scope_names 			                         = acog, eot, ac10632, specter ,c-more ,point_aimpro, leupold, aimpoint, pn23, compm4s, marchf, kemper, mepro, ekp8_18, 0kp2
-scope_status      = 2
+scope_names 			         = acog, eot, ac10632, specter, c-more, point_aimpro, leupold, aimpoint, pn23, compm4s, marchf, kemper, mepro, ekp8_18, 0kp2
+scope_status				 = 2
 
 scope_respawn                         = wpn_ar15_freedom
 scope_respawn_acog                    = wpn_ar15_freedom_acog
@@ -98,11 +98,12 @@ scope_respawn_marchf                  = wpn_ar15_freedom_marchf
 scope_respawn_kemper                  = wpn_ar15_freedom_kemper
 scope_respawn_mepro                   = wpn_ar15_freedom_mepro
 scope_respawn_ekp8_18                 = wpn_ar15_freedom_ekp8_18
+scope_respawn_0kp2                    = wpn_ar15_freedom_0kp2
 
 silencer_name                            = wpn_sil_surfire
 silencer_status                          = 2
-silencer_x			                     = 228                ; offset in inventory icon
-silencer_y			                     = 1
+silencer_x			                     = 226                ; offset in inventory icon
+silencer_y			                     = 3
 silencer_light_color                     = 0.6, 0.5, 0.3
 silencer_light_range                     = 0.01
 silencer_light_time                      = 0.2
@@ -189,24 +190,27 @@ use_alt_aim_hud                   = true
 hud_fov                             = 0.75 
 
 ;-------------------------------------------------------------------SOUNDS-----------------------------------------------------------------------------
-snd_draw				= weapons\ru556\ru556_drawalt
-snd_reload				= weapons\ru556\ru556_reloadtac_drum
-snd_reload_empty		= weapons\ru556\ru556_reloadempty_drum
+snd_draw				= weapons\ak12custom\draw
+snd_holster				 = weapons\generic\rifle_holster
+
+snd_reload				= weapons\m4tactic_young_prince\m4_reload
+snd_reload_empty			= weapons\m4tactic_young_prince\m4_reload_empty
+snd_reload_jammed			= weapons\m4tactic_young_prince\m4_unjam
 
 snd_shoot				= weapons\m4_young_prince\m4_shoot1
 snd_shoot1				= weapons\m4_young_prince\m4_shoot2
 snd_shoot2				= weapons\m4_young_prince\m4_shoot3
 snd_shoot3				= weapons\m4_young_prince\m4_shoot4
 
-snd_silncer_shot		= weapons\m4a1_ras\m4a1_sil-1
-snd_holster				= weapons\generic\rifle_holster
-snd_switch			= weapons\ru556\ru556_firemode
-snd_empty				= weapons\generic\ar_empty,	0.7
-snd_reload_jammed      = weapons\ru556\ru556_jam
-snd_shoot               				                          = wpn_m16_snd_shoot
-snd_shoot_actor													  = wpn_m16_snd_shoot_actor
-snd_silncer_shot		                 = wpn_556_snd_silenced
+snd_switch				 = weapons\ru556\ru556_firemode
+snd_empty				 = weapons\generic\ar_empty, 0.7
+snd_shoot               		 = wpn_m16_snd_shoot
+snd_shoot_actor				 = wpn_m16_snd_shoot_actor
+snd_silncer_shot		         = wpn_556_snd_silenced
 snd_silncer_shot_actor                   = wpn_556_snd_silenced_actor
+
+snd_bore				 = weapons\m4tactic_young_prince\m4_inpect
+snd_bore_empty				 = weapons\m4tactic_young_prince\m4_inpect
 
 torch_attach_offset_x = 0.019000
 torch_attach_offset_y = 0.111601
@@ -215,136 +219,139 @@ torch_attach_offset_z = 0.095801
 ;---------------------------------------------------------------------HUD-------------------------------------------------------------------------------
 [wpn_ar15_freedom_hud]:hud_base
 
-item_visual                              = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_hud.ogf
+item_visual                              = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_hud.ogf
 
 attach_place_idx                         = 0
 zoom_hide_crosshair                      = true   
 
+item_position				 = 0, 0, 0
+item_orientation			 = 0, 0, 0
+
 hands_position                           = 0.04, 0.02, 0.3
 hands_orientation                        = 2, 2, 0
 
-aim_hud_offset_pos                       = -0.1271, 0.063, -0.3
-aim_hud_offset_rot                       = 0.04, 0.035, 0
+hands_position_16x9			 =  0.013000, -0.015000, 0.015000    ;0.025000    ;final
+hands_orientation_16x9			 = -0.014000, 0.000000, 0.000000
 
 gl_hud_offset_pos                        = 0, 0, 0
 gl_hud_offset_pos_16x9                   = 0, 0, 0
 gl_hud_offset_rot                        = 0, 0, 0
 gl_hud_offset_rot_16x9                   = 0, 0, 0
 
-;-----------
-hands_position_16x9				= -0.000000,-0.000000,-0.000000
-hands_orientation_16x9			= -0.160000,-0.260000,0.000000
+aim_hud_offset_pos			 = -0.1271, 0.063, -0.3
+aim_hud_offset_rot			 = 0.04, 0.035, 0
 
-aim_hud_offset_pos_16x9				= -0.063920,0.030700,-0.054825
-aim_hud_offset_rot_16x9				= 0.014437,0.009725,-0.079000
+aim_hud_offset_pos_16x9			 = -0.052750,0.014060,-0.040000
+aim_hud_offset_rot_16x9			 = -0.001200,0.000250,0.000000
 
-item_position				= -0.000000,0.000000,0.000000
-item_orientation			= -0.000000,-0.000000,-0.000000
-;-----------
+aim_hud_offset_alt_pos                   = -0.0602, -0.0506, -0.03
+aim_hud_offset_alt_pos_16x9              = -0.0602, -0.0506, -0.03
+aim_hud_offset_alt_rot                   = -0.022, -0.005, 0.78
+aim_hud_offset_alt_rot_16x9              = -0.022, -0.005, 0.78
 
-aim_hud_offset_alt_pos_16x9				= 0.021226,0.032000,-0.055000
-aim_hud_offset_alt_rot_16x9				= 0.007750,-0.001064,-0.613188
-
-        		lowered_hud_offset_pos		= 0.1,0,0
-		        lowered_hud_offset_rot		= 0.1,-0.8,0.1  
+lowered_hud_offset_pos		= 0.1,0,0
+lowered_hud_offset_rot		= 0.1,-0.8,0.1  
 
 ;Доставание///////////////////////////////////////////////////
-anm_show                   = mka_sh_draw
-anm_show_empty             = mka_sh_draw, idle_empty
-anm_show_jammed            = mka_sh_draw
+anm_show                   = 2_m4ag_draw
+anm_show_empty             = 2_m4ag_draw, idle_empty
+anm_show_jammed            = 2_m4ag_draw
 
 ;Убирание/////////////////////////////////////////////////////
-anm_hide                   = mka_sh_holster_alt
-anm_hide_empty             = mka_sh_holster_alt, idle_empty
-anm_hide_jammed            = mka_sh_holster_alt
+anm_hide                   = 2_m4ag_hide
+anm_hide_empty             = 2_m4ag_hide, idle_empty
+anm_hide_jammed            = 2_m4ag_hide
 
 ;Бездействие//////////////////////////////////////////////////
-anm_idle                            = mka_sh_idle_alt
-anm_idle_empty                      = mka_sh_idle_alt, idle_empty
-anm_idle_jammed                     = mka_sh_idle_alt
-anm_idle_slow                       = mka_sh_idle_alt
-anm_idle_slow_empty                 = mka_sh_idle_alt, idle_empty
-anm_idle_slow_jammed                = mka_sh_idle_alt
-anm_idle_crouch                     = mka_sh_idle_alt
-anm_idle_crouch_empty               = mka_sh_idle_alt, idle_empty
-anm_idle_crouch_jammed              = mka_sh_idle_alt
-anm_idle_crouch_slow                = mka_sh_idle_alt
-anm_idle_crouch_slow_empty          = mka_sh_idle_alt, idle_empty
-anm_idle_crouch_slow_jammed         = mka_sh_idle_alt
+anm_idle                            = 1_m4ag_idle
+anm_idle_empty                      = 1_m4ag_idle, idle_empty
+anm_idle_jammed                     = 1_m4ag_idle
+anm_idle_slow                       = 1_m4ag_idle
+anm_idle_slow_empty                 = 1_m4ag_idle, idle_empty
+anm_idle_slow_jammed                = 1_m4ag_idle
+anm_idle_crouch                     = 1_m4ag_idle
+anm_idle_crouch_empty               = 1_m4ag_idle, idle_empty
+anm_idle_crouch_jammed              = 1_m4ag_idle
+anm_idle_crouch_slow                = 1_m4ag_idle
+anm_idle_crouch_slow_empty          = 1_m4ag_idle, idle_empty
+anm_idle_crouch_slow_jammed         = 1_m4ag_idle
 
 
 ;Бездействие в прицеливании///////////////////////////////////
-anm_idle_aim                   = mka_sh_idle_aim_alt
-anm_idle_aim_empty             = mka_sh_idle_aim_alt, idle_empty
-anm_idle_aim_jammed            = mka_sh_idle_aim_alt
-anm_idle_aim_scope             = mka_sh_idle_aim_alt
-anm_idle_aim_scope_empty       = mka_sh_idle_aim_alt, idle_empty
-anm_idle_aim_scope_jammed      = mka_sh_idle_aim_alt
+anm_idle_aim                   = 1_m4ag_aim
+anm_idle_aim_empty             = 1_m4ag_aim, idle_empty
+anm_idle_aim_jammed            = 1_m4ag_aim
+anm_idle_aim_scope             = 1_m4ag_aim
+anm_idle_aim_scope_empty       = 1_m4ag_aim, idle_empty
+anm_idle_aim_scope_jammed      = 1_m4ag_aim
 
 ;Ходьба ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving 					= mka_sh_idle_moving_alt
-anm_idle_moving_jammed 					= mka_sh_idle_moving_alt
-anm_idle_moving_empty					= mka_sh_idle_moving_alt, idle_empty
+anm_idle_moving 					= 1_m4ag_move
+anm_idle_moving_jammed 					= 1_m4ag_move
+anm_idle_moving_empty					= 1_m4ag_move, idle_empty
 
 ;Ходьба медленная (SHIFT) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving_slow 					= mka_sh_idle_moving_alt
-anm_idle_moving_slow_jammed 				= mka_sh_idle_moving_alt
-anm_idle_moving_slow_empty				= mka_sh_idle_moving_alt, idle_empty
+anm_idle_moving_slow 					= 1_m4ag_move
+anm_idle_moving_slow_jammed 				= 1_m4ag_move
+anm_idle_moving_slow_empty				= 1_m4ag_move, idle_empty
 
 ;Ходьба в полуприсяди (CTRL) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving_crouch 					= mka_sh_idle_moving_alt
-anm_idle_moving_crouch_jammed 				= mka_sh_idle_moving_alt
-anm_idle_moving_crouch_empty				= mka_sh_idle_moving_alt, idle_empty
+anm_idle_moving_crouch 					= 1_m4ag_move
+anm_idle_moving_crouch_jammed 				= 1_m4ag_move
+anm_idle_moving_crouch_empty				= 1_m4ag_move, idle_empty
 
 ;Ходьба в присяде (CTRL+SHIFT) ВПЕРЕД/////////////////////////////////////////////////////////////////////////
-anm_idle_moving_crouch_slow 				= mka_sh_idle_moving_alt
-anm_idle_moving_crouch_slow_jammed 			= mka_sh_idle_moving_alt
-anm_idle_moving_crouch_slow_empty			= mka_sh_idle_moving_alt, idle_empty
+anm_idle_moving_crouch_slow 				= 1_m4ag_move
+anm_idle_moving_crouch_slow_jammed 			= 1_m4ag_move
+anm_idle_moving_crouch_slow_empty			= 1_m4ag_move, idle_empty
 
 ;Бег//////////////////////////////////////////////////////////////////
-anm_idle_sprint                   = mka_sh_idle_sprint_alt
-anm_idle_sprint_empty             = mka_sh_idle_sprint_alt, idle_empty
-anm_idle_sprint_jammed            = mka_sh_idle_sprint_alt
+anm_idle_sprint_start             = 1_m4ag_sprint_start
+anm_idle_sprint_start_empty       = 1_m4ag_sprint_start, idle_empty
+anm_idle_sprint_start_jammed      = 1_m4ag_sprint_start
+
+anm_idle_sprint                   = 1_m4_sprint
+anm_idle_sprint_empty             = 1_m4_sprint, idle_empty
+anm_idle_sprint_jammed            = 1_m4_sprint
+
+anm_idle_sprint_end               = 1_m4ag_sprint_end
+anm_idle_sprint_end_empty         = 1_m4ag_sprint_end, idle_empty
+anm_idle_sprint_end_jammed        = 1_m4ag_sprint_end
 
 ;Скука////////////////////////////////////////////////////////////////////
-anm_bore                   = mka_sh_idle_bore_alt
-anm_bore_empty             = mka_sh_idle_bore_alt, idle_empty
-anm_bore_jammed            = mka_sh_idle_bore_alt
+anm_bore                   = 4_m4ag_inspect, 4_m4_inspect
+anm_bore_empty             = 4_m4ag_inspect_empty, 4_m4_inspect_empty
+anm_bore_jammed            = 4_m4ag_inspect, 4_m4_inspect
 
 ;Выстрелы обычными патронами/////////////////////////////////////////////////////////////////////
-anm_shots		       = mka_sh_alt_fire
-anm_shot_l		       = mka_sh_alt_fire, fire_empty
+anm_shots		       = 3_m4ag_shoot, 3_m4_shoot
+anm_shots_l		       = 3_m4ag_shoot3, 3_m4_shoot_last
 
 ;Перезарядка/////////////////////////////////////////////////////////////////////
-anm_reload                           = mka_sh_tac_reload_drum, mka_tac_reload_drum_zz
-anm_reload_empty                     = mka_sh_reload_drum, reload_drum
-anm_reload_jammed                    = mka_sh_idle_jam_alt, jam
-anm_reload_jammed_last               = mka_sh_idle_jam_alt, jam
+anm_reload                           = 5_m4ag_reload_40, 5_m4_reload_40
+anm_reload_empty                     = 5_m4ag_reload_empty_40, 5_m4_reload_empty_40
+anm_reload_jammed                    = 5_m4ag_reload_jam, 5_m4_reload_jam
+anm_reload_jammed_last               = 5_m4ag_reload_jam, 5_m4_reload_jam
 
-anm_idle_moving_speed_k 		    = 1.1
-anm_idle_moving_empty_speed_k		    = 1.1
-anm_idle_moving_slow_speed_k         	    = 0.9
-anm_idle_moving_slow_empty_speed_k   	    = 0.9
-anm_idle_moving_slow_jammed_speed_k  	    = 0.9
-anm_idle_moving_crouch_speed_k              = 0.7
-anm_idle_moving_crouch_empty_speed_k        = 0.7
-anm_idle_moving_crouch_jammed_speed_k       = 0.7
-anm_idle_moving_crouch_slow_speed_k         = 0.5
-anm_idle_moving_crouch_slow_empty_speed_k   = 0.5
-anm_idle_moving_crouch_slow_jammed_speed_k  = 0.5
+anm_idle_moving_slow_speed_k         	    = 0.8
+anm_idle_moving_slow_empty_speed_k   	    = 0.8
+anm_idle_moving_slow_jammed_speed_k  	    = 0.8
+anm_idle_moving_crouch_speed_k              = 0.6
+anm_idle_moving_crouch_empty_speed_k        = 0.6
+anm_idle_moving_crouch_jammed_speed_k       = 0.6
+anm_idle_moving_crouch_slow_speed_k         = 0.4
+anm_idle_moving_crouch_slow_empty_speed_k   = 0.4
+anm_idle_moving_crouch_slow_jammed_speed_k  = 0.4
 
-anm_idle_sprint_speed_k         	    = 0.9
-anm_idle_sprint_empty_speed_k		    = 0.9
+shell_bone				= wpn_body
+shell_dir				= 0, 1, 0
+shell_point				= 0.037, 0.0665, 0.117
 
-shell_point                		= 0.011,0.05,0.11
-shell_dir               		= 0,1,0
-shell_bone                		= wpn_body
-
-fire_point						= 0.000000,0.085200,0.389498
-fire_bone                  	 	= wpn_body
-fire_point2                 	= 0,0,0
-fire_bone2                		= wpn_body
-shoot_point  					= 0.000000,0.085200,0.089498
+fire_point				= 0, 0, 0
+fire_bone                  	 	= muzzle
+fire_point2				= 0, 0, 0
+fire_bone2                		= muzzle_gl
+shoot_point  				= 0.000000, 0.00000, -0.3
 
 freelook_z_offset_mul					 = 0.3
 ;---------------------------------------------------------------------------Addons----------------------------------------------------------------------
@@ -358,22 +365,17 @@ scope_name 	     = acog
 scope_x			= 76
 scope_y			= -16
 
-
-
-visual = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 [wpn_ar15_freedom_acog_hud]:wpn_ar15_freedom_hud
 
-item_visual            	 	= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_acog_hud.ogf
+item_visual            	 	= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_acog_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.068975,0.030400,-0.082625
-aim_hud_offset_rot_16x9				= 0.037250,0.043436,-0.056187
+aim_hud_offset_pos_16x9  = -0.053210,0.010280,-0.042450
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;--------------------------------------------------------------------------------
 [wpn_ar15_freedom_specter]:wpn_ar15_freedom
-
-$spawn					= "weapons\m4_butcher_specter"
-
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud					= wpn_ar15_freedom_specter_hud
 
@@ -385,16 +387,16 @@ inv_weight                                         = 3.820
 
 [wpn_ar15_freedom_specter_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_specter_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_specter_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.069275,0.029900,-0.082625
-aim_hud_offset_rot_16x9				= 0.037250,0.043436,-0.056187
+aim_hud_offset_pos_16x9  = -0.053450,0.011770,-0.048009
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
+
+aim_hud_offset_alt_pos_16x9  = -0.052800,-0.007870,-0.070801
+aim_hud_offset_alt_rot_16x9  = -0.000450,0.001000,0.000000
 ;--------------------------------------------------------------------------------
 [wpn_ar15_freedom_leupold]:wpn_ar15_freedom
-
-$spawn					= "weapons\m4_butcher_leupold"
-
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud					= wpn_ar15_freedom_leupold_hud
 
@@ -406,15 +408,13 @@ inv_weight                                         = 3.830
 
 [wpn_ar15_freedom_leupold_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_leupold_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_leupold_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.068975,0.025600,-0.064425
-aim_hud_offset_rot_16x9				= 0.037250,0.043436,-0.056187
+aim_hud_offset_pos_16x9  = -0.053300,0.007900,-0.073901
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 -------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_pn23]:wpn_ar15_freedom
-$spawn					= "weapons\m4_butcher_pn23"
-
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud					= wpn_ar15_freedom_pn23_hud
 
@@ -427,10 +427,10 @@ inv_weight                                         = 3.800
 
 [wpn_ar15_freedom_pn23_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_pn23_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_pn23_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.068775,0.016900,-0.069525
-aim_hud_offset_rot_16x9				= 0.037250,0.043436,-0.056187
+aim_hud_offset_pos_16x9  = -0.053600,-0.003000,-0.075201
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_marchf]:wpn_ar15_freedom
 
@@ -442,15 +442,15 @@ inv_weight                               = 3.790
 
 hud                                      = wpn_ar15_freedom_marchf_hud
 
-visual                                   = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual                                   = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 
 [wpn_ar15_freedom_marchf_hud]:wpn_ar15_freedom_hud
 
-item_visual                              = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_marchf_hud.ogf
+item_visual                              = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_marchf_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.067975,0.027500,-0.059825
-aim_hud_offset_rot_16x9				= 0.037250,0.043436,-0.056187
+aim_hud_offset_pos_16x9  = -0.052700,0.008100,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;------------------------------------------------------------------------------------------------
 
 
@@ -465,14 +465,14 @@ inv_weight                                         = 3.275
 
 hud				= wpn_ar15_freedom_ac10632_hud
 
-visual = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 [wpn_ar15_freedom_ac10632_hud]:wpn_ar15_freedom_hud
 
-item_visual                	= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_ac10632_hud.ogf
+item_visual                	= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_ac10632_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.027700,-0.054825
-aim_hud_offset_rot_16x9				= 0.011937,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.052990,0.010360,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;-------------------------------------------------------------------------------
 [wpn_ar15_freedom_eot]:wpn_ar15_freedom
 
@@ -484,18 +484,18 @@ inv_weight                                         = 3.450
 
 hud				= wpn_ar15_freedom_eot_hud
 
-visual = dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual = dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 [wpn_ar15_freedom_eot_hud]:wpn_ar15_freedom_hud
 
-item_visual                	= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_eot_hud.ogf
+item_visual                	= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_eot_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.017500,-0.054825
-aim_hud_offset_rot_16x9				= 0.013937,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053190,0.004400,-0.037400
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;-----------------------------------------------------------------------------
 [wpn_ar15_freedom_c-more]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_c-more_hud
 
@@ -508,14 +508,14 @@ inv_weight                                         = 3.450
 
 [wpn_ar15_freedom_c-more_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_c-more_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_c-more_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063620,0.031650,-0.054825
-aim_hud_offset_rot_16x9				= 0.014437,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053350,0.014900,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;--------------------------------------------------------------------------------------
 [wpn_ar15_freedom_mepro]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_mepro_hud
 
@@ -527,14 +527,14 @@ scope_y			= -10
 
 [wpn_ar15_freedom_mepro_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_mepro_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_mepro_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.064120,0.018000,-0.054825
-aim_hud_offset_rot_16x9				= 0.013937,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053200,0.004500,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;-------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_aimpoint]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_aimpoint_hud
 
@@ -546,14 +546,14 @@ scope_y			= -16
 
 [wpn_ar15_freedom_aimpoint_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_aimpoint_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_aimpoint_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063420,0.023400,-0.054825
-aim_hud_offset_rot_16x9				= 0.009437,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053400,0.007100,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;-------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_point_aimpro]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_point_aimpro_hud
 
@@ -565,14 +565,14 @@ scope_y			= -18
 
 [wpn_ar15_freedom_point_aimpro_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_aimpoint_pro_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_aimpoint_pro_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.017400,-0.054825
-aim_hud_offset_rot_16x9				= 0.010437,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.052800,0.006600,-0.040000
+aim_hud_offset_rot_16x9  = -0.002950,0.000950,0.000000
 ;-------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_ekp8_18]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_ekp8_18_hud
 
@@ -584,16 +584,16 @@ scope_y			= -8
 
 [wpn_ar15_freedom_ekp8_18_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_ekp8_18_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_ekp8_18_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.017100,-0.054825
-aim_hud_offset_rot_16x9				= 0.011437,0.006725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053000,0.005400,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;-------------------------------------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_compm4s]:wpn_ar15_freedom
 
 hud					= wpn_ar15_freedom_compm4s_hud
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 scope_name                              = compm4s
 scope_x                            = 100
@@ -603,10 +603,10 @@ inv_weight                               = 3.530
 
 [wpn_ar15_freedom_compm4s_hud]:wpn_ar15_freedom_hud
 
-item_visual                		= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_compm4s_hud.ogf
+item_visual                		= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_compm4s_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.026100,-0.054825
-aim_hud_offset_rot_16x9				= 0.013437,0.008225,-0.079000
+aim_hud_offset_pos_16x9  = -0.053000,0.011400,-0.040000
+aim_hud_offset_rot_16x9  = 0.001600,0.001950,0.000000
 ;--------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_kemper]:wpn_ar15_freedom
 
@@ -618,19 +618,19 @@ scope_name			    = kemper
 scope_x			= 100
 scope_y			= -16
 
-visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 
 [wpn_ar15_freedom_kemper_hud]:wpn_ar15_freedom_hud
 
-item_visual                	= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_kemper_hud.ogf
+item_visual                	= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_kemper_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.063120,0.020600,-0.054825
-aim_hud_offset_rot_16x9				= 0.011937,0.005725,-0.079000
+aim_hud_offset_pos_16x9  = -0.053000,0.006100,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;------------------------------------------------------------------------------------------------
 [wpn_ar15_freedom_0kp2]:wpn_ar15_freedom
 
-visual					= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_world.ogf
+visual					= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_world.ogf
 
 hud						= wpn_ar15_freedom_0kp2_hud
 
@@ -642,8 +642,8 @@ scope_y			= -9
 
 [wpn_ar15_freedom_0kp2_hud]:wpn_ar15_freedom_hud
 
-item_visual				= dynamics\weapons\wpn_ar15_freedom\wpn_ar15_freedom_0kp2_hud.ogf
+item_visual				= dynamics\weapons\wpn_m4_tactic\wpn_m4_tac_0kp2_hud.ogf
 
-aim_hud_offset_pos_16x9				= -0.061000,0.025100,-0.054825
-aim_hud_offset_rot_16x9				= 0.001437,0.007725,-0.079000
+aim_hud_offset_pos_16x9  = -0.051100,0.014000,-0.040000
+aim_hud_offset_rot_16x9  = -0.010000,0.002400,0.000000
 ;------------------------------------------------------------------------------------------------
