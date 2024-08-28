@@ -11,8 +11,8 @@ function element_0(shader, t_base, t_second, t_detail)
 	shader:dx10texture("env_s1", "$user$env_s1")
 	shader:dx10texture("sky_s0", "$user$sky0")
 	shader:dx10texture("sky_s1", "$user$sky1")
+	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
-	shader:dx10sampler("smp_rtlinear")
 	shader:dx10sampler("smp_linear")
 end
 
@@ -39,6 +39,7 @@ function element_3(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_rimage", "$user$generic_temp")
 	shader:dx10texture("ssr_image", "$user$ssr_temp_2")
 	shader:dx10sampler("smp_nofilter")
+	shader:dx10sampler("smp_linear")
 end
 
 function element_4(shader, t_base, t_second, t_detail)

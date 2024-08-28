@@ -20,9 +20,9 @@ v2p_bumped main(v_in I)
     O.hpos = mul(m_WVP, w_pos);
     O.hpos_curr = O.hpos;
     O.hpos_old = mul(m_WVP_old, w_pos);
-    O.hpos.xy = get_taa_jitter(O.hpos);
     O.tcdh = float4(tc.xyyy);
     O.position = float4(Pe, hemi);
+    O.hpos.xy = get_taa_jitter(O.hpos);
 
 #if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
     O.tcdh.w = I.color.w; // (r,g,b,dir-occlusion)

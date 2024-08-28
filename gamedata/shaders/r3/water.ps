@@ -129,7 +129,7 @@ float4 main(vf I) : SV_Target
     float3 tc_parallax = Water_DoParallax(I.tbase , tc_step, _step, s_water_height, 0.35f); // 0.35f
 #else
     // TCs
-    float2 tc_parallax = I.tbase + (ssfx_wind_anim.ww * float2(0.065f, 0.445f) * TimeSpeed);
+    float3 tc_parallax = I.tbase + (ssfx_wind_anim.ww * float2(0.065f, 0.445f) * TimeSpeed);
 #endif
 
     // Normal Textures
@@ -314,7 +314,7 @@ float4 main(vf I) : SV_Target
 #else
     float fogging = I.fog;
 #endif
-    acc = lerp(fog_color, acc, fogging);
+    acc = lerp(fog_color.rgb, acc, fogging);
 
     // Soft border
     float border_alpha = smoothstep(0.0, G_SSR_WATER_SOFTBORDER, waterDepth);

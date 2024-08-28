@@ -15,6 +15,7 @@ function element_0(shader, t_base, t_second, t_detail)
 
 	jitter.jitter(shader)
 
+	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_material")
 	shader:dx10sampler("smp_rtlinear")
@@ -60,7 +61,9 @@ function element_3(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_mask_flare_3", "$user$generic2")
 	shader:dx10texture("s_blur_2", "$user$blur_2")
 	shader:dx10texture("s_lut_atlas", "shaders\\lut_atlas")
+	shader:dx10texture("s_noise", "fx\\fx_noise2")
 
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
+	shader:dx10sampler("smp_linear")
 end

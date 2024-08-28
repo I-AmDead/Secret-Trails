@@ -14,8 +14,9 @@ function elemets(shader, t_base, t_second, t_detail, ps_shader, jitter_enable)
 		shader:dx10sampler("smp_smap")
 	end
 
-	shader:dx10sampler("smp_nofilter")
+	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_material")
+	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
 end
 
@@ -24,6 +25,7 @@ function element_0(shader, t_base, t_second, t_detail)
 		:fog(false)
 		:zb(false, false)
 	shader:dx10texture("s_base", t_base)
+	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 end
 

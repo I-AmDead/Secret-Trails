@@ -183,7 +183,7 @@ float3 SSFX_get_scene(float2 tc, uint iSample : SV_SAMPLEINDEX)
 
     // hemisphere
     float3 hdiffuse, hspecular;
-    hmodel(hdiffuse, hspecular, rMtl, rHemi, rD, rP, rN);
+    hmodel(hdiffuse, hspecular, rMtl, rHemi, rD, rP.rgb, rN);
 
     // Final color
     float3 rcolor = rL.rgb + hdiffuse.rgb;
