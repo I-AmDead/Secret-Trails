@@ -237,7 +237,7 @@ local function on_first_update()
             db.actor:give_info_portion("actor_na_darkvalley")
         end
 
-        if db.actor:has_info("ucen_need_metka_start") then
+        if db.actor:has_info("ucen_need_metka_start") and db.actor:dont_has_info("electro_chimera_ucen_need") then
             ucen_electro()
             db.actor:give_info_portion("electro_chimera_ucen_need")
         end
@@ -2276,7 +2276,6 @@ end
 
 function attach(sm)
 	sm:subscribe({signal = "on_first_update",  fun = on_first_update})
-	sm:subscribe({signal = "on_first_update",  fun = on_info})
 	sm:subscribe({signal = "on_info",          fun = on_info})
 	sm:subscribe({signal = "on_take",          fun = on_take})
 	sm:subscribe({signal = "on_update",        fun = on_update})
