@@ -24,6 +24,7 @@ local function del_phobj()
     delete_obj("door_trader_box_0011")
     delete_obj("level_prefix_physic_destroyable_object_0005")
     delete_obj("level_prefix_physic_destroyable_object_0006")
+    delete_obj("level_prefix_inventory_box_0034")
 end
 
 function delete_obj(name)
@@ -178,6 +179,18 @@ local function fix_agr_und_agr()
         lc.dest_level_vertex_id = 180544
         lc.dest_position = vector():set(-20.730, -0.203, 34.239)
         ogse.save_var("fix_agr_und_agr1", true)
+    end
+end
+
+-- Фикс Радара - Склады, чтобы dest_position была не в геометрии
+function fix_bar_ac()
+    if ogse.var_exists("fix_exit_to_military_01") then
+        return
+    end
+    local obj = alife():object("exit_to_military_01")
+    if obj then
+        alife():release(obj)
+        ogse.save_var("fix_exit_to_military_01", true)
     end
 end
 
@@ -361,6 +374,7 @@ local function death_npc_item(npc)
 end
 
 local function fix_new_first()
+    del_phobj()
     ded_luck()
     ded_secret()
     fix_lc_pripyat_aes()
@@ -368,6 +382,7 @@ local function fix_new_first()
     fix_lc_garbage_escape()
     fix_lc_escape_garbage()
     fix_agr_und_agr()
+    fix_bar_ac()
     gas_light_flare()
     uglovaya_light_params()
 end
