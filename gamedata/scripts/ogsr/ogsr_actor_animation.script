@@ -117,24 +117,21 @@ function swipe_mask()
     game.play_hud_anm(anm_name, 0, 1, 1, false)
     local new_speed = game.set_hud_anm_time(anm_name, (anm_time_2) / 1000 + anm_additional_length)
     animation_on()
-
-
-        game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_wipe", false, 0.8)
-        snd_gasmask:play(db.actor, 0, sound_object.s2d)
-        snd_gasmask.frequency = 0.8
-        level.add_cam_effector("camera_effects\\weapon\\gasmask_swipe1.anm", 7538, false, "", 0, false)
-        dsh.timeout(anm_time_2 - 750, 
-        function()
-            rain_drops_restart()
-        end)
-        dsh.timeout(anm_time_2 - 300, 
-        function()
-            if new_speed then
-                game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
-            end
-            dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
-        end)
-
+    game.play_hud_motion(db.actor:active_item() and 1 or 2, anm_sec, "anm_wipe", false, 0.8)
+    snd_gasmask:play(db.actor, 0, sound_object.s2d)
+    snd_gasmask.frequency = 0.8
+    level.add_cam_effector("camera_effects\\weapon\\mask.anm", 7538, false, "", 0, false)
+    dsh.timeout(anm_time_2 - 550, 
+    function()
+        rain_drops_restart()
+    end)
+    dsh.timeout(anm_time_2 - 300, 
+    function()
+        if new_speed then
+            game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
+        end
+        dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
+    end)
 end
 
 -- EMULATION TORCH AND NVG SWITCH
