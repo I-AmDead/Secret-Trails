@@ -60,7 +60,6 @@ function element_3(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_mask_flare_2", "$user$sun_shafts1")
 	shader:dx10texture("s_mask_flare_3", "$user$generic2")
 	shader:dx10texture("s_blur_2", "$user$blur_2")
-	shader:dx10texture("s_lut_atlas", "shaders\\lut_atlas")
 	shader:dx10texture("s_noise", "fx\\fx_noise2")
 
 	shader:dx10sampler("smp_nofilter")

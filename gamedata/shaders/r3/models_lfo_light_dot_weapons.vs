@@ -15,6 +15,8 @@ vf _main(v_model v)
     vf o;
 
     o.hpos = mul(m_WVP, v.P); // Homogenous position
+    o.hpos.xy = get_taa_jitter(o.hpos);
+
     o.tc0 = v.tc.xy; // Texture coordinates
 
     o.v_pos = mul(m_WV, v.P).xyz; // Position in view space

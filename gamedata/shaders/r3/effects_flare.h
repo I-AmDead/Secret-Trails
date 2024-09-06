@@ -138,7 +138,8 @@ float4 generate_flare(float2 uv)
 
     float fadeFactor = saturate(max(max(dep.x, dep.y), max(dep.z, dep.w)));
     final = lerp(float4(0.f, 0.f, 0.f, 0.f), final, fadeFactor);
-    final *= sun_shafts_intensity * 5.0;
+    final *= sun_shafts_intensity * 3.0;
+    final = blendSoftLight(final, float4(col * L_sun_color, 1.0));
 
     return final;
 }

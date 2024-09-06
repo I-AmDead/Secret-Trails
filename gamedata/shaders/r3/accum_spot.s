@@ -1,4 +1,4 @@
-function elemets(shader, t_base, t_second, t_detail, ps_shader, jitter_enable)
+function elements(shader, t_base, t_second, t_detail, ps_shader, jitter_enable)
 	shader:begin("accum_volume", ps_shader)
 		:fog(false)
 		:zb(false, false)
@@ -30,17 +30,17 @@ function element_0(shader, t_base, t_second, t_detail)
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	elemets(shader, t_base, t_second, t_detail, "accum_spot_unshadowed", false)
+	elements(shader, t_base, t_second, t_detail, "accum_spot_unshadowed", false)
 end
 
 function element_2(shader, t_base, t_second, t_detail)
-	elemets(shader, t_base, t_second, t_detail, "accum_spot_normal", true)
+	elements(shader, t_base, t_second, t_detail, "accum_spot_normal", true)
 end
 
 function element_3(shader, t_base, t_second, t_detail)
-	elemets(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
+	elements(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
 end
 
 function element_4(shader, t_base, t_second, t_detail)
-	elemets(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
+	elements(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
 end

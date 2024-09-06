@@ -229,11 +229,7 @@ float gbuf_unpack_mtl(float mtl_hemi)
 
 #endif
 
-#ifndef EXTEND_F_DEFFER
 f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, const bool use_reflections = false)
-#else
-f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, uint imask, const bool use_reflections = false)
-#endif
 {
     f_deffer res;
 
@@ -250,10 +246,6 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, uint imask, const boo
         res.H = float4(L_hotness.x, L_hotness.y, 0.0, 1.0);
     else
         res.H = float4(0.0, 0.0, 0.0, 0.0);
-
-#ifdef EXTEND_F_DEFFER
-    res.mask = imask;
-#endif
 
     return res;
 }

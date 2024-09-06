@@ -295,11 +295,8 @@ struct f_deffer
 {
     float4 position : SV_Target0; // xy=encoded normal, z = pz, w = encoded(m-id,hemi)
     float4 C : SV_Target1; // r, g, b,  gloss
-	float2 Velocity : SV_Target2; // XY - motion vectors
-	float4 H : SV_Target3;
-#ifdef EXTEND_F_DEFFER
-    uint mask : SV_COVERAGE;
-#endif
+    float2 Velocity : SV_Target2; // XY - motion vectors
+    float4 H : SV_Target3;
 };
 
 struct gbuffer_data

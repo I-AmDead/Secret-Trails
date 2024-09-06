@@ -37,7 +37,7 @@ float4 main(p_screen I) : SV_Target
     int iSample = 0;
     float2 center = I.tc0;
 
-    gbuffer_data gbd = gbuffer_load_data(center, I.hpos, iSample);
+    gbuffer_data gbd = gbuffer_load_data(center, I.hpos.xy, iSample);
 
     float depth = gbd.P.z;
 
@@ -93,15 +93,15 @@ float4 main(p_screen I) : SV_Target
     if (pnv_param_1.z < 1.f)
     {
         img = blend_soft(img, bloom.xyz * bloom.w);
-        img += generate_flare(center);
         float4 flares = s_flares.Sample(smp_rtlinear, center);
         img += flares.xyz * flares.a;
+        img += generate_flare(center);
     }
 #else
     img = blend_soft(img, bloom.xyz * bloom.w);
-    img += generate_flare(center);
     float4 flares = s_flares.Sample(smp_rtlinear, center);
     img += flares.xyz * flares.a;
+    img += generate_flare(center);
 #endif
 
     // Vanilla color grading ( Exposure, saturation and gamma )
