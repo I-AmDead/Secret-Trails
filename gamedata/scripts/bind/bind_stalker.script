@@ -25,9 +25,6 @@ function actor_binder:net_spawn(data)
     db.add_actor(self.object)
     self.am:call("on_before_spawn")
 
-    cmd("reflections_only_on_puddles on")
-    cmd("reflections_only_on_terrain on")
-
     if not db.storage[self.object:id()].pstor then --KRodin: из xr_logic почему-то не срабатывает, поэтому создаём pstor здесь.
         db.storage[self.object:id()].pstor = {}
     end
@@ -40,80 +37,13 @@ function actor_binder:net_spawn(data)
         rx_ai.actor_net_spawn()
     end
 
-    cmd("r_SunShafts_Radius 2.0")
-    cmd("r_SunShafts_Blend 0.01")
-
     cmd("cam_inert 0") --сбрасываем инерцию камеры в 0
-
-    if get_console():get_integer("r3_dynamic_wet_surfaces_sm_res") < 1024 then
-        cmd("r3_dynamic_wet_surfaces_sm_res 1024") --Чтобы полос на стенах не было во время дождя.
-    end
-
-    cmd("r2_exp_donttest_shad off") --Это экономит фпс.
-    cmd("r_terrain_parallax_enable on") --Не все текстуры земли у нас адаптированы под параллакс
 
     if isIndoor(level.name()) then -- SSS18
         cmd("ssfx_is_underground 1")
     else
         cmd("ssfx_is_underground 0")
     end
-
-    cmd("g_first_person_body_offset -0.6")
-    cmd("g_first_person_cam_offset 0.0, 0.1, -0.4")
-
------------------------------------------------------------
-    if not ogse.var_exists("ES_GRAPHICS_SETTINGS") then
-        cmd("r2_sun_lumscale 1.5")
-        cmd("r2_sun_lumscale_amb 1.0")
-        cmd("r2_sun_lumscale_hemi 1.5")
-        cmd("r2_ls_bloom_kernel_b 0.7")
-        cmd("r2_ls_bloom_kernel_g 3.0")
-        cmd("r2_ls_bloom_threshold 0.00001")
-        cmd("r2_ls_bloom_kernel_scale 0.7")
-        cmd("r2_ls_bloom_speed 100.0")
-
-        cmd("r2_tonemap on")
-        cmd("r2_tonemap_adaptation 1.0")
-        cmd("r2_tonemap_amount 0.7")
-        cmd("r2_tonemap_lowlum 0.0001")
-        cmd("r2_tonemap_middlegray 1.0")
-
-        cmd("r3_dynamic_wet_surfaces_far 100.")
-        cmd("ssfx_wetsurfaces_1 1.700000, 1.400000, 0.700000, 2.000000")
-        cmd("ssfx_wetsurfaces_2 1.100000, 1.500000, 0.200000, 0.700000")
-        cmd("ssfx_gloss_method 1")
-        cmd("ssfx_gloss_minmax 0.6, 0.8, 0.15")
-        cmd("ssfx_lightsetup_1 0.65, 1.0, 1.0, 0.5")
-        cmd("ssfx_florafixes_1 0.1, 0.3, 0.1, 0.3")
-        cmd("ssfx_florafixes_2 1.0, 1.0, 0.0, 0.0")
-
-        cmd("ssfx_rain_1 10.0, 0.015, 5.0, 2.0")
-        cmd("ssfx_rain_2 0.4, 0.5, 5.0, 1.0")
-        cmd("ssfx_rain_3 0.95, 0.5, 0.0, 0.0")
-
-        cmd("ssfx_use_new_volumetric_method 1")
-        cmd("ssfx_volumetric_limits 100.0, 0.1, 5.0")
-
-        cmd("ssfx_exposure 1")
-        cmd("ssfx_gamma 1")
-        cmd("ssfx_saturation 1.3")
-        cmd("ssfx_color_grading 0.520000, 0.515000, 0.500000")
-
-        cmd("ssfx_terrain_offset 0.050000, 0.110000, 0.060000, 0.060000")
-        cmd("ssfx_ssr_1 1.010000, 0.000000, 0.600000, 0.300000")
-        cmd("ssfx_ssr_2 0.800000, 1.000000, 0.300000, 0.010000")
-        cmd("ssfx_lut 0.100000, 1.000000, 0.000000, 0.000000")
-
-        cmd("crosshair_color 0.400000, 0.900000, 0.500000")
-        cmd("watch_color_params 0.1, 0.6, 1, 0")
-
-        cmd("heat_fade_distance 13, 20, 0, 0")
-        cmd("heat_vision_blurring 1, 1, 1.1, 1.1")
-        cmd("heat_vision_steps -0.2, 0.2, 0.5, 1")
-
-        ogse.save_var("ES_GRAPHICS_SETTINGS", true)
-    end
------------------------------------------------------------
 
     self.am:call("on_spawn", data)
     return true
