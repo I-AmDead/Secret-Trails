@@ -48,63 +48,66 @@ function quest_fail()
     end
 end
 
-local gas_lamp_list = {}
-local function gas_light_flare()
-    if ogse.var_exists("gas_lamp_list") then
-        gas_lamp_list = ogse.load_var("gas_lamp_list")
-    else
+local lamp_list = ogse.load_var("lamp_list", {})
+local function lamp_lists()
+    if not ogse.var_exists("lamp_list") then
         for a = 1, 65534 do
             local obj = level.object_by_id(a)
-            if obj and string.find(obj:name(), "light_gas_r2") then
-                table.insert(gas_lamp_list, a)
+            if obj then
+                local pk = get_netpk(obj, 1)
+                local data = pk:get()
+                if string.find(obj:name(), "light_gas_r2") then
+                    lamp_list[a] = {type = "gas"}
+                elseif string.find(obj:name(), "light_uglovaya_1") then
+                    lamp_list[a] = {type = "uglovaya"}
+                elseif data.main_color and data.main_color == -7243 then
+                    lamp_list[a] = {type = "white"}
+                elseif data.main_brightness and data.main_brightness > 0.9 then
+                    lamp_list[a] = {type = "brightness"}
+                end
             end
         end
-    end
 
-    for _, id in pairs(gas_lamp_list) do
-        local obj = level.object_by_id(id)
-        if obj then
-            obj:get_hanging_lamp():set_flare(false)
-        end
+        ogse.save_var("lamp_list", lamp_list)
     end
-
-    ogse.save_var("gas_lamp_list", gas_lamp_list)
 end
 
-local uglovaya_lamp_list = {}
-local function uglovaya_light_params()
-    if ogse.var_exists("uglovaya_lamp_list") then
-        uglovaya_lamp_list = ogse.load_var("uglovaya_lamp_list")
-    else
-        for a = 1, 65534 do
-            local obj = level.object_by_id(a)
-            if obj and string.find(obj:name(), "light_uglovaya_1") then
-                table.insert(uglovaya_lamp_list, a)
-            end
-        end
-    end
-
-    for _, id in pairs(uglovaya_lamp_list) do
-        local obj = level.object_by_id(id)
+local function lamp_settings()
+    for i, v in pairs(lamp_list) do
+        local obj = level.object_by_id(i)
         if obj then
-            local pk = get_netpk(obj, 1)
-            ASSERT(pk and pk:isOk(), "can't read netpacket of %s", obj:name())
-            local data = pk:get()
-            local props =
-            {
-                [ "main_color"          ] = tonumber("0xffffffff", 16),
-                [ "main_brightness"     ] = 0.3,
-                [ "light_flags"         ] = tonumber("0x2a", 16)
-            }
-            log3("obj %s props %s", obj:name(), props)
-            for k, v in pairs(props) do
-                data[k] = v
+            if v.type == "gas" then
+                obj:get_hanging_lamp():set_flare(false)
+            elseif v.type == "uglovaya" or v.type == "white" or v.type == "brightness" then
+                local pk = get_netpk(obj, 1)
+                ASSERT(pk and pk:isOk(), "can't read netpacket of %s", obj:name())
+                local data = pk:get()
+                local props = {}
+                if v.type == "uglovaya" then
+                    props =
+                    {
+                        [ "main_color"          ] = tonumber("0xffffffff", 16),
+                        [ "main_brightness"     ] = 0.3,
+                        [ "light_flags"         ] = tonumber("0x2a", 16)
+                    }
+                elseif v.type == "brightness" then
+                    props = {["main_brightness"] = 0.6}
+                else
+                    props =
+                    {
+                        [ "main_brightness"     ] = 0.3,
+                        [ "main_range"          ] = 7,
+                        [ "light_flags"         ] = tonumber("0x2a", 16)
+                    }
+                end
+                log3("obj %s props %s", obj:name(), props)
+                for k, v in pairs(props) do
+                    data[k] = v
+                end
+                pk:set(data)
             end
-            pk:set(data)
         end
     end
-
-    ogse.save_var("uglovaya_lamp_list", uglovaya_lamp_list)
 end
 
 local function fix_lc_pripyat_aes()
@@ -183,7 +186,7 @@ local function fix_agr_und_agr()
 end
 
 -- Фикс Радара - Склады, чтобы dest_position была не в геометрии
-function fix_bar_ac()
+local function fix_bar_ac()
     if ogse.var_exists("fix_exit_to_military_01") then
         return
     end
@@ -219,15 +222,6 @@ local function on_drag_drop(obj)
         local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
         snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
     end
-end
-
-local function fix_first()
-    del_phobj()
-    swamp_secret()
-    ded_luck()
-    ded_secret()
-    gas_light_flare()
-    uglovaya_light_params()
 end
 
 local function spawn_sverhprovodnik()
@@ -383,8 +377,8 @@ local function fix_new_first()
     fix_lc_escape_garbage()
     fix_agr_und_agr()
     fix_bar_ac()
-    gas_light_flare()
-    uglovaya_light_params()
+    lamp_lists()
+    lamp_settings()
 end
 
 local show_engine_legs
