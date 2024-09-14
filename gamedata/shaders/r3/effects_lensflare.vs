@@ -25,6 +25,7 @@ _out main(_in v)
     _out o;
 
     o.hpos = mul(m_WVP, v.P); // xform, input in world coords
+
     o.tc0.xy = v.tc; // copy tc
     o.tc1 = proj_to_screen(o.hpos);
     o.tc1.xy /= o.tc1.w;

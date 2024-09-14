@@ -2,7 +2,7 @@
 
 #define LENS_FLARE_INTENSITY 0.95
 #define GLOW_FLARE_INTENSITY 0.25
-#define LENS_DIRT_INTENSITY 0.5
+#define LENS_DIRT_INTENSITY 0.7
 #define CLIP_DISTANCE 1.5f
 
 struct flare
@@ -34,11 +34,7 @@ float4 main(flare I) : SV_Target
     final.rgb = (glow + flare) * (1.0 - flare_params.x);
 
     float2 tcProj = I.tc2.xy / I.tc2.w;
-#ifdef GBUFFER_OPTIMIZATION
     gbuffer_data gbd = gbuffer_load_data(tcProj, I.hpos);
-#else
-    gbuffer_data gbd = gbuffer_load_data(tcProj);
-#endif
     float4 _P = float4(gbd.P, gbd.mtl);
 
     float spaceDepth = gbd.P.z;
@@ -48,7 +44,7 @@ float4 main(flare I) : SV_Target
     // clip pixels on hud
     clip(spaceDepth - CLIP_DISTANCE);
 
-    final.rgb += dirt.aaa * saturate(0.5 - length(len)) * 2;
+    final.rgb += dirt.aaa * saturate(0.3 - length(len));
     final.rgb *= flare_color.rgb;
     final.rgb = clamp(0.0, 0.7, final.rgb);
 
