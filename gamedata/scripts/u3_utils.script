@@ -7,7 +7,7 @@
 -- Last update: 2009.12.29
 -----------------------------------------------------------------------------
 function isGameOn()
-    if level.present() and db.actor ~= nil and db.actor:alive() then
+    if level.present() and db.actor and db.actor:alive() then
         return true
     end
     return false
@@ -19,7 +19,7 @@ end
 function savegame(save_name)
     if not save_name then return end
 
-    if isGameOn() and string.len(save_name) > 40 then
+    if isGameOn() and string.len(save_name) < 40 then
         cmd("save " .. save_name)
     end
 end
