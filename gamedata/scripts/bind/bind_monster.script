@@ -116,6 +116,10 @@ function generic_object_binder:update(delta)
         xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "update", delta)
     end
 
+    if obj:section() == "electro_chimera" and time_global() > (self.charge_time or 0) + 3000 then
+        self.charge_time = time_global()
+    end
+
     self.am:call("on_monster_update." .. self.object:id(), self.object, delta)
 end
 
@@ -208,6 +212,8 @@ function generic_object_binder:hit_callback(obj, amount, local_direction, who, b
                 zh.impulse = 0.1
                 enemy:hit(zh)
             end
+
+            self.charge_time = time_global()
         end
     end
 
