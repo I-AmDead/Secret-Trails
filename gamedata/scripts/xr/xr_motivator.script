@@ -7,7 +7,6 @@ function motivator_binder:__init(obj)
     super(obj)
     self.loaded = false
     self.first_update = false
-    self.particles = {}
     self.am = ogsr_signals.get_mgr()
     self.am:call("on_npc_init", obj, self)
 end
@@ -92,18 +91,6 @@ function motivator_binder:net_spawn(sobject)
     self.am:call("on_npc_before_spawn", self.object, self)
     xr_gulag.setup_gulag_and_logic_on_spawn(self.object, self.st, sobject, modules.stype_stalker, self.loaded)
 
-    local particle_param = get_string(self.object:section(), "bones_particles", nil)
-    if particle_param and sys_ini:section_exist(particle_param) then
-        local tmp = get_section_keys_and_values(particle_param)
-        for k, v in pairs(tmp) do
-            local t = get_section_keys_and_values(v)
-            t.obj = self.object
-            if not t.stop_on_death or self.object:alive() then
-                play_particle(self.object, t)
-            end
-        end
-    end
-
     if rx_ai then
         rx_ai.npc_net_spawn(self.object)
     end
@@ -148,16 +135,7 @@ function motivator_binder:net_destroy()
 
     xr_logic.save_logic_online(self.object)
 
-    if table.getn(self.particles) > 0 then
-        for kk, vv in pairs(self.particles) do
-            if not vv:is_finished() then
-                vv:stop()
-                self.particles[kk] = nil
-            end
-        end
-    end
-
-    if self.object == nil then
+    if not self.object then
         return
     end
 
@@ -215,6 +193,12 @@ function motivator_binder:before_hit_callback(hit_data)
 end
 
 function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_index)
+    local chk_dist = self.object:position():distance_to(who:position())
+    local range = self.object:range()
+    if chk_dist > range then
+        self.object:set_range(chk_dist*1.1)
+    end
+    self.object:make_object_visible_somewhen(who)
     if self.st.active_section then
         xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
@@ -251,8 +235,6 @@ function motivator_binder:death_callback(victim, who)
         rx_ai.npc_death(self.object, who)
     end
 
-    xr_statistic.addKillCount(who, self.object)
-
     if self.st.death then
         xr_logic.issue_event(self.object, self.st.death, "death_callback", self.object, who)
     end
@@ -267,17 +249,11 @@ function motivator_binder:death_callback(victim, who)
 
     self:clear_callbacks()
 
-    if table.getn(self.particles) > 0 then
-        for kk, vv in pairs(self.particles) do
-            vv:on_death()
-        end
-    end
+    xr_statistic.addKillCount(who, self.object)
 
     if who and who:id() == db.actor:id() then
         archievements.acv_kill()
     end
-
-    actor_stats.remove_from_ranking(self.object:id())
 
     self.st.move_mgr = nil
 
@@ -299,16 +275,6 @@ end
 function motivator_binder:update(delta)
     object_binder.update(self, delta)
 
-    if table.getn(self.particles) > 0 then
-        for kk, vv in pairs(self.particles) do
-            if vv:is_finished() then
-                self.particles[kk] = nil
-            else
-                vv:update(delta)
-            end
-        end
-    end
-
     if not self.first_update then
         self.first_update = true
         self.am:call("on_npc_first_update", self.object, delta)
@@ -326,7 +292,6 @@ function motivator_binder:update(delta)
     end
 
     sr_light.check_light(self.object)
-    self.object:info_clear()
 
     self.am:call("on_npc_update." .. self.object:id(), self.object, delta)
 end
@@ -485,13 +450,6 @@ function addCommonPrecondition(action)
     if rx_ai then
         rx_ai.addCommonPrecondition(action)
     end
-end
-
-function play_particle(obj, params)
-    if not particles[obj:id()] then
-        particles[obj:id()] = {}
-    end
-    table.insert(particles[obj:id()], params)
 end
 
 function enemy_see_actor(obj, typ)

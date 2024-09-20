@@ -2,9 +2,7 @@
 -- Модуль обхода аномалий сталкерами. Для монстров включать его смысла не вижу.
 local ENABLE_AD = true -- Включить скрипт?
 
-local excluded_npc = {
-    ["dik_the_drifter"] = true
-}
+local excluded_npc = {}
 
 local excluded_comms = {
     ["zombied"] = true
@@ -22,29 +20,25 @@ end
 local mobs = {}
 
 function on_npc_spawn(obj, binder)
-    if not obj:alive() then
-        return
-    end
+    if not obj:alive() then return end
 
     local anomaly_detector = obj:get_custom_monster():anomaly_detector()
-    if (excluded_npc[obj:profile_name()] or excluded_npc[obj:name()] or excluded_npc[obj:story_id()] or
-        excluded_comms[obj:character_community()] or excluded_locations[level.name()]) then
+    if (excluded_npc[obj:profile_name()]
+    or excluded_npc[obj:name()]
+    or excluded_npc[obj:story_id()]
+    or excluded_comms[obj:character_community()]
+    or excluded_locations[level.name()]) then
         anomaly_detector:deactivate(true)
         return
     end
 
-    if --[=[( not obj:is_relation_enemy( db.actor ) and not get_anomaly_invisibility( obj ) )
-    or--]=] (obj:character_community() == "kulg_band_2" or obj:character_community() == "ecolog" or obj:story_id() ==
-        story_ids.colonel_prohorov) -- KRodin: квестовая хрень, нормально фиксить лень.
-    then
+    if obj:character_community() == "ecolog" or obj:story_id() == story_ids.vasil2 then
         -- log3("--[%s] set_anomaly_invisibility for [%s] comm: [%s]", script_name(), obj:name(), obj:character_community())
         set_anomaly_invisibility(obj, true)
         binder[script_name() .. ".anomaly_invisibility"] = true
     end
 
-    if not ENABLE_AD then
-        return
-    end
+    if not ENABLE_AD then return end
     --
     anomaly_detector.Anomaly_Detect_Radius = 30
     --

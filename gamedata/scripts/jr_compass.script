@@ -19,6 +19,10 @@ local spot_settings = {
     ["level_changer"] = {"level_changer", nil, GetARGB(255, 70, 180, 255)},
     ["crlc_big"] = {"crlc_big", nil, GetARGB(255, 255, 180, 70)},
     ["crlc_small"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
+    ["eliminate_lager"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
+    ["defend_lager"] = {"crlc_small", nil, GetARGB(255, 70, 180, 255)},
+    ["kill_stalker"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
+    ["find_item_location"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
 
     [clsid.zone_bfuzz_s] = {"zone_bfuzz", "Fuzz", GetARGB(255, 70, 180, 255)},                  -- Жгучий пух
     [clsid.zone_buzz_s] = {"zone_buzz", "Ameba", GetARGB(255, 59, 255, 124)},                   -- Холодец
@@ -368,7 +372,7 @@ local function actor_on_update()
                 compass_objects[obj:id()] =
                 {
                     obj = obj,
-                    text = game.translate_string(spot_settings[spot_type][2] or spot.hint) or nil,
+                    text = game.translate_string(spot_settings[spot_type][2] or (spot.hint and string.len(spot.hint)) < 15 and spot.hint or nil) or nil,
                     color = spot_settings[spot_type][3] or def_color,
                     spot = spot_settings[spot_type][1]
                 }
