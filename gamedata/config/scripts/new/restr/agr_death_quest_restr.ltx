@@ -1,30 +1,7 @@
+#include "caterpillar_restr.ltx"
+
 [logic]
-active = sr_psy_antenna@nol
+active = {+kruglov_art_spawn} sr_psy_antenna@two, sr_psy_antenna@nol
 
-[sr_psy_antenna@nol]
-eff_intensity = 30
-hit_intensity = 20
-on_actor_inside = {+kruglov_art_start -kruglov_art_done} sr_psy_antenna@preone
-;on_info = {+kruglov_art_mest} sr_psy_antenna@one
-
-[sr_psy_antenna@preone]
-eff_intensity = 50
-hit_intensity = 50
-on_timer = 10000 | sr_psy_antenna@one
-
-[sr_psy_antenna@one]
-eff_intensity = 50
-hit_intensity = 50
-on_info = {=actor_has_item_on_belt(detector_kruglov)} sr_psy_antenna@two %=braad_test.check_caterpillar(kruglov_art_spawn)%
-on_timer = 20000 | sr_psy_antenna@nol
-
-[sr_psy_antenna@two]
-eff_intensity = 50
-hit_intensity = 50
-on_info = {=actor_has_item(af_caterpillar)} sr_psy_antenna@tri 
-on_timer = 20000 | sr_psy_antenna@nol  
- 
-[sr_psy_antenna@tri]
-eff_intensity = 70
-hit_intensity = 70 
-on_timer = 120000 | nil
+[sr_psy_antenna@one]:sr_psy_antenna@ones
+on_info = {-kruglov_art_spawn} sr_psy_antenna@two %=braad_test.check_caterpillar(kruglov_art_spawn)%

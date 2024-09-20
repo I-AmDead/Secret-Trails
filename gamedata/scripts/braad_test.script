@@ -1396,18 +1396,17 @@ function set_community_jila(actor, npc)
     db.actor:set_character_community("stalker", 0, 0)
 end
 
-function spawn_caterpillar()
-    local position = db.actor:position()
+function spawn_caterpillar(obj)
+    local position = obj:position()
     position.x = position.x
-    position.y = position.y + 5
+    position.y = position.y + 10
     position.z = position.z
-    news_manager.send_tip(db.actor, game.translate_string("check_caterpillar"))
-    spawn_ai_location("af_caterpillar", position, level.name())
+    spawn_ai_location("af_caterpillar", position, obj:level_vertex_id(), obj:game_vertex_id())
 end
 
 function check_caterpillar(actor, npc, info)
     if db.actor and db.actor:dont_has_info(info[1]) then
-        spawn_caterpillar()
+        spawn_caterpillar(npc)
         db.actor:give_info_portion(info[1])
     end
 end
