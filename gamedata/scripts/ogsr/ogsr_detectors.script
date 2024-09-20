@@ -1,0 +1,137 @@
+local id_detector_in_slot
+local last_detector_sect
+local det_radius = 0
+local last_beep = 0
+local beep_period = 1000
+local miminal_beep_period = 150
+local snd_beep = xr_sound.get_safe_sound_object("detectors\\da-2_beep1")
+
+local anoms_to_show = {}
+
+local subscribed = false
+
+local function remove_mark_from_minimap(id, spot)
+	level.map_remove_object_spot(id, spot)
+	anoms_to_show[id] = nil
+end
+
+local function add_mark_on_minimap(id, sect)
+	level.map_add_object_spot(id, "anomaly_zone_location", "")
+	anoms_to_show[id] = "anomaly_zone_location"
+end
+
+local function remove_all_marks_from_minimap()
+    for id, spot in pairs(anoms_to_show) do
+        remove_mark_from_minimap(id, spot)
+    end
+end
+
+local function update_detector_sound(act_pos)
+    local hasanom, anomid, pos, cls, distance, radius, sect_anom = ogse_anomaly.get_nearest_anomaly_by_point(act_pos)
+    if not hasanom or last_detector_sect == "detector_simple" or (string.find(sect_anom, "zone_radioactive") or string.find(sect_anom, "zone_field")) then return end
+    if distance <= (det_radius * 0.5) then
+        local tg = time_global()
+        if last_beep == 0 then
+            snd_beep:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 10.0)
+            last_beep = tg
+        else
+            local mul_check = distance / (det_radius * 0.5)
+            local timeout_check = math.ceil(beep_period * mul_check)	
+            if timeout_check < miminal_beep_period then
+                timeout_check = miminal_beep_period
+            end
+            if tg > (last_beep + timeout_check) then
+                snd_beep:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 10.0)
+                last_beep = tg
+            end						
+        end
+    else
+        if last_beep > 0 then
+            last_beep = 0
+        end
+    end
+end
+
+local function on_update()
+    local act_pos = db.actor:position()
+    if last_detector_sect == "detector_elite" or last_detector_sect == "detector_scientific" then
+
+        local anm_table = ogse_anomaly.get_all_nearest_anomalies_by_point_in_radius(act_pos, det_radius)
+        local new_anom_tbl = {}
+
+        for _, anm in ipairs(anm_table) do
+            if not anoms_to_show[anm.id] then
+                add_mark_on_minimap(anm.id, anm.sect) --Установили метку на миникарте
+            end
+            new_anom_tbl[anm.id] = true
+        end
+
+        for id, spot in pairs(anoms_to_show) do --Удаляем метки с аномалий, которые больше не нужно показывать на карте
+            if not new_anom_tbl[id] then
+                remove_mark_from_minimap(id, spot)
+            end
+        end
+
+        table.sort(anm_table, function(a, b) return (a.dist + a.radius) > (b.dist + b.radius) end)
+        table.remove(anm_table)
+    end
+    update_detector_sound(act_pos)
+end
+
+local function subscribe()
+    if not subscribed then
+        subscribed = {signal = "on_update", fun = on_update}
+        ogsr_signals.get_mgr():subscribe(subscribed)
+    end
+end
+
+local function unsubscribe()
+    if subscribed then
+        ogsr_signals.get_mgr():unsubscribe(subscribed)
+        subscribed = nil
+    end
+end
+
+local function on_first_update()
+    local detectors_visible = ogse.load_var("detectors_visible", false)
+    if not detectors_visible then return end
+    get_actor_obj():DetectorToogle(true)
+
+    local obj = db.actor:item_in_slot(8)
+    if obj and string.find(obj:section(), "detector") then
+        subscribe()
+    end
+end
+
+local function on_save()
+    ogse.save_var("detectors_visible", get_actor_obj():IsDetectorActive())
+end
+
+local function on_item_to_slot(obj)
+    local sect = obj:section()
+    if string.find(sect, "detector") then
+        id_detector_in_slot = obj:id()
+        last_detector_sect = sect
+        det_radius = get_u32(sect, "af_radius", 0)
+        if device().precache_frame < 1 then
+            subscribe()
+        end
+    end
+end
+
+local function on_item_to_ruck(obj)
+    if obj:id() == id_detector_in_slot then
+        remove_all_marks_from_minimap()
+        last_detector_sect = nil
+        id_detector_in_slot = nil
+        det_radius = 0
+        unsubscribe()
+    end
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_first_update", fun = on_first_update})
+    sm:subscribe({signal = "on_save",         fun = on_save})
+    sm:subscribe({signal = "on_item_to_slot", fun = on_item_to_slot})
+    sm:subscribe({signal = "on_item_to_ruck", fun = on_item_to_ruck})
+end
