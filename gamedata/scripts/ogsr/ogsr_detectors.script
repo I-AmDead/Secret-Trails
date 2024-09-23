@@ -8,7 +8,7 @@ local snd_beep = xr_sound.get_safe_sound_object("detectors\\da-2_beep1")
 
 local anoms_to_show = {}
 
-local subscribed = false
+local subscribed
 
 local function remove_mark_from_minimap(id, spot)
 	level.map_remove_object_spot(id, spot)
@@ -93,14 +93,17 @@ local function unsubscribe()
 end
 
 local function on_first_update()
+    local obj = db.actor:item_in_slot(8)
+    if obj and string.find(obj:section(), "detector") then
+        id_detector_in_slot = obj:id()
+        last_detector_sect = obj:section()
+        det_radius = get_u32(obj:section(), "af_radius", 0)
+        subscribe()
+    end
+
     local detectors_visible = ogse.load_var("detectors_visible", false)
     if not detectors_visible then return end
     get_actor_obj():DetectorToogle(true)
-
-    local obj = db.actor:item_in_slot(8)
-    if obj and string.find(obj:section(), "detector") then
-        subscribe()
-    end
 end
 
 local function on_save()
@@ -108,11 +111,10 @@ local function on_save()
 end
 
 local function on_item_to_slot(obj)
-    local sect = obj:section()
-    if string.find(sect, "detector") then
+    if string.find(obj:section(), "detector") then
         id_detector_in_slot = obj:id()
-        last_detector_sect = sect
-        det_radius = get_u32(sect, "af_radius", 0)
+        last_detector_sect = obj:section()
+        det_radius = get_u32(obj:section(), "af_radius", 0)
         if device().precache_frame < 1 then
             subscribe()
         end

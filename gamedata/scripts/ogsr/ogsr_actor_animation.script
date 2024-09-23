@@ -99,8 +99,8 @@ local function swipe_mask()
                 game.play_hud_anm(anm_name, 2, new_speed, 1, false, true)
             end
             dsh.timeout(anm_time_2 + anm_additional_length, animation_off)
+            detector_hide(anm_time_2 + anm_additional_length)
         end)
-        detector_hide(anm_time_2)
     end)
 end
 
@@ -133,7 +133,7 @@ local function torch_and_nvg_switch(nvg)
                 end
             end)
             dsh.timeout(torch_anm_time_1, animation_off)
-            detector_hide(torch_anm_time_1 - 300)
+            detector_hide(torch_anm_time_1)
         end)
     end)
 end
@@ -206,7 +206,7 @@ local function on_item_before_pickup(obj)
                 dsh.timeout(pickup_anm_time - 100, function() toggle_force_crouch() end)
             end
             dsh.timeout(pickup_anm_time - 300, function() take_delay(obj) end)
-            detector_hide(pickup_anm_time + 10)
+            detector_hide(pickup_anm_time + 100)
             anim_plays = true
         end)
     end
@@ -253,7 +253,7 @@ function harvest(on_take)
                 animation_off()
                 db.actor:activate_slot(prev_slot)
             end)
-            detector_hide(loot_anm_time + 10)
+            detector_hide(loot_anm_time + 100)
         end)
     end)
 end
@@ -327,7 +327,7 @@ local function hand_wide()
         snd_hand_bore:play(db.actor, 0, sound_object.s2d)
         animation_on()
         dsh.timeout(anm_time, animation_off)
-        detector_hide(anm_time + 10)
+        detector_hide(anm_time + 100)
     end)
 end
 

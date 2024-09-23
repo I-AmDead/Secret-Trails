@@ -3,8 +3,8 @@ local compass_objects = {}
 local compass_y = 32
 local compass_w = 512
 local compass_h = 32
-local dir_w = 70
-local dir_h = 64
+local dir_w = 400
+local dir_h = 20
 
 local enemy_color = GetARGB(255, 255, 60, 60)
 local quest_color = GetARGB(255, 255, 180, 70)
@@ -78,12 +78,12 @@ function ui_compass:__init()
 
     self.dir = CUIStatic()
     self.dir:SetAutoDelete(true)
-    self.dir:SetWndPos(512 - dir_w / 2, compass_y - 3)
+    self.dir:SetWndPos(512 - dir_w / 2, compass_y + 10)
     self.dir:SetWndSize(dir_w, dir_h)
     self.dir:SetTextAlign(CGameFont.alCenter)
     self.dir:SetVTextAlign(CGameFont.valCenter)
-    self.dir:SetTextY(st:GetTextY() - 30)
-    self.dir:SetFont(GetFontCustom("ui_font_roboto14"))
+    self.dir:SetTextY(st:GetTextY() + 2)
+    self.dir:SetFont(GetFontCustom("ui_font_roboto16"))
     self.dir:InitTexture("ui\\compas\\dir_line")
     self.dir:SetStretchTexture(true)
 
@@ -106,7 +106,7 @@ function ui_compass:direction(vis_h)
     self.dir:SetText(string.format("%d", vis_h))
 end
 
-function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type, font_name)
+function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type, font_name, hide_center)
     if not self.points[id] then
         local st = CUIStatic()
         st:SetAutoDelete(true)
@@ -138,13 +138,18 @@ function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_t
     st:SetTextColorEx(color or def_color)
     st:SetColor(color or def_color)
 
+    local spot_show = x >= 0.0 and x <= 1.0
+    if hide_center then
+        spot_show = (x >= 0 and x < 0.36) or (x > 0.64 and x <= 1.0)
+    end
+
     st:SetWndPos(512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0))
-    st:Show(show_always or (x >= 0 and x <= 1))
+    st:Show(show_always or spot_show)
 
     if spot_type then
         local pos_x, pos_y = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0)
         if x <= 0.5 then
-            local scale = math.clamp(x * (x > 0.48 and 15 or 10), 0, 15)
+            local scale = math.clamp(x * (x > 0.48 and 20 or 10), 0, 20)
             st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
             st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
         else
@@ -212,15 +217,15 @@ function ui_compass:Update()
         return get_x_static(dir_h)
     end
 
-    self:show_point("N", get_x_static(- pi / 2), nil, def_color, 13):SetPriority(100)
-    self:show_point("S", get_x_static(pi / 2), nil, def_color, 13):SetPriority(100)
-    self:show_point("W", get_x_static(0), nil, def_color, 13):SetPriority(100)
-    self:show_point("E", get_x_static(-pi), nil, def_color, 13):SetPriority(100)
+    self:show_point("N", get_x_static(- pi / 2), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("S", get_x_static(pi / 2), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("W", get_x_static(0), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("E", get_x_static(-pi), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
 
-    self:show_point("NE", get_x_static(-3 * pi / 4), nil, def_color, 13):SetPriority(100)
-    self:show_point("SE", get_x_static(3 * pi / 4), nil, def_color, 13):SetPriority(100)
-    self:show_point("NW", get_x_static(- pi / 4), nil, def_color, 13):SetPriority(100)
-    self:show_point("SW", get_x_static(pi / 4), nil, def_color, 13):SetPriority(100)
+    self:show_point("NE", get_x_static(-3 * pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("SE", get_x_static(3 * pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("NW", get_x_static(- pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("SW", get_x_static(pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
 
     local d = (2 * pi) / 24
     local s = -pi / 2
@@ -228,16 +233,16 @@ function ui_compass:Update()
         s = s + d
         local dir = i * 15
         if i ~= 3 and i ~= 6 and i ~= 9 and i ~= 12 and i ~= 15 and i ~= 18 and i ~= 21 and i ~= 24 then
-            self:show_point("compass_mark_"..i, get_x_static(s), string.format("%d", dir), def_color, 13, nil, nil, "ui_font_roboto12"):SetPriority(-120)
+            self:show_point("compass_mark_"..i, get_x_static(s), string.format("%d", dir), def_color, 13, nil, nil, "ui_font_roboto12", true):SetPriority(-120)
         end
-        self:show_point("compass_dot_"..i, get_x_static(s), ".", def_color, 16, nil, nil, "ui_font_roboto16"):SetPriority(-120)
+        self:show_point("compass_dot_"..i, get_x_static(s), ".", def_color, 16, nil, nil, "ui_font_roboto16", true):SetPriority(-120)
     end
 
     for i, v in pairs(compass_objects) do
         local pos = v.obj and v.obj:position() or v.position
         local x = get_x(pos)
 
-        local st = self:show_point(i, x, "", v.color, 13, v.show_always, v.spot)
+        local st = self:show_point(i, x, "", v.color, -15, v.show_always, v.spot)
 
         st.position = pos
         st.x = x
