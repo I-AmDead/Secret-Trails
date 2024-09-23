@@ -44,6 +44,10 @@ local function on_torrid_spawn()
         -- Military
         spawn_anomaly("fireball_acidic_zone", vector():set(99.500, -12.049, 205.726), 272, 1545, 2.5, "lestat_military1.anm")
 
+        -- Forest
+        spawn_anomaly("fireball_acidic_zone", vector():set(220.321, -11.265, -101.748), 139924, 2911, 2.5, "forest_motion_1.anm")
+        spawn_anomaly("fireball_acidic_zone", vector():set(220.321, -11.265, -101.748), 139924, 2911, 2.5, "forest_motion_2.anm")
+
         -- Radar
         spawn_anomaly("fireball_acidic_zone", vector():set(571.355, -54.099, -251.179), 197671, 1862, 2.5, "rad_mowing_fly.anm")
 
@@ -95,7 +99,15 @@ local function on_field_spawn()
     end
 end
 
+local function on_special_spawn()
+    if not ogse.var_exists("special_spawn") and level.name() ~= "fake_start" then
+        spawn_anomaly("zone_mincer_special", vector():set(220.321, -11.265, -101.748), 139924, 2911, 16.0)
+        ogse.save_var("special_spawn", true)
+    end
+end
+
 function attach(sm)
 	sm:subscribe({signal = "on_first_update", fun = on_torrid_spawn})
 	sm:subscribe({signal = "on_first_update", fun = on_field_spawn})
+	sm:subscribe({signal = "on_first_update", fun = on_special_spawn})
 end
