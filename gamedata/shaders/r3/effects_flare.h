@@ -1,9 +1,6 @@
 #include "ogse_functions.h"
 
 Texture2D s_noise;
-Texture2D s_mask_flare_1;
-Texture2D s_mask_flare_2;
-Texture2D s_mask_flare_3;
 
 #define uGhostCount 6
 #define uGhostSpacing 0.35
@@ -120,7 +117,7 @@ float4 mainImageC(float2 uv)
 
 float4 sun_shafts_intensity;
 
-float4 generate_flare(float2 uv)
+float4 generate_flare(float2 uv, float2 hpos)
 {
     float3 col = mainImageA(uv).xyz * 25.0;
 
@@ -130,16 +127,12 @@ float4 generate_flare(float2 uv)
     col /= 1.0 + col;
     col = pow(col, float3(0.5, 0.5, 0.5));
 
-    float4 dep = s_mask_flare_1.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
-    dep += s_mask_flare_2.Load(int3(get_sun_uv() * screen_res.xy, 0), 0);
-    dep += s_mask_flare_3.Load(int3(get_sun_uv() * screen_res.xy, 0), 0) * 4.0;
+    float3 depth = gbuffer_get_pos(uv, get_sun_uv() * screen_res.xy);
 
     float4 final = float4(col * L_sun_color, 1.0);
-
-    float fadeFactor = saturate(max(max(dep.x, dep.y), max(dep.z, dep.w)));
-    final = lerp(float4(0.f, 0.f, 0.f, 0.f), final, fadeFactor);
     final *= sun_shafts_intensity * 3.0;
     final = blendSoftLight(final, float4(col * L_sun_color, 1.0));
+    final = lerp(float4(0.f, 0.f, 0.f, 0.f), final, depth.z <= 0.0 ? 1.0 : 0.0);
 
     return final;
 }

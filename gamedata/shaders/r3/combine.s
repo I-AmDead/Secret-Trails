@@ -30,7 +30,6 @@ function element_1(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_distort", "$user$generic1")
 
 	shader:dx10sampler("smp_nofilter")
-	shader:dx10sampler("smp_rtlinear")
 end
 
 function element_2(shader, t_base, t_second, t_detail)
@@ -55,11 +54,8 @@ function element_3(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_position", "$user$position")
 	shader:dx10texture("s_image", "$user$generic0")
 	shader:dx10texture("s_bloom", "$user$bloom1")
+	shader:dx10texture("s_ssfx_bloom", "$user$ssfx_bloom1")
 	shader:dx10texture("s_flares", "$user$flares")
-	shader:dx10texture("s_mask_flare_1", "$user$SunShaftsMaskSmoothed")
-	shader:dx10texture("s_mask_flare_2", "$user$sun_shafts1")
-	shader:dx10texture("s_mask_flare_3", "$user$generic2")
-	shader:dx10texture("s_blur_2", "$user$blur_2")
 	shader:dx10texture("s_noise", "fx\\fx_noise2")
 
 	shader:dx10sampler("smp_nofilter")

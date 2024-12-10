@@ -4,7 +4,7 @@
     Link       : https://www.moddb.com/mods/stalker-anomaly/addons/parallax-reflex-sights
     Authors    : LVutner, party_50
     Date       : 06.02.2024
-    Last Edit  : 06.02.2024
+    Last Edit  : 03.09.2024
     =====================================================================
 */
 
@@ -21,10 +21,10 @@
 // Then you will have to adjust models so that mark texture point is exactly in center
 // and edit aim position in configs.
 
-#define OFFSET_X 0.005 // (default 0.004) Normal vector x coordinate max absolute value which is considered 0
-#define OFFSET_Y 0.005 // (default 0.05) Normal vector y coordinate max absolute value which is considered 0
-#define PROJECT_DISTANCE 350.0 // (default 20.0) Distance to projected mark
-#define SIZE_FACTOR 100.0 // (default 4.0) Mark size factor
+#define OFFSET_X 0.004 // (default 0.004) Normal vector x coordinate max absolute value which is considered 0
+#define OFFSET_Y 0.05 // (default 0.05) Normal vector y coordinate max absolute value which is considered 0
+#define PROJECT_DISTANCE 20.0 // (default 20.0) Distance to projected mark
+#define SIZE_FACTOR 2.5 // (default 4.0) Mark size factor
 
 uniform float4 m_affects;
 uniform float4 mark_number;
@@ -107,7 +107,6 @@ float4 main(vf I) : SV_Target
 {
     // Derive view direction from view space position
     float3 V = -I.v_pos;
-    // V.x = -V.x;
 
     // Build cotangent frame
     // Important: In theory, you don't need to do this. It should be possible to pass TBN straight from VS
@@ -120,13 +119,8 @@ float4 main(vf I) : SV_Target
     // Important: PROJECT_DISTANCE can be positive or negative, 0 = no projection at all
     float2 parallax_tc = I.tc0 - V_tangent.xy * PROJECT_DISTANCE;
 
-    float factor = screen_res.y / 2160.0;
-    factor = factor * (1.0 / (m_hud_params.z / 0.45));
-
     // Upscaling the texture
-    parallax_tc.xy = (parallax_tc.xy + SIZE_FACTOR * 0.5) / SIZE_FACTOR;
-    parallax_tc.x = resize(parallax_tc.x, factor, 0);
-    parallax_tc.y = resize(parallax_tc.y, factor, 0);
+    parallax_tc.xy = (parallax_tc.xy + (SIZE_FACTOR - 1) * 0.5) / SIZE_FACTOR;
 
     if (mark_number.y > 0)
     {
@@ -140,14 +134,18 @@ float4 main(vf I) : SV_Target
 
     mark_texture.rgb += mark_color.rgb;
 
-    // Noise
-    float noise = get_noise(I.tc0 * timers.z) * 0.9;
-    mark_texture.r += noise;
-    mark_texture.g += noise;
-    mark_texture.b += noise;
-
-    // Коллиматоры глючат при выбросе
+    // Glitches when an outlier
     float mig = 1.0f - (m_affects.x * 2.f);
 
-    return float4(mark_texture.rgb, random(timers.xz) > mig ? 0.f : mark_texture.a);
+    float4 final = float4(mark_texture.rgb, random(timers.xz) > mig ? 0.f : mark_texture.a);
+
+    // bloom
+    float curve = 20.0;
+    float luma = (max(max(final.r,final.g),final.b)+min(min(final.r,final.g),final.b))/2.0;
+    float luma2 = pow(luma, sqrt(17.25866 + curve));
+
+    // Output to screen
+    final += final / luma * luma2;
+
+    return final;
 }

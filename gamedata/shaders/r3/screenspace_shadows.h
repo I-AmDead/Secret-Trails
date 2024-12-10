@@ -9,7 +9,7 @@
 #include "screenspace_common.h"
 #include "settings_screenspace_SSS.h"
 
-float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc, uint iSample)
+float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc)
 {
 	if ( abs(P.w - MAT_FLORA) > 0.03f )
 		return 1;
@@ -27,7 +27,7 @@ float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc, uint iSample)
 			return 1;
 
 		// Sample current ray pos ( x = difference | y = sample depth | z = current ray len )
-		float3 depth_ray = SSFX_ray_intersect(sss_ray, iSample);
+		float3 depth_ray = SSFX_ray_intersect(sss_ray);
 		
 		// Check depth difference
 		float diff = depth_ray.x;
@@ -51,7 +51,7 @@ float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc, uint iSample)
 
 
 
-float SSFX_ScreenSpaceShadows(float4 P, float2 tc, uint iSample)
+float SSFX_ScreenSpaceShadows(float4 P, float2 tc)
 {
 	// Light vector
 	float3 L_dir = mul(m_V, float4(-normalize(L_sun_dir_w), 0)).xyz;
@@ -98,7 +98,7 @@ float SSFX_ScreenSpaceShadows(float4 P, float2 tc, uint iSample)
 			break;
 
 		// Sample current ray pos ( x = difference | y = sample depth | z = current ray len )
-		float3 depth_ray = SSFX_ray_intersect(sss_ray, iSample);
+		float3 depth_ray = SSFX_ray_intersect(sss_ray);
 		
 		// Check depth difference
 		float diff = depth_ray.x;

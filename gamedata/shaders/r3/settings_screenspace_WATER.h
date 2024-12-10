@@ -22,6 +22,6 @@
 #define G_SSR_WATER_CAUSTICS 0.25f // Caustics intensity
 #define G_SSR_WATER_CAUSTICS_SCALE 1.0f // Caustics Size
 
-#define G_SSR_WATER_SOFTBORDER 0.1f // Soft border factor. ( 0.0f = hard edge )
+#define G_SSR_WATER_SOFTBORDER 0.5f // Soft border factor. ( 0.0f = hard edge )
 
 #define G_SSR_WATER_CHEAPFRESNEL // Uncomment/comment this if you want to use a faster/accurate fresnel calc

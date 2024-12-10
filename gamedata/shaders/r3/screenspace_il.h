@@ -19,7 +19,7 @@ static const int il_quality[4] = { 8, 16, 24, 32 };
 uniform float4 ssfx_wpn_dof_1;
 float4 fakescope_params3 = {0,0,0,0}; //uniform float4 fakescope_params3; //xrSimpodin: На данный момент в OGSR нет fake_scope, если появится - поменять обратно.
 
-float3 ssfx_il_bounce(float3 P, float3 N, float Range, int count, uint iSample) 
+float3 ssfx_il_bounce(float3 P, float3 N, float Range, int count) 
 {
 	// Use surface normal and add the hemisphere distribution
 	float3 sample_rays = ssfx_hemisphere[count] + N.xyz;
@@ -31,7 +31,7 @@ float3 ssfx_il_bounce(float3 P, float3 N, float Range, int count, uint iSample)
 	float2 occ_pos_uv = SSFX_view_to_uv(occ_pos);
 	
 	// Get position buffer to calc normal and get depth
-	float4 sample_pos = SSFX_get_position(occ_pos_uv, iSample);
+	float4 sample_pos = SSFX_get_position(occ_pos_uv);
 
 	// Adjust G_IL_MAX_DIFFERENCE if the sampled pixel is a weapon/hand...
 	float Maxdiff = sample_pos.z < 1.5f ? 2.0f : G_IL_MAX_DIFFERENCE;
@@ -70,7 +70,7 @@ float3 ssfx_il_bounce(float3 P, float3 N, float Range, int count, uint iSample)
 }
 
 
-void ssfx_il(float2 tc, float2 pos2d, float3 P, float3 N, inout float3 color, uint iSample)
+void ssfx_il(float2 tc, float2 pos2d, float3 P, float3 N, inout float3 color)
 {
 	// Skip Sky. ( Disable when used with Shader Based 2D Scopes )
 	if (P.z <= SKY_EPS || fakescope_params3.x > 0)
@@ -102,7 +102,7 @@ void ssfx_il(float2 tc, float2 pos2d, float3 P, float3 N, inout float3 color, ui
 		float range = (G_IL_WEAPON_RANGE + G_IL_RANGE * WeaponFactor) * (1.0f + il_noise);
 
 		// Do bounce
-		il += ssfx_il_bounce(P, N, range, i, iSample);
+		il += ssfx_il_bounce(P, N, range, i);
 	}
 
 	// Normalize result

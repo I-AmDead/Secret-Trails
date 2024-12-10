@@ -183,19 +183,16 @@ float3 dosimeter(float2 uva)
     
     if(uv.y > 0.0 && length(uv) < 190.0 && length(uv) > 170.0)
     {
-        rgba = float4(1.0, 1.0, 1.0, 1.0);
-        if(deg < 120.0)
-            rgba = float4(1.0, 1.0, 0.0, 1.0);
-            
-        if(deg < 60.0)
-            rgba = float4(1.0, 0.0, 0.0, 1.0);
-            
-        if(deg > 120.0)
-            rgba = float4(0.0, 1.0, 0.0, 1.0);
-            
-        if(fmod(deg, 12.0) < 2.0 && length(uv) > 175.0)
-            rgba = float4(0.0, 0.0, 0.0, 1.0);
-        else if(fmod(deg, 12.0) < 2.0 && length(uv) <= 175.0)
+        float4 red = float4(1.0, 0.0, 0.0, 1.0);
+        float4 yellow = float4(1.0, 1.0, 0.0, 1.0);
+        float4 green = float4(0.0, 1.0, 0.0, 1.0);
+    
+        if (deg < 90.0)
+            rgba = lerp(red, yellow, deg / 90.0);
+        else
+            rgba = lerp(yellow, green, (deg - 90.0) / 90.0);
+
+        if (fmod(deg, 12.0) < 2.0 && (length(uv) > 175.0 || length(uv) <= 175.0))
             rgba = float4(0.0, 0.0, 0.0, 1.0);
     }
     

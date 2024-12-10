@@ -1,10 +1,6 @@
 #include "common.h"
 
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-#define v_in v_static_color
-#else
 #define v_in v_static
-#endif
 
 v2p_bumped main(v_in I)
 {
@@ -22,10 +18,6 @@ v2p_bumped main(v_in I)
     O.tcdh = float4(tc.xyyy);
     O.position = float4(Pe, hemi);
     O.hpos.xy = get_taa_jitter(O.hpos);
-
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    O.tcdh.w = I.color.w; // (r,g,b,dir-occlusion)
-#endif
 
     // Calculate the 3x3 transform from tangent space to eye-space
     // TangentToEyeSpace = object2eye * tangent2object

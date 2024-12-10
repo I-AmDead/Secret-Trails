@@ -27,6 +27,8 @@ Texture2D jitter1;
 #define PCSS_PIXEL_MIN float(1.0)
 #define PCSS_SUN_WIDTH float(150.0)
 
+uniform float smap_size;
+
 float modify_light(float light) { return (light > 0.7 ? 1.0 : lerp(0.0, 1.0, saturate(light / 0.7))); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +36,7 @@ float modify_light(float light) { return (light > 0.7 ? 1.0 : lerp(0.0, 1.0, sat
 //////////////////////////////////////////////////////////////////////////////////////////
 float sample_hw_pcf(float4 tc, float4 shift)
 {
-    static const float ts = KERNEL / float(SMAP_size);
+    static const float ts = KERNEL / smap_size;
 
     tc.xyz /= tc.w;
     tc.xy += shift.xy * ts;
@@ -87,7 +89,7 @@ float shadow_pcss(float4 tc)
 
 #if SUN_QUALITY > 3 // Blocker search ( Penumbra ) and filter
 
-    int3 uv = int3(tc.xy * float(SMAP_size), 0);
+    int3 uv = int3(tc.xy * smap_size, 0);
     float zBlock = tc.z - 0.0001;
     float avgBlockerDepth = 0.0;
     float blockerCount = 0.0;
@@ -109,7 +111,7 @@ float shadow_pcss(float4 tc)
     avgBlockerDepth /= blockerCount;
     float fRatio = saturate(((tc.z - avgBlockerDepth) * PCSS_SUN_WIDTH) / avgBlockerDepth);
     fRatio *= fRatio;
-    fRatio = max(PCSS_PIXEL_MIN, fRatio * float(PCSS_PIXEL)) / float(SMAP_size);
+    fRatio = max(PCSS_PIXEL_MIN, fRatio * float(PCSS_PIXEL)) / smap_size;
 
     float s = 0.0;
     [unroll] for (uint i = 0; i < PCSS_NUM_SAMPLES; ++i)
@@ -121,7 +123,7 @@ float shadow_pcss(float4 tc)
 
 #else // No blocker search ( Penumbra ), just filter
 
-    float fRatio = max(PCSS_PIXEL_MIN, 0.5f * float(PCSS_PIXEL)) / float(SMAP_size);
+    float fRatio = max(PCSS_PIXEL_MIN, 0.5f * float(PCSS_PIXEL)) / smap_size;
 
     float s = 0.0;
     [unroll] for (uint i = 0; i < PCSS_NUM_SAMPLES; ++i)
@@ -148,12 +150,12 @@ float4 test(float4 tc, float2 offset)
 half shadowtest_sun(float4 tc, float4 tcJ) // jittered sampling
 {
     half4 r;
-    const float scale = (0.7 / float(SMAP_size));
+    const float scale = 0.7 / smap_size;
 
-    float2 tc_J = frac(tc.xy / tc.w * SMAP_size / 4.0) * 0.5;
+    float2 tc_J = frac(tc.xy / tc.w * smap_size / 4.0) * 0.5;
     float4 J0 = jitter0.Sample(smp_jitter, tc_J) * scale;
 
-    const float k = 0.5 / float(SMAP_size);
+    const float k = 0.5 / smap_size;
     r.x = test(tc, J0.xy + half2(-k, -k)).x;
     r.y = test(tc, J0.wz + half2(k, -k)).y;
     r.z = test(tc, -J0.xy + half2(-k, k)).z;
@@ -183,7 +185,7 @@ float shadow_rain(float4 tc, float2 tcJ) // jittered sampling
 {
     float4 r;
 
-    const float scale = (4.0 / float(SMAP_size));
+    const float scale = 4.0 / smap_size;
 
     float4 J0 = jitter0.Sample(smp_linear, tcJ) * scale;
     float4 J1 = jitter1.Sample(smp_linear, tcJ) * scale;

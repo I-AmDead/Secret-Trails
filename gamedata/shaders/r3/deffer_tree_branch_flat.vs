@@ -3,21 +3,32 @@
 #include "common.h"
 #include "check_screenspace.h"
 
+cbuffer dynamic_inter_grass
+{
 float4 benders_pos[32];
 float4 benders_pos_old[32];
 float4 benders_setup;
+}
 
+cbuffer dynamic_tree
+{
 uniform float3x4 m_xform;
 uniform float3x4 m_xform_v;
+
 uniform float4 consts; // {1/quant,1/quant,???,???}
-uniform float4 c_scale, c_bias, wind, wave;
+uniform float4 wind;
+uniform float4 wave;
+
+uniform float4 c_scale;
+uniform float4 c_bias;
 uniform float2 c_sun; // x=*, y=+
 
-////////////////
+//////////
 float4 consts_old;
 float4 wave_old;
 float4 wind_old;
-////////////////
+///////////
+}
 
 #ifdef SSFX_WIND
 #include "screenspace_wind.h"
@@ -53,9 +64,9 @@ v2p_flat main(v_tree I)
     frac = I.tc.z * consts_old.x;
     inten = H * dp;
     result = calc_xz_wave(wind_old.xz * inten * 2.0f, frac);
-# ifdef USE_TREEWAVE
+#ifdef USE_TREEWAVE
     result = 0;
-# endif
+#endif
     float4 w_pos_previous = float4(pos.x + result.x, pos.y, pos.z + result.y, 1);
     //////////
 
@@ -148,11 +159,6 @@ v2p_flat main(v_tree I)
     o.N = mul((float3x3)m_xform_v, unpack_bx2(I.Nh));
     o.tcdh = float4((I.tc * consts).xyyy);
     o.position = float4(Pe, hemi);
-
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    float suno = I.Nh.w * c_sun.x + c_sun.y;
-    o.tcdh.w = suno; // (,,,dir-occlusion)
-#endif
 
 #ifdef USE_GRASS_WAVE
     o.tcdh.z = 1.f;

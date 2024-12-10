@@ -20,7 +20,7 @@ float4 main(p_volume I, float4 pos2d : SV_Position) : SV_Target
 {
     float2 tcProj = I.tc.xy / I.tc.w;
 
-    gbuffer_data gbd = gbuffer_load_data(GLD_P(tcProj, pos2d, ISAMPLE));
+    gbuffer_data gbd = gbuffer_load_data(tcProj, pos2d);
 
     //	Emulate virtual offset
     gbd.P += gbd.N * 0.015f;
@@ -29,10 +29,7 @@ float4 main(p_volume I, float4 pos2d : SV_Position) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    float m = xmaterial;
-#ifndef USE_R2_STATIC_SUN
-    m = _P.w;
-#endif
+    float m = _P.w;
 
     // FLORA FIXES & IMPROVEMENTS - SSS Update 14.2
     // Fix Flora ilumination ( Align normal to light )

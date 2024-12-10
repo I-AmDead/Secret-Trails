@@ -8,7 +8,6 @@ function normal(shader, t_base, t_second, t_detail)
 			: zb	(true,false)
 			: blend	(true,blend.srcalpha,blend.invsrcalpha)
 			: aref 		(true,0)
-
 	shader : dx10texture("s_base", "fx\\rain_drop")
 	shader : dx10texture("s_position", "$user$position")
 	shader : dx10texture("s_accumulator", "$user$accum")

@@ -3,20 +3,18 @@
 #include "common.h"
 #include "check_screenspace.h"
 
+cbuffer dynamic_inter_grass
+{
 float4 benders_pos[32];
 float4 benders_pos_old[32];
 float4 benders_setup;
+}
 
-float4 consts; // {1/quant,1/quant,diffusescale,ambient}
-float4 wave; // cx,cy,cz,tm
-float4 dir2D;
-float4 array[61 * 4];
-
-////////////////
-uniform float4 consts_old;
-uniform float4 dir2D_old;
-uniform float4 wave_old;
-////////////////
+cbuffer DetailsData
+{
+uniform float4 consts; // {1/quant,1/quant,diffusescale,ambient}
+uniform float4 array[61 * 4];
+}
 
 #ifdef SSFX_WIND
 #include "screenspace_wind.h"
@@ -41,20 +39,7 @@ v2p_bumped main(v_detail v)
 
     float H = P.y - m1.w; // height of vertex (scaled)
 
-#ifndef SSFX_WIND
-    float dp = calc_cyclic(dot(P, wave));
-    float frac = v.misc.z * consts.x; // fractional
-    float inten = H * dp;
-    float2 result = calc_xz_wave(dir2D.xz * inten, frac);
-    float4 pos = float4(P.x + result.x, P.y, P.z + result.y, 1);
-
-    // prev
-    dp = calc_cyclic(dot(P, wave_old));
-    frac = v.misc.z * consts_old.x;
-    inten = H * dp;
-    result = calc_xz_wave(dir2D_old.xz * inten, frac);
-    float4 w_pos_previous = float4(P.x + result.x, P.y, P.z + result.y, 1);
-#else
+#ifdef SSFX_WIND
     wind_setup wset = ssfx_wind_setup();
     float3 wind_result = ssfx_wind_grass(P.xyz, H, wset);
     float4 pos = float4(P.xyz + wind_result.xyz, 1);
@@ -62,6 +47,9 @@ v2p_bumped main(v_detail v)
     wind_setup wset_old = ssfx_wind_setup(true);
     float3 wind_result_old = ssfx_wind_grass(P.xyz, H, wset_old, true);
     float4 w_pos_previous = float4(P.xyz + wind_result_old.xyz, 1);
+#else
+    float4 pos = P;
+    float4 w_pos_previous = P;	
 #endif
 
     // INTERACTIVE GRASS - SSS Update 15.4
@@ -148,10 +136,6 @@ v2p_bumped main(v_detail v)
     /////////////
 
     O.position = float4(Pe, hemi);
-
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    O.tcdh.w = hemi * c_sun.x + c_sun.y; // (,,,dir-occlusion)
-#endif
 
     return O;
 }

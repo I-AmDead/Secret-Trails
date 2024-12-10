@@ -30,7 +30,7 @@ struct _input
 
 float4 main(_input I) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(GLD_P(I.tc0, I.pos2d, ISAMPLE));
+    gbuffer_data gbd = gbuffer_load_data(I.tc0, I.pos2d);
 
     // Sample the buffers:
     float4 P = float4(gbd.P, gbd.mtl); // position.(mtl or sun)
@@ -50,13 +50,6 @@ float4 main(_input I) : SV_Target
 
     // static sun
     float mtl = P.w;
-
-#ifdef USE_R2_STATIC_SUN
-    float sun_occ = P.w * 2;
-
-    mtl = xmaterial;
-    L += SRGBToLinear(D.rgb * Ldynamic_color.rgb * sun_occ) * plight_infinity(mtl, P.xyz, N.xyz, D.xyzw, Ldynamic_dir);
-#endif
 
     float3 occ = float3(1.0, 1.0, 1.0);
 

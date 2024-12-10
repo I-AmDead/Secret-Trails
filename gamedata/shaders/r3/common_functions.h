@@ -2,6 +2,7 @@
 #define common_functions_h_included
 
 #include "srgb.h"
+#include "cgim.h"
 
 uniform float4 m_actor_params;
 uniform float4 L_hotness;
@@ -46,8 +47,6 @@ float3 tonemap(float3 rgb, float scale)
 // CUSTOM
 float3 blend_soft(float3 a, float3 b)
 {
-    // return 1.0 - (1.0 - a) * (1.0 - b);
-
     // gamma correct and inverse tonemap to add bloom
     a = SRGBToLinear(a); // post tonemap render
     a = a / max(0.004, 1 - a); // inverse tonemap
@@ -60,6 +59,7 @@ float3 blend_soft(float3 a, float3 b)
     a = pow(a, Contrast_Amount) * mid / pow(mid, Contrast_Amount);
 
     ACES_LMT(b); // color grading bloom
+
     a += b; // bloom add
 
     // Boost the contrast to match ACES RRT
@@ -69,6 +69,7 @@ float3 blend_soft(float3 a, float3 b)
     a = a / (1 + a); // tonemap
 
     a = LinearTosRGB(a);
+
     return a;
 }
 
@@ -233,8 +234,7 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, const bool use_reflec
 {
     f_deffer res;
 
-    res.position = float4(gbuf_pack_normal(norm), pos.z,
-                          gbuf_pack_hemi_mtl(norm.w, pos.w
+    res.position = float4(gbuf_pack_normal(norm), pos.z, gbuf_pack_hemi_mtl(norm.w, pos.w
 #ifdef REFLECTIONS_ONLY_ON_TERRAIN
                                              ,
                                              use_reflections
@@ -250,28 +250,15 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, const bool use_reflec
     return res;
 }
 
-gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d, int iSample)
+gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d)
 {
     gbuffer_data gbd;
 
-    gbd.P = float3(0, 0, 0);
-    gbd.hemi = 0;
-    gbd.mtl = 0;
-    gbd.C = 0;
-    gbd.N = float3(0, 0, 0);
-
     float4 P = s_position.Sample(smp_nofilter, tc);
+    float4 C = s_diffuse.Sample(smp_nofilter, tc);
 
+	// 3d view space pos reconstruction math
     pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
-
-    // 3d view space pos reconstruction math
-    // center of the plane (0,0) or (0.5,0.5) at distance 1 is eyepoint(0,0,0) + lookat (assuming |lookat| ==1
-    // left/right = (0,0,1) -/+ tan(fHorzFOV/2) * (1,0,0 )
-    // top/bottom = (0,0,1) +/- tan(fVertFOV/2) * (0,1,0 )
-    // lefttop		= ( -tan(fHorzFOV/2),  tan(fVertFOV/2), 1 )
-    // righttop		= (  tan(fHorzFOV/2),  tan(fVertFOV/2), 1 )
-    // leftbottom   = ( -tan(fHorzFOV/2), -tan(fVertFOV/2), 1 )
-    // rightbottom	= (  tan(fHorzFOV/2), -tan(fVertFOV/2), 1 )
     gbd.P = float3(P.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), P.z);
 
     // reconstruct N
@@ -283,44 +270,33 @@ gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d, int iSample)
     // reconstruct hemi
     gbd.hemi = gbuf_unpack_hemi(P.w);
 
+    gbd.C = C.xyz;
+    gbd.gloss = C.w;
+
 #ifdef REFLECTIONS_ONLY_ON_TERRAIN
     gbd.refl_flag = gbuf_unpack_refl_flag(P.w);
 #endif
 
-    float4 C = s_diffuse.Sample(smp_nofilter, tc);
-
-    gbd.C = C.xyz;
-    gbd.gloss = C.w;
-
     return gbd;
 }
-
-gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d) { return gbuffer_load_data(tc, pos2d, 0); }
 
 gbuffer_data gbuffer_load_data_offset(float2 tc : TEXCOORD, float2 OffsetTC : TEXCOORD, float2 pos2d)
 {
     float2 delta = ((OffsetTC - tc) * pos_decompression_params2.xy);
 
-    return gbuffer_load_data(OffsetTC, pos2d + delta, 0);
+    return gbuffer_load_data(OffsetTC, pos2d + delta);
 }
 
-gbuffer_data gbuffer_load_data_offset(float2 tc : TEXCOORD, float2 OffsetTC : TEXCOORD, float2 pos2d, uint iSample)
+float3 gbuffer_get_pos(float2 tc, float2 pos2d)
 {
-    float2 delta = ((OffsetTC - tc) * pos_decompression_params2.xy);
+    float4 P = s_position.Sample(smp_nofilter, tc);
 
-    return gbuffer_load_data(OffsetTC, pos2d + delta, iSample);
+    // 3d view space pos reconstruction math
+    pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
+    float3 depth = float3(P.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), P.z);
+
+    return depth;
 }
-
-//////////////////////////////////////////[SWM]///////////////////////////////////////////
-uniform float4 m_blender_mode; // x = [0 - default, 1 - night vision, 2 - thermal vision]; y = [0.0f / 1.0f - происходит ли в данный момент рендеринг картинки для прицела]; z =
-                               // [0.0f / 1.0f - выключен или включён двойной рендер]; w - зарезервировано на будущее.
-
-// Активен-ли двойной рендер?
-inline bool isSecondVPActive() { return (m_blender_mode.z == 1.f); }
-
-// Рендерится ли в данный момент кадр для прицела?
-inline bool IsSVPFrame() { return (m_blender_mode.y == 1.f); }
-//////////////////////////////////////////////////////////////////////////////////////////
 
 float2 aspect_ratio_correction(float2 tc)
 {

@@ -3,6 +3,7 @@
 #include "img_corrections.h"
 #include "ogsr_radiation_effect.h"
 #include "effects_flare.h"
+#include "combine_effects.h"
 
 // Check Screen Space Shaders modules
 #include "check_screenspace.h"
@@ -26,18 +27,14 @@
 float4 fakescope_params3;
 #endif
 
-#ifdef SSFX_LUT_INUSE
-#include "screenspace_lut.h"
-#endif
-
+Texture2D s_ssfx_bloom;
 Texture2D s_flares;
 
 float4 main(p_screen I) : SV_Target
 {
-    int iSample = 0;
     float2 center = I.tc0;
 
-    gbuffer_data gbd = gbuffer_load_data(center, I.hpos.xy, iSample);
+    gbuffer_data gbd = gbuffer_load_data(center, I.hpos.xy);
 
     float depth = gbd.P.z;
 
@@ -47,46 +44,15 @@ float4 main(p_screen I) : SV_Target
 
 // Indirect light - SCREEN SPACE SHADERS - UPDATE 14
 #ifdef SSFX_INDIRECT_LIGHT
-    ssfx_il(center, I.hpos, gbd.P, gbd.N, img, iSample);
+    ssfx_il(center, I.hpos, gbd.P, gbd.N, img);
 #endif
 
-#ifdef SSFX_FOG
-
-    // Calc Fog
-    float fogresult = SSFX_CALC_FOG(gbd.P);
-    fogresult *= fogresult;
-
-// Fog Scattering -----------------------
-#ifdef G_FOG_USE_SCATTERING
-    // Blur sample
-    float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
-
-    // Scopes
-    int disablefog = (fakescope_params3.x > 0.0 ? 0 : 1);
-
-// NVGs
-#ifdef SSFX_BEEFS_NVG
-    disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
-#endif
-
-    // Blend
-    img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
-#endif
-    // --------------------------------------
-#endif
-
+// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
 #ifdef SSFX_DEBAND
-#ifdef SSFX_FOG
-    float Debanding = depth <= SKY_EPS ? 1.0 : fogresult;
-#else
-    float Debanding = depth <= SKY_EPS ? 1.0 : 0;
+    img = lerp(img, ssfx_debanding(img, center), depth <= SKY_EPS);
 #endif
 
-    // Debanding  - SCREEN SPACE SHADERS - UPDATE 12.5
-    img = lerp(img, ssfx_debanding(img, center), Debanding);
-#endif
-
-    float4 bloom = s_bloom.Sample(smp_rtlinear, center);
+    float4 bloom = s_ssfx_bloom.Sample(smp_rtlinear, center);
 
 #ifdef SSFX_BEEFS_NVG
     // NVG CHANGE TO PREVENT WEIRD COLORS, ONLY APPLY BLOOM WHEN WE'RE NOT IN NVG MASK
@@ -95,7 +61,10 @@ float4 main(p_screen I) : SV_Target
         img = blend_soft(img, bloom.xyz * bloom.w);
         float4 flares = s_flares.Sample(smp_rtlinear, center);
         img += flares.xyz * flares.a;
-        img += generate_flare(center);
+        img += generate_flare(center, I.hpos.xy);
+        img += BuzzEffect(center.xy * screen_res.xy);
+        //img += LightEffect(center.xy);
+        img += BurnEffect(center.xy);
     }
 #else
     img = blend_soft(img, bloom.xyz * bloom.w);
@@ -106,10 +75,6 @@ float4 main(p_screen I) : SV_Target
 
     // Vanilla color grading ( Exposure, saturation and gamma )
     img = img_corrections(img);
-
-#ifdef SSFX_LUT_INUSE
-    img = ssfx_lut_pp(img);
-#endif
 
     img.rgb += rad_effect(img.rgb, center);
 

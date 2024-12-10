@@ -66,7 +66,7 @@ float3 GetWaterFall(Texture2D s_texture, float2 tc)
 
 float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR, float4 pos2d : SV_Position) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(tc, pos2d, ISAMPLE);
+    gbuffer_data gbd = gbuffer_load_data(tc, pos2d);
 
     // Buffers
     float4 _P = float4(gbd.P, 1.0);
@@ -79,7 +79,7 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
     float3 WorldN = mul(m_sunmask, _N.xyz);
 
 #ifdef INDOOR_LEAKS_FIX
-    float Cover = shadow_hw(PS) * saturate(gbd.hemi * 10.0f);
+    float Cover = shadow_hw_hq(PS) * saturate(gbd.hemi * 10.0f);
 #else
     // Read rain projection with some jetter. Also adding pixel normal
     // factor to jitter to make rain strips more realistic.

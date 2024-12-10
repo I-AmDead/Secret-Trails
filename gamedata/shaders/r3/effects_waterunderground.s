@@ -1,8 +1,8 @@
 local tex_base                = "water\\water_ryaska1"
 local tex_nmap                = "fx\\water_normal"
 local tex_dist                = "water\\water_dudv"
-local tex_sky0                = "$user$sky0"         -- "sky\\sky_8_cube"
-local tex_sky1                = "$user$sky1"         -- "sky\\sky_8_cube"
+local tex_sky0                = "$user$sky0"
+local tex_sky1                = "$user$sky1"
 
 local tex_bluenoise           = "fx\\blue_noise"
 local tex_rainsplash          = "fx\\water_sbumpvolume"

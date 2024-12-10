@@ -18,7 +18,7 @@ static const int2 q_steps[5] =
 	int2(64,1)
 };
 
-float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, uint iSample : SV_SAMPLEINDEX)
+float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise)
 {
 	// Some vars to use later...
 	float4 prev_step;
@@ -34,7 +34,7 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 	float ori_x = ssr_ray.r_step.x;
 
 	// Depth from the start of the ray
-	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start, iSample);
+	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start);
 
 	// Ray-march
 	[unroll (q_steps[G_SSR_WATER_QUALITY].x)]
@@ -49,7 +49,7 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 		ssr_ray.r_step.x = ori_x * lerp(hor.x, hor.y, saturate(ssr_ray.r_pos.x * 2.0f));
 
 		// Ray intersect check ( x = difference | y = depth sample )
-		float2 ray_check = SSFX_ray_intersect(ssr_ray, iSample);
+		float2 ray_check = SSFX_ray_intersect(ssr_ray);
 
 		// Sampled depth is not weapon or sky ( SKY_EPS float(0.001) )
 		bool NoWpnSky = ray_check.y > 1.3f;
@@ -84,7 +84,7 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise, u
 				ssr_ray.r_pos += ssr_ray.r_step;
 
 				// Ray intersect check
-				ray_check = SSFX_ray_intersect(ssr_ray, iSample);
+				ray_check = SSFX_ray_intersect(ssr_ray);
 
 				// Depth test... Conditions to use as reflections...
 				if (abs(ray_check.x) <= RayThick)

@@ -29,10 +29,6 @@ v2p_bumped _main(v_model I, float3 psp)
 
     O.position = float4(Pe, hemi_val); // Use L_material.x for old behaviour;
 
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    O.tcdh.w = L_material.y; // (,,,dir-occlusion)
-#endif
-
     // Calculate the 3x3 transform from tangent space to eye-space
     // TangentToEyeSpace = object2eye * tangent2object
     //		     = object2eye * transpose(object2tangent) (since the inverse of a rotation is its transpose)

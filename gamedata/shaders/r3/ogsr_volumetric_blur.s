@@ -15,11 +15,3 @@ function element_1(shader, t_base, t_second, t_detail)
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_linear")
 end
-
-function element_2(shader, t_base, t_second, t_detail)
-	shader:begin("stub_screen_space", "ogsr_water_waves")
-		:fog(false)
-		:zb(false, false)
-	shader:dx10texture("water_waves", "fx\\water_height")
-	shader:dx10sampler("smp_linear")
-end

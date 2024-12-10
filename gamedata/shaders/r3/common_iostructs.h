@@ -297,6 +297,7 @@ struct f_deffer
     float4 C : SV_Target1; // r, g, b,  gloss
     float2 Velocity : SV_Target2; // XY - motion vectors
     float4 H : SV_Target3;
+    float4 L : SV_Target4;
 };
 
 struct gbuffer_data
@@ -316,11 +317,7 @@ struct gbuffer_data
 //	Defer bumped
 struct v2p_bumped
 {
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    float4 tcdh : TEXCOORD0; // Texture coordinates,         w=sun_occlusion
-#else
     float2 tcdh : TEXCOORD0; // Texture coordinates
-#endif
     float4 position : TEXCOORD1; // position + hemi
     float3 M1 : TEXCOORD2; // nmap 2 eye - 1
     float3 M2 : TEXCOORD3; // nmap 2 eye - 2
@@ -339,11 +336,7 @@ struct v2p_bumped
 
 struct p_bumped
 {
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    float4 tcdh : TEXCOORD0; // Texture coordinates,         w=sun_occlusion
-#else
     float2 tcdh : TEXCOORD0; // Texture coordinates
-#endif
     float4 position : TEXCOORD1; // position + hemi
     float3 M1 : TEXCOORD2; // nmap 2 eye - 1
     float3 M2 : TEXCOORD3; // nmap 2 eye - 2
@@ -362,11 +355,7 @@ struct p_bumped
 //	Defer flat
 struct v2p_flat
 {
-#if ((defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)) || defined(USE_GRASS_WAVE))
-    float4 tcdh : TEXCOORD0; // Texture coordinates,         w=sun_occlusion
-#else
     float2 tcdh : TEXCOORD0; // Texture coordinates
-#endif
     float4 position : TEXCOORD1; // position + hemi
     float3 N : TEXCOORD2; // Eye-space normal        (for lighting)
     float4 RDrops : TEXCOORD7; // SSS Update 17 - HUD raindrops
@@ -383,11 +372,7 @@ struct v2p_flat
 
 struct p_flat
 {
-#if ((defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)) || defined(USE_GRASS_WAVE))
-    float4 tcdh : TEXCOORD0; // Texture coordinates,         w=sun_occlusion
-#else
     float2 tcdh : TEXCOORD0; // Texture coordinates
-#endif
     float4 position : TEXCOORD1; // position + hemi
     float3 N : TEXCOORD2; // Eye-space normal        (for lighting)
     float4 RDrops : TEXCOORD7; // SSS Update 17 - HUD raindrops

@@ -33,7 +33,7 @@ float3 mblur(float2 UV, float3 pos, float3 img)
 	//Get velocity (multiplied with motion blur intensity)
 	float2 p_velocity = (current_tc - previous_tc) * m_blur;
 
-	return SLB_MBlur(UV, pos, img, p_velocity, 0);
+	return SLB_MBlur(UV, pos, img, p_velocity);
 }
 #endif
 #endif

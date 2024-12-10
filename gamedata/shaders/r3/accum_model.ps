@@ -1,0 +1,15 @@
+#include "common.h"
+
+uniform float4 L_glowing;
+
+float4 main(p_flat I) : SV_Target
+{
+    // diffuse
+    float3 D = s_base.Sample(smp_base, I.tcdh); // IN:  rgb.a
+    D = SRGBToLinear(D);
+
+    float brightness = smoothstep(0.05, 0.9, saturate((L_glowing.w * 0.5) / L_glowing.z));
+    float4 color = float4(D.rgb, 1.0);
+
+    return color * brightness;
+}

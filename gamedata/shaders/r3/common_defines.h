@@ -19,12 +19,6 @@
 
 #define LUMINANCE_VECTOR float3(0.2125, 0.7154, 0.0721)
 
-//////////////////////////////////////////////////////////////////////////////////////////
-#ifndef SMAP_size
-#define SMAP_size 1024
-#endif
-//////////////////////////////////////////////////////////////////////////////////////////
-
 // #define USE_GRASS_WAVE								// enable grass wave
 #define GRASS_WAVE_FREQ float(0.7) // frequency of waves
 #define GRASS_WAVE_POWER float(3.0) // brightness of waves

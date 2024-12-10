@@ -49,15 +49,8 @@ vf main(v_vert v)
 
     o.v2point_w = P - eye_position;
     o.tbase = unpack_tc_base(v.uv, v.T.w, v.B.w); // copy tc
-
-#ifdef RIVER_WATER
-    o.tnorm0.xy = float2(o.tbase.x, o.tbase.y + timers.z * W_RIVER_SPEED_0);
-    o.tnorm0.zw = float2(o.tbase.x, o.tbase.y + timers.z * W_RIVER_SPEED_1);
-    o.tnorm0 *= W_RIVER_SCALE;
-#else // RIVER_WATER
     o.tnorm0.xy = watermove_tc(o.tbase * W_DISTORT_BASE_TILE_0, P.xz, W_DISTORT_AMP_0);
     o.tnorm0.zw = watermove_tc(o.tbase * W_DISTORT_BASE_TILE_1, P.xz, W_DISTORT_AMP_1);
-#endif // RIVER_WATER
 
     // Calculate the 3x3 transform from tangent space to eye-space
     // TangentToEyeSpace = object2eye * tangent2object

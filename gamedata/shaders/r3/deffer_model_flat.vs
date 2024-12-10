@@ -27,10 +27,6 @@ v2p_flat _main(v_model I)
 
     O.position = float4(Pe, hemi_val); // Use L_material.x for old behaviour;
 
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    O.tcdh.w = L_material.y; // (,,,dir-occlusion)
-#endif
-
 #ifdef USE_GRASS_WAVE
     O.tcdh.z = 1.f;
 #endif

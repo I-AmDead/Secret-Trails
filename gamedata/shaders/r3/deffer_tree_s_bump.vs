@@ -1,16 +1,24 @@
 #include "common.h"
 
+cbuffer dynamic_tree
+{
 uniform float3x4 m_xform;
 uniform float3x4 m_xform_v;
+
 uniform float4 consts; // {1/quant,1/quant,???,???}
-uniform float4 c_scale, c_bias, wind, wave;
+uniform float4 wind;
+uniform float4 wave;
+
+uniform float4 c_scale;
+uniform float4 c_bias;
 uniform float2 c_sun; // x=*, y=+
 
-/////////////////////
+//////////
 float4 consts_old;
 float4 wave_old;
 float4 wind_old;
-/////////////////////////
+///////////
+}
 
 v2p_bumped main(v_tree I)
 {
@@ -66,11 +74,6 @@ v2p_bumped main(v_tree I)
     /////////////////
 
     O.position = float4(Pe, hemi);
-
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    float suno = I.Nh.w * c_sun.x + c_sun.y;
-    O.tcdh.w = suno; // (,,,dir-occlusion)
-#endif
 
     // Calculate the 3x3 transform from tangent space to eye-space
     // TangentToEyeSpace = object2eye * tangent2object

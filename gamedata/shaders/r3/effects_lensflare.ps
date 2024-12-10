@@ -1,6 +1,6 @@
 #include "common.h"
 
-#define LENS_FLARE_INTENSITY 0.95
+#define LENS_FLARE_INTENSITY 0.7
 #define GLOW_FLARE_INTENSITY 0.25
 #define LENS_DIRT_INTENSITY 0.7
 #define CLIP_DISTANCE 1.5f
@@ -28,16 +28,15 @@ float4 main(flare I) : SV_Target
     float2 len = I.tc0.xy - float2(0.5, 0.5);
 
     float3 glow = s_glow.Sample(smp_base, I.tc0).rgb * GLOW_FLARE_INTENSITY;
-    float3 flare = s_flare.Sample(smp_base, I.tc0).rgb * LENS_FLARE_INTENSITY;
+    float3 flare = s_flare.Sample(smp_base, I.tc0).rgb * (LENS_FLARE_INTENSITY + (rain_params.x * 0.3));
     float4 dirt = s_dirt_mask.Sample(smp_base, I.tc1) * LENS_DIRT_INTENSITY;
 
     final.rgb = (glow + flare) * (1.0 - flare_params.x);
 
     float2 tcProj = I.tc2.xy / I.tc2.w;
-    gbuffer_data gbd = gbuffer_load_data(tcProj, I.hpos);
-    float4 _P = float4(gbd.P, gbd.mtl);
+    float3 depth = gbuffer_get_pos(tcProj, I.hpos);
 
-    float spaceDepth = gbd.P.z;
+    float spaceDepth = depth.z;
     if (spaceDepth < 0.01f)
         spaceDepth = 100000.0f; //  filter for skybox
 

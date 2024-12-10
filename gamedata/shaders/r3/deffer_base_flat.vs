@@ -1,10 +1,6 @@
 #include "common.h"
 
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-#define v_in v_static_color
-#else
 #define v_in v_static
-#endif
 
 v2p_flat main(v_in I)
 {
@@ -25,11 +21,6 @@ v2p_flat main(v_in I)
     O.tcdh = float4(tc.xyyy);
     O.position = float4(Pe, I.Nh.w);
     O.hpos.xy = get_taa_jitter(O.hpos);
-
-#if defined(USE_R2_STATIC_SUN) && !defined(USE_LM_HEMI)
-    float s = I.color.w; // (r,g,b,dir-occlusion)
-    O.tcdh.w = s;
-#endif
 
 #ifdef USE_GRASS_WAVE
     O.tcdh.z = 1.f;

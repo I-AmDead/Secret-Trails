@@ -4,9 +4,9 @@
 #include "slb_common.h"
 #include "slb_motion_blur_settings.h"
 
-float3 SLB_Screen_GetImage(float2 tc, uint iSample) { return SLB_SAMPLER_LOAD(s_image, int3(tc * screen_res.xy - 0.25, 0)).rgb; }
+float3 SLB_Screen_GetImage(float2 tc) { return SLB_SAMPLER_LOAD(s_image, int3(tc * screen_res.xy - 0.25, 0)).rgb; }
 
-float4 SLB_Screen_GetPosition(float2 tc, uint iSample)
+float4 SLB_Screen_GetPosition(float2 tc)
 {
 #ifdef SLB_GLSL /// return dummy
     return float4(0.5, 0.5, float(abs(tc.x - 0.5) < 0.25) * 10.0 + 0.01, 0.0);
@@ -17,7 +17,7 @@ float4 SLB_Screen_GetPosition(float2 tc, uint iSample)
 
 // uniform float4 shader_param_6 = float4(0.9,0,9,0);
 
-float SLB_MBlur_SightMask(float2 tc, float3 img, float2 aspect, uint iSample)
+float SLB_MBlur_SightMask(float2 tc, float3 img, float2 aspect)
 {
     float len = saturate(SLB_MBLUR_SIGHT_MASK_SIZE - length((tc - 0.5) * aspect) * 75.);
 
@@ -41,7 +41,7 @@ float SLB_MBlur_SightMask(float2 tc, float3 img, float2 aspect, uint iSample)
         else
         {
             float2 offset = dirs[i] * 1.5 / 1000.0 / aspect;
-            s = SLB_Screen_GetImage(tc + offset, iSample);
+            s = SLB_Screen_GetImage(tc + offset);
         }
 
         float3 hsv = SLB_RGB_To_HSV(s);
@@ -67,7 +67,7 @@ float SLB_MBlur_SightMask(float2 tc, float3 img, float2 aspect, uint iSample)
 
 float SLB_MBlur_WeaponMask(float3 pos) { return saturate((length(pos) - SLB_MBLUR_WPN_RADIUS) / SLB_MBLUR_WPN_RADIUS_SMOOTHING); }
 
-float3 SLB_MBlur(float2 uv, float3 pos, float3 img, float2 pixel_velocity, uint iSample)
+float3 SLB_MBlur(float2 uv, float3 pos, float3 img, float2 pixel_velocity)
 {
     float2 aspect = screen_res.x > screen_res.y ? float2(screen_res.x / screen_res.y, 1.) : float2(1., screen_res.y / screen_res.x);
 
@@ -84,7 +84,7 @@ float3 SLB_MBlur(float2 uv, float3 pos, float3 img, float2 pixel_velocity, uint 
 #endif
 
 #ifdef SLB_MBLUR_SIGHT_MASK
-    pixel_velocity *= SLB_MBlur_SightMask(uv, img, aspect, iSample);
+    pixel_velocity *= SLB_MBlur_SightMask(uv, img, aspect);
 #endif
 
     /// Accumulate motion blur samples
@@ -137,12 +137,12 @@ float3 SLB_MBlur(float2 uv, float3 pos, float3 img, float2 pixel_velocity, uint 
             amount = 1.0;
         }
 
-        float3 simg = SLB_Screen_GetImage(tc, iSample).rgb;
+        float3 simg = SLB_Screen_GetImage(tc).rgb;
 
         if (i != 0)
         {
 #ifdef SLB_MBLUR_WPN
-            float3 spos = SLB_Screen_GetPosition(tc, iSample).xyz;
+            float3 spos = SLB_Screen_GetPosition(tc).xyz;
 
             /// Fix sky ghosting caused by infinite depth value (KD)
             spos.z = is_sky(spos.z) > 0.5 ? 10000.0 : spos.z;
@@ -151,7 +151,7 @@ float3 SLB_MBlur(float2 uv, float3 pos, float3 img, float2 pixel_velocity, uint 
 #endif
 
 #ifdef SLB_MBLUR_SIGHT_MASK
-            amount *= SLB_MBlur_SightMask(tc, simg, aspect, iSample);
+            amount *= SLB_MBlur_SightMask(tc, simg, aspect);
 #endif
         }
 

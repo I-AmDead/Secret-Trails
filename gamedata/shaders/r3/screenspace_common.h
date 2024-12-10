@@ -12,6 +12,8 @@
 #include "lmodel.h"
 #include "hmodel.h"
 
+#include "ogse_functions.h"
+
 #include "screenspace_common_noise.h"
 #include "screenspace_common_ripples.h"
 
@@ -79,17 +81,17 @@ float3 SSFX_yaw_vector(float3 Vec, float Rot)
     return mul(rot_mat, Vec);
 }
 
-float SSFX_get_depth(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float SSFX_get_depth(float2 tc)
 {
     return s_position.Sample(smp_nofilter, tc).z;
 }
 
-float4 SSFX_get_position(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float4 SSFX_get_position(float2 tc)
 {
     return s_position.Sample(smp_nofilter, tc);
 }
 
-float3 SSFX_get_image(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float3 SSFX_get_image(float2 tc)
 {
     return s_rimage.Sample(smp_nofilter, tc).rgb;
 }
@@ -118,18 +120,18 @@ RayTrace SSFX_ray_init(float3 ray_start_vs, float3 ray_dir_vs, float ray_max_dis
     return rt;
 }
 
-float3 SSFX_ray_intersect(RayTrace Ray, uint iSample)
+float3 SSFX_ray_intersect(RayTrace Ray)
 {
     float len = length(Ray.r_pos - Ray.r_start);
     float alpha = len / Ray.r_length;
     float depth_ray = (Ray.z_start * Ray.z_end) / lerp(Ray.z_end, Ray.z_start, alpha);
-    float depth_scene = SSFX_get_depth(Ray.r_pos, iSample);
+    float depth_scene = SSFX_get_depth(Ray.r_pos);
 
     return float3(depth_ray.x - depth_scene, depth_scene, len);
 }
 
 // Half-way scene lighting
-float4 SSFX_get_fast_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float4 SSFX_get_fast_scenelighting(float2 tc)
 {
     float4 rL = s_accumulator.Sample(smp_nofilter, tc);
     float4 C = s_diffuse.Sample(smp_nofilter, tc);
@@ -157,7 +159,7 @@ float4 SSFX_get_fast_scenelighting(float2 tc, uint iSample : SV_SAMPLEINDEX)
 }
 
 // Full scene lighting
-float3 SSFX_get_scene(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float3 SSFX_get_scene(float2 tc)
 {
     float4 rP = s_position.Sample(smp_nofilter, tc);
 

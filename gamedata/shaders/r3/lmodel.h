@@ -64,15 +64,7 @@ float4 plight_local(float m, float3 pnt, float3 normal, float4 c_tex, float3 lig
     // vanilla atten - linear
     float att = saturate(1.0 - rsqr * light_range_rsq); // q-linear attenuate
     att = SRGBToLinear(att);
-    /*
-    //unity atten - quadtratic
-    //catlikecoding.com/unity/tutorials/custom-srp/point-and-spot-lights/
-    att = rsqr * light_range_rsq;
-    att *= att;
-    att = saturate(1.0 - att);
-    att *= att;
-    att = att / rsqr;
-    */
+
     float3 N = normalize(normal); // normal
     float3 V = normalize(-pnt); // vector2eye
     float3 L = normalize(-L2P); // vector2light

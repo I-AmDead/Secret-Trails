@@ -1,6 +1,5 @@
 #include "common.h"
 #include "infrared.h"
-#include "ogsr_gasmask_common.h"
 
 uniform float4 m_affects;
 
@@ -80,8 +79,8 @@ float4 main(p_screen I) : SV_Target
 
         if (pnv_param_1.z > 1)
         {
-            gbuffer_data gbd = gbuffer_load_data(I.tc0, I.hpos.xy, 0);
-            image.rgb = infrared(gbd, image, gbd.P.z, I.hpos.xy, I.tc0);
+            gbuffer_data gbd = gbuffer_load_data(I.tc0, I.hpos.xy);
+            image.rgb = infrared(gbd, gbd.P.z, I.hpos.xy, I.tc0);
         }
         else
         {
@@ -129,7 +128,6 @@ float4 main(p_screen I) : SV_Target
         // APPLY VIGNETTE
 
         float2 uv = I.tc0;
-        uv = applyInertiaDev(I.tc0);
 
         float vignette = calc_vignette(lua_param_nvg_num_tubes, uv, lua_param_vignette_current);
         image = clamp(image, 0.0, 1.0);

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "sload.h"
 #include "screenspace_hud_raindrops.h"
+#include "models_weapon_overheat.h"
 
 f_deffer main(p_bumped I)
 {
@@ -44,15 +45,14 @@ f_deffer main(p_bumped I)
 #ifdef USE_LM_HEMI
     float4 lm = s_hemi.Sample(smp_rtlinear, I.lmh);
     float h = get_hemi(lm);
-#ifdef USE_R2_STATIC_SUN
-    ms = get_sun(lm);
-#endif
 #else
     float h = I.position.w;
-#ifdef USE_R2_STATIC_SUN
-    ms = I.tcdh.w;
 #endif
-#endif
+
+    float4 overhets = overheat(I.tcdh);
+    S.base.rgb = lerp(S.base.rgb, overhets.rgb, L_glowing.w);
+    float gloss_factor = saturate(L_glowing.w / (L_glowing.z * 0.5));
+    S.gloss = lerp(S.gloss, 0.0, gloss_factor);
 
     O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.xyz, S.gloss));
 

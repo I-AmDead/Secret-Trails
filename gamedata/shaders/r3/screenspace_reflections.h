@@ -39,7 +39,7 @@ static const int2 q_ssr_steps[6] =
 	float(0.08f),
 };*/
 
-float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint iSample : SV_SAMPLEINDEX)
+float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc)
 {
 	float2 sky_tc = 0;
 	float2 behind_hit = 0;
@@ -56,7 +56,7 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 	float ori_x = ssr_ray.r_step.x;
 
 	// Depth from the start of the ray
-	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start, iSample);
+	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start);
 	
 	float2 ray_check = 0;
 
@@ -77,7 +77,7 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 		}
 
 		// Ray intersect check
-		ray_check = SSFX_ray_intersect(ssr_ray, iSample);
+		ray_check = SSFX_ray_intersect(ssr_ray);
 
 		// Sampled depth is not weapon or sky ( SKY_EPS float(0.001) )
 		bool NoWpnSky = ray_check.y > 1.3f;
@@ -105,7 +105,7 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 			ssr_ray.r_pos += ssr_ray.r_step;
 
 			// Ray intersect check
-			ray_check = SSFX_ray_intersect(ssr_ray, iSample);
+			ray_check = SSFX_ray_intersect(ssr_ray);
 
 			// Depth test... Conditions to use as reflections...
 			if (abs(ray_check.x) <= 1.25f)
@@ -139,7 +139,7 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc, uint
 }
 
 
-void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, inout float4 color, uint iSample : SV_SAMPLEINDEX)
+void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, inout float4 color)
 {
 	// Note: Distance falloff on "rain_patch_normal.ps"
 	
@@ -168,7 +168,7 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 
 	// Calc SSR ray. Discard low reflective pixels
 	if (refl_power > 0.02f)
-		hit_uv = SSFX_ssr_fast_ray(P.xyz, reVec, tc, iSample);
+		hit_uv = SSFX_ssr_fast_ray(P.xyz, reVec, tc);
 
 	float3 refl_ray;
 	float3 reflection = 0;
@@ -185,7 +185,9 @@ void SSFX_ScreenSpaceReflections(float2 tc, float4 P, float3 N, float gloss, ino
 	if (all(hit_uv.xy))
 	{
 		// Get scene reflection
-		refl_ray = SSFX_get_image(hit_uv.xy, iSample);//SSFX_get_scene(hit_uv.xy, iSample);
+		refl_ray = SSFX_get_image(hit_uv.xy);
+
+		//SSFX_get_scene(hit_uv.xy);
 
 		// Set reflection UV
 		uvcoor = hit_uv.xy;

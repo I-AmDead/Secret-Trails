@@ -3,8 +3,6 @@
 
 f_deffer main(p_flat I)
 {
-    // 1. Base texture + kill pixels with low alpha
-
     float4 D = tbase(I.tcdh);
 
     hashed_alpha_test(I.tcdh.xy, D.a);
@@ -21,15 +19,8 @@ f_deffer main(p_flat I)
     float4 lm = s_hemi.Sample(smp_rtlinear, I.lmh);
     //	float 	h  	= dot			(lm.rgb,1.h/3.h);
     float h = get_hemi(lm);
-#ifdef USE_R2_STATIC_SUN
-    //		 	ms 	= lm.w			;
-    ms = get_sun(lm);
-#endif
 #else
     float h = I.position.w;
-#ifdef USE_R2_STATIC_SUN
-    ms = I.tcdh.w;
-#endif
 #endif
 
 #ifdef USE_GRASS_WAVE
