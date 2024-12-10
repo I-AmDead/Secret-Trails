@@ -129,8 +129,7 @@ function action_car:reset_scheme(loading)
             -- if not self.path_walk_info then
             self.path_walk_info = utils.path_parse_waypoints(self.st.path_walk)
             if not self.path_walk_info then
-                abort("object '%s': path_walk ('%s'): unable to obtain path_walk_info from path", self.object:name(),
-                    self.st.path_walk)
+                abort("object '%s': path_walk ('%s'): unable to obtain path_walk_info from path", self.object:name(), self.st.path_walk)
             end
             -- end
 
@@ -336,7 +335,8 @@ function action_car:at_target_walkpoint()
         return true
     end
 
-    local curVel = self.car:CurrentVel():magnitude()
+    local Vel = self.car:CurrentVel()
+    local curVel = math.sqrt(Vel.x * Vel.x + Vel.y * Vel.y --[[+ Vel.z * Vel.z]])
     local dist = self.object:position():distance_to(self.path_walk:point(self.target_walk_pt))
 
     -- local arrived = 2 * dist < def_update_time * (curVel.x + self.speed) --def_update_time > 2 * dist / (curVel.x + self.speed)
@@ -395,7 +395,8 @@ function action_car:go_to_walkpoint(pt)
 
     local diff_angle = angle_xz(self.object, self.path_walk:point(pt))
     local accel = move.none
-    local curVel = self.car:CurrentVel():magnitude()
+    local Vel = self.car:CurrentVel()
+    local curVel = math.sqrt(Vel.x * Vel.x + Vel.y * Vel.y --[[+ Vel.z * Vel.z]])
     if curVel < self.speed then
         accel = move.fwd
     elseif curVel > self.speed * 1.15 or diff_angle >= math.pi then
@@ -899,8 +900,7 @@ function action_car:fast_update()
         self.fc_last_upd_tm = cur_time
     end
 
-    if self.state_moving == state_moving_end and self.state_cannon == state_cannon_stop and self.state_firetarget ==
-        state_none then
+    if self.state_moving == state_moving_end and self.state_cannon == state_cannon_stop and self.state_firetarget == state_none then
         if xr_logic.mob_captured(self.object) and not self.object:action() then
             -- xr_logic.mob_release(self.object)
             -- if self.st.on_death_info ~= nil then
@@ -912,8 +912,7 @@ function action_car:fast_update()
         return false
     end
 
-    if self.state_moving ~= state_moving_end and self.state_moving ~= state_moving_stop and cur_time >=
-        self.last_pos_time + self.min_car_explode_time then
+    if self.state_moving ~= state_moving_end and self.state_moving ~= state_moving_stop and cur_time >= self.last_pos_time + self.min_car_explode_time then
         if not self.last_pos then
             self.last_pos = self.object:position()
             self.last_pos_time = cur_time
@@ -999,7 +998,7 @@ function action_car:fast_update()
 
                 self.target_fire_pt = self:extrapolate_pos(self.target_obj)
                 --[[
-          if self.target_obj:id() ~= db.actor:id() then
+          if not self.target_obj:is_actor() then
               if self.target_obj:target_body_state() == move.crouch then
                   self.target_fire_pt.y = self.target_fire_pt.y + 0.6 -- FAKE
               elseif not xr_wounded.is_heavy_wounded_by_id(self.target_obj:id()) then

@@ -83,8 +83,8 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.on_actor_weapon_zoom_switch, nil)
     self.object:set_callback(callback.on_actor_weapon_reload, nil)
     self.object:set_callback(callback.on_actor_weapon_reload_end, nil)
-    self.object:set_callback(callback.on_throw_grenade, nil)
     self.object:set_callback(callback.on_actor_weapon_fire, nil)
+    self.object:set_callback(callback.on_throw_grenade, nil)
     self.object:set_callback(callback.level_changer_action, nil)
     self.object:set_callback(callback.update_artefacts_on_belt, nil)
     self.object:set_callback(callback.on_cell_item_focus, nil)
@@ -137,8 +137,8 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_actor_weapon_zoom_switch, self.on_actor_weapon_zoom_switch, self)
     self.object:set_callback(callback.on_actor_weapon_reload, self.on_actor_weapon_reload, self)
     self.object:set_callback(callback.on_actor_weapon_reload_end, self.on_actor_weapon_reload_end, self)
-    self.object:set_callback(callback.on_throw_grenade, self.on_throw_grenade, self)
     self.object:set_callback(callback.on_actor_weapon_fire, self.on_actor_weapon_fire, self)
+    self.object:set_callback(callback.on_throw_grenade, self.on_throw_grenade, self)
     self.object:set_callback(callback.level_changer_action, self.level_changer_action, self)
     self.object:set_callback(callback.update_artefacts_on_belt, self.update_artefacts_on_belt, self)
     self.object:set_callback(callback.on_cell_item_focus, self.on_cell_item_focus, self)
@@ -210,11 +210,12 @@ local info2call = {
 }
 
 function actor_binder:info_callback(npc, info_id)
-    log3("give info portion %s", info_id) 	
     self.am:call("on_info", npc, info_id)
     local sc = info2call[info_id]
     if sc then
         self.am:call(sc, npc)
+    else
+        log3("give info portion %s", info_id)
     end
 end
 
@@ -240,8 +241,6 @@ function actor_binder:on_item_take(obj)
     if rx_ai then
         rx_ai.actor_item_take(obj)
     end
-
-    amk_mod.check_usable_item(obj)
 
     self.am:call("on_take", obj, sobj)
 end
@@ -378,15 +377,15 @@ function actor_binder:item_to_slot(obj)
 end
 
 function actor_binder:save(packet)
-    ogse.save_var("game_difficulty", level.get_game_difficulty(), "u8") --Сохраняем уровень сложности
+    ogse.save_var("game_difficulty", level.get_game_difficulty()) --Сохраняем уровень сложности
 
     xr_logic.pstor_save_all(self.object, packet)
-
-    log2("~~Actor netpacket size %s", packet:w_tell())
 
     if rx_ai then
         rx_ai.actor_save(packet)
     end
+
+    log2("~~Actor netpacket size %s", packet:w_tell())
 
     self.am:call("on_save", packet)
 end
@@ -449,7 +448,7 @@ function actor_binder:level_changer_action(obj, wnd)
     local dest_lname  = alife():level_name(game_graph():vertex( dest_vertex ):level_id())
     local msg_text_wnd = wnd:FindChild( "message_box_change_level:message_text" )
     msg_text_wnd:GetCUIStatic():SetText(game.translate_string("level_changer_invitation") .. " " .. game.translate_string("to_" .. dest_lname) .. "?")
-  self.am:call( "level_changer_action", obj, wnd )
+    self.am:call( "level_changer_action", obj, wnd )
 end
 
 function actor_binder:update_artefacts_on_belt(dt)

@@ -1,0 +1,38 @@
+
+
+function attach(sm)
+	sm:subscribe({ signal = "on_update", fun = this.update })
+end
+
+function update()
+local wnd = get_main_window()
+local st = wnd:GetStatic( "quick_info" )
+
+if st then
+    local target = level.get_target_obj()
+    if target then
+        local pos = get_screen_coords(target:center())		
+        local rect = { x = pos.x - ( pos.x * 0.1 ), y = pos.y - ( pos.y * 0.1 ), w = device().width, h = device().height, } 
+        st:SetWndRect( Frect():set( rect.x, rect.y, rect.w, rect.h ) )	
+    else
+        st:SetWndRect( 1000, 1000, 0, 0 )
+    end
+end
+	
+end
+
+function get_screen_coords(point)
+    local dev = device()
+    local scr_w = dev.width
+    local scr_h = dev.height
+
+    local fov2 = (dev.fov/2) * (math.pi/180)
+    local scr_dist = 0.5 * scr_h / math.tan(fov2)
+
+    local ppp = vector():sub(point, dev.cam_pos)
+    local dp = dev.cam_dir:dotproduct(ppp)
+
+    local _x = 512 + dev.cam_right:dotproduct(ppp) * scr_dist / dp * (1024/scr_w)
+    local _y = 384 - dev.cam_top:dotproduct(ppp)   * scr_dist / dp * (768/scr_h)
+    return {x = _x, y = _y}
+end

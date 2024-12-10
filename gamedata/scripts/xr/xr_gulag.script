@@ -126,7 +126,7 @@ end
 
 -- подготовка гулага к работе
 function gulag:initialize()
-    self.ObjectJobPathName = {} -- ' по id. имя патрульного пути места работы персонажа
+    self.ObjectJobTasks = {} -- ' по id. task места работы персонажа
     self.restrictors = {} -- ' по id. назначенные гулагом рестрикторы для каждого персонажа
 
     self:prepare_jobs()
@@ -197,7 +197,7 @@ function gulag:prepare_jobs()
         if job then
 
             job.object = obj_id
-            self.ObjectJobPathName[obj_id] = job.path_name
+            self.ObjectJobTasks[obj_id] = CALifeSmartTerrainTask(job.path_name)
 
             if not self:availState(job.state, self.state) then
                 self.Need_Reinit[obj_id] = true
@@ -916,7 +916,7 @@ function gulag:setJob(obj_id, job)
 
     self.Object_begin_job[obj_id] = false
     self.ObjectJob[obj_id] = job.num
-    self.ObjectJobPathName[obj_id] = job.path_name
+    self.ObjectJobTasks[obj_id] = CALifeSmartTerrainTask(job.path_name)
 
     self:setup_squad_and_group(obj_id, job)
 end
@@ -1034,9 +1034,9 @@ function gulag:getJob(obj_id)
     return jobN and self.Job[jobN]
 end
 
--- возвращает имя пути места работы персонажа
-function gulag:get_obj_job_path_name(obj_id)
-    return self.ObjectJobPathName[obj_id]
+-- возвращает таск места работы персонажа
+function gulag:get_obj_job_task(obj_id)
+    return self.ObjectJobTasks[obj_id]
 end
 
 -- освободить объект от работы
@@ -1051,7 +1051,7 @@ function gulag:free_obj(obj_id)
             self.Job[jobN].object  = nil
         end
 
-        self.ObjectJobPathName[obj_id] = nil
+        self.ObjectJobTasks[obj_id] = nil
 
         if self.npc_info[obj_id] then
             local sobj = self.npc_info[obj_id].se_obj

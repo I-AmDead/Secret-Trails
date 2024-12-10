@@ -27,20 +27,26 @@ function on_load()
     show_wnd_tutorial = ogse.load_var("teleport_tutorial", false)
 end
 
-function teleport_actor(lvid, gvid, pos, dir)
+function teleport_actor(pos, dir, level_name)
     dsh.wait_condition(function() return db.actor:dont_has_info("ui_talk") end, 
     function()
         level.add_pp_effector("black.ppe", 2006, false)
+
         if type(pos) == "table" then
             pos = vector():set(unpack(pos))
         end
+
         if not dir then
             dir = vector():set(0, 0, 0)
         elseif type(dir) == "table" then
             dir = vector():set(unpack(dir))
         end
+
+        local lv, gv = get_lv_gv(level_name, pos)
+        log3("teleport_actor level_name %s lv %s, gv %s", level_name, lv, gv)
+
         dsh.timeout(1000, function()
-            level.change_level(gvid, lvid, pos, dir)
+            level.change_level(gv, lv, pos, dir)
         end)
     end)
 end
@@ -48,54 +54,49 @@ end
 -----------------------------Телепортация--------------------------------
 
 function sarcofag_start()
-    teleport_actor(10193, 2437, vector():set(66.210, 15.040, 4.250), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(vector():set(66.210, 15.040, 4.250), vector():set(0.0, 0.0, 0.0), "l12u_sarcofag")
 end
 
 function generator()
-    teleport_actor(219143, 2547, vector():set(554.448, 152.252, 201.151), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(vector():set(554.448, 152.252, 201.151), vector():set(0.0, 0.0, 0.0), "l12_stancia_2")
 end
 
 function radar()
-    teleport_actor(193136, 2559, vector():set(415.891, 46.821, 106.251), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(vector():set(415.891, 46.821, 106.251), vector():set(0.0, 0.0, 0.0), "l12_stancia_2")
 end
 
 function pripyat_mervin()
-    teleport_actor(212430, 2185, vector():set(101.590, 4.00, 150.572), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(vector():set(101.590, 4.00, 150.572), vector():set(0.0, 0.0, 0.0), "l11_pripyat")
 end
 
 function mg_pripyat_new()
-    teleport_actor(634, 2140, vector():set(-162.555, -1.757, 65.565), vector():set(0.0, 0.0, 0.0))
+    teleport_actor(vector():set(-162.555, -1.757, 65.565), vector():set(0.0, 0.0, 0.0), "l11_pripyat")
 end
 
 function bunker_brat()
-    teleport_actor(178968, 2618, vector():set(-31.369, 20.150, 646.914), vector():set(0.0, -0.1, 0.0))
+    teleport_actor(vector():set(-31.369, 20.150, 646.914), vector():set(0.0, -0.1, 0.0), "l12_stancia_2")
 end
 
 function bunker_end()
-    teleport_actor(3231, 2514, vector():set(22.659, -34.482, 13.152), vector():set(0.0, 1.5, 0.0))
+    teleport_actor(vector():set(22.659, -34.482, 13.152), vector():set(0.0, 1.5, 0.0), "l12u_control_monolith")
 end
 
 function sarfinal()
-    teleport_actor(3729, 2464, vector():set(11.325, 55.594, 28.993), vector():set(0.0, -0.8, 0.0))
+    teleport_actor(vector():set(11.325, 55.594, 28.993), vector():set(0.0, -0.8, 0.0), "l12u_sarcofag")
 end
 
 function stadium_teleport()
-    teleport_actor(142242, 2269, vector():set(31.507, 1.032, 413.601), vector():set(0.0, 3.0, 0.0))
+    teleport_actor(vector():set(31.507, 1.032, 413.601), vector():set(0.0, 3.0, 0.0), "l11_pripyat")
     show_wnd_tutorial = true
 end
 
 function sarcofag_teleport()
-    teleport_actor(8519, 2455, vector():set(46.934, 12.186, -3.127), vector():set(0.0, 0.0, 0.0))
-    show_wnd_tutorial = true
-end
-
-function chaos_teleport()
-    teleport_actor(172158, 2385, vector():set(393.82781, -0.0035887, 63.712), vector():set(0.0, 3.0, 0.0))
+    teleport_actor(vector():set(46.934, 12.186, -3.127), vector():set(0.0, 0.0, 0.0), "l12u_sarcofag")
     show_wnd_tutorial = true
 end
 
 function swamp_karina()
     local pp = patrol("lc_swamp_mg")
-    teleport_actor(pp:level_vertex_id(0), pp:game_vertex_id(0), pp:point(0), vector():set(0.0, 0.5, 0.0))
+    teleport_actor(pp:point(0), vector():set(0.0, 0.5, 0.0), "swamp")
     show_wnd_tutorial = true
 end

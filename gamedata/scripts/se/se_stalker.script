@@ -116,7 +116,6 @@ function se_stalker:STATE_Write(packet)
     end
 end
 --------------------
-
 function se_stalker:STATE_Read(packet, size)
     cse_alife_human_stalker.STATE_Read(self, packet, size)
 
@@ -145,6 +144,38 @@ function se_stalker:STATE_Read(packet, size)
     else
         -- log3("~~[se_stalker:STATE_Read] id of [%s] is [%s]", self:name(), self.id)
     end
+end
+--------------------
+function se_stalker:STATE_WriteLtx(ini, section)
+    cse_alife_human_stalker.STATE_WriteLtx(self, ini, section)
+    --log1("se_stalker:STATE_WriteLtx")
+
+    local need_to_write_condition = false
+    local job = 0
+
+    -- онлайн/оффлайн работа
+    if self.job_online == true then
+        job = 0
+    elseif self.job_online == false then
+        job = 1
+    elseif self.job_online == nil then
+        job = 2
+    else
+        job = 3
+        need_to_write_condition = true
+    end
+
+    ini:annotation(section, "job_online", "; se_stalker")
+    ini:w_u8(section, "job_online", job)
+
+    if need_to_write_condition then
+        ini:w_string(section, "job_online_condlist", self.job_online_condlist)
+    end
+
+    ini:w_bool(section, "was_in_smart_terrain", self.was_in_smart_terrain)
+
+    ini:w_bool(section, "death_dropped", self.death_dropped)
+    ini:w_bool(section, "wounded", self.wounded)
 end
 --------------------
 function se_stalker:on_before_register()

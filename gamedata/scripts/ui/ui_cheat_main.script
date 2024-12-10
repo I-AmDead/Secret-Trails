@@ -6,26 +6,6 @@
  Copyright         : naxac
 --]]-----------------------------------------------------------------------------------------------
 
-ini_file.r_float_ex = function (ini, section, line, def)
-	if ini:section_exist(section) and ini:line_exist(section, line) then
-		return ini:r_float(section, line)
-	end
-	return def
-end
-ini_file.r_string_ex = function (ini, section, line, def)
-	if ini:section_exist(section) and ini:line_exist(section, line) then
-		return ini:r_string(section, line)
-	end
-	return def
-end
-ini_file.r_u32_ex = function (ini, section, line, def)
-	if ini:section_exist(section) and ini:line_exist(section, line) then
-		return ini:r_u32(section, line)
-	end
-	return def
-end
-
-
 
 ---*************************************************************************************
 local classes = {
@@ -187,9 +167,10 @@ local function check_section(sect)
 			and sys_ini:line_exist(sect, "visual")
 			and sys_ini:line_exist(sect, "description") then	-- inventory item
 			
-			if get_bool(sect, "can_take", true) == false	-- can't take it
+			if not get_bool(sect, "can_take", true)	-- can't take it
 				or sect:find("^mp_") 
-				or get_string(sect, "scope_name") and get_string(sect, "scope_name") ~= "wpn_addon_scope" then -- from multiplayer
+				or (get_string(sect, "scope_name") and get_string(sect, "scope_name") ~= "wpn_addon_scope")
+				or get_bool(sect, "can_spawner", false) then
 				return false
 			end
 			
@@ -264,7 +245,7 @@ function start_menu(self)
 			cheat_list[k] = {}
 			t = cheat_list[k]
 			for i,s in pairs(v) do
-                local inv_name = game.translate_string(sys_ini:r_string_ex(s, "inv_name"))
+                local inv_name = game.translate_string(get_string(s, "inv_name"))
                 table.insert(t,
 				{
 					section = s,
@@ -318,16 +299,16 @@ end
 
 function give_item_icon(section)
 	local t = {}
-	t.width = sys_ini:r_u32_ex(section, "inv_grid_width", 1) *50
-	t.height = sys_ini:r_u32_ex(section, "inv_grid_height", 1) *50
-	t.x = sys_ini:r_u32_ex(section, "inv_grid_x", 8) *50
-	t.y = sys_ini:r_u32_ex(section, "inv_grid_y", 13) *50
+	t.width = get_u32(section, "inv_grid_width", 1) *50
+	t.height = get_u32(section, "inv_grid_height", 1) *50
+	t.x = get_u32(section, "inv_grid_x", 8) *50
+	t.y = get_u32(section, "inv_grid_y", 13) *50
 	return t
 end
 
 function give_monster_icon(section)
 	local t = {}
-	local texture = sys_ini:r_string_ex(section, "icon", "ui_npc_monster_mutant_boar")
+	local texture = get_string(section, "icon", "ui_npc_monster_mutant_boar")
 
 	local tex_info = GetTextureInfo(texture, texture)
 	local rect = tex_info:get_rect()

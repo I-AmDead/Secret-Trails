@@ -469,7 +469,7 @@ end
 
 function demon_dal(first_speaker, second_speaker)
     dialogs.relocate_item_section(second_speaker, "nebo_light_outfit", "in", 1)
-    dialogs.relocate_item_section(second_speaker, "wpn_abakan_n", "in", 1)
+    dialogs.relocate_item_section(second_speaker, "wpn_abakan", "in", 1)
     dialogs.relocate_item_section(second_speaker, "ammo_5.45x39_fmj", "in", 4)
 end
 
@@ -773,27 +773,32 @@ function doctor_kostolom_spawn()
     level_tasks.add_location_by_id(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
 end
 
+local spiders_list = ogse.load_var("spider_list", {})
+
 local function spider_kostolom_spawn(obj, amount, local_direction, who, bone_index)
-    if obj:section() == "doctor_kostolom" then
-        alife():create("spider_kostolom", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
+    if obj:section() == "doctor_kostolom" and table.getn(spiders_list) < 100 then
+        local sobj = alife():create("spider_kostolom", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
+        table.insert(spiders_list, sobj.id)
+        ogse.save_var("spider_list", spiders_list)
     end
 end
 
-local function spider_kostolom_dead()
-    if db.actor:dont_has_info("doctor_kostolom_dead") or db.actor:has_info("doctor_kostolom_done")then
-        return
-    end
-    for id, obj in alife():objects() do
-        local spider = level.object_by_id(id)
-        if spider and spider:section() == "spider_kostolom" and spider:alive() then
-            local hit = hit()
-            hit.direction = spider:direction()
-            hit.impulse = 1000
-            hit.draftsman = spider
-            hit.power = 1000
-            hit.type = hit.wound
-            spider:hit(hit)
+local function spider_kostolom_dead(obj, who)
+    if obj:section() == "doctor_kostolom" then
+        for i, v in pairs(spiders_list) do
+            local obj = level.object_by_id(v)
+            if obj and obj:alive() then
+                local hit = hit()
+                hit.direction = obj:direction()
+                hit.impulse = 1
+                hit.draftsman = obj
+                hit.power = 1000
+                hit.type = hit.wound
+                obj:hit(hit)
+            end
         end
+        spiders_list = {}
+        ogse.save_var("spider_list", spiders_list)
     end
 end
 
@@ -1005,7 +1010,7 @@ end
 
 function brown_patrony(first_speaker, second_speaker)
     dialogs.relocate_item_section(second_speaker, "eot", "in", 1)
-    dialogs.relocate_item_section(second_speaker, "wpn_m4_tac", "in", 1)
+    dialogs.relocate_item_section(second_speaker, "wpn_hk416", "in", 1)
     dialogs.relocate_item_section(second_speaker, "ammo_5.56x45_ap", "in", 5)
     dialogs.relocate_item_section(second_speaker, "grenade_f1", "in", 3)
     dialogs.relocate_item_section(second_speaker, "medkit_army", "in", 3)
@@ -1285,7 +1290,7 @@ function karta_bar_otdal(first_speaker, second_speaker)
 end
 
 function barman_new_dal(first_speaker, second_speaker)
-    dialogs.relocate_item_section(second_speaker, "wpn_pkp_tac_siber", "in", 1)
+    dialogs.relocate_item_section(second_speaker, "wpn_pkm", "in", 1)
     dialogs.relocate_money(first_speaker, 100000, "in")
 end
 
@@ -2245,8 +2250,8 @@ end
 
 function attach(sm)
     sm:subscribe({signal = "on_monster_hit",	fun = spider_kostolom_spawn})
+    sm:subscribe({signal = "on_monster_death",  fun = spider_kostolom_dead})
     sm:subscribe({signal = "on_update",         fun = distance_check})
-    sm:subscribe({signal = "on_update",         fun = spider_kostolom_dead})
     sm:subscribe({signal = "on_first_update",   fun = storyline_mix})
     sm:subscribe({signal = "on_info",           fun = storyline_mix})
 end

@@ -107,10 +107,46 @@ local function on_update()
 		ammo_alpha = ammo_alpha > 3 and ammo_alpha - 3 or 0
 		alpha_static("static_weapon", ammo_alpha)
 	end
+
+	local wnd = get_main_window()
+	local gun_jammed = wnd:GetStatic("gun_jammed")
+	if gun_jammed then
+		local target = db.actor:active_item()
+		if target then
+			local hud_sect = get_string(target:section(), "hud")
+			local shell_bone = get_string(hud_sect, "shell_bone")
+			local shell_point = get_vector(hud_sect, "shell_point", vector():set(0, 0, 0))
+			local shell_bone_pos = vector().add(target:bone_position(shell_bone and shell_bone or wpn_body, true), shell_point)
+			local shell_pos = vector().add(shell_bone_pos, device().cam_pos)
+			local pos = game.world2ui(shell_pos, true)
+            gun_jammed:SetWndSize(256, 256)
+			local wnd_size = gun_jammed:GetWndSize()
+            gun_jammed:SetWndPos(pos.x - (wnd_size.x * 0.5), pos.y - (wnd_size.y * 0.5))
+		else
+			gun_jammed:SetWndRect(1000, 1000, 0, 0)
+		end
+	end
+
+    local quick_info = wnd:GetStatic("quick_info")
+    if quick_info then
+        local target = level.get_target_obj()
+        if target then
+			local target_pos = vector().add(target:center(), device().cam_pos)
+            local pos = game.world2ui(target:center())
+            quick_info:SetWndSize(256, 128)
+			local wnd_size = quick_info:GetWndSize()
+			if target:is_stalker() and target:alive() then
+				pos.y = pos.y - 128
+			end
+            quick_info:SetWndPos(pos.x - (wnd_size.x * 0.5), pos.y - (wnd_size.y * 0.5))
+        else
+            quick_info:SetWndRect(1000, 1000, 100, 100)
+        end
+    end
 end
 
 function attach(sm)
 	sm:subscribe({ signal = "on_key_down",	fun = on_key_down })
 	sm:subscribe({ signal = "on_key_up",	fun = on_key_up   })
-	sm:subscribe({ signal = "on_update",	fun = on_update })
+	sm:subscribe({ signal = "on_update",	fun = on_update	  })
 end

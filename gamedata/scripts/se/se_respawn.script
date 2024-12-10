@@ -15,9 +15,6 @@ local idle_spawn_preset = {
 local respawners = {}
 local respawners_by_parent = {}
 
--- Хэш id всех созданных объектов. В качестве значения будет id респаунера.
-local all_spawned_obj = {}
-
 function attach(sm)
     sm:subscribe({signal = "on_release_npc", fun = this.on_release_npc})
 end
@@ -159,6 +156,16 @@ function se_respawn:STATE_Read(packet, size)
         self.respawn_time = utils.r_CTime(packet)
         self.rt_read = true
     end
+end
+
+function se_respawn:STATE_WriteLtx(ini, section)
+  cse_alife_smart_zone.STATE_WriteLtx(self, ini, section)
+  --log1("se_respawn:STATE_WriteLtx")
+end
+
+function se_respawn:STATE_ReadLtx(ini, section)
+  cse_alife_smart_zone.STATE_ReadLtx(self, ini, section)
+  --log1("se_respawn:STATE_ReadLtx")
 end
 
 -- инициализация объекта.

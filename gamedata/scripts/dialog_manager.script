@@ -24,7 +24,7 @@ function fill_phrase_table()
     local category = ""
 
     for i = 0, n - 1 do
-        result, id, value = phrase_ini:r_line("list", i, "", "")
+        result, id, value = phrase_ini:r_line("list", i)
 
         if not phrase_ini:section_exist(id) then
             abort("There is no section [%s] in dialog_manager.ltx", id)
@@ -48,12 +48,16 @@ function fill_phrase_table()
         if phrase_ini:line_exist(id, "npc_rank") then
             tt.npc_rank = phrase_ini:r_u32(id, "npc_rank")
         end
+        -- Добавил Mixser, возможность проверки на ранг актора
+        -- Если ранг выше указанного в фразе, то фраза блочится
+        if sys_ini:line_exist(id, "actor_rank") then
+            tt.actor_rank = sys_ini:r_string(id, "actor_rank")
+        end
         if phrase_ini:line_exist(id, "level") then
             tt.level = phrase_ini:r_string(id, "level")
         end
         if phrase_ini:line_exist(id, "condlist") then
-            tt.condlist = xr_logic.parse_condlist(db.actor, "dialog_manager", "condlist",
-                phrase_ini:r_string(id, "condlist"))
+            tt.condlist = xr_logic.parse_condlist(db.actor, "dialog_manager", "condlist", phrase_ini:r_string(id, "condlist"))
         end
         if phrase_ini:line_exist(id, "smart_terrain") then
             tt.smart_terrain = phrase_ini:r_string(id, "smart_terrain")
@@ -227,8 +231,8 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
         local lll = sel_tbl[npc:id()]
         local ttt = tbl[lll.phrase]
 
-        if (ttt == nil) then
-            local a = lll.phrase + 1
+        if (ttt == nil) then			
+            sel_tbl[npc:id()] = nil  --- KamikaZze * этот код инициализирует память фраз непися если возникает её сбой
         end
 
         local value, number = calculate_predicate(npc, ttt)
@@ -242,7 +246,7 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
     local phrase = tbl[p3]
 
     -- ' Проверка на повторяемость фраз.
-    if ((sel_tbl ~= nil) and (sel_tbl[npc:id()] ~= nil)) then
+    if sel_tbl and sel_tbl[npc:id()] then
         -- ' Если проверяется не запомненная фраза
         if (sel_tbl[npc:id()].phrase ~= phrase.phr_id) then
             return false
@@ -257,17 +261,50 @@ function precondition(npc, actor, tbl, sel_tbl, p1, p2, p3)
     return value
 end
 
+local community_substitutes = {
+    ["actor"] = "stalker",
+    ["actor_dolg"] = "dolg",
+    ["actor_freedom"] = "freedom",
+    ["stranger"] = "stalker",
+    ["actor_zombied"] = "",
+    ["csky"] = "stalker",
+    ["actor_prebandit"] = "stalker",
+    ["quest_stalker"] = "stalker",
+    ["kulg_band"] = "bandit",
+    ["bratstvo_9"] = "stalker",
+    ["kulg_band_2"] = "bandit",
+    ["neutral_military"] = "military",
+    ["iskatel"] = "stalker",
+    ["neutral_killer"] = "killer",
+    ["mil_stalker"] = "military"
+}
+
 function calculate_predicate(npc, tbl, settings)
     local property_num = 0
     local k, v = 0, 0
+
+    if not tbl then 
+        return true, property_num 
+    end
+	
+    local rating_names = 
+    {
+        ["novice"] = 1,
+        ["experienced"] = 2,
+        ["veteran"] = 3,
+        ["master"] = 4
+    }
+
     if tbl.community ~= nil then
-        if tbl.community ~= db.actor:character_community() then
+        local susbt = community_substitutes[db.actor:character_community()]
+        if tbl.community ~= db.actor:character_community() and not (susbt and tbl.community == susbt) then
             return false, 0
         end
         property_num = property_num + 1
     end
     if tbl.npc_community ~= nil then
-        if tbl.npc_community ~= npc:character_community() then
+        local susbt = community_substitutes[npc:character_community()]
+        if tbl.npc_community ~= npc:character_community() and not (susbt and tbl.npc_community == susbt) then
             return false, 0
         end
         property_num = property_num + 1
@@ -285,6 +322,13 @@ function calculate_predicate(npc, tbl, settings)
             return false, 0
         end
         property_num = property_num + 1
+    end
+    -- Mixser, проверка на ранг актора
+    if tbl.actor_rank then
+        if rating_names[ranks.get_obj_rank_name(db.actor)] > rating_names[ranks.get_obj_rank_name(npc)] then 
+            return false, 0 
+        end
+        property_num = property_num + 1	
     end
     if tbl.level ~= nil then
         if tbl.level ~= level.name() then

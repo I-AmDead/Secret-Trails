@@ -3,6 +3,7 @@ local function del_phobj()
     delete_obj("sar_physic_destroyable_object_0085")
     delete_obj("mil_awr_lamp_mil_smart_terrain_7_7_freedom_mechanic_stalker_01")
     delete_obj("mil_awr_lamp_mil_smart_terrain_7_7_freedom_mechanic_stalker_02")
+    delete_obj("mil_physic_object_0009")
     delete_obj("mil_physic_object_0022")
     delete_obj("mil_physic_object_0023")
     delete_obj("mil_physic_object_0024")
@@ -64,8 +65,6 @@ local function lamp_lists()
                     lamp_list[a] = {type = "gas"}
                 elseif string.find(obj:name(), "light_uglovaya_1") then
                     lamp_list[a] = {type = "uglovaya"}
-                elseif data.main_color and data.main_color == -7243 then
-                    lamp_list[a] = {type = "white"}
                 elseif data.main_brightness and data.main_brightness > 0.9 then
                     lamp_list[a] = {type = "brightness"}
                 end
@@ -82,7 +81,7 @@ local function lamp_settings()
         if obj then
             if v.type == "gas" then
                 obj:get_hanging_lamp():set_flare(false)
-            elseif v.type == "uglovaya" or v.type == "white" or v.type == "brightness" then
+            elseif v.type == "uglovaya" or v.type == "brightness" then
                 local pk = get_netpk(obj, 1)
                 ASSERT(pk and pk:isOk(), "can't read netpacket of %s", obj:name())
                 local data = pk:get()
@@ -122,10 +121,25 @@ local function fix_lc_pripyat_aes()
     local obj = alife():story_object(832)
     if obj then
         local lc = obj:get_level_changer()
-        lc.dest_game_vertex_id = 2399
-        lc.dest_level_vertex_id = 414957
-        lc.dest_position = vector():set(918.561, -0.102, -393.141)
+        lc.dest_game_vertex_id = 2651
+        lc.dest_level_vertex_id = 414969
+        lc.dest_position = vector():set(918.553, -0.110, -385.134)
         ogse.save_var("fix_lc_pripyat_aes", true)
+    end
+end
+
+local function fix_lc_aes_pripyat()
+    if ogse.var_exists("fix_lc_aes_pripyat") then
+        return
+    end
+
+    local obj = alife():story_object(6001)
+    if obj then
+        local lc = obj:get_level_changer()
+        lc.dest_game_vertex_id = 2521
+        lc.dest_level_vertex_id = 142984
+        lc.dest_position = vector():set(31.669, 1.034, 405.963)
+        ogse.save_var("fix_lc_aes_pripyat", true)
     end
 end
 
@@ -137,9 +151,9 @@ local function fix_lc_radar_millitary()
     local obj = alife():story_object(1008)
     if obj then
         local lc = obj:get_level_changer()
-        lc.dest_game_vertex_id = 1808
-        lc.dest_level_vertex_id = 357153
-        lc.dest_position = vector():set(81.863, -12.047, 405.985)
+        lc.dest_game_vertex_id = 1701
+        lc.dest_level_vertex_id = 353709
+        lc.dest_position = vector():set(77.851, -13.643, 402.098)
         ogse.save_var("fix_lc_radar_millitary", true)
     end
 end
@@ -376,6 +390,7 @@ local function fix_new_first()
     ded_luck()
     ded_secret()
     fix_lc_pripyat_aes()
+    fix_lc_aes_pripyat()
     fix_lc_radar_millitary()
     fix_lc_garbage_escape()
     fix_lc_escape_garbage()

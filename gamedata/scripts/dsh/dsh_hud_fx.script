@@ -69,7 +69,6 @@ function get_wpn_info(wpn)
     if (not t.name) or t.name ~= wpn:name() then
         t.const_dev_t = 0
         t.dispersion_start = get_u32(wpn:section(), "dispersion_start")
-        t.fire_power_loss = get_fire_power_loss(wpn)
         t.hit_power = get_float(wpn:section(), "hit_power")
         t.hit_power_2 = get_float(wpn:section(), "hit_power_2")
         t.id = wpn:id()
@@ -81,12 +80,6 @@ function get_wpn_info(wpn)
     end
     t.wpn = wpn
     return cur_wpn
-end
-
-function get_fire_power_loss(wpn)
-    local sect = wpn:section()
-    local fire_power_loss_k = get_float(sect, "dsh_wpn.fire_power_loss_k", 1)
-    return stand_power * time_factor * fire_power_loss_k
 end
 
 local cached_wpn = {}

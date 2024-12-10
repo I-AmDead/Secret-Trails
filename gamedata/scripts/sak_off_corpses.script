@@ -8,7 +8,6 @@ end
 local tabl_corpses = {}
 local tabl_corpses_9510 = {}
 local exceptions_9510 = {}
-local exceptions_9510_info = {}
 
 -- схема удаления трупов монстров
 local tabl_monsters_dead = {} -- все мёртвые монстры
@@ -71,7 +70,7 @@ function is_level_vertex_ok(sobj, obj_level)
 end
 
 function fix_level_vertex(sobj)
-    local vert_ok = level.vertex_id_by_pos(sobj.m_level_vertex_id, sobj.position)
+    local vert_ok = level.vertex_id(sobj.m_level_vertex_id, sobj.position)
     if level.valid_vertex_id(vert_ok) then
         sobj.m_level_vertex_id = vert_ok
         sobj:set_position(level.vertex_position(vert_ok))
@@ -111,7 +110,6 @@ function off_corpses()
                 -- проверка трупа сталкера, если не в исключениях - в
                 -- таблицу и бум удалять
                 protected_items.unprotect_tabl_corps_keep(obj)
-                -- add_9510_exceptions( obj )
                 if not protected_items.is_corps_keep_by_story_id(obj) and
                     not protected_items.obj_is_protected(obj, "tabl_corps_keep", "exactly") then
                     if obj.m_story_id > 30210 or exceptions_9510[obj.m_story_id] then
@@ -233,10 +231,3 @@ function item_keep(item)
     end
     return cached_item[k]
 end
-
--- function add_9510_exceptions( sobj )
---  local by_info = exceptions_9510_info[ sobj.m_story_id ]
---  if by_info and sak.has_all_info( by_info ) then
---    exceptions_9510[ sobj.m_story_id ] = true
---  end
--- end

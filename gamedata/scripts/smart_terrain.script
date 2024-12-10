@@ -132,6 +132,16 @@ function se_smart_terrain:STATE_Read( packet, size )
     --	self:print()
 end
 
+function se_smart_terrain:STATE_ReadLtx(ini, section)
+    cse_alife_smart_zone.STATE_ReadLtx(self, ini, section)
+    --log1("se_smart_terrain:STATE_ReadLtx")
+end
+
+function se_smart_terrain:STATE_WriteLtx(ini, section)
+    cse_alife_smart_zone.STATE_WriteLtx(self, ini, section)
+    --log1("se_smart_terrain:STATE_WriteLtx")
+end
+
 -- инициализировать работу смарт террейна.
 -- после этой функции смарт ПОЛНОСТЬЮ работоспособен.
 -- вызывается из всех мест, которые могут вызвать другие объекты:
@@ -380,26 +390,7 @@ end
 -- надо согласовывать место спавна неписей и группы, иначе заспавненные неписи не смогут 
 -- попасть в свой смарт. 
 -- если локация не прописана в этой таблице, то она будет автоматически изолирована.
-local level_groups = {
-    l01_escape = "group1",
-    l02_garbage = "group1",
-    l03_agroprom = "group1",
-    l03u_agr_underground = "group1",
-    l04_darkvalley = "group1",
-    l04u_labx18 = "group1",
-    l05_bar = "group1",
-    l06_Rostok = "group1",
-    l07_military = "group1",
-    l08_yantar = "group1",
-    l08u_brainlab = "group1",
-    l10_radar = "group1",
-    l10u_bunker = "group1",
-    l11_pripyat = "group1",
-    l12_stancia = "group3",
-    l12u_sarcofag = "group3",
-    l12u_control_monolith = "group3",
-    l12_stancia_2 = "group3"
-}
+local level_groups = {}
 
 function is_same_level_group(l1, l2)
     local g1 = level_groups[l1] or l1
@@ -672,18 +663,20 @@ end
 -- вызывается движком после включения непися в состав смарта
 -- задание в оффлайне заключается попросту топать к смарту, где непись 
 -- выйдет в онлайн и будет подхвачен уже логикой гулага
+local def_task = false
 function se_smart_terrain:task(obj)
-    local path_name = self.gulag:get_obj_job_path_name(obj.id)
-    if not path_name then
-        log1("!!WARNING: NO PATH [" .. obj.id .. "] [" .. obj:name() .. "] [" .. self:name() .. "] PATH [" .. tostring(path_name) .. "]")
-        -- log3("[smart_terrain %s] task: obj=%s job_path=nil, CLEARING", self:name(), obj:name())
+    local task = self.gulag:get_obj_job_task(obj.id)
+    if not task then
         self.gulag:free_obj(obj.id)
         self:unregister_npc(obj) --'Затычка против вылета.
         self:reset_npc_logic(obj)
-        return CALifeSmartTerrainTask("simulation_default_path")
-    end
 
-    return CALifeSmartTerrainTask(path_name)
+        if not def_task then
+            def_task = CALifeSmartTerrainTask("simulation_default_path")
+        end
+        return def_task
+    end
+    return task
 end
 
 -- может ли данный гулаг создаться в данный момент?

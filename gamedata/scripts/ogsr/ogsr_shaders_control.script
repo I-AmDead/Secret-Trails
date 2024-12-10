@@ -14,10 +14,38 @@ local function dof_disable()
     set_dof_params(0.0, 0.0, 0.0, 0.0)
 end
 
+local ssfx_parallax_setup = {
+    ["l01_escape"]			= { 0.0,   -0.05, 0.2,   0.0   },
+    ["l02_garbage"]			= { 0.13,  0.15,  0.13,  0.1   },
+    ["l03_agroprom"]			= { 0.05,  0.35,  -0.13, -0.1  },
+    ["l04_darkvalley"]			= { 0.07,  0.15,  0.07,  0.15  },
+    ["l05_bar"]				= { 0.07,  0.15,  0.13,  0.0   },
+    ["l06_rostok"]			= { -0.07, -0.05, -0.07, 0.0   },
+    ["l07_military"]			= { -0.07, -0.05, 0.0,  -0.05  },
+    ["l08_yantar"]			= { -0.13, -0.05, -0.13, 0.0   },
+    ["l09_deadcity"]			= { -0.13, -0.05, -0.13, 0.3   },
+    ["l10_radar"]			= { -0.07, -0.05, -0.07, 0.0   },
+    ["l10_red_forest"]			= { -0.13, -0.05, -0.07, -0.1  },
+    ["l11_pripyat"]			= { -0.1,  -0.05, 0.0,   -0.05 },
+    ["l12_stancia"]			= { -0.1,  -0.05, 0.0,   -0.1  }, 
+    ["l12_stancia_2"]			= { -0.1,  -0.05, 0.0,   0.0   },
+}
+
+local function terrain_offset()
+    if (ssfx_parallax_setup[level.name()]) then
+        local setup = ssfx_parallax_setup[level.name()]
+        cmd("ssfx_terrain_offset " .. string.format("%f, %f, %f, %f", setup[1], setup[2], setup[3], setup[4]))
+    else
+        cmd("ssfx_terrain_offset 0, 0, 0, 0")
+    end
+end
+
 local function on_first_update()
-    cmd("ssfx_wpn_dof_2 0.5")
-    set_dof_params(0.0, 0.0, 0.0, 0.0)
+    dof_disable()
+    terrain_offset()
     shader_set_custom_param("radiation_effect", 0, 0, 0, 0)
+    shader_set_custom_param("buzz_effect", 0, 0, 0, 0)
+    shader_set_custom_param("burn_effect", 0, 0, 0, 0)
 end
 
 local function on_key_down(key, bind)
@@ -38,51 +66,103 @@ local function on_dots_update()
 
     if last_weapon_id and last_weapon_id == wpn:id() then return end
     last_weapon_id = wpn:id()
+
+    local section = wpn:section()
+    local scope_status = get_u32(section, "scope_status", 0)
+    local scope_name = scope_status > 1 and get_string(section, "scope_name", nil) or section
+    local scope_texture = get_string(scope_name, "scope_texture", nil)
+
+    if scope_texture then
+        scope_control(scope_name, scope_status)
+    end
+
     mark_control(wpn, true)
+end
+
+function scope_control(scope_name, scope_status)
+    if scope_status < 1 and not scope_name then return end
+
+    local reticle_size = get_float(scope_name, "3d_reticle_size", 4)
+    local eye_relief = get_float(scope_name, "3d_eye_relief", 4)
+    local exit_pupil = get_float(scope_name, "3d_exit_pupil", 0.3)
+    local ffp = get_float(scope_name, "3d_ffp", 0)
+
+    local scope_zoom_factor = get_float(scope_name, "scope_zoom_factor", 1.5)
+    local min_zoom = get_float(scope_name, "3d_min_zoom", 0)
+    local zoom_factor = get_float(scope_name, "3d_zoom_factor", 1.5)
+
+    local image_type = get_float(scope_name, "3d_image_type", 0)
+    local reticle_type = get_float(scope_name, "3d_reticle_type", 0)
+    local dirt_intensity = get_float(scope_name, "3d_dirt_intensity", 0)
+    local chroma_power = get_float(scope_name, "3d_chroma_power", 0.02)
+
+    local lens_color = get_vector(scope_name, "3d_lens_color", vector():set(1, 1, 1))
+    local nvg_blur = get_float(scope_name, "3d_nvg_blur", 0)
+
+    local mark_color = get_vector(scope_name, "mark_color", vector():set(0, 0, 0))
+
+    shader_set_custom_param("s3ds_param_1", reticle_size, eye_relief, exit_pupil, ffp)
+    shader_set_custom_param("s3ds_param_2", 0, 0, min_zoom, zoom_factor)
+    shader_set_custom_param("s3ds_param_3", image_type, reticle_type, dirt_intensity, chroma_power)
+    shader_set_custom_param("s3ds_param_4", lens_color.x, lens_color.y, lens_color.z, nvg_blur)
+
+    shader_set_custom_param("mark_number", 0, 0, 0, 0)
+    shader_set_custom_param("mark_color", mark_color.x, mark_color.y, mark_color.z, 0)
 end
 
 function mark_control(wpn, force, bind)
     local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
     local dots_number = get_u32(wpn:section(), "dots_number", 0)
-    if scope_name and get_line_exist(scope_name, "dots_number") then
-        dots_number = get_u32(scope_name, "dots_number", 0)
+    local backlight = get_bool(wpn:section(), "backlight_reticle", false)
+
+    if scope_name then
+        if get_line_exist(scope_name, "dots_number") then
+            dots_number = get_u32(scope_name, "dots_number", dots_number)
+        else
+            backlight = get_bool(scope_name, "backlight_reticle", backlight)
+        end
     else
         scope_name = wpn:section()
     end
-    if not force then
-        if dots_number and dots_number > 0 then
-            if bind == key_bindings.kSWITCH_MARK then
-                settings_mark(false, dots_number, "mark_number", scope_name, wpn)
-            else
-                settings_mark(false, 3, "mark_color", scope_name, wpn)
-            end
-        end
-    else
+
+    if dots_number == 0 and not backlight then return end
+
+    if bind == key_bindings.kSWITCH_MARK and backlight then return end
+
+    local max_color = backlight and 2 or 3
+
+    if force then
         settings_mark(true, dots_number, "mark_number", scope_name, wpn)
-        settings_mark(true, 3, "mark_color", scope_name, wpn)
+        settings_mark(true, max_color, "mark_color", scope_name, wpn, backlight)
+    else
+        if bind == key_bindings.kSWITCH_MARK then
+            settings_mark(false, dots_number, "mark_number", scope_name, wpn)
+        else
+            settings_mark(false, max_color, "mark_color", scope_name, wpn, backlight)
+        end
     end
 end
 
 local last_weapon_id
 local snd_adjust = sound_object('interface\\mark_adjust')
-function settings_mark(update, max_value, value_name, scope_name, wpn)
+function settings_mark(update, max_value, value_name, scope_name, wpn, backlight)
     local value = ogse.load_var(value_name .. scope_name .. wpn:section(), 0)
     if not update then
-        value = value < max_value - 1 and value + 1 or 0
+        value = value >= max_value - 1 and 0 or value + 1
         ogse.save_var(value_name .. scope_name .. wpn:section(), value)
         game.play_hud_anm("script\\mark_adjust.anm", 2, 2, 1, false, false)
         snd_adjust:play(db.actor, 0, sound_object.s2d)
     end
     if value_name == "mark_color" then
-        if value < 2 then
-            if value < 1 then
-                shader_set_custom_param(value_name, 1, 0, 0)
-            else
-                shader_set_custom_param(value_name, 0, 1, 0)
-            end
+        local r, g, b = 0, 0, 0
+        if value < 2 and not backlight then
+            r, g = (value == 0) and 1 or 0, (value == 1) and 1 or 0
+        elseif backlight then
+            r = (value > 0) and 1 or 0
         else
-            shader_set_custom_param(value_name, 0, 0, 1)
+            b = 1
         end
+        shader_set_custom_param(value_name, r, g, b)
     else
         shader_set_custom_param(value_name, value, max_value, 0)
     end
@@ -93,17 +173,14 @@ local cur_rad_level = 0
 local function update_rad_effect()
     local rad_level = arc_radiation.get_rad_level() * 50
     local v = shader_get_custom_param_vector("radiation_effect")
-    if rad_level > cur_rad_level then
-        cur_rad_level = cur_rad_level + (rad_level * 0.1)
-        v.z = cur_rad_level
+
+    if rad_level > 0 then
+        cur_rad_level = cur_rad_level + (rad_level - cur_rad_level) * 0.1
     else
-        cur_rad_level = cur_rad_level - (rad_level * 0.1)
-        v.z = cur_rad_level
+        cur_rad_level = cur_rad_level < 0.01 and 0 or cur_rad_level * 0.9
     end
-    if rad_level == 0 then
-        cur_rad_level = cur_rad_level > 0 and cur_rad_level - (cur_rad_level * 0.1) or 0
-        v.z = cur_rad_level
-    end
+
+    v.z = cur_rad_level
     ogsr_signals.get_mgr():reschedule(60)
     shader_set_custom_param_vector("radiation_effect", v)
 end
@@ -113,10 +190,76 @@ local function on_actor_update()
     on_dots_update()
 end
 
+local function modifyValue(startValue, endValue, typeValue)
+    local lcall
+    local currentValue = startValue
+    local v = shader_get_custom_param_vector(typeValue)
+    lcall = level.add_call(
+        function()
+            log3("Current value: %s", currentValue)
+            log3("typeValue = %s, v.w = %s", typeValue, v.w)
+            if startValue < endValue then
+                currentValue = currentValue + 4
+                v.w = currentValue * 0.01
+                shader_set_custom_param_vector(typeValue, v)
+                return currentValue > endValue
+            else
+                currentValue = currentValue - 4
+                v.w = currentValue * 0.01
+                shader_set_custom_param_vector(typeValue, v)
+                return currentValue < endValue
+            end
+
+            lcall:set_pause(100)
+            return false
+        end,
+        function()
+            v.w = currentValue * 0.01
+            shader_set_custom_param_vector(typeValue, v)
+            log3("typeValue = %s, v.w = %s", typeValue, v.w)
+        end
+    )
+end
+
+local function on_zone_enter(zone, obj)
+    if obj:id() ~= db.actor:id() then return end
+
+    if string.find(zone:section(), "zone_field_acidic") or string.find(zone:section(), "_buzz") then
+        local v = shader_get_custom_param_vector("buzz_effect")
+        local zone_color = get_vector(zone:section(), "effect_color", vector():set(1.0, 0.8, 0.1))
+        v.x = zone_color.x
+        v.y = zone_color.y
+        v.z = zone_color.z
+        shader_set_custom_param_vector("buzz_effect", v)
+        modifyValue(v.w * 100, 100, "buzz_effect")
+    end
+
+    if string.find(zone:section(), "zone_field_thermal") then
+        local v = shader_get_custom_param_vector("burn_effect")
+        modifyValue(v.w * 100, 100, "burn_effect")
+    end
+end
+
+local function on_zone_exit(zone, obj)
+    if obj:id() ~= db.actor:id() then return end
+
+    if string.find(zone:section(), "zone_field_acidic") or string.find(zone:section(), "_buzz") then
+        local v = shader_get_custom_param_vector("buzz_effect")
+        modifyValue(v.w * 100, 0, "buzz_effect")
+    end
+
+    if string.find(zone:section(), "zone_field_thermal") then
+        local v = shader_get_custom_param_vector("burn_effect")
+        modifyValue(v.w * 100, 0, "burn_effect")
+    end
+end
+
 function attach(sm)
     sm:subscribe({ signal = "on_first_update",     fun = on_first_update })
     sm:subscribe({ signal = "ui_on_dialog_show",   fun = dof_enable })
     sm:subscribe({ signal = "ui_on_dialog_hide",   fun = dof_disable })
     sm:subscribe({ signal = "on_update",           fun = on_actor_update })
     sm:subscribe({ signal = "on_key_down",         fun = on_key_down })
+    sm:subscribe({ signal = "on_zone_enter",       fun = on_zone_enter })
+    sm:subscribe({ signal = "on_zone_exit",        fun = on_zone_exit })
 end

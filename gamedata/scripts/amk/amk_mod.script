@@ -4,6 +4,7 @@ function attach(sm)
     sm:subscribe({signal = "on_use",       fun = this.treasure_create})
     sm:subscribe({signal = "on_spawn",     fun = this.first_run})
     sm:subscribe({signal = "on_spawn",     fun = this.check_spawn})
+    sm:subscribe({signal = "on_take",      fun = this.check_usable_item})
     sm:subscribe({signal = "on_npc_use",   fun = this.check_usable_item})
     sm:subscribe({signal = "on_npc_spawn", fun = this.build_btrs_table})
     sm:subscribe({signal = "on_ph_spawn",  fun = this.build_btrs_table})
@@ -65,12 +66,6 @@ function check_spawn()
     local obj = alife():story_object(6002)
     if obj then
         level_tasks.add_location_by_id(obj.id, "level_changer", "to_l04_darkvalley")
-    end
-
-    local obj = alife():story_object(6000)
-    if not obj then
-        alife():create(6520)
-        obj = alife():story_object(6000)
     end
 
     delete_new_lc(833, "info_way_pripyat")
@@ -492,11 +487,11 @@ function spawn_unspawned_respawners()
             local flag = get_bool("amk_respawns", v, false, sini)
             if not respawners[v] and flag then
                 local t = get_section_keys_and_values(v, sini)
-                local xyzlg = string.explode(",", t.xyzlg, true)
-                local pos = vector():set(tonumber(xyzlg[1]), tonumber(xyzlg[2]), tonumber(xyzlg[3]))
-                local respawner = alife():create("respawn", pos, tonumber(xyzlg[4]), tonumber(xyzlg[5]))
+                local position = get_vector(v, "pos", vector():set(0, 0, 0), sini)
+                local level_name = get_string(v, "level_name", nil, sini)
+                local respawner = alife_create("respawn", level_name, position)
 
-                t.xyzlg = nil
+                t.pos = nil
                 t.amk_name = v
 
                 local pk = get_netpk(respawner, 1)
@@ -518,8 +513,7 @@ end
 btrs_friends = {}
 
 function build_btrs_table(obj)
-    if obj and (obj:is_stalker() and obj:character_community() == "military" and obj:alive()) or obj:section() ==
-        "vehicle_btr" then
+    if obj and (obj:is_stalker() and obj:character_community() == "military" and obj:alive()) or obj:section() == "vehicle_btr" then
         btrs_friends[obj:id()] = obj:section()
     end
 end

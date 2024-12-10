@@ -140,10 +140,10 @@ function set_weapon_drop_condition(item, npc)
         item:unload_magazine()
     end
     local l, h = low_damage_rar, high_damage_rar
-    if not rare_item[item:section()] then
+    if not rare_item[item:id()] and not rare_item[item:section()] then
         l, h = damage_boundaries(npc)
+        item:set_condition(math.random(l, h) / 100)
     end
-    item:set_condition(math.random(l, h) / 100)
 end
 
 local death_ini = ini_file("misc\\death_manager.ltx")

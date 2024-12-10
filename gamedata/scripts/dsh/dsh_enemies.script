@@ -28,33 +28,6 @@ function on_spawn()
             end
         end
     end
-    if level.name() == "l01_escape" then
-        ogsr_signals.get_mgr():subscribe({
-            signal = "on_npc_spawn",
-            fun = this.check_military_blockpost
-        })
-    end
-end
-
--- некоторых сталкеров военные будут пропускать под мостом. А
--- некоторых - не будут.
-local blockpost_pass = {"esc_bridge"}
-function check_military_blockpost(obj)
-    if math.random() > 0.6 then
-        return
-    end
-    for _, k in ipairs(blockpost_pass) do
-        if not ignore_enemies[k] then
-            ignore_enemies[k] = {}
-        end
-        ignore_enemies[k][obj:name()] = true
-        if not ignore_enemies[obj:name()] then
-            ignore_enemies[obj:name()] = {}
-        end
-        ignore_enemies[obj:name()][k] = true
-    end
-    --
-    -- log3("tbl ignore: %s", ignore_enemies)
 end
 
 local freq = 60000
@@ -125,14 +98,7 @@ function check_is_enemy_always(obj, enemy)
             end
         end
     end
-    --
-    if level.name() == "l07_military" and obj:is_stalker() and enemy:is_stalker() and
-        (obj:character_community() == "freedom" or obj:character_community() == "dolg") and
-        (enemy:character_community() == "freedom" or enemy:character_community() == "dolg") then
-        return has_alife_info("mil_freedom_under_attack") or has_alife_info("mil_max_arrive") or
-                   not has_alife_info("mil_patrol_dead")
-    end
-    --
+
     return true
 end
 
