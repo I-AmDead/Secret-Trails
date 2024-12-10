@@ -1,466 +1,450 @@
 ;===========================================================================
 ; FLESH
 ;===========================================================================
+
 [m_flesh_e]:monster_base
-GroupControlSection = spawn_group
-SpaceRestrictionSection = space_restrictor,zone_mosquito_bald,zone_gravi_zone
-$spawn               = "monsters\fleshes\flesh_base"  ; option for Level Editor
-$npc           = on           ; option for Level Editor
-$prefetch        = 16
-Scheduled        = on           ; option for ALife Simulator
-Human          = off            ; option for ALife Simulator
-Health           = 250            ; option for ALife Simulator
-MinSpeed         = 1.0            ; option for ALife Simulator
-MaxSpeed         = 1.5            ; option for ALife Simulator
-going_speed          = 2.0                      ; option for ALife Simulator
-current_level_going_speed   = 1;2         ; option for ALife Simulator
-search_speed         = .5                       ; option for ALife Simulator
-visual         = monsters\flesh\flesh
-corpse_visual    = monsters\flesh\flesh_dead
-keep_visual = true
-icon         = ui_npc_monster_flesh
-MaxHealthValue         = 1.0      ; range [0..200]
-DynamicObjectsCount  = 32
-smart_terrain_choose_interval = 00:15:00
+SpaceRestrictionSection                  = space_restrictor, zone_mosquito_bald, zone_gravi_zone
+Human                                    = off ;option for ALife Simulator
+Health                                   = 250 ;option for ALife Simulator
+MinSpeed                                 = 1.0 ;option for ALife Simulator
+MaxSpeed                                 = 1.5 ;option for ALife Simulator
+going_speed                              = 2.0 ;option for ALife Simulator
+current_level_going_speed                = 1 ;2     ; option for ALife Simulator
+search_speed                             = .5 ;option for ALife Simulator
+visual                                   = monsters\flesh\flesh
+corpse_visual                            = monsters\flesh\flesh_dead
+keep_visual                              = true
+icon                                     = ui_npc_monster_flesh
+MaxHealthValue                           = 1.0 ;range [0..200]
+DynamicObjectsCount                      = 32
+smart_terrain_choose_interval            = 00:15:00
 
-character_use                     = flesh_character_use     ;айди текста описания юза
+character_use                            = flesh_character_use ;айди текста описания юза
 
-Spawn_Inventory_Item_Section = mutant_flesh_eye
-Spawn_Inventory_Item_Probability = 1.0
+Spawn_Inventory_Item_Section             = mutant_flesh_eye
+Spawn_Inventory_Item_Probability         = 1.0
 
-ef_creature_type   = 7        ; option for evaluation functions
-ef_weapon_type     = 2
-ef_detector_type       = 1
-panic_threshold   = 0.1
+ef_creature_type                         = 7 ;option for evaluation functions
+ef_weapon_type                           = 2
+ef_detector_type                         = 1
+panic_threshold                          = 0.1
 
-cform               = skeleton          ; collision class
-class               = SM_FLESH          ; AI class
+cform                                    = skeleton ;collision class
+class                                    = SM_FLESH ;AI class
 
-script_binding    = bind_monster.bind
+script_binding                           = bind_monster.bind
 
-bone_torso    = bip01_spine      ; bone name
-bone_head     = bip01_head        ; bone name
-bone_fire     = bip01_head        ; bone name
-weapon_usage    = 0           ; boolean
+bone_torso                               = bip01_spine ;bone name
+bone_head                                = bip01_head ;bone name
+bone_fire                                = bip01_head ;bone name
+weapon_usage                             = 0 ;boolean
 
-use_cop_anims = true
+use_cop_anims                            = true
 
 ;------------------------------------------------------------------------
 ; Influences
 ;------------------------------------------------------------------------
+fire_max_distance                        = 0
+fire_max_power                           = 5
+fire_linear_factor                       = 0
+fire_quadratic_factor                    = 0.025
 
-fire_max_distance			=	0
-fire_max_power				=	5
-fire_linear_factor			=	0
-fire_quadratic_factor		=	0.025
+psy_max_distance                         = 0
+psy_max_power                            = 5
+psy_linear_factor                        = 0.05
+psy_quadratic_factor                     = 0
 
-psy_max_distance			=	0
-psy_max_power				=	5
-psy_linear_factor			=	0.05
-psy_quadratic_factor		=	0
-
-radiation_max_distance		=	0
-radiation_max_power			=	0.01
-radiation_linear_factor		=	1
-radiation_quadratic_factor	=	1
-radiation_pp_effector_name	= 	postprocess_rad
-radiation_pp_highest_at		= 	0.02
+radiation_max_distance                   = 0
+radiation_max_power                      = 0.01
+radiation_linear_factor                  = 1
+radiation_quadratic_factor               = 1
+radiation_pp_effector_name               = postprocess_rad
+radiation_pp_highest_at                  = 0.02
 
 ;---------------------------------------------------------------------
 ; Physics
 ;---------------------------------------------------------------------
 ; movement
-ph_box0_center     = 0.0,  0.9,  0.0
-ph_box0_size     = 0.55, 0.9,  0.55
-ph_box1_center     = 0.0,  0.6,  0.0
-ph_box1_size     = 0.40, 0.6,  0.40
-ph_crash_speed_min      = 10
-ph_crash_speed_max      = 30
-ph_collision_damage_factor  = 0.1
-ph_mass          = 200;100            ; also it's the food
+ph_box0_center                           = 0.0, 0.9, 0.0
+ph_box0_size                             = 0.55, 0.9, 0.55
+ph_box1_center                           = 0.0, 0.6, 0.0
+ph_box1_size                             = 0.40, 0.6, 0.40
+ph_crash_speed_min                       = 10
+ph_crash_speed_max                       = 30
+ph_collision_damage_factor               = 0.1
+ph_mass                                  = 200 ;100      ; also it's the food
 
-destroyed_vis_name	 = dynamics\Dead_Body\skelet_crash_monster
+destroyed_vis_name                       = dynamics\Dead_Body\skelet_crash_monster
 
 ;----------------------------------------------------------------------------
-ph_skeleton_airr_lin_factor   = 2.0 ;550.0 (изменно из-за того, что убрано домножение коэффициент 0.002 из кода)
-ph_skeleton_airr_ang_factor   = 0.0 ;0.0 (изменно из-за того, что убрано домножение на коэффициент 0.3 из кода (0.0*0.3=0.0))
-ph_skeleton_hinger_factor1    = 1.0 ;1.0 (изменно из-за того, что убрано домножение на коэффициент 5.0 из кода)
-ph_skeleton_ddelay          = 15.0 ;Время изменения значения трения в суставе с момента создания шелла, сек
+ph_skeleton_airr_lin_factor              = 2.0 ;550.0 (изменно из-за того, что убрано домножение коэффициент 0.002 из кода)
+ph_skeleton_airr_ang_factor              = 0.0 ;0.0 (изменно из-за того, что убрано домножение на коэффициент 0.3 из кода (0.0*0.3=0.0))
+ph_skeleton_hinger_factor1               = 1.0 ;1.0 (изменно из-за того, что убрано домножение на коэффициент 5.0 из кода)
+ph_skeleton_ddelay                       = 15.0 ;Время изменения значения трения в суставе с момента создания шелла, сек
 
-ph_skel_fatal_impulse_factor  = 12.0
-ph_after_death_velocity_factor= 0.75
-ph_skel_shot_up_factor        = 0.25
+ph_skel_fatal_impulse_factor             = 12.0
+ph_after_death_velocity_factor           = 0.75
+ph_skel_shot_up_factor                   = 0.25
+
 ;----------------------------------------------------------------------------
-
 ;---------------------------------------------------------------------
 ; Squad seperation behaviour (расталкивание)
 ;---------------------------------------------------------------------
-separate_factor = 0.8 ; сила расталкивания
-separate_range  = 3   ; радиус в котором расталкивание действует
+separate_factor                          = 0.8 ;сила расталкивания
+separate_range                           = 3 ;радиус в котором расталкивание действует
 
 ;----------------------------------------------------------------------------
 ; Movement::Velocities & Acceleration
 ;----------------------------------------------------------------------------
-
 ; speed factors			linear | angular_real | angular_path | min |  max
-Velocity_Stand			= 0,		1.79,			1.79		1,		1
-Velocity_WalkFwdNormal	= 1.5,		2.0,			2.0,		0.2,	2.0
-Velocity_WalkFwdDamaged	= 1.2,		1.14,			1.14,		0.2,	2.0
-Velocity_RunFwdNormal	= 5.0,		2.5,			2.5,		0.2,	1
-Velocity_RunFwdDamaged	= 4.5,  	3.0,			3.0,		0.3,	1
-Velocity_Drag			= 1.5,		2.14,			2.14,		1,		1
-Velocity_Steal			= 1.3,		2.14,			2.14,		1,		1
+Velocity_Stand                           = 0, 1.79, 1.79		1, 1
+Velocity_WalkFwdNormal                   = 1.5, 2.0, 2.0, 0.2, 2.0
+Velocity_WalkFwdDamaged                  = 1.2, 1.14, 1.14, 0.2, 2.0
+Velocity_RunFwdNormal                    = 5.0, 2.5, 2.5, 0.2, 1
+Velocity_RunFwdDamaged                   = 4.5, 3.0, 3.0, 0.3, 1
+Velocity_Drag                            = 1.5, 2.14, 2.14, 1, 1
+Velocity_Steal                           = 1.3, 2.14, 2.14, 1, 1
 
 ; acceleration
-Accel_Generic			= 1.5
-Accel_Calm				= 2.5
-Accel_Aggressive		= 8.5
+Accel_Generic                            = 1.5
+Accel_Calm                               = 2.5
+Accel_Aggressive                         = 8.5
 
 ;--------------------------------------------------------------------------
 ; Attack parameters
 ;--------------------------------------------------------------------------
+MinAttackDist                            = 2.3
+MaxAttackDist                            = 2.9
 
-MinAttackDist     = 2.3
-MaxAttackDist     = 2.9
+as_min_dist                              = 1.3
+as_step                                  = 0.4
 
-as_min_dist       = 1.3
-as_step         = 0.4
+Melee_Rotation_Factor                    = 2.6
 
-Melee_Rotation_Factor = 2.6
 ;-------------------------------------------------------------------------
 ; Entity Conditions
 ;-------------------------------------------------------------------------
-
-satiety_v       = 0.0001        ;0.01     ;ёъюЁюёЄ№ єьхэ№°хэш  ёvЄюёЄш ёю тЁхьхэхь
-radiation_v     = 0.00001   ;0.004      ;ёъюЁюёЄ№ єьхэ№°хэш  ЁрфшрЎшш
-satiety_power_v   = 0.005   ;0.01     ;єтхышўхэшх ёшыv яЁш єьхэ№°хэшш ёvЄюёЄш 
-satiety_health_v  = 0.0005 ;0.001 ;0.03     ;єтхышўхэшх чфюЁют№  яЁш єьхэ№°хэшш ёvЄюёЄш 
-satiety_critical  = -1.0    ;0.25     ;ъЁшЄшўхёъюх чэрўхэш  ёvЄюёЄш (т яЁюЎхэЄрї юЄ 0..1) ъюуфр чфюЁют№х эрўшрэрхЄ єьхэ№°рЄ№ё 
-radiation_health_v  = 0.01  ;0.006      ;єьхэ№°хэшх чфюЁют№  яЁш тючфхщёЄтшш ЁрфшрЎшш
-morale_v      = 0.01          ;ёъюЁюёЄ№ тюёёЄрэютыхэш  ьюЁрыш
-health_hit_part   = 1.0   ;0.8      ;яЁюЎхэЄ їшЄр, єїюф шщ эр юЄэшьрэшх чфюЁют№ 
-power_hit_part    = 1.0   ;0.9      ;яЁюЎхэЄ їшЄр, єїюф шщ эр юЄэшьрэшх ёшыv
-psy_health_v    = 0.1           ;скорость восстановления psy-здоровья
-health_restore_v      = 0.0001
+satiety_v                                = 0.0001 ;0.01   ;ёъюЁюёЄ№ єьхэ№°хэш  ёvЄюёЄш ёю тЁхьхэхь
+radiation_v                              = 0.00001 ;0.004   ;ёъюЁюёЄ№ єьхэ№°хэш  ЁрфшрЎшш
+satiety_power_v                          = 0.005 ;0.01   ;єтхышўхэшх ёшыv яЁш єьхэ№°хэшш ёvЄюёЄш
+satiety_health_v                         = 0.0005 ;0.001 ;0.03   ;єтхышўхэшх чфюЁют№  яЁш єьхэ№°хэшш ёvЄюёЄш
+satiety_critical                         = -1.0 ;0.25   ;ъЁшЄшўхёъюх чэрўхэш  ёvЄюёЄш (т яЁюЎхэЄрї юЄ 0..1) ъюуфр чфюЁют№х эрўшрэрхЄ єьхэ№°рЄ№ё�
+radiation_health_v                       = 0.01 ;0.006   ;єьхэ№°хэшх чфюЁют№  яЁш тючфхщёЄтшш ЁрфшрЎшш
+morale_v                                 = 0.01 ;ёъюЁюёЄ№ тюёёЄрэютыхэш  ьюЁрыш
+health_hit_part                          = 1.0 ;0.8   ;яЁюЎхэЄ їшЄр, єїюф шщ эр юЄэшьрэшх чфюЁют№�
+power_hit_part                           = 1.0 ;0.9   ;яЁюЎхэЄ їшЄр, єїюф шщ эр юЄэшьрэшх ёшыv
+psy_health_v                             = 0.1 ;скорость восстановления psy-здоровья
+health_restore_v                         = 0.0001
 
 ;открытые раны
-bleeding_v          = 0.01            ;потеря крови при номинальной ране в секунду
-wound_incarnation_v     = 0.04        ;крутизна кривой заживления (какой процент раны останется после заживления в игровую секунду)
-min_wound_size        = 0.01
+bleeding_v                               = 0.01 ;потеря крови при номинальной ране в секунду
+wound_incarnation_v                      = 0.04 ;крутизна кривой заживления (какой процент раны останется после заживления в игровую секунду)
+min_wound_size                           = 0.01
 
+sleep_health                             = 1.0 ;1.5    ;ъю¤ЇЇшЎшхэЄv ёъюЁюёЄхщ шчьхэхэш  ярЁрьхЄЁют тю тЁхь  ёэр
+sleep_power                              = 1.0 ;1.5
+sleep_satiety                            = 1.0 ;0.8
+sleep_radiation                          = 1.0 ;1.1
+sleep_psy_health                         = 1.0
 
-sleep_health        = 1.0   ;1.5        ;ъю¤ЇЇшЎшхэЄv ёъюЁюёЄхщ шчьхэхэш  ярЁрьхЄЁют тю тЁхь  ёэр
-sleep_power         = 1.0   ;1.5
-sleep_satiety       = 1.0   ;0.8
-sleep_radiation       = 1.0 ;1.1
-sleep_psy_health      = 1.0
+eat_freq                                 = 5.0 ;ўрёЄюЄр єъєёют т ёхъ
+eat_slice                                = 0.01 ;єтхышўхэшх ёvЄюёЄш яЁш 1 єъєёх
+eat_slice_weight                         = 10.0 ;єьхэ№°хэшх хфv є ЄЁєяр
 
-eat_freq          = 5.0 ; ўрёЄюЄр єъєёют т ёхъ
-eat_slice         = 0.01  ; єтхышўхэшх ёvЄюёЄш яЁш 1 єъєёх
-eat_slice_weight      = 10.0  ; єьхэ№°хэшх хфv є ЄЁєяр
-
-satiety_threshold     = 0.5             ; below this value monster fill hunger
+satiety_threshold                        = 0.5 ;below this value monster fill hunger
 
 ;---------------------------------------------------------
 ; Sounds and sound parameters
 ;---------------------------------------------------------
+SoundThreshold                           = 0.07 ;range [0..1]
+max_hear_dist                            = 40
 
-SoundThreshold     = 0.07           ; range [0..1]
-max_hear_dist    = 40
+sound_idle                               = monsters\flesh\flesh_idle_
+sound_eat                                = monsters\flesh\flesh_eat_
+sound_aggressive                         = monsters\flesh\flesh_aggressive_
+sound_attack_hit                         = monsters\flesh\flesh_attack_ ;hit_
+sound_take_damage                        = monsters\flesh\flesh_pain_
+sound_die                                = monsters\flesh\flesh_death_
+sound_threaten                           = monsters\flesh\flesh_attack_
+sound_landing                            = monsters\biting\def_
+sound_steal                              = monsters\biting\def_
+sound_panic                              = monsters\flesh\flesh_panic_
+sound_growling                           = monsters\biting\def_
+sound_die_in_anomaly                     = monsters\flesh\flesh_anomaly_death_
 
-sound_idle        = monsters\flesh\flesh_idle_
-sound_eat       = monsters\flesh\flesh_eat_
-sound_aggressive    = monsters\flesh\flesh_aggressive_
-sound_attack_hit    = monsters\flesh\flesh_attack_      ;hit_
-sound_take_damage   = monsters\flesh\flesh_pain_
-sound_die       = monsters\flesh\flesh_death_
-sound_threaten      = monsters\flesh\flesh_attack_
-sound_landing     = monsters\biting\def_
-sound_steal       = monsters\biting\def_
-sound_panic       = monsters\flesh\flesh_panic_
-sound_growling      = monsters\biting\def_
-sound_die_in_anomaly  = monsters\flesh\flesh_anomaly_death_
 ;sound_distant      = monsters\dog\flesh_distant_ ; только для расстояний свыше 200м
+killer_clsids                            = Z_MINCER, Z_GALANT, ZS_BFUZZ, ZS_MBALD, ZS_GALAN, ZS_MINCE
 
-killer_clsids     = Z_MINCER,Z_GALANT,ZS_BFUZZ,ZS_MBALD,ZS_GALAN,ZS_MINCE
+idle_sound_delay                         = 85000
+eat_sound_delay                          = 3000
+attack_sound_delay                       = 6000
 
-idle_sound_delay    = 85000
-eat_sound_delay     = 3000
-attack_sound_delay    = 6000
-
-sound_distant_idle      = monsters\flesh\flesh_idle_
-distant_idle_sound_delay  = 80000
-distant_idle_sound_range  = 100.0 
-
+sound_distant_idle                       = monsters\flesh\flesh_idle_
+distant_idle_sound_delay                 = 80000
+distant_idle_sound_range                 = 100.0
 
 ;---------------------------------------------------------
 ; Logic
 ;---------------------------------------------------------
-
-DayTime_Begin   = 6     ; эрўрыр фэ  фы  ьюэёЄЁр
-DayTime_End     = 21    ; ъюэхЎ фэ  фы  ьюэёЄЁр
-Min_Satiety   = 0.4 ;0.6    ; ьшэ. эюЁьр ёvЄюёЄш (ьхэ№°х - єцх уюыюфэvщ)
-Max_Satiety   = 1.0   ; ьръё. эюЁьр ёvЄюёЄш (сюы№°х - юўхэ№ ёvЄvщ)
-
+DayTime_Begin                            = 6 ;эрўрыр фэ  фы  ьюэёЄЁр
+DayTime_End                              = 21 ;ъюэхЎ фэ  фы  ьюэёЄЁр
+Min_Satiety                              = 0.4 ;0.6  ; ьшэ. эюЁьр ёvЄюёЄш (ьхэ№°х - єцх уюыюфэvщ)
+Max_Satiety                              = 1.0 ;ьръё. эюЁьр ёvЄюёЄш (сюы№°х - юўхэ№ ёvЄvщ)
 
 ;-------------------------------------------------------------------------
 ; Morale
 ;-------------------------------------------------------------------------
-
-Morale_Hit_Quant        = 0.1
-Morale_Attack_Success_Quant   = 0.1
-Morale_Take_Heart_Speed     = 0.1
-Morale_Despondent_Speed     = 0.1
-Morale_Stable_Speed       = 0.01
-Morale_Despondent_Threashold  = 0.5
+Morale_Hit_Quant                         = 0.1
+Morale_Attack_Success_Quant              = 0.1
+Morale_Take_Heart_Speed                  = 0.1
+Morale_Despondent_Speed                  = 0.1
+Morale_Stable_Speed                      = 0.01
+Morale_Despondent_Threashold             = 0.5
 
 ;-------------------------------------------------------------------------
 ; Other Stuff (refactoring needed)
 ;-------------------------------------------------------------------------
+critical_wound_threshold                 = 0.4
+critical_wound_decrease_quant            = 0.
 
-critical_wound_threshold    = 0.4
-critical_wound_decrease_quant = 0.
+critical_wound_anim_head                 = critical_hit_head_0
+critical_wound_bones_head                = flesh_critical_wound_bones_head
 
-critical_wound_anim_head  = critical_hit_head_0
-critical_wound_bones_head = flesh_critical_wound_bones_head
+critical_wound_anim_torso                = critical_hit_torso_0
+critical_wound_bones_torso               = flesh_critical_wound_bones_torso
 
-critical_wound_anim_torso = critical_hit_torso_0
-critical_wound_bones_torso  = flesh_critical_wound_bones_torso
+critical_wound_anim_legs                 = critical_hit_torso_0
+critical_wound_bones_legs                = flesh_critical_wound_bones_legs
 
-critical_wound_anim_legs  = critical_hit_torso_0
-critical_wound_bones_legs = flesh_critical_wound_bones_legs
+distance_to_corpse                       = 0.9 ;фшёЄ. фю ЄЁєяр, яЁш ъюЄюЁющ юэ яхЁхїюфшЄ т ёюёЄю эшх хфv
+selector_approach                        = 20.0, 1.0, 1000.0, 0.0, 0.0, 1000.0, 10000.0, 
 
+DamagedThreshold                         = 0.2
 
-distance_to_corpse  = 0.9; фшёЄ. фю ЄЁєяр, яЁш ъюЄюЁющ юэ яхЁхїюфшЄ т ёюёЄю эшх хфv
-selector_approach =      20.0,            1.0,                1000.0,             0.0,               0.0,           1000.0,       10000.0,      
-
-DamagedThreshold  = 0.2
-
-material      = creatures\hoof
-step_params     = m_flesh_step_params
-LegsCount     = 4
+material                                 = creatures\hoof
+step_params                              = m_flesh_step_params
+LegsCount                                = 4
 
 ;species of monster
-species       = flesh
+species                                  = flesh
 
-terrain       = flesh_terrain
-damage				= m_flesh_damage
-protections_sect 	= flesh_protections
-immunities_sect		= flesh_immunities
-attack_effector		= m_flesh_attack_effector
-attack_params		= m_flesh_attack_params
-
+terrain                                  = flesh_terrain
+damage                                   = m_flesh_damage
+protections_sect                         = flesh_protections
+immunities_sect                          = flesh_immunities
+attack_effector                          = m_flesh_attack_effector
+attack_params                            = m_flesh_attack_params
 
 ;---------------------------------------------------------
 ; Vision
 ;---------------------------------------------------------
-
-eye_fov					= 100
-eye_range				= 30	;60	;30
+eye_fov                                  = 100
+eye_range                                = 30 ;60	;30
 
 ; number of visible objects monster can handle
-DynamicObjectsCount		= 32
+DynamicObjectsCount                      = 32
 
-vision_free_section			= flesh_vision_free
-vision_danger_section		= flesh_vision_danger
+vision_free_section                      = flesh_vision_free
+vision_danger_section                    = flesh_vision_danger
 
 ; ЗНАЧЕНИЯ visibility_threshold ДОЛЖНЫ БЫТЬ РАВНЫ для денжера и фри,
 ; иначе возникают артефакты с потерей видимости при переходе от денжера во фри.
 
 [flesh_vision_free]
-min_view_distance   		= 0.4				; коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance	 		= 1.0				; коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold	 	= 100.0				; значение, при достижении суммой которого объект считается видимым
-always_visible_distance 	= 0.2
-time_quant					= 0.001
-decrease_value				= 0.01				; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor		     	= 0.5
-luminocity_factor			= 0.5 				; фактор освещения (только для Актёра)
-transparency_threshold		= 0.25
+min_view_distance                        = 0.4 ;коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance                        = 1.0 ;коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold                     = 100.0 ;значение, при достижении суммой которого объект считается видимым
+always_visible_distance                  = 0.2
+time_quant                               = 0.001
+decrease_value                           = 0.01 ;значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor                          = 0.5
+luminocity_factor                        = 0.5 ;фактор освещения (только для Актёра)
+transparency_threshold                   = 0.25
 
 [flesh_vision_danger]
-min_view_distance   		= 0.4				; коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance	 		= 1.0				; коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold	 	= 100.0				; значение, при достижении суммой которого объект считается видимым
-always_visible_distance 	= 0.2
-time_quant					= 0.001
-decrease_value				= 0.01				; значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor		     	= 0.5
-luminocity_factor			= 0.5 				; фактор освещения (только для Актёра)
-transparency_threshold		= 0.25
-
+min_view_distance                        = 0.4 ;коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance                        = 1.0 ;коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold                     = 100.0 ;значение, при достижении суммой которого объект считается видимым
+always_visible_distance                  = 0.2
+time_quant                               = 0.001
+decrease_value                           = 0.01 ;значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor                          = 0.5
+luminocity_factor                        = 0.5 ;фактор освещения (только для Актёра)
+transparency_threshold                   = 0.25
 
 [flesh_terrain]
-	255,000,255,255
+255,000,255,255
 
 [m_Flesh_damage]
+
 ;bone_name     = <hit_scale>,-1,<wound_scale>
-;<hit_scale>  - коэфф. изменения хита (уменьшения здоровья) 
+;<hit_scale>  - коэфф. изменения хита (уменьшения здоровья)
 ;<wound_scale>  - коэфф. изменения величины открытой раны
-default				= 0.5,	-1,	0.10
-bip01_pelvis 		= 1.0, -1, 0.1
-bip01_spine 		= 1.0, -1, 0.1
-bip01_neck 			= 1.0, -1, 0.3
-bip01_head 			= 2.0, -1, 0.10
+default                                  = 0.5, -1, 0.10
+bip01_pelvis                             = 1.0, -1, 0.1
+bip01_spine                              = 1.0, -1, 0.1
+bip01_neck                               = 1.0, -1, 0.3
+bip01_head                               = 2.0, -1, 0.10
 
 [flesh_protections]
-skin_armor = 0.1
-hit_fraction_monster = 0.4
+skin_armor                               = 0.1
+hit_fraction_monster                     = 0.4
 
 ;===========================================================================
 ; Immunities
 ;===========================================================================
+
 [flesh_immunities]
-burn_immunity     = 1.0       ;ъю¤ЇЇшЎшхэЄv шььєэшЄхЄр 
-strike_immunity     = 1
-shock_immunity      = 1.0
-wound_immunity      = 0.01
-radiation_immunity = 0.0
-telepatic_immunity = 1.0
-chemical_burn_immunity = 1.0
-explosion_immunity = 0.15
-fire_wound_immunity  = 0.15
+burn_immunity                            = 1.0 ;ъю¤ЇЇшЎшхэЄv шььєэшЄхЄр
+strike_immunity                          = 1
+shock_immunity                           = 1.0
+wound_immunity                           = 0.01
+radiation_immunity                       = 0.0
+telepatic_immunity                       = 1.0
+chemical_burn_immunity                   = 1.0
+explosion_immunity                       = 0.15
+fire_wound_immunity                      = 0.15
 
 ;===========================================================================
 ; Attack Animation Parameters
 ;===========================================================================
+
 [m_flesh_attack_params]
+
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, top, bottom) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Left leg strike
-stand_attack_0 =	  	0.25,		0.6,		    70,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
+stand_attack_0                           = 0.25, 0.6, 70, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+
 ;Both leg strike
-stand_attack_1 =	  	0.30,		0.6,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
-stand_attack_2 =	  	0.30,		0.6,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
-stand_attack_3 =	  	0.40,		0.6,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
+stand_attack_1                           = 0.30, 0.6, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_2                           = 0.30, 0.6, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_3                           = 0.40, 0.6, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
 
 ;===========================================================================
 ; Step Events
 ;===========================================================================
+
 [m_flesh_step_params]
+
 ;-------------------------------------------------------------------------------------------------------------
 ;	anim			| cycles | time1 | power1 | time2 | power2 | time3 | power3 | time4 | power4 |
 ;-------------------------------------------------------------------------------------------------------------
-stand_walk_fwd_0	=	   8,	    0.2,     1,	    0.25,    0.7,    0.5,     1.0,     0.7,    1.0
-stand_walk_fwd_dmg_0=      7,	    0.2,     1,	    0.25,    0.7,    0.5,     1.0,     0.7,    1.0
-stand_run_0			=	   6,	    0.2,     1,	    0.25,    0.7,    0.5,     1.0,     0.7,    1.0
-stand_run_dmg_0		=	   6,	    0.2,     1,	    0.25,    0.7,    0.7,     1.0,     0.7,    1.0
-stand_crawl_0		=	   1,	    0.2,     1,	    0.25,    0.7,    0.7,     1.0,     0.7,    1.0
-stand_drag_0		=	   1,	    0.2,     1,	    0.25,    0.7,    0.7,     1.0,     0.7,    1.0
+stand_walk_fwd_0                         = 8, 0.2, 1, 0.25, 0.7, 0.5, 1.0, 0.7, 1.0
+stand_walk_fwd_dmg_0                     = 7, 0.2, 1, 0.25, 0.7, 0.5, 1.0, 0.7, 1.0
+stand_run_0                              = 6, 0.2, 1, 0.25, 0.7, 0.5, 1.0, 0.7, 1.0
+stand_run_dmg_0                          = 6, 0.2, 1, 0.25, 0.7, 0.7, 1.0, 0.7, 1.0
+stand_crawl_0                            = 1, 0.2, 1, 0.25, 0.7, 0.7, 1.0, 0.7, 1.0
+stand_drag_0                             = 1, 0.2, 1, 0.25, 0.7, 0.7, 1.0, 0.7, 1.0
 
 ;===========================================================================
 ; SPECIAL EFFECTORS
 ;===========================================================================
+
 [m_flesh_attack_effector]
-duality_h		= 0.01
-duality_v		= 0.01
-blur			= 0.01
-gray			= 0.5
-noise_intensity = 0.0
-noise_grain		= 1
-noise_fps		= 30
-color_base		= 0.65,0.15,0.1
-color_gray		= 0.333,0.333,0.333
-color_add		= 0,0,0
-time			= 0.3
-time_attack		= 0.05		; fade in
-time_release	        = 0.25		; fade out
+duality_h                                = 0.01
+duality_v                                = 0.01
+blur                                     = 0.01
+gray                                     = 0.5
+noise_intensity                          = 0.0
+noise_grain                              = 1
+noise_fps                                = 30
+color_base                               = 0.65, 0.15, 0.1
+color_gray                               = 0.333, 0.333, 0.333
+color_add                                = 0, 0, 0
+time                                     = 0.3
+time_attack                              = 0.05 ;fade in
+time_release                             = 0.25 ;fade out
 
 ; camera effects
-ce_time				= 0.45 ;time
-ce_amplitude		= -10.0
-ce_period_number	= 2.0
-ce_power			= 1.5 ;0.7 ; power
-
+ce_time                                  = 0.45 ;time
+ce_amplitude                             = -10.0
+ce_period_number                         = 2.0
+ce_power                                 = 1.5 ;0.7 ; power
 
 ;*********************************************************************************
 ; NORMAL PROFILE
 ;*********************************************************************************
 
 [flesh_normal]:m_flesh_e
-$spawn        = "monsters\fleshes\flesh_02_normal"
-visual        = monsters\flesh\flesh
-corpse_visual   = monsters\flesh\flesh_dead
-icon        = ui_npc_monster_flesh
-panic_threshold   = 0.2
-rank        = 401
-immunities_sect   = flesh_immunities_normal
-attack_params   = flesh_attack_params_normal
-spec_rank     = normal
-community     = flesh
-
+visual                                   = monsters\flesh\flesh
+corpse_visual                            = monsters\flesh\flesh_dead
+icon                                     = ui_npc_monster_flesh
+panic_threshold                          = 0.2
+rank                                     = 401
+immunities_sect                          = flesh_immunities_normal
+attack_params                            = flesh_attack_params_normal
+spec_rank                                = normal
+community                                = flesh
 
 [flesh_immunities_normal]
-burn_immunity     = 1.0
-strike_immunity     = 1
-shock_immunity      = 1.0
-wound_immunity      = 0.01
-radiation_immunity    = 0.0
-telepatic_immunity    = 1.0
-chemical_burn_immunity  = 1.0
-explosion_immunity    = 0.15
-fire_wound_immunity   = 0.15
+burn_immunity                            = 1.0
+strike_immunity                          = 1
+shock_immunity                           = 1.0
+wound_immunity                           = 0.01
+radiation_immunity                       = 0.0
+telepatic_immunity                       = 1.0
+chemical_burn_immunity                   = 1.0
+explosion_immunity                       = 0.15
+fire_wound_immunity                      = 0.15
 
 [flesh_attack_params_normal]
+
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ; anim      | time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  | Field of hit_test  (left,right, top, bottom) |  Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Left leg strike
-stand_attack_0 =      0.25,   0.20,       70,        0.0, 0.5, 1.0,     -1.0, 1.0, -1.0, 1.0,                 2.0
-;Both leg strike
-stand_attack_1 =      0.30,   0.40,       150,        0.0, 0.5, 1.0,     -1.0, 1.0, -1.0, 1.0,                  2.5
-stand_attack_2 =      0.30,   0.40,       150,        0.0, 0.5, 1.0,     -1.0, 1.0, -1.0, 1.0,                  2.5
-stand_attack_3 =      0.40,   0.40,       150,        0.0, 0.5, 1.0,     -1.0, 1.0, -1.0, 1.0,                  2.5
+stand_attack_0                           = 0.25, 0.20, 70, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.0
 
+;Both leg strike
+stand_attack_1                           = 0.30, 0.40, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_2                           = 0.30, 0.40, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_3                           = 0.40, 0.40, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
 
 ;*********************************************************************************
 ; STRONG PROFILE
 ;*********************************************************************************
 
 [flesh_strong]:m_flesh_e
-$spawn        = "monsters\fleshes\flesh_03_strong"
-visual        = monsters\flesh\flesh_strong
-corpse_visual		= monsters\flesh\flesh_dead
-icon        = ui_npc_monster_flesh_strong
-panic_threshold   = 0.05  
-rank        = 801
-immunities_sect   = flesh_immunities_strong
-attack_params   = flesh_attack_params_strong
-spec_rank     = strong
-community     = flesh
-
+visual                                   = monsters\flesh\flesh_strong
+corpse_visual                            = monsters\flesh\flesh_dead
+icon                                     = ui_npc_monster_flesh_strong
+panic_threshold                          = 0.05
+rank                                     = 801
+immunities_sect                          = flesh_immunities_strong
+attack_params                            = flesh_attack_params_strong
+spec_rank                                = strong
+community                                = flesh
 
 [flesh_immunities_strong]
-burn_immunity     = 1.0
-strike_immunity     = 1
-shock_immunity      = 1.0
-wound_immunity      = 0.01
-radiation_immunity    = 0.0
-telepatic_immunity    = 1.0
-chemical_burn_immunity  = 1.0
-explosion_immunity    = 0.12
-fire_wound_immunity   = 0.12
+burn_immunity                            = 1.0
+strike_immunity                          = 1
+shock_immunity                           = 1.0
+wound_immunity                           = 0.01
+radiation_immunity                       = 0.0
+telepatic_immunity                       = 1.0
+chemical_burn_immunity                   = 1.0
+explosion_immunity                       = 0.12
+fire_wound_immunity                      = 0.12
 
 [flesh_attack_params_strong]
+
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;	anim			| time[0..1] | hit_power | impulse | impulse_dir (x,y,z)  |	Field of hit_test  (left,right, top, bottom) |	Test Dist
 ;---------------------------------------------------------------------------------------------------------------------------------------------
 ;Left leg strike
-stand_attack_0 =	  	0.25,		0.5,		    70,        0.0, 0.5, 1.0,		  -1.0, 1.0, -1.0, 1.0,								  2.0
-;Both leg strike
-stand_attack_1 =	  	0.30,		0.5,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
-stand_attack_2 =	  	0.30,		0.5,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
-stand_attack_3 =	  	0.40,		0.5,		    150,        0.0, 0.5, 1.0,		 -1.0, 1.0, -1.0, 1.0,								  2.5
+stand_attack_0                           = 0.25, 0.5, 70, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.0
 
+;Both leg strike
+stand_attack_1                           = 0.30, 0.5, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_2                           = 0.30, 0.5, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
+stand_attack_3                           = 0.40, 0.5, 150, 0.0, 0.5, 1.0, -1.0, 1.0, -1.0, 1.0, 2.5
 
 [flesh_group]
-GroupControlSection = spawn_group
-;$spawn              = "monsters\flesh-group"   ; option for Level Editor
-$npc          = on            ; option for Level Editor
-Human         = off           ; option for ALife Simulator
-class               = AI_FLE_G          ; AI class
-monster_section   = m_flesh_e
+Human                                    = off ;option for ALife Simulator
+class                                    = AI_FLE_G ;AI class
+monster_section                          = m_flesh_e
 
 [flesh_critical_wound_bones_head]
 bip01_neck
@@ -499,23 +483,22 @@ bip01_r_finger01
 bip01_l_thigh
 
 [flesh_weak]:m_flesh_e
-$spawn          = "monsters\fleshes\flesh_01_weak"
-visual          = monsters\flesh\flesh
-corpse_visual     = monsters\flesh\flesh_dead
-icon          = ui_npc_monster_flesh
-panic_threshold     = 0.2
-rank          = 0
-immunities_sect     = flesh_immunities_weak
-spec_rank     = weak
-community     = flesh
+visual                                   = monsters\flesh\flesh
+corpse_visual                            = monsters\flesh\flesh_dead
+icon                                     = ui_npc_monster_flesh
+panic_threshold                          = 0.2
+rank                                     = 0
+immunities_sect                          = flesh_immunities_weak
+spec_rank                                = weak
+community                                = flesh
 
 [flesh_immunities_weak]
-burn_immunity     = 1.0
-strike_immunity     = 1
-shock_immunity      = 1.0
-wound_immunity      = 0.01
-radiation_immunity    = 0.0
-telepatic_immunity    = 1.0
-chemical_burn_immunity  = 1.0
-explosion_immunity    = 0.17
-fire_wound_immunity   = 0.17
+burn_immunity                            = 1.0
+strike_immunity                          = 1
+shock_immunity                           = 1.0
+wound_immunity                           = 0.01
+radiation_immunity                       = 0.0
+telepatic_immunity                       = 1.0
+chemical_burn_immunity                   = 1.0
+explosion_immunity                       = 0.17
+fire_wound_immunity                      = 0.17

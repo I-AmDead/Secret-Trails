@@ -35,407 +35,384 @@
 #include "weapons\weapons.ltx"
 #include "weapons\weapons_ai_gl.ltx"
 
-
 #include "creatures\spawn_includes.ltx" ;После misc\items\devices надо грузить
 
 #include "delete.ltx"
 
 [sound]
-occlusion_scale			= 0.4
-snd_collide_min_volume		= 0.1
-snd_collide_max_volume		= 200
+occlusion_scale                          = 0.4
+snd_collide_min_volume                   = 0.1
+snd_collide_max_volume                   = 200
 
 [demo_record]
-show_info = false ;Отключаем красные надписи
-speed0    = 0.3
-speed1    = 3.0
-speed2    = 15.0
-speed3    = 60.0
-ang_speed0  = 0.1
-ang_speed1  = 0.5
-ang_speed2  = 7.0
-ang_speed3  = 2.0
+show_info                                = false ;Отключаем красные надписи
+speed0                                   = 0.3
+speed1                                   = 3.0
+speed2                                   = 15.0
+speed3                                   = 60.0
+ang_speed0                               = 0.1
+ang_speed1                               = 0.5
+ang_speed2                               = 7.0
+ang_speed3                               = 2.0
 
 [texture_desc]
-files =
+files                                    = 
 
 [info_portions]
+
 ;список xml файлов, содержащих info_portions
-files = info_includes
+files                                    = info_includes
 
 [encyclopedia]
-files = article_includes
+files                                    = article_includes
 
 [dialogs]
-files = dialog_includes
+files                                    = dialog_includes
 
 [profiles]
+
 ;список xml файлов, содержащих профили сталкеров и торговцев
-files =  npc_includes
+files                                    = npc_includes
+
 ;список xml файлов, содержащих описания конкретных сталкеров и торговцев
-specific_characters_files = character_desc_includes
+specific_characters_files                = character_desc_includes
 
 [game_tasks]
-files = game_tasks
-
+files                                    = game_tasks
 
 [lights_hanging_lamp]
-GroupControlSection = spawn_group
-$spawn        = "physics\hanging lamp"
-class       = O_HLAMP
+class                                    = O_HLAMP
+
 ;script_binding      = bind_physic_object.init
-script_binding      = ogse_bind_light.init
+script_binding                           = ogse_bind_light.init
 
 [physic_object]
-GroupControlSection = spawn_group
-$spawn        = "physics\object"
-$prefetch       = 8
-class       = O_PHYS_S
-remove_time     = 60; after this time  unbreaked removable bone will be removed
-script_binding      = bind_physic_object.init
+class                                    = O_PHYS_S
+remove_time                              = 60 ;after this time unbreaked removable bone will be removed
+script_binding                           = bind_physic_object.init
 
 [physic_destroyable_object]
-GroupControlSection = spawn_group
-$spawn        = "physics\destroyable_object"
-;$prefetch      = 8
-class       = P_DSTRBL
-remove_time     = 60; after this time  unbreaked removable bone will be removed
-script_binding      = bind_physic_object.init
+class                                    = P_DSTRBL
+remove_time                              = 60 ;after this time unbreaked removable bone will be removed
+script_binding                           = bind_physic_object.init
 
 [search_light]
-GroupControlSection = spawn_group
-$spawn        = "physics\search light"
-class       = O_SEARCH
-cform       = skeleton
-visual        = equipments\projector.ogf
+class                                    = O_SEARCH
+cform                                    = skeleton
+visual                                   = equipments\projector.ogf
+
 ;script_binding      = bind_physic_object.init
-script_binding      = ogse_bind_light.init
+script_binding                           = ogse_bind_light.init
 
 [explosion_marks]
-wallmarks     = wm\wm_grenade
-dist        = 0.5 ;2.4  ;
-size        = 0.6 ;0.4  ;
-max_count     = 5
+wallmarks                                = wm\wm_grenade
+dist                                     = 0.5 ;2.4 ;
+size                                     = 0.6 ;0.4 ;
+max_count                                = 5
 
 [bloody_marks]
-wallmarks			= wm\wm_blood_1,wm\wm_blood_2,wm\wm_blood_3,wm\wm_blood_4,wm\wm_blood_5,wm\wm_blood_6,wm\wm_blood_7,wm\wm_blood_8,wm\wm_blood_9
-dist				= 3	;2.4	;(м) max расстояние отлета крови
-max_size			= 0.8	;0.3	;(м)радиус пятна при хите силой nominal hit по большому объекту (по маленькому *0.5)
-min_size			= 0.1			;(м)минимальный радиус пятна
-nominal_hit			= 0.3			;величина номинального хита, при котором разлетается максимум крови (max_size)
+wallmarks                                = wm\wm_blood_1, wm\wm_blood_2, wm\wm_blood_3, wm\wm_blood_4, wm\wm_blood_5, wm\wm_blood_6, wm\wm_blood_7, wm\wm_blood_8, wm\wm_blood_9
+dist                                     = 3 ;2.4	;(м) max расстояние отлета крови
+max_size                                 = 0.8 ;0.3	;(м)радиус пятна при хите силой nominal hit по большому объекту (по маленькому *0.5)
+min_size                                 = 0.1 ;(м)минимальный радиус пятна
+nominal_hit                              = 0.3 ;величина номинального хита, при котором разлетается максимум крови (max_size)
 
 ;капли крови
+blood_drops                              = wm\wm_blood_drop_1, wm\wm_blood_drop_2, wm\wm_blood_drop_3, wm\wm_blood_drop_4
+start_blood_size                         = 0.4 ;размер раны чтоб начала капать кровь
+stop_blood_size                          = 0.025 ;размер раны чтоб кровь остановилась (должно быть меньше start_blood_size)
 
-blood_drops			= wm\wm_blood_drop_1,wm\wm_blood_drop_2,wm\wm_blood_drop_3,wm\wm_blood_drop_4
-start_blood_size	= 0.4			;размер раны чтоб начала капать кровь
-stop_blood_size		= 0.025			;размер раны чтоб кровь остановилась (должно быть меньше start_blood_size)
-
-blood_drop_time     = 0.1			;OBSOLETE
-blood_drop_time_min = 0.3			;
-blood_drop_time_max = 2.0			;
-blood_drop_size		= 0.2			;размер капли (м) крови, которая упала
-
+blood_drop_time                          = 0.1 ;OBSOLETE
+blood_drop_time_min                      = 0.3
+blood_drop_time_max                      = 2.0
+blood_drop_size                          = 0.2 ;размер капли (м) крови, которая упала
 
 [entity_fire_particles]
-fire_particles = damage_fx\burn_creatures00 ;damage_fx\burn_creatures
-start_burn_size = 0.0003    ;размер ожега после которого начать играть партиклы огня
-stop_burn_size  = 0.0001    ;размер ожега после которого остановить партиклы
-min_burn_time = 10000   ;минимальное время отыгрыша партиклов (даже если рана уже зажила)
+fire_particles                           = damage_fx\burn_creatures00 ;damage_fx\burn_creatures
+start_burn_size                          = 0.0003 ;размер ожега после которого начать играть партиклы огня
+stop_burn_size                           = 0.0001 ;размер ожега после которого остановить партиклы
+min_burn_time                            = 10000 ;минимальное время отыгрыша партиклов (даже если рана уже зажила)
 
 [hud_cursor]
+
 ;все размеры в процентах от длины экрана
-cross_length		= 0.005					;длина "палочки" прицела
-min_radius			= 0.0					;минимальный радиус прицела (при нулевой дисперсии)
-max_radius			= 2.0					;максимальный радиус
-radius_lerp_speed	= 0.08					;скорость интерполяции положений прицела
-cross_color			= 0.7,0.7,0.7,1.0		;цвет прицела
-disp_scale			= 0.08					;масштаб прицела (относительно радиан)
+cross_length                             = 0.005 ;длина "палочки" прицела
+min_radius                               = 0.0 ;минимальный радиус прицела (при нулевой дисперсии)
+max_radius                               = 2.0 ;максимальный радиус
+radius_lerp_speed                        = 0.08 ;скорость интерполяции положений прицела
+cross_color                              = 0.7, 0.7, 0.7, 1.0 ;цвет прицела
+disp_scale                               = 0.08 ;масштаб прицела (относительно радиан)
 
 [hud_hitmark]
-hit_mark_texture = ui\ui_hud_hit_mark
+hit_mark_texture                         = ui\ui_hud_hit_mark
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inventory items
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [spectator]
-$player        = on
-class                   = SPECT
+$player                                  = on
+class                                    = SPECT
 
 [m_car]
-GroupControlSection = spawn_group
-$spawn      = "vehicles\car"
-cform                   = skeleton
-class                   = SCRPTCAR
+cform                                    = skeleton
+class                                    = SCRPTCAR
 
-inv_weight        = 1000
-cost          = 100000
-inv_grid_width      = 1
-inv_grid_height     = 1
+inv_weight                               = 1000
+cost                                     = 100000
+inv_grid_width                           = 1
+inv_grid_height                          = 1
 
-script_binding      = bind_physic_object.init
+script_binding                           = bind_physic_object.init
 
-ph_heavy = true; Чтоб псевдогигант бтры не раскидывал от удара ногой
+ph_heavy                                 = true ;Чтоб псевдогигант бтры не раскидывал от удара ногой
 
 [actor_firsteye_cam]
-lim_pitch                = -1.5, 1.5
-lim_yaw                  = 0, 0
-rot_speed                = 3.14, 3.14, 0
+lim_pitch                                = -1.5, 1.5
+lim_yaw                                  = 0, 0
+rot_speed                                = 3.14, 3.14, 0
 
 [actor_ladder_cam]
-lim_pitch                = -1.5, 1.5
-lim_yaw                  = -1.0, 1.0
-rot_speed                = 3.14, 3.14, 0
+lim_pitch                                = -1.5, 1.5
+lim_yaw                                  = -1.0, 1.0
+rot_speed                                = 3.14, 3.14, 0
 
 [actor_free_cam]
+
 ;----------------
-lim_pitch                = -1.5, 1.5
-lim_yaw                  = 0, 0
-lim_zoom                 = 0.4, 10
-rot_speed                = 3.14, 1.0, 10
- 
+lim_pitch                                = -1.5, 1.5
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 0.4, 10
+rot_speed                                = 3.14, 1.0, 10
+
 [actor_look_cam]
-lim_pitch                = -0.7, 1
-lim_yaw                  = 0, 0
-lim_zoom                 = 1, 5
-rot_speed                = 3.14, 6.28, 10
+lim_pitch                                = -0.7, 1
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 1, 5
+rot_speed                                = 3.14, 6.28, 10
 
 [actor_look_cam_psp]
-lim_pitch                = -0.7, 1
-lim_yaw                  = 0, 0
-lim_zoom                 = 1, 5
-rot_speed                = 2, 2, 2
-offset          = 0.4,0.2,-1.1
-autoaim_speed_y     = 0.5, 3.14    ;min,max speed
-autoaim_speed_x     = 0.5, 3.14
+lim_pitch                                = -0.7, 1
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 1, 5
+rot_speed                                = 2, 2, 2
+offset                                   = 0.4, 0.2, -1.1
+autoaim_speed_y                          = 0.5, 3.14 ;min,max speed
+autoaim_speed_x                          = 0.5, 3.14
 
 [mounted_weapon_cam]
-lim_pitch                = -0.5, 0.5
-lim_yaw                  = -2.0, 2.0
-rot_speed                = 3.14, 1.0, 0
+lim_pitch                                = -0.5, 0.5
+lim_yaw                                  = -2.0, 2.0
+rot_speed                                = 3.14, 1.0, 0
 
 [car_firsteye_cam]
-lim_pitch                = -0.5, 0.3
-lim_yaw                  = -2.9, 2.5
-rot_speed                = 3.14, 1.0, 0
- 
+lim_pitch                                = -0.5, 0.3
+lim_yaw                                  = -2.9, 2.5
+rot_speed                                = 3.14, 1.0, 0
+
 [car_free_cam]
-lim_pitch                = -1, 1.56 ;0, 1.56
-lim_yaw                  = 0, 0 ;0, 0
-lim_zoom                 = 1, 10 ;1, 7
-rot_speed                = 3.14, 1.0, 10 ;3.14, 1.0, 10
+lim_pitch                                = -1, 1.56 ;0, 1.56
+lim_yaw                                  = 0, 0 ;0, 0
+lim_zoom                                 = 1, 10 ;1, 7
+rot_speed                                = 3.14, 1.0, 10 ;3.14, 1.0, 10
 
 [car_look_cam]
-lim_pitch                = 0, 1.56
-lim_yaw                  = 0  , 0
-lim_zoom                 = 1, 7
-rot_speed                = 25, 1.0, 10
+lim_pitch                                = 0, 1.56
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 1, 7
+rot_speed                                = 25, 1.0, 10
 
 [heli_free_cam]
-lim_pitch                = -1.5, 1.5
-lim_yaw                  = 0, 0
-lim_zoom                 = 5, 25
-rot_speed                = 3.14, 1.0, 10
- 
+lim_pitch                                = -1.5, 1.5
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 5, 25
+rot_speed                                = 3.14, 1.0, 10
+
 [heli_front_cam]
+
 ;lim_yaw    = -0.01,0.01
-lim_pitch                = -1.2, 1.2
-lim_yaw                  = -1.5, 1.5
-rot_speed                = 3.14, 1.5, 0
- 
+lim_pitch                                = -1.2, 1.2
+lim_yaw                                  = -1.5, 1.5
+rot_speed                                = 3.14, 1.5, 0
+
 [heli_look_cam]
-lim_pitch                = 0, 1.56
-lim_yaw                  = 0, 0
-lim_zoom                 = 5, 15
-rot_speed                = 3.14, 1.0, 10
- 
+lim_pitch                                = 0, 1.56
+lim_yaw                                  = 0, 0
+lim_zoom                                 = 5, 15
+rot_speed                                = 3.14, 1.0, 10
+
 [interface]
-font_game                = font_game
-font_small               = font_small
- 
+font_game                                = font_game
+font_small                               = font_small
 
 [graph_point]
-class                = AI_GRAPH
-$spawn               = "ai\graph point"
-
+class                                    = AI_GRAPH
 
 ;-----------------------------------------------------------------
 ; Trade
 ;-----------------------------------------------------------------
+
 [trade]
+
 ;коэффициенты изменения цены при торговле в зависимости от отношения к персонажу
 ;линейно апроксимируются между значения
-buy_price_factor_hostile  = 1   ;коэффициент покупки при goodwill = -100
-buy_price_factor_friendly = 1   ;коэффициент покупки при goodwill = 100
-sell_price_factor_hostile = 1   ;коэффициент покупки при goodwill = -100
-sell_price_factor_friendly  = 1   ;коэффициент покупки при goodwill = 100
+buy_price_factor_hostile                 = 1 ;коэффициент покупки при goodwill = -100
+buy_price_factor_friendly                = 1 ;коэффициент покупки при goodwill = 100
+sell_price_factor_hostile                = 1 ;коэффициент покупки при goodwill = -100
+sell_price_factor_friendly               = 1 ;коэффициент покупки при goodwill = 100
 
 ; Если у сталкеров не хватает денег купить все, что им предлагает
 ; актор, в этом режиме они купят это все за те деньги, что у них есть.
-others_zero_trade = false
+others_zero_trade                        = false
+
 ;-----------------------------------------------------------------
 
-
 [spawn_group_zone]
-GroupControlSection     = spawn_group_zone
-$spawn            = "ai\group zone"                 ; option for Level Editor
-class           = AI_SPGRP
+class                                    = AI_SPGRP
 
 [spawn_group]
-GroupControlSection     = spawn_group
-$spawn            = "ai\spawn group"                ; option for Level Editor
-class           = AI_SPGRP
+class                                    = AI_SPGRP
 
 [level_changer]
-GroupControlSection = 
-$spawn      = "ai\level changer"
-;$prefetch    = 4
-class     = LVL_CHNG
+class                                    = LVL_CHNG
 
 [script_zone]
-GroupControlSection = 
-$spawn      = "ai\script zone"
-;$prefetch    = 4
-class     = SCRIPTZN
-script_binding  = xr_zones.bind
+class                                    = SCRIPTZN
+script_binding                           = xr_zones.bind
 
 [physics]
-object_damage_factor    = 1.2f
+object_damage_factor                     = 1.2f
 
 ;*****************************************
 ; ГЕНЕРАТОРЫ ИМЕН
 ;*****************************************
+
 [stalker_names_stalker]
-name_cnt		= 102
-last_name_cnt = 599
+name_cnt                                 = 102
+last_name_cnt                            = 599
 
 [stalker_names_bandit]
-name_cnt		= 36
-last_name_cnt	= 180
+name_cnt                                 = 36
+last_name_cnt                            = 180
 
 [stalker_names_science]
-name_cnt		= 14
-last_name_cnt	= 27
+name_cnt                                 = 14
+last_name_cnt                            = 27
 
 [stalker_names_private]
-name_cnt		= 1
-last_name_cnt	= 200
+name_cnt                                 = 1
+last_name_cnt                            = 200
 
 [stalker_names_sergeant]
-name_cnt		= 1
-last_name_cnt	= 200
+name_cnt                                 = 1
+last_name_cnt                            = 200
 
 [stalker_names_lieutenant]
-name_cnt		= 1
-last_name_cnt	= 200
+name_cnt                                 = 1
+last_name_cnt                            = 200
 
 [stalker_names_captain]
-name_cnt		= 1
-last_name_cnt	= 200
-
+name_cnt                                 = 1
+last_name_cnt                            = 200
 
 [script_object]
-GroupControlSection			= spawn_group
-$spawn						= "script\script object"						; option for Level Editor
-$npc						= on											; option for Level Editor
-; $prefetch 					= 32										;
-Scheduled					= on											; option for ALife Simulator
-Human		     			= off											; option for ALife Simulator
-cform                       = skeleton										; collision class
-class                       = SCRPTOBJ										; AI class
+Human                                    = off ;option for ALife Simulator
+cform                                    = skeleton ;collision class
+class                                    = SCRPTOBJ ;AI class
 
 ;параметры показывания входящих сообщений PDA в главном меню
+
 [maingame_ui]
-pda_msgs_max_show_time = 20000
-info_msgs_max_show_time = 10000
-snd_new_contact         = detectors\contact_1
-snd_new_contact1        = detectors\contact_8
+pda_msgs_max_show_time                   = 20000
+info_msgs_max_show_time                  = 10000
+snd_new_contact                          = detectors\contact_1
+snd_new_contact1                         = detectors\contact_8
 
 [attachable_item]
-GroupControlSection   = spawn_group
-$spawn          = "equipment\attachable_item"
-cform                   = skeleton
-class         = II_ATTCH
-cost          = 100
-inv_name        = "Attachable item"
-inv_name_short      = "Attachable item"
-inv_weight        = .5
-inv_grid_width      = 2
-inv_grid_height     = 1
-inv_grid_x        = 16
-inv_grid_y        = 12
-attach_angle_offset   = 0, -3.14, 1.6
-attach_position_offset  = 0.105, 0.00, 0.085
-attach_bone_name    = bip01_head
+cform                                    = skeleton
+class                                    = II_ATTCH
+cost                                     = 100
+inv_name                                 = "Attachable item"
+inv_name_short                           = "Attachable item"
+inv_weight                               = .5
+inv_grid_width                           = 2
+inv_grid_height                          = 1
+inv_grid_x                               = 16
+inv_grid_y                               = 12
+attach_angle_offset                      = 0, -3.14, 1.6
+attach_position_offset                   = 0.105, 0.00, 0.085
+attach_bone_name                         = bip01_head
 
 [breakable_object]
-class           = O_BRKBL
-remove_time         = 10      ;after remove_time seconds object will be removed after it is breaked
-hit_break_threthhold    = 0.      ;weapon impact can stand breakable_object
-collision_break_threthhold  = 2000.f  ;collision impact can stand breakable_object
-immunity_factor       = 1.3     ;hit power multiplier
+class                                    = O_BRKBL
+remove_time                              = 10 ;after remove_time seconds object will be removed after it is breaked
+hit_break_threthhold                     = 0. ;weapon impact can stand breakable_object
+collision_break_threthhold               = 2000.f ;collision impact can stand breakable_object
+immunity_factor                          = 1.3 ;hit power multiplier
 
 [climable_object]
-class           = O_CLMBL
+class                                    = O_CLMBL
 
 [main_ingame_indicators_thresholds]
-radiation       = 0.1,0.25,0.4,0.55,0.7
-wounds          = 0.01,0.2,0.4,0.6,0.8
-jammed          = 0.5,0.6,0.7,0.8,0.9
-starvation      = 0.5,0.6,0.7,0.8,0.9
-fatigue         = 0.3,0.6,0.7,0.8,0.9
+radiation                                = 0.1, 0.25, 0.4, 0.55, 0.7
+wounds                                   = 0.01, 0.2, 0.4, 0.6, 0.8
+jammed                                   = 0.5, 0.6, 0.7, 0.8, 0.9
+starvation                               = 0.5, 0.6, 0.7, 0.8, 0.9
+fatigue                                  = 0.3, 0.6, 0.7, 0.8, 0.9
 
 [tutorial_conditions_thresholds]
-max_power       = 0.75
-power         = 0.1
-bleeding        = 0.4
-satiety         = 0.5
-radiation       = 0.1
-weapon_jammed     = 0.9
-psy_health        = 0.5
+max_power                                = 0.75
+power                                    = 0.1
+bleeding                                 = 0.4
+satiety                                  = 0.5
+radiation                                = 0.1
+weapon_jammed                            = 0.9
+psy_health                               = 0.5
 
 [squad_manager]
-schedule_min      =   1
-schedule_max      = 999
+schedule_min                             = 1
+schedule_max                             = 999
 
 [agent_manager]
-schedule_min      = 100
-schedule_max      = 1000
+schedule_min                             = 100
+schedule_max                             = 1000
 
 [ph_skeleton_object]
-class         = P_SKELET
-remove_time       = 120
+class                                    = P_SKELET
+remove_time                              = 120
 
 [script]
-current_server_entity_version = 7
+current_server_entity_version            = 7
 
 [collision_damage]
-bonce_damage_factor_for_objects = 1.
+bonce_damage_factor_for_objects          = 1.
 
 [details]
-swing_normal_amp1		= 0.07 ;амплитуда - насколько далеко отклонится верхняя точка травы. чем больше, тем дальше отклонится.
-swing_normal_amp2		= 0.03
-swing_normal_rot1		= 30.0 ;вращение - насколько сильно будет идти вращение вокруг центра. чем меньше, тем быстрей
-swing_normal_rot2		= 15.0
-swing_normal_speed		= 1.0 ;скорость смены колебаний
-// fast
-swing_fast_amp1			= 0.35	;0.25
-swing_fast_amp2			= 0.20	;0.15
-swing_fast_rot1			= 5
-swing_fast_rot2			= 0.5	;0.75
-swing_fast_speed		= 0.5	;1
+swing_normal_amp1                        = 0.07 ;амплитуда - насколько далеко отклонится верхняя точка травы. чем больше, тем дальше отклонится.
+swing_normal_amp2                        = 0.03
+swing_normal_rot1                        = 30.0 ;вращение - насколько сильно будет идти вращение вокруг центра. чем меньше, тем быстрей
+swing_normal_rot2                        = 15.0
+swing_normal_speed                       = 1.0 ;скорость смены колебаний
+
+swing_fast_amp1                          = 0.35 ;0.25
+swing_fast_amp2                          = 0.20 ;0.15
+swing_fast_rot1                          = 5
+swing_fast_rot2                          = 0.5 ;0.75
+swing_fast_speed                         = 0.5 ;1
 
 ; Замена шейдеров в визуалах
+
 [vis_shaders_replace]
+
 ; шейдер тесселяции: models\model -> models\model_pn
-anomaly_weapons = models\window,models\transparent, models\lfo_glass_lens_weapons,models\transparent
-anomaly_weapons\hands = models\model,models\model_pn, models\weapons,models\model_pn
-dynamics\weapons = models\window,models\transparent, models\lfo_glass_lens_weapons,models\transparent
-actors   = models\model,models\model_pn, models\weapons,models\model_pn
-dynamics\weapons\wpn_eat = models\model,models\model_pn, models\weapons,models\model_pn
-monsters = models\model,models\model_pn
-gwr = models\model,models\model_pn, models\weapons,models\model_pn
-gwr\equipment\energy_drink = ; на энергетике тесселяция раздувает банку
+anomaly_weapons                          = models\window, models\transparent, models\lfo_glass_lens_weapons, models\transparent
+anomaly_weapons\hands                    = models\model, models\model_pn, models\weapons, models\model_pn
+dynamics\weapons                         = models\window, models\transparent, models\lfo_glass_lens_weapons, models\transparent
+actors                                   = models\model, models\model_pn, models\weapons, models\model_pn
+dynamics\weapons\wpn_eat                 = models\model, models\model_pn, models\weapons, models\model_pn
+monsters                                 = models\model, models\model_pn
+gwr                                      = models\model, models\model_pn, models\weapons, models\model_pn
+gwr\equipment\energy_drink               =  ;на энергетике тесселяция раздувает банку
 
 [shader_params_export]
 pnv_color
@@ -447,15 +424,14 @@ heat_fade_distance
 breath_size
 breath_idx
 
-gasmask_inertia
-device_inertia
-
 crosshair_color
 
 game_date
 game_time
 
 radiation_effect
+buzz_effect
+burn_effect
 
 mark_number
 mark_color
@@ -465,6 +441,11 @@ raindrop_restart
 watch_actor_params
 watch_color_params
 
+s3ds_param_1
+s3ds_param_2
+s3ds_param_3
+s3ds_param_4
+
 [mod_ver]
-mod_ver = "Secret Trails"
-mod_version = "27.03.23"
+mod_ver                                  = "Secret Trails"
+mod_version                              = "27.03.23"
