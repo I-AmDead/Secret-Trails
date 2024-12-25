@@ -13,7 +13,7 @@ struct vf
     float3 v_sun : TEXCOORD6;
 };
 
-vf _main (v_model I)
+vf _main(v_model I)
 {
     vf O;
 

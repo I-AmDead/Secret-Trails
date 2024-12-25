@@ -1,10 +1,9 @@
 /*
-	=====================================================================
-	Original Author  : vegeta1k95
-	Link             : https://www.moddb.com/mods/stalker-anomaly/addons/heatvision-v02-extension-for-beefs-nvg-dx11engine-mod
-	=====================================================================
+    =====================================================================
+    Original Author  : vegeta1k95
+    Link             : https://www.moddb.com/mods/stalker-anomaly/addons/heatvision-v02-extension-for-beefs-nvg-dx11engine-mod
+    =====================================================================
 */
-
 
 Texture2D s_heat;
 
@@ -28,15 +27,15 @@ Texture2D s_heat;
 #define COLOR_BLACK float3(0.0, 0.0, 0.0)
 #define COLOR_WHITE float3(1.0, 1.0, 1.0)
 
-#define color_background_min    COLOR_DBLUE
-#define color_background_max    COLOR_BLUE
+#define color_background_min COLOR_DBLUE
+#define color_background_max COLOR_BLUE
 
 #define color_gradient_very_low color_background_max
-#define color_gradient_low      COLOR_GREEN
-#define color_gradient_warm     COLOR_YELLOW
-#define color_gradient_hot      COLOR_RED
-	
-float3 normal_blur(float2 pos2d, int samples) 
+#define color_gradient_low COLOR_GREEN
+#define color_gradient_warm COLOR_YELLOW
+#define color_gradient_hot COLOR_RED
+
+float3 normal_blur(float2 pos2d, int samples)
 {
     float3 accum = (0.0, 0.0, 0.0);
 
@@ -55,25 +54,25 @@ float3 normal_blur(float2 pos2d, int samples)
 float3 greyscale(float3 img)
 {
     float Y = 0.6 * img.x + 0.5 * img.y + 0.55 * img.z;
-    return float3(Y, Y, Y); 
+    return float3(Y, Y, Y);
 }
 
-float3 infrared(gbuffer_data gbd, float2 HPos, float2 Tex0) 
+float3 infrared(gbuffer_data gbd, float2 HPos, float2 Tex0)
 {
     int BW = 1;
 
     float depth = gbd.P.z;
     float3 hotness = s_heat.Load(int3(Tex0 * screen_res.xy, 0), 0);
     float3 mixed;
-    
-    if (hotness.x > 0.0) 
+
+    if (hotness.x > 0.0)
     {
         int samples = lerp(15, 4, smoothstep(0.0, 60, depth));
 
         mixed = normal_blur(HPos, samples);
         mixed = normalize(mixed);
         float projection = dot(mixed, float3(0.0, 0.0, -1.0));
-        
+
         if (projection <= 0.f)
         {
             mixed = color_background_max;
@@ -84,7 +83,7 @@ float3 infrared(gbuffer_data gbd, float2 HPos, float2 Tex0)
         }
 
         mixed = lerp(color_background_max, mixed, hotness.x);
-    } 
+    }
     else if (hotness.y > 0.0)
     {
         float3 blur_2 = s_blur_2.Sample(smp_base, Tex0).rgb;
@@ -114,11 +113,11 @@ float3 infrared(gbuffer_data gbd, float2 HPos, float2 Tex0)
     {
         mixed = lerp(color_background_min, color_gradient_low, hotness.z);
     }
-    else 
+    else
     {
-        float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0)); 
+        float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
 
-        if (depth <= 0) 
+        if (depth <= 0)
         {
             depth = FADE_DISTANCE_END;
         }

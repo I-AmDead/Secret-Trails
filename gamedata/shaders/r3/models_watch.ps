@@ -9,8 +9,6 @@ float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233)
 
 f_deffer main(p_flat I)
 {
-    f_deffer O;
-
     // узкая полоска искажений
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x)) * 2;
     I.tcdh.x += (m_affects.x > 0.09 && I.tcdh.y > problems - 0.01 && I.tcdh.y < problems) ? sin((I.tcdh.y - problems) * 5 * m_affects.y * 2) : 0;
@@ -19,20 +17,14 @@ f_deffer main(p_flat I)
     problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
     float AMPL = 0.13;
     I.tcdh.x -= (m_affects.x > 0.15 && I.tcdh.y > problems - AMPL && I.tcdh.y < problems + AMPL) ?
-        (cos(4.71 * (I.tcdh.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tcdh.y - problems)) / AMPL) : 0;
+        (cos(4.71 * (I.tcdh.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tcdh.y - problems)) / AMPL) :
+        0;
 
     // тряска влево-вправо в финальной стадии
     I.tcdh.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0;
 
     // diffuse
     float3 D = tbase(I.tcdh); // IN:  rgb.a
-
-    // Шум при выбросе
-    float noise = (m_affects.x < 0.41 && m_affects.x > 0.0) ? get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 20 : 0.0;
-
-    D.x += noise;
-    D.y += noise;
-    D.z += noise;
 
     if (m_affects.x > 0.41)
     {
@@ -43,24 +35,27 @@ f_deffer main(p_flat I)
     {
         if (m_affects.a == 0)
         {
-            // D += watch_seconds(I.tcdh);
-            if (watch_actor_params.w == 2)
-                D += CardioGraph2(I.tcdh);
-            else
-                D += NixieTime(I.tcdh);
+            D += NixieTime(I.tcdh);
         }
     }
 
     if (m_affects.a > 0 && m_affects.x >= 0.08)
         D += watch_loading(I.tcdh);
 
+    // Шум при выбросе
+    float noise = (m_affects.x < 0.41 && m_affects.x > 0.0) ? get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 20 : 0.0;
+
+    D.x += noise;
+    D.y += noise;
+    D.z += noise;
+
 #ifdef USE_TDETAIL
-    //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
 #endif
 
     // hemi,sun,material
     float ms = xmaterial;
+
 #ifdef USE_LM_HEMI
     float4 lm = s_hemi.Sample(smp_rtlinear, I.lmh);
     float h = get_hemi(lm);
@@ -68,9 +63,8 @@ f_deffer main(p_flat I)
     float h = I.position.w;
 #endif
 
-    // 2. Standart output
     float4 Ne = float4(normalize((float3)I.N.xyz), h);
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, 1.0)); // OUT: rgb.gloss
+    f_deffer O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, def_gloss));
 
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
 

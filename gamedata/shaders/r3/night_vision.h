@@ -35,17 +35,17 @@ float rand(float n) { return frac(cos(n) * 343.42); }
 #define luma_conversion_coeff float3(0.299, 0.587, 0.114) // When we convert to YUV, these are the coefficients for Y (since we discard UV)
 #define farthest_depth float(25.0f) // The farthest far place that we can reach in regards to DOF effects
 
-//#define single_tube_centered float2(0.5f, -0.5f + (floor(pnv_param_1.x) / 100))
-//#define single_tube_offset_left float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
-//#define single_tube_offset_right float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
+// #define single_tube_centered float2(0.5f, -0.5f + (floor(pnv_param_1.x) / 100))
+// #define single_tube_offset_left float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))		// Single tube screen position (0.5, 0.5 is centered)
+// #define single_tube_offset_right float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))	// Single tube screen position (0.5, 0.5 is centered)
 //
-//#define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube left eye
-//#define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube right eye
+// #define dual_tube_offset_1 float2(0.25f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube left eye
+// #define dual_tube_offset_2 float2(0.75f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for dual tube right eye
 //
-//#define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left outer tube
-//#define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left inner tube
-//#define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right inner tube
-//#define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right outer tube
+// #define quad_tube_offset_1 float2(0.05f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left outer tube
+// #define quad_tube_offset_2 float2(0.3f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube left inner tube
+// #define quad_tube_offset_3 float2(0.7f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right inner tube
+// #define quad_tube_offset_4 float2(0.95f, -0.5f + (floor(pnv_param_1.x) / 100))			// Offset for quad tube right outer tube
 
 ///////////////////////////////////////////////////////
 // DEFINE NVG MASK (Credit to LVutner for huge assistance in designing the functions)

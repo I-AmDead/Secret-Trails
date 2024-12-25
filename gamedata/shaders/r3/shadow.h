@@ -164,10 +164,7 @@ half shadowtest_sun(float4 tc, float4 tcJ) // jittered sampling
     return dot(r, 1.0 / 4.0);
 }
 
-float shadow_hw_hq(float4 tc)
-{
-    return shadow_pcss(tc);
-}
+float shadow_hw_hq(float4 tc) { return shadow_pcss(tc); }
 
 float shadow(float4 tc)
 {

@@ -1,73 +1,5 @@
 #include "models_watch_effects_common.h"
 
-float3 watch_seconds(float2 uv)
-{
-    // ��������� ������� ���������� ���������
-    uv.x = resize(uv.x, screen_res.x / screen_res.y, 0.0);
-
-    // ��������� ���������� ��������� � �������������� �� � ���������� ������
-    float2 p = uv;
-    p -= 0.5;
-    p.x *= screen_res.x * screen_res.w;
-
-    // ��������� �������� ������� ����
-    float time = game_time.z;
-
-    // ������ ���� �������� �� ������ �������
-    float angle = (time * 1.0 / 60.0) * 2.0 * PI;
-
-    // �������� ������� �������� 2x2
-    float2x2 rot = float2x2(cos(angle), sin(angle), -sin(angle), cos(angle));
-
-    // ���������� �������� � ���������� ����������� � ��������������� �� 0.73
-    p = mul(rot, p) * 0.73;
-
-    // ��������� �������� ����� � ������
-    float3 color_base = float3(0.0, 0.0, 0.0);
-
-    // ������ ���������� �� ������ ������
-    float L = length(p);
-
-    // ������������� ���������� ��� ���������
-    float f = 0.;
-
-    // ������������� smoothstep ��� �������� �������� �������� � ���������
-    f = smoothstep(L - 0.005, L, 0.35);
-    f -= smoothstep(L, L + 0.005, 0.33);
-
-    // ��������� ������� ��� �������� � ��������� ��������� �����
-    float t = fmod(time, TPI) - PI;
-    float t1 = -PI;
-    float t2 = PI;
-    float t3 = PI - 6.1;
-
-    // ������ ���� �� ������ ���������� ���������
-    float a = atan2(p.x, p.y);
-
-    // ��������� �� ������ ���� � �������
-    float f_final = f * step(a, t3);
-    f = f * step(a, t2);
-
-    // ������������� �������� ������������ ��� ���������� ������ �� ������ ��������� ��������
-    float3 col2 = lerp(color_base, float3(0.21, 0.21, 0.21), f);
-    float3 col3 = lerp(color_base, float3(cos(timers.x), cos(timers.x + TPI / 3.0), cos(timers.x + 2.0 * TPI / 3.0)), f_final);
-
-    // ��������� �������� ����� ��� �������� ������
-    float4 fragColor1 = float4(col2, 0.0);
-    float4 fragColor2 = float4(col3, 0.0);
-
-    // ���������� �������������� ������������ �� ������ ������������� �����
-    if (fragColor1.r > 0.2 || fragColor1.g > 0.2 || fragColor1.b > 0.2)
-        fragColor1.a = 0.5;
-
-    if (fragColor2.r > 0.3 || fragColor2.g > 0.3 || fragColor2.b > 0.3)
-        fragColor2.a = 0.8;
-
-    float4 final = fragColor1 + fragColor2;
-
-    return final.rgb;
-}
-
 // https://www.shadertoy.com/view/styBzt
 float3 watch_loading(float2 uv)
 {
@@ -116,10 +48,8 @@ float3 watch_loading(float2 uv)
 // https://www.shadertoy.com/view/3dVXzh
 float3 glitch_cube(float2 uv)
 {
-    // ��������� ������� ���������� ���������
     uv.x = resize(uv.x, screen_res.x / screen_res.y, 0.0);
 
-    // ��������� ���������� ��������� � �������������� �� � ���������� ������
     float2 p = uv;
     p -= 0.5;
     p.x *= screen_res.x * screen_res.w;
@@ -151,10 +81,9 @@ float3 glitch_cube(float2 uv)
 // https://www.shadertoy.com/view/Xd3cR8
 float3 pda_loading(float2 uv)
 {
-    // ��������� ������� ���������� ���������
-    uv.x = resize(uv.x, 0.6, 0.0); // ��� ��������������� ��� ��� ui
+    uv.x = resize(uv.x, 0.6, 0.0);
     uv -= 0.5;
-    uv.x = -uv.x; 
+    uv.x = -uv.x;
 
     float geo = ring(uv, float2(0.0, 0.0), RADIUS - THICCNESS, RADIUS);
 
@@ -173,20 +102,20 @@ float3 dosimeter(float2 uva)
 {
     float2 uv = uva;
 
-    //uv -= 0.5;
-    //uv.y = -uv.y;
+    // uv -= 0.5;
+    // uv.y = -uv.y;
 
     uv *= 280.0;
     float deg = radiansToDegrees(atan2(uv.y, uv.x));
-    
+
     float4 rgba = float4(0.0, 0.0, 0.0, 1.0);
-    
-    if(uv.y > 0.0 && length(uv) < 190.0 && length(uv) > 170.0)
+
+    if (uv.y > 0.0 && length(uv) < 190.0 && length(uv) > 170.0)
     {
         float4 red = float4(1.0, 0.0, 0.0, 1.0);
         float4 yellow = float4(1.0, 1.0, 0.0, 1.0);
         float4 green = float4(0.0, 1.0, 0.0, 1.0);
-    
+
         if (deg < 90.0)
             rgba = lerp(red, yellow, deg / 90.0);
         else
@@ -195,23 +124,23 @@ float3 dosimeter(float2 uva)
         if (fmod(deg, 12.0) < 2.0 && (length(uv) > 175.0 || length(uv) <= 175.0))
             rgba = float4(0.0, 0.0, 0.0, 1.0);
     }
-    
+
     float rad_level = radiation_effect.z;
     rad_level = clamp(rad_level, 0.0, 1.0);
     uv = mul(uv, rotate(-abs(sin(1.4) * rad_level) * PI));
-    
-    if(uv.x < 0.0 && abs((uv.x + 180.0) / 50.0) > abs(uv.y) && uv.x > -160.0 || length(uv) < 6.0)
+
+    if (uv.x < 0.0 && abs((uv.x + 180.0) / 50.0) > abs(uv.y) && uv.x > -160.0 || length(uv) < 6.0)
         rgba = float4(0.5, 0.4, 0.1, 1.0);
 
     return rgba.rgb;
 }
 
-float3 NixieTime(float2 uv) 
+float3 NixieTime(float2 uv)
 {
     uv.x = resize(uv.x, screen_res.x / screen_res.y, 0.0);
 
     float2 uva = uv;
-    //uva.y -= 0.2;
+    // uva.y -= 0.2;
 
     uv -= 0.5;
     uv *= 1.1;
@@ -223,48 +152,76 @@ float3 NixieTime(float2 uv)
     float seconds = game_time.z;
     float miliseconds = game_time.w;
     float radiation = watch_actor_params.z;
-    
-	float nsize = numberLength(9999.0);
+
+    float nsize = numberLength(9999.0);
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
-	float2 pos = -digit_spacing * float2(nsize, 1.0) / 2.0;
-
+    float2 pos = -digit_spacing * float2(nsize, 1.0) / 2.0;
+ 
     float2 basepos = pos;
-	float dist = 1.0;
+    float dist = 1.0;
 
-	float3 color = float3(0.0, 0.0, 0.0);
+    float3 color = float3(0.0, 0.0, 0.0);
+
+    float3 red_color = float3(1.0, 0.0, 0.0);
+    float3 green_color = float3(0.0, 1.0, 0.0);
 
     if (watch_actor_params.w == 1)
     {
         pos.x = basepos.x + 0.16;
-	    dist = min(dist, dfNumber(pos, hour, uv));
-    
+        dist = min(dist, dfNumber(pos, hour, uv));
+
         pos.x = basepos.x + 0.39;
-	    dist = min(dist, dfColon(pos, uv));
-    
+        dist = min(dist, dfColon(pos, uv));
+
         pos.x = basepos.x + 0.60;
-	    dist = min(dist, dfNumber(pos, minute, uv));
+        dist = min(dist, dfNumber(pos, minute, uv));
     }
 
-    if (watch_actor_params.w == 4)
+    if (watch_actor_params.w == 2)
     {
-        uv *= 1.5;
+        float health_factor = watch_actor_params.x * 100;
+        pos.x -= 0.2;
+        pos.y += 0.05;
+        pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);
+        dist = min(dist, dfNumberHealth(pos, health_factor, uv));
+ 
+        pos.x += health_factor < 100.f ? (health_factor < 10.f ? 0.2 : 0.35) : 0.55;
+	    dist = min(dist, dfPercent(pos, uv));
 
-        pos.x = basepos.x - 0.15;
-	    dist = min(dist, dfNumber(pos, minute, uv));
+        pos.y -= 0.35;
+
+        pos.x = basepos.x + 0.25;
+
+        // Icons
+        if (watch_actor_params_2.x < 0.99)
+        {
+            float eatDist = dfEat(pos, uv);
+            color += lerp(red_color, green_color, watch_actor_params_2.x) * (0.001 / eatDist);
+        }
+
+        pos.x += 0.25;
     
-        pos.x = basepos.x + 0.1;
-	    dist = min(dist, dfColon(pos, uv));
-    
-        pos.x = basepos.x + 0.35;
-	    dist = min(dist, dfNumber(pos, seconds, uv));
+        if (watch_actor_params_2.y < 0.99)
+        {
+            float radioDist = dfRadio(pos, uv);
+            color += lerp(red_color, green_color, watch_actor_params_2.y) * (0.001 / radioDist);
+        }
 
-        pos.x = basepos.x + 1.75;
-        pos.y = basepos.y - 0.75;
-        dist = min(dist, dfCircle(pos, 0.04, uv));
+        pos.x += 0.25;
 
-        pos.x = basepos.x + 0.8;
-        pos.y = basepos.y;
-	    dist = min(dist, dfNumber(pos, miliseconds, uv));
+        if (watch_actor_params_2.z < 1.0)
+        {
+            float kettlebellDist = dfKettlebell(pos, uv);
+            color += lerp(red_color, green_color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
+        }
+
+        pos.x += 0.25;
+
+        if (watch_actor_params_2.w < 0.99) 
+        {
+            float dropDist = dfDrop(pos, uv);
+            color += lerp(red_color, green_color, watch_actor_params_2.w) * (0.001 / dropDist);
+        }
     }
 
     if (watch_actor_params.w == 3)
@@ -273,113 +230,46 @@ float3 NixieTime(float2 uv)
         pos = basepos;
         pos.x += 0.15;
         pos.y -= 0.3;
-	    dist = min(dist, dfNumber2(pos, radiation, uv));
+        dist = min(dist, dfNumber2(pos, radiation, uv));
 
         color += dosimeter(uv);
     }
-	
-	float shade = 0.004 / (dist);
-	
-	color += watch_color_params.rgb * shade;
-#if GLOWPULSE
-	color += (watch_color_params.rgb * 0.5) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5, 0.0));
-#endif
 
-//	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.9, 0.2) : float3(0.9, 0.2, 0.0)) * shade;
-//#if GLOWPULSE
-//	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.2, 0.5) : float3(0.9, 0.2, 0.0)) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5, 0.0));
-//#endif
+    if (watch_actor_params.w == 4)
+    {
+        uv *= 1.5;
+
+        pos.x = basepos.x - 0.15;
+        dist = min(dist, dfNumber(pos, minute, uv));
+
+        pos.x = basepos.x + 0.1;
+        dist = min(dist, dfColon(pos, uv));
+
+        pos.x = basepos.x + 0.35;
+        dist = min(dist, dfNumber(pos, seconds, uv));
+
+        pos.x = basepos.x + 1.75;
+        pos.y = basepos.y - 0.75;
+        dist = min(dist, dfCircle(pos, 0.04, uv));
+
+        pos.x = basepos.x + 0.8;
+        pos.y = basepos.y;
+        dist = min(dist, dfNumber(pos, miliseconds, uv));
+    }
+
+    float shade = 0.004 / dist;
+    color += watch_color_params.rgb * shade;
+
+    //	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.9, 0.2) : float3(0.9, 0.2, 0.0)) * shade;
+    // #if GLOWPULSE
+    //	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.2, 0.5) : float3(0.9, 0.2, 0.0)) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5,
+    // 0.0)); #endif
 
 #ifdef SHOW_GRID
-    float grid = 0.5 - max(abs(fmod(uva.x * 64.0, 1.0) -0.3), abs(fmod(uva.y * 64.0, 1.0) -0.3));
+    float grid = 0.5 - max(abs(fmod(uva.x * 64.0, 1.0) - 0.3), abs(fmod(uva.y * 64.0, 1.0) - 0.3));
     float mixing = smoothstep(0.0, 64.0 / screen_res.y, grid);
     color *= 0.25 + float3(mixing, mixing, mixing);
 #endif
-	
-	return color;
-}
 
-
-float3 CardioGraph(float2 uv)
-{
-    float persist = 0.9; // Persistance of the light
-    float health = watch_actor_params.x; // Здоровье, от него зависит дуга
-    float power = watch_actor_params.y; // Стамина, от нее зависит частота сердцебиения
-    float speed = 0.6;
-
-    float mx = max(screen_res.x, screen_res.y);
-    float2 scrs = screen_res.xy / mx;
-    uv.y = 1.0 - uv.y;
-    uv = (uv / screen_res.zw) / mx;
-
-    float f = 70.0; // Frequency of the sinus function
-    float scrs_uv = uv.x - scrs.x / 2.0;
-
-    float scrs_uv_f = scrs_uv * f;
-    float uv_x_f = uv.x * f;
-
-    float heartBeat_distance = distance(uv, float2(uv.x, (sin(scrs_uv_f) / (scrs_uv * 3.5 * f) + sin(uv_x_f) / 7.0) * clamp(1.0 - abs(scrs_uv * 10.0), 0.0, 1.0 * health) + scrs.y / 2.2));
-
-    float heartBeat_smoothstep = 1.0 - smoothstep(0.0, 0.01, heartBeat_distance);
-    float3 heartBeat = float3(heartBeat_smoothstep, heartBeat_smoothstep, heartBeat_smoothstep);
-
-    float persist_uv = uv.x + persist - frac(timers.x * speed) * (1.0 + persist);
-    float distance_uv = distance(0.0, clamp(persist_uv, 0.0, 1.0) / persist);
-    float light_uv = smoothstep(0.0, 1.0, distance_uv) * (1.0 - step(1.0, distance_uv));
-    float scanlignes_uv = 0.7;
-
-    float3 light = float3(light_uv, light_uv, light_uv);
-    float3 scanlignes = float3(scanlignes_uv, scanlignes_uv, scanlignes_uv);
-
-    float3 colorRed = float3(1.0, 0.0, 0.0);
-    float3 colorGreen = float3(0.0, 1.0, 0.0);
-    float3 color = lerp(colorRed, colorGreen, health);
-
-    float grid = 0.5 - max(abs(fmod(uv.x * 16.0, 1.0) - 0.4), abs(fmod(uv.y * 16.0, 1.0) - 0.4));
-    float mixing = smoothstep(0.0, 8.0 / screen_res.y, grid);
-    float3 grid_color = float3(mixing, mixing, mixing) * 0.75;
-    color *= 0.25 + grid_color;
-
-    float3 final = float3(heartBeat * light + scanlignes * 0.1) * color;
-
-    return final;
-}
-
-float4 CardioGraph2(float2 uv)
-{
-    uv.y = 1.0 - uv.y;
-    uv *= SCALE;
-    uv.y -= .5 * SCALE; // Center the Y axis
-    uv.x *= screen_res.x / screen_res.y; // Keeps the aspect ratio
-    uv.y /= screen_res.y / screen_res.x; // Keeps the aspect ratio
-
-    float3 colorRed = float3(1.0f, 0.0f, 0.0f);
-    float3 colorGreen = float3(0.0f, 1.0f, 0.0f);
-    float3 colormix = lerp(colorRed, colorGreen, watch_actor_params.x);
-
-    float grid = GridLines(uv.x, 6.0f) + GridLines(uv.y, 6.0f);
-    float3 color = (colormix * 0.1f) * grid;
-
-    float dotX = getDotXPosition();
-    float2 dotPosition = float2(dotX, generateEGC(dotX));
-
-    color += MovingDot(uv, dotPosition);
-
-    float delayedX = dotX;
-
-    for(int i = 1; i < MAX_TRAIL_ITEMS; i++)
-    {
-        delayedX -= 0.002f;
-        float2 trailPosition = float2(delayedX, generateEGC(delayedX));
-
-        float trail = Circle(uv, trailPosition, 0.028f, 0.1f);
-        float trailBlur = Circle(uv, trailPosition, 0.06f, 0.5f);
-
-        float q = 1.0f - remap01(float(i), 1.0f, float(MAX_TRAIL_ITEMS));
-
-        color += (colormix * q) * trail;
-        color += trailBlur * (colormix * q);
-    }
-
-    return float4(color, 1.0f);
+    return color;
 }

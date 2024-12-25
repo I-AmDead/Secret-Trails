@@ -72,7 +72,7 @@ float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d, uint iSample)
         if (SSFX_is_valid_uv(occ_pos_uv))
         {
             // Sample depth buffer
-            float4 sample_pos = SSFX_get_position(occ_pos_uv, iSample);
+            float4 sample_pos = SSFX_get_position(occ_pos_uv);
 
             // AO Distance attenuation. To discard incorrect AO and add some attenuation through distance.
             float atte = lerp(0.1f, 4.0f, smoothstep(G_SSDO_WEAPON_LENGTH * 0.5f, G_SSDO_WEAPON_LENGTH, sample_pos.z));
@@ -87,7 +87,7 @@ float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d, uint iSample)
                 // Same has before but with smaller radius
                 occ_pos = P.xyz + sample_rays * detail_radius;
                 occ_pos_uv = SSFX_view_to_uv(occ_pos); // We don't check for a valid UV coor, is already done and this sample radius is smaller ( in theory )
-                sample_pos = SSFX_get_position(occ_pos_uv, iSample); // Get Sample
+                sample_pos = SSFX_get_position(occ_pos_uv); // Get Sample
                 AO = step(sample_pos.z, occ_pos.z); // Check occlusion
                 atte *= saturate(detail_radius + WeaponFactor); // Adjust attenuation for the scenary AO
             }

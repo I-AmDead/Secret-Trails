@@ -128,14 +128,10 @@ float3 infrared(gbuffer_data gbd, float depth, float2 HPos, float2 Tex0)
         float FADE_DISTANCE_END = heat_fade_distance.y;
 
         if (depth <= 0)
-        {
             depth = FADE_DISTANCE_END;
-        }
 
         if (depth < FADE_DISTANCE_START)
-        {
             mixed = lerp(color_background_min, color_background_max, projection);
-        }
         else
         {
             float arg = smoothstep(FADE_DISTANCE_START, FADE_DISTANCE_END, clamp(depth, FADE_DISTANCE_START, FADE_DISTANCE_END));
@@ -145,18 +141,8 @@ float3 infrared(gbuffer_data gbd, float depth, float2 HPos, float2 Tex0)
         }
     }
 
-    float4 jitter = float4(frac(sin(dot(Tex0, float2(12.0, 78.0) + (timers.x))) * 12345.0), frac(sin(dot(Tex0, float2(12.0, 78.0) + (timers.x))) * 67890.0),
-                           frac(sin(dot(Tex0, float2(12.0, 78.0) + (timers.x))) * 78372.0), frac(sin(dot(Tex0, float2(12.0, 78.0) + (timers.x))) * 37857.0));
-
     if (heat_mode == 1.0)
-    {
-        mixed += jitter.y * (0.12);
         mixed = greyscale(mixed);
-    }
-    else
-    {
-        mixed += jitter.y * (0.15);
-    }
 
     return mixed;
 }

@@ -1,10 +1,7 @@
 #include "common.h"
 #include "sload.h"
 
-float2 rand2(float2 p)
-{
-    return frac(float2(sin(p.x * 591.32 + p.y * 154.077), cos(p.x * 391.32 + p.y * 49.077)));
-}
+float2 rand2(float2 p) { return frac(float2(sin(p.x * 591.32 + p.y * 154.077), cos(p.x * 391.32 + p.y * 49.077))); }
 
 float voronoi(float2 x)
 {
@@ -12,9 +9,9 @@ float voronoi(float2 x)
     float2 f = frac(x);
     float minDistance = 1.0;
 
-    for(int j = -1; j <= 1; j++)
+    for (int j = -1; j <= 1; j++)
     {
-        for(int i = -1; i <= 1; i++)
+        for (int i = -1; i <= 1; i++)
         {
             float2 b = float2(i, j);
             float2 rand = .5 + .5 * sin(timers.x * 3.0 + 12.0 * rand2(p + b));
@@ -46,7 +43,7 @@ float CV(float3 c, float2 uv)
 float4 electric_glitch(float2 uv)
 {
     float4 color = float4(0, 0, 0, 1);
-    for(int i = 0; i < 20; i += 1)
+    for (int i = 0; i < 20; i += 1)
     {
         float3 c = float3(1.0, 1.0, 1.0);
         color.rgb = MIX(color.rgb, c * CV(float3((1.0 + sin(timers.x * 0.52 + (i - 1400.0) * 1.35)) * 0.5, (1.0 + sin(timers.x * 0.73 + (i - 1200.0) * 1.61)) * 0.5, 0.0), uv));
@@ -65,7 +62,8 @@ float noise2(float2 st)
     float2 f = frac(st);
     float2 u = f * f * (3.0 - 2.0 * f);
 
-    return lerp(lerp(dot(rand2(i + float2(0.0, 0.0)), f - float2(0.0, 0.0)), dot(rand2(i + float2(1.0, 0.0)), f - float2(1.0, 0.0)), u.x), lerp(dot(rand2(i + float2(0.0, 1.0)), f - float2(0.0, 1.0)), dot(rand2(i + float2(1.0, 1.0)), f - float2(1.0, 1.0)), u.x), u.y);
+    return lerp(lerp(dot(rand2(i + float2(0.0, 0.0)), f - float2(0.0, 0.0)), dot(rand2(i + float2(1.0, 0.0)), f - float2(1.0, 0.0)), u.x),
+                lerp(dot(rand2(i + float2(0.0, 1.0)), f - float2(0.0, 1.0)), dot(rand2(i + float2(1.0, 1.0)), f - float2(1.0, 1.0)), u.x), u.y);
 }
 
 // Value Noise by Inigo Quilez - iq/2013
@@ -98,9 +96,9 @@ float3 magmaFunc(float3 color, float2 uv, float detail, float power, float color
     float2 cell = floor(uv);
     float2 fractal = frac(uv);
 
-    for(int i = -1; i <= 1; i++)
+    for (int i = -1; i <= 1; i++)
     {
-        for(int j = -1; j <= 1; j++)
+        for (int j = -1; j <= 1; j++)
         {
             float2 cellDir = float2(float(i), float(j));
             float2 randPoint = rand2(cell + cellDir);
@@ -133,7 +131,7 @@ f_deffer main(p_flat I)
     // diffuse
     float3 D = tbase(I.tcdh); // IN:  rgb.a
 
-    //D += slime(I.tcdh) * 0.2;
+    // D += slime(I.tcdh) * 0.2;
     D += slime2(I.tcdh);
 
 #ifdef USE_TDETAIL

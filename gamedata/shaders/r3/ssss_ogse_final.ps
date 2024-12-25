@@ -9,7 +9,6 @@
 #define SS_DUST_SIZE float(0.7) // размер пылинок
 
 uniform float4 ssss_params; // x - exposure, y - density
-uniform float3 L_sun_dir_e;
 
 Texture2D jitter0;
 Texture2D jitter1;
@@ -30,11 +29,11 @@ float4 main(p_screen I) : SV_Target
     // smooth shafts
     float4 cSunShafts = s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy);
     // #ifdef SUN_SHAFTS_QUALITY
-    // #	if SUN_SHAFTS_QUALITY > 1
+    // # if SUN_SHAFTS_QUALITY > 1
     cSunShafts *= 0.5;
     cSunShafts += s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy + sun_vec_screen.yx * screen_res.zw) * 0.25f;
     cSunShafts += s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy - sun_vec_screen.yx * screen_res.zw) * 0.25f;
-    // #	endif
+    // # endif
     // #endif
     float3 img = s_image.Sample(smp_rtlinear, I.tc0.xy).xyz;
 

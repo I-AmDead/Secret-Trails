@@ -52,8 +52,11 @@ float4 u_position(float4 v)
     return float4(v.xyz, 1.f);
 } // -12..+12
 
+cbuffer sbones
+{
 float4 sbones_array[512];
 float4 sbones_array_old[512];
+}
 
 float3 skinning_dir(float3 dir, float3 m0, float3 m1, float3 m2)
 {

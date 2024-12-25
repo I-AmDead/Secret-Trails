@@ -22,7 +22,5 @@ ui_vert_out main(ui_vert_in v)
     O.P.w = 1;
     O.P = mul(m_WVP, O.P);
 
-    O.P.xy = get_taa_jitter(O.P);
-
     return O;
 }

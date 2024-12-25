@@ -11,29 +11,21 @@
 
 cbuffer dynamic_inter_grass
 {
-float4 benders_pos[32];
-float4 benders_pos_old[32];
-float4 benders_setup;
+    float4 benders_pos[32];
+    float4 benders_pos_old[32];
+    float4 benders_setup;
 }
 
 cbuffer dynamic_tree
 {
-uniform float3x4 m_xform;
-uniform float3x4 m_xform_v;
+    uniform float3x4 m_xform;
+    uniform float3x4 m_xform_v;
 
-uniform float4 consts; // {1/quant,1/quant,???,???}
-uniform float4 wind;
-uniform float4 wave;
+    uniform float4 consts; // {1/quant,1/quant,???,???}
 
-uniform float4 c_scale;
-uniform float4 c_bias;
-uniform float2 c_sun; // x=*, y=+
-
-//////////
-float4 consts_old;
-float4 wave_old;
-float4 wind_old;
-///////////
+    uniform float4 c_scale;
+    uniform float4 c_bias;
+    uniform float2 c_sun; // x=*, y=+
 }
 
 #ifdef SSFX_WIND
@@ -53,27 +45,8 @@ v2p_bumped main(v_tree I)
     float2 tc = (I.tc * consts).xy;
 
 #ifndef SSFX_WIND
-    float base = m_xform._24; // take base height from matrix
-    float dp = calc_cyclic(wave.w + dot(pos, (float3)wave));
-    float frac = I.tc.z * consts.x; // fractional (or rigidity)
-    float inten = H * dp; // intensity
-    float2 result = calc_xz_wave(wind.xz * inten * 2.0f, frac);
-
-    float3 wind_result = float3(result.x, 0, result.y);
-    float4 w_pos = float4(pos.xyz + wind_result.xyz, 1);
-
-    //////////////
-    // prev
-    dp = calc_cyclic(wave_old.w + dot(pos, (float3)wave_old));
-    frac = I.tc.z * consts_old.x;
-    inten = H * dp;
-    result = calc_xz_wave(wind_old.xz * inten * 2.0f, frac);
-# ifdef USE_TREEWAVE
-    result = 0;
-# endif
-    float4 w_pos_previous = float4(pos.x + result.x, pos.y, pos.z + result.y, 1);
-    //////////
-
+    float4 w_pos = float4(pos.xyz, 1);
+    float4 w_pos_previous = w_pos;
 #else
     wind_setup wset = ssfx_wind_setup();
     float3 wind_result = ssfx_wind_tree_branches(pos, H, tc.y, wset);
@@ -82,10 +55,6 @@ v2p_bumped main(v_tree I)
     wind_setup wset_old = ssfx_wind_setup(true);
     float3 wind_result_old = ssfx_wind_tree_branches(pos, H, tc.y, wset_old, true);
     float4 w_pos_previous = float4(pos.xyz + wind_result_old.xyz, 1);
-#endif
-
-#ifdef USE_TREEWAVE
-    wind_result = 0;
 #endif
 
     // INTERACTIVE GRASS ( Bushes ) - SSS Update 15.4
@@ -118,7 +87,7 @@ v2p_bumped main(v_tree I)
         w_pos.y -= bend * 0.67f * rstr.z * height_limit * dir_limit.y; // Vertical
     }
 
-    //for old frame
+    // for old frame
     for (int b = 0; b < benders_setup.w; b++)
     {
         // Direction, Radius & Bending Strength, Distance and Height Limit
@@ -148,7 +117,7 @@ v2p_bumped main(v_tree I)
 #endif
 
     float hemi = clamp(I.Nh.w * c_scale.w + c_bias.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
-    //	float 	hemi 	= I.Nh.w;
+    // float hemi = I.Nh.w;
 
     // Eye-space pos/normal
     v2p_bumped O;
@@ -163,11 +132,6 @@ v2p_bumped main(v_tree I)
     /////////////
 
     O.position = float4(Pe, hemi);
-
-    // Calculate the 3x3 transform from tangent space to eye-space
-    // TangentToEyeSpace = object2eye * tangent2object
-    //		     = object2eye * transpose(object2tangent) (since the inverse of a rotation is its transpose)
-    // Normal mapping
 
     // FLORA FIXES & IMPROVEMENTS - SSS Update 14
     // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
@@ -197,4 +161,3 @@ v2p_bumped main(v_tree I)
 
     return O;
 }
-FXVS;

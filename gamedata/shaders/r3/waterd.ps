@@ -6,9 +6,7 @@ struct v2p
     float2 tbase : TEXCOORD0;
     float2 tdist0 : TEXCOORD1;
     float2 tdist1 : TEXCOORD2;
-#ifdef USE_SOFT_WATER
     float4 tctexgen : TEXCOORD3;
-#endif //	USE_SOFT_WATER
     float4 hpos : SV_Position;
 };
 
@@ -27,7 +25,6 @@ float4 main(v2p I) : SV_Target
     float2 faded = lerp(distort, zero, t_base.a);
 
     //	Igor: additional depth test
-#ifdef USE_SOFT_WATER
     float alphaDistort;
     float2 PosTc = I.tctexgen.xy / I.tctexgen.z;
 
@@ -36,7 +33,6 @@ float4 main(v2p I) : SV_Target
     float waterDepth = _P.z - I.tctexgen.z;
     alphaDistort = saturate(5 * waterDepth);
     faded = lerp(zero, faded, alphaDistort);
-#endif //	USE_SOFT_WATER
 
     float2 faded_bx2 = (faded * 2 - 1) * W_DISTORT_POWER;
     float faded_dot = dot(float3(faded_bx2, 0), .75); // 0.75

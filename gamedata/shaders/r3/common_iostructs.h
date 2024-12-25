@@ -7,8 +7,6 @@
 //	v2p_name:	output for vertex shader.
 //	p_name	:	input for pixel shader.
 ////////////////////////////////////////////////////////////////
-#include "common\ogsr_shaders_cfg.h"
-////////////////////////////////////////////////////////////////
 //	TL0uv
 struct v_TL0uv_positiont
 {
@@ -297,7 +295,6 @@ struct f_deffer
     float4 C : SV_Target1; // r, g, b,  gloss
     float2 Velocity : SV_Target2; // XY - motion vectors
     float4 H : SV_Target3;
-    float4 L : SV_Target4;
 };
 
 struct gbuffer_data
@@ -308,9 +305,6 @@ struct gbuffer_data
     float hemi; // AO
     float3 C;
     float gloss;
-#ifdef REFLECTIONS_ONLY_ON_TERRAIN
-    bool refl_flag;
-#endif
 };
 
 ////////////////////////////////////////////////////////////////

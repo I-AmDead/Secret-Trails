@@ -55,9 +55,9 @@ float4 main(_input I) : SV_Target
 
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
-    occ = calc_gtao(P, N, I.tc0, ISAMPLE);
+    occ = calc_gtao(P, N, I.tc0, 0);
 #else
-    occ = calc_ssdo(P, N, I.tc0, I.pos2d, ISAMPLE);
+    occ = calc_ssdo(P, N, I.tc0, I.pos2d, 0);
 #endif
     occ = compute_colored_ao(occ.x, D.xyz);
 #endif
@@ -97,7 +97,7 @@ float4 main(_input I) : SV_Target
     color = lerp(color, fog_color, fog);
 #endif
 
-    float skyblend = saturate(fog * fog);
+    float skyblend = 0.0; // saturate(fog * fog);  // Тут 0.0 потому что как то странно выглядит
 
     return float4(color, skyblend);
 }

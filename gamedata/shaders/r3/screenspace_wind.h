@@ -14,8 +14,6 @@ uniform float4 ssfx_wsetup_trees; // Branches Speed - Trunk Speed - Bending - Mi
 uniform float4 ssfx_wind_anim;
 uniform float4 ssfx_wind_anim_old;
 
-uniform float is_bugged_flora;
-
 Texture2D s_waves;
 sampler smp_linear2;
 
@@ -126,8 +124,7 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     // Branch motion [ -1.0 ~ 1.0 ]
     float3 branchMotion = 0;
 
-    if (!is_bugged_flora)
-        branchMotion = float3(Flow.x, Flow2.y, Flow.y) * 2.0f - 1.0f;
+    branchMotion = float3(Flow.x, Flow2.y, Flow.y) * 2.0f - 1.0f;
 
     // Trunk position
     float3 Trunk = ssfx_wind_tree_trunk(pos, Tree_H, W, for_old_frame);
@@ -136,15 +133,13 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     branchMotion.xz *= Trunk.z * clamp(Tree_H * 0.1f, 1.0f, 2.5f);
 
     // Add wind direction
-    if (!is_bugged_flora)
-        branchMotion.xz += Flow2.z * W.direction;
+    branchMotion.xz += Flow2.z * W.direction;
 
     // Add wind gust
     branchMotion.y *= saturate(Tree_H * 0.1f);
 
     // Everything is limited by the UV and wind speed
-    if (!is_bugged_flora)
-        branchMotion *= (1.0f - tc_y) * W.speed;
+    branchMotion *= (1.0f - tc_y) * W.speed;
 
     // Add trunk animation
     branchMotion.xz += Trunk.xy;

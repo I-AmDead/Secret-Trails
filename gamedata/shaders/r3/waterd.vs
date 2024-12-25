@@ -17,9 +17,7 @@ struct vf
     float2 tbase : TEXCOORD0;
     float2 tdist0 : TEXCOORD1;
     float2 tdist1 : TEXCOORD2;
-#ifdef USE_SOFT_WATER
     float4 tctexgen : TEXCOORD3;
-#endif //	USE_SOFT_WATER
     float4 hpos : SV_Position;
     float fog : FOG;
 };
@@ -54,12 +52,10 @@ vf main(v_vert v)
     o.hpos.xy = get_taa_jitter(o.hpos);
     o.fog = saturate(calc_fogging(v.P)); // Always do this for forward geometry (AMD)
 
-//	Igor: for additional depth dest
-#ifdef USE_SOFT_WATER
+    // Igor: for additional depth dest
     o.tctexgen = mul(m_texgen, P);
     float3 Pe = mul(m_V, P);
     o.tctexgen.z = Pe.z;
-#endif //	USE_SOFT_WATER
 
     return o;
 }

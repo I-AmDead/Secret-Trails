@@ -1,7 +1,7 @@
 //=================================================================================================
 // Gamma Correction
 //=================================================================================================
-//#define USE_STRICT_GAMMA_CORRECTION //use gamma correction for sky blending, might distort the original colors
+// #define USE_STRICT_GAMMA_CORRECTION //use gamma correction for sky blending, might distort the original colors
 //=================================================================================================
 
 float LinearTosRGB(float gammaPre)

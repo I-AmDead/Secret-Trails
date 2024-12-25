@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // Defines
 //--------------------------------------------------------------------------------------
-//#define OCCLUDED_PIXEL_RAYVALUE     float4(1, 0, 0, 0)
+// #define OCCLUDED_PIXEL_RAYVALUE     float4(1, 0, 0, 0)
 //	Use very large value for aplha to help edge detection
 #define OCCLUDED_PIXEL_RAYVALUE float4(1, 0, 0, 100000)
 #define NEARCLIPPED_PIXEL_RAYPOS float3(0, -1, 0)
@@ -222,7 +222,7 @@ float4 Raycast( PS_INPUT_RAYCAST input )
 }
 */
 
-//#define	RENDER_FIRE
+// #define	RENDER_FIRE
 void DoSample(float weight, float3 O, inout float4 color)
 {
 // This value can be tuned to produce denser or thinner looking smoke

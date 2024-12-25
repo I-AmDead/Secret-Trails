@@ -1,6 +1,6 @@
 // [ SETTINGS ] [ SCREEN SPACE SHADOWS ]
 
-#define G_SSS_STEPS 32 // More steps = better quality / poor performance. ( 24 = Low | 32 = Medium | 48 = High | 64 = Ultra )
+#define G_SSS_STEPS 24 // More steps = better quality / poor performance. ( 24 = Low | 32 = Medium | 48 = High | 64 = Ultra )
 
 #define G_SSS_INTENSITY 1.0f // Shadow general intensity. [ 0.5f = 50% ~ 1.0f = 100% ]
 #define G_SSS_DETAILS 0.02f // Limit detail. Lower values will introduce more details to shadows but also incorrect results.

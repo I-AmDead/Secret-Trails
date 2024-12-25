@@ -52,18 +52,3 @@ function element_2(shader, t_base, t_second, t_detail)
 	shader:dx10adress(s_smap, 4)
 	shader:dx10bordercolor(s_smap, 255, 255, 255, 255)
 end
-
-function element_3(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform_aa_AA", "accum_sun")
-		:fog(false)
-		:zb(false, false)
-	shader:dx10cullmode(1)
-	shader:dx10texture("s_position", "$user$position")
-	shader:dx10texture("s_smap", "$user$generic0")
-	shader:dx10texture("s_diffuse", "$user$albedo")
-
-	jitter.jitter(shader)
-
-	shader:dx10sampler("smp_nofilter")
-	shader:dx10sampler("smp_material")
-end

@@ -1,7 +1,6 @@
 #include "common.h"
 #include "sload.h"
 #include "screenspace_hud_raindrops.h"
-#include "models_weapon_overheat.h"
 
 f_deffer main(p_flat I)
 {
@@ -49,11 +48,6 @@ f_deffer main(p_flat I)
 #else
     float h = I.position.w;
 #endif
-
-    float4 overhets = overheat(I.tcdh);
-    D.rgb = lerp(D.rgb, overhets.rgb, L_glowing.w);
-    float gloss_factor = saturate(L_glowing.w / (L_glowing.z * 0.5));
-    gloss = lerp(gloss, 0.0, gloss_factor);
 
     // 2. Standart output
     float4 Ne = float4(normalize((float3)I.N.xyz + float3(drops.xy * drops.w, 0.0f)), h);

@@ -81,20 +81,11 @@ float3 SSFX_yaw_vector(float3 Vec, float Rot)
     return mul(rot_mat, Vec);
 }
 
-float SSFX_get_depth(float2 tc)
-{
-    return s_position.Sample(smp_nofilter, tc).z;
-}
+float SSFX_get_depth(float2 tc) { return s_position.Sample(smp_nofilter, tc).z; }
 
-float4 SSFX_get_position(float2 tc)
-{
-    return s_position.Sample(smp_nofilter, tc);
-}
+float4 SSFX_get_position(float2 tc) { return s_position.Sample(smp_nofilter, tc); }
 
-float3 SSFX_get_image(float2 tc)
-{
-    return s_rimage.Sample(smp_nofilter, tc).rgb;
-}
+float3 SSFX_get_image(float2 tc) { return s_rimage.Sample(smp_nofilter, tc).rgb; }
 
 RayTrace SSFX_ray_init(float3 ray_start_vs, float3 ray_dir_vs, float ray_max_dist, int ray_steps, float noise)
 {

@@ -68,14 +68,10 @@ void ComputePatchVertex(float3 P[3], float3 N[3], float3 uvw, in PNPatch patch, 
     float v = uvw.x;
     float w = uvw.z;
 
-    Pos = P[0] * w * w * w + P[1] * u * u * u + P[2] * v * v * v +
-          patch.f3B210 * 3.0f * w * w * u + patch.f3B120 * 3.0f * w * u * u +
-          patch.f3B201 * 3.0f * w * w * v + patch.f3B021 * 3.0f * u * u * v +
-          patch.f3B102 * 3.0f * w * v * v + patch.f3B012 * 3.0f * u * v * v +
-          patch.f3B111 * 6.0f * w * u * v;
+    Pos = P[0] * w * w * w + P[1] * u * u * u + P[2] * v * v * v + patch.f3B210 * 3.0f * w * w * u + patch.f3B120 * 3.0f * w * u * u + patch.f3B201 * 3.0f * w * w * v +
+        patch.f3B021 * 3.0f * u * u * v + patch.f3B102 * 3.0f * w * v * v + patch.f3B012 * 3.0f * u * v * v + patch.f3B111 * 6.0f * w * u * v;
 
-    Norm = N[0] * w * w + N[1] * u * u + N[2] * v * v +
-           patch.f3N110 * w * u + patch.f3N011 * u * v + patch.f3N101 * w * v;
+    Norm = N[0] * w * w + N[1] * u * u + N[2] * v * v + patch.f3N110 * w * u + patch.f3N011 * u * v + patch.f3N101 * w * v;
 }
 
 sampler smp_bump_ds;

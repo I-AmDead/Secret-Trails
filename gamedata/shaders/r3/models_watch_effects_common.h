@@ -1,5 +1,6 @@
 uniform float4 game_time;
 uniform float4 watch_actor_params;
+uniform float4 watch_actor_params_2;
 uniform float4 watch_color_params;
 uniform float4 radiation_effect;
 
@@ -19,10 +20,10 @@ uniform float4 radiation_effect;
 #define aa 2.0 / min(screen_res.x, screen_res.y)
 
 // Hearthbeat
-#define SCALE 1.0
+#define SCALE 1.4
 #define LINES_WIDTH 0.05
 #define DOT_SPEED_LIMITER 2.4
-#define MAX_TRAIL_ITEMS 600
+#define MAX_TRAIL_ITEMS 300
 
 // NixieTime
 #define TWELVE_HOUR_CLOCK 1
@@ -407,6 +408,29 @@ float dfNumber(float2 origin, float num, float2 uv)
 }
 
 // Distance to a number This handles 2 digit integers, leading 0's will be drawn
+float dfNumberHealth(float2 origin, float num, float2 uv)
+{
+    uv -= origin;
+    float dist = 1.0;
+    float offs = 0.0;
+
+    float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
+    float health_factor = watch_actor_params.x * 100;
+	float index = health_factor < 100.f ? (health_factor < 10.f ? 0 : 1) : 2;
+
+    for (float i = index; i >= 0.0; i--)
+    {
+        float d = fmod(num / pow(10.0, i), 10.0);
+
+        float2 pos = digit_spacing * float2(offs, 0.0);
+
+        dist = min(dist, dfDigit(pos, d, uv));
+        offs++;
+    }
+    return dist;
+}
+
+// Distance to a number This handles 2 digit integers, leading 0's will be drawn
 float dfNumber2(float2 origin, float num, float2 uv)
 {
     uv -= origin;
@@ -439,83 +463,86 @@ float dfColon(float2 origin, float2 uv)
     return dist;
 }
 
+float dfPercent(float2 origin, float2 uv) 
+{
+	uv -= origin;
+	float dist = 1e6;
+
+    dist = min(dist, dfCircle(float2(0.3, 0.7), 0.15, uv));
+    dist = min(dist, dfCircle(float2(0.7, 0.3), 0.15, uv));
+    dist = min(dist, dfLine(float2(0.2, 0.2), float2(0.8, 0.8), uv));
+    
+    return dist;
+}
+
+float dfEat(float2 origin, float2 uv)
+{
+    uv -= origin;
+    float dist = 1e6;
+
+    dist = min(dist, dfLine(float2(0.25, 1.0), float2(0.25, 0.5), uv));
+    dist = min(dist, dfArc(float2(0.25, 1.0), 3.142, 3.142, 0.1, uv));
+    dist = min(dist, dfLine(float2(0.15, 1.0), float2(0.15, 1.1), uv));
+    dist = min(dist, dfLine(float2(0.25, 1.0), float2(0.25, 1.1), uv));
+    dist = min(dist, dfLine(float2(0.35, 1.0), float2(0.35, 1.1), uv));
+    
+    dist = min(dist, dfLine(float2(0.6, 0.845), float2(0.6, 0.5), uv));
+    dist = min(dist, dfArc(float2(0.6, 0.97), 3.142, 3.142, 0.1, uv));
+    dist = min(dist, dfArc(float2(0.6, 1.02), 0.0, 3.142, 0.1, uv));
+    
+    return dist;
+}
+
+float dfRadio(float2 origin, float2 uv)
+{
+    uv -= origin;
+    float dist = 1e6;
+
+    dist = min(dist, dfCircle(float2(0.0, 0.8), 0.1, uv));
+    dist = min(dist, dfLine(float2(0.0, 0.5), float2(0.0, 0.7), uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), 2.34, 1.5708, 0.4, uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), 2.34, 1.5708, 0.3, uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), 2.34, 1.5708, 0.2, uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), -0.9, 1.5708, 0.4, uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), -0.9, 1.5708, 0.3, uv));
+    dist = min(dist, dfArc(float2(0.0, 0.8), -0.9, 1.5708, 0.2, uv));
+
+    return dist;
+}
+
+float dfKettlebell(float2 origin, float2 uv)
+{
+	uv -= origin;
+	float dist = 1e6;
+
+    dist = min(dist, dfLine(float2(-0.51, 0.52), float2(-0.27, 0.52), uv));
+    dist = min(dist, dfArc(float2(-0.37, 0.75), 1.7, 2.3708, 0.28, uv));
+    dist = min(dist, dfArc(float2(-0.42, 0.75), -0.9, 2.3708, 0.28, uv));
+    dist = min(dist, dfArc(float2(-0.39, 1.06), 3.35, -3.542, 0.13, uv));
+    
+    dist = min(dist, dfLine(float2(-0.52, 0.85), float2(-0.52, 0.65), uv));
+    dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.85), uv));
+    dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.65), uv));
+    
+    dist = min(dist, dfArc(float2(-0.32, 0.8), 3.35, -3.542, 0.05, uv));
+    dist = min(dist, dfLine(float2(-0.37, 0.8), float2(-0.37, 0.7), uv));
+    dist = min(dist, dfArc(float2(-0.32, 0.7), 3.35, 3.542, 0.05, uv));
+    dist = min(dist, dfLine(float2(-0.27, 0.73), float2(-0.32, 0.73), uv));
+    
+    return dist;
+}
+
+float dfDrop(float2 origin, float2 uv)
+{
+    uv -= origin;
+    float dist = 1e6;
+
+    dist = min(dist, dfArc(float2(-1.0, 0.7), 2.521, 4.142, 0.2, uv));
+    dist = min(dist, dfLine(float2(-1.2, 0.75), float2(-0.99, 1.15), uv));
+    dist = min(dist, dfLine(float2(-0.8, 0.75), float2(-0.99, 1.15), uv));
+
+    return dist;
+}
+
 // Length of a number in digits
 float numberLength(float n) { return floor(max(log(n) / log(10.0), 0.0) + 1.0) + 2.0; }
-
-//
-// HearthBeat
-//
-
-float remap01(float t, float a, float b) { return (t - a) / (b - a); }
-
-float Circle(float2 uv, float2 position, float radius, float blur)
-{
-    float distance = length(uv - position);
-    return smoothstep(radius, radius - blur, distance);
-}
-
-float GridLines(float t, float lines) { return step(frac(t * lines), LINES_WIDTH); }
-
-float3 Ring(float2 uv, float2 position)
-{
-    float ring = Circle(uv, position, 0.08f, 0.01f);
-    ring -= Circle(uv, position, 0.065f, 0.01f);
-
-    float3 RING_COLOR = float3(0.0f, 0.01f, 0.0f);
-
-    return RING_COLOR * ring;
-}
-
-float spike(float x, float d, float w, float raiseBy)
-{
-    float f1 = pow(abs(x + (d * SCALE)), raiseBy);
-    return exp(-f1 / w);
-}
-
-float generateEGC(float x)
-{
-    x -= .7 * SCALE;
-
-    float a = 0.4 * SCALE;
-    float d = .3;
-    float w = 0.001;
-
-    float f1 = a * spike(x, d, w, 2.);
-    float f2 = 0.3 * spike(x, d - 0.02, 0.5 * w, 2.0);
-    float f3 = 0.1 * spike(x, d - 0.25, 0.0002, 2.5);
-    float f4 = 0.07 * spike(x, d - 0.55, 0.009, 1.5);
-    float f5 = 0.1 * spike(x, d - 0.75, 0.001, 2.7);
-
-    float f6 = a * spike(x, d - 1., 0.002, 2.);
-    float f7 = 0.3 * spike(x, d - 1.025, 0.5 * w, 2.0);
-    float f8 = 0.1 * spike(x, d - 1.2, 0.0002, 2.5);
-    float f9 = 0.07 * spike(x, d - 1.55, 0.009, 1.3);
-
-    return (f1 - f2 + f3 + f4 + f5 + f6 - f7 + f8 + f9) * watch_actor_params.x;
-    ;
-}
-
-float getDotXPosition()
-{
-    float dotX = frac(timers.x / DOT_SPEED_LIMITER);
-    dotX *= 2.0f * SCALE;
-    return dotX;
-}
-
-float3 MovingDot(float2 uv, float2 dotPosition)
-{
-    float movingDot = Circle(uv, dotPosition, 0.015f, 0.01f);
-    float smallBlurredDot = Circle(uv, dotPosition, 0.06f, 0.1f);
-    float bigBlurredDot = Circle(uv, dotPosition, 0.3f, 0.6f);
-
-    float3 colorRed = float3(1.0f, 0.0f, 0.0f);
-    float3 colorGreen = float3(0.0f, 1.0f, 0.0f);
-    float3 colormix = lerp(colorRed, colorGreen, watch_actor_params.x);
-
-    float3 color = colormix * 0.1f * movingDot;
-    color += colormix * smallBlurredDot;
-    color += colormix * bigBlurredDot;
-    color += Ring(uv, dotPosition);
-
-    return color;
-}

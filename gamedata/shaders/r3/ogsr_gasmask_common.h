@@ -26,14 +26,12 @@ Texture2D s_breath_noise;
 Texture2D s_image_blurred;
 
 // Constants from engine
-float4 mask_control;
-float3 drops_control;
+uniform float4 mask_control;
+uniform float3 drops_control;
 
 uniform float breath_size;
 uniform float breath_idx;
 uniform float4 raindrop_restart;
-
-uniform float3 eye_direction;
 
 // Gasmask settings
 #define GM_DIST_INT 0.05 // Refraction intensity
