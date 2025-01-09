@@ -9,7 +9,6 @@ local t_koef_glob = sys_ini:r_s32("options", "random_news_delta") -- глоба�
 local news_showtime = sys_ini:r_s32("options", "news_showtime") -- стандартное время показа сообщения
 local check_news_flag = 1 -- 1 - работает
 
-local prob1 = news_main_new.show_news_trade
 local prob2 = news_main_new.show_news_another
 local prob3 = news_main_new.show_news_dolg
 local prob4 = news_main_new.show_news_freedom
@@ -58,12 +57,11 @@ function show_news_main()
         elseif (has_alife_info("pre_blowout") and not has_alife_info("pre_blowout2")) or (has_alife_info("blowout")) then
             ft = {prob7, prob10}
         elseif db.FlagEsc == 1 then
-            ft = {prob1, prob7, prob2, prob7, prob3, prob7, prob4, prob7, prob5, prob7, prob8, prob7, prob11, prob7,
-                  prob12, prob7}
+            ft = {prob7, prob2, prob7, prob3, prob7, prob4, prob7, prob5, prob7, prob8, prob7, prob7, prob12, prob7}
         elseif has_alife_info("horror_time") then
             ft = {prob3, prob4, prob6, prob7, prob8, prob10}
         else
-            ft = {prob1, prob2, prob3, prob4, prob5, prob8, prob11, prob12}
+            ft = {prob2, prob3, prob4, prob5, prob8, prob11, prob12}
         end
         ft[math.random(table.getn(ft))]()
     end
