@@ -12,6 +12,8 @@ ef_weapon_type                           = 13
 sound                                    = $no_sound ;zone_mosquito_bald
 
 ;postprocess		= mosquito_bald
+artefacts                                = af_medusa, 0.56, af_cristall_flower, 0.31, af_night_star, 0.05, af_pudd_1, 0.04, af_pudd_2, 0.02, af_pudd_3, 0.01, af_pudd_4, 0.005, af_buliz, 0.005
+
 hit_type                                 = strike
 
 ;----------- Anomaly settings -----------------------
@@ -20,7 +22,9 @@ max_start_power                          = 1.00
 attenuation                              = 1
 period                                   = 1
 min_artefact_count                       = 0
-max_artefact_count                       = 0
+max_artefact_count                       = 1
+artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
+artefact_spawn_rnd                       = 50 ;вероятность заспавнить артефакт в процентах.
 
 idle_particles                           = anomaly2\bold_idle
 blowout_particles                        = anomaly2\gravity_blast_01
@@ -48,7 +52,7 @@ blowout_sound_time                       = 100
 
 disable_time                             = 5000 ;время игнорирования неживого объекта в зоне (-1 если не нужно)
 disable_time_small                       = 5000 ;время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
-disable_idle_time                        = 100 ;время отключения idle партиклов
+disable_idle_time                        = -1 ;время отключения idle партиклов
 
 ignore_nonalive                          = false
 ignore_small                             = true
@@ -66,7 +70,6 @@ visible_by_detector                      = on
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;рождение артефактов
-artefacts                                = af_medusa, 0.56, af_cristall_flower, 0.31, af_night_star, 0.05, af_pudd_1, 0.04, af_pudd_2, 0.02, af_pudd_3, 0.01, af_pudd_4, 0.005, af_buliz, 0.005
 BirthProbability                         = 0.03
 
 ;;во время срабатывания в online
@@ -110,10 +113,6 @@ in_start_power                           = 0.2
 max_start_power                          = 0.4
 attenuation                              = 1
 period                                   = 1
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
-artefact_spawn_rnd                       = 50 ;вероятность заспавнить артефакт в процентах.
 
 ignore_nonalive                          = false
 ignore_small                             = false
@@ -125,9 +124,6 @@ blowout_wind_power                       = 0.2
 
 [zone_mosquito_bald_weak_noart]:zone_mosquito_bald_weak
 spawn_blowout_artefacts                  = off
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
 
 [zone_mosquito_bald_average]:zone_mosquito_bald
 hit_impulse_scale                        = 0.5
@@ -141,11 +137,6 @@ min_start_power                          = 1.1
 max_start_power                          = 1.3
 attenuation                              = 1
 period                                   = 1
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-
-artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
-artefact_spawn_rnd                       = 70 ;вероятность заспавнить артефакт в процентах.
 
 ignore_nonalive                          = false
 ignore_small                             = false
@@ -189,10 +180,6 @@ min_start_power                          = 1.99
 max_start_power                          = 2.00
 attenuation                              = 1
 period                                   = 1
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
-artefact_spawn_rnd                       = 90 ;вероятность заспавнить артефакт в процентах.
 
 blowout_wind_power                       = 1
 
@@ -200,9 +187,6 @@ blowout_wind_power                       = 1
 
 [zone_mosquito_bald_strong_noart]:zone_mosquito_bald_strong
 spawn_blowout_artefacts                  = off
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_idle                      = 24 ;насколько часто спонить артефакты в офлайне, в часах
 
 [zone_sarcofag]
 class                                    = Z_MBALD
@@ -229,8 +213,6 @@ min_start_power                          = 1.69
 max_start_power                          = 1.70
 attenuation                              = 1
 period                                   = 1
-min_artefact_count                       = 0
-max_artefact_count                       = 0
 
 idle_particles                           = anomaly2\bold_idle_sarkofag
 blowout_particles                        = anomaly2\bold_sarkofag_blast
@@ -258,7 +240,7 @@ blowout_sound_time                       = 100
 
 disable_time                             = 5000 ;время игнорирования неживого объекта в зоне (-1 если не нужно)
 disable_time_small                       = 5000 ;время игнорирования маленького неживого объекта в зоне (-1 если не нужно)
-disable_idle_time                        = 100 ;время отключения idle партиклов
+disable_idle_time                        = -1 ;время отключения idle партиклов
 
 ignore_nonalive                          = false
 ignore_small                             = true
@@ -283,36 +265,40 @@ artefact_spawn_height                    = 3 ;(м) высота на центр�
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ветер
-blowout_wind                             = off
+blowout_wind                             = on
 
 blowout_wind_time_start                  = 0
 blowout_wind_time_peak                   = 300
 blowout_wind_time_end                    = 501 ;899
 blowout_wind_power                       = 0.5 ;сила поднимаего ветра (от 0 до 1), в момент blowout_wind_time_peak
 
+bend_grass_idle_anim                     = 3
+bend_grass_idle_radius                   = 4.0
+bend_grass_idle_str                      = 2.0
+bend_grass_idle_speed                    = 1.5
+
+bend_grass_whenactive_str                = 3.0
+bend_grass_whenactive_speed              = 3.0
+
+bend_grass_blowout                       = true
+bend_grass_blowout_duration              = 2500
+bend_grass_blowout_speed                 = 6.0
+bend_grass_blowout_radius                = 20.0
+
 ;----------- Аномалия Комариная плешь слабая без артов -----------------------
 
 [noartf_mosquito_bald_weak]:zone_mosquito_bald_weak
 BirthProbability                         = 0
 spawn_blowout_artefacts                  = off
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_rnd                       = 0
 
 ;----------- Аномалия Комариная плешь средняя без артов -----------------------
 
 [noartf_mosquito_bald_average]:zone_mosquito_bald_average
 BirthProbability                         = 0
 spawn_blowout_artefacts                  = off
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_rnd                       = 0
 
 ;----------- Аномалия Комариная плешь сильная без артов -----------------------
 
 [noartf_mosquito_bald_strong]:zone_mosquito_bald_strong
 BirthProbability                         = 0
 spawn_blowout_artefacts                  = off
-min_artefact_count                       = 0
-max_artefact_count                       = 0
-artefact_spawn_rnd                       = 0
