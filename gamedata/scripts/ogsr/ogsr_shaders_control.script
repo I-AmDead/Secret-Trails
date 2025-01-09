@@ -21,14 +21,15 @@ local ssfx_parallax_setup = {
     ["l04_darkvalley"]			= { 0.07,  0.15,  0.07,  0.15  },
     ["l05_bar"]				= { 0.07,  0.15,  0.13,  0.0   },
     ["l06_rostok"]			= { -0.07, -0.05, -0.07, 0.0   },
-    ["l07_military"]			= { -0.07, -0.05, 0.0,  -0.05  },
+    ["l07_military"]			= { 0.05,  -0.05, 0.1,   -0.05 },
     ["l08_yantar"]			= { -0.13, -0.05, -0.13, 0.0   },
     ["l09_deadcity"]			= { -0.13, -0.05, -0.13, 0.3   },
-    ["l10_radar"]			= { -0.07, -0.05, -0.07, 0.0   },
-    ["l10_red_forest"]			= { -0.13, -0.05, -0.07, -0.1  },
-    ["l11_pripyat"]			= { -0.1,  -0.05, 0.0,   -0.05 },
-    ["l12_stancia"]			= { -0.1,  -0.05, 0.0,   -0.1  }, 
-    ["l12_stancia_2"]			= { -0.1,  -0.05, 0.0,   0.0   },
+    ["l10_radar"]			= { 0.1,   0.15,  0.15,  0.0   },
+    ["l10_red_forest"]			= { 0.05,  0.05, -0.05, -0.1   },
+    ["l11_pripyat"]			= { 0.1,   0.15,  0.15,  -0.05 },
+    ["l12_stancia"]			= { 0.1,   0.15,  0.15,  0.1   }, 
+    ["l12_stancia_2"]			= { 0.1,   0.15,  0.1,   0.0   },
+    ["swamp"]			        = { -0.1,  -0.1,  0.3,   0.15  },
 }
 
 local function terrain_offset()
@@ -72,11 +73,11 @@ local function on_dots_update()
     local scope_name = scope_status > 1 and get_string(section, "scope_name", nil) or section
     local scope_texture = get_string(scope_name, "scope_texture", nil)
 
+    mark_control(wpn, true)
+
     if scope_texture then
         scope_control(scope_name, scope_status)
     end
-
-    mark_control(wpn, true)
 end
 
 function scope_control(scope_name, scope_status)
@@ -99,15 +100,14 @@ function scope_control(scope_name, scope_status)
     local lens_color = get_vector(scope_name, "3d_lens_color", vector():set(1, 1, 1))
     local nvg_blur = get_float(scope_name, "3d_nvg_blur", 0)
 
-    local mark_color = get_vector(scope_name, "mark_color", vector():set(0, 0, 0))
+    local mark_number = get_float(scope_name, "mark_number", 0)
 
     shader_set_custom_param("s3ds_param_1", reticle_size, eye_relief, exit_pupil, ffp)
     shader_set_custom_param("s3ds_param_2", 0, 0, min_zoom, zoom_factor)
     shader_set_custom_param("s3ds_param_3", image_type, reticle_type, dirt_intensity, chroma_power)
     shader_set_custom_param("s3ds_param_4", lens_color.x, lens_color.y, lens_color.z, nvg_blur)
 
-    shader_set_custom_param("mark_number", 0, 0, 0, 0)
-    shader_set_custom_param("mark_color", mark_color.x, mark_color.y, mark_color.z, 0)
+    shader_set_custom_param("mark_number", mark_number, 0, 0, 0)
 end
 
 function mark_control(wpn, force, bind)

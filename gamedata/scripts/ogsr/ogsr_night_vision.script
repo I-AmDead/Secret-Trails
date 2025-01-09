@@ -7,10 +7,10 @@
 ---------------------------------------------------------------------------]] 
 
 function attach(sm)
-	sm:subscribe({signal = "on_first_update",	fun = this.try_to_restart_nv_fx})
-	sm:subscribe({signal = "on_drop",		    fun = this.chek_drop_pnv})
-	sm:subscribe({signal = "on_item_to_ruck",	fun = this.chek_drop_pnv})
-	sm:subscribe({signal = "on_save",		    fun = this.on_save})
+    sm:subscribe({signal = "on_first_update", fun = this.try_to_restart_nv_fx})
+    sm:subscribe({signal = "on_drop",         fun = this.chek_drop_pnv})
+    sm:subscribe({signal = "on_item_to_ruck", fun = this.chek_drop_pnv})
+    sm:subscribe({signal = "on_save",         fun = this.on_save})
 end
 
 -- ==========================================================Настройки=================================================================
@@ -19,37 +19,34 @@ local night_vision_fx_on = ogse.load_var("pnv", false) -- флаг работа�
 
 -- Звуки
 local snd_nv_start = xr_sound.get_safe_sound_object("weapons\\nv_start") -- звук включения ПНВ
-local snd_nv_work = xr_sound.get_safe_sound_object("weapons\\nv_loop") -- звук работающего ПНВ
-local snd_nv_stop = xr_sound.get_safe_sound_object("weapons\\nv_off") -- звук выключения ПНВ
+local snd_nv_work  = xr_sound.get_safe_sound_object("weapons\\nv_loop")  -- звук работающего ПНВ
+local snd_nv_stop  = xr_sound.get_safe_sound_object("weapons\\nv_off")   -- звук выключения ПНВ
 
 -- Уровень громкости звуков
-local snd_nv_fx_volume = 0.5 -- общий уровень громкости звуков
-local snd_nv_start_subvolume = 1 -- громкость звука включения ПНВ
-local snd_nv_work_subvolume = 0.3 -- громкость звука работающего ПНВ
-local snd_nv_stop_subvolume = 1 -- громкость звука выключения ПНВ
+local snd_nv_fx_volume        = 0.5 -- общий уровень громкости звуков
+local snd_nv_start_subvolume  = 1   -- громкость звука включения ПНВ
+local snd_nv_work_subvolume   = 0.3 -- громкость звука работающего ПНВ
+local snd_nv_stop_subvolume   = 1   -- громкость звука выключения ПНВ
 -- ====================================================================================================================================
 
 local function lcalls(count, radius, sub)
-    local lcall
-    local add = 0
     local cnt = count
     nvg_distortion_timer = true
-    lcall = level.add_call(
+    level.add_call(
         function()
-            cnt = cnt - 5
-            add = sub and cnt or add + 5
+            cnt = cnt - 2.5
+            local add = sub and cnt or (count - cnt)
             cmd("r_pnv_radius", radius * (add / count))
             cmd("r_pnv_position", add)
-            lcall:set_pause(20)
             return cnt == 0
         end,
         function()
-	    if sub then
+            if sub then
                 cmd("r_pnv_mode", 0)
-	    else
+            else
                 cmd("r_pnv_alfa_vignete", 1)
-	    end
-	    nvg_distortion_timer = nil
+            end
+            nvg_distortion_timer = nil
         end
     )
 end
@@ -64,83 +61,72 @@ end
 
 function try_to_restart_nv_fx() -- Восстанавливаем работу ПНВ после загрузки сейва
     cmd("r_pnv_mode", 0)
-
-    if ogse.load_var("pnv", false) then
+    if is_nv_working() then
         nv_fx_on() -- включаем обычный ПНВ
     end
 end
 
 function call_pnv()
-    if not night_vision_fx_on then
-        nv_fx_on()
-    else
+    if is_nv_working() then
         turn_off_nv_fx()
+    else
+        nv_fx_on()
     end
 end
 
 function chek_drop_pnv(obj) -- Проверка выкладывания работающего ПНВ
-    local pnv_slot = db.actor:item_in_slot(11) -- предмет в слоте ПНВ
-
-    if not pnv_slot and night_vision_fx_on then -- если выбросили/переместили в рюкзак действительно ПНВ, то отключаем пнв:
+    if not db.actor:item_in_slot(11) and is_nv_working() then
         ogsr_actor_animation.torch_and_nvg_switch(true)
     end
 end
 
 function get_nightvision_section_for_nv_fx()
-    local nightvision_section
-
     local nv_in_slot = db.actor:item_in_slot(11)
-    if nv_in_slot then
-        nightvision_section = nv_in_slot:section()
-    end
+    return nv_in_slot and nv_in_slot:section()
+end
 
-    return nightvision_section
+function apply_nv_settings(section)
+    if not section then return end
+
+    local r_pnv_mode = get_u32(section, "r_pnv_mode", 0)
+    if r_pnv_mode > 0 then
+        local color = get_vector(section, "r_pnv_color")
+        cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+        cmd("r_pnv_noise", get_float(section, "r_pnv_noise"))
+        cmd("r_pnv_scanlines", get_float(section, "r_pnv_scanlines"))
+        cmd("r_pnv_scintillation", get_float(section, "r_pnv_scintillation"))
+        cmd("r_pnv_num_tubes", get_float(section, "r_pnv_num_tubes"))
+        cmd("r_pnv_gain_current", get_float(section, "r_pnv_gain_current"))
+        cmd("r_pnv_gain_offset", get_float(section, "r_pnv_gain_offset"))
+        cmd("r_pnv_size_vignet", get_float(section, "r_pnv_size_vignet"))
+        cmd("r_pnv_alfa_vignete", get_float(section, "r_pnv_alfa_vignete"))
+        cmd("r_pnv_washout_thresh", get_float(section, "r_pnv_washout_thresh"))
+        cmd("r_pnv_glitch", get_float(section, "r_pnv_glitch"))
+        cmd("r_pnv_mode", r_pnv_mode)
+        lcalls(100, get_float(section, "r_pnv_radius"), false)
+    end
 end
 
 function nv_fx_on() -- Старт/остановка работы прибора ПНВ
-    local nightvision_section = get_nightvision_section_for_nv_fx()
-
-    if nightvision_section then
-        turn_on_nv_fx(nightvision_section)
+    local section = get_nightvision_section_for_nv_fx()
+    if section then
+        turn_on_nv_fx(section)
     end
 end
 
-function turn_on_nv_fx(nightvision_section) -- Старт ПНВ
-    if night_vision_fx_on then
-        return
-    end
-
-    local r_pnv_mode = get_u32(nightvision_section, "r_pnv_mode", 0)
-    if r_pnv_mode > 0 then
-        local color = get_vector(nightvision_section, "r_pnv_color")
-        cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
-        cmd("r_pnv_noise", get_float(nightvision_section, "r_pnv_noise"))
-        cmd("r_pnv_scanlines", get_float(nightvision_section, "r_pnv_scanlines"))
-        cmd("r_pnv_scintillation", get_float(nightvision_section, "r_pnv_scintillation"))
-        cmd("r_pnv_num_tubes", get_float(nightvision_section, "r_pnv_num_tubes"))
-        cmd("r_pnv_gain_current", get_float(nightvision_section, "r_pnv_gain_current"))
-        cmd("r_pnv_gain_offset", get_float(nightvision_section, "r_pnv_gain_offset"))
-        cmd("r_pnv_size_vignet", get_float(nightvision_section, "r_pnv_size_vignet"))
-        cmd("r_pnv_alfa_vignete", get_float(nightvision_section, "r_pnv_alfa_vignete"))
-        cmd("r_pnv_washout_thresh", get_float(nightvision_section, "r_pnv_washout_thresh"))
-        cmd("r_pnv_glitch", get_float(nightvision_section, "r_pnv_glitch"))
-        cmd("r_pnv_mode", r_pnv_mode)
-        lcalls(100, get_float(nightvision_section, "r_pnv_radius"), false)
-    end
-
+function turn_on_nv_fx(section) -- Старт ПНВ
+    if is_nv_working() then return end
+    apply_nv_settings(section)
     night_vision_fx_on = true
     snd_fx_start()
 end
 
 function turn_off_nv_fx() -- Остановка ПНВ
-    if not night_vision_fx_on then
-        return
-    end
-    local nightvision_section = get_nightvision_section_for_nv_fx()
-    local nightvision_radius = get_float(nightvision_section, "r_pnv_radius", 0.5)
-    lcalls(100, nightvision_radius, true)
+    if not is_nv_working() then return end
+    local section = get_nightvision_section_for_nv_fx()
+    lcalls(100, get_float(section, "r_pnv_radius", 0.5), true)
     night_vision_fx_on = false
-    snd_fx_stop() -- звук выключения.
+    snd_fx_stop()
 end
 
 function snd_fx_start() -- Старт звукового сопровождения работы ПНВ
@@ -155,12 +141,8 @@ function snd_fx_start() -- Старт звукового сопровожден�
 end
 
 function snd_fx_stop() -- Остановка звукового сопровождения работы ПНВ
-    if snd_nv_start:playing() then
-        snd_nv_start:stop()
-    end
-    if snd_nv_work:playing() then
-        snd_nv_work:stop()
-    end
+    if snd_nv_start:playing() then snd_nv_start:stop() end
+    if snd_nv_work:playing() then snd_nv_work:stop() end
     if snd_nv_stop then
         snd_nv_stop:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
         snd_nv_stop.volume = snd_nv_fx_volume * snd_nv_stop_subvolume
