@@ -16,6 +16,8 @@ local scope_radius
 local zooming_t
 
 function actor_on_weapon_fire()
+    if get_con_bool("g_3d_scopes") then return end
+
     local wpn = db.actor:active_item()
     if not wpn then return end
 
@@ -27,8 +29,6 @@ function actor_on_weapon_fire()
 end
 
 function actor_on_weapon_zoom_out()
-    --game.play_hud_anm("script\\aim_end_groza.anm", 2, 0.5, 0.3, false)
-
     apply_pnv()
     cmd("scope_params_4 0.0, 1.25, 4.0")
 end
@@ -37,10 +37,7 @@ function actor_on_weapon_zoom_switch()
     apply_pnv()
     cmd("scope_params_4 0.0, 1.25, 4.0")
 
-    if (get_con_string("fake_scope_enable") == "off" or get_con_string("fake_scope_enable") == "0") and
-        (db.actor and db.actor:alive()) then
-        return
-    end
+    if get_con_bool("g_3d_scopes") then return end
 
     local wpn = db.actor:active_item()
     if not wpn then return end
@@ -52,13 +49,9 @@ function actor_on_weapon_zoom_switch()
 end
 
 function actor_on_weapon_zoom_in()
-    --game.play_hud_anm("script\\aim_start_groza.anm", 2, 0.5, 0.1, false)
-
     pnv_mode_save = get_con_string("r_pnv_mode", 0)
-    if (get_con_string("fake_scope_enable") == "off" or get_con_string("fake_scope_enable") == "0") and
-        (db.actor and db.actor:alive()) then
-        return
-    end
+
+    if get_con_bool("g_3d_scopes") then return end
 
     local wpn = db.actor:active_item()
     if not (wpn) then
@@ -118,43 +111,36 @@ function updateScope(wpn)
 end
 
 function apply_pnv(nv_sect)
+    local function apply_settings(sect)
+        if not sect then return end
+
+        local color = get_vector(sect, "r_pnv_color")
+        cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
+        cmd("r_pnv_noise", get_string(sect, "r_pnv_noise"))
+        cmd("r_pnv_scanlines", get_string(sect, "r_pnv_scanlines"))
+        cmd("r_pnv_scintillation", get_float(sect, "r_pnv_scintillation"))
+        cmd("r_pnv_radius", get_float(sect, "r_pnv_radius", 0.5))
+        cmd("r_pnv_num_tubes", get_float(sect, "r_pnv_num_tubes"))
+        cmd("r_pnv_gain_current", get_float(sect, "r_pnv_gain_current"))
+        cmd("r_pnv_gain_offset", get_float(sect, "r_pnv_gain_offset"))
+        cmd("r_pnv_size_vignet", get_float(sect, "r_pnv_size_vignet"))
+        cmd("r_pnv_alfa_vignete", get_float(sect, "r_pnv_alfa_vignete"))
+        local pnv_wash_thresh = get_float(sect, "r_pnv_washout_thresh")
+        cmd("r_pnv_washout_thresh", pnv_wash_thresh)
+        log3("r_pnv_washout_thresh %s", pnv_wash_thresh)
+        cmd("r_pnv_glitch", get_float(sect, "r_pnv_glitch"))
+    end
+
     if nv_sect then
         local mode = get_u32(nv_sect, "r_pnv_mode", 0)
-        local color = get_vector(nv_sect, "r_pnv_color")
-        cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
-        cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
-        cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
+        apply_settings(nv_sect)
         cmd("r_pnv_mode", tostring(mode))
-        cmd("r_pnv_radius", scope_radius)
-        cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
-        cmd("r_pnv_num_tubes", get_float(nv_sect, "r_pnv_num_tubes"))
-        cmd("r_pnv_gain_current", get_float(nv_sect, "r_pnv_gain_current"))
-        cmd("r_pnv_gain_offset", get_float(nv_sect, "r_pnv_gain_offset"))
-        cmd("r_pnv_size_vignet", get_float(nv_sect, "r_pnv_size_vignet"))
-        cmd("r_pnv_alfa_vignete", get_float(nv_sect, "r_pnv_alfa_vignete"))
-        cmd("r_pnv_washout_thresh", get_float(nv_sect, "r_pnv_washout_thresh"))
-        cmd("r_pnv_glitch", get_float(nv_sect, "r_pnv_glitch"))
         cmd("r_pnv_position", 100)
     else
         local nv_slot = db.actor:item_in_slot(11)
         local mode = pnv_mode_save
         if nv_slot then
-            local nv_sect = nv_slot:section()
-            if nv_sect then
-                local color = get_vector(nv_sect, "r_pnv_color")
-                cmd("pnv_color", string.format("%f,%f,%f", color.x, color.y, color.z))
-                cmd("r_pnv_noise", get_string(nv_sect, "r_pnv_noise"))
-                cmd("r_pnv_scanlines", get_string(nv_sect, "r_pnv_scanlines"))
-                cmd("r_pnv_scintillation", get_float(nv_sect, "r_pnv_scintillation"))
-                cmd("r_pnv_radius", get_float(nv_sect, "r_pnv_radius", 0.5))
-        	cmd("r_pnv_num_tubes", get_float(nv_sect, "r_pnv_num_tubes"))
-        	cmd("r_pnv_gain_current", get_float(nv_sect, "r_pnv_gain_current"))
-        	cmd("r_pnv_gain_offset", get_float(nv_sect, "r_pnv_gain_offset"))
-        	cmd("r_pnv_size_vignet", get_float(nv_sect, "r_pnv_size_vignet"))
-        	cmd("r_pnv_alfa_vignete", get_float(nv_sect, "r_pnv_alfa_vignete"))
-        	cmd("r_pnv_washout_thresh", get_float(nv_sect, "r_pnv_washout_thresh"))
-        	cmd("r_pnv_glitch", get_float(nv_sect, "r_pnv_glitch"))
-            end
+            apply_settings(nv_slot:section())
         end
         cmd("r_pnv_mode", tostring(mode))
     end
