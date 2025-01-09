@@ -1,289 +1,87 @@
-function attach(sm)
-	sm:subscribe({signal = "on_key_down", fun = this.on_key_down})
-end
-
-local GUI
-
 watch_mode = ogse.load_var("watch_mode", 1)
-local delay = 0
-
 local snd_adjust = sound_object('interface\\mark_adjust')
-function on_key_down(key, bind)
+
+local function increment_watch_mode()
+    watch_mode = watch_mode < 3 and watch_mode + 1 or 1
+    game.play_hud_anm("script\\mark_adjust.anm", 1, 2, 1, false, false)
+    snd_adjust:play(db.actor, 0, sound_object.s2d)
+    ogse.save_var("watch_mode", watch_mode)
+end
+
+local function on_key_down(key, bind)
     if bind == key_bindings.kWATCH_MODE and watch_mode < 4 then
-        if watch_mode < 3 then
-            watch_mode = watch_mode + 1
-        else
-            watch_mode = 1
-        end
-        game.play_hud_anm("script\\mark_adjust.anm", 1, 2, 1, false, false)
-        snd_adjust:play(db.actor, 0, sound_object.s2d)
-        ogse.save_var("watch_mode", watch_mode)
+        increment_watch_mode()
     end
 end
 
-function get_instance()
-    if (not GUI) then
-        GUI = UIWatch()
-        watch_mode = ogse.load_var("watch_mode", 1)
-    end
-
-    return GUI
+local function c2t(ct)
+    if not ct then return nil end
+    local Y, M, D, h, m, s, ms = ct:get()
+    return {Y = Y, M = M, D = D, h = h, m = m, s = s, ms = ms}
 end
 
-function c2t(ct)
-    if not ct then
-        return nil
-    end
-    local Y, M, D, h, m, s, ms = 0, 0, 0, 0, 0, 0, 0
-    Y, M, D, h, m, s, ms = ct:get(Y, M, D, h, m, s, ms)
-    return {
-        Y = Y,
-        M = M,
-        D = D,
-        h = h,
-        m = m,
-        s = s,
-        ms = ms
-    }
-end
-
--- Радиация
-function radiation_level()
-    local radiation = has_alife_info("pre_blowout") and math.random(0, 400) or arc_radiation.get_radiation_dose()
-    if radiation > 100 and radiation < 150 then
-        return "green"
-    elseif radiation > 150 and radiation < 250 then
-        return "yellow"
-    elseif radiation > 250 and radiation < 300 then
-        return "orange"
-    elseif radiation > 300 then
-        return "red"
-    end
-    return "nil"
-end
-
--- Кровотечения
-function bleeding_level()
-    local bleeding = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor:get_bleeding()
-    if bleeding > 0.01 and bleeding < 0.25 then
-        return "green"
-    elseif bleeding > 0.25 and bleeding < 0.5 then
-        return "yellow"
-    elseif bleeding > 0.5 and bleeding < 0.75 then
-        return "orange"
-    elseif bleeding > 0.75 then
-        return "red"
-    end
-    return "nil"
-end
-
--- Пси
-function psy_level()
-    local psy_health = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.psy_health
-    if psy_health < 0.9 and psy_health >= 0.7 then
-        return "green"
-    elseif psy_health < 0.7 and psy_health >= 0.5 then
-        return "yellow"
-    elseif psy_health < 0.5 and psy_health >= 0.3 then
-        return "orange"
-    elseif psy_health < 0.3 then
-        return "red"
-    end
-    return "nil"
-end
-
--- Голод
-function hunger_level()
-    local satiety = has_alife_info("pre_blowout") and math.random(0, 100) * 0.01 or db.actor.satiety
-    if satiety < 0.9 and satiety >= 0.7 then
-        return "green"
-    elseif satiety < 0.7 and satiety >= 0.5 then
-        return "yellow"
-    elseif satiety < 0.5 and satiety >= 0.3 then
-        return "orange"
-    elseif satiety < 0.3 then
-        return "red"
-    end
-    return "nil"
-end
-
--- Перевес
-function overweight_level()
-    local inv_weight = has_alife_info("pre_blowout") and math.random(99, db.actor:get_max_weight()) or db.actor:get_inventory_weight()
+local function overweight_level()
+    local inv_weight = has_alife_info("pre_blowout") and math.random(99, db.actor:get_max_walk_weight()) or db.actor:get_inventory_weight()
     local max_weight = db.actor:get_max_weight()
     local max_walk_weight = db.actor:get_max_walk_weight()
-    local yellow_over = max_weight + (max_walk_weight - max_weight) * 0.6
-    local orange_over = max_weight + (max_walk_weight - max_weight) * 0.8
 
-    if (inv_weight >= max_walk_weight) then
-        return "red"
-    elseif (inv_weight >= orange_over and inv_weight <= max_walk_weight) then
-        return "orange"
-    elseif (inv_weight >= yellow_over and inv_weight <= orange_over) then
-        return "yellow"
-    elseif (inv_weight >= max_weight and inv_weight <= yellow_over) then
-        return "green"
+    if inv_weight >= max_weight then
+        return (max_walk_weight - inv_weight) * 0.1
     end
-    return "nil"
+    return 1.0
 end
 
-class "UIWatch"(CUIScriptWnd)
-
-function UIWatch:__init() super()
-    self:Show(true)
-    self:Enable(true)
-    self:SetAutoDelete(true)
-
-    self.xml = CScriptXmlInit()
-    self.xml:ParseFile("script_wnd\\ui_watch.xml")
-
-    self.xml:InitWindow("display", 0, self)
-
-    self.indik_blood = self.xml:InitStatic("display:indik_blood", self)
-    self.indik_hunger = self.xml:InitStatic("display:indik_hunger", self)
-    self.indik_radiation = self.xml:InitStatic("display:indik_radiation", self)
-    self.indik_psy = self.xml:InitStatic("display:indik_psy", self)
-    self.indik_overweight = self.xml:InitStatic("display:indik_overweight", self)
-
-    self.indicator_booster_psy = self.xml:InitStatic("display:indicator_booster_psy", self)
-    self.indicator_booster_rad = self.xml:InitStatic("display:indicator_booster_rad", self)
-    self.indicator_booster_health = self.xml:InitStatic("display:indicator_booster_health", self)
-    self.indicator_booster_power = self.xml:InitStatic("display:indicator_booster_power", self)
-    self.indicator_booster_rad_cleanup = self.xml:InitStatic("display:indicator_booster_rad_cleanup", self)
-    self.indicator_booster_psy_cleanup = self.xml:InitStatic("display:indicator_booster_psy_cleanup", self)
-    self.indicator_booster_wound = self.xml:InitStatic("display:indicator_booster_wound", self)
-    self.indicator_booster_weight = self.xml:InitStatic("display:indicator_booster_weight", self)
-end
-
-function UIWatch:__finalize()
-    GUI = nil
-end
-
-function UIWatch:Update()
-    if has_alife_info("pre_blowout") and time_global() < delay then return end
-    delay = time_global() + 120
-    CUIScriptWnd.Update(self)
-    self:ShowBoosterIndicators(false)
-    self:ShowIndicators(false)
-
+local function update_watch_mode()
     if has_alife_info("pobeg_start") and watch_mode ~= 4 then
         watch_mode = 4
     end
+end
 
-    if watch_mode ~= 4 then
+local function update_game_time()
+    if watch_mode == 1 then
         local game_time = c2t(game.get_game_time())
         shader_set_custom_param("game_time", game_time.h, game_time.m, game_time.s, game_time.ms)
     end
+end
 
-    shader_set_custom_param("watch_actor_params", db.actor.health, db.actor.power, arc_radiation.get_radiation_dose(), watch_mode)
-
+local function update_watch_actor_params()
     if has_alife_info("pre_blowout") then
         shader_set_custom_param("watch_actor_params", math.random(0.1, 1.0), math.random(0.1, 1.0), math.random(0, 9999), math.random(1, 3))
         shader_set_custom_param("game_time", math.random(0, 23), math.random(0, 59))
-    end
-
-    if watch_mode == 2 and not has_alife_info("pre_blowout") then
-    	self:UpdateTopPanel()
-    end
-end
-
-function UIWatch:UpdateTopPanel()
-    self:UpdateIndicators()
-    self:UpdateBoosterIndicators()
-end
-
-function UIWatch:ShowBoosterIndicators(vis)
-    self.indicator_booster_psy:Show(vis)
-    self.indicator_booster_rad:Show(vis)
-    self.indicator_booster_health:Show(vis)
-    self.indicator_booster_power:Show(vis)
-    self.indicator_booster_rad_cleanup:Show(vis)
-    self.indicator_booster_psy_cleanup:Show(vis)
-    self.indicator_booster_wound:Show(vis)
-    self.indicator_booster_weight:Show(vis)
-end
-
-function UIWatch:ShowIndicators(vis)
-    self.indik_blood:Show(vis)
-    self.indik_hunger:Show(vis)
-    self.indik_radiation:Show(vis)
-    self.indik_psy:Show(vis)
-    self.indik_overweight:Show(vis)
-end
-
-function UIWatch:UpdateIndicators()
-    if not db.actor:alive() then
-        return
-    end
-
-    local bleeding = bleeding_level()
-    local hunger = hunger_level()
-    local radiation = radiation_level()
-    local psy = psy_level()
-    local overweight = overweight_level()
-
-    local texture_indik = bleeding ~= "nil" and ("ui\\watch_ui\\indik_blood_" .. bleeding) or "ui\\watch_ui\\indik_blood"
-    self.indik_blood:Show(bleeding ~= "nil")
-    self.indik_blood:InitTextureEx(texture_indik, "hud\\p3d")
-
-    texture_indik = hunger ~= "nil" and ("ui\\watch_ui\\indik_satiety_" .. hunger) or "ui\\watch_ui\\indik_satiety"
-    self.indik_hunger:Show(hunger ~= "nil")
-    self.indik_hunger:InitTextureEx(texture_indik, "hud\\p3d")
-
-    texture_indik = radiation ~= "nil" and ("ui\\watch_ui\\indik_rad_" .. radiation) or "ui\\watch_ui\\indik_rad"
-    self.indik_radiation:Show(radiation ~= "nil")
-    self.indik_radiation:InitTextureEx(texture_indik, "hud\\p3d")
-
-    texture_indik = psy ~= "nil" and ("ui\\watch_ui\\indik_psy_" .. psy) or "ui\\watch_ui\\indik_psy"
-    self.indik_psy:Show(psy ~= "nil")
-    self.indik_psy:InitTextureEx(texture_indik, "hud\\p3d")
-
-    texture_indik = overweight ~= "nil" and ("ui\\watch_ui\\indik_weight_" .. overweight) or "ui\\watch_ui\\indik_weight"
-    self.indik_overweight:Show(overweight ~= "nil")
-    self.indik_overweight:InitTextureEx(texture_indik, "hud\\p3d")
-end
-
-function UIWatch:UpdateIndicatorsTest()
-    if not db.actor:alive() then
-        return
-    end
-
-    self.indik_blood:Show(true)
-    self.indik_blood:InitTextureEx("ui\\watch_ui\\indik_blood", "hud\\p3d")
-
-    self.indik_hunger:Show(true)
-    self.indik_hunger:InitTextureEx("ui\\watch_ui\\indik_satiety", "hud\\p3d")
-
-    self.indik_radiation:Show(true)
-    self.indik_radiation:InitTextureEx("ui\\watch_ui\\indik_rad", "hud\\p3d")
-
-    self.indik_psy:Show(true)
-    self.indik_psy:InitTextureEx("ui\\watch_ui\\indik_psy", "hud\\p3d")
-
-    self.indik_overweight:Show(true)
-    self.indik_overweight:InitTextureEx("ui\\watch_ui\\indik_weight", "hud\\p3d")
-end
-
-
-function UIWatch:UpdateBoosterIndicators()
-    if not db.actor:alive() then
-        return
-    end
-
-    if has_alife_info("pre_blowout") then
-        self.indicator_booster_psy:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_rad:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_health:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_power:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_rad_cleanup:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_psy_cleanup:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_wound:Show(math.random(0, 100) > 50 and true or false)
-        self.indicator_booster_weight:Show(math.random(0, 100) > 50 and true or false)
     else
-        for idx = 1, 8 do
-            if laucer_item_special_effect["booster_type" .. idx] then
-                self[laucer_item_special_effect["booster_type" .. idx]]:Show(laucer_item_special_effect["booster_state" .. idx])
-            end
-        end
+        shader_set_custom_param("watch_actor_params", db.actor.health, db.actor.power, arc_radiation.get_radiation_dose(), watch_mode)
     end
+end
+
+local function update_watch_actor_params_2()
+    if watch_mode == 2 and not has_alife_info("pre_blowout") then
+        local satiety = db.actor.satiety
+        local psy = db.actor.psy_health
+        local overweight = overweight_level()
+        local bleeding = 1.0 - db.actor:get_bleeding()
+        shader_set_custom_param("watch_actor_params_2", satiety, psy, overweight < 0.0 and 0.0 or overweight, bleeding)
+    end
+end
+
+local function on_update()
+    if not db.actor:alive() or (has_alife_info("pre_blowout") and time_global() < delay) then
+        return
+    end
+
+    delay = time_global() + 120
+
+    update_watch_mode()
+    update_game_time()
+    update_watch_actor_params()
+    update_watch_actor_params_2()
+end
+
+local function on_first_update()
+    watch_mode = ogse.load_var("watch_mode", 1)
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_key_down", fun = on_key_down})
+    sm:subscribe({signal = "on_update", fun = on_update})
+    sm:subscribe({signal = "on_first_update", fun = on_first_update})
 end
