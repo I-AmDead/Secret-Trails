@@ -1,6 +1,6 @@
 --************************************************* Инициализация расширений движка ************************************************
 log1("--LUA version: ["..(jit.version or _VERSION).."]")
-log1("--MOD version: "..system_ini():r_string_wq("mod_ver", "mod_ver").." "..stdfs.path(getFS():update_path( "$fs_root$",  "gamedata.db_base_configs" )).last_write_time_string_short)
+log1("--MOD version: "..system_ini():r_string_wq("mod_ver", "mod_ver"))
 --==============================================================================================
 FFI = require('ffi') --Делать только здесь и только один раз!
 --==============================================================================================
@@ -524,23 +524,6 @@ end
 
 function start_game_callback()
 	monster_classes = {
-		[clsid.bloodsucker] 			= true,
-		[clsid.boar] 					= true,
-		[clsid.dog_red] 				= true,
-		[clsid.dog_black] 				= true,
-		[clsid.flesh] 					= true,
-		[clsid.burer] 					= true,
-		[clsid.cat] 					= true,
-		[clsid.chimera] 				= true,
-		[clsid.controller] 				= true,
-		[clsid.fracture] 				= true,
-		[clsid.poltergeist] 			= true,
-		[clsid.zombie] 					= true,
-		[clsid.snork] 					= true,
-		[clsid.tushkano] 				= true,
-		[clsid.psy_dog] 				= true,
-		[clsid.psy_dog_phantom] 		= true,	
-		[clsid.pseudo_gigant] 			= true,	
 		[clsid.bloodsucker_s] 			= true,
 		[clsid.boar_s] 					= true,
 		[clsid.dog_s] 					= true,
@@ -623,8 +606,6 @@ function start_game_callback()
 	}
 	outfit_classes = {
 		[clsid.equ_exo] 				= true,
-		[clsid.equ_military]			= true,
-		[clsid.equ_scientific] 			= true,
 		[clsid.equ_stalker] 			= true,
 		[clsid.equ_stalker_s] 			= true
 	}
@@ -1406,6 +1387,5 @@ function alife_create(section, level_name, pos)
     local is_alive =  stalker_classes[cls] or monster_classes[cls]
 
     local lv, gv = get_lv_gv(level_name, pos)
-    log3("is_alive section = %s, level_name = %s, pos = %s, %s, %s, lv = %d, gv = %d", section, level_name, pos.x, pos.y, pos.z, lv, gv)
     return alife():create(section, pos, lv, gv)
 end
