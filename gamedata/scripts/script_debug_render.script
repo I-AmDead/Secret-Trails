@@ -1,0 +1,98 @@
+local last_gizmo_id = 0
+local shapes = {
+    rectangle = {},
+    cube = {},
+    sphere = {}
+}
+
+-- Вспомогательная функция для создания линии
+local function create_line(points, color, text)
+    last_gizmo_id = last_gizmo_id + 1
+    local line = debug_render.add_object(last_gizmo_id, DBG_ScriptObject.line):cast_dbg_line()
+    line.visible = true
+    line.color = color
+    line.point_a = points[1]
+    line.point_b = points[2]
+    if text then
+        line:text(text)
+    end
+    return line
+end
+
+-- Функция для рисования прямоугольника
+function draw_rectangle(x1, x2, y1, y2)
+    local corners = {
+        vector():set(x2, 0, y1),  -- Левый нижний угол
+        vector():set(x1, 0, y1),  -- Правый нижний угол
+        vector():set(x1, 0, y2),  -- Правый верхний угол
+        vector():set(x2, 0, y2)   -- Левый верхний угол
+    }
+
+    for i = 1, 4 do
+        local next_index = (i % 4) + 1
+        shapes.rectangle[last_gizmo_id + 1] = create_line({corners[i], corners[next_index]}, {1, 0, 0, 1})
+    end
+end
+
+-- Функция для рисования 3D-куба
+function draw_cube(x1, x2, y1, y2, z_min, z_max, color, text)
+    local vertices = {
+        vector():set(x2, z_min, y1),  -- Передняя нижняя левая
+        vector():set(x1, z_min, y1),  -- Передняя нижняя правая
+        vector():set(x2, z_min, y2),  -- Задняя нижняя левая
+        vector():set(x1, z_min, y2),  -- Задняя нижняя правая
+        vector():set(x2, z_max, y1),  -- Передняя верхняя левая
+        vector():set(x1, z_max, y1),  -- Передняя верхняя правая
+        vector():set(x2, z_max, y2),  -- Задняя верхняя левая
+        vector():set(x1, z_max, y2)   -- Задняя верхняя правая
+    }
+
+    local edges = {
+        {1, 2}, {2, 4}, {4, 3}, {3, 1},  -- Нижняя грань
+        {5, 6}, {6, 8}, {8, 7}, {7, 5},  -- Верхняя грань
+        {1, 5}, {2, 6}, {3, 7}, {4, 8}   -- Вертикальные ребра
+    }
+
+    for i, edge in ipairs(edges) do
+        shapes.cube[last_gizmo_id + 1] = create_line({vertices[edge[1]], vertices[edge[2]]}, color, text)
+    end
+end
+
+-- Функция для рисования сферы
+function draw_sphere(pos, scale, color, text)
+    last_gizmo_id = last_gizmo_id + 1
+    shapes.sphere[last_gizmo_id] = debug_render.add_object(last_gizmo_id, DBG_ScriptObject.sphere):cast_dbg_sphere()
+    shapes.sphere[last_gizmo_id].visible = true
+    shapes.sphere[last_gizmo_id].color = color or fcolor():set(1, 0, 0, 1)  -- Красный по умолчанию
+    shapes.sphere[last_gizmo_id]:scale(scale)
+    shapes.sphere[last_gizmo_id].position = pos
+    if text then
+        shapes.sphere[last_gizmo_id]:text(text)
+    end
+end
+
+-- Функция для рисования коробки
+function draw_box(x1, x2, y1, y2, z_min, z_max, color, text)
+    -- Вычисляем позицию центра куба
+    local pos = vector():set(x1 + x2, z_min + z_max, y1 + y2)
+    pos.x = pos.x * 0.5
+    pos.y = pos.y * 0.5
+    pos.z = pos.z * 0.5
+
+    -- Вычисляем размеры куба
+    local scale = vector():set(math.abs(x2 - x1), math.abs(z_max - z_min), math.abs(y2 - y1))
+    scale.x = scale.x * 0.5
+    scale.y = scale.y * 0.5
+    scale.z = scale.z * 0.5
+
+    -- Создаем куб
+    last_gizmo_id = last_gizmo_id + 1
+    shapes.cube[last_gizmo_id] = debug_render.add_object(last_gizmo_id, DBG_ScriptObject.box):cast_dbg_box()
+    shapes.cube[last_gizmo_id].visible = true
+    shapes.cube[last_gizmo_id].color = color or fcolor():set(1, 0, 0, 1)  -- Красный по умолчанию
+    shapes.cube[last_gizmo_id]:size(scale)  -- Устанавливаем размеры куба
+    shapes.cube[last_gizmo_id].position = pos  -- Устанавливаем позицию куба
+    if text then
+        shapes.cube[last_gizmo_id]:text(text)  -- Добавляем текст, если он указан
+    end
+end
