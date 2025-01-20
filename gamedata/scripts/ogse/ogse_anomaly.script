@@ -13,7 +13,7 @@ function attach(sm)
 	sm:subscribe({signal = "on_anomaly_spawn",          fun = this.on_anomaly_spawn})
 	sm:subscribe({signal = "on_anomaly_net_destroy",    fun = this.on_anomaly_net_destroy})
 	sm:subscribe({signal = "on_drop",                   fun = this.check_artefact_activation})
-	sm:subscribe({signal = "on_first_update",           fun = this.debug_zone})
+	--sm:subscribe({signal = "on_first_update",           fun = this.debug_zone})
 end
 
 local DISABLE_ANOMS_RESPAWN = false -- DBG
@@ -955,18 +955,27 @@ function check_hideouts( pos )
 end
 
 function debug_zone()
-	local bad_pos_tbl = bad_circle_table[level.name()]
+	local level_name = level.name()
+
+	-- Отрисовка сфер
+	local bad_pos_tbl = bad_circle_table[level_name]
 	if bad_pos_tbl then
-		for k, pos in pairs(bad_pos_tbl) do
-			script_debug_render.draw_sphere(vector():set(pos[1], pos[2], pos[3]), pos[4], fcolor():set(0, 1, 0, 1))
+		for k = 1, #bad_pos_tbl do
+			local pos = bad_pos_tbl[k]
+			local sphere_pos = vector():set(pos[1], pos[2], pos[3])
+			local sphere_radius = pos[4]
+			script_debug_render.draw_sphere(sphere_pos, sphere_radius, fcolor():set(0, 1, 0, 1), "sphere " .. k)
 		end
 	end
 
-	local bad_list = bad_sector_table[level.name()]
+	-- Отрисовка коробок
+	local bad_list = bad_sector_table[level_name]
 	if bad_list then
-		for k = 1, #bad_list.x2 do
-			--draw_rectangle(bad_list.x1[k], bad_list.x2[k], bad_list.y1[k], bad_list.y2[k], fcolor():set(0.5, 0.5, 0, 1))
-			script_debug_render.draw_box(bad_list.x1[k], bad_list.x2[k], bad_list.y1[k], bad_list.y2[k], 0, 30, fcolor():set(0, 0, 1, 1), "COCAЛ? " .. k)
+		for k = 1, #bad_list.x1 do
+			local x1, x2 = bad_list.x1[k], bad_list.x2[k]
+			local y1, y2 = bad_list.y1[k], bad_list.y2[k]
+			local z_min, z_max = 0, 30
+			script_debug_render.draw_box(x1, x2, y1, y2, z_min, z_max, fcolor():set(0, 0, 1, 1), "box " .. k)
 		end
 	end
 end
