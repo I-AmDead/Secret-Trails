@@ -17,8 +17,7 @@ function spawn_anomaly(section, position, level_name, radius, motion)
 end
 
 local function on_torrid_spawn()
-
-    if not ogse.var_exists("torrid_spawn") and level.name() ~= "fake_start" then
+    if not ogse.var_exists("torrid_spawn") then
         -- Deep
         spawn_anomaly("fireball_electric_zone", vector():set(-341.45, 9.54, 513.49), "l13_deep", 5.5, "test_provoda_move_1.anm")
         spawn_anomaly("fireball_electric_zone", vector():set(-341.45, 9.54, 513.49), "l13_deep", 5.5, "test_provoda_move_2.anm")
@@ -62,7 +61,7 @@ local function on_torrid_spawn()
 end
 
 local function on_field_spawn()
-    if not ogse.var_exists("field_spawn") and level.name() ~= "fake_start" then
+    if not ogse.var_exists("field_spawn") then
         -- Deep
         spawn_anomaly("zone_field_acidic_strong", vector():set(7.574, 0.537, 402.582), "l13_deep", 13.5)
         spawn_anomaly("zone_field_acidic_strong", vector():set(-0.229, 1.193, 409.050), "l13_deep", 7.5)
@@ -104,14 +103,19 @@ local function on_field_spawn()
 end
 
 local function on_special_spawn()
-    if not ogse.var_exists("special_spawn") and level.name() ~= "fake_start" then
+    if not ogse.var_exists("special_spawn") then
         spawn_anomaly("zone_mincer_special", vector():set(220.321, -11.265, -101.748), "l10_red_forest", 16.0)
         ogse.save_var("special_spawn", true)
     end
 end
 
+local function on_spawn()
+    if level.name() == "fake_start" or level.name() == "test_poligon_v1" then return end
+    on_torrid_spawn()
+    on_field_spawn()
+    on_special_spawn()
+end
+
 function attach(sm)
-	sm:subscribe({signal = "on_spawn", fun = on_torrid_spawn})
-	sm:subscribe({signal = "on_spawn",        fun = on_field_spawn})
-	sm:subscribe({signal = "on_spawn",        fun = on_special_spawn})
+	sm:subscribe({signal = "on_spawn", fun = on_spawn})
 end
