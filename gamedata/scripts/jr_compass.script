@@ -1,6 +1,6 @@
 local compass_objects = {}
 
-local compass_y = 32
+local compass_y = 737
 local compass_w = 512
 local compass_h = 32
 local dir_w = 400
@@ -76,18 +76,18 @@ function ui_compass:__init()
 
     self.panel:AttachChild(st)
 
-    self.dir = CUIStatic()
-    self.dir:SetAutoDelete(true)
-    self.dir:SetWndPos(512 - dir_w / 2, compass_y + 9)
-    self.dir:SetWndSize(dir_w, dir_h)
-    self.dir:SetTextAlign(CGameFont.alCenter)
-    self.dir:SetVTextAlign(CGameFont.valCenter)
-    self.dir:SetTextY(st:GetTextY() + 4)
-    self.dir:SetFont(GetFontCustom("ui_font_roboto16"))
-    self.dir:InitTexture("ui\\compas\\dir_line")
-    self.dir:SetStretchTexture(true)
+    --self.dir = CUIStatic()
+    --self.dir:SetAutoDelete(true)
+    --self.dir:SetWndPos(512 - dir_w / 2, compass_y + 9)
+    --self.dir:SetWndSize(dir_w, dir_h)
+    --self.dir:SetTextAlign(CGameFont.alCenter)
+    --self.dir:SetVTextAlign(CGameFont.valCenter)
+    --self.dir:SetTextY(st:GetTextY() - 30)
+    --self.dir:SetFont(GetFontCustom("ui_font_roboto14"))
+    --self.dir:InitTexture("ui\\compas\\dir_line")
+    --self.dir:SetStretchTexture(true)
 
-    self.panel:AttachChild(self.dir)
+    --self.panel:AttachChild(self.dir)
 end
 
 function ui_compass:__finalize()
@@ -106,7 +106,7 @@ function ui_compass:direction(vis_h)
     self.dir:SetText(string.format("%d", vis_h))
 end
 
-function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type, font_name, hide_center)
+function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type, font_name)
     if not self.points[id] then
         local st = CUIStatic()
         st:SetAutoDelete(true)
@@ -138,29 +138,34 @@ function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_t
     st:SetTextColorEx(color or def_color)
     st:SetColor(color or def_color)
 
-    local spot_show = x >= 0.0 and x <= 1.0
-    if hide_center then
-        spot_show = (x >= 0 and x < 0.36) or (x > 0.64 and x <= 1.0)
-    end
-
     st:SetWndPos(512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0))
-    st:Show(show_always or spot_show)
+    st:Show(show_always or (x >= 0 and x <= 1))
 
     if spot_type then
-        local pos_x, pos_y = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0)
+        local pos_x = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2
+        local pos_y = compass_y + (delta_y or 0)
+    
+        local scale
         if x <= 0.5 then
-            local scale = math.clamp(x * (x > 0.48 and 20 or 10), 0, 20)
-            st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
-            st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
+            scale = x * (x > 0.48 and 20 or 10)
+            scale = scale < 0 and 0 or (scale > 20 and 20 or scale)
         else
-            local scale = math.clamp((1.0 - x) * (x < 0.52 and 15 or 10), 0, 15)
-            st:SetWndPos(pos_x - scale * 0.5, pos_y - scale * 0.5)
-            st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
+            scale = (1.0 - x) * (x < 0.52 and 15 or 10)
+            scale = scale < 0 and 0 or (scale > 15 and 15 or scale) 
         end
+    
+        local offset = scale * 0.5
+        st:SetWndPos(pos_x - offset, pos_y - offset)
+        st:SetWndSize((18 + scale) * get_current_kx(), 16 + scale)
     end
 
-    if (x < 0.35 or x > 0.65) and not show_always then
-        local fade = x < 0.35 and 255 * (1 / 0.35 * x) or 255 * (1 - (x - 0.65) / 0.35)
+    if not show_always then
+        local fade = 255
+        if x < 0.35 then
+            fade = 255 * (x / 0.35)
+        elseif x > 0.65 then
+            fade = 255 * ((1 - x) / 0.35)
+        end
         st:SetColorA(fade)
         st:SetTextColorA(fade)
     end
@@ -196,7 +201,7 @@ function ui_compass:Update()
     local cam_h = h - pi / 2
     local vis_h = h * (180 / math.pi)
 
-    self:direction(vis_h >= 0 and vis_h or (360 + vis_h))
+    --self:direction(vis_h >= 0 and vis_h or (360 + vis_h))
 
     local function get_x_static(dir_h)
         local cam_h_real = cam_h
@@ -217,32 +222,32 @@ function ui_compass:Update()
         return get_x_static(dir_h)
     end
 
-    self:show_point("N", get_x_static(- pi / 2), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("S", get_x_static(pi / 2), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("W", get_x_static(0), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("E", get_x_static(-pi), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("N", get_x_static(- pi / 2), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("S", get_x_static(pi / 2), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("W", get_x_static(0), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("E", get_x_static(-pi), nil, def_color, 0, nil, nil, nil):SetPriority(100)
 
-    self:show_point("NE", get_x_static(-3 * pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("SE", get_x_static(3 * pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("NW", get_x_static(- pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
-    self:show_point("SW", get_x_static(pi / 4), nil, def_color, 13, nil, nil, nil, true):SetPriority(100)
+    self:show_point("NE", get_x_static(-3 * pi / 4), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("SE", get_x_static(3 * pi / 4), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("NW", get_x_static(- pi / 4), nil, def_color, 0, nil, nil, nil):SetPriority(100)
+    self:show_point("SW", get_x_static(pi / 4), nil, def_color, 0, nil, nil, nil):SetPriority(100)
 
     local d = (2 * pi) / 24
     local s = -pi / 2
     for i = 1, 24 do
         s = s + d
-        local dir = i * 15
-        if i ~= 3 and i ~= 6 and i ~= 9 and i ~= 12 and i ~= 15 and i ~= 18 and i ~= 21 and i ~= 24 then
-            self:show_point("compass_mark_"..i, get_x_static(s), string.format("%d", dir), def_color, 13, nil, nil, "ui_font_roboto12", true):SetPriority(-120)
+        if i % 3 ~= 0 then
+            self:show_point("compass_dot_"..i, get_x_static(s), "|", def_color, 15, nil, nil, "ui_font_roboto12"):SetPriority(-120)
+        else
+            self:show_point("compass_dot_"..i, get_x_static(s), "|", def_color, 13, nil, nil, "ui_font_roboto14"):SetPriority(-120)
         end
-        self:show_point("compass_dot_"..i, get_x_static(s), ".", def_color, 16, nil, nil, "ui_font_roboto16", true):SetPriority(-120)
     end
 
     for i, v in pairs(compass_objects) do
         local pos = v.obj and v.obj:position() or v.position
         local x = get_x(pos)
 
-        local st = self:show_point(i, x, "", v.color, -15, v.show_always, v.spot)
+        local st = self:show_point(i, x, "", v.color, 5, v.show_always, v.spot)
 
         st.position = pos
         st.x = x
@@ -265,14 +270,14 @@ function ui_compass:Update()
 
         local st = self:show_point("compass_dist", self.highest_st.x, string.format("%dм", dist), def_color, 32)
         st:SetPriority(100)
-        st:SetTextY(40)
+        st:SetTextY(-70)
 
         if self.highest_st.text then
             local st = self:show_point("compass_name", self.highest_st.x, self.highest_st.text, self.highest_st.color, 32)
             st:SetPriority(200)
-            st:SetTextY(10)
+            st:SetTextY(-50)
         else
-            st:SetTextY(10)
+            st:SetTextY(-50)
         end
 
         local hidden_a = 50
@@ -348,7 +353,7 @@ local function actor_on_update()
                     obj = obj,
                     text = quest and obj:character_name() or nil,
                     color = (quest and quest_color) or (friend and friend_color) or (neutral and neutral_color) or (enemy and enemy_color) or nil,
-                    show_always = bio_radar,
+                    show_always = bio_radar and obj:alive(),
                     spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
                 }
             end
@@ -360,7 +365,7 @@ local function actor_on_update()
                     obj = obj,
                     text = nil,
                     color = obj:alive() and enemy_color or nil,
-                    show_always = true,
+                    show_always = obj:alive(),
                     spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
                 }
             end

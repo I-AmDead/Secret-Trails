@@ -71,8 +71,8 @@ local function add_hud()
 		if not quick_slot_icon[i] then
 			quick_slot_icon[i] = CUIStatic()
 			quick_slot_icon[i]:SetAutoDelete(true)
-			quick_slot_icon[i]:SetWndPos(2, 7)
-			quick_slot_icon[i]:SetWndSize(33, 33)
+			quick_slot_icon[i]:SetWndPos(5, 7)
+			quick_slot_icon[i]:SetWndSize(26, 26)
 			quick_slot_icon[i]:SetStretchTexture(true)
 			CIconParams(section):set_shader(quick_slot_icon[i])
 			quick_slot_back:wnd():AttachChild(quick_slot_icon[i])
@@ -80,13 +80,13 @@ local function add_hud()
 			quick_slot_num[i] = CUIStatic()
 			quick_slot_num[i]:SetAutoDelete(true)
 			quick_slot_num[i]:SetText("x"..count_item_slot[i])
-			quick_slot_num[i]:SetWndPos(2, 1)
+			quick_slot_num[i]:SetWndPos(4, 2)
 			quick_slot_back:wnd():AttachChild(quick_slot_num[i])
 
 			quick_slot_key[i] = CUIStatic()
 			quick_slot_key[i]:SetAutoDelete(true)
 			quick_slot_key[i]:SetText(key_name and key_name:sub(2) or "")
-			quick_slot_key[i]:SetWndPos(2, 28)
+			quick_slot_key[i]:SetWndPos(24, 23)
 			quick_slot_back:wnd():AttachChild(quick_slot_key[i])
 		else
 			CIconParams(section):set_shader(quick_slot_icon[i])
@@ -159,7 +159,18 @@ local function eat_qs_item(slot)
 		local item = db.actor:object(section)
 		if item then
 			db.actor:eat(item)
+			quick_slot_key[slot]:SetTextColorEx(GetARGB(255, 0, 255, 0))
+			dsh.timeout(300, 
+			function()
+				quick_slot_key[slot]:SetTextColorEx(GetARGB(255, 255, 255, 255))			
+			end)
 			return true
+		else
+			quick_slot_num[slot]:SetTextColorEx(GetARGB(255, 255, 0, 0))
+			dsh.timeout(300, 
+			function()
+				quick_slot_num[slot]:SetTextColorEx(GetARGB(255, 255, 255, 255))			
+			end)
 		end
 	end
 end
