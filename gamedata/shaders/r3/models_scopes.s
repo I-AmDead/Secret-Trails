@@ -37,6 +37,4 @@ function element_2(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_inside", "wpn\\scope_utility\\inside")
 	shader:dx10texture("s_dirt", "wpn\\scope_utility\\dirt")
 	shader:dx10sampler("smp_base")
-	shader:dx10sampler("smp_nofilter")
-	shader:dx10sampler("smp_rtlinear")
 end

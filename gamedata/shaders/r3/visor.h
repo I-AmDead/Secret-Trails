@@ -1,6 +1,3 @@
-
-uniform float4 addon_VControl; // x - интенсивность визора стекла, y -  насколько далеко от центра будет круг стекла
-
 #define HELMET_VISUAL_QUALITY 3 // [1;2;3]
 
 float3 visor_reflection(float3 color, float2 tc)
@@ -8,7 +5,7 @@ float3 visor_reflection(float3 color, float2 tc)
     static const float blackout_factor = 0.05f, rounding = 2.0f, closeness = 0.8f, elongation = 0.15f, blackout = 5.2f;
 
     static const uint layers_base_count = 6, layers_count = layers_base_count + (int)HELMET_VISUAL_QUALITY;
-    static const float radius = addon_VControl.y, intensity = addon_VControl.x;
+    static const float radius = mask_control.w, intensity = mask_control.z;
 
     float3 final = float3(0.0, 0.0, 0.0);
     float2 center = float2(0.5, 0.5);

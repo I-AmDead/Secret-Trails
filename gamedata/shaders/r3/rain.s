@@ -23,7 +23,7 @@ function element_1(shader, t_base, t_second, t_detail)
 	local ps_shader = opt:wet_surface_opt_enable() and "rain_patch_normal" or "rain_patch_normal_new"
 	shader:begin("stub_notransform_2uv", ps_shader)
 		:fog(false)
-		:zb(true, false)
+		:zb(true, false, true)
 	shader:dx10zfunc(cmp_func.greater)
 	shader:dx10texture("s_position", "$user$position")
 	shader:dx10texture("s_lmap", "sunmask")

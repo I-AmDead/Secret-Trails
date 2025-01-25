@@ -91,7 +91,7 @@ float2 project(float2 tc, float2 tangent, float distance, float size)
     return parallax_tc;
 }
 
-float4 blur_sample(Texture2D tex, SamplerState samp, float2 uv)
+float4 blur_sample(Texture2D tex, float2 uv)
 {
     float4 color = float4(0, 0, 0, 0);
     float blur_amount = 0.006;
@@ -106,7 +106,7 @@ float4 blur_sample(Texture2D tex, SamplerState samp, float2 uv)
 
     for (int i = 0; i < 9; i++)
     {
-        color += tex.Sample(samp, uv + offsets[i] * blur_amount + dither) * weights[i];
+        color += tex.Sample(smp_base, uv + offsets[i] * blur_amount + dither) * weights[i];
     }
 
     color.rgb *= m_hud_params.x;
@@ -131,7 +131,7 @@ float3 chroma_sample(float2 lens_tc, float2 back_tc, float current_fov, float po
         float3 weight = float3(step, 1.0 - abs(step + step - 1.0), 1.0 - step);
         weight = lerp(float3(0.5, 0.5, 0.5), weight, 2.0);
 
-        float3 color = s_prev_frame.Sample(smp_rtlinear, coord).rgb;
+        float3 color = s_prev_frame.Sample(smp_base, coord).rgb;
         color.rgb *= m_hud_params.x;
 
         color_sum += color * color * weight;
@@ -144,7 +144,7 @@ float3 chroma_sample(float2 lens_tc, float2 back_tc, float current_fov, float po
 
 float3 back_image_sample(float2 lens_tc, float2 back_tc, float current_fov, float power, int nvg_blur)
 {
-    float3 final = nvg_blur ? blur_sample(s_prev_frame, smp_rtlinear, back_tc) : chroma_sample(lens_tc, back_tc, current_fov, power);
+    float3 final = nvg_blur ? blur_sample(s_prev_frame, back_tc) : chroma_sample(lens_tc, back_tc, current_fov, power);
 
     return final;
 }
@@ -293,19 +293,19 @@ float4 main(vf I) : SV_Target
     float4 mark_texture = float4(0, 0, 0, 0);
     if (reticle_tc.x >= 0 && reticle_tc.x <= 1 && reticle_tc.y >= 0 && reticle_tc.y <= 1)
     {
-        mark_texture = s_base.Sample(smp_rtlinear, reticle_tc);
+        mark_texture = s_base.Sample(smp_base, reticle_tc);
     }
 
     if (RETICLE_TYPE == RT_GIPERON)
     {
-        float finder = s_base.Sample(smp_rtlinear, reticle_lens_tc).g;
+        float finder = s_base.Sample(smp_base, reticle_lens_tc).g;
         float reticle = mark_texture.r;
         float shift_3x = 0.053;
         float angle = -PI * (zoom_part + shift_3x) / (1 + shift_3x);
         float2 tc = reticle_lens_tc - 0.5;
         tc = float2(tc.x * cos(angle) - tc.y * sin(angle), tc.x * sin(angle) + tc.y * cos(angle));
         tc += 0.5;
-        float numbers = s_base.Sample(smp_rtlinear, tc + fisheye(I.tc0, V_tangent.xy)).b;
+        float numbers = s_base.Sample(smp_base, tc + fisheye(I.tc0, V_tangent.xy)).b;
         mark_texture = float4(0, 0, 0, max(numbers, max(finder, reticle)));
     }
 
@@ -367,7 +367,7 @@ float4 main(vf I) : SV_Target
     float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH);
 
     // LED-illuminated inside walls
-    float4 inside = s_inside.Sample(smp_rtlinear, (reticle_lens_tc - 0.5) * 0.62 + 0.5);
+    float4 inside = s_inside.Sample(smp_base, (reticle_lens_tc - 0.5) * 0.62 + 0.5);
     inside = float4(mark_color.rgb * inside.r, inside.a);
     if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_SPECTER)
     {
@@ -375,7 +375,7 @@ float4 main(vf I) : SV_Target
     }
 
     // Dirt texture
-    float4 dirt = s_dirt.Sample(smp_rtlinear, I.tc0);
+    float4 dirt = s_dirt.Sample(smp_base, I.tc0);
     dirt.a *= DIRT_INTENSITY;
 
     // Back image

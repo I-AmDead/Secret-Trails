@@ -481,10 +481,10 @@ float dfEat(float2 origin, float2 uv)
     float dist = 1e6;
 
     dist = min(dist, dfLine(float2(0.25, 1.0), float2(0.25, 0.5), uv));
-    dist = min(dist, dfArc(float2(0.25, 1.0), 3.142, 3.142, 0.1, uv));
     dist = min(dist, dfLine(float2(0.15, 1.0), float2(0.15, 1.1), uv));
     dist = min(dist, dfLine(float2(0.25, 1.0), float2(0.25, 1.1), uv));
     dist = min(dist, dfLine(float2(0.35, 1.0), float2(0.35, 1.1), uv));
+    dist = min(dist, dfArc(float2(0.25, 1.0), 3.142, 3.142, 0.1, uv));
     
     dist = min(dist, dfLine(float2(0.6, 0.845), float2(0.6, 0.5), uv));
     dist = min(dist, dfArc(float2(0.6, 0.97), 3.142, 3.142, 0.1, uv));
@@ -524,10 +524,10 @@ float dfKettlebell(float2 origin, float2 uv)
     dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.85), uv));
     dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.65), uv));
     
-    dist = min(dist, dfArc(float2(-0.32, 0.8), 3.35, -3.542, 0.05, uv));
     dist = min(dist, dfLine(float2(-0.37, 0.8), float2(-0.37, 0.7), uv));
-    dist = min(dist, dfArc(float2(-0.32, 0.7), 3.35, 3.542, 0.05, uv));
     dist = min(dist, dfLine(float2(-0.27, 0.73), float2(-0.32, 0.73), uv));
+    dist = min(dist, dfArc(float2(-0.32, 0.8), 3.35, -3.542, 0.05, uv));
+    dist = min(dist, dfArc(float2(-0.32, 0.7), 3.35, 3.542, 0.05, uv));
     
     return dist;
 }
@@ -537,9 +537,9 @@ float dfDrop(float2 origin, float2 uv)
     uv -= origin;
     float dist = 1e6;
 
-    dist = min(dist, dfArc(float2(-1.0, 0.7), 2.521, 4.142, 0.2, uv));
-    dist = min(dist, dfLine(float2(-1.2, 0.75), float2(-0.99, 1.15), uv));
-    dist = min(dist, dfLine(float2(-0.8, 0.75), float2(-0.99, 1.15), uv));
+    dist = min(dist, dfLine(float2(-1.15, 0.85), float2(-0.99, 1.15), uv));
+    dist = min(dist, dfLine(float2(-0.85, 0.85), float2(-0.99, 1.15), uv));
+    dist = min(dist, dfArc(float2(-1.0, 0.7), -5.795, -4.142, 0.2, uv));
 
     return dist;
 }

@@ -16,40 +16,29 @@ uniform int grass_align;
 cbuffer DetailsData
 {
     uniform float4 consts; // {1/quant,1/quant,diffusescale,ambient}
-    uniform float4 array[128 * 4];
+    uniform float4 array[171 * 3];
 }
 
 #ifdef SSFX_WIND
 #include "screenspace_wind.h"
 #endif
 
-inline void unpackFloats(float packed, out float a, out float b)
-{
-    // Преобразуем float в 32-битное целое число
-    uint packedInt = asuint(packed);
-
-    // Извлекаем два 16-битных числа
-    uint part1 = (packedInt >> 16) & 0xFFFF;
-    uint part2 = packedInt & 0xFFFF;
-
-    // Нормализуем значения обратно в диапазон [0, 1]
-    a = part1 / 65535.0;
-    b = part2 / 65535.0;
-}
-
 v2p_bumped main(v_detail v, uint instance_id : SV_InstanceID)
 {
     v2p_bumped O;
 
-    // index
-    int i = instance_id * 4; // v.misc.w;
-    float4 m0 = array[i + 0];
-    float4 m1 = array[i + 1];
-    float4 m2 = array[i + 2];
-    float4 data = array[i + 3]; // Terrain Normal [xyz] , packed Hemi && Grass alpha [w]
+    int i = instance_id * 3;
 
-    float hemi, alpha;
-    unpackFloats(data.w, hemi, alpha);
+    float4 _a0 = array[i];
+    float4 a1 = array[i + 1];
+
+    float2 a0 = float2(_a0.x * a1.w, _a0.y * a1.w);
+    float4 m0 = float4(a0.y, 0, -a0.x, a1.x);
+    float4 m1 = float4(0, a1.w, 0, a1.y);
+    float4 m2 = float4(a0.x, 0, a0.y, a1.z);
+    float3 data = array[i + 2].xyz; // Terrain Normal [xyz]
+    float hemi = _a0.z;
+    float alpha = _a0.w;
 
     // Transform pos to world coords
     float4 P;

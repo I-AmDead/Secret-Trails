@@ -16,10 +16,6 @@
 
 float4 compute_lighting(float3 N, float3 V, float3 L, float4 alb_gloss, float mat_id)
 {
-    // [ SSS Test ]. Overwrite terrain material
-    bool m_terrain = abs(mat_id - 0.95) <= 0.04f;
-    if (m_terrain)
-        mat_id = 0;
 
     float3 albedo = calc_albedo(alb_gloss, mat_id);
     float3 specular = calc_specular(alb_gloss, mat_id);
