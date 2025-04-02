@@ -23,6 +23,7 @@ local spot_settings = {
     ["defend_lager"] = {"crlc_small", nil, GetARGB(255, 70, 180, 255)},
     ["kill_stalker"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
     ["find_item_location"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
+    ["yellow_flag_location"] = {"unknown", nil, GetARGB(255, 255, 180, 70)},
 
     [clsid.zone_bfuzz_s] = {"zone_bfuzz", "Fuzz", GetARGB(255, 70, 180, 255)},                  -- Жгучий пух
     [clsid.zone_buzz_s] = {"zone_buzz", "Ameba", GetARGB(255, 59, 255, 124)},                   -- Холодец
@@ -374,17 +375,32 @@ local function actor_on_update()
 
     level.iterate_map_spots(function(spot)
         local obj = level.object_by_id(spot.object_id)
-        if obj and map_spot_limit(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
-            local pos = obj:center()
-            local distance = IsAnomaly(obj) and m * 2 or f
-            if pos:distance_to_sqr(dev_pos) < distance then
-                local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
-                compass_objects[obj:id()] =
+        if obj then
+            if map_spot_limit(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
+                local pos = obj:center()
+                local distance = IsAnomaly(obj) and m * 2 or f
+                if pos:distance_to_sqr(dev_pos) < distance then
+                    local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
+                    compass_objects[obj:id()] =
+                    {
+                        obj = obj,
+                        text = game.translate_string(spot_settings[spot_type][2] or (spot.hint and string.len(spot.hint) < 40) and spot.hint or nil) or nil,
+                        color = spot_settings[spot_type][3] or def_color,
+                        spot = spot_settings[spot_type][1] or "unknown"
+                    }
+                end
+            end
+        else
+            local pos = spot.position
+            local distance = f
+            if level.name() == spot:level_name() and pos:distance_to_sqr(dev_pos) < distance then
+                local spot_type = spot.type
+                compass_objects[spot.object_id] =
                 {
-                    obj = obj,
-                    text = game.translate_string(spot_settings[spot_type][2] or (spot.hint and string.len(spot.hint) < 40) and spot.hint or nil) or nil,
+                    position = pos,
+                    text = game.translate_string(spot_settings[spot_type][2] or (spot.hint and string.len(spot.hint) < 40) and spot.hint or "") or nil,
                     color = spot_settings[spot_type][3] or def_color,
-                    spot = spot_settings[spot_type][1]
+                    spot = spot_settings[spot_type][1] or "unknown"
                 }
             end
         end
