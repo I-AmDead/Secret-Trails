@@ -10,24 +10,15 @@ cbuffer dynamic_inter_grass
     float4 benders_setup;
 }
 
-cbuffer dynamic_tree
-{
-    uniform float3x4 m_xform;
-    uniform float3x4 m_xform_v;
-
-    uniform float4 consts; // {1/quant,1/quant,???,???}
-
-    uniform float4 c_scale;
-    uniform float4 c_bias;
-    uniform float2 c_sun; // x=*, y=+
-}
-
 #ifdef SSFX_WIND
 #include "screenspace_wind.h"
 #endif
 
 v2p_flat main(v_tree I)
 {
+    float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
+    float4 consts = I.consts;
+
     I.Nh = unpack_D3DCOLOR(I.Nh);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
@@ -45,11 +36,11 @@ v2p_flat main(v_tree I)
     float4 w_pos_previous = w_pos;
 #else
     wind_setup wset = ssfx_wind_setup();
-    float3 wind_result = ssfx_wind_tree_branches(pos, H, tc.y, wset);
+    float3 wind_result = ssfx_wind_tree_branches(m_xform, pos, H, tc.y, wset);
     float4 w_pos = float4(pos.xyz + wind_result.xyz, 1);
 
     wind_setup wset_old = ssfx_wind_setup(true);
-    float3 wind_result_old = ssfx_wind_tree_branches(pos, H, tc.y, wset_old, true);
+    float3 wind_result_old = ssfx_wind_tree_branches(m_xform, pos, H, tc.y, wset_old, true);
     float4 w_pos_previous = float4(pos.xyz + wind_result_old.xyz, 1);
 #endif
 
@@ -114,7 +105,7 @@ v2p_flat main(v_tree I)
 
     // Final xform
     float3 Pe = mul(m_V, w_pos);
-    float hemi = I.Nh.w * c_scale.w + c_bias.w;
+    float hemi = I.Nh.w * consts.z + consts.w;
     // float hemi = I.Nh.w;
     o.hpos = mul(m_VP, w_pos);
 
@@ -124,7 +115,8 @@ v2p_flat main(v_tree I)
     o.hpos.xy = get_taa_jitter(o.hpos);
     /////////////
 
-    o.N = mul((float3x3)m_xform_v, unpack_bx2(I.Nh));
+    float3x3 m_xform_v = mul((float3x3)m_V, (float3x3)m_xform);
+    o.N = mul(m_xform_v, unpack_bx2(I.Nh));
     o.tcdh = float4((I.tc * consts).xyyy);
     o.position = float4(Pe, hemi);
 

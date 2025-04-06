@@ -87,7 +87,7 @@ float3 ssfx_wind_grass(float3 pos, float H, wind_setup W, const bool for_old_fra
 
 #else // Non Grass
 
-float3 ssfx_wind_tree_trunk(float3 pos, float Tree_H, wind_setup W, const bool for_old_frame = false)
+float3 ssfx_wind_tree_trunk(const float3x4 m_xform, float3 pos, float Tree_H, wind_setup W, const bool for_old_frame = false)
 {
     // Phase ( from matrix ) + Offset
     float Phase = m_xform._24 + (for_old_frame ? ssfx_wind_anim_old.z : ssfx_wind_anim.z) * W.trees_trunk_animspeed;
@@ -110,7 +110,7 @@ float3 ssfx_wind_tree_trunk(float3 pos, float Tree_H, wind_setup W, const bool f
     return float3(Final, saturate((TWave + 1.0f) * 0.5));
 }
 
-float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup W, const bool for_old_frame = false)
+float3 ssfx_wind_tree_branches(const float3x4 m_xform, float3 pos, float Tree_H, float tc_y, wind_setup W, const bool for_old_frame = false)
 {
     // UV Offset
     float2 Offset = -(for_old_frame ? ssfx_wind_anim_old.xy : ssfx_wind_anim.xy) * W.trees_animspeed;
@@ -127,7 +127,7 @@ float3 ssfx_wind_tree_branches(float3 pos, float Tree_H, float tc_y, wind_setup 
     branchMotion = float3(Flow.x, Flow2.y, Flow.y) * 2.0f - 1.0f;
 
     // Trunk position
-    float3 Trunk = ssfx_wind_tree_trunk(pos, Tree_H, W, for_old_frame);
+    float3 Trunk = ssfx_wind_tree_trunk(m_xform, pos, Tree_H, W, for_old_frame);
 
     // Gust from trunk data.
     branchMotion.xz *= Trunk.z * clamp(Tree_H * 0.1f, 1.0f, 2.5f);

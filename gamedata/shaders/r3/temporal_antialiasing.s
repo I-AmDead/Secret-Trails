@@ -6,6 +6,6 @@ function normal(shader, t_base, t_second, t_detail)
 	shader:dx10texture("t_previous", "$user$generic0_previous")
 	shader:dx10texture("t_motion_vectors", "$user$velocity")
 	shader:dx10texture("t_zbuffer", "$user$zbuffer")
-	shader:dx10sampler("SamplerPointClamp")
-	shader:dx10sampler("SamplerLinearClamp")
+	shader:dx10sampler("smp_rtlinear")
+	shader:dx10sampler("smp_nofilter")
 end

@@ -8,111 +8,108 @@ Texture2D<float4> t_previous;
 Texture2D<float2> t_motion_vectors; // RG16FLOAT
 Texture2D t_zbuffer; // R24G8
 
-// Sampler states
-SamplerState SamplerLinearClamp;
-SamplerState SamplerPointClamp;
+// From Timothy Lottes
+float3 Lottes_Tonemap(float3 c) { return c / (max(c.r, max(c.g, c.b)) + 1.0); }
 
-float3 find_closest_fragment_3x3(float2 texcoord)
+float3 Lottes_Tonemap_Inverse(float3 c) { return c / (1.0 - max(c.r, max(c.g, c.b))); }
+
+static const int2 offset_3x3[9] = {
+    int2(-1, -1), int2(0, -1), int2(1, -1), int2(-1, 0), int2(0, 0), int2(1, 0), int2(-1, 1), int2(0, 1), int2(1, 1),
+};
+
+// From CoD presentation
+float3 SMAABicubicFilter(float3 current_top, float3 current_bottom, float3 current_left, float3 current_right, float3 current_center, float3 previous_center, float2 f)
 {
-    float4 zbuffer_gather_0 = t_zbuffer.GatherRed(SamplerPointClamp, texcoord, int2(0, 0));
-    float4 zbuffer_gather_1 = t_zbuffer.GatherRed(SamplerPointClamp, texcoord, int2(-1, 0));
-    float4 zbuffer_gather_2 = t_zbuffer.GatherRed(SamplerPointClamp, texcoord, int2(0, -1));
-    float4 zbuffer_gather_3 = t_zbuffer.GatherRed(SamplerPointClamp, texcoord, int2(-1, -1));
-
-    float3 tap_topleft = float3(-screen_res.z, -screen_res.w, zbuffer_gather_3.w);
-    float3 tap_topcenter = float3(0, -screen_res.w, zbuffer_gather_2.w);
-    float3 tap_topright = float3(screen_res.z, -screen_res.w, zbuffer_gather_2.z);
-
-    float3 tap_left = float3(-screen_res.z, 0, zbuffer_gather_1.w);
-    float3 tap_center = float3(0, 0, zbuffer_gather_0.w);
-    float3 tap_right = float3(screen_res.z, 0, zbuffer_gather_0.z);
-
-    float3 tap_downleft = float3(-screen_res.z, screen_res.w, zbuffer_gather_1.x);
-    float3 tap_downcenter = float3(0, screen_res.w, zbuffer_gather_0.x);
-    float3 tap_downright = float3(screen_res.z, screen_res.w, zbuffer_gather_0.y);
-
-    // test all samples
-    float3 closest = tap_topleft;
-    if (closest.z > tap_topcenter.z)
-        closest = tap_topcenter;
-    if (closest.z > tap_topright.z)
-        closest = tap_topright;
-
-    if (closest.z > tap_left.z)
-        closest = tap_left;
-    if (closest.z > tap_center.z)
-        closest = tap_center;
-    if (closest.z > tap_right.z)
-        closest = tap_right;
-
-    if (closest.z > tap_downleft.z)
-        closest = tap_downleft;
-    if (closest.z > tap_downcenter.z)
-        closest = tap_downcenter;
-    if (closest.z > tap_downright.z)
-        closest = tap_downright;
-
-    return float3(texcoord + closest.xy, closest.z);
-}
-
-float3 SMAABicubicFilter(float3 current_top, float3 current_bottom, float3 current_left, float3 current_right, float3 current_center, float3 previous_center, float2 texcoord,
-                         float4 rt_metrics, float sharpness_scale)
-{
-    float2 f = frac(rt_metrics.zw * texcoord - 0.5);
-    float c = 0.8 * sharpness_scale / 100.0;
-    float2 w = c * (f * f - f);
+    float2 w = 0.468 * (f * f - f); // hardcoded sharpness, refer to slides
     float4 color = float4(lerp(current_left, current_right, f.x), 1.0) * w.x + float4(lerp(current_top, current_bottom, f.y), 1.0) * w.y;
+
     color += float4((1.0 + color.w) * previous_center - color.w * current_center, 1.0);
     return color.xyz / color.w;
 }
 
+// Cheapest way to get 3x3 neighborhood of single channel texture
+void get_3x3_depth(float2 tc0, inout float d_3x3[9])
+{
+    // https://wojtsterna.blogspot.com/2018/02/directx-11-hlsl-gatherred.html
+    float2 gather_texcoord = tc0 + screen_res.zw * 0.5;
+
+    float4 d_gather0 = t_zbuffer.Gather(smp_nofilter, gather_texcoord);
+    float4 d_gather1 = t_zbuffer.Gather(smp_nofilter, gather_texcoord, int2(-1, -1));
+
+    d_3x3[0] = d_gather1.w;
+    d_3x3[1] = d_gather1.z;
+    d_3x3[2] = t_zbuffer.SampleLevel(smp_nofilter, tc0, 0, int2(1, -1)).x;
+    d_3x3[3] = d_gather1.x;
+    d_3x3[4] = d_gather0.w; // d_gather1.y overlap
+    d_3x3[5] = d_gather0.z;
+    d_3x3[6] = t_zbuffer.SampleLevel(smp_nofilter, tc0, 0, int2(-1, 1)).x;
+    d_3x3[7] = d_gather0.x;
+    d_3x3[8] = d_gather0.y;
+}
+
 float4 main(p_screen I) : SV_Target
 {
-    // fetch center color (aliased)
-    float3 c_c = t_current.Load(int3(I.hpos.xy, 0)).xyz;
+    // Fetch 3x3 depth neighborhood
+    float d_3x3[9];
+    get_3x3_depth(I.tc0.xy, d_3x3);
 
-    // dilate motion vectors
-    float2 motion_vectors = t_motion_vectors.SampleLevel(SamplerPointClamp, find_closest_fragment_3x3(I.tc0.xy).xy, 0).xy;
+    // Fetch 3x3 color neighborhood and find closest depth
+    float3 c_3x3[9];
+    int2 depth_offset = int2(0, 0);
+    float depth_closest = 1.0;
 
-    // previous frame texture coordinates
-    float2 tc_previous = I.tc0.xy + motion_vectors;
+    [unroll] for (int i = 0; i < 9; i++)
+    {
+        int2 offset_hpos = clamp(I.hpos.xy + offset_3x3[i], 0, screen_res.xy - 1);
 
-    // early exit
-    if (any(tc_previous != saturate(tc_previous)))
-        return float4(c_c, 1.0);
+        float sampled_depth = d_3x3[i]; // Down to 2 gathers and 2 SampleLevel
+        c_3x3[i] = Lottes_Tonemap(t_current[offset_hpos].xyz); // This can be optimized to 3 gathers and 5 SampleLevel, on DX11...
 
-    // fetch 3x3 neighborhood (center is first)
-    float3 c_tl = t_current.Load(int3(I.hpos.xy, 0), int2(-1, -1)).xyz;
-    float3 c_t = t_current.Load(int3(I.hpos.xy, 0), int2(0, -1)).xyz;
-    float3 c_tr = t_current.Load(int3(I.hpos.xy, 0), int2(1, -1)).xyz;
-    float3 c_l = t_current.Load(int3(I.hpos.xy, 0), int2(-1, 0)).xyz;
+        if (sampled_depth < depth_closest) // Swap the sign if something is wrong (And replace initial value of depth_closest)
+        {
+            depth_closest = sampled_depth;
+            depth_offset = offset_3x3[i];
+        }
+    }
 
-    float3 c_r = t_current.Load(int3(I.hpos.xy, 0), int2(1, 0)).xyz;
-    float3 c_bl = t_current.Load(int3(I.hpos.xy, 0), int2(-1, 1)).xyz;
-    float3 c_b = t_current.Load(int3(I.hpos.xy, 0), int2(0, 1)).xyz;
-    float3 c_br = t_current.Load(int3(I.hpos.xy, 0), int2(1, 1)).xyz;
-
-    // soft min-max window
-    float3 c_min = min(c_tl, min(c_t, min(c_tr, min(c_l, min(c_c, min(c_r, min(c_bl, min(c_b, c_br))))))));
-    c_min += min(c_t, min(c_l, min(c_c, min(c_r, c_c)))); // cross
+    // Soft min and max window
+    float3 c_min = min(c_3x3[0], min(c_3x3[1], min(c_3x3[2], min(c_3x3[3], min(c_3x3[4], min(c_3x3[5], min(c_3x3[6], min(c_3x3[7], c_3x3[8]))))))));
+    c_min += min(c_3x3[1], min(c_3x3[3], min(c_3x3[4], min(c_3x3[5], c_3x3[7]))));
     c_min *= 0.5;
 
-    float3 c_max = max(c_tl, max(c_t, max(c_tr, max(c_l, max(c_c, max(c_r, max(c_bl, max(c_b, c_br))))))));
-    c_max += max(c_t, max(c_l, max(c_c, max(c_r, c_c))));
+    float3 c_max = max(c_3x3[0], max(c_3x3[1], max(c_3x3[2], max(c_3x3[3], max(c_3x3[4], max(c_3x3[5], max(c_3x3[6], max(c_3x3[7], c_3x3[8]))))))));
+    c_max += max(c_3x3[1], max(c_3x3[3], max(c_3x3[4], max(c_3x3[5], c_3x3[7]))));
     c_max *= 0.5;
 
-    // 1tap bicubic filter
-    float3 p_c = SMAABicubicFilter(c_t, c_b, c_l, c_r, c_c, t_previous.Sample(SamplerLinearClamp, tc_previous).xyz, tc_previous, screen_res.zwxy, 60.0);
+    // Fetch motion vectors and reproject
+    float2 motion_vector = t_motion_vectors[clamp(I.hpos.xy + depth_offset, 0, screen_res.xy - 1)].xy;
+    float2 reprojected_tc = I.tc0.xy - motion_vector * float2(0.5, -0.5);
 
-    // neighborhood clamping
-    p_c = clamp(p_c, c_min, c_max);
+    // Early quit
+    if (any(reprojected_tc != saturate(reprojected_tc)))
+        return float4(Lottes_Tonemap_Inverse(c_3x3[4]), 0.0);
 
-    // weights
-    float response = lerp(0.125, 0.91, 1.0 - saturate(length(motion_vectors) * 54.0)); // 54 better
+    // Fetch previous frame
+    float3 p_4 = Lottes_Tonemap(t_previous.SampleLevel(smp_rtlinear, reprojected_tc, 0).xyz);
 
-    // proper blending for 8bit rendertargets
-    float3 delta = c_c - p_c;
-    float3 clamped_weight = min(response.xxx, saturate(1.0 - rcp(255.0) * rcp(delta)));
-    float3 c_blended = p_c + (1.0 - clamped_weight) * delta; // final color
-    return float4(c_blended, 1.0);
+    // Spatio-temporal bicubic filter
+    p_4 = SMAABicubicFilter(c_3x3[1], c_3x3[7], c_3x3[3], c_3x3[5], c_3x3[4], p_4, frac(reprojected_tc * screen_res.xy - 0.5));
+
+    // Clamp
+    p_4 = clamp(p_4, c_min, c_max);
+
+    // SMAA-ish velocity weighting. Something better should be used...
+    float2 mags = (0.0).xx;
+    mags.x = sqrt(5.0 * length(motion_vector));
+    mags.y = t_previous.SampleLevel(smp_nofilter, reprojected_tc, 0.0).w;
+
+    float delta = abs(mags.x * mags.x - mags.y * mags.y) * rcp(5.0);
+    float weight = 0.925 * saturate(1.0 - sqrt(delta) * 8.0);
+
+    // Simple lerp is ok, RGBA16F lmao
+    float3 reprojected_color = lerp(c_3x3[4], p_4, weight);
+    reprojected_color = max(reprojected_color, 0.0);
+    reprojected_color = Lottes_Tonemap_Inverse(reprojected_color);
+
+    return float4(reprojected_color, mags.x);
 }

@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#ifdef SKIN_0
 struct v_model_skinned_0
 {
     float4 P : POSITION; // (float,float,float,1)// float4
@@ -11,6 +12,9 @@ struct v_model_skinned_0
     float3 B : BINORMAL; // binormal				// DWORD
     float2 tc : TEXCOORD0; // (u,v)				// float2
 };
+#endif
+
+#ifdef SKIN_1
 struct v_model_skinned_1 // 36 bytes
 {
     float4 P : POSITION; // (float,float,float,1)// float4
@@ -19,6 +23,9 @@ struct v_model_skinned_1 // 36 bytes
     float3 B : BINORMAL; // binormal				// DWORD
     float2 tc : TEXCOORD0; // (u,v)				// float2
 };
+#endif
+
+#ifdef SKIN_2
 struct v_model_skinned_2 // 44 bytes
 {
     float4 P : POSITION; // (float,float,float,1)// float4
@@ -27,7 +34,9 @@ struct v_model_skinned_2 // 44 bytes
     float3 B : BINORMAL; // binormal				// DWORD
     float4 tc : TEXCOORD0; // (u,v, w=m-index0, z=m-index1)  	// float4
 };
+#endif
 
+#ifdef SKIN_3
 struct v_model_skinned_3 // 44 bytes
 {
     float4 P : POSITION; // (float,float,float,1)		// float4
@@ -36,7 +45,9 @@ struct v_model_skinned_3 // 44 bytes
     float4 B : BINORMAL; // (bx,by,bz,m-index2)				// DWORD
     float4 tc : TEXCOORD0; // (u,v, w=m-index0, z=m-index1)  	// float4
 };
+#endif
 
+#ifdef SKIN_4
 struct v_model_skinned_4 // 40 bytes
 {
     float4 P : POSITION; // (float,float,float,1)		// float4
@@ -46,12 +57,14 @@ struct v_model_skinned_4 // 40 bytes
     float2 tc : TEXCOORD0; // (u,v)  					// float2
     float4 ind : TEXCOORD1; // (x=m-index0, y=m-index1, z=m-index2, w=m-index3)  	// DWORD
 };
+#endif
 
 float4 u_position(float4 v)
 {
     return float4(v.xyz, 1.f);
 } // -12..+12
 
+#ifndef SKIN_0
 cbuffer sbones
 {
 float4 sbones_array[512];
@@ -76,7 +89,8 @@ float4 skinning_pos(float4 pos, float4 m0, float4 m1, float4 m2)
         1);
 }
 
-#ifdef SKIN_0
+#else
+
 v_model skinning_0(v_model_skinned_0 v)
 {
     //	Swizzle for D3DCOLOUR format

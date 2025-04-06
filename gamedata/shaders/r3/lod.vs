@@ -52,4 +52,3 @@ vf main(vv I)
     o.af = float4(h, h, I.sun_af.z, factor);
     return o;
 }
-FXVS;

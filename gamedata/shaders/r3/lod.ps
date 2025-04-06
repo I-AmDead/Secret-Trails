@@ -39,12 +39,15 @@ f_deffer main(vf I)
     float4 H;
 
     sample_Textures(D, H, I.tc1, I.tc0, I.af, float2(0, 0));
+
     clip(D.w - (96.h / 255.h));
 
     float3 N = normalize(H.xyz);
 
     f_deffer O = pack_gbuffer(float4(N, H.w), float4(I.position + N * def_virtualh / 2.h, 0), float4(D.x, D.y, D.z, def_gloss));
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+
+    O.H = float4(0.0, 0.0, 0.0, 0.0);
 
     return O;
 }

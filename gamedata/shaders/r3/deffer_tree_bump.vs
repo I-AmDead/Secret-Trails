@@ -9,24 +9,15 @@
 #include "common.h"
 #include "check_screenspace.h"
 
-cbuffer dynamic_tree
-{
-    uniform float3x4 m_xform;
-    uniform float3x4 m_xform_v;
-
-    uniform float4 consts; // {1/quant,1/quant,???,???}
-
-    uniform float4 c_scale;
-    uniform float4 c_bias;
-    uniform float2 c_sun; // x=*, y=+
-}
-
 #ifdef SSFX_WIND
 #include "screenspace_wind.h"
 #endif
 
 v2p_bumped main(v_tree I)
 {
+    float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
+    float4 consts = I.consts;
+
     I.Nh = unpack_D3DCOLOR(I.Nh);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
@@ -40,16 +31,16 @@ v2p_bumped main(v_tree I)
     float4 w_pos_previous = w_pos;
 #else
     wind_setup wset = ssfx_wind_setup();
-    float2 wind_result = ssfx_wind_tree_trunk(pos, H, wset).xy;
+    float2 wind_result = ssfx_wind_tree_trunk(m_xform, pos, H, wset).xy;
     float4 w_pos = float4(pos.x + wind_result.x, pos.y, pos.z + wind_result.y, 1);
 
     wind_setup wset_old = ssfx_wind_setup(true);
-    float2 wind_result_old = ssfx_wind_tree_trunk(pos, H, wset_old, true).xy;
+    float2 wind_result_old = ssfx_wind_tree_trunk(m_xform, pos, H, wset_old, true).xy;
     float4 w_pos_previous = float4(pos.x + wind_result_old.x, pos.y, pos.z + wind_result_old.y, 1);
 #endif
 
     float2 tc = (I.tc * consts).xy;
-    float hemi = clamp(I.Nh.w * c_scale.w + c_bias.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
+    float hemi = clamp(I.Nh.w * consts.z + consts.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
 
     // Eye-space pos/normal
     v2p_bumped O;
@@ -71,7 +62,9 @@ v2p_bumped main(v_tree I)
     float3 N = unpack_bx4(I.Nh);
     float3 T = unpack_bx4(I.T);
     float3 B = unpack_bx4(I.B);
-    float3x3 xform = mul((float3x3)m_xform_v, float3x3(T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z));
+
+    float3x3 m_xform_v = mul((float3x3)m_V, (float3x3)m_xform);
+    float3x3 xform = mul(m_xform_v, float3x3(T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z));
 
     // The pixel shader operates on the bump-map in [0..1] range
     // Remap this range in the matrix, anyway we are pixel-shader limited :)

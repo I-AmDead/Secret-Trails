@@ -382,17 +382,6 @@ struct p_flat
 
 ////////////////////////////////////////////////////////////////
 //	Shadow
-struct v_shadow_direct_aref
-{
-    float4 P : POSITION; // (float,float,float,1)
-    int4 tc : TEXCOORD0; // (u,v,frac,???)
-};
-
-struct v_shadow_direct
-{
-    float4 P : POSITION; // (float,float,float,1)
-};
-
 struct v2p_shadow_direct_aref
 {
     float2 tc0 : TEXCOORD1; // Diffuse map for aref
@@ -432,15 +421,27 @@ struct v_tree
     float3 T : TANGENT; // tangent
     float3 B : BINORMAL; // binormal
     int4 tc : TEXCOORD0; // (u,v,frac,???)
+
+    float4 m0 : COLOR0;
+     float4 m1 : COLOR1;
+     float4 m2 : COLOR2;
+     float4 consts : COLOR3;
 };
 
 ////////////////////////////////////////////////////////////////
 //	Details
 struct v_detail
 {
-    float4 pos : POSITION; // (float,float,float,1)
-    int4 misc : TEXCOORD0; // (u(Q),v(Q),frac,matrix-id)
+    float4 pos : POSITION; // (float,float,float,0)
+    float4 misc : NORMAL; // (u,v,frac,0)
+ 
+    float4 m0 : COLOR0;
+    float4 m1 : COLOR1;
+    float4 m2 : COLOR2;
+    float4 consts : COLOR3;
+    float4 tnorm : COLOR4;
 };
+
 ////////for screenspace transformation
 struct p_screen
 {
