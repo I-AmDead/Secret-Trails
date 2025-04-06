@@ -24,6 +24,7 @@ local spot_settings = {
     ["kill_stalker"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
     ["find_item_location"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
     ["yellow_flag_location"] = {"unknown", nil, GetARGB(255, 255, 180, 70)},
+    ["anomaly_zone_location"] = {"unknown", nil, GetARGB(255, 255, 60, 60)},
 
     [clsid.zone_bfuzz_s] = {"zone_bfuzz", "Fuzz", GetARGB(255, 70, 180, 255)},                  -- Жгучий пух
     [clsid.zone_buzz_s] = {"zone_buzz", "Ameba", GetARGB(255, 59, 255, 124)},                   -- Холодец
@@ -393,7 +394,8 @@ local function actor_on_update()
         else
             local pos = spot.position
             local distance = f
-            if level.name() == spot:level_name() and pos:distance_to_sqr(dev_pos) < distance then
+            local spot_ignore = spot.type == "mp_hit_sector_location"
+            if not spot_ignore and level.name() == spot:level_name() and pos:distance_to_sqr(dev_pos) < distance then
                 local spot_type = spot.type
                 compass_objects[spot.object_id] =
                 {

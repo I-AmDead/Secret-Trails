@@ -243,9 +243,6 @@ function spawn_item_in_inv(section, npc, num)
     local game_obj = level.object_by_id(pid)
     for i = 1, num do
         sobj = alife():create(section, pos, lvi, gvi, pid)
-        if not is_actor and game_obj then
-            level.client_spawn_manager():add(sobj.id, -1, fix_spawn_item_in_inv, game_obj) -- Фикс пропадания доспавненного предмета при сейв/лоаде
-        end
     end
     if num == 1 then
         return alife():object(sobj.id)
@@ -271,10 +268,7 @@ function spawn_ammo_in_inv(section, num, npc)
     local game_obj = level.object_by_id(pid)
     local num_in_box = get_u32(section, "box_size")
     while num > num_in_box or num > 0 do
-        local sitem = alife():create_ammo(section, pos, lvi, gvi, pid, num < num_in_box and num or num_in_box)
-        if not is_actor and game_obj then
-            level.client_spawn_manager():add(sitem.id, -1, fix_spawn_item_in_inv, game_obj) -- Фикс пропадания доспавненного предмета при сейв/лоаде
-        end
+        alife():create_ammo(section, pos, lvi, gvi, pid, num < num_in_box and num or num_in_box)
         num = num - num_in_box
     end
 end
