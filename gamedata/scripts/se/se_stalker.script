@@ -178,6 +178,34 @@ function se_stalker:STATE_WriteLtx(ini, section)
     ini:w_bool(section, "wounded", self.wounded)
 end
 --------------------
+function se_stalker:STATE_ReadLtx(ini, section)
+    cse_alife_human_stalker.STATE_ReadLtx(self, ini, section)
+    --log1("se_stalker:STATE_ReadLtx")
+
+    local job = ini:r_u8(section, "job_online")
+
+    -- онлайн/оффлайн работа
+    if job == 0 then
+        self.job_online = true
+    elseif job == 1 then
+        self.job_online = false
+    elseif job == 2 then
+        self.job_online = nil
+    else
+        self.job_online_condlist = ini:r_string(section, "job_online_condlist")
+        self.job_online = dsh.cached_condlist(
+            xr_logic.parse_condlist(self.job_online_condlist, nil, "se_stalker:STATE_Read", "job_online"),
+            1000
+        )
+    end
+
+    self.was_in_smart_terrain = ini:r_bool(section, "was_in_smart_terrain")
+
+    -- Прочитаем состояние раненности.
+    self.death_dropped = ini:r_bool(section, "death_dropped")
+    self.wounded = ini:r_bool(section, "wounded")
+end
+--------------------
 function se_stalker:on_before_register()
     local strn_id = self:smart_terrain_id()
     if strn_id ~= 65535 then

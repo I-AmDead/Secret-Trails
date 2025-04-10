@@ -31,13 +31,13 @@ function se_monster:get_ini()
 
         self.spawner_present = self.ini:section_exist("spawner")
 
-        if self.ini ~= nil and self.spawner_present == true then
-            if self.ini:line_exist("spawner", "check_distance") == true then
+        if self.ini and self.spawner_present then
+            if self.ini:line_exist("spawner", "check_distance") then
                 self.check_distance = self.ini:r_bool("spawner", "check_distance")
                 if self.check_distance == nil then
                     self.check_distance = false
                 end
-                if self.ini:line_exist("spawner", "min_distance") == true then
+                if self.ini:line_exist("spawner", "min_distance") then
                     self.min_distance = self.ini:r_u32("spawner", "min_distance")
                 end
             end
@@ -54,12 +54,12 @@ function se_monster:get_job_online()
     if self.job_online_condlist == nil then
         return self.job_online
     else
-        return xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.job_online) ~= nil
+        return xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.job_online)
     end
 end
 --------------------
 function se_monster:can_switch_offline()
-    if self:get_job_online() ~= nil then
+    if self:get_job_online() then
         return not self:get_job_online()
     else
         return cse_alife_monster_base.can_switch_offline(self)
@@ -176,10 +176,7 @@ function se_monster:STATE_ReadLtx(ini, section)
         self.job_online = nil
     else
         self.job_online_condlist = ini:r_string(section, "job_online_condlist")
-        self.job_online = dsh.cached_condlist(
-            xr_logic.parse_condlist(self.job_online_condlist, nil, "se_monster:STATE_Read", "job_online"),
-            1000
-        )
+        self.job_online = xr_logic.parse_condlist(self.job_online_condlist, nil, "se_monster:STATE_Read", "job_online")
     end
 end
 --------------------
