@@ -1,5 +1,10 @@
 local particles = {}
 
+local hit_ignore = 
+{
+    ["spy_aes"] = true
+}
+
 ----------------------------------------------------------------------------------------------------------------------
 class "motivator_binder"(object_binder)
 
@@ -184,7 +189,7 @@ function motivator_binder:before_hit_callback(hit_data)
         end
     end
 
-    if self.object:story_id() ~= 4294967295 and hit_data.who_id ~= db.actor:id() then
+    if self.object:story_id() ~= 4294967295 and hit_data.who_id ~= db.actor:id() and not hit_ignore[self.object:name()] then
         hit_data.ignore_hit = true
     end
 
