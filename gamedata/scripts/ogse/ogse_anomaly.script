@@ -25,10 +25,9 @@ local position_forbidden = {}
 local anti_spawn_zones = {}
 local anom_list = {} --В этой таблице находятся только онлайновые аномалии.
 local get_lists_inited = false
---
+
 local spawn_anom_prob = system_ini():r_s32("options","spawn_anom_prob") -- Коэффициент кол-ва аномалий
-local spawn_blow_art_probe = system_ini():r_s32("options","spawn_blow_art_probe") -- Коэффициент вероятности попытки рождения артефакта аномалией в Выброс
---
+
 local level_anoms = { --Локации, на которых можно респавнить аномалии после выброса. Значение - походу коэффициент для рассчёта кол-ва аномалий.
 	l01_escape     = { 15, 35},
 	l02_garbage    = { 20, 40},
@@ -575,7 +574,6 @@ function add_anom(levelname) --вызывается из anom_update() и сиг
 			local sobj = alife():object(v)
 			if sobj then
 				set_anomaly_mode(v, "anom_off")
-				spawn_blow_art(sobj)
 			end
 		end
 	end
@@ -703,50 +701,6 @@ function set_anomaly_mode(anom_id, status)
 	--log3("[%s.set_anomaly_mode] New status for anom [%s] = [%s]. Level: [%s]", script_name(), sobj:name(), status, object_level_name(sobj))
 end
 
-
---Эта функция парсит строку из конфига аномалии и выбирает какой арт спавнить
-function parse_string_arts(sect) --Перенесено из скрипта ogse_death_artefact
-	local string_arts = get_string(sect, "artefacts")
-	if not string_arts then return false end
-
-	local arts_table = {}
-	for key, value, dec in string.gmatch( string_arts, "%s*([%w_%-.\\]+)%s*,%s*(%d).(%d*)%s*" ) do
-		local artefact = { art = key, val = tonumber(value.."."..dec) }
-		table.insert(arts_table, artefact)
-	end
-	if #arts_table > 0 then
-		--log3("[%s] arts_table for anom [%s] before sort: %s", script_name(), sect, arts_table)
-		table.sort(arts_table,function(a,b) return a.val < b.val end) --Секции артов должны находиться в таблице в порядке от меньшей вероятности спавна к большей.
-		--log3("[%s] arts_table for anom [%s] after sort: %s", script_name(), sect, arts_table)
-
-		local rnd = math.random()
-		for _, value in ipairs(arts_table) do
-			if rnd <= value.val then
-				return value.art
-			end
-		end
-	end
-
-	return false
-end
-
--- Рожание артефактов в Выброс
-local game_difficulty = level.get_game_difficulty()
-function spawn_blow_art(sobj)
-	local anom_sect = sobj:section_name()
-	local rand_chk = get_float(anom_sect, "artefact_spawn_probability", 0.1)
-	if math.random(0, 1) <= rand_chk * spawn_blow_art_probe then
-		local art_section = parse_string_arts(anom_sect)
-		--log3("~~Called spawn_blow_art for anom [%s], art_sect: [%s]", sobj:name(), art_section or "nil")
-		if art_section then
-			local lv, gv, pos = sobj.m_level_vertex_id, sobj.m_game_vertex_id, sobj.position
-			pos.y = pos.y + 1
-			local art_sobj = alife():create(art_section, pos, lv, gv)
-		end
-	end
-end
-
-
 function anomaly_position_choice(lname)
 	ASSERT( lname == level.name(), "level.vertex_count() work only on current level!" )
 
@@ -767,7 +721,6 @@ function anomaly_position_choice(lname)
 
 	return pos, new_lv, new_gv
 end
-
 
 local anom_types = {
 	l01_escape = {
