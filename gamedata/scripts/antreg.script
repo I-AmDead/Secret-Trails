@@ -773,35 +773,6 @@ function doctor_kostolom_spawn()
     level_tasks.add_location_by_id(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
 end
 
-local spiders_list = ogse.load_var("spider_list", {})
-
-local function spider_kostolom_spawn(obj, amount, local_direction, who, bone_index)
-    if obj:section() == "doctor_kostolom" and table.getn(spiders_list) < 100 then
-        local sobj = alife():create("spider_kostolom", obj:position(), obj:level_vertex_id(), obj:game_vertex_id())
-        table.insert(spiders_list, sobj.id)
-        ogse.save_var("spider_list", spiders_list)
-    end
-end
-
-local function spider_kostolom_dead(obj, who)
-    if obj:section() == "doctor_kostolom" then
-        for i, v in pairs(spiders_list) do
-            local obj = level.object_by_id(v)
-            if obj and obj:alive() then
-                local hit = hit()
-                hit.direction = obj:direction()
-                hit.impulse = 0
-                hit.draftsman = obj
-                hit.power = 1000
-                hit.type = hit.wound
-                obj:hit(hit)
-            end
-        end
-        spiders_list = {}
-        ogse.save_var("spider_list", spiders_list)
-    end
-end
-
 function spawn_sar_pauki()
     spawn_patrol("spider_sar", "sar_pauki")
 end
@@ -2249,8 +2220,6 @@ function pda_fab()
 end
 
 function attach(sm)
-    sm:subscribe({signal = "on_monster_hit",	fun = spider_kostolom_spawn})
-    sm:subscribe({signal = "on_monster_death",  fun = spider_kostolom_dead})
     sm:subscribe({signal = "on_update",         fun = distance_check})
     sm:subscribe({signal = "on_first_update",   fun = storyline_mix})
     sm:subscribe({signal = "on_info",           fun = storyline_mix})
