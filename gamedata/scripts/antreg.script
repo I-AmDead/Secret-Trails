@@ -770,6 +770,7 @@ end
 
 function doctor_kostolom_spawn()
     local obj = spawn_patrol("doctor_kostolom", "doctor_kostolom")
+    alife():assign_story_id(obj.id, story_ids.doctor_kostolom)
     level_tasks.add_location_by_id(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
 end
 
@@ -778,11 +779,9 @@ function spawn_sar_pauki()
 end
 
 function remove_metka_kostolom()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "doctor_kostolom" then
-            level_tasks.remove_location_by_id(obj.id, "crlc_big")
-            break
-        end
+    local obj = alife():story_object(story_ids.doctor_kostolom)
+    if obj then
+        level_tasks.remove_location_by_id(obj.id, "crlc_big")
     end
 end
 
@@ -1062,11 +1061,9 @@ function spawn_fab_trup()
 end
 
 function remove_metka_fab()
-    for a, obj in alife():objects() do
-        if obj:section_name() == "fab_trup" then
-            level_tasks.remove_location_by_id(obj.id, "crlc_big")
-            break
-        end
+    local obj = alife():story_object(story_ids.fab_trup)
+    if obj then
+        level_tasks.remove_location_by_id(obj.id, "crlc_big")
     end
 end
 
