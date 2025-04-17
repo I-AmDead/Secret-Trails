@@ -711,8 +711,8 @@ end
 
 function CUIDescriptionWnd:OnUpdate(delta) --Если сюда передали аргументом передали true - обновление будет форсировано.
 	if (not self.keypressed and self.shift_tmr and self.shift_tmr < time_global()) or delta == true then
-		if self.itemInFocus and ( self.itemInFocus > 65535 or alife():object( self.itemInFocus ) ) then
-			self:ShowDescription( level.object_by_id(self.itemInFocus) )
+		if self.itemInFocus and (self.itemInFocus > 65535 or alife():object(self.itemInFocus)) then
+			self:ShowDescription(level.object_by_id(self.itemInFocus))
 		end
 		self.shift_tmr = nil
 	end
@@ -732,7 +732,7 @@ end
 
 function need_show_condition(item)
 	local b = get_bool(item:section(), "inv_show_condition", false)
-	return (( item:is_weapon() or item:is_outfit()) and b) or b
+	return b and (item:is_weapon() or item:is_outfit())
 end
 
 function get_cur_wpn_ammo_section(wpn)
