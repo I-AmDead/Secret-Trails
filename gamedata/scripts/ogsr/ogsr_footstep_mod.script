@@ -4,6 +4,9 @@ function is_exo_visual(obj)
                string.find(vis, "_redeye") or string.find(vis, "stalker_arhara1")
 end
 
+local Rain_Hemi = 0
+local Rain_Factor = 0
+
 local function on_foot_step(obj, power)
     local outfit = db.actor:item_in_slot(6)
     if outfit then
@@ -13,23 +16,29 @@ local function on_foot_step(obj, power)
             local snd_servo = sound_object(snd_fname)
             snd_servo:play(db.actor, 0, sound_object.s2d)
             snd_servo.volume = math.clamp(power, 0.0, 1.5) + 0.2
-            -- snd_servo:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), volume)
         end
     end
 
-    if not db.actor:is_ActorHide() and level.rain_wetness() then
-        local snd_fname = "material\\human\\step\\rain_0" .. math.random(8)
-        local body_state = get_actor_obj():get_body_state()
-        if body_state > 512 and body_state < 2048 then
-            snd_fname = "material\\human\\step\\rain_land_0" .. math.random(3)
-            -- elseif body_state > 128 and body_state < 256 then -- не робит на этом калбеке
-            --	snd_fname = "material\\human\\step\\rain_jump_0".. math.random(3)
-        end
-        local snd_rain = xr_sound.get_safe_sound_object(snd_fname)
-        local volume = math.clamp(level.rain_wetness(), 0.0, 0.4) + (level.rain_factor() * 0.01)
-        snd_rain:play(db.actor, 0, sound_object.s2d)
-        snd_rain.volume = volume
+	local Base_Vol = level.rain_wetness()
+	if Base_Vol < 0.15 then return end
+
+	Rain_Hemi = (db.actor:is_ActorHide() or isIndoor(level.name())) and 0 or level.rain_hemi()
+	Rain_Factor = math.clamp(level.rain_factor(), 0.3, 1.0)
+
+	Base_Vol = Base_Vol * Rain_Hemi * Rain_Factor
+
+	if Base_Vol < 0.05 then return end
+
+    local snd_fname = "material\\human\\step\\rain_0" .. math.random(8)
+    local body_state = get_actor_obj():get_body_state()
+    if body_state > 512 and body_state < 2048 then
+        snd_fname = "material\\human\\step\\rain_land_0" .. math.random(3)
     end
+    local snd_rain = xr_sound.get_safe_sound_object(snd_fname)
+    local variation = math.random(0.0, 0.2 * 100) / 100
+    local volume = math.clamp(Base_Vol * (0.8 + variation), 0.0, 1.0);
+    snd_rain:play(db.actor, 0, sound_object.s2d)
+    snd_rain.volume = volume
 end
 
 local function on_npc_foot_step(obj, power)

@@ -161,7 +161,10 @@ local function play_item_use(item)
         dsh.timeout(anm_duration, function()
             ogsr_actor_animation.animation_off()
             db.actor:activate_slot(prev_active_slot)
-            detector_hide()
+            dsh.wait_condition(function() return db.actor:active_slot() == prev_active_slot  end, 
+            function()
+                detector_hide()
+            end)
         end)
     end)
 end
