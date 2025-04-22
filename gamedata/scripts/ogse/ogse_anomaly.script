@@ -8,11 +8,10 @@
 -- version 3.0 (23/11/2016)
 -----------------------------------------------------------------------
 function attach(sm)
-    sm:subscribe({signal = "on_spawn",                  fun = this.anom_update})
+	sm:subscribe({signal = "on_spawn",                  fun = this.anom_update})
 	sm:subscribe({signal = "on_after_blowout",          fun = this.on_after_blowout})
 	sm:subscribe({signal = "on_anomaly_spawn",          fun = this.on_anomaly_spawn})
 	sm:subscribe({signal = "on_anomaly_net_destroy",    fun = this.on_anomaly_net_destroy})
-	sm:subscribe({signal = "on_drop",                   fun = this.check_artefact_activation})
 	--sm:subscribe({signal = "on_first_update",           fun = this.debug_zone})
 end
 
@@ -40,7 +39,8 @@ local level_anoms = { --Локации, на которых можно респ�
 	l11_pripyat    = { 15, 35},
 	l12_stancia    = { 35, 40},
 	l10_red_forest = { 10, 20},
-	l13_deep       = { 5, 10},
+	l13_deep       = { 10, 15},
+	swamp          = { 20, 40},
 }
 --
 local excluded_anoms = { --Секции и имена аномалий, которые запрещено удалять после выброса.
@@ -289,6 +289,11 @@ local bad_circle_table = {
 		{104.187218, -2.968468, -301.215820, 10}, -- Спавн Васильева
 		{-97.698235, -0.821109, -192.161102, 60} -- Спавн Карины
 	},
+	["swamp"] = {
+		{-55.589, 2.629, 267.736, 30}, -- Хата доктора
+		{-247.707, 3.190, 67.339, 100}, -- Пункт скитальцев
+		{91.584, 3.041, 235.683, 30}, -- Костолом
+	},
 }
 local bad_sector_table = { --Скорее всего, это координаты, за пределами которых запрещено спавнить аномалии (места за пределами локаций).
 	-- Кордон --- fixed by KamikaZze
@@ -355,16 +360,6 @@ local bad_sector_table = { --Скорее всего, это координат�
 		y2 = { -266,  33, 159, 301, 210,  -60 },
 	},
 }
-
-local dangerous_acivated_arts = {}
-
-function check_artefact_activation(obj, sobj)
-	local section = sobj:section_name()
-	if sys_ini:line_exist(section, "artefact_activation_seq") then
-		dangerous_acivated_arts[sobj.id] = time_global() + 12000
-	end
-end
-
 
 function on_anomaly_spawn(obj)
 	if is_not_anomaly(alife():object(obj:id())) then return end --НЕ аномалии не учитываем. Они сюда и не должны попадать, но на всякий случай.
