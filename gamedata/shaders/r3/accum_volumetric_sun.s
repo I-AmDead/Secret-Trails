@@ -11,4 +11,5 @@ function normal		(shader, t_base, t_second, t_detail)
 	shader:dx10sampler	("smp_base")
 	shader:dx10sampler	("smp_jitter")
 	shader:dx10sampler	("smp_smap")
+	shader:dx10sampler	("smp_nofilter")
 end

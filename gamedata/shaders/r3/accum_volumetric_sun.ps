@@ -21,6 +21,8 @@
 
 float4 sun_shafts_intensity;
 
+
+uniform float4 any_test;
 float4 main(v2p_volume I) : SV_Target
 {
 #ifndef SUN_SHAFTS_QUALITY
@@ -30,11 +32,10 @@ float4 main(v2p_volume I) : SV_Target
     float max_density = sun_shafts_intensity;
     float inner_density = 4.0f;
 
-    float2 tc = clamp(I.tc.xy / I.tc.w, 0.0, 1.0);
+    float2 tc = I.tc.xy / I.tc.w;
     float4 pos2d = I.hpos;
 
-    // Проверка границ экрана
-    if (tc.x < 0.0 || tc.x > 1.0 || tc.y < 0.0 || tc.y > 1.0)
+    if (any(tc <= 0.0) || any(tc >= 1.0))
         return float4(0, 0, 0, 0);
 
     gbuffer_data gbd = gbuffer_load_data(tc, pos2d);
@@ -70,7 +71,7 @@ float4 main(v2p_volume I) : SV_Target
     total_light *= length(ray_increment);
 
     if (depth < 0.0001)
-        total_light = 1;
+        total_light = sun_shafts_intensity;
 
     total_light = 1.0 - saturate(exp(-total_light * inner_density));
 
