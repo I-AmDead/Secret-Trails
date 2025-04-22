@@ -7,22 +7,21 @@ struct ui_vert_out
     float2 tc0 : TEXCOORD0;
 };
 
+// https://stackoverflow.com/a/10625698
+float random(float2 p)
+{
+    float2 K1 = float2(23.14069263277926f, // e^pi (Gelfond's constant)
+                       2.665144142690225f // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+    );
+    return frac(cos(dot(p, K1)) * 12345.6789f);
+}
+
 float4 main(ui_vert_out I) : SV_Target
 {
-    // узкая полоска искажений
-    float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
-    I.tc0.x += (m_affects.x > 0.09 && I.tc0.y > problems - 0.01 && I.tc0.y < problems) ? sin((I.tc0.y - problems) * 5 * m_affects.y) : 0;
-
-    // широкая полоска искажений
-    problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
-    float AMPL = 0.13;
-    I.tc0.x -= (m_affects.x > 0.15 && I.tc0.y > problems - AMPL && I.tc0.y < problems + AMPL) ?
-        cos(4.71 * (I.tc0.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tc0.y - problems)) / AMPL :
-        0;
-
-    // тряска влево-вправо в финальной стадии
-    I.tc0.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0;
-
     float4 r = s_base.Sample(smp_base, I.tc0);
-    return r;
+
+    // Приборы глючат при выбросе
+    float mig = 1.0f - (m_affects.x * 2.f);
+
+    return float4(r.r, r.g, r.b, random(timers.xz) > mig ? 0.f : r.a);
 }
