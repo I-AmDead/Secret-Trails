@@ -193,6 +193,10 @@ function motivator_binder:before_hit_callback(hit_data)
         hit_data.ignore_hit = true
     end
 
+    if self.object:section() == "esc_mervin_new" and hit_data.power < 100 then
+        hit_data.ignore_hit = true
+    end
+
     if not self.last_hit_data then
         self.last_hit_data = {}
     end
@@ -207,7 +211,9 @@ function motivator_binder:hit_callback(obj, amount, local_direction, who, bone_i
     if chk_dist > range then
         self.object:set_range(chk_dist*1.1)
     end
+
     self.object:make_object_visible_somewhen(who)
+
     if self.st.active_section then
         xr_logic.issue_event(self.object, self.st[self.st.active_scheme], "hit_callback", self.object, amount, local_direction, who, bone_index)
     end
