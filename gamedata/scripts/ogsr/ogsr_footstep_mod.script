@@ -19,15 +19,15 @@ local function on_foot_step(obj, power)
         end
     end
 
-	local Base_Vol = level.rain_wetness()
-	if Base_Vol < 0.15 then return end
+    local Base_Vol = level.rain_wetness()
+    if Base_Vol < 0.15 then return end
 
-	Rain_Hemi = (db.actor:is_ActorHide() or isIndoor(level.name())) and 0 or level.rain_hemi()
-	Rain_Factor = math.clamp(level.rain_factor(), 0.3, 1.0)
+    Rain_Hemi = (db.actor:is_ActorHide() or isIndoor(level.name())) and 0 or level.rain_hemi()
+    Rain_Factor = math.clamp(level.rain_factor(), 0.3, 1.0)
 
-	Base_Vol = Base_Vol * Rain_Hemi * Rain_Factor
+    Base_Vol = Base_Vol * Rain_Hemi * Rain_Factor
 
-	if Base_Vol < 0.05 then return end
+    if Base_Vol < 0.05 then return end
 
     local snd_fname = "material\\human\\step\\rain_0" .. math.random(8)
     local body_state = get_actor_obj():get_body_state()
