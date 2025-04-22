@@ -12,12 +12,21 @@ local excluded_locations = {}
 
 function attach(sm)
     sm:subscribe({signal = "on_after_blowout",      fun = this.on_after_blowout})
+    sm:subscribe({signal = "on_monster_net_spawn",  fun = this.on_monster_spawn})
     sm:subscribe({signal = "on_npc_spawn",          fun = this.on_npc_spawn})
     sm:subscribe({signal = "on_npc_death",          fun = this.on_death})
     sm:subscribe({signal = "on_npc_net_destroy",    fun = this.on_death})
 end
 
 local mobs = {}
+
+function on_monster_spawn(obj, binder)
+    if not obj:alive() then return end
+
+    if obj:story_id() == story_ids.dog_povodyr then
+        set_anomaly_invisibility(obj, true)
+    end
+end
 
 function on_npc_spawn(obj, binder)
     if not obj:alive() then return end
