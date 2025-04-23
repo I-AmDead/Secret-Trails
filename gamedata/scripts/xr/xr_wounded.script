@@ -96,6 +96,15 @@ function action_wounded:initialize()
     if not self.a.regen then
         self.object:wounded(true)
     end
+
+    local item = self.object:active_item()
+    local slot = self.object:active_slot()
+	
+    if item and (slot <= 3) then
+        self.object:drop_item(item)
+    end
+
+    death_manager.set_weapon_drop_condition(item, self.object)
 end
 function action_wounded:execute()
     action_base.execute(self)
