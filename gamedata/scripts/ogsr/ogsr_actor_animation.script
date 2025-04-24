@@ -258,19 +258,19 @@ local function on_item_before_pickup(obj)
     local cam_pos = device().cam_pos
     local cam_pos_y = cam_pos.y - 0.7
     local obj_pos = obj:position()
-    local anm_name = "camera_effects\\weapon\\two_handed_weapon_effect.anm"
+    local anm_name = "script\\clear_mask_right_hand.anm"
     if not anim_plays then
         detector_hide()
         dsh.wait_condition(function() return not get_actor_obj():IsDetectorActive() end, 
         function()
             animation_on()
             local pickup_anm_time = game.play_hud_motion(1, pickup_anm_sec, "anm_take", false, 1.4)
-            game.play_hud_anm(anm_name, 0, 1.4, 1, false)
+            game.play_hud_anm(anm_name, 0, 1.3, 2, false)
             if obj_pos.y <= cam_pos_y then
                 toggle_force_crouch()
                 dsh.timeout(pickup_anm_time - 100, function() toggle_force_crouch() end)
             end
-            dsh.timeout(pickup_anm_time - 300, function() take_delay(obj) end)
+            dsh.timeout(pickup_anm_time - 350, function() take_delay(obj) end)
             detector_hide(pickup_anm_time + 100)
             anim_plays = true
         end)
