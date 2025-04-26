@@ -332,12 +332,12 @@ function UIRadialMenu:Update()
 
     -- Get angle from center of screen to mouse cursor
     -- Account for scaling from 1024x768 so that the cursor rotates towards cursor properly
-    local angle = math.atan2(-(self:GetMousePosX()-self.center.x)/x_scale, -(self:GetMousePosY()-self.center.y))
-    angle = (angle < 0) and 2*math.pi+angle or angle
-    angle = 2*math.pi - angle
+    local angle = math.atan2(-(self:GetMousePosX() - self.center.x) / x_scale, -(self:GetMousePosY() - self.center.y))
+    angle = (angle < 0) and 2 * math.pi + angle or angle
+    angle = 2 * math.pi - angle
 
-    local new_x = cur_pos.x*math.cos(angle) - cur_pos.y*math.sin(angle)
-    local new_y = cur_pos.y*math.cos(angle) + cur_pos.x*math.sin(angle)
+    local new_x = cur_pos.x * math.cos(angle) - cur_pos.y * math.sin(angle)
+    local new_y = cur_pos.y * math.cos(angle) + cur_pos.x * math.sin(angle)
 
     -- Scale Correction
     new_x = new_x*x_scale
@@ -356,7 +356,7 @@ function UIRadialMenu:Update()
     for i, option in ipairs(self.options) do
         -- Ignore disabled options
         -- if not self.option_data[i]:IsState(States.DISABLED) then
-            local similarity = math.pi - math.abs(math.fmod(math.abs(angle - option.angle), 2*math.pi) - math.pi)
+            local similarity = math.pi - math.abs(math.fmod(math.abs(angle - option.angle), 2 * math.pi) - math.pi)
 
             if best_similarity == nil or similarity < best_similarity then
                 best_similarity = similarity
@@ -382,7 +382,8 @@ function UIRadialMenu:OnKeyboard(dik, keyboard_action)
 		if dik == DIK_keys.DIK_ESCAPE then
 			self:Close()
 		end
-		if dik == DIK_keys.MOUSE_1 then
+    else
+		if dik_to_bind(dik) == key_bindings.kRADIAL then
 			self:OnButtonClick(self.hovered_option_i)
 		end
 	end

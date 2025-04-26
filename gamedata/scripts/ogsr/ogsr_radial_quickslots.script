@@ -60,52 +60,25 @@ SLOTS_DATA                   = {                      -- table to store slots da
 -- ---------------------------------------------------------------------------------------------------------------------
 function get_ui()
     local GUI = arm.UIRadialMenu()
+    
+    local slots = {
+        { key = "rq_secondary",  ui_key = "ui_rq_secondary"  },
+        { key = "rq_knife",      ui_key = "ui_rq_knife"      },
+        { key = "rq_grenade",    ui_key = "ui_rq_grenade"   },
+        { key = "rq_pda",        ui_key = "ui_rq_pda"       },
+        { key = "rq_binoculars", ui_key = "ui_rq_binoculars"},
+        { key = "rq_bolts",      ui_key = "ui_rq_bolts"     },
+        { key = "rq_primary",    ui_key = "ui_rq_primary"    }
+    }
 
-    -- Secondary slot
-    local rq_secondary = arm.OptionData("rq_secondary", "ui_rq_secondary")
-    rq_secondary:SetText(get_slot_info("rq_secondary"))
-    GUI:AddOption(rq_secondary)
-    GUI:RegisterCallback("rq_secondary", function(flags) this.activate_slot(SLOTS_DATA["rq_secondary"].id) end)
+    for _, slot in ipairs(slots) do
+        local option = arm.OptionData(slot.key, slot.ui_key)
+        option:SetText(get_slot_info(slot.key))
+        GUI:AddOption(option)
+        GUI:RegisterCallback(slot.key, function(flags) this.activate_slot(SLOTS_DATA[slot.key].id) end)
+    end
 
-    -- Knife slot
-    local rq_knife = arm.OptionData("rq_knife", "ui_rq_knife")
-    rq_knife:SetText(get_slot_info("rq_knife"))
-    GUI:AddOption(rq_knife)
-    GUI:RegisterCallback("rq_knife", function(flags) this.activate_slot(SLOTS_DATA["rq_knife"].id) end)
-
-    -- Grenade slot
-    local rq_grenade = arm.OptionData("rq_grenade", "ui_rq_grenade")
-    rq_grenade:SetText(get_slot_info("rq_grenade"))
-    GUI:AddOption(rq_grenade)
-    GUI:RegisterCallback("rq_grenade", function(flags) this.activate_slot(SLOTS_DATA["rq_grenade"].id) end)
-
-    -- PDA slot
-    local rq_pda = arm.OptionData("rq_pda", "ui_rq_pda")
-    rq_pda:SetText(get_slot_info("rq_pda"))
-    GUI:AddOption(rq_pda)
-    GUI:RegisterCallback("rq_pda", function(flags) this.activate_slot(SLOTS_DATA["rq_pda"].id) end)
-
-    -- Binoculars slot
-    local rq_binoculars = arm.OptionData("rq_binoculars", "ui_rq_binoculars")
-    rq_binoculars:SetText(get_slot_info("rq_binoculars"))
-    GUI:AddOption(rq_binoculars)
-    GUI:RegisterCallback("rq_binoculars", function(flags) this.activate_slot(SLOTS_DATA["rq_binoculars"].id) end)
-
-    -- Bolts slot
-    local rq_bolts = arm.OptionData("rq_bolts", "ui_rq_bolts")
-    rq_bolts:SetText(get_slot_info("rq_bolts"))
-    GUI:AddOption(rq_bolts)
-    GUI:RegisterCallback("rq_bolts", function(flags) this.activate_slot(SLOTS_DATA["rq_bolts"].id) end)
-
-    -- Primary slot
-    local rq_primary = arm.OptionData("rq_primary", "ui_rq_primary")
-    rq_primary:SetText(get_slot_info("rq_primary"))
-    GUI:AddOption(rq_primary)
-    GUI:RegisterCallback("rq_primary", function(flags) this.activate_slot(SLOTS_DATA["rq_primary"].id) end)
-
-    -- Draw options
     GUI:DrawOptions()
-
     return GUI
 end
 
