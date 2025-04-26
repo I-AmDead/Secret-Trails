@@ -472,8 +472,8 @@ function CUIDescriptionWnd:ShowEatableParams()
 		end
 	end
 
-	local tm = get_float(self.section, "boost_time")
-	if tm then
+	local tm = has_alife_info("acv_nar") and get_float(self.section, "boost_time", 0) - 10.0 or get_float(self.section, "boost_time", 0)
+	if tm > 0 then
 		local txt = string.format("%.0f %s", tm, game.translate_string("descr_seconds"))
 		table.insert(params, {"time", game.translate_string("descr_time"), txt, {255, 0, 255, 0}})
 	end
