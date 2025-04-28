@@ -175,10 +175,7 @@ f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, const bool use_reflec
     res.position = float4(gbuf_pack_normal(norm), pos.z, gbuf_pack_hemi_mtl(norm.w, pos.w));
     res.C = col;
 
-    if (L_hotness.x > 0.0)
-        res.H = float4(L_hotness.x, L_hotness.y, 0.0, 1.0);
-    else
-        res.H = float4(0.0, 0.0, 0.0, 0.0);
+    res.H = float4(L_hotness.x, L_hotness.y, 0.0, 1.0);
 
     return res;
 }
