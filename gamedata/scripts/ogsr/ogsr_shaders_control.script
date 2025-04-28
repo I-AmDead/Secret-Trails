@@ -112,19 +112,9 @@ function scope_control(scope_name, scope_status)
 end
 
 function mark_control(wpn, force, bind)
-    local scope_name = get_string(wpn:section(), "scope_name", wpn:section())
-    local dots_number = get_u32(wpn:section(), "dots_number", 0)
-    local backlight = get_bool(wpn:section(), "backlight_reticle", false)
-
-    if scope_name then
-        if get_line_exist(scope_name, "dots_number") then
-            dots_number = get_u32(scope_name, "dots_number", dots_number)
-        else
-            backlight = get_bool(scope_name, "backlight_reticle", backlight)
-        end
-    else
-        scope_name = wpn:section()
-    end
+    local scope_name = get_string(wpn:section(), "scope_name", nil) or wpn:section()
+    local dots_number = get_u32(scope_name, "dots_number", 0)
+    local backlight = get_bool(scope_name, "backlight_reticle", false)
 
     if dots_number == 0 and not backlight then return end
 

@@ -1,6 +1,6 @@
 
 subscribed_anoms = {} -- ключи - id радиоактивных аномалий, которые возможно подписать на сигналы, значения - подписана ли аномалия на апдейт (true/false)
-autosubscribe = true -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
+autosubscribe = false -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
 
 local radzone_sect = {
 	["zone_radioactive"] = { warn = 1, last_warn = 4,  alarm = 8 },
@@ -145,16 +145,6 @@ function anomaly_binder:get_rad_intensity()
                                (dist_to_actor < geiger_warn * 4 and math.random(2500, 3000)) or math.random(4000, 5000))
         end
     end	
-end
-
-function get_ditance_to_radzone()
-    local distance = 0
-    for k, v in pairs(estimate_size) do
-        if v > distance then
-            distance = v
-        end
-    end
-    return distance
 end
 
 function get_max_radlevel()
