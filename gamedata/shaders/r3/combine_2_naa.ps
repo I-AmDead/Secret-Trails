@@ -20,6 +20,8 @@
 
 float4 fakescope_params3;
 
+uniform float4 m_flare_params;
+
 Texture2D s_ssfx_bloom;
 Texture2D s_flares;
 
@@ -63,6 +65,7 @@ float4 main(p_screen I) : SV_Target
     if (pnv_param_1.z < 1.f)
     {
         img = blend_soft(img, bloom.xyz * bloom.w);
+        img += generate_flare(center, m_flare_params.y);
         float4 flares = s_flares.Sample(smp_rtlinear, center);
         img += flares.xyz * flares.a;
     }

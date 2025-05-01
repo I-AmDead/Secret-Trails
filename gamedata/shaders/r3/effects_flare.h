@@ -2,7 +2,7 @@
 
 Texture2D s_noise;
 
-#define uGhostCount 6
+#define uGhostCount 7
 #define uGhostSpacing 0.35
 #define uGhostThreshold 0.7
 #define uHaloRadius 0.3
@@ -44,7 +44,7 @@ float4 mainImageA(float2 uv)
     circle_pos -= 0.5;
     circle_pos *= float2(screen_res.x * screen_res.w, 1.0);
 
-    float circle = smoothstep(0.025, 0.0, length(uv + circle_pos));
+    float circle = smoothstep(0.02, 0.0, length(uv + circle_pos));
     return float4(1.0, 0.656, 0.3, 1.0) * circle;
 }
 
@@ -72,7 +72,7 @@ float3 generate_ghosts(float2 uv)
             float ghost_intensity = float(i) / float(uGhostCount);
             ghost_intensity = pow(ghost_intensity, 2.0); // so each subsequent ghost has different intensity
             float d = distance(suv, 0.5);
-            float weight = 1.0 - smoothstep(0.0, 0.75, d);
+            float weight = 1.0 - smoothstep(0.0, 0.15, d);
             accumulated_ghosts += mainImageA(suv).xyz * weight;
         }
     }
@@ -117,22 +117,15 @@ float4 mainImageC(float2 uv)
 
 float4 sun_shafts_intensity;
 
-float4 generate_flare(float2 uv, float2 hpos)
+float4 generate_flare(float2 uv, float blend)
 {
-    float3 col = mainImageA(uv).xyz * 25.0;
-
-    float3 lf_col = mainImageC(uv).xyz;
-    col += lf_col;
+    float3 col = mainImageC(uv).xyz;
 
     col /= 1.0 + col;
     col = pow(col, float3(0.5, 0.5, 0.5));
 
-    float3 depth = gbuffer_get_pos(uv, get_sun_uv() * screen_res.xy);
-
-    float4 final = float4(col * L_sun_color, 1.0);
-    final *= sun_shafts_intensity * 3.0;
-    final = blendSoftLight(final, float4(col * L_sun_color, 1.0));
-    final = lerp(float4(0.f, 0.f, 0.f, 0.f), final, depth.z <= 0.0 ? 1.0 : 0.0);
+    float4 final = float4(col * (L_sun_color * 0.2), 1.0);
+    final = lerp(float4(0.f, 0.f, 0.f, 0.f), final, blend);
 
     return final;
 }
