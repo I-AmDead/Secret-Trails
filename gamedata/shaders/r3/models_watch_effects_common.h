@@ -544,5 +544,30 @@ float dfDrop(float2 origin, float2 uv)
     return dist;
 }
 
+float dfRadiation(float2 origin, float2 uv)
+{
+    uv -= origin;
+    float dist = 1e6;
+    
+    dist = min(dist, dfCircle(float2(-1.5, 0.8), 0.07, uv));
+    
+    for(int i = 0; i < 3; i++) 
+    {
+        float angle = float(i) * (2.0944);
+        
+        dist = min(dist, dfArc(float2(-1.5, 0.8), angle - 0.0, 1.0, 0.35, uv));
+        
+        float2 p1 = float2(cos(angle), sin(angle)) * 0.12 + float2(-1.5, 0.8);
+        float2 p2 = float2(cos(angle), sin(angle)) * 0.35 + float2(-1.5, 0.8);
+        dist = min(dist, dfLine(p1, p2, uv));
+        
+        float2 p3 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.12 + float2(-1.5, 0.8);
+        float2 p4 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.35 + float2(-1.5, 0.8);
+        dist = min(dist, dfLine(p3, p4, uv));
+    }
+    
+    return dist;
+}
+
 // Length of a number in digits
 float numberLength(float n) { return floor(max(log(n) / log(10.0), 0.0) + 1.0) + 2.0; }
