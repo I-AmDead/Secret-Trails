@@ -161,20 +161,16 @@ function opt_adv:InitControls(xml, handler)
                 handler:Register(ctl, "option_adv:" .. ctr_type .. "_" .. opt_key)
 
                 if ctr_type == "track" then
-                    caption = xml:Init3tButton("option_adv:btn_1", item)
-                    caption:SetText("<<")
-                    handler:Register(caption, "option_adv_btn_1_" .. opt_key)
-                    handler:AddCallback("option_adv_btn_1_" .. opt_key, ui_events.BUTTON_CLICKED,
-                        function()
-                            ctl:SetTrackValue(ctl:GetTrackValue() - (ctl:GetStep()))
-                        end)
-                    caption = xml:Init3tButton("option_adv:btn_2", item)
-                    caption:SetText(">>")
-                    handler:Register(caption, "option_adv_btn_2_" .. opt_key)
-                    handler:AddCallback("option_adv_btn_2_" .. opt_key, ui_events.BUTTON_CLICKED,
-                        function()
-                            ctl:SetTrackValue(ctl:GetTrackValue() + (ctl:GetStep()))
-                        end)
+                    local function create_track_button(name, text, delta)
+                        local caption = xml:Init3tButton("option_adv:" .. name, item)
+                        caption:SetText(text)
+                        local handler_key = "option_adv:" .. name .. "_" .. opt_key
+                        handler:Register(caption, handler_key)
+                        handler:AddCallback(handler_key, ui_events.BUTTON_CLICKED, function() ctl:SetTrackValue(ctl:GetTrackValue() + delta) end)
+                    end
+
+                    create_track_button("btn_1", "<<", -ctl:GetStep())
+                    create_track_button("btn_2", ">>", ctl:GetStep())
                 end
 
                 if group == "script" then
