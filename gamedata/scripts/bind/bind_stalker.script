@@ -78,6 +78,7 @@ function actor_binder:net_destroy()
     self.object:set_callback(callback.death, nil)
     self.object:set_callback(callback.entity_alive_before_hit, nil)
     self.object:set_callback(callback.on_before_use_item, nil)
+    self.object:set_callback(callback.on_actor_hud_motion_mark, nil)
     self.object:set_callback(callback.on_actor_weapon_zoom_in, nil)
     self.object:set_callback(callback.on_actor_weapon_zoom_out, nil)
     self.object:set_callback(callback.on_actor_weapon_zoom_switch, nil)
@@ -132,6 +133,7 @@ function actor_binder:reinit()
     self.object:set_callback(callback.on_goodwill_change, self.on_goodwill_change, self)
     self.object:set_callback(callback.entity_alive_before_hit, self.before_hit_callback, self)
     self.object:set_callback(callback.on_before_use_item, self.before_use, self)
+    self.object:set_callback(callback.on_actor_hud_motion_mark, self.on_actor_hud_motion_mark, self)
     self.object:set_callback(callback.on_actor_weapon_zoom_in, self.on_actor_weapon_zoom_in, self)
     self.object:set_callback(callback.on_actor_weapon_zoom_out, self.on_actor_weapon_zoom_out, self)
     self.object:set_callback(callback.on_actor_weapon_zoom_switch, self.on_actor_weapon_zoom_switch, self)
@@ -398,6 +400,10 @@ function actor_binder:load(reader)
     xr_logic.pstor_load_all(self.object, reader)
 
     self.am:call("on_load", reader)
+end
+
+function actor_binder:on_actor_hud_motion_mark(state, mark, obj)
+    self.am:call("on_motion_mark", state, mark, obj)
 end
 
 function actor_binder:on_actor_weapon_zoom_in(obj)
