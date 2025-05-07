@@ -82,18 +82,12 @@ end
 
 local bugfix_detector = false
 local function detector_hide(anm_time)
-    if anm_time then
-        dsh.timeout(anm_time, function() get_actor_obj():DetectorToogle(true) end)
-        bugfix_detector = false
+    if bugfix_detector then
+        get_actor_obj():DetectorToogle(true)
     else
-        if not bugfix_detector then
-            if get_actor_obj():IsDetectorActive() then
-                get_actor_obj():DetectorToogle(true)
-                bugfix_detector = true
-            end
-        else
+        if get_actor_obj():IsDetectorActive() then
             get_actor_obj():DetectorToogle(true)
-            bugfix_detector = false
+            bugfix_detector = true
         end
     end
 end
@@ -140,7 +134,11 @@ local function play_item_use(item)
 
     local prev_active_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
-    detector_hide()
+
+    dsh.wait_condition(function() return not db.actor:active_item() end, 
+    function()
+        detector_hide()
+    end)
 
     dsh.wait_condition(function() return not db.actor:active_item() and not get_actor_obj():IsDetectorActive() end, 
     function()
@@ -161,10 +159,7 @@ local function play_item_use(item)
         dsh.timeout(anm_duration, function()
             ogsr_actor_animation.animation_off()
             db.actor:activate_slot(prev_active_slot)
-            dsh.wait_condition(function() return db.actor:active_slot() == prev_active_slot  end, 
-            function()
-                detector_hide()
-            end)
+            dsh.wait_condition(function() return db.actor:active_slot() == prev_active_slot  end, detector_hide)
         end)
     end)
 end

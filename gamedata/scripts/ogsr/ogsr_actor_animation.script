@@ -256,7 +256,7 @@ local function on_item_before_pickup(obj)
 
     local pickup_anm_sec = "anim_pickup"
     local cam_pos = device().cam_pos
-    local cam_pos_y = cam_pos.y - 0.7
+    local cam_pos_y = cam_pos.y - 1.0
     local obj_pos = obj:position()
     local anm_name = "script\\clear_mask_right_hand.anm"
     if not anim_plays then
@@ -291,10 +291,11 @@ function harvest(on_take)
 
     local prev_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
-    detector_hide()
     animation_on()
 
-    dsh.wait_condition(function() return not db.actor:active_item() end, 
+    dsh.wait_condition(function() return not db.actor:active_item() end, detector_hide)
+
+    dsh.wait_condition(function() return not db.actor:active_item() and not get_actor_obj():IsDetectorActive() end, 
     function()
         speed_k = has_alife_info("acv_gvdr") and 1.2 or 1.0
         level.add_cam_effector("camera_effects\\harvest_cam_down.anm", 8999, false, "")
@@ -303,7 +304,7 @@ function harvest(on_take)
         snd_harvest:play(db.actor, 0, sound_object.s2d)
         snd_harvest.frequency = speed_k
         local harvest_anm_time = game.play_hud_motion(2, harvest_anm_sec, "anm_harvest", true, speed_k)
-        dsh.timeout(harvest_anm_time + 100, 
+        dsh.timeout(harvest_anm_time, 
         function()
             level.add_cam_effector("camera_effects\\harvest_loot.anm", 9000, false, "")
             snd_loot:play(db.actor, 0, sound_object.s2d)
@@ -311,15 +312,15 @@ function harvest(on_take)
             local loot_anm_time = game.play_hud_motion(2, loot_anm_sec, "anm_loot", true, speed_k)
             dsh.timeout(loot_anm_time - 500, 
             function()
-                --toggle_force_crouch()
                 on_take()
                 level.enable_input()
                 archievements.acv_count_event("acv_gvdr", 100, game.translate_string("acv_gvdr"))
             end)
             dsh.timeout(loot_anm_time, 
             function()
-                animation_off()
                 db.actor:activate_slot(prev_slot)
+                dsh.wait_condition(function() return db.actor:active_slot() == prev_slot  end, detector_hide)
+                animation_off()
             end)
         end)
     end)
