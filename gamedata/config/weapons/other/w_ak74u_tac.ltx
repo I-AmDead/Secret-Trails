@@ -56,7 +56,7 @@ ammo_class                               = ammo_5.45x39_fmj, ammo_5.45x39_ap
 ammo_elapsed                             = 45
 ammo_mag_size                            = 45
 
-scope_names                              = kobra, ekp8_02, okp, pso2, 1p59, pka, ac10632, eot, 0kp2, kemper, mepro
+scope_names                              = kobra, ekp8_02, okp, pso2, 1p59, pka, ac10632, eot, aimpoint, compm4s, 0kp2, kemper, mepro
 scope_status                             = 2
 
 scope_respawn                            = wpn_ak74u_tac
@@ -68,6 +68,8 @@ scope_respawn_1p59                       = wpn_ak74u_tac_1p59
 scope_respawn_pka                        = wpn_ak74u_tac_pka
 scope_respawn_ac10632                    = wpn_ak74u_tac_ac10632
 scope_respawn_eot                        = wpn_ak74u_tac_eot
+scope_respawn_aimpoint                   = wpn_ak74u_tac_aimpoint
+scope_respawn_compm4s                    = wpn_ak74u_tac_compm4s
 scope_respawn_0kp2                       = wpn_ak74u_tac_0kp2
 scope_respawn_kemper                     = wpn_ak74u_tac_kemper
 scope_respawn_mepro                      = wpn_ak74u_tac_mepro
@@ -153,15 +155,18 @@ grenade_flame_particles                  = weapons\generic_weapon01
 smoke_particles                          = ghost_particles\weapons\flame_eft_ak ;particles remade incomp.
 silencer_smoke_particles                 = ghost_particles\weapons\generic_smoke_eft_sil ;particles remade incomp.
 
-;-------------------------------------------------------------------------------------------------------------------------------------------------------
 ;---------------------------------------------------------------------SND-------------------------------------------------------------------------------
-snd_draw                                 = weapons\ak74u_tac\aksu_tac_draw
-snd_holster                              = weapons\ak74u_tac\aksu_tac_hide
+snd_draw                                 = weapons\assault_draw
+snd_holster                              = weapons\assault_holster
 
+snd_switch                               = weapons\abakan\abakan_gl_deactivate
+snd_switch_g                             = weapons\abakan\abakan_gl_activate
 snd_empty                                = weapons\ak_empty, 0.5
-snd_reload                               = weapons\ak74u_tac\aksu_tac_reload
-snd_reload_empty                         = weapons\ak74u_tac\aksu_tac_reload_empty
-snd_reload_jammed                        = weapons\ak74u_tac\aksu_tac_unjam
+
+snd_reload                               = weapons\ak74\ak74_reload
+snd_reload_empty                         = weapons\ak74\ak74_reload_empty
+snd_reload_jammed                        = weapons\ak74\ak74_misfire
+snd_reload_grenade                       = weapons\gp25_grenload
 
 snd_shoot                                = wpn_aks74u_snd_shoot
 snd_shoot_actor                          = wpn_aks74u_snd_shoot_actor
@@ -175,114 +180,120 @@ torch_attach_offset_z                    = 0.120801
 ;------------------------------------------------------------------Attachment----------------------------------------------------------------------------
 
 scope_attach                             = true
+scope_attach_bone                        = wpn_scope
 scope_hud_attach_bone                    = wpn_scope
 
-scope_hud_attach_pos                     = 0.002022,-0.059662,-0.002591
+scope_hud_attach_pos                     = -0.023072,-0.066949,0.000255
 scope_hud_attach_rot                     = 180.000000,0.000000,0.000000
-scope_hud_attach_scale                   = 0.890
+scope_hud_attach_scale                   = 0.850
 
 [wpn_ak74u_tac_nato_attach]
 
 scope_attach                             = true
 scope_hud_attach_bone                    = wpn_scope
 
-scope_hud_attach_pos                     = 0.026155,0.001095,0.208250
+scope_hud_attach_pos                     = 0.000157,-0.006111,0.208450
 scope_hud_attach_rot                     = 180.000000,0.000000,0.000000
 scope_hud_attach_scale                   = 0.950
 
 ;---------------------------------------------------------------------HUD-------------------------------------------------------------------------------
 
 [wpn_ak74u_tac_hud]:hud_base
+
 item_visual                              = dynamics\weapons\wpn_ak74u_tac\wpn_ak74u_tac_hud.ogf
-
-hands_position                           = -0.062, -0.18, 0.1655
-hands_orientation                        = 0.55, 2.39, 0.15
-
-aim_hud_offset_pos                       = -0.0901, 0.0711, -0.35
-aim_hud_offset_rot                       = 0.0421, 0.00845, -0.0055
-
-gl_hud_offset_pos                        = -0.0495, 0.014, -0.155
-gl_hud_offset_rot                        = -0.081, 0.0045, 0
-
-lean_hud_offset_pos                      = 0, 0, 0
-lean_hud_offset_rot                      = 0, 0, 0
-
-;--------
-aim_hud_offset_pos_16x9                  = -0.056300, 0.023800, -0.045000
-aim_hud_offset_rot_16x9                  = 0.005000, 0.008000, -0.094500
-
-hands_position_16x9                      = -0.007000, -0.003000, 0.025000
-hands_orientation_16x9                   = 0.420000, 0.120000, 0.000000
 
 item_position                            = 0, 0, 0
 item_orientation                         = 0, 0, 0
 
-aim_hud_offset_alt_pos_16x9              = 0.009000, 0.026600, -0.045000
-aim_hud_offset_alt_rot_16x9              = 0.003500, 0.001500, -0.790509
+hands_position                           = 0.004800, -0.008400, -0.059300
+hands_position_16x9                      = 0.004800, -0.008400, -0.059300
+hands_orientation                        = 0, 0, 0
+hands_orientation_16x9                   = 0, 0, 0
 
-;-------
-lowered_hud_offset_pos                   = 0, 0.1, 0
-lowered_hud_offset_rot                   = 0.3, -0.1, 0.1
+aim_hud_offset_pos                       = -0.063070,0.019400,-0.060725
+aim_hud_offset_pos_16x9                  = -0.063070,0.019400,-0.060725
+aim_hud_offset_rot                       = -0.000263,-0.000175,0.004500
+aim_hud_offset_rot_16x9                  = -0.000263,-0.000175,0.004500
+
+lean_hud_offset_pos                      = 0, 0, 0
+lean_hud_offset_rot                      = 0, 0, 0
 
 lowered_hud_offset_pos                   = 0.1, 0, 0
 lowered_hud_offset_rot                   = 0.1, -0.8, 0.1
 
 ;Доставание///////////////////////////////////////////////////
-anm_show                                 = wpn_hand_aksu_tact_in
-anm_show_empty                           = wpn_hand_aksu_tact_in
-anm_show_jammed                          = wpn_hand_aksu_tact_in
+anm_show                                 = ak74_tac_draw
+anm_show_empty                           = ak74_tac_draw
+anm_show_jammed                          = ak74_tac_draw
 
 ;Убирание/////////////////////////////////////////////////////
-anm_hide                                 = wpn_hand_aksu_tact_out
-anm_hide_empty                           = wpn_hand_aksu_tact_out
-anm_hide_jammed                          = wpn_hand_aksu_tact_out
+anm_hide                                 = ak74_tac_hide
+anm_hide_empty                           = ak74_tac_hide
+anm_hide_jammed                          = ak74_tac_hide
 
 ;Бездействие//////////////////////////////////////////////////
-anm_idle                                 = wpn_hand_aksu_tact_idle
-anm_idle_empty                           = wpn_hand_aksu_tact_idle
-anm_idle_jammed                          = wpn_hand_aksu_tact_idle
+anm_idle                                 = ak74_tac_idle
+anm_idle_empty                           = ak74_tac_idle
+anm_idle_jammed                          = ak74_tac_idle
 
 ;Бездействие в прицеливании///////////////////////////////////
-anm_idle_aim                             = wpn_hand_aksu_tact_idle_aim
-anm_idle_aim_empty                       = wpn_hand_aksu_tact_idle_aim
-anm_idle_aim_jammed                      = wpn_hand_aksu_tact_idle_aim
-anm_idle_aim_scope                       = wpn_hand_aksu_tact_idle_aim
-anm_idle_aim_scope_empty                 = wpn_hand_aksu_tact_idle_aim
-anm_idle_aim_scope_jammed                = wpn_hand_aksu_tact_idle_aim
+anm_idle_aim                             = ak74_tac_idle_aim
+anm_idle_aim_empty                       = ak74_tac_idle_aim
+anm_idle_aim_jammed                      = ak74_tac_idle_aim
+anm_idle_aim_scope                       = ak74_tac_idle_aim
+anm_idle_aim_scope_empty                 = ak74_tac_idle_aim
+anm_idle_aim_scope_jammed                = ak74_tac_idle_aim
 
 ;Ходьба ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving                          = wpn_hand_aksu_tact_walk
-anm_idle_moving_jammed                   = wpn_hand_aksu_tact_walk
-anm_idle_moving_empty                    = wpn_hand_aksu_tact_walk
+anm_idle_moving                          = ak74_tac_walk
+anm_idle_moving_jammed                   = ak74_tac_walk
+anm_idle_moving_empty                    = ak74_tac_walk
 
 ;Ходьба медленная (SHIFT) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving_slow                     = wpn_hand_aksu_tact_walk
-anm_idle_moving_slow_jammed              = wpn_hand_aksu_tact_walk
-anm_idle_moving_slow_empty               = wpn_hand_aksu_tact_walk
+anm_idle_moving_slow                     = ak74_tac_walk
+anm_idle_moving_slow_jammed              = ak74_tac_walk
+anm_idle_moving_slow_empty               = ak74_tac_walk
 
 ;Ходьба в полуприсяди (CTRL) ВПЕРЕД//////////////////////////////////////////////////////////////////////////
-anm_idle_moving_crouch                   = wpn_hand_aksu_tact_walk
-anm_idle_moving_crouch_jammed            = wpn_hand_aksu_tact_walk
-anm_idle_moving_crouch_empty             = wpn_hand_aksu_tact_walk
+anm_idle_moving_crouch                   = ak74_tac_walk
+anm_idle_moving_crouch_jammed            = ak74_tac_walk
+anm_idle_moving_crouch_empty             = ak74_tac_walk
 
 ;Ходьба в присяде (CTRL+SHIFT) ВПЕРЕД/////////////////////////////////////////////////////////////////////////
-anm_idle_moving_crouch_slow              = wpn_hand_aksu_tact_walk
-anm_idle_moving_crouch_slow_jammed       = wpn_hand_aksu_tact_walk
-anm_idle_moving_crouch_slow_empty        = wpn_hand_aksu_tact_walk
+anm_idle_moving_crouch_slow              = ak74_tac_walk
+anm_idle_moving_crouch_slow_jammed       = ak74_tac_walk
+anm_idle_moving_crouch_slow_empty        = ak74_tac_walk
 
 ;Бег//////////////////////////////////////////////////////////////////
-anm_idle_sprint                          = wpn_hand_aksu_tact_run
-anm_idle_sprint_empty                    = wpn_hand_aksu_tact_run
-anm_idle_sprint_jammed                   = wpn_hand_aksu_tact_run
+anm_idle_sprint                          = ak74_tac_sprint
+anm_idle_sprint_empty                    = ak74_tac_sprint
+anm_idle_sprint_jammed                   = ak74_tac_sprint
+
+;Вход в спринт//////////////////////////////////////////////////////////////////
+anm_idle_sprint_start                    = ak74_tac_sprint_start
+anm_idle_sprint_start_empty              = ak74_tac_sprint_start
+anm_idle_sprint_start_jammed             = ak74_tac_sprint_start
+
+;Выход из спринта//////////////////////////////////////////////////////////////////
+anm_idle_sprint_end                      = ak74_tac_sprint_end
+anm_idle_sprint_end_empty                = ak74_tac_sprint_end
+anm_idle_sprint_end_jammed               = ak74_tac_sprint_end
 
 ;Выстрелы обычными патронами/////////////////////////////////////////////////////////////////////
-anm_shots                                = wpn_hand_aksu_tact_shoot, wpn_aksu_tact_shoot
+anm_shots                                = ak74_tac_shoot, shoot
+anm_shots_l                              = ak74_tac_shoot, shoot
+anm_shots_aim                            = ak74_tac_aim_shoot, shoot
+anm_shots_aim_last                       = ak74_tac_aim_shoot, shoot
 
 ;Перезарядка/////////////////////////////////////////////////////////////////////
-anm_reload                               = wpn_hand_aksu_tact_reload, wpn_aksu_tact_reload
-anm_reload_empty                         = wpn_hand_aksu_tact_reload_empty, wpn_aksu_tact_reload_empty
-anm_reload_jammed                        = wpn_hand_aksu_tact_misfire, wpn_aksu_tact_misfire
-anm_reload_jammed_last                   = wpn_hand_aksu_tact_misfire, wpn_aksu_tact_misfire
+anm_reload                               = ak74_tac_reload, reload
+anm_reload_empty                         = ak74_tac_reload_empty, reload_empty
+anm_reload_jammed                        = ak74_tac_revival, revival
+anm_reload_jammed_last                   = ak74_tac_revival, revival
+
+;Переключение режимов огня///////////////////////////////////////////////////////////////
+anm_firemode                             = ak74_tac_firemode
+anm_firemode_empty                       = ak74_tac_firemode
 
 anm_idle_moving_slow_speed_k             = 0.7
 anm_idle_moving_slow_empty_speed_k       = 0.7
@@ -294,17 +305,18 @@ anm_idle_moving_crouch_slow_speed_k      = 0.3
 anm_idle_moving_crouch_slow_empty_speed_k = 0.3
 anm_idle_moving_crouch_slow_jammed_speed_k = 0.3
 
-shell_point                              = 0.065, 0.04, 0.118
-shell_dir                                = 0, 1, 0
-shell_bone                               = wpn_body
-
-fire_point                               = 0.000000, 0.049711, 0.300000
+fire_point                               = 0.000000,-0.006600,0.176902
 fire_bone                                = wpn_body
-fire_point2                              = 0, -0.029, 0.575
-fire_bone2                               = wpn_body
-shoot_point                              = 0.000000, 0.049711, 0.300000
+fire_point2                              = 0.000000, -0.004400, 0.139700
+fire_bone2                               = wpn_launcher
 
-freelook_z_offset_mul                    = 0.7
+shoot_point                              = 0.000000,-0.006600,-0.376902
+
+shell_point                              = 0, -0.01, 0
+shell_dir                                = 0.0, 1.0, 0.0
+shell_bone                               = bolt
+
+freelook_z_offset_mul                    = 0.6
 
 ;-----------------------------------------------------------------------Addons--------------------------------------------------------------------------
 
@@ -318,10 +330,10 @@ hud                                      = wpn_ak74u_tac_kobra_hud
 
 [wpn_ak74u_tac_kobra_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.058320,0.001600,-0.033625
-aim_hud_offset_pos_16x9                  = -0.058320,0.001600,-0.033625
-aim_hud_offset_rot                       = 0.025837,0.014825,-0.077500
-aim_hud_offset_rot_16x9                  = 0.025837,0.014825,-0.077500
+aim_hud_offset_pos                       = -0.063120,0.002600,-0.047125
+aim_hud_offset_pos_16x9                  = -0.063120,0.002600,-0.047125
+aim_hud_offset_rot                       = 0.019337,-0.000675,0.004500
+aim_hud_offset_rot_16x9                  = 0.019337,-0.000675,0.004500
 
 ;------------------------------------------------------------------------------------------------
 
@@ -335,10 +347,10 @@ hud                                      = wpn_ak74u_tac_ekp8_02_hud
 
 [wpn_ak74u_tac_ekp8_02_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.053920,-0.005200,-0.038525
-aim_hud_offset_pos_16x9                  = -0.053920,-0.005200,-0.038525
-aim_hud_offset_rot                       = 0.029837,0.011825,-0.097500
-aim_hud_offset_rot_16x9                  = 0.029837,0.011825,-0.097500
+aim_hud_offset_pos                       = -0.059920,-0.009000,-0.050625
+aim_hud_offset_pos_16x9                  = -0.059920,-0.009000,-0.050625
+aim_hud_offset_rot                       = 0.004837,0.001825,0.004500
+aim_hud_offset_rot_16x9                  = 0.004837,0.001825,0.004500
 
 ;---------------------------------------------------------------------------------------------------
 
@@ -352,10 +364,10 @@ hud                                      = wpn_ak74u_tac_okp_hud
 
 [wpn_ak74u_tac_okp_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.049820,0.012900,-0.041525
-aim_hud_offset_pos_16x9                  = -0.049820,0.012900,-0.041525
-aim_hud_offset_rot                       = 0.004337,0.017325,-0.082500
-aim_hud_offset_rot_16x9                  = 0.004337,0.017325,-0.082500
+aim_hud_offset_pos                       = -0.053920,0.013300,-0.041525
+aim_hud_offset_pos_16x9                  = -0.053920,0.013300,-0.041525
+aim_hud_offset_rot                       = 0.000337,0.001325,0.004500
+aim_hud_offset_rot_16x9                  = 0.000337,0.001325,0.004500
 
 ;-----------------------------------------------------------------------------------------------------------------------
 
@@ -369,10 +381,10 @@ hud                                      = wpn_ak74u_tac_pso2_hud
 
 [wpn_ak74u_tac_pso2_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.041320,0.011000,-0.012825
-aim_hud_offset_pos_16x9                  = -0.041320,0.011000,-0.012825
-aim_hud_offset_rot                       = 0.007837,0.012325,-0.081500
-aim_hud_offset_rot_16x9                  = 0.007837,0.012325,-0.081500
+aim_hud_offset_pos                       = -0.048520,0.010700,-0.026725
+aim_hud_offset_pos_16x9                  = -0.048520,0.010700,-0.026725
+aim_hud_offset_rot                       = 0.003337,0.005325,0.006500
+aim_hud_offset_rot_16x9                  = 0.003337,0.005325,0.006500
 
 ;-----------------------------------------------------------------------------------------------------
 
@@ -386,10 +398,10 @@ hud                                      = wpn_ak74u_tac_1p59_hud
 
 [wpn_ak74u_tac_1p59_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.038920,0.002600,-0.057725
-aim_hud_offset_pos_16x9                  = -0.038920,0.002600,-0.057725
-aim_hud_offset_rot                       = 0.008000,0.012500,-0.093000
-aim_hud_offset_rot_16x9                  = 0.008000,0.012500,-0.093000
+aim_hud_offset_pos                       = -0.045870,0.002450,-0.063625
+aim_hud_offset_pos_16x9                  = -0.045870,0.002450,-0.063625
+aim_hud_offset_rot                       = 0.003500,0.005500,0.000000
+aim_hud_offset_rot_16x9                  = 0.003500,0.005500,0.000000
 
 ;-----------------------------------------------------------------------------------------------------
 
@@ -403,10 +415,10 @@ hud                                      = wpn_ak74u_tac_pka_hud
 
 [wpn_ak74u_tac_pka_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.044620,0.005600,-0.025024
-aim_hud_offset_pos_16x9                  = -0.044620,0.005600,-0.025024
-aim_hud_offset_rot                       = 0.007500,0.011500,-0.042000
-aim_hud_offset_rot_16x9                  = 0.007500,0.011500,-0.042000
+aim_hud_offset_pos                       = -0.051320,0.006800,-0.030025
+aim_hud_offset_pos_16x9                  = -0.051320,0.006800,-0.030025
+aim_hud_offset_rot                       = 0.004000,0.004000,0.004000
+aim_hud_offset_rot_16x9                  = 0.004000,0.004000,0.004000
 
 ;-------------------------------------------------------------------------------
 
@@ -420,10 +432,10 @@ scope_y                                  = -5
 
 [wpn_ak74u_tac_ac10632_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.056850,-0.006250,-0.082901
-aim_hud_offset_pos_16x9                  = -0.056850,-0.006250,-0.082901
-aim_hud_offset_rot                       = 0.013500,0.007500,-0.092006
-aim_hud_offset_rot_16x9                  = 0.013500,0.007500,-0.092006
+aim_hud_offset_pos                       = -0.064000,-0.013300,-0.057701
+aim_hud_offset_pos_16x9                  = -0.064000,-0.013300,-0.057701
+aim_hud_offset_rot                       = 0.004000,0.002000,0.004994
+aim_hud_offset_rot_16x9                  = 0.004000,0.002000,0.004994
 
 ;-------------------------------------------------------------------------------
 
@@ -437,10 +449,44 @@ scope_y                                  = -4
 
 [wpn_ak74u_tac_eot_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.056850,-0.006250,-0.117702
-aim_hud_offset_pos_16x9                  = -0.056850,-0.006250,-0.117702
-aim_hud_offset_rot                       = 0.013500,0.007500,-0.092006
-aim_hud_offset_rot_16x9                  = 0.013500,0.007500,-0.092006
+aim_hud_offset_pos                       = -0.064200,-0.012200,-0.045800
+aim_hud_offset_pos_16x9                  = -0.064200,-0.012200,-0.045800
+aim_hud_offset_rot                       = 0.011000, 0.003500, 0.004994
+aim_hud_offset_rot_16x9                  = 0.011000, 0.003500, 0.004994
+
+;-------------------------------------------------------------------------------------------------------------------------------
+
+[wpn_ak74u_tac_aimpoint]:wpn_ak74u_tac, wpn_ak74u_tac_nato_attach
+
+hud                                      = wpn_ak74u_tac_aimpoint_hud
+
+scope_name                               = aimpoint
+scope_x                                  = 90
+scope_y                                  = -10
+
+[wpn_ak74u_tac_aimpoint_hud]:wpn_ak74u_tac_hud
+
+aim_hud_offset_pos                       = -0.062950,-0.014500,-0.025000
+aim_hud_offset_pos_16x9                  = -0.062950,-0.014500,-0.025000
+aim_hud_offset_rot                       = 0.002600,-0.000150,0.004994
+aim_hud_offset_rot_16x9                  = 0.002600,-0.000150,0.004994
+
+;-------------------------------------------------------------------------------------------------------------------------------
+
+[wpn_ak74u_tac_compm4s]:wpn_ak74u_tac, wpn_ak74u_tac_nato_attach
+
+hud                                      = wpn_ak74u_tac_compm4s_hud
+
+scope_name                               = compm4s
+scope_x                                  = 90
+scope_y                                  = -10
+
+[wpn_ak74u_tac_compm4s_hud]:wpn_ak74u_tac_hud
+
+aim_hud_offset_pos                       = -0.062950,-0.008500,-0.057101
+aim_hud_offset_pos_16x9                  = -0.062950,-0.008500,-0.057101
+aim_hud_offset_rot                       = -0.002000,0.001050,0.004994
+aim_hud_offset_rot_16x9                  = -0.002000,0.001050,0.004994
 
 ;-------------------------------------------------------------------------------------------------------------------------------
 
@@ -454,10 +500,10 @@ scope_y                                  = -10
 
 [wpn_ak74u_tac_0kp2_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.056850,-0.007150,-0.082901
-aim_hud_offset_pos_16x9                  = -0.056850,-0.007150,-0.082901
-aim_hud_offset_rot                       = -0.005500,0.011500,-0.092006
-aim_hud_offset_rot_16x9                  = -0.005500,0.011500,-0.092006
+aim_hud_offset_pos                       = -0.059850,-0.005950,-0.056300
+aim_hud_offset_pos_16x9                  = -0.059850,-0.005950,-0.056300
+aim_hud_offset_rot                       = 0.002000,0.000000,0.002994
+aim_hud_offset_rot_16x9                  = 0.002000,0.000000,0.002994
 
 ;-------------------------------------------------------------------------------------------------------------------------------
 
@@ -469,12 +515,14 @@ scope_name                               = kemper
 scope_x                                  = 90
 scope_y                                  = -10
 
+scope_hud_attach_pos                     = 0.000157,-0.006111,0.223248
+
 [wpn_ak74u_tac_kemper_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.056850,-0.009550,-0.082901
-aim_hud_offset_pos_16x9                  = -0.056850,-0.009550,-0.082901
-aim_hud_offset_rot                       = 0.013500,0.007500,-0.092006
-aim_hud_offset_rot_16x9                  = 0.013500,0.007500,-0.092006
+aim_hud_offset_pos                       = -0.061650,-0.019000,-0.044800
+aim_hud_offset_pos_16x9                  = -0.061650,-0.019000,-0.044800
+aim_hud_offset_rot                       = 0.002000,-0.001200,0.002994
+aim_hud_offset_rot_16x9                  = 0.002000,-0.001200,0.002994
 
 ;-------------------------------------------------------------------------------------------------------------------------------
 
@@ -488,7 +536,7 @@ scope_y                                  = -10
 
 [wpn_ak74u_tac_mepro_hud]:wpn_ak74u_tac_hud
 
-aim_hud_offset_pos                       = -0.057600,-0.007600,-0.124302
-aim_hud_offset_pos_16x9                  = -0.057600,-0.007600,-0.124302
-aim_hud_offset_rot                       = 0.037500,0.007500,-0.092006
-aim_hud_offset_rot_16x9                  = 0.037500,0.007500,-0.092006
+aim_hud_offset_pos                       = -0.062800,-0.024700,-0.044800
+aim_hud_offset_pos_16x9                  = -0.062800,-0.024700,-0.044800
+aim_hud_offset_rot                       = 0.002000,-0.001500,0.002994
+aim_hud_offset_rot_16x9                  = 0.002000,-0.001500,0.002994
