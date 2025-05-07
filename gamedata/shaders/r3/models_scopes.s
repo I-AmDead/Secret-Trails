@@ -35,6 +35,8 @@ function element_2(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_heat", "$user$heat")
 	shader:dx10texture("s_inside", "wpn\\scope_utility\\inside")
 	shader:dx10texture("s_dirt", "wpn\\scope_utility\\dirt")
+	shader:dx10texture("s_reflection", "wpn\\scope_utility\\reflection")
+	shader:dx10texture("s_heat_map", "wpn\\scope_utility\\heat_map")
 	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 end

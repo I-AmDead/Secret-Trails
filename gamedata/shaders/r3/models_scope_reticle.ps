@@ -4,7 +4,7 @@
     Link       : https://www.moddb.com/mods/stalker-anomaly/addons/shader-3d-scopes
     Authors    : LVutner, party_50
     Date       : 01.03.2024
-    Last Edit  : 26.10.2024
+    Last Edit  : 14.04.2025
     =====================================================================
 */
 
@@ -12,7 +12,10 @@
 #include "nv_utils.h"
 #include "thermal_utils.h"
 
-#define PI 3.1415926f
+#define REFLECTIONS_FACTOR 0.0
+#define SPECULAR_FACTOR 1.0
+
+#define PI 3.1415926
 
 #define RT_NONE 0
 #define RT_LED 1
@@ -26,14 +29,24 @@
 #define IT_NONE 0
 #define IT_NV 1
 #define IT_THERMAL 2
+#define IT_THERMAL_COLOR 3
+
+#define ST_NVG_BLUR 0
+#define ST_PARALLAX_SHADOW 1
+#define ST_SEE_THROUGH 2
+#define ST_THERMAL_PIXELATION 3
+#define ST_CHROMATISM 4
+#define ST_NEXT 5
+
+#define SETTING(settings, shift) (settings & (1 << shift))
 
 Texture2D s_prev_frame;
 Texture2D s_inside;
 Texture2D s_dirt;
-TextureCube s_env0;
-TextureCube s_env1;
+Texture2D s_heat_map;
+TextureCube s_reflection;
 
-uniform float4 m_hud_params;
+float4 m_hud_params;
 uniform float4 s3ds_param_1;
 uniform float4 s3ds_param_2;
 uniform float4 s3ds_param_3;
@@ -45,12 +58,14 @@ struct vf
 {
     float4 hpos : SV_Position;
     float2 tc0 : TEXCOORD0;
-    float3 v_pos : TEXCOORD1;
-    float3 v_nrm : TEXCOORD2;
-    float3 w_pos : TEXCOORD3;
-    float3 w_nrm : TEXCOORD4;
-    float3 v_dir : TEXCOORD5;
-    float3 v_sun : TEXCOORD6;
+    float3 w_P : POSITION0;
+    float3 w_T : TANGENT0;
+    float3 w_B : BINORMAL0;
+    float3 w_N : NORMAL0;
+    float3 v_P : POSITION1;
+    float3 v_T : TANGENT1;
+    float3 v_B : BINORMAL1;
+    float3 v_N : NORMAL1;
 };
 
 float3x3 cotangent_frame(float3 N, float3 P, float2 uv)
@@ -91,7 +106,7 @@ float2 project(float2 tc, float2 tangent, float distance, float size)
     return parallax_tc;
 }
 
-float4 blur_sample(Texture2D tex, float2 uv)
+float4 blur_sample(float2 uv)
 {
     float4 color = float4(0, 0, 0, 0);
     float blur_amount = 0.006;
@@ -101,15 +116,12 @@ float4 blur_sample(Texture2D tex, float2 uv)
     float weights[9] = {1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0};
 
     // Generate a small random offset for dithering
-    float2 dither =
-        float2((frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453) - 0.5) * dither_amount, (frac(sin(dot(uv, float2(93.9898, 67.345))) * 43758.5453) - 0.5) * dither_amount);
+    float2 dither = float2((frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453) - 0.5) * dither_amount, (frac(sin(dot(uv, float2(93.9898, 67.345))) * 43758.5453) - 0.5) * dither_amount);
 
     for (int i = 0; i < 9; i++)
     {
-        color += tex.Sample(smp_base, uv + offsets[i] * blur_amount + dither) * weights[i];
+        color += s_prev_frame.Sample(smp_base, uv + offsets[i] * blur_amount + dither) * weights[i];
     }
-
-    color.rgb *= m_hud_params.x;
 
     return color;
 }
@@ -124,7 +136,7 @@ float3 chroma_sample(float2 lens_tc, float2 back_tc, float current_fov, float po
         float step = i / 16.0;
 
         float2 delta = lens_tc - 0.5;
-        float zoom_multiplier = min(1, 0.005 * (180 / current_fov));
+        float zoom_multiplier = min(1, 0.004 * (180 / current_fov));
         delta = sign(delta) * pow(abs(delta), 3.5) * (2 * power + zoom_multiplier);
         float2 coord = back_tc + (step - 0.5) * delta;
 
@@ -132,31 +144,37 @@ float3 chroma_sample(float2 lens_tc, float2 back_tc, float current_fov, float po
         weight = lerp(float3(0.5, 0.5, 0.5), weight, 2.0);
 
         float3 color = s_prev_frame.Sample(smp_base, coord).rgb;
-        color.rgb *= m_hud_params.x;
-
         color_sum += color * color * weight;
 
         weight_sum += weight;
     }
 
-    return sqrt(color_sum / weight_sum);
+    return max(0.0001, sqrt(color_sum / weight_sum));
 }
 
-float3 back_image_sample(float2 lens_tc, float2 back_tc, float current_fov, float power, int nvg_blur)
+float3 back_image_sample(float2 lens_tc, float2 back_tc, float current_fov, float power, bool blur, bool chroma)
 {
-    float3 final = nvg_blur ? blur_sample(s_prev_frame, back_tc) : chroma_sample(lens_tc, back_tc, current_fov, power);
+    if (blur)
+    {
+        return blur_sample(back_tc);
+    }
 
-    return final;
+    if (chroma)
+    {
+        return chroma_sample(lens_tc, back_tc, current_fov, power);
+    }
+
+    return s_prev_frame.Sample(smp_base, back_tc).rgb;
 }
 
 float3 apply_nvg(float2 tc, float3 img)
 {
     img = BlackandWhite(img);
-    img = Brightness(img, 0.45, 6);
+    img = Brightness(img, 0.45, 7);
     img = clamp(img, 0, 1);
     img = LevelsPass(img);
-    img = Grain2(img, tc);
     img = Grain1(img, tc);
+    img = Grain2(img, tc);
     return img;
 }
 
@@ -173,11 +191,8 @@ float3 lcd_effect(int2 hpos)
     else
         lcdColor.b = 1;
 
-    float sclV = 0.35;
-    if (int(fmod(hpos.y, 4)) == 0)
-        lcdColor.rgb = float3(sclV, sclV, sclV);
-
-    if (int(fmod(hpos.x, 4)) == 0)
+    float sclV = 0.25;
+    if (int(fmod(hpos.y, 3)) == 0)
         lcdColor.rgb = float3(sclV, sclV, sclV);
 
     return lcdColor;
@@ -224,21 +239,109 @@ float4 rgba_blend(float4 b, float4 a)
     return float4(nc, na);
 }
 
-float3 sample_sky(float3 dir)
+float sample_vignette(float2 tc)
 {
-    dir.y = (dir.y - max(cos(dir.x) * 0.65, cos(dir.z) * 0.65)) * 2.1;
-    dir.y -= -0.35;
-
-    float3 sky0 = s_env0.SampleLevel(smp_base, dir, 0).xyz;
-    float3 sky1 = s_env1.SampleLevel(smp_base, dir, 0).xyz;
-
-    return lerp(sky0, sky1, L_ambient.w);
+    float dist = length(tc - 0.5);
+    float vig = 1.0 - dist * 2;
+    return pow(vig, dist * 1.0);
 }
 
 float4 sample_specular(float3 pnt, float3 normal, float3 light_direction)
 {
-    float w = pow(abs(dot(normalize(pnt + light_direction), normal)), 256);
-    return float4(L_sun_color.rgb * w, w);
+	float w = pow(abs(dot(normalize(pnt + light_direction), normal)), 3072);
+	return float4(L_sun_color.rgb * w, w);
+}
+
+float3 sample_lens_normalmap(float2 tc, float radius)
+{
+	float2 xy = (tc - 0.5) * 2;
+	return float3(xy, sign(radius) * sqrt(pow(radius, 2) - dot(xy, xy)));
+}
+
+float3 sample_reflections(float2 tc, float parallax_factor, float radius, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, float lum)
+{
+	float3 normalmap = sample_lens_normalmap(tc, radius);
+    float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
+
+	float3 reflections = s_reflection.SampleLevel(smp_base, reflect(normalize(normalize(w_pos - eye_position) - normalize(w_nrm) * parallax_factor), lensnormal), 0).rgb;
+	reflections *= sample_vignette(tc);
+	
+	return reflections * normalize(0.3 + L_ambient.rgb + L_hemi_color.rgb);
+}
+
+float sample_reflections_weight(float dirt_factor, float3 w_pos, float3 w_nrm, float lum, bool see_through)
+{
+	float angle_factor = smoothstep(0, 0.03, (dot(normalize(w_pos - eye_position), normalize(w_nrm)) + 1) / 2);
+	if (!see_through) {
+
+		angle_factor = lerp(1, angle_factor, m_hud_params.x);
+	}
+	return
+		angle_factor
+		* smoothstep(0, 1, lum)
+		* pow(1 - dirt_factor, 10)
+		* REFLECTIONS_FACTOR;
+}
+
+float3 sample_specular(float2 tc, float parallax_factor, float radius, float specular_factor, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, bool see_through)
+{
+	float3 normalmap = sample_lens_normalmap(tc, radius);
+	
+	float angle_factor = smoothstep(0, 0.03, (dot(normalize(w_pos - eye_position), normalize(w_nrm)) + 1) / 2);
+	if (!see_through) {
+
+		angle_factor = lerp(1, angle_factor, m_hud_params.x);
+	}
+
+	float4 specular = sample_specular(
+		normalize(normalize(w_pos - eye_position) - normalize(w_nrm) * parallax_factor),
+		normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2]))),
+		normalize(L_sun_dir_w)
+	) * 4;
+	specular.w *= L_material.g * angle_factor;
+	specular.w = min(1, specular.w);
+	specular.w *= pow(1 - dirt_factor, 10);
+	specular.w *= specular_factor;
+	
+	return specular.rgb * specular.a * normalize(0.3 + L_ambient.rgb + L_hemi_color.rgb);
+}
+
+float3 HSVtoRGB(float3 hsv)
+{
+    if (hsv.y == 0.0)
+        return hsv.z;
+
+    float i = floor(hsv.x * 6.0);
+    float f = hsv.x * 6.0 - i;
+    float p = hsv.z * (1.0 - hsv.y);
+    float q = hsv.z * (1.0 - f * hsv.y);
+    float t = hsv.z * (1.0 - (1.0 - f) * hsv.y);
+
+    i = fmod(i, 6.0);
+
+    if (i == 0.0)
+        return float3(hsv.z, t, p);
+    else if (i == 1.0)
+        return float3(q, hsv.z, p);
+    else if (i == 2.0)
+        return float3(p, hsv.z, t);
+    else if (i == 3.0)
+        return float3(p, q, hsv.z);
+    else if (i == 4.0)
+        return float3(t, p, hsv.z);
+    return float3(hsv.z, p, q);
+}
+
+float3 tonemap(float3 color, float3 v_pos)
+{
+    float fog = saturate(length(v_pos) * fog_params.w + fog_params.x);
+    color = lerp(color, fog_color, fog);
+    color = lerp(color, fog_color, saturate(fog * fog));
+
+    color *= s_tonemap.Load(int3(0, 0, 0)).x;
+    const float fWhiteIntensity = 1.7;
+    const float fWhiteIntensitySQR = fWhiteIntensity * fWhiteIntensity;
+    return (color * (1 + color / fWhiteIntensitySQR)) / (color + 1);
 }
 
 float4 main(vf I) : SV_Target
@@ -250,6 +353,7 @@ float4 main(vf I) : SV_Target
 
     float MIN_ZOOM_FOV = m_hud_params.w * 0.75;
     float MAX_ZOOM_FOV = m_hud_params.y * 0.75;
+    float REFLECTION_HUE = s3ds_param_2.x;
     int MIN_ZOOM_1X = s3ds_param_2.z;
     float ZOOM_FACTOR = s3ds_param_2.w;
 
@@ -259,7 +363,7 @@ float4 main(vf I) : SV_Target
     float CHROMA_POWER = s3ds_param_3.w;
 
     float3 LENS_COLOR = s3ds_param_4.xyz;
-    int NVG_BLUR = s3ds_param_4.w;
+    int SETTINGS = s3ds_param_4.w;
 
     // ZOOM_FACTOR = 1 => (0, 1); ZOOM_FACTOR = 1.5 => (0.4, 1.1)
     float IMAGE_PROJECT = 0.8 * ZOOM_FACTOR - 0.8;
@@ -268,9 +372,8 @@ float4 main(vf I) : SV_Target
     float RETICLE_PROJECT = 10;
     float SHADOW_WIDTH = 0.15;
 
-    float3 V = -I.v_pos;
-    float3x3 TBN = cotangent_frame(I.v_nrm, I.v_pos, I.tc0.xy);
-    float3 V_tangent = normalize(float3(dot(V, TBN[0]), dot(V, TBN[1]), dot(V, TBN[2])));
+    float3x3 TBN = cotangent_frame(I.v_N, I.v_P, I.tc0.xy);
+    float3 V_tangent = normalize(float3(dot(-I.v_P, TBN[0]), dot(-I.v_P, TBN[1]), dot(-I.v_P, TBN[2])));
 
     float current_zoom = max(MIN_ZOOM_FOV / ogse_c_screen.x, 1);
     float zoom_part = max(0, (ogse_c_screen.x - MIN_ZOOM_FOV) / (MAX_ZOOM_FOV - MIN_ZOOM_FOV));
@@ -285,42 +388,48 @@ float4 main(vf I) : SV_Target
         IMAGE_SIZE = 1 + (IMAGE_SIZE - 1) * zoom_part;
     }
 
+    if (!SETTING(SETTINGS, ST_CHROMATISM))
+    {
+        CHROMA_POWER = 0;
+    }
+
     float lum = current_lum();
 
     // Sight reticle
     float2 reticle_lens_tc = project(I.tc0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE) + fisheye(I.tc0, V_tangent.xy) / current_zoom;
-    float2 reticle_tc = project(I.tc0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE * (FFP ? current_zoom : 1)) + fisheye(I.tc0, V_tangent.xy) / current_zoom;
+    float2 reticle_tc = project(I.tc0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE * (FFP || RETICLE_TYPE == RT_GIPERON ? current_zoom : 1)) + fisheye(I.tc0, V_tangent.xy) / current_zoom;
     float4 mark_texture = float4(0, 0, 0, 0);
     if (reticle_tc.x >= 0 && reticle_tc.x <= 1 && reticle_tc.y >= 0 && reticle_tc.y <= 1)
     {
-        mark_texture = s_base.Sample(smp_base, reticle_tc);
+        mark_texture = s_base.Sample(smp_base, clamp(reticle_tc, 0, 1));
     }
 
+    float4 giperon_sfp;
     if (RETICLE_TYPE == RT_GIPERON)
     {
-        float finder = s_base.Sample(smp_base, reticle_lens_tc).g;
-        float reticle = mark_texture.r;
+        mark_texture = mark_texture.r;
+        float finder = s_base.Sample(smp_base, clamp(reticle_lens_tc, 0, 1)).g;
         float shift_3x = 0.053;
         float angle = -PI * (zoom_part + shift_3x) / (1 + shift_3x);
         float2 tc = reticle_lens_tc - 0.5;
         tc = float2(tc.x * cos(angle) - tc.y * sin(angle), tc.x * sin(angle) + tc.y * cos(angle));
         tc += 0.5;
-        float numbers = s_base.Sample(smp_base, tc + fisheye(I.tc0, V_tangent.xy)).b;
-        mark_texture = float4(0, 0, 0, max(numbers, max(finder, reticle)));
+        float numbers = s_base.Sample(smp_base, clamp(tc + fisheye(I.tc0, V_tangent.xy), 0, 1)).b;
+        giperon_sfp = float4(0, 0, 0, max(finder, numbers));
     }
 
     if (RETICLE_TYPE == RT_ACOG)
     {
         float3 black = float3(0, 0, 0);
-        float3 color = float3(1, 0.2, 0.2);
         float3 text = float3(0.3, 0.3, 0.3);
         float tritium_lum = 0.2;
-        mark_texture = rgba_blend(rgba_blend(float4(black, mark_texture.r), float4(color * max(tritium_lum, lum * 2), mark_texture.g)), float4(text, mark_texture.b * lum));
+        mark_texture = rgba_blend(rgba_blend(float4(black, mark_texture.r), float4(mark_color.rgb * max(tritium_lum, lum * 2), mark_texture.g)), float4(text, mark_texture.b * lum));
     }
 
     if (RETICLE_TYPE == RT_LED || RETICLE_TYPE == RT_GIPERON)
     {
         mark_texture = float4(mark_color.rgb, mark_texture.a);
+        giperon_sfp = float4(mark_color.rgb, giperon_sfp.a);
     }
 
     if (RETICLE_TYPE == RT_SPECTER)
@@ -341,7 +450,11 @@ float4 main(vf I) : SV_Target
         mark_texture = rgba_blend(float4(black, mark_texture.r), float4(mark_color.rgb, mark_texture.g));
     }
 
-    mark_texture *= m_hud_params.x;
+    if (!SETTING(SETTINGS, ST_SEE_THROUGH))
+    {
+        mark_texture.rgb *= m_hud_params.x;
+        giperon_sfp.rgb *= m_hud_params.x;
+    }
 
     // Specter switch shadow
     float4 zoom_switch_shadow = float4(0, 0, 0, 0);
@@ -363,20 +476,27 @@ float4 main(vf I) : SV_Target
     }
 
     // Parallax shadow
-    float2 exit_pupil_tc = project(I.tc0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL);
-    float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH);
+    float2 exit_pupil_tc = project(I.tc0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL * (SETTING(SETTINGS, ST_SEE_THROUGH) ? 1 : m_hud_params.x));
+    float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH + 0.02 * (current_zoom - 1));
+    if (!SETTING(SETTINGS, ST_PARALLAX_SHADOW))
+    {
+        shadow_texture *= 1 - m_hud_params.x;
+    }
 
     // LED-illuminated inside walls
-    float4 inside = s_inside.Sample(smp_base, (reticle_lens_tc - 0.5) * 0.62 + 0.5);
+    float4 inside = s_inside.Sample(smp_base, clamp((reticle_lens_tc - 0.5) * 0.62 + 0.5, 0, 1));
     inside = float4(mark_color.rgb * inside.r, inside.a);
-    if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_SPECTER)
+    if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_SPECTER || RETICLE_TYPE == RT_ACOG || FFP)
     {
         inside = float4(0, 0, 0, 0);
     }
 
     // Dirt texture
+    float3x3 TBNw_inv = transpose(float3x3(I.w_T, I.w_B, I.w_N));
+    float3 normalmap = sample_lens_normalmap(I.tc0, 3);
+    float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
     float4 dirt = s_dirt.Sample(smp_base, I.tc0);
-    dirt.a *= DIRT_INTENSITY;
+    dirt = saturate(float4((1 - dirt.rgb) * 1.5 * calc_model_lq_lighting(lensnormal), dirt.a * DIRT_INTENSITY));
 
     // Back image
     float2 screen_tc = I.hpos.xy * screen_res.zw;
@@ -396,72 +516,112 @@ float4 main(vf I) : SV_Target
     }
 
     float3 back;
-    if (IMAGE_TYPE == IT_THERMAL && mark_number.x < 2)
+    if ((IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR) && mark_number.x < 2)
     {
-        float pixelate = int(current_zoom);
-        scope_tc = (floor(scope_tc * screen_res.xy / (pixelate)) * (pixelate) + 0.5) / screen_res.xy;
+        float pixelate = SETTING(SETTINGS, ST_THERMAL_PIXELATION) ? int(current_zoom) : 1;
+        scope_tc = (floor(scope_tc * screen_res.xy / pixelate) * pixelate + 0.5) / screen_res.xy;
         gbuffer_data gbd = gbuffer_load_data(scope_tc, scope_tc * screen_res.xy);
         back = infrared(gbd, scope_tc * screen_res.xy, scope_tc);
         if (mark_number.x == 1)
         {
             back = 1 - back;
         }
+        if (IMAGE_TYPE == IT_THERMAL_COLOR)
+        {
+            back = s_heat_map.Sample(smp_base, float2(back.x, 0.5));
+        }
     }
     else
     {
-        back = back_image_sample(I.tc0, scope_tc, ogse_c_screen.x, CHROMA_POWER, NVG_BLUR);
+        bool blur = SETTING(SETTINGS, ST_NVG_BLUR) /*&& floor(shader_param_8.x) != 0*/ || m_hud_params.x == 0;
+        back = back_image_sample(I.tc0, scope_tc, ogse_c_screen.x, CHROMA_POWER, blur, SETTING(SETTINGS, ST_CHROMATISM));
         back *= LENS_COLOR;
     }
 
-    if (IMAGE_TYPE == IT_THERMAL)
+    if (IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR)
+    {
         back *= lcd_effect(I.hpos);
+    }
 
     if (IMAGE_TYPE == IT_NV && mark_number.x == 0)
+    {
         back = apply_nvg(scope_tc, back);
+    }
 
     // Reflections
-    float3 normalmap = float3(I.tc0.xy, 1) * 2 - 1;
-    float3x3 TBNw = cotangent_frame(I.w_nrm, I.w_pos, I.tc0.xy);
-    float3x3 TBNw_inv = transpose(TBNw);
-    float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
+    float3 layer1_color = HSVtoRGB(float3(REFLECTION_HUE, 0.16, 1));
+    float3 layer2_color = HSVtoRGB(float3(REFLECTION_HUE - 0.1, 0.7, 1));
+    float3 layer3_color = HSVtoRGB(float3(REFLECTION_HUE + 0.1, 0.4, 1));
 
-    float3 reflections = sample_sky(reflect(normalize(I.w_pos - eye_position), lensnormal));
-    float angle_factor = (dot(normalize(I.w_pos - eye_position), normalize(I.w_nrm)) + 1) / 2;
-    reflections *= smoothstep(0, 0.03, angle_factor) * smoothstep(0, 1, lum) * 0.15;
-    reflections *= pow(1 - dirt.a, 10);
+    float4 reflections;
+    reflections.a = sample_reflections_weight(dirt.a, I.w_P, I.w_N, lum, SETTING(SETTINGS, ST_SEE_THROUGH));
+    reflections.rgb = sample_reflections(I.tc0.xy, 0, 3, dirt.a, TBNw_inv, I.w_P, I.w_N, lum) * layer1_color;
+    reflections.rgb += sample_reflections(I.tc0.xy, 100, 2, dirt.a, TBNw_inv, I.w_P, I.w_N, lum) * layer2_color;
+    reflections.rgb += sample_reflections(I.tc0.xy, 40, -1, dirt.a, TBNw_inv, I.w_P, I.w_N, lum) * layer3_color;
 
-    // Specular light
-    float3x3 TBN_inv = transpose(TBN);
-    float4 specular = sample_specular(normalize(I.v_dir), normalize(float3(dot(normalmap, TBN_inv[0]), dot(normalmap, TBN_inv[1]), dot(normalmap, TBN_inv[2]))), normalize(I.v_sun)) * 4;
-    specular.w *= L_material.g * smoothstep(-0.001, 0.03, angle_factor);
-    specular.w = min(1, specular.w);
-    specular.w *= pow(1 - dirt.a, 10);
+    // Specular
+    float3 specular = sample_specular(I.tc0.xy, 0, 3, SPECULAR_FACTOR, dirt.a, TBNw_inv, I.w_P, I.w_N, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer1_color;
+    specular += sample_specular(I.tc0.xy, 100, 2, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.w_P, I.w_N, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer2_color;
+    specular += sample_specular(I.tc0.xy, 40, -1, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.w_P, I.w_N, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer3_color;
 
     // Vignette
     float4 vignette = float4(0, 0, 0, smoothstep(0.4, 2, 2 * length(I.tc0.xy - float2(0.5, 0.5))));
 
-    float3 final_scope = back;
+    // Split result to apply additive layers later
+
+    float4 final_scope_1 = float4(0, 0, 0, 0);
     if (RETICLE_TYPE != RT_SCREEN)
     {
-        final_scope = lerp(final_scope, mark_shadow_blue.xyz, mark_shadow_blue.w * BlackandWhite(back));
+        mark_shadow_blue.w *= BlackandWhite(back);
+        final_scope_1 = rgba_blend(final_scope_1, mark_shadow_blue);
     }
-    final_scope = lerp(final_scope, vignette.xyz, vignette.w);
-    final_scope = lerp(final_scope, mark_shadow.xyz, mark_shadow.w);
-    final_scope = lerp(final_scope, inside.xyz, inside.w);
+    final_scope_1 = rgba_blend(final_scope_1, vignette);
 
-    if (RETICLE_TYPE == RT_ADDITIVE)
-        final_scope += mark_texture.xyz * mark_texture.w;
-
+    float4 final_scope_2 = float4(0, 0, 0, 0);
+    if (RETICLE_TYPE != RT_ADDITIVE && (RETICLE_TYPE == RT_GIPERON || FFP))
+    {
+        final_scope_2 = rgba_blend(final_scope_2, mark_texture);
+    }
+    final_scope_2 = rgba_blend(final_scope_2, mark_shadow);
+    final_scope_2 = rgba_blend(final_scope_2, inside);
     if (RETICLE_TYPE != RT_SCREEN)
-        final_scope = lerp(final_scope, shadow_texture.xyz, shadow_texture.w);
+    {
+        final_scope_2 = rgba_blend(final_scope_2, shadow_texture);
+    }
+    if (!(RETICLE_TYPE == RT_ADDITIVE || RETICLE_TYPE == RT_GIPERON || FFP))
+    {
+        final_scope_2 = rgba_blend(final_scope_2, mark_texture);
+    }
+    if (RETICLE_TYPE == RT_GIPERON)
+    {
+        final_scope_2 = rgba_blend(final_scope_2, giperon_sfp);
+    }
+    final_scope_2 = rgba_blend(final_scope_2, zoom_switch_shadow);
+    final_scope_2 = rgba_blend(final_scope_2, reflections);
 
-    if (RETICLE_TYPE != RT_ADDITIVE)
-        final_scope = lerp(final_scope, mark_texture.xyz, mark_texture.w);
+    float4 final_scope_3 = float4(0, 0, 0, 0);
+    final_scope_3 = rgba_blend(final_scope_3, dirt);
 
-    final_scope = lerp(final_scope, zoom_switch_shadow.xyz, zoom_switch_shadow.w);
-    //final_scope = max(final_scope, reflections);
-    final_scope += specular.xyz * specular.w;
-    final_scope = lerp(final_scope, dirt.xyz, dirt.w);
+    // Tonemapping
 
-    return float4(final_scope, 1.0);
+    if (IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR)
+    {
+        back = tonemap(back, I.v_P);
+    }
+    final_scope_1.rgb = tonemap(final_scope_1.rgb, I.v_P);
+    final_scope_2.rgb = tonemap(final_scope_2.rgb, I.v_P);
+    final_scope_3.rgb = tonemap(final_scope_3.rgb, I.v_P);
+
+    // Result
+
+    float3 final_scope = lerp(back, final_scope_1.rgb, final_scope_1.a);
+    if (RETICLE_TYPE == RT_ADDITIVE)
+    {
+        final_scope = saturate(final_scope + mark_texture.rgb * mark_texture.a);
+    }
+    final_scope = lerp(final_scope, final_scope_2.rgb, final_scope_2.a);
+    final_scope += specular;
+    final_scope = lerp(final_scope, final_scope_3.rgb, final_scope_3.a);
+
+    return float4(final_scope, 1);
 }

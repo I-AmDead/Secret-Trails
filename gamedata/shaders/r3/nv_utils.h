@@ -165,7 +165,9 @@ float pnoise3D(float3 p, float t, float grainSize)
     pi.xy *= permTexSize;
     pi.xy = round((pi.xy - permHALF) / grainSize) * grainSize;
     pi.xy /= permTexSize;
-    float3 pf = frac(p);
+
+    // Magic constatns
+    float3 pf = float3(-0.1, 0.1, 0);
     // Noise contributions from (x=0, y=0), z=0 and z=1
     float perm00 = rnm(pi.xy, t).x;
     float3 grad000 = samplerPermTex(float2(perm00, pi.z)).xyz * 4.0 - 1.0;
@@ -225,21 +227,6 @@ float3 doGrain(float3 color, float2 texcoord, float grainSize, float grainAmount
     return float3(color.xyz);
 }
 
-float3 Grain2(float3 color, float2 texcoord)
-{
-    float grainSize = 2.0;
-    float grainAmount = 0.023000 * 0.00004;
-    float grainIntensity = 1.000000;
-    float grainColor = 0.000000;
-    float grainIntHigh = 0.000000;
-    float grainIntLow = 1.000000;
-    float grainDensity = 0.000000;
-
-    return doGrain(color, texcoord, grainSize, grainAmount, grainIntensity, grainColor, grainIntHigh, grainIntLow, grainDensity);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-
 float3 Grain1(float3 color, float2 texcoord)
 {
     float grainSize = 1.0;
@@ -249,6 +236,19 @@ float3 Grain1(float3 color, float2 texcoord)
     float grainIntHigh = 0.000000;
     float grainIntLow = 0.500000;
     float grainDensity = 10.000000;
+
+    return doGrain(color, texcoord, grainSize, grainAmount, grainIntensity, grainColor, grainIntHigh, grainIntLow, grainDensity);
+}
+
+float3 Grain2(float3 color, float2 texcoord)
+{
+    float grainSize = 1.0;
+    float grainAmount = 0.4;
+    float grainIntensity = 1.000000;
+    float grainColor = 0.000000;
+    float grainIntHigh = 0.000000;
+    float grainIntLow = 1.000000;
+    float grainDensity = 0.000000;
 
     return doGrain(color, texcoord, grainSize, grainAmount, grainIntensity, grainColor, grainIntHigh, grainIntLow, grainDensity);
 }
