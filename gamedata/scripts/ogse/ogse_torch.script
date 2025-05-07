@@ -4,7 +4,7 @@ function attach( sm )
 end
 
 local torch_mode = "off"
-function set_torch_mode(k)
+function set_torch_mode()
     if db.actor:alive() then
         local torch = db.actor:item_in_slot(9)
         if torch and torch:is_torch() then
@@ -12,12 +12,12 @@ function set_torch_mode(k)
             if torch.on then
                 torch_mode = ogse.load_var("ogse_torch.torch_mode", "near")
                 if torch_mode == "far" then
-                    set_far_mode(torch, k)
+                    set_far_mode(torch)
                 elseif torch_mode == "near" then
-                    set_near_mode(torch, k)
+                    set_near_mode(torch)
                 end
             else
-                set_near_mode(torch, k)
+                set_near_mode(torch)
                 torch_mode = "off"
             end
         end
@@ -31,19 +31,19 @@ function on_switch() -- Действие при нажатии клавиши ф
             torch = get_torch_obj(torch)
             if torch.on then
                 if torch_mode == "near" then
-                    set_far_mode(torch)
+                    set_far_mode(torch, true)
                 else
                     set_off_mode(torch)
                 end
             else
-                set_near_mode(torch, nil, true)
+                set_near_mode(torch, true)
             end
             ogse.save_var("ogse_torch.torch_mode", torch_mode)
         end
     end
 end
 
-function set_near_mode(torch, r, switch_on)
+function set_near_mode(torch, switch_on)
     torch_mode = "near"
     torch:set_range(30)
     torch:set_angle(math.rad(90))
@@ -52,7 +52,7 @@ function set_near_mode(torch, r, switch_on)
     end
 end
 
-function set_far_mode(torch, r, switch_on)
+function set_far_mode(torch, switch_on)
     torch_mode = "far"
     torch:set_range(70)
     torch:set_angle(math.rad(55))
