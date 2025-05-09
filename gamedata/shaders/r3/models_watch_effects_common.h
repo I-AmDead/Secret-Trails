@@ -416,7 +416,7 @@ float dfNumberHealth(float2 origin, float num, float2 uv)
 
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
     float health_factor = watch_actor_params.x * 100;
-	float index = health_factor < 100.f ? (health_factor < 10.f ? 0 : 1) : 2;
+    float index = health_factor < 100.f ? (health_factor < 10.f ? 0 : 1) : 2;
 
     for (float i = index; i >= 0.0; i--)
     {
@@ -463,15 +463,15 @@ float dfColon(float2 origin, float2 uv)
     return dist;
 }
 
-float dfPercent(float2 origin, float2 uv) 
+float dfPercent(float2 origin, float2 uv)
 {
-	uv -= origin;
-	float dist = 1e6;
+    uv -= origin;
+    float dist = 1e6;
 
     dist = min(dist, dfCircle(float2(0.3, 0.7), 0.15, uv));
     dist = min(dist, dfCircle(float2(0.7, 0.3), 0.15, uv));
     dist = min(dist, dfLine(float2(0.2, 0.2), float2(0.8, 0.8), uv));
-    
+
     return dist;
 }
 
@@ -485,11 +485,11 @@ float dfEat(float2 origin, float2 uv)
     dist = min(dist, dfLine(float2(0.25, 1.0), float2(0.25, 1.1), uv));
     dist = min(dist, dfLine(float2(0.35, 1.0), float2(0.35, 1.1), uv));
     dist = min(dist, dfArc(float2(0.25, 1.0), 3.142, 3.142, 0.1, uv));
-    
+
     dist = min(dist, dfLine(float2(0.6, 0.845), float2(0.6, 0.5), uv));
     dist = min(dist, dfArc(float2(0.6, 0.97), 3.142, 3.142, 0.1, uv));
     dist = min(dist, dfArc(float2(0.6, 1.02), 0.0, 3.142, 0.1, uv));
-    
+
     return dist;
 }
 
@@ -512,23 +512,23 @@ float dfRadio(float2 origin, float2 uv)
 
 float dfKettlebell(float2 origin, float2 uv)
 {
-	uv -= origin;
-	float dist = 1e6;
+    uv -= origin;
+    float dist = 1e6;
 
     dist = min(dist, dfLine(float2(-0.51, 0.52), float2(-0.27, 0.52), uv));
     dist = min(dist, dfArc(float2(-0.37, 0.75), 1.7, 2.3708, 0.28, uv));
     dist = min(dist, dfArc(float2(-0.42, 0.75), -0.9, 2.3708, 0.28, uv));
     dist = min(dist, dfArc(float2(-0.39, 1.06), 3.35, -3.542, 0.13, uv));
-    
+
     dist = min(dist, dfLine(float2(-0.52, 0.85), float2(-0.52, 0.65), uv));
     dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.85), uv));
     dist = min(dist, dfLine(float2(-0.52, 0.75), float2(-0.45, 0.65), uv));
-    
+
     dist = min(dist, dfLine(float2(-0.37, 0.8), float2(-0.37, 0.7), uv));
     dist = min(dist, dfLine(float2(-0.27, 0.73), float2(-0.32, 0.73), uv));
     dist = min(dist, dfArc(float2(-0.32, 0.8), 3.35, -3.542, 0.05, uv));
     dist = min(dist, dfArc(float2(-0.32, 0.7), 3.35, 3.542, 0.05, uv));
-    
+
     return dist;
 }
 
@@ -548,24 +548,24 @@ float dfRadiation(float2 origin, float2 uv)
 {
     uv -= origin;
     float dist = 1e6;
-    
+
     dist = min(dist, dfCircle(float2(-1.5, 0.8), 0.07, uv));
-    
-    for(int i = 0; i < 3; i++) 
+
+    for (int i = 0; i < 3; i++)
     {
         float angle = float(i) * (2.0944);
-        
+
         dist = min(dist, dfArc(float2(-1.5, 0.8), angle - 0.0, 1.0, 0.35, uv));
-        
+
         float2 p1 = float2(cos(angle), sin(angle)) * 0.12 + float2(-1.5, 0.8);
         float2 p2 = float2(cos(angle), sin(angle)) * 0.35 + float2(-1.5, 0.8);
         dist = min(dist, dfLine(p1, p2, uv));
-        
+
         float2 p3 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.12 + float2(-1.5, 0.8);
         float2 p4 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.35 + float2(-1.5, 0.8);
         dist = min(dist, dfLine(p3, p4, uv));
     }
-    
+
     return dist;
 }
 

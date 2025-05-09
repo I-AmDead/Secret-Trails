@@ -107,14 +107,14 @@ void TerrainParallax(float2 tc_step, float _step, inout surface S, inout p_bumpe
     if (S.mask <= 0)
         return;
 
-	if (p.position.z >= ssfx_terrain_pom.y)
+    if (p.position.z >= ssfx_terrain_pom.y)
         return;
 
     // Init vars to store steps
     float curr_step = 0;
     float2 parallax_tc = p.tcdbump;
 
-	// Store the previous & current sample to do the POM calc and Contact Refinement if needed.
+    // Store the previous & current sample to do the POM calc and Contact Refinement if needed.
     float prev_Height = 0;
     float curr_Height = TERRAIN_POM_PLANE - S.height * S.mask; // Apply the splatting weight and limit
 
@@ -164,16 +164,16 @@ void TerrainParallax(float2 tc_step, float _step, inout surface S, inout p_bumpe
         parallax_tc -= tc_step;
         curr_step += _step;
 
-        // Sample
-        #ifdef TERRAIN_GTR_COMPATIBILITY
-            curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).a + ssfx_terrain_offset[idx]);
-        #else
-            curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).r + ssfx_terrain_offset[idx]);
-        #endif
+// Sample
+#ifdef TERRAIN_GTR_COMPATIBILITY
+        curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).a + ssfx_terrain_offset[idx]);
+#else
+        curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).r + ssfx_terrain_offset[idx]);
+#endif
 
         curr_Height = TERRAIN_POM_PLANE - curr_Sam * S.mask; // Apply the splatting weight and limit
 
-    } while(curr_Height >= curr_step);
+    } while (curr_Height >= curr_step);
 
 #endif
 

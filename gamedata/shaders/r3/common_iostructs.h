@@ -423,9 +423,9 @@ struct v_tree
     int4 tc : TEXCOORD0; // (u,v,frac,???)
 
     float4 m0 : COLOR0;
-     float4 m1 : COLOR1;
-     float4 m2 : COLOR2;
-     float4 consts : COLOR3;
+    float4 m1 : COLOR1;
+    float4 m2 : COLOR2;
+    float4 consts : COLOR3;
 };
 
 ////////////////////////////////////////////////////////////////
@@ -434,7 +434,7 @@ struct v_detail
 {
     float4 pos : POSITION; // (float,float,float,0)
     float4 misc : NORMAL; // (u,v,frac,0)
- 
+
     float4 m0 : COLOR0;
     float4 m1 : COLOR1;
     float4 m2 : COLOR2;

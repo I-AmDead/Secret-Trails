@@ -42,25 +42,24 @@ float4 main(p_screen I) : SV_Target
     float fogresult = SSFX_CALC_FOG(gbd.P);
     fogresult *= fogresult;
 
-    // Fog Scattering -----------------------
-    #ifdef G_FOG_USE_SCATTERING
-        // Blur sample
-        float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
+// Fog Scattering -----------------------
+#ifdef G_FOG_USE_SCATTERING
+    // Blur sample
+    float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
 
-        // Scopes
-        int disablefog = (fakescope_params3.x > 0 ? 0 : 1);
-        disablefog *= (pnv_param_1.z > 0 ? 0 : 1);  
+    // Scopes
+    int disablefog = (fakescope_params3.x > 0 ? 0 : 1);
+    disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
 
-        // Blend
-        img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
-    #endif
+    // Blend
+    img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
+#endif
 #endif
 
 // Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
 #ifdef SSFX_DEBAND
     img = lerp(img, ssfx_debanding(img, center), depth <= SKY_EPS);
 #endif
-
 
     if (pnv_param_1.z < 1.f)
     {

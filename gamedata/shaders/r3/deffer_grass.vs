@@ -34,20 +34,21 @@ v2p_bumped main(v_detail v)
     // Force grass to go up
     P.xz = P.xz - 0.5f * data.xz * H * grass_align;
 
-    float4 pos = float4(P.xyz, 1);;
+    float4 pos = float4(P.xyz, 1);
+    ;
     float4 w_pos_previous = pos;
 
 #ifdef SSFX_WIND
-     if (use_wave)
-     {
-         wind_setup wset = ssfx_wind_setup();
-         float3 wind_result = ssfx_wind_grass(P.xyz, H, wset);
-         pos = float4(P.xyz + wind_result.xyz, 1);
- 
-         wind_setup wset_old = ssfx_wind_setup(true);
-         float3 wind_result_old = ssfx_wind_grass(P.xyz, H, wset_old, true);
-         w_pos_previous = float4(P.xyz + wind_result_old.xyz, 1);
-     }
+    if (use_wave)
+    {
+        wind_setup wset = ssfx_wind_setup();
+        float3 wind_result = ssfx_wind_grass(P.xyz, H, wset);
+        pos = float4(P.xyz + wind_result.xyz, 1);
+
+        wind_setup wset_old = ssfx_wind_setup(true);
+        float3 wind_result_old = ssfx_wind_grass(P.xyz, H, wset_old, true);
+        w_pos_previous = float4(P.xyz + wind_result_old.xyz, 1);
+    }
 #endif
 
     // INTERACTIVE GRASS - SSS Update 15.4
@@ -56,59 +57,59 @@ v2p_bumped main(v_detail v)
     if (use_wave)
     {
         for (int b = 0; b < benders_setup.w; b++)
-         {
-             // Direction, Radius & Bending Strength, Distance and Height Limit
-             float3 dir = benders_pos[b + 16].xyz;
-             float3 rstr = float3(benders_pos[b].w, benders_pos[b + 16].ww);
-             bool non_dynamic = rstr.x <= 0 ? true : false;
-             float dist = distance(pos.xz, benders_pos[b].xz);
-             float height_limit = 1.0f - saturate(abs(pos.y - benders_pos[b].y) / (non_dynamic ? 2.0f : rstr.x));
-             height_limit *= H;
- 
-             // Adjustments ( Fix Radius or Dynamic Radius )
-             rstr.x = non_dynamic ? benders_setup.x : rstr.x;
-             rstr.yz *= non_dynamic ? benders_setup.yz : 1.0f;
- 
-             // Strength through distance and bending direction.
-             float bend = 1.0f - saturate(dist / (rstr.x + 0.001f));
-             float3 bend_dir = normalize(pos.xyz - benders_pos[b].xyz) * bend;
-             float3 dir_limit = dir.y >= -1 ? saturate(dot(bend_dir.xyz, dir.xyz) * 5.0f) : 1.0f; // Limit if nedeed
- 
-             // Apply direction limit
-             bend_dir.xz *= dir_limit.xz;
- 
-             // Apply vertex displacement
-             pos.xz += bend_dir.xz * 2.0f * rstr.yy * height_limit; // Horizontal
-             pos.y -= bend * 0.6f * rstr.z * height_limit * dir_limit.y; // Vertical
-         }
- 
-         // for old frame
-         for (int b = 0; b < benders_setup.w; b++)
-         {
-             // Direction, Radius & Bending Strength, Distance and Height Limit
-             float3 dir = benders_pos_old[b + 16].xyz;
-             float3 rstr = float3(benders_pos_old[b].w, benders_pos_old[b + 16].ww);
-             bool non_dynamic = rstr.x <= 0 ? true : false;
-             float dist = distance(w_pos_previous.xz, benders_pos_old[b].xz);
-             float height_limit = 1.0f - saturate(abs(w_pos_previous.y - benders_pos_old[b].y) / (non_dynamic ? 2.0f : rstr.x));
-             height_limit *= H;
- 
-             // Adjustments ( Fix Radius or Dynamic Radius )
-             rstr.x = non_dynamic ? benders_setup.x : rstr.x;
-             rstr.yz *= non_dynamic ? benders_setup.yz : 1.0f;
- 
-             // Strength through distance and bending direction.
-             float bend = 1.0f - saturate(dist / (rstr.x + 0.001f));
-             float3 bend_dir = normalize(w_pos_previous.xyz - benders_pos_old[b].xyz) * bend;
-             float3 dir_limit = dir.y >= -1 ? saturate(dot(bend_dir.xyz, dir.xyz) * 5.0f) : 1.0f; // Limit if nedeed
- 
-             // Apply direction limit
-             bend_dir.xz *= dir_limit.xz;
- 
-             // Apply vertex displacement
-             w_pos_previous.xz += bend_dir.xz * 2.0f * rstr.yy * height_limit; // Horizontal
-             w_pos_previous.y -= bend * 0.6f * rstr.z * height_limit * dir_limit.y; // Vertical
-         }
+        {
+            // Direction, Radius & Bending Strength, Distance and Height Limit
+            float3 dir = benders_pos[b + 16].xyz;
+            float3 rstr = float3(benders_pos[b].w, benders_pos[b + 16].ww);
+            bool non_dynamic = rstr.x <= 0 ? true : false;
+            float dist = distance(pos.xz, benders_pos[b].xz);
+            float height_limit = 1.0f - saturate(abs(pos.y - benders_pos[b].y) / (non_dynamic ? 2.0f : rstr.x));
+            height_limit *= H;
+
+            // Adjustments ( Fix Radius or Dynamic Radius )
+            rstr.x = non_dynamic ? benders_setup.x : rstr.x;
+            rstr.yz *= non_dynamic ? benders_setup.yz : 1.0f;
+
+            // Strength through distance and bending direction.
+            float bend = 1.0f - saturate(dist / (rstr.x + 0.001f));
+            float3 bend_dir = normalize(pos.xyz - benders_pos[b].xyz) * bend;
+            float3 dir_limit = dir.y >= -1 ? saturate(dot(bend_dir.xyz, dir.xyz) * 5.0f) : 1.0f; // Limit if nedeed
+
+            // Apply direction limit
+            bend_dir.xz *= dir_limit.xz;
+
+            // Apply vertex displacement
+            pos.xz += bend_dir.xz * 2.0f * rstr.yy * height_limit; // Horizontal
+            pos.y -= bend * 0.6f * rstr.z * height_limit * dir_limit.y; // Vertical
+        }
+
+        // for old frame
+        for (int b = 0; b < benders_setup.w; b++)
+        {
+            // Direction, Radius & Bending Strength, Distance and Height Limit
+            float3 dir = benders_pos_old[b + 16].xyz;
+            float3 rstr = float3(benders_pos_old[b].w, benders_pos_old[b + 16].ww);
+            bool non_dynamic = rstr.x <= 0 ? true : false;
+            float dist = distance(w_pos_previous.xz, benders_pos_old[b].xz);
+            float height_limit = 1.0f - saturate(abs(w_pos_previous.y - benders_pos_old[b].y) / (non_dynamic ? 2.0f : rstr.x));
+            height_limit *= H;
+
+            // Adjustments ( Fix Radius or Dynamic Radius )
+            rstr.x = non_dynamic ? benders_setup.x : rstr.x;
+            rstr.yz *= non_dynamic ? benders_setup.yz : 1.0f;
+
+            // Strength through distance and bending direction.
+            float bend = 1.0f - saturate(dist / (rstr.x + 0.001f));
+            float3 bend_dir = normalize(w_pos_previous.xyz - benders_pos_old[b].xyz) * bend;
+            float3 dir_limit = dir.y >= -1 ? saturate(dot(bend_dir.xyz, dir.xyz) * 5.0f) : 1.0f; // Limit if nedeed
+
+            // Apply direction limit
+            bend_dir.xz *= dir_limit.xz;
+
+            // Apply vertex displacement
+            w_pos_previous.xz += bend_dir.xz * 2.0f * rstr.yy * height_limit; // Horizontal
+            w_pos_previous.y -= bend * 0.6f * rstr.z * height_limit * dir_limit.y; // Vertical
+        }
     }
 #endif
 

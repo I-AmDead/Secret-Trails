@@ -10,18 +10,10 @@ float sample(float2 tc)
 
 float4 main(p_filter I) : SV_Target
 {
-    float2 coords[8] = 
-    {
-        I.Tex0.xy, I.Tex1.xy, I.Tex2.xy, I.Tex3.xy,
-        I.Tex4.xy, I.Tex5.xy, I.Tex6.xy, I.Tex7.xy
-    };
-    
-    float2 coords_wz[8] = 
-    {
-        I.Tex0.wz, I.Tex1.wz, I.Tex2.wz, I.Tex3.wz,
-        I.Tex4.wz, I.Tex5.wz, I.Tex6.wz, I.Tex7.wz
-    };
-    
+    float2 coords[8] = {I.Tex0.xy, I.Tex1.xy, I.Tex2.xy, I.Tex3.xy, I.Tex4.xy, I.Tex5.xy, I.Tex6.xy, I.Tex7.xy};
+
+    float2 coords_wz[8] = {I.Tex0.wz, I.Tex1.wz, I.Tex2.wz, I.Tex3.wz, I.Tex4.wz, I.Tex5.wz, I.Tex6.wz, I.Tex7.wz};
+
     // perform accumulation
     float4 final;
     for (int i = 0; i < 4; i++)
@@ -31,7 +23,7 @@ float4 main(p_filter I) : SV_Target
         final.z += sample(coords_wz[i]);
         final.w += sample(coords_wz[i + 4]);
     }
-    
+
     float result = final * 0.25h;
 
     result = SRGBToLinear(result);

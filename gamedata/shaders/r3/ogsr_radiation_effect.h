@@ -5,7 +5,7 @@ uniform float3 radiation_effect;
 struct RadiationEffectConstants
 {
     static const float Size = 55.f;
-    static const float Power = 0.75f; 
+    static const float Power = 0.75f;
     static const float PowerNoise = 1.6f;
     static const float PowerInRadZone = 0.055f;
 };
