@@ -68,11 +68,8 @@ local return_task_by_type = {
 class "CRandomTask"
 function CRandomTask:__init()
     self.sm = ogsr_signals.get_mgr()
-    self.sm:subscribe({
-        signal = "on_first_update",
-        self = self,
-        fun = self.on_first_update
-    })
+    self.sm:subscribe({ signal = "on_first_update", self = self, fun = self.on_first_update})
+
     -- ' На конструкторе вычитываем LTX и создаем заготовки квестов.
     self.task_phrase_id = 100
 
@@ -137,10 +134,6 @@ function CRandomTask:__init()
 
         curr_task_info.idle_time = get_u32(id, "idle_time", 24 * 60 * 60)
 
-        if sys_ini:line_exist(id, "init_condition") then
-            curr_task_info.init_condition = xr_logic.parse_condlist(db.actor_proxy, "task_manager", "init_condition", sys_ini:r_string(id, "init_condition"))
-        end
-
         local sss = get_string(id, "reward_item", nil)
         if sss then
             curr_task_info.reward_item = parse_names(sss)
@@ -169,7 +162,8 @@ function CRandomTask:__init()
         curr_task_info.no_phrase_id = self:gen_phrase_id()
 
         -- ' По умолчанию квест доступен для выдачи
-        curr_task_info.enabled = true
+        curr_task_info.enabled = get_bool(id, "enabled", true)
+    
         -- ' Доступен ли квест по своим свойствам. По умолчанию всегда недоступен.
         -- ' Этот параметр зависит от наличия целей для квестов и того срабатывает ли прекондишн квеста
         curr_task_info.enabled_props = false
@@ -204,27 +198,12 @@ function CRandomTask:__init()
         self.task_id_by_desc_phrase_id[v.desc_phrase_id] = k
         -- ' По id фразы выдачи квеста.
         self.task_id_by_init_phrase_id[tostring(v.init_phrase_id)] = k
-        -- ' По самовыдаваемости
-        if v.init_condition ~= nil then
-            table.insert(self.task_id_self_inited, k)
-            if not self.subscribed then
-                self.subscribed = {
-                    signal = "on_update",
-                    self = self,
-                    fun = self.actor_update,
-                    queued = true
-                }
-                self.sm:subscribe(self.subscribed)
-            end
-        end
     end
 end
 -- ' Сохранение
 function CRandomTask:save()
     local tasks = {}
     for k, v in pairs(self.task_info) do
-        local last_task_time = v.last_task_time or game.CTime()
-        ogse.save_var("task_manager.last_time", {last_task_time:get()}, "time")
         table.insert(
             tasks,
             {
@@ -232,7 +211,8 @@ function CRandomTask:save()
                 v.enabled,
                 v.enabled_props,
                 v.status,
-                v.selected_target or 4294967295
+                v.selected_target or 4294967295,
+                v.last_task_time or game.CTime()
             }
         )
     end
@@ -261,7 +241,12 @@ function CRandomTask:load()
         if selected_target ~= 4294967295 then
             info.selected_target = selected_target
         end
-        info.last_task_time = dsh.unpack_time(ogse.load_var_safe("task_manager.last_time"))
+
+        if table.getn(t) > 1 then
+            info.last_task_time = table.remove(t, 1)
+        else
+            info.last_task_time = game.CTime()
+        end
         -- здесь адский баг. Активный selected_target может быть _только_ у выданных квестов, в остальном случае там -1.
         -- Тут проверяем активность таска. Параллельно правим еще в функции проверки завершенности таска на всякий случай.
         if info.type == "defend_lager" and info.selected_target then
@@ -415,13 +400,6 @@ function CRandomTask:action_give_task(actor, npc, p1, p2)
             v.enabled = false
         end
     end
-    -- Мирное получение Форта-15 у майора Кузнецова по заданию Сидоровича
-    -- проверяем, является ли предмет фортом-15, и если да, выдаём инфопоршень
-    if task_desc.target == "wpn_fort_unic" then
-        db.actor:give_info_portion("find_fort_m1")
-    end
-    -- проверяем, является ли предмет фортом-15, и если да, выдаём инфопоршень
-    -- Мирное получение Форта-15 у майора Кузнецова по заданию Сидоровича
 end
 -- ' Отказ игроком от квеста
 function CRandomTask:action_refuse_task(actor, npc, p1, p2)
@@ -433,7 +411,7 @@ function CRandomTask:action_refuse_task(actor, npc, p1, p2)
     -- ' Делаем доступными все задания данного типа
     for k, v in pairs(self.task_info) do
         if v.complex_type == task_desc.complex_type then
-            v.enabled = true
+            v.enabled = get_bool(v, "enabled", true)
         end
     end
 end
@@ -542,7 +520,7 @@ function CRandomTask:task_callback(p1, p2, state)
         -- ' восстановление других заданий данного типа
         for k, v in pairs(self.task_info) do
             if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
-                v.enabled = true
+                v.enabled = get_bool(v, "enabled", true)
             end
         end
         self.active_task_by_type[p1] = nil
@@ -568,7 +546,7 @@ function CRandomTask:task_avail(actor, npc, p1, p2, p3, calculate)
         self:check_task_props(self.task_id_by_init_phrase_id[p3])
     end
 
-    return task_desc.enabled and task_desc.enabled_props and task_desc.init_condition == nil
+    return task_desc.enabled and task_desc.enabled_props
 end
 -- ' Проверка свойств таска
 function CRandomTask:check_task_props(task_id)
@@ -589,6 +567,7 @@ function CRandomTask:check_task_props(task_id)
         self.task_info[task_id].enabled_props = false
         return
     end
+
 
     -- ' проверка по таргету
     if self.task_info[task_id].type == "eliminate_lager" then
@@ -658,20 +637,6 @@ function CRandomTask:check_task_props(task_id)
         self.task_info[task_id].enabled_props = false
     else
         self.task_info[task_id].enabled_props = true
-    end
-end
--- ' Проверяем можем ли мы сейчас выдать какой либо самоинициализующийся таск
-function CRandomTask:actor_update()
-    self.sm:reschedule(math.random(1000, 1500))
-    for k, v in pairs(self.task_id_self_inited) do
-        if self.task_info[v].status == "normal" then
-            self:check_task_props(v)
-            if self.task_info[v].enabled_props == true and self.task_info[v].enabled == true and
-                xr_logic.pick_section_from_condlist(db.actor, db.actor, self.task_info[v].init_condition) ~= nil then
-                -- ' Нужно автоматически выдать квест
-                self:action_give_task(db.actor, nil, nil, self.task_info[v].yes_phrase_id)
-            end
-        end
     end
 end
 -- ' Проверяется является ли текущий таск выданным игроку

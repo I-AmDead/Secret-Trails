@@ -15,47 +15,49 @@ local nlc7_act_breath = {
       { "actor\\nlc7\\gas_mask_1_",      6, 1.2 },
       { "actor\\nlc7\\gas_mask_2_",      6, 1.0 },
       { "actor\\nlc7\\gas_mask_3_",     10, 0.9 },
-      { "actor\\nlc7\\gas_mask_4_",     10, 0.8 },
     },
     [ "exo" ] = {
       { "actor\\nlc7\\exo_mask_1_",      9, 1.7 },
       { "actor\\nlc7\\exo_mask_2_",      9, 1.5 },
       { "actor\\nlc7\\exo_mask_3_",      9, 1.3 },
-      { "actor\\nlc7\\exo_mask_4_",      8, 1.1 },
     },
     [ "scn" ] = {
       { "actor\\nlc7\\scient_mask_1_",   2, 1.8 },
       { "actor\\nlc7\\scient_mask_2_",   2, 1.6 },
       { "actor\\nlc7\\scient_mask_3_",   2, 1.4 },
-      { "actor\\nlc7\\scient_mask_4_",   6, 1.2 },
     },
   }
 
-local time_distortion = 0
-local breath_rnd = 1
 local breath_size = 0
 
-local function start_breath_distortion(min, max)
-
-    if breath_distortion_timer then
-        breath_distortion_timer:stop()
-        breath_distortion_timer = nil
-    end
-
-    breath_distortion_timer = dsh.wait_condition(
-    function()
-        min = min > max and min - 100 or min + 100
-        breath_size = min
-        shader_set_custom_param("breath_size", game_options.opt_breath and min / 10000 or 0.0)
-        shader_set_custom_param("breath_idx", breath_rnd)
-        return min == max
-    end, 
-    function()
-        breath_distortion_timer = nil
-    end, 
-    function()
-        ogsr_signals.get_mgr():reschedule(time_distortion)
-    end)
+local function modifyValue(startValue, endValue, typeValue)
+    local lcall
+    local currentValue = startValue
+    local v = shader_get_custom_param_vector(typeValue)
+    lcall = level.add_call(
+        function()
+            if startValue < endValue then
+                currentValue = currentValue + 1
+                v.x = currentValue * 0.01
+                breath_size = currentValue
+                shader_set_custom_param_vector(typeValue, v)
+                return currentValue > endValue
+            else
+                currentValue = currentValue - 1
+                v.x = currentValue * 0.01
+                breath_size = currentValue
+                shader_set_custom_param_vector(typeValue, v)
+                return currentValue < endValue
+            end
+            lcall:set_pause(100)
+            return false
+        end,
+        function()
+            v.x = currentValue * 0.01
+            breath_size = currentValue
+            shader_set_custom_param_vector(typeValue, v)
+        end
+    )
 end
 
 function attach(sm)
@@ -235,52 +237,36 @@ function nlc7_actor_heart()
         end
     end
 
-    if tip ~= "wht" then
-        if r_h < 0.25 then
-            step = 4
-        elseif r_h < 0.5 then
-            step = 3
-        elseif r_h < 0.85 then
-            step = 2
-        else
-            step = 1
-        end
-        time_delt = time_curr - delt
-        if time_delt >= r_h * 1500 + 800 then
-            delt = time_curr
-            time_distortion = (r_h * 1500 + 800) * 0.001
-            start_breath_distortion(breath_size, 6000 + (1000 - (1000 * r_h)))
-            breath_double = true
-            breath_rnd = math.random(0, 10)
-            local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
-            local snd = xr_sound.get_safe_sound_object(snd_fname)
-            snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
-            snd:play(db.actor, 0, sound_object.s2d)
-            delt = time_curr
-        elseif time_delt >= (r_h * 1500 + 600) * (0.4 / step) + step * 90 and breath_double then
-            time_distortion = (1.5 * 1500 + 700) * 0.012
-            start_breath_distortion(breath_size, 0)
-            breath_double = false
-        end
+    if r_h < 0.25 then
+        step = 3
+    elseif r_h < 0.5 then
+        step = 2
     else
-        if r_h < 0.79 then
-            time_delt = time_curr - delt
-            if time_delt >= r_h * 1500 + 800 then
-                if r_h < 0.25 then
-                    step = 3
-                elseif r_h < 0.5 then
-                    step = 2
-                else
-                    step = 1
-                end
-                local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
-                local snd = xr_sound.get_safe_sound_object(snd_fname)
-                snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
-                snd:play(db.actor, 0, sound_object.s2d)
-                delt = time_curr
-                cmd("breath_size", 0)
-            end
+        step = 1
+    end
+
+    time_delt = time_curr - delt
+
+    if time_delt >= r_h * 1500 + 800 then
+        delt = time_curr
+
+        if tip ~= "wht" and game_options.opt_breath then
+            modifyValue(breath_size, 70, "breath_size")
         end
+
+        local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
+        local snd = xr_sound.get_safe_sound_object(snd_fname)
+        snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
+
+        if tip ~= "wht" or r_h < 0.79 then
+            snd:play(db.actor, 0, sound_object.s2d)
+        end
+    elseif game_options.opt_breath and tip ~= "wht" and time_delt >= (r_h * 1500 + 600) * (0.4 / step) + step * 90 then
+        modifyValue(breath_size, 0, "breath_size")
+    end
+
+    if tip == "wht" or not game_options.opt_breath then
+        cmd("breath_size", 0)
     end
 end
 
