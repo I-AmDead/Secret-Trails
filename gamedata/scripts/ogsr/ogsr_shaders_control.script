@@ -74,11 +74,11 @@ local function on_dots_update()
     local scope_name = scope_status > 1 and get_string(section, "scope_name", nil) or section
     local scope_texture = get_string(scope_name, "scope_texture", nil)
 
-    mark_control(wpn, true)
-
     if scope_texture then
         scope_control(scope_name, scope_status)
     end
+
+    mark_control(wpn, true)
 end
 
 function scope_control(scope_name, scope_status)
@@ -102,6 +102,7 @@ function scope_control(scope_name, scope_status)
     local nvg_blur = get_float(scope_name, "3d_nvg_blur", 0)
 
     local mark_number = get_float(scope_name, "mark_number", 0)
+    local mark_color = get_vector(scope_name, "mark_color", vector():set(0, 0, 0))
 
     shader_set_custom_param("s3ds_param_1", reticle_size, eye_relief, exit_pupil, ffp)
     shader_set_custom_param("s3ds_param_2", 0, 0, min_zoom, zoom_factor)
@@ -109,6 +110,7 @@ function scope_control(scope_name, scope_status)
     shader_set_custom_param("s3ds_param_4", lens_color.x, lens_color.y, lens_color.z, nvg_blur)
 
     shader_set_custom_param("mark_number", mark_number, 0, 0, 0)
+    shader_set_custom_param("mark_color", mark_color.x, mark_color.y, mark_color.z)
 end
 
 function mark_control(wpn, force, bind)
@@ -123,7 +125,9 @@ function mark_control(wpn, force, bind)
     local max_color = backlight and 2 or 3
 
     if force then
-        settings_mark(true, dots_number, "mark_number", scope_name, wpn)
+        if not backlight then
+            settings_mark(true, dots_number, "mark_number", scope_name, wpn)
+        end
         settings_mark(true, max_color, "mark_color", scope_name, wpn, backlight)
     else
         if bind == key_bindings.kSWITCH_MARK then
