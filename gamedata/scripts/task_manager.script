@@ -411,7 +411,7 @@ function CRandomTask:action_refuse_task(actor, npc, p1, p2)
     -- ' Делаем доступными все задания данного типа
     for k, v in pairs(self.task_info) do
         if v.complex_type == task_desc.complex_type then
-            v.enabled = get_bool(v, "enabled", true)
+            v.enabled = get_bool(k, "enabled", true)
         end
     end
 end
@@ -520,7 +520,7 @@ function CRandomTask:task_callback(p1, p2, state)
         -- ' восстановление других заданий данного типа
         for k, v in pairs(self.task_info) do
             if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
-                v.enabled = get_bool(v, "enabled", true)
+                v.enabled = get_bool(k, "enabled", true)
             end
         end
         self.active_task_by_type[p1] = nil
