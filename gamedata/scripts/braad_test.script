@@ -46,38 +46,18 @@ local function on_take(obj, sobj)
     elseif obj:section() == "money50" then
         db.actor:give_money(50000)
         alife():release(sobj)
-    elseif obj:section() == "af_snake_eye" and not has_alife_info("snake_dialog_have") then
+    elseif obj:section() == "af_snake_eye" and db.actor:dont_has_info("snake_dialog_have") then
         db.actor:give_info_portion("snake_dialog_have")
-    elseif obj:section() == "amulet_1" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_2") and db.actor:object("amulet_3") and db.actor:object("amulet_4")
-        and db.actor:object("amulet_5") and db.actor:object("amulet_6") then
-            db.actor:give_info_portion("amulet_sobral")
+    elseif string.find(obj:section(), "amulet") and db.actor:dont_has_info("amulet_sobral") then
+        local missing = false
+        for i = 1, 6 do
+            local amulet = "amulet_"..i
+            if amulet ~= obj:section() and not db.actor:object(amulet) then
+                missing = true
+                break
+            end
         end
-    elseif obj:section() == "amulet_2" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_1") and db.actor:object("amulet_3") and db.actor:object("amulet_4")
-        and db.actor:object("amulet_5") and db.actor:object("amulet_6") then
-            db.actor:give_info_portion("amulet_sobral")
-        end
-    elseif obj:section() == "amulet_3" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_1") and db.actor:object("amulet_2") and db.actor:object("amulet_4")
-        and db.actor:object("amulet_5") and db.actor:object("amulet_6") then
-            db.actor:give_info_portion("amulet_sobral")
-        end
-    elseif obj:section() == "amulet_4" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_1") and db.actor:object("amulet_2") and db.actor:object("amulet_3")
-        and db.actor:object("amulet_5") and db.actor:object("amulet_6") then
-            db.actor:give_info_portion("amulet_sobral")
-        end
-    elseif obj:section() == "amulet_5" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_1") and db.actor:object("amulet_2") and db.actor:object("amulet_3") and
-            db.actor:object("amulet_4") and db.actor:object("amulet_6") then
-            db.actor:give_info_portion("amulet_sobral")
-        end
-    elseif obj:section() == "amulet_6" and not has_alife_info("amulet_sobral") then
-        if db.actor:object("amulet_1") and db.actor:object("amulet_2") and db.actor:object("amulet_3")
-        and db.actor:object("amulet_4") and db.actor:object("amulet_5") then
-            db.actor:give_info_portion("amulet_sobral")
-        end
+        if not missing then db.actor:give_info_portion("amulet_sobral") end
     elseif level.name() == "l10_red_forest" then
         if obj:section() == "mandra" then
             level_tasks.remove_location_by_id(obj:id(), "crlc_big")
@@ -85,20 +65,16 @@ local function on_take(obj, sobj)
             level_tasks.remove_location_by_id(obj:id(), "crlc_big")
         end
     elseif level.name() == "l13_deep" then
-        if db.actor:has_info("nato_enemy") and not has_alife_info("nato_zasada") then
-            db.actor:give_info_portion("nato_zasada")
-        elseif obj:section() == "box_vano" then
+        if obj:section() == "box_vano" then
             level_tasks.remove_location_by_id(obj:id(), "crlc_big")
         end
     elseif level.name() == "l03_agroprom" then
-        if obj:section() == "af_agro" and not has_alife_info("pauk_agro_spawn") then
+        if obj:section() == "af_agro" and db.actor:dont_has_info("pauk_agro_spawn") then
             db.actor:give_info_portion("pauk_agro_spawn")
         end
     elseif level.name() == "l04_darkvalley" then
-        if obj:section() == "af_snake_eye" and not has_alife_info("snake_dialog_begin") then
+        if obj:section() == "af_snake_eye" and db.actor:dont_has_info("snake_dialog_begin") then
             db.actor:give_info_portion("snake_dialog_begin")
-        elseif obj:section() == "wpn_knife" and db.actor:has_info("doronin_help_start") then
-            db.actor:give_info_portion("doronin_help_val")
         end
     elseif level.name() == "l04u_labx18" then
         if obj:section() == "detector_elite_bad" then
@@ -112,19 +88,15 @@ local function on_take(obj, sobj)
             level_tasks.remove_location_by_id(obj:id(), "red_location")
         end
     elseif level.name() == "l10_radar" then
-        if obj:section() == "amulet_5" and not has_alife_info("pauk_les_spawn") then
+        if obj:section() == "amulet_5" and db.actor:dont_has_info("pauk_les_spawn") then
             db.actor:give_info_portion("pauk_les_spawn")
         end
     elseif level.name() == "l10u_bunker" then
-        if obj:section() == "book_zombi" and not has_alife_info("pauk_x10_spawn") then
+        if obj:section() == "book_zombi" and db.actor:dont_has_info("pauk_x10_spawn") then
             db.actor:give_info_portion("pauk_x10_spawn")
         elseif obj:section() == "amk_zapiska" then
             db.actor:give_info_portion("info_amk_recipt_sopl_dikoobraz")
             alife():release(sobj)
-        end
-    elseif level.name() == "l12_stancia" then
-        if obj:section() == "wpn_knife" and db.actor:has_info("haron_spy_start") then
-            db.actor:give_info_portion("haron_spy_spawn")
         end
     elseif level.name() == "l12_stancia_2" then
         if obj:section() == "aes_case1" then
@@ -150,7 +122,7 @@ end
 local function on_first_update()
 
     if level.name() == "l01_escape" then
-        if not has_alife_info("actor_na_kordon") then
+        if db.actor:dont_has_info("actor_na_kordon") then
             db.actor:give_info_portion("actor_na_kordon")
         end
 
@@ -168,70 +140,70 @@ local function on_first_update()
             db.actor:give_info_portion("art_garbage_spawn")
         end
 
-        if has_alife_info("krest_razborka_start") and not has_alife_info("krest_razborka_spawn") then
+        if db.actor:has_info("krest_razborka_start") and db.actor:dont_has_info("krest_razborka_spawn") then
             db.actor:give_info_portion("krest_razborka_spawn")
         end
 
-        if has_alife_info("bes_help_levsha_start") and not has_alife_info("bes_smart_done") then
+        if db.actor:has_info("bes_help_levsha_start") and db.actor:dont_has_info("bes_smart_done") then
             db.actor:give_info_portion("bes_smart_done")
         end
 
-        if has_alife_info("sledopyt_first_dialog_zasada") and not has_alife_info("fantom_svalka1_spawn") then
+        if db.actor:has_info("sledopyt_first_dialog_zasada") and db.actor:dont_has_info("fantom_svalka1_spawn") then
             db.actor:give_info_portion("fantom_svalka1_spawn")
         end
 
-        if has_alife_info("mayor_yarofeev_start") and not has_alife_info("fantom_svalka2_spawn") then
+        if db.actor:has_info("mayor_yarofeev_start") and db.actor:dont_has_info("fantom_svalka2_spawn") then
             db.actor:give_info_portion("fantom_svalka2_spawn")
         end
 
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("vypolzen_boloto_spawn") then
+        if db.actor:has_info("potapov_first_dialog_start") and db.actor:dont_has_info("vypolzen_boloto_spawn") then
             db.actor:give_info_portion("vypolzen_boloto_spawn")
         end
 
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("izlom_mini_spawn") then
+        if db.actor:has_info("potapov_first_dialog_start") and db.actor:dont_has_info("izlom_mini_spawn") then
             db.actor:give_info_portion("izlom_mini_spawn")
         end
 
-        if has_alife_info("sledopyt_first_dialog_done") and not has_alife_info("doctor_und_del") then
+        if db.actor:has_info("sledopyt_first_dialog_done") and db.actor:dont_has_info("doctor_und_del") then
             db.actor:give_info_portion("doctor_und_del")
         end
 
-        if has_alife_info("bes_patron_start") and not has_alife_info("bes_patron_spawn") then
+        if db.actor:has_info("bes_patron_start") and db.actor:dont_has_info("bes_patron_spawn") then
             ogse_st_mgr.start_timer("bes_zasada", math.random(500, 600), "braad_test.bes_zasada")
             db.actor:give_info_portion("bes_patron_spawn")
         end
     end
 
     if level.name() == "l03_agroprom" then
-        if has_alife_info("sledopyt_first_dialog_start") and not has_alife_info("taynik_sms") then
+        if db.actor:has_info("sledopyt_first_dialog_start") and db.actor:dont_has_info("taynik_sms") then
             db.actor:give_info_portion("taynik_sms")
         end
 
-        if not has_alife_info("actor_na_agro") then
+        if db.actor:dont_has_info("actor_na_agro") then
             db.actor:give_info_portion("actor_na_agro")
         end
 
-        if has_alife_info("lazarev_dialog_start") and not has_alife_info("vypolzen_lazarev_spawn") then
+        if db.actor:has_info("lazarev_dialog_start") and db.actor:dont_has_info("vypolzen_lazarev_spawn") then
             db.actor:give_info_portion("vypolzen_lazarev_spawn")
         end
     end
 
     if level.name() == "l03u_agr_underground" then
-        if not has_alife_info("teleport_spawn") then
+        if db.actor:dont_has_info("teleport_spawn") then
             db.actor:give_info_portion("teleport_spawn")
         end
 
-        if has_alife_info("sledopyt_first_dialog_start") and not has_alife_info("doctor_und_spawn") then
+        if db.actor:has_info("sledopyt_first_dialog_start") and db.actor:dont_has_info("doctor_und_spawn") then
             db.actor:give_info_portion("doctor_und_spawn")
         end
 
-        if has_alife_info("sledopyt_spawn") and not has_alife_info("str_spawn") then
+        if db.actor:has_info("sledopyt_spawn") and db.actor:dont_has_info("str_spawn") then
             db.actor:give_info_portion("str_spawn")
         end
     end
 
     if level.name() == "l04_darkvalley" then
-        if not has_alife_info("actor_na_darkvalley") then
+        if db.actor:dont_has_info("actor_na_darkvalley") then
             db.actor:give_info_portion("actor_na_darkvalley")
         end
 
@@ -239,20 +211,24 @@ local function on_first_update()
             ucen_electro()
             db.actor:give_info_portion("electro_chimera_ucen_need")
         end
+
+        if db.actor:has_info("doronin_help_start") and db.actor:dont_has_info("doronin_help_val") then
+            db.actor:give_info_portion("doronin_help_val")
+        end
     end
 
     if level.name() == "l04u_labx18" then
-        if db.actor:has_info("mil_klyak_lab_start") and not has_alife_info("mil_klyak_lab_spawn") then
+        if db.actor:has_info("mil_klyak_lab_start") and db.actor:dont_has_info("mil_klyak_lab_spawn") then
             db.actor:give_info_portion("mil_klyak_lab_spawn")
         end
     end
 
     if level.name() == "l05_bar" then
-        if not has_alife_info("potapov_spawn") then
+        if db.actor:dont_has_info("potapov_spawn") then
             db.actor:give_info_portion("potapov_spawn")
         end
 
-        if has_alife_info("sidr_lab_start") and not has_alife_info("graf_sms") then
+        if db.actor:has_info("sidr_lab_start") and db.actor:dont_has_info("graf_sms") then
             db.actor:give_info_portion("graf_sms")
         end
 
@@ -260,12 +236,11 @@ local function on_first_update()
             db.actor:give_info_portion("barman_speech_start")
         end
 
-        if has_alife_info("levsha_daet_dobro") and has_alife_info("sidr_nacalo_start") and
-            not has_alife_info("sledopyt_spawn") then
+        if db.actor:has_info("levsha_daet_dobro") and db.actor:has_info("sidr_nacalo_start") and db.actor:dont_has_info("sledopyt_spawn") then
             db.actor:give_info_portion("sledopyt_spawn")
         end
 
-        if has_alife_info("sidor_poslanie_dialog_start") and not has_alife_info("killer_attak_start") then
+        if db.actor:has_info("sidor_poslanie_dialog_start") and db.actor:dont_has_info("killer_attak_start") then
             db.actor:give_info_portion("killer_attak_start")
         end
     end
@@ -275,22 +250,21 @@ local function on_first_update()
             db.actor:give_info_portion("gigant_strong_ucen_need")
         end
 
-        if has_alife_info("lektor_dialog_start") and not has_alife_info("lektor_spawn") then
+        if db.actor:has_info("lektor_dialog_start") and db.actor:dont_has_info("lektor_spawn") then
             db.actor:give_info_portion("lektor_spawn")
         end
 
-        if level.name() == "l06_rostok" and has_alife_info("ucen_need_metka_start") and
-            not has_alife_info("fantom_rostok_spawn") then
+        if level.name() == "l06_rostok" and db.actor:has_info("ucen_need_metka_start") and db.actor:dont_has_info("fantom_rostok_spawn") then
             db.actor:give_info_portion("fantom_rostok_spawn")
         end
 
-        if has_alife_info("doronin_help_begin") and not has_alife_info("fantom_rostok2_spawn") then
+        if db.actor:has_info("doronin_help_begin") and db.actor:dont_has_info("fantom_rostok2_spawn") then
             db.actor:give_info_portion("fantom_rostok2_spawn")
         end
     end
 
     if level.name() == "l07_military" then
-        if not has_alife_info("actor_na_scladah") then
+        if db.actor:dont_has_info("actor_na_scladah") then
             spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
             spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
             spawn_patrol("add_military", "mil_voen_lager_voen17_walk")
@@ -309,75 +283,75 @@ local function on_first_update()
             db.actor:give_info_portion("actor_na_scladah")
         end
 
-        if has_alife_info("finish_put_start") and not has_alife_info("klyak_sms") then
+        if db.actor:has_info("finish_put_start") and db.actor:dont_has_info("klyak_sms") then
             db.actor:give_info_portion("klyak_sms")
         end
     end
 
     if level.name() == "l08_yantar" then
-        if not has_alife_info("vasil2_yantar") then
+        if db.actor:dont_has_info("vasil2_yantar") then
             db.actor:give_info_portion("vasil2_yantar")
         end
 
-        if not has_alife_info("actor_na_yantar") then
+        if db.actor:dont_has_info("actor_na_yantar") then
             db.actor:give_info_portion("actor_na_yantar")
         end
 
-        if has_alife_info("graf_tri_dialog_start") and not has_alife_info("tsezar_spawn") then
+        if db.actor:has_info("graf_tri_dialog_start") and db.actor:dont_has_info("tsezar_spawn") then
             db.actor:give_info_portion("tsezar_spawn")
         end
     end
 
     if level.name() == "l08u_brainlab" then
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("izlom_x16_spawn") then
+        if db.actor:has_info("potapov_first_dialog_start") and db.actor:dont_has_info("izlom_x16_spawn") then
             db.actor:give_info_portion("izlom_x16_spawn")
         end
 
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("restr_x16_spawn") then
+        if db.actor:has_info("potapov_first_dialog_start") and db.actor:dont_has_info("restr_x16_spawn") then
             db.actor:give_info_portion("restr_x16_spawn")
         end
     end
 
     if level.name() == "l10_radar" then
-        if not has_alife_info("actor_na_radare") then
+        if db.actor:dont_has_info("actor_na_radare") then
             db.actor:give_info_portion("actor_na_radare")
         end
 
-        if has_alife_info("sahar_shlem_have") and not has_alife_info("crazy_delete") then
+        if db.actor:has_info("sahar_shlem_have") and db.actor:dont_has_info("crazy_delete") then
             db.actor:give_info_portion("crazy_delete")
         end
 
-        if has_alife_info("graf_second_dialog_start") and not has_alife_info("prince_spawn") then
+        if db.actor:has_info("graf_second_dialog_start") and db.actor:dont_has_info("prince_spawn") then
             db.actor:give_info_portion("prince_spawn")
         end
 
-        if has_alife_info("potapov_first_dialog_start") and not has_alife_info("izlom_blue_spawn") then
+        if db.actor:has_info("potapov_first_dialog_start") and db.actor:dont_has_info("izlom_blue_spawn") then
             db.actor:give_info_portion("izlom_blue_spawn")
         end
 
-        if has_alife_info("black_box_start") and not has_alife_info("izlom_radar_spawn") then
+        if db.actor:has_info("black_box_start") and db.actor:dont_has_info("izlom_radar_spawn") then
             db.actor:give_info_portion("izlom_radar_spawn")
         end
 
-        if has_alife_info("black_box_start") and not has_alife_info("fantom_radar2_spawn") then
+        if db.actor:has_info("black_box_start") and db.actor:dont_has_info("fantom_radar2_spawn") then
             db.actor:give_info_portion("fantom_radar2_spawn")
         end
     end
 
     if level.name() == "l10_red_forest" then
-        if not has_alife_info("lesnik2_mesto") then
+        if db.actor:dont_has_info("lesnik2_mesto") then
             db.actor:give_info_portion("lesnik2_mesto")
         end
     end
 
     if level.name() == "l10u_bunker" then
-        if has_alife_info("kruglov_case_done") and not has_alife_info("actor_v_bunker") then
+        if db.actor:has_info("kruglov_case_done") and db.actor:dont_has_info("actor_v_bunker") then
             db.actor:give_info_portion("actor_v_bunker")
         end
     end
 
     if level.name() == "l11_pripyat" then
-        if not has_alife_info("my_spawn_est") then
+        if db.actor:dont_has_info("my_spawn_est") then
             spawn_mervin()
             db.actor:give_info_portion("my_spawn_est")
         end
@@ -386,17 +360,17 @@ local function on_first_update()
             db.actor:give_info_portion("haron_doktor_pripyat_spawn")
         end
 
-        if has_alife_info("finish_put_start") and not has_alife_info("zombie_spawn") then
+        if db.actor:has_info("finish_put_start") and db.actor:dont_has_info("zombie_spawn") then
             db.actor:give_info_portion("zombie_spawn")
         end
 
-        if has_alife_info("new_urok_dialog_start") and not has_alife_info("artefact_new_spawn") then
+        if db.actor:has_info("new_urok_dialog_start") and db.actor:dont_has_info("artefact_new_spawn") then
             db.actor:give_info_portion("artefact_new_spawn")
         end
     end
 
     if level.name() == "l12_stancia" then
-        if has_alife_info("prizrak_kill_start") and not has_alife_info("doctor_sms") then
+        if db.actor:has_info("prizrak_kill_start") and db.actor:dont_has_info("doctor_sms") then
             ogse_st_mgr.start_timer("sms_doc", math.random(100, 120), "braad_test.sms_doc")
             db.actor:give_info_portion("doctor_sms")
         end
@@ -405,21 +379,25 @@ local function on_first_update()
             db.actor:give_info_portion("mahon_sar_finish")
         end
 
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("chaes_final_spawn") then
+        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("chaes_final_spawn") then
             db.actor:give_info_portion("chaes_final_spawn")
         end
 
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("pauk_final_spawn") then
+        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("pauk_final_spawn") then
             db.actor:give_info_portion("pauk_final_spawn")
         end
 
-        if has_alife_info("second_urok_dialog_done") and not has_alife_info("mervin2_delete") then
+        if db.actor:has_info("second_urok_dialog_done") and db.actor:dont_has_info("mervin2_delete") then
             db.actor:give_info_portion("mervin2_delete")
+        end
+
+        if db.actor:has_info("haron_spy_start") and db.actor:dont_has_info("haron_spy_spawn") then
+            db.actor:give_info_portion("haron_spy_spawn")
         end
     end
 
     if level.name() == "l12_stancia_2" then
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("sled_spawn") then
+        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("sled_spawn") then
             db.actor:give_info_portion("sled_spawn")
         end
 
@@ -427,11 +405,11 @@ local function on_first_update()
             db.actor:give_info_portion("haron_need_stalker_spawn")
         end
 
-        if has_alife_info("semecky_first_dialog_done") and not has_alife_info("semecky_delete") then
+        if db.actor:has_info("semecky_first_dialog_done") and db.actor:dont_has_info("semecky_delete") then
             db.actor:give_info_portion("semecky_delete")
         end
 
-        if has_alife_info("monolit_bunker_doc_start") and not has_alife_info("monolit_bunker_doc_spawn") then
+        if db.actor:has_info("monolit_bunker_doc_start") and db.actor:dont_has_info("monolit_bunker_doc_spawn") then
             solomon_grabs()
             ograblen()
             z_teleport.aes_tele()
@@ -441,15 +419,15 @@ local function on_first_update()
 
     if level.name() == "l12u_sarcofag" then
 
-        if has_alife_info("magomet_start_dialog_start") and not has_alife_info("semecky_spawn") then
+        if db.actor:has_info("magomet_start_dialog_start") and db.actor:dont_has_info("semecky_spawn") then
             db.actor:give_info_portion("semecky_spawn")
         end
 
-        if has_alife_info("sled_dialog_start") and not has_alife_info("vhod_new") then
+        if db.actor:has_info("sled_dialog_start") and db.actor:dont_has_info("vhod_new") then
             db.actor:give_info_portion("vhod_new")
         end
 
-        if has_alife_info("mervin_start_begin") and not has_alife_info("mervin1_delete") then
+        if db.actor:has_info("mervin_start_begin") and db.actor:dont_has_info("mervin1_delete") then
             db.actor:give_info_portion("mervin1_delete")
         end
 
@@ -482,111 +460,110 @@ local function on_first_update()
     end
 
     if level.name() == "l12u_control_monolith" then
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("gromov_spawn") then
+        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("gromov_spawn") then
             db.actor:give_info_portion("gromov_spawn")
         end
 
-        if has_alife_info("actor_poslednii_put") and not has_alife_info("actor_finish") then
+        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("actor_finish") then
             db.actor:give_info_portion("actor_finish")
         end
     end
 end
 
 local function on_info(npc, info_id)
-
     if level.name() == "l10_red_forest" then
-        if has_alife_info("babka_dialog_start") and not has_alife_info("babka_del") then
+        if db.actor:has_info("babka_dialog_start") and db.actor:dont_has_info("babka_del") then
             db.actor:give_info_portion("babka_del")
         end
     end
 
     if level.name() == "l01_escape" then
-        if has_alife_info("mayor_yarofeev_start") and not has_alife_info("mayor_yarofeev_spawn") then
+        if db.actor:has_info("mayor_yarofeev_start") and db.actor:dont_has_info("mayor_yarofeev_spawn") then
             db.actor:give_info_portion("mayor_yarofeev_spawn")
         end
 
-        if has_alife_info("mayor_yarofeev_done") and not has_alife_info("sidr_sms_info") then
+        if db.actor:has_info("mayor_yarofeev_done") and db.actor:dont_has_info("sidr_sms_info") then
             ogse_st_mgr.start_timer("sms_sidr", math.random(10, 20), "braad_test.sms_sidr")
             db.actor:give_info_portion("sidr_sms_info")
         end
     end
 
     if level.name() == "l03_agroprom" then
-        if has_alife_info("kruglov_art_have") then
+        if db.actor:has_info("kruglov_art_have") then
             contr_art_spawn()
         end
     end
 
     if level.name() == "l04_darkvalley" then
-        if has_alife_info("doronin_help_have") and not has_alife_info("naem_td_spawn") then
+        if db.actor:has_info("doronin_help_have") and db.actor:dont_has_info("naem_td_spawn") then
             db.actor:give_info_portion("naem_td_spawn")
         end
     end
 
     if level.name() == "l05_bar" then
-        if has_alife_info("dolg_attak_dialog_start") and not has_alife_info("sledopyt_delete") then
+        if db.actor:has_info("dolg_attak_dialog_start") and db.actor:dont_has_info("sledopyt_delete") then
             db.actor:give_info_portion("sledopyt_delete")
         end
     end
 
     if level.name() == "l11_pripyat" then
-        if has_alife_info("prizrak_kill_speak") and not has_alife_info("mono_prizrak_spawn") then
+        if db.actor:has_info("prizrak_kill_speak") and db.actor:dont_has_info("mono_prizrak_spawn") then
             ogse_st_mgr.start_timer("mono_prizrak_spawn", math.random(70, 80), "braad_test.mono_prizrak_spawn")
             db.actor:give_info_portion("mono_prizrak_spawn")
         end
 
-        if has_alife_info("ubity_mervina_done") and not has_alife_info("vozvrat_sms") then
+        if db.actor:has_info("ubity_mervina_done") and db.actor:dont_has_info("vozvrat_sms") then
             db.actor:give_info_portion("vozvrat_sms")
         end
 
-        if has_alife_info("prizrak_help_have") and not has_alife_info("haron_sms") then
+        if db.actor:has_info("prizrak_help_have") and db.actor:dont_has_info("haron_sms") then
             ogse_st_mgr.start_timer("sms_new", math.random(100, 120), "braad_test.sms_new")
             db.actor:give_info_portion("haron_sms")
         end
     end
 
     if level.name() == "l12_stancia_2" then
-        if has_alife_info("control_monolit_have") and not has_alife_info("keys_sms") then
+        if db.actor:has_info("control_monolit_have") and db.actor:dont_has_info("keys_sms") then
             db.actor:give_info_portion("keys_sms")
         end
     end
 
     if level.name() == "l12u_sarcofag" then
-        if has_alife_info("haron_naem_done") and not has_alife_info("mervin3_spawn") then
+        if db.actor:has_info("haron_naem_done") and db.actor:dont_has_info("mervin3_spawn") then
             db.actor:give_info_portion("mervin3_spawn")
         end
     end
 
     if level.name() == "l12u_control_monolith" then
-        if has_alife_info("gromov_first_dialog_done") and not has_alife_info("gromov_del") then
+        if db.actor:has_info("gromov_first_dialog_done") and db.actor:dont_has_info("gromov_del") then
             db.actor:give_info_portion("gromov_del")
         end
     end
 
-    if has_alife_info("semeckii_treasure_start") and not has_alife_info("semeckii_treasure_article") then
+    if db.actor:has_info("semeckii_treasure_start") and db.actor:dont_has_info("semeckii_treasure_article") then
         db.actor:give_info_portion("semeckii_treasure_article")
     end
 
-    if has_alife_info("black_box_done") and not has_alife_info("prizrak_about_pda_sms") then
+    if db.actor:has_info("black_box_done") and db.actor:dont_has_info("prizrak_about_pda_sms") then
         ogse_st_mgr.start_timer("prizrak_pda", math.random(20, 30), "braad_test.prizrak_pda")
         db.actor:give_info_portion("prizrak_about_pda_sms")
     end
 
-    if (has_alife_info("mil_lucash_dead") or has_alife_info("mil_blockpost_leader_dead"))
-    and has_alife_info("mil_lucash_help_start") and not has_alife_info("mil_lucash_help_done") then
+    if (db.actor:has_info("mil_lucash_dead") or db.actor:has_info("mil_blockpost_leader_dead"))
+    and db.actor:has_info("mil_lucash_help_start") and db.actor:dont_has_info("mil_lucash_help_done") then
         db.actor:give_info_portion("mil_lucash_help_fail")
     end
 
-    if (has_alife_info("levsha_dead") or has_alife_info("bes_dead")) and has_alife_info("bes_help_levsha_start")
-    and not has_alife_info("bes_help_levsha_done") then
+    if (db.actor:has_info("levsha_dead") or db.actor:has_info("bes_dead")) and db.actor:has_info("bes_help_levsha_start")
+    and db.actor:dont_has_info("bes_help_levsha_done") then
         db.actor:give_info_portion("bes_help_levsha_fail")
     end
 
-    if has_alife_info("fedya_razboinik_see") and not has_alife_info("sveeblov_predatel_vpered") then -- Тут глянуть почему он не видит
+    if db.actor:has_info("fedya_razboinik_see") and db.actor:dont_has_info("sveeblov_predatel_vpered") then -- Тут глянуть почему он не видит
         db.actor:give_info_portion("sveeblov_predatel_fail")
     end
 
-    if has_alife_info("aes_solmon_have") and not has_alife_info("aes_solmon_sms") then
+    if db.actor:has_info("aes_solmon_have") and db.actor:dont_has_info("aes_solmon_sms") then
         ogse_st_mgr.start_timer("sms_solomon", math.random(20, 30), "braad_test.sms_solomon")
         db.actor:give_info_portion("aes_solmon_sms")
     end
@@ -610,45 +587,49 @@ local function on_info(npc, info_id)
         db.actor:give_info_portion("art_escape_spawn")
     end
 
-    if has_alife_info("garbage_stalker_wound_dead") and has_alife_info("knyaz_dolg_start")
-    and not has_alife_info("knyaz_dolg_have") then
+    if db.actor:has_info("garbage_stalker_wound_dead") and db.actor:has_info("knyaz_dolg_start")
+    and db.actor:dont_has_info("knyaz_dolg_have") then
         db.actor:give_info_portion("knyaz_dolg_have")
     end
 
-    if has_alife_info("valet_dead") and has_alife_info("krest_work_start") and not has_alife_info("krest_work_have") then
+    if db.actor:has_info("valet_dead") and db.actor:has_info("krest_work_start") and db.actor:dont_has_info("krest_work_have") then
         db.actor:give_info_portion("krest_work_fail")
     end
 
-    if (has_alife_info("krest_dead") and has_alife_info("krest_razborka_spawn")
-    and not has_alife_info("krest_razborka_done")) or ((has_alife_info("razbor_ban1_see") or has_alife_info("razbor_ban2_see") or has_alife_info("razbor_ban3_see") 
-    or has_alife_info("razbor_ban4_see") or has_alife_info("razbor_ban5_see"))
-    and has_alife_info("krest_razborka_spawn") and not has_alife_info("krest_razborka_begin")) then
+    if (db.actor:has_info("krest_dead") and db.actor:has_info("krest_razborka_spawn")
+    and db.actor:dont_has_info("krest_razborka_done")) or ((db.actor:has_info("razbor_ban1_see") or db.actor:has_info("razbor_ban2_see") or db.actor:has_info("razbor_ban3_see") 
+    or db.actor:has_info("razbor_ban4_see") or db.actor:has_info("razbor_ban5_see"))
+    and db.actor:has_info("krest_razborka_spawn") and db.actor:dont_has_info("krest_razborka_begin")) then
         db.actor:give_info_portion("krest_razborka_fail")
     end
 
-    if (has_alife_info("volk_dead") or has_alife_info("esc_fanat_new_dead")) and has_alife_info("derevna_stalker_start")
-    and not has_alife_info("derevna_stalker_done") then
+    if (db.actor:has_info("volk_dead") or db.actor:has_info("esc_fanat_new_dead")) and db.actor:has_info("derevna_stalker_start")
+    and db.actor:dont_has_info("derevna_stalker_done") then
         db.actor:give_info_portion("derevna_stalker_fail")
     end
 
-    if (has_alife_info("ucen_ohr1_see") or has_alife_info("ucen_ohr2_see") or has_alife_info("ucen_ohr3_see")) 
-    and has_alife_info("doronin_help_val") and not has_alife_info("doronin_help_have") then
+    if (db.actor:has_info("ucen_ohr1_see") or db.actor:has_info("ucen_ohr2_see") or db.actor:has_info("ucen_ohr3_see")) 
+    and db.actor:has_info("doronin_help_val") and db.actor:dont_has_info("doronin_help_have") then
         db.actor:give_info_portion("doronin_help_fail")
     end
 
-    if has_alife_info("electro_chimera_ucen_need") and has_alife_info("electro_chimera_ucen_dead")
-    and not has_alife_info("ucen_need_metka_chimera_have") then
+    if db.actor:has_info("electro_chimera_ucen_need") and db.actor:has_info("electro_chimera_ucen_dead")
+    and db.actor:dont_has_info("ucen_need_metka_chimera_have") then
         db.actor:give_info_portion("ucen_need_metka_fail")
     end
 
-    if has_alife_info("gigant_strong_ucen_need") and has_alife_info("gigant_strong_ucen_dead")
-    and not has_alife_info("ucen_need_metka_gigant_have") then
+    if db.actor:has_info("gigant_strong_ucen_need") and db.actor:has_info("gigant_strong_ucen_dead")
+    and db.actor:dont_has_info("ucen_need_metka_gigant_have") then
         db.actor:give_info_portion("ucen_need_metka_fail")
     end
 
-    if has_alife_info("bloodsucker_strong_ucen_need") and has_alife_info("bloodsucker_strong_ucen_dead")
-    and not has_alife_info("ucen_need_metka_bloodsucker_have") then
+    if db.actor:has_info("bloodsucker_strong_ucen_need") and db.actor:has_info("bloodsucker_strong_ucen_dead")
+    and db.actor:dont_has_info("ucen_need_metka_bloodsucker_have") then
         db.actor:give_info_portion("ucen_need_metka_fail")
+    end
+
+    if db.actor:has_info("nato_enemy") and db.actor:dont_has_info("nato_zasada") then
+        db.actor:give_info_portion("nato_zasada")
     end
 end
 
