@@ -120,7 +120,6 @@ local function on_take(obj, sobj)
 end
 
 local function on_first_update()
-
     if level.name() == "l01_escape" then
         if db.actor:dont_has_info("actor_na_kordon") then
             db.actor:give_info_portion("actor_na_kordon")
@@ -285,6 +284,19 @@ local function on_first_update()
 
         if db.actor:has_info("finish_put_start") and db.actor:dont_has_info("klyak_sms") then
             db.actor:give_info_portion("klyak_sms")
+        end
+
+        if db.actor:has_info("levsha_daet_dobro") then
+            local sobj = alife():object(id_by_sid(story_ids.garbage_levsha))
+            if sobj then
+                local pk = get_netpk(sobj, 1)
+                ASSERT(pk and pk:isOk(), "can't read netpacket of %s", sobj:name())
+                local data = pk:get()
+                data.visual_name = "actors\\killer\\stalker_ki_nauchniy"
+                pk:set(data)
+            end
+            local pp = patrol("mil_levsha_larger_mil_levsha_walk")
+            alife():teleport_object(id_by_sid(story_ids.garbage_levsha), pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
         end
     end
 
