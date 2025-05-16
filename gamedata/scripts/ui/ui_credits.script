@@ -1,7 +1,7 @@
 class "ui_credits" (CUIScriptWnd)
 
 local SPEED = 0.95
-local DEFAULT_SPEED = 0.5
+local DEFAULT_SPEED = 0.55
 
 local fade_background, fade_vignette = 0, 0
 local fade_timer
@@ -64,8 +64,9 @@ function ui_credits:UpdateWnd()
 	end
 
 	local pos = self.credits_area:GetWndPos()
-	if pos.y < -5525 then
+	if pos.y < -6500 then
 		SPEED = 0
+		fade_timer = true
 	else
 		fade_background = fade_background + 5
 		local alpha_color = fade_background >= 250 and 255 or fade_background
@@ -76,17 +77,16 @@ function ui_credits:UpdateWnd()
 		self.darkside_logo:SetWndPos(pos.x, (pos.y - 768) - SPEED)
 	end
 
-	if self.music:playing() and time_global() - fade_timer > self.music:length() - 7000 then
-		fade_vignette = fade_vignette + 1
+	if self.music:playing() and fade_timer then
+		fade_vignette = fade_vignette + 0.2
 		self.vignette_fade:SetColor(GetARGB(fade_vignette >= 250 and 255 or fade_vignette, 255, 255, 255))
 	end
 
-	--log3("update wnd, pos = x %s, y %s - time global = %s, fade_timer = %s, music length = %s", pos.x, pos.y, time_global(), fade_timer, self.music:length() - 270)
+	--log3("update wnd, pos = x %s, y %s - time global = %s, music position = %s, music length = %s", pos.x, pos.y, time_global(), self.music:get_position(), self.music:length())
 end
 
 function ui_credits:Update()
 	CUIScriptWnd.Update(self)
-
 	ui_credits_window:UpdateWnd()
 end
 
@@ -124,14 +124,8 @@ function StartCredits(no_game)
 
 	SPEED = DEFAULT_SPEED
 
-	fade_timer = time_global()
-
 	ui_credits_window = ui_credits()
 	ui_credits_window:ShowDialog(true)
 	snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
 	cmd("snd_volume_eff", 0.0)
-end
-
-function attach(sm)
-    sm:subscribe({ signal = "on_update", fun = self.UpdateWnd, self = self })
 end
