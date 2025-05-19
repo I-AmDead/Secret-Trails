@@ -219,7 +219,7 @@ function totalizator(actor, npc)
         end
     end
 
-    ogse_st_mgr.start_gtimer("totalizator_bet_result", math.random(50000, 80000), "totalizator.bet_result")
+    ogse_st_mgr.start_gtimer(nil, math.random(50000, 80000), "totalizator.bet_result")
 end
 
 function give_prize(actor, npc)
@@ -300,12 +300,12 @@ function bet_result()
         end
 
         if dolg > 0 then
-            ogse_st_mgr.start_gtimer("totalizator_send_dolg", time_send_dolg + math.random(1000, 5000), "totalizator.send")
-            ogse_st_mgr.start_gtimer("totalizator_percent_dolg", time_index_dolg, "totalizator.percent_dolg")
+            ogse_st_mgr.start_gtimer(nil, time_send_dolg + math.random(1000, 5000), "totalizator.send")
+            ogse_st_mgr.start_gtimer(nil, time_index_dolg, "totalizator.percent_dolg")
         end
 
         if deposit > 0 then
-            ogse_st_mgr.start_gtimer("totalizator_percent_deposit", time_index_deposit, "totalizator.percent_deposit")
+            ogse_st_mgr.start_gtimer(nil, time_index_deposit, "totalizator.percent_deposit")
         end
     end
 end
@@ -329,7 +329,7 @@ function percent_deposit()
         news_manager.send_tip(db.actor, game.translate_string("deposit_plus") .. " " .. tostring(deposit) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     end
-    ogse_st_mgr.start_gtimer("totalizator_percent_deposit", time_index_deposit, "totalizator.percent_deposit")
+    ogse_st_mgr.start_gtimer(nil, time_index_deposit, "totalizator.percent_deposit")
 end
 
 function percent_dolg()
@@ -351,7 +351,7 @@ function percent_dolg()
         news_manager.send_tip(db.actor, game.translate_string("deposit_minus") .. " " .. tostring(dolg) .. " " ..
             game.translate_string("descr_rub"), 5, "default", 10000)
     end
-    ogse_st_mgr.start_gtimer("totalizator_percent_dolg", time_index_dolg, "totalizator.percent_dolg")
+    ogse_st_mgr.start_gtimer(nil, time_index_dolg, "totalizator.percent_dolg")
 end
 
 function send()
@@ -378,7 +378,7 @@ function send()
     elseif dolg > 500000 then
         news_manager.send_tip(db.actor, "dolg_10", 0, "killer", 5000)
     end
-    ogse_st_mgr.start_gtimer("totalizator_send_dolg", time_send_dolg + math.random(1000, 5000), "totalizator.send")
+    ogse_st_mgr.start_gtimer(nil, time_send_dolg + math.random(1000, 5000), "totalizator.send")
 end
 
 function precond()
