@@ -177,14 +177,14 @@ function anomaly_binder:on_enter(zone, obj)
     if obj:is_artefact() then
         if is_anomaly then
             amk_mod.af_on_enter_zone(obj)
-        end
-        local is_delete = get_bool(obj:section(), "is_delete", false)
-        if is_delete then
-            local hasanom, anom_id = ogse_anomaly.get_nearest_anomaly_by_point(obj:position())
-            local sobj = alife():object(anom_id)
-            if sobj then
-                ogse_anomaly.set_anomaly_mode(anom_id, "anom_off")
-                alife():release(sobj, true)
+
+            local is_delete = get_bool(obj:section(), "is_delete", false)
+            if is_delete then
+                local sobj = alife():object(zone:id())
+                if sobj then
+                    ogse_anomaly.set_anomaly_mode(zone:id(), "anom_off")
+                    alife():release(sobj, true)
+                end
             end
         end
     end
