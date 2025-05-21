@@ -69,18 +69,7 @@ cbuffer static_globals
 
 float2 get_taa_jitter(float4 hpos) { return hpos.xy + m_taa_jitter.xy * hpos.w; }
 
-float2 get_motion_vector(float4 hpos_curr, float4 hpos_old)
-{
-    if (m_taa_jitter.w > 0.f)
-    { // use_taa
-        float4 screen = float4(hpos_curr.xy, hpos_old.xy) / float4(hpos_curr.ww, hpos_old.ww);
-        return (screen.zw - screen.xy) * float2(0.5f, -0.5f);
-    }
-    else // use dlss
-    {
-        return hpos_curr.xy / hpos_curr.w - hpos_old.xy / hpos_old.w;
-    }
-}
+float2 get_motion_vector(float4 hpos_curr, float4 hpos_old) { return hpos_curr.xy / hpos_curr.w - hpos_old.xy / hpos_old.w; }
 
 float calc_cyclic(float x)
 {
