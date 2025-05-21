@@ -6,7 +6,8 @@ function normal		(shader, t_base, t_second, t_detail)
 --			: aref 		(true,0)	--	enable to save bandwith?
 			: sorting	(2, false)
 
-	shader:dx10texture	("s_vollight", 	"$user$generic2")
+	shader:dx10texture	("s_vollight1", "$user$generic2")
+	shader:dx10texture	("s_vollight2", "$user$generic3")
 	shader:dx10texture 	("s_tonemap", 	"$user$tonemap")
 	shader:dx10texture 	("noise_tex", 	"fx\\blue_noise")
 	shader:dx10texture 	("s_position", 	"$user$position")
