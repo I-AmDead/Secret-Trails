@@ -1,5 +1,5 @@
 uniform float4 game_time;
-uniform float4 watch_actor_params;
+uniform float4 watch_actor_params_1;
 uniform float4 watch_actor_params_2;
 uniform float4 watch_color_params;
 uniform float4 radiation_effect;
@@ -415,7 +415,7 @@ float dfNumberHealth(float2 origin, float num, float2 uv)
     float offs = 0.0;
 
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
-    int health_factor = round(watch_actor_params.x * 100);
+    int health_factor = round(watch_actor_params_1.x * 100);
     int index = health_factor < 100 ? (health_factor < 10 ? 0 : 1) : 2;
 
     for (int i = index; i >= 0; i--)
@@ -549,23 +549,26 @@ float dfRadiation(float2 origin, float2 uv)
     uv -= origin;
     float dist = 1e6;
 
-    dist = min(dist, dfCircle(float2(-1.5, 0.8), 0.07, uv));
+    float2 pos = float2(-1.0, 0.83);
+    float2 line_length = float2(0.1, 0.33);
 
-    for (int i = 0; i < 3; i++)
+    dist = min(dist, dfCircle(pos, 0.06, uv));
+
+    for(int i = 0; i < 3; i++) 
     {
         float angle = float(i) * (2.0944);
 
-        dist = min(dist, dfArc(float2(-1.5, 0.8), angle - 0.0, 1.0, 0.35, uv));
+        dist = min(dist, dfArc(pos, angle, 1.0, 0.35, uv));
 
-        float2 p1 = float2(cos(angle), sin(angle)) * 0.12 + float2(-1.5, 0.8);
-        float2 p2 = float2(cos(angle), sin(angle)) * 0.35 + float2(-1.5, 0.8);
+        float2 p1 = float2(cos(angle), sin(angle)) * line_length.x + pos;
+        float2 p2 = float2(cos(angle), sin(angle)) * line_length.y + pos;
         dist = min(dist, dfLine(p1, p2, uv));
 
-        float2 p3 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.12 + float2(-1.5, 0.8);
-        float2 p4 = float2(cos(angle + 1.0), sin(angle + 1.0)) * 0.35 + float2(-1.5, 0.8);
+        float2 p3 = float2(cos(angle + 1.0) , sin(angle + 1.0)) * line_length.x + pos;
+        float2 p4 = float2(cos(angle + 1.0), sin(angle + 1.0)) * line_length.y + pos;
         dist = min(dist, dfLine(p3, p4, uv));
     }
-
+    
     return dist;
 }
 

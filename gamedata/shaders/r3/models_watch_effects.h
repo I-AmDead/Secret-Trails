@@ -151,7 +151,7 @@ float3 NixieTime(float2 uv)
     float minute = game_time.y;
     float seconds = game_time.z;
     float miliseconds = game_time.w;
-    float radiation = watch_actor_params.z;
+    float radiation = watch_actor_params_1.z;
 
     float nsize = numberLength(9999.0);
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
@@ -166,7 +166,7 @@ float3 NixieTime(float2 uv)
     float3 green_color = float3(0.0, 0.9, 0.1);
     float3 blue_color = float3(0.0, 0.1, 0.7);
 
-    if (watch_actor_params.w == 1)
+    if (watch_actor_params_1.w == 1)
     {
         pos.x = basepos.x + 0.16;
         dist = min(dist, dfNumber(pos, hour, uv));
@@ -178,11 +178,11 @@ float3 NixieTime(float2 uv)
         dist = min(dist, dfNumber(pos, minute, uv));
     }
 
-    if (watch_actor_params.w == 2)
+    if (watch_actor_params_1.w == 2)
     {
-        int health_factor = round(watch_actor_params.x * 100);
+        int health_factor = round(watch_actor_params_1.x * 100);
         pos.x -= 0.2;
-        pos.y += 0.05;
+        pos.y += 0.1;
         pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);
         dist = min(dist, dfNumberHealth(pos, health_factor, uv));
  
@@ -191,7 +191,7 @@ float3 NixieTime(float2 uv)
 
         pos.y -= 0.35;
 
-        pos.x = basepos.x + 0.25;
+        pos.x = basepos.x + 0.15;
 
         // Icons
         if (watch_actor_params_2.x < 0.99)
@@ -227,7 +227,7 @@ float3 NixieTime(float2 uv)
 
         pos.x += 0.25;
 
-        if (watch_actor_params_2.w < 0.99) 
+        if (watch_actor_params_2.w < 0.99)
         {
             float dropDist = dfDrop(pos, uv);
             if (watch_actor_params_2.w < 0.0)
@@ -235,9 +235,20 @@ float3 NixieTime(float2 uv)
             else
                 color += lerp(red_color, green_color, watch_actor_params_2.w) * (0.001 / dropDist);
         }
+
+        pos.x += 0.15;
+
+        if (watch_actor_params_1.y < 0.99)
+        {
+            float radDist = dfRadiation(pos, uv);
+            if (watch_actor_params_1.y < 0.0)
+                color += lerp(blue_color, color, watch_actor_params_1.y) * (0.001 / radDist);
+            else
+                color += lerp(red_color, green_color, watch_actor_params_1.y) * (0.001 / radDist);
+        }
     }
 
-    if (watch_actor_params.w == 3)
+    if (watch_actor_params_1.w == 3)
     {
         uv *= 1.3;
         pos = basepos;
@@ -248,7 +259,7 @@ float3 NixieTime(float2 uv)
         color += dosimeter(uv);
     }
 
-    if (watch_actor_params.w == 4)
+    if (watch_actor_params_1.w == 4)
     {
         uv *= 1.5;
 
