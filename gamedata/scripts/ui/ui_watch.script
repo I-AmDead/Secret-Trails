@@ -47,11 +47,17 @@ end
 local function update_watch_actor_params()
     shader_set_custom_param("watch_actor_params", db.actor.health, db.actor.power, arc_radiation.get_radiation_dose(), watch_mode)
     if watch_mode == 2 then
-        local satiety = db.actor.satiety
-        local psy = db.actor.psy_health
-        local overweight = overweight_level()
-        local bleeding = 1.0 - db.actor:get_bleeding()
-        shader_set_custom_param("watch_actor_params_2", satiety, psy, overweight < 0.0 and 0.0 or overweight, bleeding)
+        local satiety_boost = laucer_item_special_effect.boosting("boost_satiety_restore")
+        local psy_boost = laucer_item_special_effect.boosting("boost_telepat_protection") or laucer_item_special_effect.boosting("boost_psy_health_restore")
+        local overweight_boost = laucer_item_special_effect.boosting("boost_max_weight")
+        local bleeding_boost = laucer_item_special_effect.boosting("boost_bleeding_restore")
+
+        local satiety = satiety_boost and -1 or db.actor.satiety
+        local psy = psy_boost and -1 or db.actor.psy_health
+        local overweight = overweight_boost and -1 or math.clamp(overweight_level(), 0.0, 1.0)
+        local bleeding = bleeding_boost and -1 or 1.0 - db.actor:get_bleeding()
+
+        shader_set_custom_param("watch_actor_params_2", satiety, psy, overweight, bleeding)
     end
 end
 

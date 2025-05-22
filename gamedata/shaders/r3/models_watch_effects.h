@@ -162,8 +162,9 @@ float3 NixieTime(float2 uv)
 
     float3 color = float3(0.0, 0.0, 0.0);
 
-    float3 red_color = float3(1.0, 0.0, 0.0);
-    float3 green_color = float3(0.0, 1.0, 0.0);
+    float3 red_color = float3(0.9, 0.1, 0.0);
+    float3 green_color = float3(0.0, 0.9, 0.1);
+    float3 blue_color = float3(0.0, 0.1, 0.7);
 
     if (watch_actor_params.w == 1)
     {
@@ -196,7 +197,10 @@ float3 NixieTime(float2 uv)
         if (watch_actor_params_2.x < 0.99)
         {
             float eatDist = dfEat(pos, uv);
-            color += lerp(red_color, green_color, watch_actor_params_2.x) * (0.001 / eatDist);
+            if (watch_actor_params_2.x < 0.0)
+                color += lerp(blue_color, color, watch_actor_params_2.x) * (0.001 / eatDist);
+            else
+                color += lerp(red_color, green_color, watch_actor_params_2.x) * (0.001 / eatDist);
         }
 
         pos.x += 0.25;
@@ -204,7 +208,10 @@ float3 NixieTime(float2 uv)
         if (watch_actor_params_2.y < 0.99)
         {
             float radioDist = dfRadio(pos, uv);
-            color += lerp(red_color, green_color, watch_actor_params_2.y) * (0.001 / radioDist);
+            if (watch_actor_params_2.y < 0.0)
+                color += lerp(blue_color, color, watch_actor_params_2.y) * (0.001 / radioDist);
+            else
+                color += lerp(red_color, green_color, watch_actor_params_2.y) * (0.001 / radioDist);
         }
 
         pos.x += 0.25;
@@ -212,7 +219,10 @@ float3 NixieTime(float2 uv)
         if (watch_actor_params_2.z < 1.0)
         {
             float kettlebellDist = dfKettlebell(pos, uv);
-            color += lerp(red_color, green_color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
+            if (watch_actor_params_2.z < 0.0)
+                color += lerp(blue_color, color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
+            else
+                color += lerp(red_color, green_color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
         }
 
         pos.x += 0.25;
@@ -220,7 +230,10 @@ float3 NixieTime(float2 uv)
         if (watch_actor_params_2.w < 0.99) 
         {
             float dropDist = dfDrop(pos, uv);
-            color += lerp(red_color, green_color, watch_actor_params_2.w) * (0.001 / dropDist);
+            if (watch_actor_params_2.w < 0.0)
+                color += lerp(blue_color, color, watch_actor_params_2.w) * (0.001 / dropDist);
+            else
+                color += lerp(red_color, green_color, watch_actor_params_2.w) * (0.001 / dropDist);
         }
     }
 
