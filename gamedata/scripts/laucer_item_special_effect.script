@@ -11,13 +11,14 @@ local our_hits = {
 
 local normal_time_factor = get_float("alife", "time_factor")
 
-local boosters = {
+local boosters_type = {
     ["boost_health_restore"] = false,
     ["boost_power_restore"] = false,
     ["boost_radiation_restore"] = false,
     ["boost_bleeding_restore"] = false,
     ["boost_psy_health_restore"] = false,
     ["boost_alcohol_restore"] = false,
+    ["boost_satiety_restore"] = false,
     ["boost_fire_wound_protection"] = false,
     ["boost_max_weight"] = false,
     ["boost_radiation_protection"] = false,
@@ -25,30 +26,10 @@ local boosters = {
     ["boost_time_factor"] = false
 }
 
-booster_type = nil
-booster_state = false
-
-booster_type1 = nil
-booster_type2 = nil
-booster_type3 = nil
-booster_type4 = nil
-booster_type5 = nil
-booster_type6 = nil
-booster_type7 = nil
-booster_type8 = nil
-booster_state1 = false
-booster_state2 = false
-booster_state3 = false
-booster_state4 = false
-booster_state5 = false
-booster_state6 = false
-booster_state7 = false
-booster_state8 = false
-
 function on_first_update()
     cmd("time_factor", 1)
 
-    for k, v in pairs(boosters) do
+    for k, v in pairs(boosters_type) do
         local tname = "special_effect." .. k
         local ttl = ogse.load_var_safe(tname .. ".ttl") or 0
         local value = ogse.load_var_safe(tname) or 0
@@ -57,7 +38,7 @@ function on_first_update()
             local boost = {}
             boost.ttl = ttl
             boost.value = value
-            boosters[k] = boost
+            boosters_type[k] = boost
             set_boost(k, value, true)
         end
     end
@@ -76,7 +57,7 @@ function on_first_update()
 end
 
 function on_save()
-    for k, v in pairs(boosters) do
+    for k, v in pairs(boosters_type) do
         if v and v.ttl > 0 then
             ogse.save_var("special_effect." .. k .. ".ttl", v.ttl)
             ogse.save_var("special_effect." .. k, v.value)
@@ -93,7 +74,7 @@ function on_item_use(section)
         return
     end
 
-    for k, v in pairs(boosters) do
+    for k, v in pairs(boosters_type) do
         local boostValue = get_float(section, k, 0)
         if boostValue ~= 0 then
             local boost
@@ -103,7 +84,7 @@ function on_item_use(section)
                 set_boost(k, -v.value, false) -- disable prev boost affect
             else
                 boost = {}
-                boosters[k] = boost
+                boosters_type[k] = boost
             end
             boost.ttl = boost.ttl and boost.ttl + boost_time or boost_time
             boost.value = boostValue
@@ -125,7 +106,7 @@ function on_before_hit(hit_data)
     if not protection_type then
         return
     end
-    local protection = boosters[protection_type]
+    local protection = boosters_type[protection_type]
     if not protection then
         return
     end
@@ -138,28 +119,17 @@ function on_before_hit(hit_data)
 end
 
 function process_boost(dt)
-    for k, v in pairs(boosters) do
+    for k, v in pairs(boosters_type) do
         if v then
             v.ttl = v.ttl - (dt / normal_time_factor)
             if v.ttl <= 0 then
                 -- log1("disable k=" .. k .. " by ttl")
                 set_boost(k, -v.value, false) -- disable prev boost affect
-                boosters[k] = false
+                boosters_type[k] = false
             end
         end
     end
 end
-
-local booster_hud = {
-    ["boost_health_restore"] = "indicator_booster_health",
-    ["boost_power_restore"] = "indicator_booster_power",
-    ["boost_radiation_restore"] = "indicator_booster_rad_cleanup",
-    ["boost_psy_health_restore"] = "indicator_booster_psy_cleanup",
-    ["boost_bleeding_restore"] = "indicator_booster_wound",
-    ["boost_max_weight"] = "indicator_booster_weight",
-    ["boost_radiation_protection"] = "indicator_booster_rad",
-    ["boost_telepat_protection"] = "indicator_booster_psy"
-}
 
 function set_boost(type, value, state)
     if type == "boost_health_restore" then
@@ -174,6 +144,8 @@ function set_boost(type, value, state)
         get_actor_obj().condition.psy_health_v = get_actor_obj().condition.psy_health_v + value
     elseif type == "boost_alcohol_restore" then
         get_actor_obj().condition.alcohol_v = get_actor_obj().condition.alcohol_v + (has_alife_info("acv_alk") and value - 0.0005 or value)
+    elseif type == "boost_satiety_restore" then
+        get_actor_obj().condition.satiety_v = get_actor_obj().condition.satiety_v + value
     elseif type == "boost_max_weight" then
         local curr_max = db.actor:get_actor_max_weight()
         db.actor:set_actor_max_weight(curr_max + value)
@@ -197,24 +169,15 @@ function set_boost(type, value, state)
         end
     else
         update_inventory_window()
-
-        for idx = 1, 8 do
-            local b_type = this["booster_type" .. idx]
-            if not b_type or b_type == booster_hud[type] then
-                this["booster_type" .. idx] = booster_hud[type]
-                this["booster_state" .. idx] = state
-                break
-            end
-        end
     end
 end
 
 function boosting(k)
-    return boosters[k] and boosters[k].ttl > 0
+    return boosters_type[k] and boosters_type[k].ttl > 0
 end
 
 function boosters_reset()
-    for k, v in pairs(boosters) do
+    for k, v in pairs(boosters_type) do
         if v then
             v.ttl = 0
         end
