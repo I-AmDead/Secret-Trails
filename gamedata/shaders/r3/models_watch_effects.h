@@ -179,7 +179,7 @@ float3 NixieTime(float2 uv)
 
     if (watch_actor_params.w == 2)
     {
-        float health_factor = watch_actor_params.x * 100;
+        int health_factor = round(watch_actor_params.x * 100);
         pos.x -= 0.2;
         pos.y += 0.05;
         pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);

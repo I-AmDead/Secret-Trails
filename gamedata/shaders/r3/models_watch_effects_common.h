@@ -415,10 +415,10 @@ float dfNumberHealth(float2 origin, float num, float2 uv)
     float offs = 0.0;
 
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
-    float health_factor = watch_actor_params.x * 100;
-    float index = health_factor < 100.f ? (health_factor < 10.f ? 0 : 1) : 2;
+    int health_factor = round(watch_actor_params.x * 100);
+    int index = health_factor < 100 ? (health_factor < 10 ? 0 : 1) : 2;
 
-    for (float i = index; i >= 0.0; i--)
+    for (int i = index; i >= 0; i--)
     {
         float d = fmod(num / pow(10.0, i), 10.0);
 
