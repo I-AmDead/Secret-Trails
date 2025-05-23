@@ -1,6 +1,6 @@
 
 subscribed_anoms = {} -- ключи - id радиоактивных аномалий, которые возможно подписать на сигналы, значения - подписана ли аномалия на апдейт (true/false)
-autosubscribe = false -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
+autosubscribe = true -- Должны ли аномалии подписываться на апдейт автоматически при net_spawn
 
 local radzone_sect = {
 	["zone_radioactive"] = { warn = 1, last_warn = 4,  alarm = 8 },
@@ -88,7 +88,7 @@ function anomaly_binder:net_spawn(data)
 end
 
 local geiger_warn = 15
-local actor_radlevel = 0
+rad_level = 0
 
 function anomaly_binder:get_rad_intensity()
     local intencity = radzone_sect[self.object:section()]
@@ -105,7 +105,7 @@ function anomaly_binder:get_rad_intensity()
         if dist_to_actor > geiger_warn then --- актор внутри радзоны, но дальше радиуса предупреждения - большая зона, считаем по крайним значениям
             local low = intencity.warn
             local step = radius / high
-            local rad_level = math.ceil(radius / step)
+            rad_level = math.ceil(radius / step)
             if rad_level > high then
                 rad_level = high
             end
@@ -115,7 +115,7 @@ function anomaly_binder:get_rad_intensity()
             local div = high - low
             local step = radius / div
             local deep = high - (dist_to_actor / step)
-            local rad_level = math.ceil(deep)
+            rad_level = math.ceil(deep)
             if rad_level > high then
                 rad_level = high
             end
@@ -130,13 +130,14 @@ function anomaly_binder:get_rad_intensity()
             local div = high - low
             local step = radius / div
             local deep = high - (dist_to_actor / step)
-            local rad_level = math.ceil(deep)
+            rad_level = math.ceil(deep)
             if rad_level > high then
                 rad_level = high
             end
             radzone_deeps[o_id] = rad_level
             estimate_size[o_id] = dist_to_actor
         else
+            rad_level = 0
             if radzone_deeps[o_id] then
                 radzone_deeps[o_id] = nil
             end

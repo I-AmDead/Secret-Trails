@@ -52,8 +52,8 @@ end
 
 local function update_watch_actor_params()
     local rad_boost = laucer_item_special_effect.boosting("boost_radiation_protection") or laucer_item_special_effect.boosting("boost_radiation_restore")
-    local radiation = rad_boost and -1 or interpolate_rad(arc_radiation.get_radiation_dose())
-    shader_set_custom_param("watch_actor_params_1", db.actor.health, radiation, arc_radiation.get_radiation_dose(), watch_mode)
+    local radiation = rad_boost and -1 or interpolate_rad(db.actor.radiation * 500)
+    shader_set_custom_param("watch_actor_params_1", db.actor.health, radiation, db.actor.radiation * 500, watch_mode)
     if watch_mode == 2 then
         local satiety_boost = laucer_item_special_effect.boosting("boost_satiety_restore")
         local psy_boost = laucer_item_special_effect.boosting("boost_telepat_protection") or laucer_item_special_effect.boosting("boost_psy_health_restore")

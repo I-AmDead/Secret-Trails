@@ -151,7 +151,7 @@ float3 NixieTime(float2 uv)
     float minute = game_time.y;
     float seconds = game_time.z;
     float miliseconds = game_time.w;
-    float radiation = watch_actor_params_1.z;
+    float radiation = round(watch_actor_params_1.z);
 
     float nsize = numberLength(9999.0);
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
