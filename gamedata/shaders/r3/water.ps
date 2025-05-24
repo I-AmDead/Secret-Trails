@@ -84,11 +84,7 @@ float4 main(vf I) : SV_Target
     float2 Refraction_UV = N_Scr * Refraction_Discard;
 
     // Shadows to do some tricks
-#ifndef USE_MSAA
     float water_shadows = saturate(s_accumulator.Sample(smp_nofilter, PosTc + Refraction_UV).r * 2000);
-#else
-    float water_shadows = saturate(s_accumulator.Load(int3((PosTc + Refraction_UV) * screen_res.xy, 0), 0).r * 2000);
-#endif
 
     float3 Nw = mul(float3x3(I.M1, I.M2, I.M3), Navg);
     Nw = normalize(Nw);
