@@ -10,6 +10,7 @@ end
 function on_treasure_use(obj, who)
     if obj:is_inventory_box() and obj:story_id() then
         get_treasure_manager():treasure_empty(obj, obj:story_id())
+        level_tasks.remove_location_by_id(obj:id(), "red_location")
     end
 
     if not ogse.var_exists("DED_SKELET") and string.find(obj:name(), "dead_city_secret") then
@@ -19,7 +20,7 @@ function on_treasure_use(obj, who)
         sobj.angle = vector():set(0, 0.7, 0)
         local snd = sound_object("intriga")
         snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 1.0)
-	ogse.save_var("DED_SKELET", true)
+        ogse.save_var("DED_SKELET", true)
     end
 end
 
