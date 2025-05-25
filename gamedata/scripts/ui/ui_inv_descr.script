@@ -41,6 +41,7 @@ local conditions = {
 	satiety_restore_speed	= get_float("actor_condition", "satiety_v"),
 	radiation_restore_speed	= get_float("actor_condition", "radiation_v") * 100
 }
+
 -- параметры костюмов и артов
 local conditions_params = 
 {
@@ -48,12 +49,13 @@ local conditions_params =
 	{ prop = "bleeding_restore_speed",		text = string.format("%s", game.translate_string("ui_inv_bleeding")),	    	tex = "bleeding"	},
 	{ prop = "satiety_restore_speed",		text = string.format("%s", game.translate_string("ui_inv_satiety")),			tex = "satiety"		},
 	{ prop = "power_restore_speed",			text = string.format("%s", game.translate_string("ui_inv_power")),	    		tex = "power"		},
-	{ prop = "radiation_restore_speed",		text = string.format("%s", game.translate_string("ui_inv_radiation")),			tex = "radiation", unit = game.translate_string("ui_inv_actor_rad_unit")	},
+	{ prop = "radiation_restore_speed",		text = string.format("%s", game.translate_string("ui_inv_radiation")),			tex = "radiation"	},
 }
+
 -- Типы хитов и соответствующие им текстуры и названия
 local hit_types = 
 {
-	{ prop = "burn",						text = string.format("%s", game.translate_string("ui_inv_outfit_burn_protection")),			},
+	{ prop = "burn",						text = string.format("%s", game.translate_string("ui_inv_outfit_burn_protection")),				},
 	{ prop = "shock",						text = string.format("%s", game.translate_string("ui_inv_outfit_shock_protection")),	        },
 	{ prop = "strike",						text = string.format("%s", game.translate_string("ui_inv_outfit_strike_protection")),	        },
 	{ prop = "wound",						text = string.format("%s", game.translate_string("ui_inv_outfit_wound_protection")),	        },
@@ -63,6 +65,7 @@ local hit_types =
 	{ prop = "explosion",					text = string.format("%s", game.translate_string("ui_inv_outfit_explosion_protection")),	    },
 	{ prop = "fire_wound",					text = string.format("%s", game.translate_string("ui_inv_outfit_fire_wound_protection")),	    },
 }
+
 -- Параметры еды
 local eatable_params = 
 {
@@ -73,11 +76,16 @@ local eatable_params =
 	{ prop = "eat_power",					text = string.format("%s", game.translate_string("ui_inv_power")),	        	tex = "power"		},
 	{ prop = "eat_alcohol",					text = string.format("%s", game.translate_string("ui_inv_alcohol")),			tex = "alcohol"		},
 	{ prop = "eat_radiation",				text = string.format("%s", game.translate_string("ui_inv_radiation")),			tex = "radiation"	},
+}
 
+-- Параметры бустов
+local boost_params = 
+{
 	{ prop = "boost_health_restore",		text = string.format("%s", game.translate_string("ui_inv_health")),		    	tex = "health"		},
 	{ prop = "boost_bleeding_restore",		text = string.format("%s", game.translate_string("ui_inv_bleeding")),		    tex = "bleeding"	},
 	{ prop = "boost_psy_health_restore",	text = string.format("%s", game.translate_string("ui_inv_psy_health")),	    	tex = "telepatic"	},
 	{ prop = "boost_alcohol_restore",		text = string.format("%s", game.translate_string("ui_inv_alcohol")),	        tex = "alcohol"		},
+	{ prop = "boost_satiety_restore",		text = string.format("%s", game.translate_string("ui_inv_satiety")),	        tex = "satiety"		},
 	{ prop = "boost_telepat_protection",	text = string.format("%s", game.translate_string("ui_inv_outfit_telepatic_protection")),	tex = "telepatic"	},
 	{ prop = "boost_time_factor",			text = string.format("%s", game.translate_string("ui_inv_satiety")),			tex = "satiety"		},
 	{ prop = "boost_power_restore",			text = string.format("%s", game.translate_string("ui_inv_power")),				tex = "power"		},
@@ -473,6 +481,24 @@ function CUIDescriptionWnd:ShowEatableParams()
 	end
 
 	local tm = has_alife_info("acv_nar") and get_float(self.section, "boost_time", 0) - 10.0 or get_float(self.section, "boost_time", 0)
+
+	for i, t in ipairs(boost_params) do
+		local val = get_float(self.section, t.prop, 0.0)
+		if val ~= 0.0 then
+			local txt = val > 0.0 and "%c[green]+" or "%c[red]"
+			local tex_color = val > 0.0 and color_green or color_red
+			if t.prop == "boost_radiation_restore" or t.prop == "boost_bleeding_restore" or t.prop == "boost_satiety_restore"then
+				txt = val > 0.0 and "%c[green]-" or "%c[red]+"
+				if t.prop == "boost_radiation_restore" or t.prop == "boost_satiety_restore" then
+					val = val * 10
+				end
+			end
+			val = string.find(t.prop, "restore") and val * tm or val
+			txt = txt .. string.format("%.0f", val * 100) .. (t.unit or "%")
+			table.insert(params, {t.tex, t.text, txt, tex_color})
+		end
+	end
+
 	if tm > 0 then
 		local txt = string.format("%.0f %s", tm, game.translate_string("descr_seconds"))
 		table.insert(params, {"time", game.translate_string("descr_time"), txt, {255, 0, 255, 0}})
