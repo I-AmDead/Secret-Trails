@@ -180,9 +180,11 @@ float3 NixieTime(float2 uv)
 
     if (watch_actor_params_1.w == 2)
     {
+        bool indicators_show = watch_actor_params_2.x < 0.99 || watch_actor_params_2.y < 0.99 || watch_actor_params_2.z < 1.0 || watch_actor_params_2.w < 0.99 || watch_actor_params_1.y < 0.99;
+
         int health_factor = round(watch_actor_params_1.x * 100);
         pos.x -= 0.2;
-        pos.y += 0.1;
+        pos.y += indicators_show ? 0.1 : 0.0;
         pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);
         dist = min(dist, dfNumberHealth(pos, health_factor, uv));
  
@@ -190,7 +192,6 @@ float3 NixieTime(float2 uv)
 	    dist = min(dist, dfPercent(pos, uv));
 
         pos.y -= 0.35;
-
         pos.x = basepos.x + 0.15;
 
         // Icons
