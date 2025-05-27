@@ -47,8 +47,5 @@ v2p_shadow_direct main(v_tree I)
 
     O.hpos = mul(m_VP, f_pos);
 
-#ifndef USE_HWSMAP
-    O.depth = O.hpos.z;
-#endif
     return O;
 }
