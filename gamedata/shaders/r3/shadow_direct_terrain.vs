@@ -30,4 +30,3 @@ v2p_shadow_direct main(a2v I)
 #endif
     return O;
 }
-FXVS;

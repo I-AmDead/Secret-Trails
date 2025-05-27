@@ -77,5 +77,3 @@ v2p_bumped main(v_model_skinned_3 v) { return _main(skinning_3(v)); }
 #ifdef SKIN_4
 v2p_bumped main(v_model_skinned_4 v) { return _main(skinning_4(v)); }
 #endif
-
-FXVS;

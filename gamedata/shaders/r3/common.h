@@ -10,8 +10,4 @@
 #include "common_functions.h"
 
 #define xmaterial float(L_material.w)
-
-#define FXPS
-#define FXVS
-
 #endif

@@ -10,4 +10,3 @@ v2p_dumb main(v_dumb I)
 
     return O;
 }
-FXVS;

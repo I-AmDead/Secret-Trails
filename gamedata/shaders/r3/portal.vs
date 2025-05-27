@@ -28,4 +28,3 @@ v2p main(v_vert v)
 
     return o;
 }
-FXVS;

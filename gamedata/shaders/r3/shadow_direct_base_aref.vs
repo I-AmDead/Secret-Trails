@@ -18,4 +18,3 @@ v2p_shadow_direct_aref main(v_static I)
 #endif
     return O;
 }
-FXVS;
