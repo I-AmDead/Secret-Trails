@@ -4,7 +4,6 @@
 
 v2p_bumped main(v_in I)
 {
-    //	I.color.rgb 	= I.color.bgr;	//	Swizzle to compensate DX9/DX10 format mismatch
     float4 w_pos = I.P;
     float2 tc = unpack_tc_base(I.tc, I.T.w, I.B.w); // copy tc
     float hemi = I.Nh.w;
@@ -20,8 +19,6 @@ v2p_bumped main(v_in I)
     O.hpos.xy = get_taa_jitter(O.hpos);
 
     // Calculate the 3x3 transform from tangent space to eye-space
-    // TangentToEyeSpace = object2eye * tangent2object
-    //		     = object2eye * transpose(object2tangent) (since the inverse of a rotation is its transpose)
     I.Nh = unpack_D3DCOLOR(I.Nh);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
@@ -29,14 +26,6 @@ v2p_bumped main(v_in I)
     float3 T = unpack_bx4(I.T); //
     float3 B = unpack_bx4(I.B); //
     float3x3 xform = mul((float3x3)m_WV, float3x3(T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z));
-    // The pixel shader operates on the bump-map in [0..1] range
-    // Remap this range in the matrix, anyway we are pixel-shader limited :)
-    // ...... [ 2  0  0  0]
-    // ...... [ 0  2  0  0]
-    // ...... [ 0  0  2  0]
-    // ...... [-1 -1 -1  1]
-    // issue: strange, but it's slower :(
-    // issue: interpolators? dp4? VS limited? black magic?
 
     // Feed this transform to pixel shader
     O.M1 = xform[0];

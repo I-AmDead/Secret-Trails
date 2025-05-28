@@ -6,6 +6,12 @@ f_deffer main(p_bumped I)
 {
     f_deffer O;
 
+    surface_bumped S = sload(I);
+
+#ifdef USE_AREF
+    hashed_alpha_test(I.tcdh.xy, S.base.a);
+#endif
+
     // HUD Rain drops - SSS Update 17
     // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
 
@@ -30,8 +36,6 @@ f_deffer main(p_bumped I)
         drops.w = max(drops.w, 3.0f);
     }
 
-    surface_bumped S = sload(I);
-
     // Add sampled normal and droplets
     float3 Ne = mul(float3x3(I.M1, I.M2, I.M3), S.normal + float3(drops.xy * drops.w, 1.0f));
     Ne = normalize(Ne);
@@ -48,7 +52,7 @@ f_deffer main(p_bumped I)
     float h = I.position.w;
 #endif
 
-    O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.xyz, S.gloss));
+    O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.rgb, S.gloss));
 
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
 

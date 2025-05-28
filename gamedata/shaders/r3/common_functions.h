@@ -168,7 +168,7 @@ float gbuf_unpack_mtl(float mtl_hemi)
     return float(packed_hemi) * (1.0 / 31.0) * 1.333333333;
 }
 
-f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col, const bool use_reflections = false)
+f_deffer pack_gbuffer(float4 norm, float4 pos, float4 col)
 {
     f_deffer res;
 

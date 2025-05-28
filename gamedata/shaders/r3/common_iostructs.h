@@ -344,6 +344,7 @@ struct p_bumped
 #endif
     float4 hpos_curr : TEXCOORD8;
     float4 hpos_old : TEXCOORD9;
+    float4 hpos : SV_Position;
 };
 ////////////////////////////////////////////////////////////////
 //	Defer flat

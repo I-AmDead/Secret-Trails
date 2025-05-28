@@ -66,15 +66,6 @@ v2p_bumped main(v_tree I)
     float3x3 m_xform_v = mul((float3x3)m_V, (float3x3)m_xform);
     float3x3 xform = mul(m_xform_v, float3x3(T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z));
 
-    // The pixel shader operates on the bump-map in [0..1] range
-    // Remap this range in the matrix, anyway we are pixel-shader limited :)
-    // ...... [ 2  0  0  0]
-    // ...... [ 0  2  0  0]
-    // ...... [ 0  0  2  0]
-    // ...... [-1 -1 -1  1]
-    // issue: strange, but it's slower :(
-    // issue: interpolators? dp4? VS limited? black magic?
-
     // Feed this transform to pixel shader
     O.M1 = xform[0];
     O.M2 = xform[1];

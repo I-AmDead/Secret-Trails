@@ -3,8 +3,11 @@
 
 f_deffer main(p_flat I)
 {
-    // diffuse
-    float3 D = tbase(I.tcdh); // IN:  rgb.a
+    float4 D = tbase(I.tcdh);
+
+#ifdef USE_AREF
+    hashed_alpha_test(I.tcdh.xy, D.a);
+#endif
 
 #ifdef USE_TDETAIL
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;

@@ -16,7 +16,6 @@ Texture2D s_bumpX; //
 Texture2D s_detail; //
 Texture2D s_detailBump; //
 Texture2D s_detailBumpX; //	Error for bump detail
-// Texture2D 	s_bumpD;                //
 Texture2D s_hemi; //
 
 Texture2D s_mask; //
