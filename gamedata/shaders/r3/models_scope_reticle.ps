@@ -530,14 +530,14 @@ float4 main(vf I) : SV_Target
     }
     else
     {
-        bool blur = SETTING(SETTINGS, ST_NVG_BLUR) /*&& floor(shader_param_8.x) != 0*/ || m_hud_params.x == 0;
-        back = back_image_sample(I.tc0, scope_tc, ogse_c_screen.x, CHROMA_POWER, blur, SETTING(SETTINGS, ST_CHROMATISM));
+        back = back_image_sample(I.tc0, scope_tc, ogse_c_screen.x, CHROMA_POWER, false, SETTING(SETTINGS, ST_CHROMATISM));
         back *= LENS_COLOR;
     }
 
     if (IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR)
     {
-        back *= lcd_effect(I.hpos);
+        float3 lcdColor = float3(0.4, 0.4, 0.4);
+        back *= lcdColor;
     }
 
     if (IMAGE_TYPE == IT_NV && mark_number.x == 0)

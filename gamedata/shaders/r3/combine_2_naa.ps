@@ -36,7 +36,13 @@ float4 main(p_screen I) : SV_Target
     float3 img = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
 
     img = mblur(center, gbd.P, img.rgb);
+
     float4 bloom = s_ssfx_bloom.Sample(smp_rtlinear, center);
+
+// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
+#ifdef SSFX_DEBAND
+    img = lerp(img, ssfx_debanding(img, center), depth <= SKY_EPS);
+#endif
 
 #ifdef SSFX_FOG
     float fogresult = SSFX_CALC_FOG(gbd.P);
@@ -54,11 +60,6 @@ float4 main(p_screen I) : SV_Target
     // Blend
     img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
 #endif
-#endif
-
-// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
-#ifdef SSFX_DEBAND
-    img = lerp(img, ssfx_debanding(img, center), depth <= SKY_EPS);
 #endif
 
     if (pnv_param_1.z < 1.f)
