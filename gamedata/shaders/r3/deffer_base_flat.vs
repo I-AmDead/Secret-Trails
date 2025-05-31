@@ -1,8 +1,6 @@
 #include "common.h"
 
-#define v_in v_static
-
-v2p_flat main(v_in I)
+v2p_flat main(v_static I)
 {
     I.Nh = unpack_D3DCOLOR(I.Nh);
     I.T = unpack_D3DCOLOR(I.T);

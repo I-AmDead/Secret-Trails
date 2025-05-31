@@ -2,13 +2,6 @@
 #define USE_LM_HEMI
 #include "common.h"
 
-struct v_lmap
-{
-    float4 pos : POSITION; // (float,float,float,1)
-    float4 norm : NORMAL; // (nx,ny,nz,hemi occlusion)
-    float2 tc0 : TEXCOORD0; // (base)
-    float2 tc1 : TEXCOORD1; // (lmap/compressed)
-};
 struct vf
 {
     float2 tc0 : TEXCOORD0;

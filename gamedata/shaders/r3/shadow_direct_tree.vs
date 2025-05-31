@@ -13,21 +13,16 @@
 #include "screenspace_wind.h"
 #endif
 
-#ifdef USE_AREF
-v2p_shadow_direct_aref main(v_tree I)
-#else
 v2p_shadow_direct main(v_tree I)
-#endif
 {
     float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
     float4 consts = I.consts;
 
+    v2p_shadow_direct O;
+
 #ifdef USE_AREF
-    v2p_shadow_direct_aref O;
     float2 tc = (I.tc * consts).xy;
     O.tc0 = tc;
-#else
-    v2p_shadow_direct O;
 #endif
 
     // Transform to world coords

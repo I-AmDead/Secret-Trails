@@ -22,7 +22,7 @@ v2p main(vi v)
 {
     v2p o;
 
-    float4 tpos = mul(v.p, 1000);
+    float4 tpos = mul(v.p, 2000);
     o.hpos = mul(m_WVP, tpos);
     o.hpos.z = o.hpos.w;
     o.hpos_curr = o.hpos;

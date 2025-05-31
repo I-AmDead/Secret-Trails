@@ -2,9 +2,7 @@
 
 #include "common.h"
 
-#define v_in v_static
-
-v2p_bumped main(v_in I)
+v2p_bumped main(v_static I)
 {
     float4 w_pos = I.P;
     float2 tc = unpack_tc_base(I.tc, I.T.w, I.B.w); // copy tc

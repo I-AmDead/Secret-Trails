@@ -40,7 +40,12 @@ v2p_bumped main(v_tree I)
 #endif
 
     float2 tc = (I.tc * consts).xy;
+
+#ifdef DISABLE_WIND
+    float hemi = I.Nh.w * consts.z + consts.w;
+#else
     float hemi = clamp(I.Nh.w * consts.z + consts.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
+#endif
 
     // Eye-space pos/normal
     v2p_bumped O;

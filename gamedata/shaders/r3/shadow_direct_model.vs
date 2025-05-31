@@ -7,8 +7,11 @@ v2p_shadow_direct _main(v_model I)
 {
     v2p_shadow_direct O;
     float4 hpos = mul(m_WVP, I.P);
-
     O.hpos = hpos;
+
+#ifdef USE_AREF
+    O.tc0 = I.tc;
+#endif
 
     return O;
 }
