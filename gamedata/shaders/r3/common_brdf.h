@@ -11,7 +11,7 @@
 #define BRDF_H_INCLUDED
 
 // SSS Settings
-#include "settings_screenspace_FLORA.h"
+#include "screenspace\settings_screenspace_FLORA.h"
 
 ////////////////////////
 // Material table

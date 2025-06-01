@@ -6,8 +6,8 @@
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
-#include "screenspace_common.h"
-#include "settings_screenspace_DEBAND.h"
+#include "screenspace\screenspace_common.h"
+#include "screenspace\settings_screenspace_DEBAND.h"
 
 // Internal vars
 static const float dband_threshold = 0.039215f;

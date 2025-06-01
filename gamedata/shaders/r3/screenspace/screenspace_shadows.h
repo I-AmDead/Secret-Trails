@@ -6,8 +6,8 @@
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
-#include "screenspace_common.h"
-#include "settings_screenspace_SSS.h"
+#include "screenspace\screenspace_common.h"
+#include "screenspace\settings_screenspace_SSS.h"
 
 float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc)
 {

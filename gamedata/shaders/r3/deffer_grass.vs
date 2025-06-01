@@ -14,7 +14,7 @@ cbuffer dynamic_inter_grass
 }
 
 #ifdef SSFX_WIND
-#include "screenspace_wind.h"
+#include "screenspace\screenspace_wind.h"
 #endif
 
 v2p_bumped main(v_detail v)

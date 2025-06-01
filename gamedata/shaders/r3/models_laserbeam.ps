@@ -6,20 +6,8 @@ uniform float4 m_affects;
 struct v2p
 {
     float2 tc0 : TEXCOORD0; // base
-    //	float2 tc1: TEXCOORD1; // lmap
     float4 c0 : COLOR0; // sun
 };
-
-// https://stackoverflow.com/a/10625698
-float random(float2 p)
-{
-    float2 K1 = float2(23.14069263277926f, // e^pi (Gelfond's constant)
-                       2.665144142690225f // 2^sqrt(2) (Gelfondâ€“Schneider constant)
-    );
-    return frac(cos(dot(p, K1)) * 12345.6789f);
-}
-
-float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
 
 float4 main(v2p I) : SV_Target
 {

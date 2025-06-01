@@ -18,7 +18,16 @@ float2 hash22(float2 p)
 
 float noise(float2 tc) { return frac(sin(dot(tc, float2(12.0, 78.0) + (timers.x))) * 43758.0) * 0.25f; }
 
-//	contrast function
+float get_noise(float2 co) { return (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5; }
+
+// https://stackoverflow.com/a/10625698
+float random(float2 p)
+{
+    float2 K1 = float2(23.14069263277926f, 2.665144142690225f);
+    return frac(cos(dot(p, K1)) * 12345.6789f);
+}
+
+// Contrast function
 float Contrast(float Input, float ContrastPower)
 {
     // piecewise contrast function

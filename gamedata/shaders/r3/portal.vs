@@ -1,11 +1,12 @@
 #include "common.h"
-#include "screenspace_fog.h"
+#include "screenspace\screenspace_fog.h"
 
 struct v_vert
 {
     float4 pos : POSITION; // (float,float,float,1)
     float4 color : COLOR0; // (r,g,b,dir-occlusion)
 };
+
 struct v2p
 {
     float4 c : COLOR0;

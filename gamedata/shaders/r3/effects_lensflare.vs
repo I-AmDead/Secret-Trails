@@ -1,6 +1,6 @@
 #include "common.h"
 #include "ogse_functions.h"
-#include "screenspace_fog.h"
+#include "screenspace\screenspace_fog.h"
 
 struct _in
 {

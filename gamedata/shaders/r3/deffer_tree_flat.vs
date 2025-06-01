@@ -10,7 +10,7 @@
 #include "check_screenspace.h"
 
 #ifdef SSFX_WIND
-#include "screenspace_wind.h"
+#include "screenspace\screenspace_wind.h"
 #endif
 
 v2p_flat main(v_tree I)

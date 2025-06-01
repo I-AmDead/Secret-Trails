@@ -5,20 +5,18 @@
 #include "check_screenspace.h"
 
 #ifdef SSFX_SSS
-#include "screenspace_shadows.h"
+#include "screenspace\screenspace_shadows.h"
 #endif
 
 #if SUN_QUALITY > 2
 #define ULTRA_SHADOWS_ON
-#endif //	SUN_QUALITY>2
+#endif
 
 #ifdef ULTRA_SHADOWS_ON
 #define USE_ULTRA_SHADOWS
 #endif
 
 #include "shadow.h"
-
-// uniform float3 view_shadow_proj; // Unused
 
 #ifdef USE_SUNFILTER
 float4 main(v2p_volume I) : SV_Target
@@ -48,10 +46,7 @@ float4 main(v2p_volume I) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    // ----- light-model
     float4 light = plight_infinity(_P.w, _P, _N, _C, Ldynamic_dir);
-
-    // ----- shadow
 
     // SHADOWS FIXES - SSS Update 19
     // Normal Offset for biasing

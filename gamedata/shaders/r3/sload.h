@@ -1,14 +1,3 @@
-#define USE_ERROR_CORRECTION
-// #define RECALCULATENORMALZ
-// #define NORMALIZE_TEXTURES
-static const float NORMAL_STRENGTH = 1.0;
-static const float DETAIL_STRENGTH = 1.0;
-static const float DETAIL_TINT = 1.0;
-static const float DETAIL_GLOSS = 1.0;
-
-#ifndef SLOAD_H
-#define SLOAD_H
-
 #include "common.h"
 
 uniform float4 ssfx_pom; // Samples, Range, Height, AO
@@ -18,58 +7,6 @@ uniform float4 ssfx_pom; // Samples, Range, Height, AO
 //////////////////////////////////////////////////////////////////////////////////////////
 
 float3 NormalBlend(float3 A, float3 B) { return normalize(float3(A.rg + B.rg, A.b * B.b)); }
-
-float3 SampleNormal(float4 N, float4 NE)
-{
-    float3 Norm = unpack_normal(N.wzy);
-#ifdef USE_ERROR_CORRECTION
-    Norm += unpack_normal(NE.xyz);
-#endif
-#ifdef RECALCULATENORMALZ
-    Norm.z = sqrt(1 - saturate(dot(Norm.xy, Norm.xy)));
-#endif
-#ifdef NORMALIZE_TEXTURES
-    Norm = normalize(Norm);
-#endif
-    return Norm;
-}
-
-float3 NormalStrength(float3 N, float Strength)
-{
-    if (Strength != 1.0)
-    {
-        N.xy *= Strength;
-        N.z = sqrt(1 - saturate(dot(N.xy, N.xy)));
-        N = normalize(N);
-    }
-    return N;
-}
-
-float SampleGloss(float4 N) { return N.x; }
-
-float SampleHeight(float4 NE) { return NE.w; }
-
-float3 ApplyDetailAlbedo(float3 A1, float3 A2)
-{
-    // return saturate(A1 * A2 * 2);
-    return saturate(A1 * exp2(DETAIL_TINT * (A2 * 2 - 1)));
-}
-
-float3 ApplyDetailNormal(float3 N1, float3 N2)
-{
-    N1 += float3(0, 0, 1);
-    N2 *= float3(-1, -1, 1);
-    return normalize(N1 * dot(N1, N2) / N1.z - N2);
-}
-
-float ApplyDetailGloss(float G1, float G2)
-{
-    // return saturate(G1 * G2 * 2);
-    // return saturate(G1 + (DETAIL_GLOSS * (G2 * 2 - 1)));
-    return saturate(G1 * exp2(DETAIL_GLOSS * (G2 * 2 - 1)));
-}
-
-float ApplyDetailHeight(float H1, float H2) { return H1 + (H2 * 2 - 1); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Bumped surface loader                //
@@ -179,7 +116,7 @@ void UpdateTC(inout p_bumped I, inout float H)
     I.tcdh = final_tc;
 }
 
-#elif defined(USE_PARALLAX) || defined(USE_STEEPPARALLAX)
+#else
 
 void UpdateTC(inout p_bumped I, inout float H)
 {
@@ -198,10 +135,6 @@ void UpdateTC(inout p_bumped I, inout float H)
 #endif
 }
 
-#else
-
-void UpdateTC(inout p_bumped I, inout float H) {}
-
 #endif
 
 surface_bumped sload_i(p_bumped I)
@@ -210,7 +143,9 @@ surface_bumped sload_i(p_bumped I)
 
     float H = 0;
 
+#if defined(USE_STEEPPARALLAX) || defined(USE_PARALLAX)
     UpdateTC(I, H); // Parallax
+#endif
 
     float4 Nu = s_bump.Sample(smp_base, I.tcdh);
 
@@ -255,5 +190,3 @@ surface_bumped sload_i(p_bumped I)
 surface_bumped sload(p_bumped I) { return sload_i(I); }
 
 void hashed_alpha_test(float2 tc, float alpha) { clip(alpha - def_aref); }
-
-#endif

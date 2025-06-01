@@ -10,8 +10,8 @@
 	#define SSFX_SSR_QUALITY 2
 #endif
 
-#include "screenspace_common.h"
-#include "settings_screenspace_SSR.h"
+#include "screenspace\screenspace_common.h"
+#include "screenspace\settings_screenspace_SSR.h"
 
 uniform float4 ssr_setup; // x: SSR Resolution | y: Blur Intensity | z: Temporal Intensity
 uniform float4 ssfx_ssr_2; // x: Intensity | y: Sky Intensity | z: Weapon Intensity | w: Max Weapon Intensity

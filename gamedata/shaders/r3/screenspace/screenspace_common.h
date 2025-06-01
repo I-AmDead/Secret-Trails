@@ -14,8 +14,8 @@
 
 #include "ogse_functions.h"
 
-#include "screenspace_common_noise.h"
-#include "screenspace_common_ripples.h"
+#include "screenspace\screenspace_common_noise.h"
+#include "screenspace\screenspace_common_ripples.h"
 
 #include "check_screenspace.h"
 

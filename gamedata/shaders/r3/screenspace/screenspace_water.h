@@ -6,8 +6,8 @@
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
-#include "screenspace_common.h"
-#include "settings_screenspace_WATER.h"
+#include "screenspace\screenspace_common.h"
+#include "screenspace\settings_screenspace_WATER.h"
 
 static const int2 q_steps[5] =
 {
