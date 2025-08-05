@@ -113,7 +113,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     float3 env_col = env_color.rgb;
     // float3 env_col = fog_color.rgb * 2.0;
 
-    //env_d *= env_col;
+    // env_d *= env_col;
     env_s *= env_col;
 
     // lightmap ambient

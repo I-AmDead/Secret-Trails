@@ -27,12 +27,6 @@ Texture2D s_puddles_mask;
 Texture2D s_rainsplash;
 #endif
 
-// Height Textures
-Texture2D s_height_r;
-Texture2D s_height_g;
-Texture2D s_height_b;
-Texture2D s_height_a;
-
 uniform float4 ssfx_terrain_pom; // Samples, Range, Height, Water Limit
 uniform float4 ssfx_terrain_offset;
 
@@ -55,11 +49,7 @@ surface Terrain_InitSurfaces(Texture2D height_tex, float2 tc, float mask, int id
     S.gloss = 0;
     S.normal = 0;
 
-#ifdef TERRAIN_GTR_COMPATIBILITY
     S.height = saturate(height_tex.Sample(smp_base, tc).a + ssfx_terrain_offset[idx]);
-#else
-    S.height = saturate(height_tex.Sample(smp_base, tc).r + ssfx_terrain_offset[idx]);
-#endif
 
     S.AO = TERRAIN_POM_AO - S.height * S.height * TERRAIN_POM_AO; // Use the height as AO
     S.mask = mask;
@@ -132,11 +122,7 @@ void TerrainParallax(float2 tc_step, float _step, inout surface S, inout p_bumpe
         curr_step += _step;
 
         // Sample
-#ifdef TERRAIN_GTR_COMPATIBILITY
         curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).a + ssfx_terrain_offset[idx]);
-#else
-        curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).r + ssfx_terrain_offset[idx]);
-#endif
         curr_Height = TERRAIN_POM_PLANE - curr_Sam * S.mask; // Apply the splatting weight and limit
 
     } while (curr_Height > curr_step);
@@ -164,12 +150,8 @@ void TerrainParallax(float2 tc_step, float _step, inout surface S, inout p_bumpe
         parallax_tc -= tc_step;
         curr_step += _step;
 
-// Sample
-#ifdef TERRAIN_GTR_COMPATIBILITY
+        // Sample
         curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).a + ssfx_terrain_offset[idx]);
-#else
-        curr_Sam = saturate(height_tex.SampleLevel(smp_base, parallax_tc, 0).r + ssfx_terrain_offset[idx]);
-#endif
 
         curr_Height = TERRAIN_POM_PLANE - curr_Sam * S.mask; // Apply the splatting weight and limit
 
@@ -221,18 +203,10 @@ f_deffer main(p_bumped I)
     mask /= dot(mask, 1.0);
 
     // Init Surfaces --------------------------------------------------
-
-#ifdef TERRAIN_GTR_COMPATIBILITY
     surface Sr = Terrain_InitSurfaces(s_dt_r, I.tcdbump.xy, mask.x, 0);
     surface Sg = Terrain_InitSurfaces(s_dt_g, I.tcdbump.xy, mask.y, 1);
     surface Sb = Terrain_InitSurfaces(s_dt_b, I.tcdbump.xy, mask.z, 2);
     surface Sa = Terrain_InitSurfaces(s_dt_a, I.tcdbump.xy, mask.w, 3);
-#else
-    surface Sr = Terrain_InitSurfaces(s_height_r, I.tcdbump.xy, mask.x, 0);
-    surface Sg = Terrain_InitSurfaces(s_height_g, I.tcdbump.xy, mask.y, 1);
-    surface Sb = Terrain_InitSurfaces(s_height_b, I.tcdbump.xy, mask.z, 2);
-    surface Sa = Terrain_InitSurfaces(s_height_a, I.tcdbump.xy, mask.w, 3);
-#endif
 
     // Texture splatting ( TODO: Improve Texture Splatting )
     // HeightBlending(float4(Sr.height, Sg.height, Sb.height, Sa.height), mask);
@@ -257,17 +231,10 @@ f_deffer main(p_bumped I)
     float2 tc_step = _step * viewdir * ssfx_terrain_pom.z * dist_att;
 
     // Do Parallax
-#ifdef TERRAIN_GTR_COMPATIBILITY
     TerrainParallax(tc_step, _step, Sr, I, s_dt_r, 0);
     TerrainParallax(tc_step, _step, Sg, I, s_dt_g, 1);
     TerrainParallax(tc_step, _step, Sb, I, s_dt_b, 2);
     TerrainParallax(tc_step, _step, Sa, I, s_dt_a, 3);
-#else
-    TerrainParallax(tc_step, _step, Sr, I, s_height_r, 0);
-    TerrainParallax(tc_step, _step, Sg, I, s_height_g, 1);
-    TerrainParallax(tc_step, _step, Sb, I, s_height_b, 2);
-    TerrainParallax(tc_step, _step, Sa, I, s_height_a, 3);
-#endif
 
     // Calculate height using splatting mask
     float PixelHeight = dot(float4(Sr.height, Sg.height, Sb.height, Sa.height), mask);

@@ -59,34 +59,24 @@ struct v_model_skinned_4 // 40 bytes
 };
 #endif
 
-float4 u_position(float4 v)
-{
-    return float4(v.xyz, 1.f);
-} // -12..+12
+float4 u_position(float4 v) { return float4(v.xyz, 1.f); } // -12..+12
 
 #ifndef SKIN_0
 cbuffer sbones
 {
-float4 sbones_array[512];
-float4 sbones_array_old[512];
+    float4 sbones_array[512];
+    float4 sbones_array_old[512];
 }
 
 float3 skinning_dir(float3 dir, float3 m0, float3 m1, float3 m2)
 {
     float3 U = unpack_normal(dir);
-    return float3(
-        dot(m0, U),
-        dot(m1, U),
-        dot(m2, U));
+    return float3(dot(m0, U), dot(m1, U), dot(m2, U));
 }
 float4 skinning_pos(float4 pos, float4 m0, float4 m1, float4 m2)
 {
     float4 P = u_position(pos); // -12..+12
-    return float4(
-        dot(m0, P),
-        dot(m1, P),
-        dot(m2, P),
-        1);
+    return float4(dot(m0, P), dot(m1, P), dot(m2, P), 1);
 }
 
 #else
@@ -285,13 +275,11 @@ v_model skinning_4(v_model_skinned_4 v)
     float4 m[4][3]; //	[bone index][matrix row or column???]
     float4 m_old[4][3]; //	[bone index][matrix row or column???]
 
-    [unroll(4)]
-    for (int i = 0; i < 4; ++i)
+    [unroll(4)] for (int i = 0; i < 4; ++i)
     {
         id[i] = v.ind[i] * 765 + 0.3;
 
-        [unroll(3)]
-        for (int j = 0; j < 3; ++j)
+        [unroll(3)] for (int j = 0; j < 3; ++j)
         {
             m[i][j] = sbones_array[id[i] + j];
             m_old[i][j] = sbones_array_old[id[i] + j];
@@ -313,8 +301,7 @@ v_model skinning_4(v_model_skinned_4 v)
     float4 m1_old = m_old[0][1] * w[0];
     float4 m2_old = m_old[0][2] * w[0];
 
-    [unroll]
-    for (int i = 1; i < 4; ++i)
+    [unroll] for (int i = 1; i < 4; ++i)
     {
         m0 += m[i][0] * w[i];
         m1 += m[i][1] * w[i];
