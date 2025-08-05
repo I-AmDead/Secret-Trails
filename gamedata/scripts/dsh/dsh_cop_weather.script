@@ -70,6 +70,7 @@ function on_first_update()
         log1("!!Surge is fucked up, resetting")
         ogse_surge_mgr.surge_final()
     end
+    level.set_rain_wetness(ogse.load_var("rain_wetness", 0))
 end
 
 -- на время сохранения ставим в ноль, это и запомнится в сейве
@@ -80,6 +81,7 @@ function on_save()
         level.set_time_factor(normal_time_factor)
         log2("[%s]: time diff after save is %s", script_name(), game.get_game_time():diffSec(pt))
     end)
+    ogse.save_var("rain_wetness", level.rain_wetness())
 end
 
 function on_update()
