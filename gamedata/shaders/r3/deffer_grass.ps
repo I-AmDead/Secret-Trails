@@ -12,6 +12,10 @@
 #include "screenspace\settings_screenspace_FLORA.h"
 #endif
 
+uniform float4 ssfx_floravariation; // Grass Int, Grass Freq, Foliage Int, Foliage Freq
+
+float3 color_variation(float t) { return sin(t + float3(0.0f, 0.33f, 0.66f) * 6.28f) * 0.5f; }
+
 static float DITHER_THRESHOLDS[16] = {1.0 / 17.0, 9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0, 13.0 / 17.0, 5.0 / 17.0, 15.0 / 17.0, 7.0 / 17.0,
                                       4.0 / 17.0, 12.0 / 17.0, 2.0 / 17.0, 10.0 / 17.0, 16.0 / 17.0, 8.0 / 17.0, 14.0 / 17.0, 6.0 / 17.0};
 
@@ -67,6 +71,7 @@ f_deffer main(p_bumped I)
     float h = I.position.w;
 #endif
 
+    S.base.rgb = saturate(S.base.rgb + color_variation(I.sss_extra.z * 4.0f) * ssfx_floravariation.x);
     O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.rgb, S.gloss));
 
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);

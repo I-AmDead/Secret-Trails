@@ -87,7 +87,7 @@ float3 pda_loading(float2 uv)
 
     float geo = ring(uv, float2(0.0, 0.0), RADIUS - THICCNESS, RADIUS);
 
-    float rot = timers.z * SPEED; // �� GL -timers.z
+    float rot = timers.z * SPEED;
 
     uv = mul(uv, float2x2(cos(rot), sin(rot), -sin(rot), cos(rot)));
 
@@ -156,7 +156,7 @@ float3 NixieTime(float2 uv)
     float nsize = numberLength(9999.0);
     float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
     float2 pos = -digit_spacing * float2(nsize, 1.0) / 2.0;
- 
+
     float2 basepos = pos;
     float dist = 1.0;
 
@@ -180,16 +180,17 @@ float3 NixieTime(float2 uv)
 
     if (watch_actor_params_1.w == 2)
     {
-        bool indicators_show = watch_actor_params_2.x < 0.99 || watch_actor_params_2.y < 0.99 || watch_actor_params_2.z < 1.0 || watch_actor_params_2.w < 0.99 || watch_actor_params_1.y < 0.99;
+        bool indicators_show =
+            watch_actor_params_2.x < 0.99 || watch_actor_params_2.y < 0.99 || watch_actor_params_2.z < 1.0 || watch_actor_params_2.w < 0.99 || watch_actor_params_1.y < 0.99;
 
         int health_factor = round(watch_actor_params_1.x * 100);
         pos.x -= 0.2;
         pos.y += indicators_show ? 0.1 : 0.0;
         pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);
         dist = min(dist, dfNumberHealth(pos, health_factor, uv));
- 
+
         pos.x += health_factor < 100.f ? (health_factor < 10.f ? 0.2 : 0.35) : 0.55;
-	    dist = min(dist, dfPercent(pos, uv));
+        dist = min(dist, dfPercent(pos, uv));
 
         pos.y -= 0.35;
         pos.x = basepos.x + 0.15;
@@ -205,7 +206,7 @@ float3 NixieTime(float2 uv)
         }
 
         pos.x += 0.25;
-    
+
         if (watch_actor_params_2.y < 0.99)
         {
             float radioDist = dfRadio(pos, uv);
@@ -284,11 +285,6 @@ float3 NixieTime(float2 uv)
 
     float shade = 0.004 / dist;
     color += watch_color_params.rgb * shade;
-
-    //	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.9, 0.2) : float3(0.9, 0.2, 0.0)) * shade;
-    // #if GLOWPULSE
-    //	color += (game_time.x > 21 || game_time.x < 4 ? float3(0.0, 0.2, 0.5) : float3(0.9, 0.2, 0.0)) * shade * noiseNixie((uv + float2(timers.y * 0.2, 0.0)) * 2.5 + float2(0.5,
-    // 0.0)); #endif
 
 #ifdef SHOW_GRID
     float grid = 0.5 - max(abs(fmod(uva.x * 64.0, 1.0) - 0.3), abs(fmod(uva.y * 64.0, 1.0) - 0.3));

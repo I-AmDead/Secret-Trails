@@ -238,14 +238,6 @@ float ring(float2 uv, float2 pos, float innerRad, float outerRad)
 // NixieTime
 //
 
-// hash function copy from https://www.shadertoy.com/view/4djSRW
-float hash12(float2 p)
-{
-    float3 p3 = frac(float3(p.xyx) * .1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return frac((p3.x + p3.y) * p3.z);
-}
-
 float noiseNixie(float2 pos)
 {
     float2 i = floor(pos);
@@ -554,7 +546,7 @@ float dfRadiation(float2 origin, float2 uv)
 
     dist = min(dist, dfCircle(pos, 0.06, uv));
 
-    for(int i = 0; i < 3; i++) 
+    for (int i = 0; i < 3; i++)
     {
         float angle = float(i) * (2.0944);
 
@@ -564,11 +556,11 @@ float dfRadiation(float2 origin, float2 uv)
         float2 p2 = float2(cos(angle), sin(angle)) * line_length.y + pos;
         dist = min(dist, dfLine(p1, p2, uv));
 
-        float2 p3 = float2(cos(angle + 1.0) , sin(angle + 1.0)) * line_length.x + pos;
+        float2 p3 = float2(cos(angle + 1.0), sin(angle + 1.0)) * line_length.x + pos;
         float2 p4 = float2(cos(angle + 1.0), sin(angle + 1.0)) * line_length.y + pos;
         dist = min(dist, dfLine(p3, p4, uv));
     }
-    
+
     return dist;
 }
 

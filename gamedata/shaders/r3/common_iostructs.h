@@ -288,6 +288,7 @@ struct v2p_bumped
     float4 hpos_curr : TEXCOORD8;
     float4 hpos_old : TEXCOORD9;
     float4 hpos : SV_Position;
+    float4 sss_extra : SSS_EXTRA;
 };
 
 struct p_bumped
@@ -307,6 +308,7 @@ struct p_bumped
     float4 hpos_curr : TEXCOORD8;
     float4 hpos_old : TEXCOORD9;
     float4 hpos : SV_Position;
+    float4 sss_extra : SSS_EXTRA;
 };
 
 ////////////////////////////////////////////////////////////////

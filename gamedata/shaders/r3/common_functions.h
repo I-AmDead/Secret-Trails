@@ -9,6 +9,13 @@ float3 vibrance(float3 img, float val)
     return float3(lerp(luminance, float3(img.rgb), val));
 }
 
+float hash12(float2 p)
+{
+    float3 p3 = frac(float3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 19.19);
+    return frac((p3.x + p3.y) * p3.z);
+}
+
 float2 hash22(float2 p)
 {
     float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
