@@ -53,7 +53,7 @@ function get_gg_need_sleep()
 end
 
 function set_gg_need_sleep(v)
-    ogse.save_var("dsh_sleep.gg_need_sleep", v, "u16")
+    ogse.save_var("dsh_sleep.gg_need_sleep", v)
 end
 
 function add_gg_need_sleep(add)
@@ -106,31 +106,21 @@ function test_for_need_sleep(add)
 end
 
 function test_for_need_sleep_matras()
-    local actorPos = db.actor:position()
-    local enemy = false
-    local friends = false
-    for npcId, is_stalker in pairs(db.creatures) do
-        local obj = level.object_by_id(npcId)
-        if obj and obj:alive() then
-            local dist = obj:position():distance_to(actorPos)
-            local is_enemy_to_actor = ogse.get_npc_relation(obj, db.actor) == "enemy"
-        end
-    end
     if db.actor:has_info("pre_blowout") or dsh_cop_weather.get_weather_mgr():is_surge_in_process() or surge_soon() then
         ogse.autohiding_msg(game.translate_string("blowout_not_sleep"), 1500)
     else
-
         -- звуковое сопровождение
         local snd = xr_sound.get_safe_sound_object("zwuk\\inv_sleeping")
         snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), 2.0)
+
         -- закрываем инвентарь
         local wnd = level.main_input_receiver()
         if wnd then
             wnd:GetHolder():start_stop_menu(wnd, true)
         end
+
         -- открываем диалог сна
         level.start_stop_menu(ui_sleep.sleep(), true)
-
     end
 end
 
