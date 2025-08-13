@@ -67,37 +67,51 @@ end
 
 local zevota_flag = 0
 function test_sleep_pp()
-    local gg_need_sleep = has_alife_info("acv_slp") and get_gg_need_sleep() - 10 or get_gg_need_sleep()
-    if gg_need_sleep > 250 then
+    -- Вычисляем потребность во сне один раз
+    local sleep_need = get_gg_need_sleep()
+    if has_alife_info("acv_slp") then
+        sleep_need = sleep_need - 10
+    end
+
+    -- Обработка критического уровня усталости
+    if sleep_need > 250 then
         ogse_sleep_mgr.begin_sleep(8)
-    elseif gg_need_sleep > 244 then
-        zevota()
-        level.add_pp_effector("black.ppe", 105, false)
-        if zevota_flag ~= 3 then
-            zevota_flag = 3
-            level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
-            level.set_pp_effector_factor(999, 7.5)
-        end
-    elseif gg_need_sleep > 190 then
-        if zevota_flag ~= 2 then
-            zevota()
-            level.add_pp_effector("black.ppe", 105, false)
-            zevota_flag = 2
-            level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
-            level.set_pp_effector_factor(999, 5.0)
-        end
-    elseif gg_need_sleep > 185 then
-        if zevota_flag ~= 1 then
-            zevota()
-            zevota_flag = 1
-            level.remove_pp_effector(999)
-        end
-    else
-        if zevota_flag ~= 0 then
-            zevota_flag = 0
-            level.remove_pp_effector(999)
+        return
+    end
+
+    log3("sleep need %s", sleep_need)
+
+    -- Определяем необходимый уровень эффектов
+    local level_sleepness = 0
+    if not laucer_item_special_effect.boosting("boost_power_restore") then
+        if sleep_need > 244 then
+            level_sleepness = 3
+        elseif sleep_need > 190 then
+            level_sleepness = 2
+        elseif sleep_need > 185 then
+            level_sleepness = 1
         end
     end
+
+    -- Применяем изменения только если состояние изменилось
+    if level_sleepness == zevota_flag then return end
+
+    -- Сначала очищаем предыдущие эффекты
+    if zevota_flag > 0 or laucer_item_special_effect.boosting("boost_power_restore") then
+        level.remove_pp_effector(999)
+    end
+
+    -- Применяем новые эффекты
+    if level_sleepness >= 2 then
+        zevota()
+        level.add_pp_effector("black.ppe", 105, false)
+        level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
+        level.set_pp_effector_factor(999, level_sleepness == 3 and 7.5 or 5.0)
+    elseif level_sleepness == 1 then
+        zevota()
+    end
+
+    zevota_flag = level_sleepness
 end
 
 function test_for_need_sleep(add)
