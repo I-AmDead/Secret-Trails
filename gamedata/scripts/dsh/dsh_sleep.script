@@ -53,7 +53,7 @@ function get_gg_need_sleep()
 end
 
 function set_gg_need_sleep(v)
-    ogse.save_var("dsh_sleep.gg_need_sleep", v, "u16")
+    ogse.save_var("dsh_sleep.gg_need_sleep", v)
 end
 
 function add_gg_need_sleep(add)
@@ -67,37 +67,51 @@ end
 
 local zevota_flag = 0
 function test_sleep_pp()
-    local gg_need_sleep = has_alife_info("acv_slp") and get_gg_need_sleep() - 10 or get_gg_need_sleep()
-    if gg_need_sleep > 250 then
+    -- Вычисляем потребность во сне один раз
+    local sleep_need = get_gg_need_sleep()
+    if has_alife_info("acv_slp") then
+        sleep_need = sleep_need - 10
+    end
+
+    -- Обработка критического уровня усталости
+    if sleep_need > 250 then
         ogse_sleep_mgr.begin_sleep(8)
-    elseif gg_need_sleep > 244 then
-        zevota()
-        level.add_pp_effector("black.ppe", 105, false)
-        if zevota_flag ~= 3 then
-            zevota_flag = 3
-            level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
-            level.set_pp_effector_factor(999, 7.5)
-        end
-    elseif gg_need_sleep > 190 then
-        if zevota_flag ~= 2 then
-            zevota()
-            level.add_pp_effector("black.ppe", 105, false)
-            zevota_flag = 2
-            level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
-            level.set_pp_effector_factor(999, 5.0)
-        end
-    elseif gg_need_sleep > 185 then
-        if zevota_flag ~= 1 then
-            zevota()
-            zevota_flag = 1
-            level.remove_pp_effector(999)
-        end
-    else
-        if zevota_flag ~= 0 then
-            zevota_flag = 0
-            level.remove_pp_effector(999)
+        return
+    end
+
+    log3("sleep need %s", sleep_need)
+
+    -- Определяем необходимый уровень эффектов
+    local level_sleepness = 0
+    if not laucer_item_special_effect.boosting("boost_power_restore") then
+        if sleep_need > 244 then
+            level_sleepness = 3
+        elseif sleep_need > 190 then
+            level_sleepness = 2
+        elseif sleep_need > 185 then
+            level_sleepness = 1
         end
     end
+
+    -- Применяем изменения только если состояние изменилось
+    if level_sleepness == zevota_flag then return end
+
+    -- Сначала очищаем предыдущие эффекты
+    if zevota_flag > 0 or laucer_item_special_effect.boosting("boost_power_restore") then
+        level.remove_pp_effector(999)
+    end
+
+    -- Применяем новые эффекты
+    if level_sleepness >= 2 then
+        zevota()
+        level.add_pp_effector("black.ppe", 105, false)
+        level.add_pp_effector("yantar_underground_psi.ppe", 999, true)
+        level.set_pp_effector_factor(999, level_sleepness == 3 and 7.5 or 5.0)
+    elseif level_sleepness == 1 then
+        zevota()
+    end
+
+    zevota_flag = level_sleepness
 end
 
 function test_for_need_sleep(add)
@@ -106,31 +120,21 @@ function test_for_need_sleep(add)
 end
 
 function test_for_need_sleep_matras()
-    local actorPos = db.actor:position()
-    local enemy = false
-    local friends = false
-    for npcId, is_stalker in pairs(db.creatures) do
-        local obj = level.object_by_id(npcId)
-        if obj and obj:alive() then
-            local dist = obj:position():distance_to(actorPos)
-            local is_enemy_to_actor = ogse.get_npc_relation(obj, db.actor) == "enemy"
-        end
-    end
     if db.actor:has_info("pre_blowout") or dsh_cop_weather.get_weather_mgr():is_surge_in_process() or surge_soon() then
         ogse.autohiding_msg(game.translate_string("blowout_not_sleep"), 1500)
     else
-
         -- звуковое сопровождение
         local snd = xr_sound.get_safe_sound_object("zwuk\\inv_sleeping")
         snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector():set(0, 0, 0), 2.0)
+
         -- закрываем инвентарь
         local wnd = level.main_input_receiver()
         if wnd then
             wnd:GetHolder():start_stop_menu(wnd, true)
         end
+
         -- открываем диалог сна
         level.start_stop_menu(ui_sleep.sleep(), true)
-
     end
 end
 
