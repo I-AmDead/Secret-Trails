@@ -1,6 +1,6 @@
 local hint_colors = {
-    ["gray"]   = { 255, 215, 195, 170 },
-    ["white"]  = { 255, 215, 195, 170 },
+    ["gray"]   = { 255, 255, 255, 255 },
+    ["white"]  = { 255, 255, 255, 255 },
     ["green"]  = { 255, 0, 128, 0 },
     ["yellow"] = { 255, 186, 149, 0 },
     ["red"]    = { 255, 255, 0, 0 },
@@ -12,6 +12,7 @@ end
 
 local gameplay_params = {
     separator("sep_gameplay"),
+    separator(""),
 
     --{ "g_game_difficulty",           "mm_opt_gameplay",  "track",  { "ui_mm_difficulty", hint_colors.white, "", "" },                                                         { is_token = true} },
 
@@ -28,7 +29,7 @@ local gameplay_params = {
     { "g_3d_scopes",                 "mm_opt_gameplay",  "track", { "ui_mm_3d_scopes", hint_colors.white, "", "" },                                                           { is_bool = true} },
     { "g_3d_pda",                    "mm_opt_gameplay",  "track", { "ui_mm_3d_pda", hint_colors.white, "", "" },                                                              { is_bool = true} },
 
-    { "fakescope_enable",            "mm_opt_gameplay",  "track", { "ui_mm_fakescope", hint_colors.white, "", "" },                                                           { is_bool = true} },
+    --{ "fakescope_enable",            "mm_opt_gameplay",  "track", { "ui_mm_fakescope", hint_colors.white, "", "" },                                                           { is_bool = true} },
 
     { "keypress_on_start",           "mm_opt_gameplay",  "track", { "ui_mm_keypress_on_start", hint_colors.white, "", "" },                                                   { is_bool = true} },
     { "wpn_aim_toggle",              "mm_opt_gameplay",  "track", { "ui_mm_aim_toggle", hint_colors.white, "", "" },                                                          { is_bool = true} },
@@ -41,6 +42,7 @@ local gameplay_params = {
 
 local control_params = {
     separator("INPUT"),
+    separator(""),
 
     { "mouse_sens",                  "mm_opt_controls",  "track", { "ui_mm_mouse_sense", hint_colors.white, "", "" },                                                         { step = 0.01} },
     { "mouse_invert",                "mm_opt_controls",  "track", { "ui_mm_invert_mouse", hint_colors.white, "", "" },                                                        { is_bool = true} },
@@ -48,6 +50,7 @@ local control_params = {
 
 local audio_params = {
     separator("sep_audio"),
+    separator(""),
 
     { "snd_device",                  "mm_opt_sound",     "track",  { "ui_mm_snd_device", hint_colors.white, "", "" },                                                         { is_token = true, depend = "restart"} },
     { "snd_volume_eff",              "mm_opt_sound",     "track", { "ui_mm_master_volume", hint_colors.white, "", "" },                                                       { step = 0.01} },
@@ -58,11 +61,19 @@ local audio_params = {
 
 local video_params = {
     separator("sep_video"),
+    separator(""),
 
     { "vid_mode",                    "mm_opt_video",     "track", { "ui_mm_resolution", hint_colors.white, "", "" },                                                          { is_token = true, depend = "restart" } },
     { "_preset",                     "mm_opt_video_preset", "track",  { "ui_mm_quality_presets", hint_colors.white, "", "" },                                                 { is_token = true, id = "combo_preset", depend = "restart" } },
     { "r_fps_lock",                  "mm_opt_video",     "track", { "ui_mm_fps_lock", hint_colors.white, "", "" },                                                            { is_token = true} },
     { "rs_v_sync",                   "mm_opt_video",     "track", { "ui_mm_vsync", hint_colors.rwhite, "video_settings_name_16", "video_settings_desc_16" },                     { is_bool = true } },
+
+    { "g_font_scale_x",              "mm_opt_video",     "track", { "ui_mm_font_scale_x", hint_colors.white, "", "" },                                                        { step = 0.01} },
+    { "g_font_scale_y",              "mm_opt_video",     "track", { "ui_mm_font_scale_y", hint_colors.white, "", "" },                                                        { step = 0.01} },
+
+    separator(""),
+    separator("sep_video_color"),
+    separator(""),
 
     { "ssfx_saturation",             "mm_opt_video",     "track", { "ui_mm_gamma", hint_colors.white, "", "" },                                                               { step = 0.01} },
     { "ssfx_exposure",               "mm_opt_video",     "track", { "ui_mm_contrast", hint_colors.white, "", "" },                                                            { step = 0.01} },
@@ -72,10 +83,9 @@ local video_params = {
     { "ssfx_color_grading",          "mm_opt_video",     "track", { "ui_mm_r2_color_grading_g", hint_colors.white, "", "" },                                                  { index = 1, step = 0.01} },
     { "ssfx_color_grading",          "mm_opt_video",     "track", { "ui_mm_r2_color_grading_b", hint_colors.white, "", "" },                                                  { index = 2, step = 0.01} },
 
-    { "g_font_scale_x",              "mm_opt_video",     "track", { "ui_mm_font_scale_x", hint_colors.white, "", "" },                                                        { step = 0.01} },
-    { "g_font_scale_y",              "mm_opt_video",     "track", { "ui_mm_font_scale_y", hint_colors.white, "", "" },                                                        { step = 0.01} },
-
+    separator(""),
     separator("sep_video_adv"),
+    separator(""),
 
     { "fov",                         "mm_opt_video_adv", "track", { "ui_mm_fov", hint_colors.white, "video_settings_name_61", "video_settings_desc_61" },                      { step = 1} },
     { "hud_fov_add",                 "mm_opt_video_adv", "track", { "ui_mm_hud_fov", hint_colors.white, "video_settings_name_62", "video_settings_desc_62" },                  { step = 0.01} },
@@ -88,8 +98,11 @@ local video_params = {
     { "r__detail_scale",             "mm_opt_video_adv", "track", { "ui_mm_detail_scale", hint_colors.yellow, "", "" },                                                        { step = 0.01, smooth = false } },
 
     { "r_aa_mode",                   "mm_opt_video_adv", "track", { "ui_mm_r_aa_mode", hint_colors.green, "video_settings_name_18", "video_settings_desc_18" },                { is_token = true } },
+
+    --[[
     { "r_ao_mode",                   "mm_opt_video_adv", "track", { "ui_mm_ao_mode", hint_colors.red, "video_settings_name_38", "video_settings_desc_38" },                    { is_token = true, depend = "restart" } },
     { "r2_ssao",                     "mm_opt_video_adv", "track", { "ui_mm_ssao_quality", hint_colors.red, "video_settings_name_37", "video_settings_desc_37" },               { is_token = true, depend = "restart" } },
+    --]]
 
     { "r__smap_size",                "mm_opt_video_adv", "track", { "ui_mm_r__smap_size", hint_colors.red, "video_settings_name_59", "video_settings_desc_59" },               { is_token = true, depend = "vid" } },
     { "r2_sun_quality",              "mm_opt_video_adv", "track", { "ui_mm_r2_sun_quality", hint_colors.red, "", "" },                                                         { is_token = true, depend = "vid" } },
@@ -214,7 +227,7 @@ function options_dialog:InitControls()
     self.pages = pages
 
     for i, v in ipairs(self.pages) do
-        v:Init(270, 74, 500, 640)
+        v:Init(260, 74, 500, 640)
         v:SetAutoDelete(true)
         v:InitControls(xml, self)
         v:Show(false)
