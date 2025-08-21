@@ -113,7 +113,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     float3 env_col = env_color.rgb;
     // float3 env_col = fog_color.rgb * 2.0;
 
-    // env_d *= env_col;
+    env_d *= env_col;
     env_s *= env_col;
 
     // lightmap ambient
@@ -128,9 +128,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     env_d = SRGBToLinear(env_d);
     env_s = SRGBToLinear(env_s); // gamma correct
 
-    env_s *= 1.0f - m_flora * 0.75f;
-
-    hdiffuse = Amb_BRDF(rough, albedo, specular, env_d, env_s, -v2Pnt, nw).rgb;
+    hdiffuse = Amb_BRDF(rough, albedo, specular, env_d, env_s * !m_flora, -v2Pnt, nw).rgb;
     hspecular = 0; // do not use hspec at all
 }
 #endif
