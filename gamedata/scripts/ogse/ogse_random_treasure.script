@@ -77,16 +77,13 @@ function random_treasure:__init(treasure_name, treasure_id)
         self.current_template = "" -- Шаблон для награды
 
         -- Берём из хранилища данные о наполнении предыдущих тайников
-        self.item_data = ogse.var_exists("random_treasure_item_data") and ogse.load_var("random_treasure_item_data") or
-                             {}
+        self.item_data = ogse.var_exists("random_treasure_item_data") and ogse.load_var("random_treasure_item_data") or {}
     end
 end
 
 function random_treasure:get_treasure_level()
     local current_level = level.name()
-    return
-        (self:get_price_by_level(current_level) > self:get_price_by_level(self.treasure_placement)) and current_level or
-            self.treasure_placement
+    return self:get_price_by_level(current_level) > self:get_price_by_level(self.treasure_placement) and current_level or self.treasure_placement
 end
 
 -- Функция получение шансов выпадения того или иного шаблона для каждого уровня
@@ -168,12 +165,12 @@ function random_treasure:get_level_by_name(name)
                "l03_agroprom" or name:find("agr_u") and "l03u_agr_underground" or name:find("val") and "l04_darkvalley" or
                name:find("x18") and "l04u_labx18" or name:find("bar") and "l05_bar" or name:find("ros") and "l06_rostok" or
                name:find("mil") and "l07_military" or name:find("yan") and "l08_yantar" or name:find("x16") and
-               "l08u_brainlab" or name:find("rad") and "l10_radar" or name:find("pri") and "l11_pripyat" or nil
+               "l08u_brainlab" or name:find("rad") and "l10_radar" or name:find("pri") and "l11_pripyat" or name:find("red") and "l10_red_forest" or nil
 end
 
 -- Функция получения "цены" тайника по уровню
 function random_treasure:get_price_by_level(level)
-    return sys_ini:r_u32("level_price", level)
+    return get_u32("level_price", level, 1, sys_ini)
 end
 
 -- Функция получения шаблона по уровню
