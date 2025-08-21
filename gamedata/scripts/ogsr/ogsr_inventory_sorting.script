@@ -1,0 +1,257 @@
+local categories = {
+    ammo = "visible",
+    weapons = "visible",
+    outfits = "visible",
+    artefacts = "visible",
+    items = "visible",
+    other = "visible"
+}
+
+local buttons = {}
+local btn_hud
+local xvars = get_stored_vars()
+
+local button_positions = {
+    all = {671, 650, 17, 21},
+    ammo = {704, 650, 17, 21},
+    wpn = {737, 650, 17, 21},
+    armor = {770, 650, 17, 21},
+    art = {803, 650, 17, 21},
+    med = {836, 650, 17, 21},
+    other = {869, 650, 17, 21}
+}
+
+local button_to_category = {
+    ammo = "ammo",
+    wpn = "weapons",
+    armor = "outfits",
+    art = "artefacts",
+    med = "items",
+    other = "other"
+}
+
+function attach(sm)
+    local signals = {
+        "on_item_to_ruck",
+        "on_death",
+        "on_spawn",
+        "on_save",
+        "on_inventory_open",
+        "on_inventory_hide",
+        "on_body_open",
+        "on_trade_open"
+    }
+
+    local handlers = {
+        this.on_item_to_ruck,
+        this.inventory_close,
+        this.on_spawn,
+        this.on_save,
+        this.inventory_open,
+        this.inventory_close,
+        this.inventory_close,
+        this.inventory_close
+    }
+
+    for i, signal in ipairs(signals) do
+        sm:subscribe({signal = signal, fun = handlers[i]})
+    end
+end
+
+function on_item_to_ruck(item)
+    local item_group = get_class_group(item)
+    if categories[item_group] == "hidden" then
+        set_item_inv_hidden(item)
+        db.actor:invalidate_inventory()
+        update_inventory_window()
+    end
+end
+
+function on_spawn()
+    if xvars.invSort_ammo ~= nil then
+        for category in pairs(categories) do
+            local var_name = "invSort_" .. category
+            if xvars[var_name] ~= nil then
+                categories[category] = xvars[var_name]
+            end
+        end
+    end
+end
+
+function on_save()
+    for category, value in pairs(categories) do
+        xvars["invSort_" .. category] = value
+    end
+end
+
+function restore_all_visibility()
+    for category in pairs(categories) do
+        change_visibility(category, "visible")
+    end
+    db.actor:invalidate_inventory()
+end
+
+function apply_current_filters()
+    for category, status in pairs(categories) do
+        change_visibility(category, status)
+    end
+    db.actor:invalidate_inventory()
+end
+
+function update_button_texture(button_id)
+    if not buttons[button_id] or not buttons[button_id].btn then
+        return
+    end
+
+    local texture_state = "disable"
+
+    if button_id == "all" then
+        local all_visible = true
+        for _, status in pairs(categories) do
+            if status ~= "visible" then
+                all_visible = false
+                break
+            end
+        end
+        texture_state = all_visible and "enable" or "disable"
+    else
+        local category = button_to_category[button_id]
+        texture_state = categories[category] == "visible" and "enable" or "disable"
+    end
+
+    buttons[button_id].btn:InitTexture("ui\\inv\\" .. button_id .. "_" .. texture_state)
+end
+
+function set_category_visibility(button_id)
+    if button_id == "all" then
+        for category in pairs(categories) do
+            categories[category] = "visible"
+        end
+    else
+        for category in pairs(categories) do
+            categories[category] = "hidden"
+        end
+        local selected_category = button_to_category[button_id]
+        categories[selected_category] = "visible"
+    end
+
+    apply_current_filters()
+
+    for btn_id in pairs(buttons) do
+        update_button_texture(btn_id)
+    end
+
+    db.actor:invalidate_inventory()
+    update_inventory_window()
+end
+
+local button_handlers = {
+    all = function() set_category_visibility("all") end,
+    ammo = function() set_category_visibility("ammo") end,
+    wpn = function() set_category_visibility("wpn") end,
+    armor = function() set_category_visibility("armor") end,
+    art = function() set_category_visibility("art") end,
+    med = function() set_category_visibility("med") end,
+    other = function() set_category_visibility("other") end
+}
+
+class "CUI_InvButton" (CUIScriptWnd)
+
+function CUI_InvButton:__init(id, f, pos, texture) 
+    super()
+    local btn = CUIButton()
+    self.btn = btn
+    btn:SetWindowName()
+    btn:SetAutoDelete(true)
+    btn:InitTexture("ui\\inv\\" .. texture[1] .. "_" .. texture[2])
+    btn:SetStretchTexture(true)
+    btn:Init(pos[1], pos[2], pos[3], pos[4])
+    self:Register(btn, id)
+    self:AddCallback(id, ui_events.BUTTON_CLICKED, f, self)
+end
+
+function CUI_InvButton:__finalize()
+end
+
+function inventory_open()
+    btn_hud = level.main_input_receiver()
+
+    apply_current_filters()
+
+    for btn_id, handler in pairs(button_handlers) do
+        local texture_state = "disable"
+        if btn_id == "all" then
+            local all_visible = true
+            for _, status in pairs(categories) do
+                if status ~= "visible" then
+                    all_visible = false
+                    break
+                end
+            end
+            texture_state = all_visible and "enable" or "disable"
+        else
+            local category = button_to_category[btn_id]
+            texture_state = categories[category] == "visible" and "enable" or "disable"
+        end
+
+        buttons[btn_id] = CUI_InvButton(
+            "btn_" .. btn_id,
+            handler,
+            button_positions[btn_id],
+            {btn_id, texture_state}
+        )
+        btn_hud:AttachChild(buttons[btn_id].btn)
+    end
+
+    db.actor:invalidate_inventory()
+    update_inventory_window()
+end
+
+function inventory_close()
+    restore_all_visibility()
+
+    for btn_id, button in pairs(buttons) do
+        if button and button.btn then
+            btn_hud:DetachChild(button.btn)
+            button.btn = nil
+        end
+    end
+    buttons = {}
+    btn_hud = nil
+end
+
+function change_visibility(class, status)
+    db.actor:iterate_ruck(function(dummy, obj)
+        if get_class_group(obj) == class then
+            if status == "visible" then
+                set_item_inv_visible(obj)
+            else
+                set_item_inv_hidden(obj)
+            end
+        end
+    end, nil)
+end
+
+function get_class_group(obj)
+    if sys_ini:line_exist(obj:section(), "quest_item") and 
+       sys_ini:r_bool(obj:section(), "quest_item") then
+        return "other"
+    end
+
+    if obj:is_ammo() or obj:is_grenade() then
+        return "ammo"
+    elseif obj:is_weapon() or obj:is_scope() or 
+           obj:is_silencer() or obj:is_grenade_launcher() then
+        return "weapons"
+    elseif obj:is_outfit() then
+        return "outfits"
+    elseif obj:is_artefact() then
+        return "artefacts"
+    elseif obj:is_medkit() or obj:is_antirad() or 
+           obj:is_food_item() or obj:is_bottle_item() or 
+           obj:is_eatable_item() then
+        return "items"
+    else
+        return "other"
+    end
+end
