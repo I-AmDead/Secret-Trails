@@ -122,11 +122,11 @@ function action_wounded:execute()
         end
     end
 
-    -- if self.object:relation(db.actor) == game_object.enemy then
-    --	self.object:disable_talk()
-    -- else
-    self.object:enable_talk()
-    -- end
+    if self.object:character_community() == "zombied" then
+        self.object:disable_talk()
+    else
+        self.object:enable_talk()
+    end
 
     wound_manager_state = xr_logic.pstor_retrieve(self.object, "wounded_state")
     wound_manager_sound = xr_logic.pstor_retrieve(self.object, "wounded_sound")
