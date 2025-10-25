@@ -1,0 +1,116 @@
+local settings_marker = {
+    visible = false,
+    size_hit = 32,
+    size_die = 64,
+    texture = "ui\\hit_marker\\hit_marker",
+    color_hit = {255, 255, 160, 0},
+    color_die = {255, 255, 0, 0},
+    alpha = 255,
+    scale = 1.0
+}
+
+local snd_hit = sound_object("interface\\hitmarker_sound_1")
+
+function get_crosshair_screen_position()
+    local cross_pos = level.get_cross_pos()
+    if not cross_pos then
+        return 512, 384
+    end
+    
+    local screen_x = (cross_pos.x + 1) * 512
+    local screen_y = (cross_pos.y + 1) * 384
+    
+    return screen_x, screen_y
+end
+
+function init_hit_marker_texture()
+    if not get_hud() then 
+        return 
+    end
+
+    local hit_markers = get_hud():GetCustomStatic("hit_markers") or get_hud():AddCustomStatic("hit_markers")
+    if hit_markers then
+        local wnd = hit_markers:wnd()
+        wnd:Show(false)
+        wnd:SetAutoDelete(false)
+        wnd:SetStretchTexture(true)
+        wnd:InitTexture(settings_marker.texture)
+    end
+end
+
+local wnd_size
+
+function show_hit_marker(die)
+    if not game_options.opt_hitmark then return end
+
+    local hit_markers = get_hud():GetCustomStatic("hit_markers") or get_hud():AddCustomStatic("hit_markers")
+    if hit_markers then
+        settings_marker.visible = true
+        settings_marker.alpha = 255
+
+        wnd_size = die and settings_marker.size_die or settings_marker.size_hit
+    
+        local wnd = hit_markers:wnd()
+        wnd:Show(true)
+        wnd:SetColor(GetARGB(unpack(die and settings_marker.color_die or settings_marker.color_hit)))
+        wnd:SetAlphaValue(255)
+    end
+end
+
+local function update_hit_marker(delta_time)
+    if not game_options.opt_hitmark then return end
+
+    if not settings_marker.visible then return end
+
+    local hit_markers = get_hud():GetCustomStatic("hit_markers") or get_hud():AddCustomStatic("hit_markers")
+    if hit_markers then
+        local cx, cy = get_crosshair_screen_position()
+
+        settings_marker.alpha = settings_marker.alpha - 5
+        wnd_size = wnd_size - 2
+
+        local wnd = hit_markers:wnd()
+        wnd:SetWndSize(wnd_size, wnd_size)
+        wnd:SetWndPos(cx - wnd_size / 2, cy - wnd_size / 2)
+        wnd:SetAlphaValue(settings_marker.alpha)
+
+        if settings_marker.alpha < 30 then
+            settings_marker.visible = false
+            wnd:Show(false)
+        end
+    end
+end
+
+local function hit_callback(obj, amount, local_direction, who, bone_index)
+    if not game_options.opt_hitmark then return end
+
+    if who and who:id() == db.actor:id() then
+        show_hit_marker(false)
+        snd_hit:play(db.actor, 0, sound_object.s2d)
+        snd_hit.volume = 0.7
+    end
+end
+
+local function death_callback(victim, who)
+    if not game_options.opt_hitmark then return end
+
+    if who and who:id() == db.actor:id() then
+        show_hit_marker(true)
+        snd_hit:play(db.actor, 0, sound_object.s2d)
+        snd_hit.volume = 1.0
+    end
+end
+
+local function on_first_update()
+    init_hit_marker_texture()
+end
+
+-- Подписка на события
+function attach(sm)
+    sm:subscribe({signal = "on_npc_hit", fun = hit_callback})
+    sm:subscribe({signal = "on_monster_hit", fun = hit_callback})
+    sm:subscribe({signal = "on_npc_death", fun = death_callback})
+    sm:subscribe({signal = "on_monster_death", fun = death_callback})
+    sm:subscribe({signal = "on_first_update", fun = on_first_update})
+    sm:subscribe({signal = "on_update", fun = update_hit_marker})
+end
