@@ -1,0 +1,17 @@
+local difficulty_hit_koef = {0.6, 0.7, 0.85, 1.0}
+local hit_koef = 1.0
+
+local function on_load()
+	local game_dif = ogse.load_var("game_difficulty", 3)
+	hit_koef = difficulty_hit_koef[game_dif + 1]
+end
+
+local function on_actor_hit(hit_data)
+	if hit_data.hit_type == hit.radiation then return end
+	hit_data.power = hit_data.power * hit_koef
+end
+
+function attach(sm)
+	sm:subscribe({signal = "on_load", fun = on_load})
+	sm:subscribe({signal = "on_actor_before_hit", fun = on_actor_hit})
+end
