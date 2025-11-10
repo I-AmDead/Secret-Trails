@@ -1,5 +1,5 @@
 function normal		(shader, t_base, t_second, t_detail)
-	shader:begin	("combine_1", "combine_volumetric")
+	shader:begin	("stub_screen_space", "combine_volumetric")
 			: fog		(false)
 			: zb 		(false,false)
 			: blend		(true,blend.one,blend.one)

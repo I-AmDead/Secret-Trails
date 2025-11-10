@@ -13,6 +13,8 @@
 #include "screenspace\screenspace_wind.h"
 #endif
 
+uniform float4 ssfx_floravariation; // Grass Int, Grass Freq, Foliage Int, Foliage Freq
+
 v2p_bumped main(v_tree I)
 {
     float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
@@ -79,6 +81,9 @@ v2p_bumped main(v_tree I)
 #ifdef USE_TDETAIL
     O.tcdbump = O.tcdh * dt_params; // dt tc
 #endif
+
+    float2 tree_pos = pos.xz;
+    O.sss_extra = float4(0, 0, hash12(floor(tree_pos * ssfx_floravariation.w)), H);
 
     return O;
 }
