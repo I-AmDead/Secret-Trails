@@ -40,7 +40,3 @@ end
 function element_3(shader, t_base, t_second, t_detail)
 	elements(shader, t_base, t_second, t_detail, "accum_omni_normal", true)
 end
-
-function element_4(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_omni_transluent", true)
-end

@@ -40,7 +40,3 @@ end
 function element_3(shader, t_base, t_second, t_detail)
 	elements(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
 end
-
-function element_4(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
-end
