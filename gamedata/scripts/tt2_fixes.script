@@ -1,5 +1,4 @@
 local function del_phobj()
-    --delete_obj("light_uglovaya_1_glass_0006") -- мб перестала баговать уже?
     delete_obj("sar_physic_destroyable_object_0085")
     delete_obj("mil_awr_lamp_mil_smart_terrain_7_7_freedom_mechanic_stalker_01")
     delete_obj("mil_awr_lamp_mil_smart_terrain_7_7_freedom_mechanic_stalker_02")
@@ -50,66 +49,6 @@ end
 function quest_fail()
     if has_alife_info("pobeg_start") and not has_alife_info("pobeg_finish") then
         db.actor:give_info_portion("pobeg_net")
-    end
-end
-
-local lamp_list = ogse.load_var("lamp_list", {})
-local function lamp_lists()
-    if not ogse.var_exists("lamp_list") then
-        for a = 1, 65535 do
-            local obj = level.object_by_id(a)
-            if obj then
-                local pk = get_netpk(obj, 1)
-                local data = pk:get()
-                if string.find(obj:name(), "light_gas_r2") then
-                    lamp_list[a] = {type = "gas"}
-                elseif string.find(obj:name(), "light_uglovaya_1") then
-                    lamp_list[a] = {type = "uglovaya"}
-                elseif data.main_brightness and data.main_brightness > 0.9 then
-                    lamp_list[a] = {type = "brightness"}
-                end
-            end
-        end
-
-        ogse.save_var("lamp_list", lamp_list)
-    end
-end
-
-local function lamp_settings()
-    for i, v in pairs(lamp_list) do
-        local obj = level.object_by_id(i)
-        if obj then
-            if v.type == "gas" then
-                obj:get_hanging_lamp():set_flare(false)
-            elseif v.type == "uglovaya" or v.type == "brightness" then
-                local pk = get_netpk(obj, 1)
-                ASSERT(pk and pk:isOk(), "can't read netpacket of %s", obj:name())
-                local data = pk:get()
-                local props = {}
-                if v.type == "uglovaya" then
-                    props =
-                    {
-                        [ "main_color"          ] = tonumber("0xffffffff", 16),
-                        [ "main_brightness"     ] = 0.3,
-                        [ "light_flags"         ] = tonumber("0x2a", 16)
-                    }
-                elseif v.type == "brightness" then
-                    props = {["main_brightness"] = 0.6}
-                else
-                    props =
-                    {
-                        [ "main_brightness"     ] = 0.3,
-                        [ "main_range"          ] = 7,
-                        [ "light_flags"         ] = tonumber("0x2a", 16)
-                    }
-                end
-                log3("obj %s props %s", obj:name(), props)
-                for k, v in pairs(props) do
-                    data[k] = v
-                end
-                pk:set(data)
-            end
-        end
     end
 end
 
@@ -813,8 +752,6 @@ local function fix_new_first()
     fix_lc_sar_aes_desc()
     fix_lc_yantar_agroprom_desc()
     fix_lc_yantar_radar_desc()
-    lamp_lists()
-    lamp_settings()
     swamp_secret()
 end
 
