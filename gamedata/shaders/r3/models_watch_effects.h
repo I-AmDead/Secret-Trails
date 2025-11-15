@@ -98,13 +98,8 @@ float3 pda_loading(float2 uv)
     return a * geo;
 }
 
-float3 dosimeter(float2 uva)
+float3 dosimeter(float2 uv)
 {
-    float2 uv = uva;
-
-    // uv -= 0.5;
-    // uv.y = -uv.y;
-
     uv *= 280.0;
     float deg = radiansToDegrees(atan2(uv.y, uv.x));
 
@@ -112,14 +107,18 @@ float3 dosimeter(float2 uva)
 
     if (uv.y > 0.0 && length(uv) < 190.0 && length(uv) > 170.0)
     {
-        float4 red = float4(1.0, 0.0, 0.0, 1.0);
-        float4 yellow = float4(1.0, 1.0, 0.0, 1.0);
-        float4 green = float4(0.0, 1.0, 0.0, 1.0);
+        float edgeFactor = 1.0 - abs((deg / 90.0) - 1.0);
+        edgeFactor = smoothstep(0.0, 1.0, edgeFactor);
+        
+        float dynamicThickness = 15.0 * (0.3 + 0.7 * edgeFactor);
+        
+        if (length(uv) < 190.0 && length(uv) > 190.0 - dynamicThickness)
+        {
+            float4 red = float4(1.0, 0.0, 0.0, 1.0);
+            float4 green = float4(0.0, 1.0, 0.0, 1.0);
 
-        if (deg < 90.0)
-            rgba = lerp(red, yellow, deg / 90.0);
-        else
-            rgba = lerp(yellow, green, (deg - 90.0) / 90.0);
+            rgba = lerp(red, green, deg / 180.0);
+        }
 
         if (fmod(deg, 12.0) < 2.0 && (length(uv) > 175.0 || length(uv) <= 175.0))
             rgba = float4(0.0, 0.0, 0.0, 1.0);
@@ -135,11 +134,35 @@ float3 dosimeter(float2 uva)
     return rgba.rgb;
 }
 
+float get_shade(float distance) { return 0.0003 / (distance); }
+
+// Функция для получения расстояния до иконки по индексу
+float GetIconDistance(int index, float2 pos, float2 uv)
+{
+    if (index == 0) return dfEat(pos, uv);
+    if (index == 1) return dfRadio(pos, uv);
+    if (index == 2) return dfKettlebell(pos, uv);
+    if (index == 3) return dfDrop(pos, uv);
+    if (index == 4) return dfRadiation(pos, uv);
+    return 0.0;
+}
+
+// Функция для вычисления цвета иконки
+float3 GetIconColor(float param)
+{
+    float3 def_color = float3(0.0, 0.0, 0.0);
+    float3 red_color = float3(0.9, 0.1, 0.0);
+    float3 green_color = float3(0.0, 0.9, 0.1);
+    float3 blue_color = float3(0.0, 0.1, 0.5);
+
+    return param < 0.0 ? lerp(blue_color, def_color, param) : lerp(red_color, green_color, param);
+}
+
 float3 NixieTime(float2 uv)
 {
-    uv.x = resize(uv.x, screen_res.x / screen_res.y, 0.0);
-
     float2 uva = uv;
+
+    uv.x = resize(uv.x, screen_res.x / screen_res.y, 0.0);
     // uva.y -= 0.2;
 
     uv -= 0.5;
@@ -147,107 +170,57 @@ float3 NixieTime(float2 uv)
     uv.x *= screen_res.x * screen_res.w;
     uv.y = -uv.y;
 
-    float hour = game_time.x;
-    float minute = game_time.y;
-    float seconds = game_time.z;
-    float miliseconds = game_time.w;
-    float radiation = round(watch_actor_params_1.z);
-
-    float nsize = numberLength(9999.0);
-    float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
-    float2 pos = -digit_spacing * float2(nsize, 1.0) / 2.0;
-
-    float2 basepos = pos;
     float dist = 1.0;
 
-    float3 color = float3(0.0, 0.0, 0.0);
+    float2 digit_spacing = mul(float2(1.1, 1.6), 1.0 / 6.0);
+    float2 pos = -digit_spacing * float2(numberLength(9999.0), 1.0) / 2.0;
 
-    float3 red_color = float3(0.9, 0.1, 0.0);
-    float3 green_color = float3(0.0, 0.9, 0.1);
-    float3 blue_color = float3(0.0, 0.1, 0.7);
+    float2 basepos = pos;
+
+    float3 color = float3(0.0, 0.0, 0.0);
 
     if (watch_actor_params_1.w == 1)
     {
         pos.x = basepos.x + 0.16;
-        dist = min(dist, dfNumber(pos, hour, uv));
+        dist = min(dist, dfNumber(pos, game_time.x, uv));
 
         pos.x = basepos.x + 0.39;
         dist = min(dist, dfColon(pos, uv));
 
         pos.x = basepos.x + 0.60;
-        dist = min(dist, dfNumber(pos, minute, uv));
+        dist = min(dist, dfNumber(pos, game_time.y, uv));
     }
 
-    if (watch_actor_params_1.w == 2)
+    if (watch_actor_params_1.w == 2.0)
     {
-        bool indicators_show =
-            watch_actor_params_2.x < 0.99 || watch_actor_params_2.y < 0.99 || watch_actor_params_2.z < 1.0 || watch_actor_params_2.w < 0.99 || watch_actor_params_1.y < 0.99;
+        float icon_params[5] = {watch_actor_params_2.x, watch_actor_params_2.y, watch_actor_params_2.z, watch_actor_params_2.w, watch_actor_params_1.y};
+        float icon_thresholds[5] = {0.99, 0.99, 1.0, 0.99, 0.99};
+        float icon_spacings[5] = {0.25, 0.25, 0.25, 0.15, 0.25};
 
-        int health_factor = round(watch_actor_params_1.x * 100);
+        float2 icon_pos = float2(basepos.x + 0.15, basepos.y - 0.25);
+
+        bool indicators_show = false;
+        for (int i = 0; i < 5; i++)
+        {
+            if (icon_params[i] < icon_thresholds[i])
+            {
+                float icon_dist = GetIconDistance(i, icon_pos, uv);
+                float3 icon_color = GetIconColor(icon_params[i]);
+                color += icon_color * get_shade(icon_dist);
+                indicators_show = true;
+            }
+            icon_pos.x += icon_spacings[i];
+        }
+
         pos.x -= 0.2;
-        pos.y += indicators_show ? 0.1 : 0.0;
-        pos.x = basepos.x + (health_factor < 100.f ? (health_factor < 10.f ? 0.42 : 0.33) : 0.22);
-        dist = min(dist, dfNumberHealth(pos, health_factor, uv));
 
-        pos.x += health_factor < 100.f ? (health_factor < 10.f ? 0.2 : 0.35) : 0.55;
-        dist = min(dist, dfPercent(pos, uv));
+        int health_factor = round(watch_actor_params_1.x * 100.0);
+        float health_x_offset = health_factor < 10.0 ? 0.42 : (health_factor < 100.0 ? 0.33 : 0.22);
+        float health_x_spacing = health_factor < 10.0 ? 0.2 : (health_factor < 100.0 ? 0.35 : 0.55);
 
-        pos.y -= 0.35;
-        pos.x = basepos.x + 0.15;
-
-        // Icons
-        if (watch_actor_params_2.x < 0.99)
-        {
-            float eatDist = dfEat(pos, uv);
-            if (watch_actor_params_2.x < 0.0)
-                color += lerp(blue_color, color, watch_actor_params_2.x) * (0.001 / eatDist);
-            else
-                color += lerp(red_color, green_color, watch_actor_params_2.x) * (0.001 / eatDist);
-        }
-
-        pos.x += 0.25;
-
-        if (watch_actor_params_2.y < 0.99)
-        {
-            float radioDist = dfRadio(pos, uv);
-            if (watch_actor_params_2.y < 0.0)
-                color += lerp(blue_color, color, watch_actor_params_2.y) * (0.001 / radioDist);
-            else
-                color += lerp(red_color, green_color, watch_actor_params_2.y) * (0.001 / radioDist);
-        }
-
-        pos.x += 0.25;
-
-        if (watch_actor_params_2.z < 1.0)
-        {
-            float kettlebellDist = dfKettlebell(pos, uv);
-            if (watch_actor_params_2.z < 0.0)
-                color += lerp(blue_color, color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
-            else
-                color += lerp(red_color, green_color, watch_actor_params_2.z) * (0.001 / kettlebellDist);
-        }
-
-        pos.x += 0.25;
-
-        if (watch_actor_params_2.w < 0.99)
-        {
-            float dropDist = dfDrop(pos, uv);
-            if (watch_actor_params_2.w < 0.0)
-                color += lerp(blue_color, color, watch_actor_params_2.w) * (0.001 / dropDist);
-            else
-                color += lerp(red_color, green_color, watch_actor_params_2.w) * (0.001 / dropDist);
-        }
-
-        pos.x += 0.15;
-
-        if (watch_actor_params_1.y < 0.99)
-        {
-            float radDist = dfRadiation(pos, uv);
-            if (watch_actor_params_1.y < 0.0)
-                color += lerp(blue_color, color, watch_actor_params_1.y) * (0.001 / radDist);
-            else
-                color += lerp(red_color, green_color, watch_actor_params_1.y) * (0.001 / radDist);
-        }
+        float2 health_pos = float2(basepos.x + health_x_offset, pos.y + (indicators_show ? 0.1 : 0.0));
+        dist = min(dist, dfNumberHealth(health_pos, health_factor, uv));
+        dist = min(dist, dfPercent(health_pos + float2(health_x_spacing, 0.0), uv));
     }
 
     if (watch_actor_params_1.w == 3)
@@ -256,7 +229,7 @@ float3 NixieTime(float2 uv)
         pos = basepos;
         pos.x += 0.15;
         pos.y -= 0.3;
-        dist = min(dist, dfNumber2(pos, radiation, uv));
+        dist = min(dist, dfNumber2(pos, round(watch_actor_params_1.z), uv));
 
         color += dosimeter(uv);
     }
@@ -266,13 +239,13 @@ float3 NixieTime(float2 uv)
         uv *= 1.5;
 
         pos.x = basepos.x - 0.15;
-        dist = min(dist, dfNumber(pos, minute, uv));
+        dist = min(dist, dfNumber(pos, game_time.y, uv));
 
         pos.x = basepos.x + 0.1;
         dist = min(dist, dfColon(pos, uv));
 
         pos.x = basepos.x + 0.35;
-        dist = min(dist, dfNumber(pos, seconds, uv));
+        dist = min(dist, dfNumber(pos, game_time.z, uv));
 
         pos.x = basepos.x + 1.75;
         pos.y = basepos.y - 0.75;
@@ -280,16 +253,16 @@ float3 NixieTime(float2 uv)
 
         pos.x = basepos.x + 0.8;
         pos.y = basepos.y;
-        dist = min(dist, dfNumber(pos, miliseconds, uv));
+        dist = min(dist, dfNumber(pos, game_time.w, uv));
     }
 
-    float shade = 0.004 / dist;
+    float shade = 0.003 / dist;
     color += watch_color_params.rgb * shade;
 
 #ifdef SHOW_GRID
-    float grid = 0.5 - max(abs(fmod(uva.x * 64.0, 1.0) - 0.3), abs(fmod(uva.y * 64.0, 1.0) - 0.3));
-    float mixing = smoothstep(0.0, 64.0 / screen_res.y, grid);
-    color *= 0.25 + float3(mixing, mixing, mixing);
+    float grid = 0.45 - max(abs(fmod(uva.x * 32.0, 1.0) - 0.5), abs(fmod(uva.y * 32.0, 1.0) - 0.5));
+    float mixing = smoothstep(0.0, 32.0 / screen_res.y, grid);
+    color *= smoothstep(0.0, 32.0 / screen_res.y, grid);
 #endif
 
     return color;
