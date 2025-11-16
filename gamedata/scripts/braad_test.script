@@ -613,10 +613,19 @@ local function on_info(npc, info_id)
         db.actor:give_info_portion("krest_work_fail")
     end
 
-    if (db.actor:has_info("krest_dead") and db.actor:has_info("krest_razborka_spawn")
-    and db.actor:dont_has_info("krest_razborka_done")) or ((db.actor:has_info("razbor_ban1_see") or db.actor:has_info("razbor_ban2_see") or db.actor:has_info("razbor_ban3_see") 
-    or db.actor:has_info("razbor_ban4_see") or db.actor:has_info("razbor_ban5_see"))
-    and db.actor:has_info("krest_razborka_spawn") and db.actor:dont_has_info("krest_razborka_begin")) then
+    local see_infos = {"razbor_ban1_see", "razbor_ban2_see", "razbor_ban3_see", "razbor_ban4_see", "razbor_ban5_see"}
+    local chec_see = false
+    for _, info in ipairs(see_infos) do
+        if db.actor:has_info(info) then
+            chec_see = true
+            break
+        end
+    end
+
+    if db.actor:dont_has_info("krest_razborka_done") 
+    and db.actor:has_info("krest_razborka_spawn")
+    and (db.actor:has_info("krest_dead") or (chec_see and db.actor:has_info("krest_razborka_speech")))
+    and db.actor:dont_has_info("krest_razborka_speech2") then
         db.actor:give_info_portion("krest_razborka_fail")
     end
 
@@ -1400,25 +1409,16 @@ function knyaz_razborka()
     news_manager.send_tip(db.actor, game.translate_string("knyaz_razborka"))
 end
 
-function knyaz_set()
-    for a, obj in alife():objects() do
-        local sobj = level.object_by_id(obj.id)
-	    if sobj and sobj:alive() and string.find(sobj:name(), "razbor_ban") then
-            sobj:set_character_community("killer", 0, 0)
-        end
-    end
-end
-
 function razborka_begin()
     db.actor:give_info_portion("krest_razborka_speech2")
     news_manager.send_tip(db.actor, game.translate_string("razborka_begin"))
 end
 
-function knyaz_set_nazad()
+function knyaz_set()
     for a, obj in alife():objects() do
-        local sobj = level.object_by_id(obj)
-        if sobj and sobj:alive() and string.find(sobj:name(), "esc_krest_ohr") then
-            obj:set_character_community("bratok", 0, 0)
+        local sobj = level.object_by_id(obj.id)
+        if sobj and sobj:alive() and string.find(sobj:name(), "razbor_ban") then
+            sobj:set_character_community("killer", 0, 0)
         end
     end
 end

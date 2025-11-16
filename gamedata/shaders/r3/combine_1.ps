@@ -22,15 +22,9 @@
 #endif
 #endif
 
-struct _input
+float4 main(p_screen I) : SV_Target
 {
-    float2 tc0 : TEXCOORD0;
-    float4 pos2d : SV_Position;
-};
-
-float4 main(_input I) : SV_Target
-{
-    gbuffer_data gbd = gbuffer_load_data(I.tc0, I.pos2d);
+    gbuffer_data gbd = gbuffer_load_data(I.tc0, I.hpos);
 
     // Sample the buffers:
     float4 P = float4(gbd.P, gbd.mtl); // position.(mtl or sun)
@@ -57,7 +51,7 @@ float4 main(_input I) : SV_Target
 #ifdef USE_GTAO
     occ = calc_gtao(P, N, I.tc0, 0);
 #else
-    occ = calc_ssdo(P, N, I.tc0, I.pos2d, 0);
+    occ = calc_ssdo(P, N, I.tc0, I.hpos, 0);
 #endif
     occ = compute_colored_ao(occ.x, D.xyz);
 #endif

@@ -1,5 +1,5 @@
 function element_0(shader, t_base, t_second, t_detail)
-	shader:begin("combine_1", "combine_1")
+	shader:begin("stub_screen_space", "combine_1")
 		:fog(false)
 		:zb(false, false)
 		:blend(true, blend.invsrcalpha,blend.srcalpha)
