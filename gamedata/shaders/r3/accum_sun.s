@@ -1,4 +1,4 @@
-function case_0_1_4(shader, t_base, t_second, t_detail)
+function elements(shader, t_base, t_second, t_detail)
 	shader:begin("accum_sun", "accum_sun_near")
 		:fog(false)
 		:zb(true, false, true)
@@ -20,15 +20,11 @@ function case_0_1_4(shader, t_base, t_second, t_detail)
 end
 
 function element_0(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail)
+	elements(shader, t_base, t_second, t_detail)
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail)
-end
-
-function element_4(shader, t_base, t_second, t_detail)
-	case_0_1_4(shader, t_base, t_second, t_detail)
+	elements(shader, t_base, t_second, t_detail)
 end
 
 function element_2(shader, t_base, t_second, t_detail)

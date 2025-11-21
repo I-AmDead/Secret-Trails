@@ -18,23 +18,6 @@
 
 #include "shadow.h"
 
-#ifdef USE_SUNFILTER
-float4 main(v2p_volume I) : SV_Target
-{
-    gbuffer_data gbd = gbuffer_load_data(I.tc, I.hpos);
-
-    //	Emulate virtual offset
-    gbd.P += gbd.N * 0.015f;
-
-    float4 _P = float4(gbd.P, 1.f);
-
-    float4 PS = mul(m_shadow, _P);
-
-    float s = shadowtest_sun(PS, I.tcJ) * sunmask(_P);
-
-    return s;
-}
-#else
 float4 main(v2p_volume I) : SV_Target
 {
     gbuffer_data gbd = gbuffer_load_data(I.tc.xy / I.tc.w, I.hpos);
@@ -87,4 +70,3 @@ float4 main(v2p_volume I) : SV_Target
     return blend(Ldynamic_color * light * shadows, I.tc);
 #endif
 }
-#endif
