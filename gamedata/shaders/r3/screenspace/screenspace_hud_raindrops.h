@@ -12,6 +12,7 @@ Texture2D s_hud_rain; // Raindrops texture [ x: Fade | y: Normal-Y | z: Normal-X
 
 uniform float4 ssfx_hud_drops_1; // Time, Int, refle, refra
 uniform float4 ssfx_hud_drops_2; // Density, Size, Extra Gloss, Gloss
+uniform float4 ssfx_gloss;
 
 float3 ssfx_process_drops(float4 droplets, float speed, float intensity)
 {
