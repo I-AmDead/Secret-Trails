@@ -1,9 +1,9 @@
+local snd_animation
 local snd_gasmask = sound_object('interface\\item_usage\\gasmask_swipe')
 local snd_torch = sound_object('interface\\item_usage\\headflash_switch')
 local snd_pickup = sound_object('interface\\item_usage\\pickup')
 local snd_harvest = sound_object('interface\\item_usage\\harvest_use')
 local snd_loot = sound_object('interface\\item_usage\\harvest_loot')
-local snd_hand_bore = sound_object('interface\\item_usage\\outfit_inspect')
 local hide_hand_speed = 1.5
 local anim_plays
 local speed_k = 1.0
@@ -50,8 +50,9 @@ local function play_hud_animation(item, anim_base, snd_name)
     
     anim = item:get_ammo_in_magazine() == 0 and animation_exist(hud_section, anim .. "_empty", anim) or anim
     
-    local snd = sound_object(get_string(item:section(), snd_name))
-    snd:play(db.actor, 0, sound_object.s2d)
+    snd_animation = sound_object(get_string(item:section(), snd_name))
+    snd_animation:play(db.actor, 0, sound_object.s2d)
+
     item:set_hud_item_state(15)
     return item:play_hud_motion(anim, true, 15, 1.0)
 end
