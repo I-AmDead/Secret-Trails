@@ -771,11 +771,12 @@ function spawn_zahar2()
 end
 
 --------------------------------------swamp_doctor---------------------------------------
-
 function doctor_kostolom_spawn()
     local obj = spawn_patrol("doctor_kostolom", "doctor_kostolom")
     alife():assign_story_id(obj.id, story_ids.doctor_kostolom)
-    level_tasks.add_location_by_id(obj.id, "crlc_big", game.translate_string("metka_kostolom"))
+    local level_id = game_graph():vertex(db.actor:game_vertex_id()):level_id()
+    local spot_id = level.map_add_user_spot(level_id, vector():set(91.823708, 3.043741, 235.854614), "crlc_mdl", game.translate_string("metka_kostolom"), true)
+    ogse.save_var("kostolom_spot_id", spot_id)
 end
 
 function spawn_sar_pauki()
@@ -783,10 +784,8 @@ function spawn_sar_pauki()
 end
 
 function remove_metka_kostolom()
-    local obj = alife():story_object(story_ids.doctor_kostolom)
-    if obj then
-        level_tasks.remove_location_by_id(obj.id, "crlc_big")
-    end
+    local spot_id = ogse.load_var("kostolom_spot_id", 0)
+    level.map_remove_object_spot(spot_id, "crlc_mdl")
 end
 
 function doctor_kostolom_have(task, info)
