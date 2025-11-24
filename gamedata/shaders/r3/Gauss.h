@@ -1,30 +1,35 @@
-#ifndef GAUSSBLUR_H_INCLUDED
-#define GAUSSBLUR_H_INCLUDED
-
-float4 Gauss(Texture2D t2d, float2 texCoord, int factor, bool optimize)
+float4 Gauss_Horizontal(Texture2D t2d, float2 texCoord, float blur_factor)
 {
-    float4 outColor = 0.f;
-
-    if (!optimize)
+    static const float weights[3] = {0.441, 0.279, 0.08};
+    static const float offsets[3] = {0.0, 1.384, 3.230};
+    
+    float4 color = t2d.SampleLevel(smp_rtlinear, float3(texCoord, 0), 0) * weights[0];
+    float pixelSize = blur_factor / screen_res.x;
+    
+    for (int i = 1; i < 3; i++)
     {
-        float dx = factor * .5f / screen_res.x;
-        float dy = factor * .5f / screen_res.y;
-
-        outColor.rgb =
-            (1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord, 0), 0).rgb + 1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(dx, 0), 0), 0).rgb +
-             1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(dy, 0), 0), 0).rgb + 1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(-dx, 0), 0), 0).rgb +
-             1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(-dx, -dy), 0), 0).rgb +
-             1.f * t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(dx, -dy), 0), 0).rgb) /
-            6.f;
+        float offset = offsets[i] * pixelSize;
+        color += t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(offset, 0), 0), 0) * weights[i];
+        color += t2d.SampleLevel(smp_rtlinear, float3(texCoord - float2(offset, 0), 0), 0) * weights[i];
     }
-    else
-    {
-        const float delta = factor * (.5f / screen_res.x);
-
-        outColor.rgb = t2d.SampleLevel(smp_rtlinear, float3(texCoord + delta, 0), 0).rgb + t2d.SampleLevel(smp_rtlinear, float3(texCoord - delta, 0), 0).rgb * (1.f / 2.f);
-    }
-
-    return outColor;
+    
+    return color;
 }
 
-#endif // GAUSSBLUR_H_INCLUDED
+float4 Gauss_Vertical(Texture2D t2d, float2 texCoord, float blur_factor)
+{
+    static const float weights[3] = {0.441, 0.279, 0.08};
+    static const float offsets[3] = {0.0, 1.384, 3.230};
+    
+    float4 color = t2d.SampleLevel(smp_rtlinear, float3(texCoord, 0), 0) * weights[0];
+    float pixelSize = blur_factor / screen_res.y;
+    
+    for (int i = 1; i < 3; i++)
+    {
+        float offset = offsets[i] * pixelSize;
+        color += t2d.SampleLevel(smp_rtlinear, float3(texCoord + float2(0, offset), 0), 0) * weights[i];
+        color += t2d.SampleLevel(smp_rtlinear, float3(texCoord - float2(0, offset), 0), 0) * weights[i];
+    }
+    
+    return color;
+}
