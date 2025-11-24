@@ -11,7 +11,7 @@ Texture2D s_noise;
 float4 blendSoftLight(float4 a, float4 b)
 {
     float4 c = 2 * a * b + a * a * (1 - 2 * b);
-    float4 d = sqrt(a) * (2 * b - 1) + 2 * a * (1 - b);
+    float4 d = rsqrt(a) * (2 * b - 1) + 2 * a * (1 - b);
 
     return (b < 0.5) ? c : d;
 }
@@ -25,7 +25,7 @@ float Window_Cubic(float x, float center, float radius)
 float4 get_sun_uv()
 {
     // Dist to the sun
-    float sun_dist = 100 / (sqrt(1.0f - L_sun_dir_w.y * L_sun_dir_w.y));
+    float sun_dist = 100 / (rsqrt(1.0f - L_sun_dir_w.y * L_sun_dir_w.y));
 
     // Sun pos
     float3 sun_pos_world = sun_dist * L_sun_dir_w + eye_position;
@@ -51,7 +51,7 @@ float4 mainImageA(float2 uv)
 float generate_starburst(float2 uv)
 {
     uv *= float2(screen_res.x / screen_res.y, 1.0).xy;
-    float angle = atan(uv.y / uv.x);
+    float angle = atan2(uv.y, uv.x);
     float2 sb_uv = float2(cos(angle), sin(angle)) / 3.14;
     float sb_tex = s_noise.Sample(smp_linear, sb_uv * 64.).x;
     return smoothstep(0.0, sb_tex, length(uv / 4.)) * length(uv / 2.); // soften it a little bit
