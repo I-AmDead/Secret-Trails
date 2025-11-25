@@ -75,6 +75,9 @@ local function on_take(obj, sobj)
     elseif level.name() == "l04_darkvalley" then
         if obj:section() == "af_snake_eye" and db.actor:dont_has_info("snake_dialog_begin") then
             db.actor:give_info_portion("snake_dialog_begin")
+        elseif obj:section() == "flash_ban" then
+            local box_obj = level_object_by_sid(story_ids.val_secret_0024)
+            level.map_remove_object_spot(box_obj:id(), "blue_location")
         end
     elseif level.name() == "l04u_labx18" then
         if obj:section() == "detector_elite_bad" then
@@ -111,9 +114,6 @@ local function on_take(obj, sobj)
             db.actor:give_info_portion("info_amk_recipt_almaz_kolobok")
             alife():release(sobj)
         end
-    elseif obj:section() == "flash_ban" then
-        local box = level_object_by_sid(story_ids.val_secret_0024)
-        level_tasks.remove_location_by_id(box:id(), "blue_location")
     elseif obj:section() == "doc_peredatchik" then
         level_tasks.remove_location_by_id(obj:id(), "crlc_big")
     end
