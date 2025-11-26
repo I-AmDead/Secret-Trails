@@ -69,6 +69,7 @@ function opt_adv:__init(options, live_mode)
     self.options = options
     self.live_mode = live_mode
     self.script_ctrs = {}
+    self.items = {}
 end
 
 function opt_adv:__finalize()
@@ -110,6 +111,8 @@ function opt_adv:InitControls(xml, handler)
 
         if enabled then
             local item = xml:InitStatic("option_adv:templ_item", self.scroll_v)
+            item.label = label
+            table.insert(self.items, item)
 
             if not hint_caption or #hint_caption == 0 then
                 hint_caption = label
@@ -199,4 +202,17 @@ function opt_adv:InitControls(xml, handler)
             end
         end
     end
+end
+
+function opt_adv:filter(text)
+    text = text or ""
+    text = string.lowerW(text)
+    for _, item in ipairs(self.items) do
+        if item.label then
+            local translated = game.translate_string(item.label)
+            local show = string.find(string.lowerW(translated), text) ~= nil or text == ""
+            item:Show(show)
+        end
+    end
+    self.scroll_v:ForceUpdate()
 end

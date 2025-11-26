@@ -254,6 +254,10 @@ function options_dialog:InitControls()
     self.hint_frame = xml:InitFrame("frame_hint", self)
     self.hint_name = xml:InitStatic("hint_description", self.hint_frame)
 
+    self.search_edit = xml:InitEditBox("main_dialog:search_edit", self.dialog)
+    self:Register(self.search_edit, "search_edit")
+    self:AddCallback("search_edit", ui_events.EDIT_TEXT_CHANGED, self.OnSearchChanged, self)
+
     self.message_box = CUIMessageBoxEx()
     self.message_box:Init("message_box_restart_game")
 end
@@ -319,6 +323,13 @@ function options_dialog:HintRefresh()
     self.hint_frame:Show(false)
 end
 
+function options_dialog:OnSearchChanged()
+    local text = self.search_edit:GetText()
+    if self.current_view and self.pages[self.current_view].filter then
+        self.pages[self.current_view]:filter(text)
+    end
+end
+
 function options_dialog:OnBtnDefault()
     mm:PlaySound("interface\\page")
     cmd("unbindall")
@@ -380,6 +391,13 @@ function options_dialog:SetPage(index)
     self.current_view = index
     self.pages[index]:Show(true)
     self.pages[index].button:SetCheck(true)
+
+    if self.search_edit then
+        self.search_edit:Show(index ~= 4)  -- Hide search for CONTROLS (index 4)
+        if self.pages[index].filter then
+            self.pages[index]:filter(self.search_edit:GetText())
+        end
+    end
 
     self:HintRefresh()
 end
