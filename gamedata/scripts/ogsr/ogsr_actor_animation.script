@@ -9,7 +9,6 @@ local anim_plays
 local speed_k = 1.0
 
 local nvg_switch
-local key_release = false
 local bugfix_detector = false
 
 local lowered_anm_kinds = {
@@ -368,15 +367,15 @@ local function watch_wide()
     function()
         if get_actor_obj():is_actor_sprinting() then
             get_actor_obj():press_action(key_bindings.kSPRINT_TOGGLE)
-            get_actor_obj():block_action(key_bindings.kSPRINT_TOGGLE)
         end
+        get_actor_obj():block_action(key_bindings.kSPRINT_TOGGLE)
         local watch_anm_time = game.play_hud_motion(1, watch_anm_sec, anm_in, true, 1)
         game.play_hud_anm(anm_name, 0, 0.5, 1, false)
         animation_on()
         dsh.timeout(watch_anm_time, function()
             game.set_hud_anm_time(anm_name, 10000000)
             game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, anm_idle, true, 1)
-            dsh.wait_condition(function() return key_release end, 
+            dsh.wait_condition(function() return key_state(bind_to_dik(key_bindings.kWATCH)) == 0 end, 
             function()
                 game.stop_hud_motion()
                 watch_anm_time = game.play_hud_motion(db.actor:active_item() and 1 or 2, watch_anm_sec, anm_out, true, 1)
@@ -416,15 +415,7 @@ local function on_key_down(key, bind)
     elseif (torch and bind == key_bindings.kHEADLAMP) or (pnv and bind == key_bindings.kNIGHTVISION) then
         torch_and_nvg_switch(pnv and bind == key_bindings.kNIGHTVISION)
     elseif bind == key_bindings.kWATCH then
-        key_release = false
         watch_wide()
-    end
-end
-
-local function on_key_up(key, bind)
-    if level.main_input_receiver() or not db.actor:alive() then return end
-    if bind == key_bindings.kWATCH then
-        key_release = true
     end
 end
 
@@ -463,7 +454,6 @@ end
 function attach(sm)
     sm:subscribe({signal = "on_first_update",       fun = on_first_update})
     sm:subscribe({signal = "on_key_down",           fun = on_key_down})
-    sm:subscribe({signal = "on_key_up",             fun = on_key_up})
     sm:subscribe({signal = "on_item_before_pickup", fun = on_item_before_pickup})
     sm:subscribe({signal = "on_update",             fun = on_update})
     sm:subscribe({signal = "on_motion_mark",        fun = on_motion_mark})
