@@ -31,9 +31,13 @@ function main_menu:InitControls()
     self.message_box = CUIMessageBoxEx()
     self:Register(self.message_box, "msg_box")
 
-    self.xml:InitStatic("ogsm_version", self):SetText("Secret Trails@ 2012-2025")
-    self.xml:InitStatic("static_version", self):SetText("For feedback and help, visit")
-    self:Register(self.xml:Init3tButton("btn_discord", self), "btn_discord")
+    self.xml:InitStatic("ogsm_version", self):SetText("Secret Trails 2012-2025")
+    local static_version = self.xml:InitStatic("static_version", self)
+    static_version:SetText("For feedback and help, visit ")
+    static_version:AdjustWidthToText()
+    local btn_discord = self.xml:Init3tButton("btn_discord", self)
+    btn_discord:SetWndPos(static_version:GetWidth() + static_version:GetWndPos().x, static_version:GetWndPos().y)
+    self:Register(btn_discord, "btn_discord")
 end
 
 function main_menu:Show(...)
