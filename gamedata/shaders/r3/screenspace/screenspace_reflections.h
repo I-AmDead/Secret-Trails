@@ -29,16 +29,6 @@ static const int2 q_ssr_steps[6] =
 	int2(64,1),
 };
 
-/*static const float q_ssr_noise[6] =
-{
-	float(0.04f),
-	float(0.04f),
-	float(0.04f),
-	float(0.06f),
-	float(0.08f),
-	float(0.08f),
-};*/
-
 float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc)
 {
 	float2 sky_tc = 0;
