@@ -1,17 +1,20 @@
 class "ui_credits" (CUIScriptWnd)
 
-local SPEED = 0.55
-local DEFAULT_SPEED = 0.45
+local SPEED = 0.35
+local DEFAULT_SPEED = 0.35
+local FADE_SPEED = 1.0
 
 local fade_background, fade_vignette = 0, 0
 local fade_timer
 local snd_volume_eff
+local snd_volume_mus
 
 ui_credits_window = nil
 
 function ui_credits:__init() super()
 	self:InitUI()
 	self:InitMusic()
+	self:AllowCursor(false)
 end
 
 function ui_credits:__finalize()
@@ -49,6 +52,7 @@ end
 
 function ui_credits:Close()
 	cmd("snd_volume_eff", tostring(snd_volume_eff))
+	cmd("snd_volume_music", tostring(snd_volume_mus))
 	self:StopMusic()
 	ui_credits_window:ShowDialog(false)
 	ui_credits_window = nil
@@ -64,22 +68,26 @@ function ui_credits:UpdateWnd()
 	end
 
 	local pos = self.credits_area:GetWndPos()
-	if pos.y < -6500 then
+	if pos.y < -7100 then
 		SPEED = 0
 		fade_timer = true
 	else
 		fade_background = fade_background + 5
 		local alpha_color = fade_background >= 250 and 255 or fade_background
 		self.vignette:SetColor(GetARGB(alpha_color, 255, 255, 255))
-		self.background:SetColor(GetARGB(alpha_color,255,255,255))
+		self.background:SetColor(GetARGB(255,255,255,255))
 		self.darkside_logo:SetColor(GetARGB(alpha_color,255,255,255))
 		self.credits_area:SetWndPos(pos.x, pos.y - SPEED)
 		self.darkside_logo:SetWndPos(pos.x, (pos.y - 768) - SPEED)
 	end
 
 	if self.music:playing() and fade_timer then
-		fade_vignette = fade_vignette + 0.2
+		fade_vignette = fade_vignette + (0.2 * FADE_SPEED)
 		self.vignette_fade:SetColor(GetARGB(fade_vignette >= 250 and 255 or fade_vignette, 255, 255, 255))
+		self.music.volume = math.clamp(self.music.volume - (0.001 * FADE_SPEED), -1.0, 1.0)
+		if self.music.volume == -1.0 then
+			self:Close()
+		end
 	end
 
 	--log3("update wnd, pos = x %s, y %s - time global = %s, music position = %s, music length = %s", pos.x, pos.y, time_global(), self.music:get_position(), self.music:length())
@@ -95,8 +103,8 @@ function ui_credits:OnKeyboard(dik, keyboard_action)
 
 	if keyboard_action == ui_events.WINDOW_KEY_PRESSED then
 		if dik == DIK_keys.DIK_ESCAPE then
-			self:Close()
-			return
+			fade_timer = true
+			FADE_SPEED = 3.0
 		end
 
 		if dik == DIK_keys.DIK_1 then
@@ -126,6 +134,10 @@ function StartCredits(no_game)
 
 	ui_credits_window = ui_credits()
 	ui_credits_window:ShowDialog(true)
+
 	snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
+	snd_volume_mus = get_con_float("snd_volume_music", 1.0)
+
 	cmd("snd_volume_eff", 0.0)
+	cmd("snd_volume_music", 1.0)
 end
