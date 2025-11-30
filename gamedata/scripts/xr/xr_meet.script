@@ -169,6 +169,7 @@ function Cmeet_manager:__init(npc, storage)
     self.emerg_state = false
     self.startdialog = nil
 end
+
 function Cmeet_manager:update()
     -- стартовый диалог
     if self.a.meet_dialog ~= nil then
@@ -219,6 +220,7 @@ function Cmeet_manager:update()
         self.sound = "nil"
     end
 end
+
 function Cmeet_manager:process_zone()
     if self.a.zone == nil then
         return "nil", "nil"
@@ -238,64 +240,50 @@ function Cmeet_manager:process_zone()
     end
     return "nil", "nil"
 end
+
 function Cmeet_manager:process_meet()
-    local key
     local is_talking = self.npc:is_talking()
     local act_it = db.actor:active_item()
-    if act_it and act_it:is_weapon() and not act_it:is_binoculars() and not act_it:get_weapon().lowered_active and self.npc:relation(db.actor) ~= game_object.friend and self:actor_targets_npc(self.npc) then
-        key = self:get_key_from_distance(self.a.meet_state_wpn)
-        if key ~= nil then
-            self.wpn_meet = true
-            local r1, r2
-            if self.a.meet_state_wpn[key].state then
-                r1 = xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.meet_state_wpn[key].state)
-                self.emerg_state = true
-            end
-            if is_talking then
-                r2 = nil
-            else
-                if self.a.meet_state_wpn[key].sound then
-                    r2 = xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.meet_state_wpn[key].sound)
-                end
-            end
-            return tostring(r1), tostring(r2)
-        end
-    else
-        self.wpn_meet = false
-        key = self:get_key_from_distance(self.a.meet_state)
-        if key ~= nil then
-            local r1, r2
-            if self.a.meet_state[key].state then
-                r1 = xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.meet_state[key].state)
-                self.emerg_state = false
-            end
-            if is_talking then
-                r2 = nil
-            else
-                if self.a.meet_state[key].sound then
-                    r2 = xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.meet_state[key].sound)
-                end
-            end
-            return tostring(r1), tostring(r2)
-        end
+    local weapon_aimed = act_it and act_it:is_weapon() and not act_it:is_binoculars()
+    local hostile = self.npc:relation(db.actor) ~= game_object.friend
+    
+    local config = self.a.meet_state
+    self.wpn_meet = false
+    
+    -- Проверка lowered режима
+    if weapon_aimed and act_it:get_weapon().lowered_active then
+        weapon_aimed = false
     end
-    return "nil", "nil"
+
+    if weapon_aimed and hostile and self:actor_targets_npc(self.npc) then
+        config = self.a.meet_state_wpn
+        self.wpn_meet = true
+    end
+    
+    local key = self:get_key_from_distance(config)
+    if not key then return "nil", "nil" end
+    
+    local r1 = config[key].state and xr_logic.pick_section_from_condlist(db.actor, self.npc, config[key].state)
+    local r2 = not is_talking and config[key].sound and xr_logic.pick_section_from_condlist(db.actor, self.npc, config[key].sound)
+    
+    self.emerg_state = self.wpn_meet
+    return tostring(r1 or "nil"), tostring(r2 or "nil")
 end
+
 function Cmeet_manager:process_victim()
-    local key
     local act_it = db.actor:active_item()
-    if act_it and act_it:is_weapon() and not act_it:is_binoculars() and not act_it:get_weapon().lowered_active then
-        key = self:get_key_from_distance(self.a.victim_wpn)
-        if key ~= nil then
-            return tostring(xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.victim_wpn[key].state))
-        end
-    else
-        key = self:get_key_from_distance(self.a.victim)
-        if key ~= nil then
-            return tostring(xr_logic.pick_section_from_condlist(db.actor, self.npc, self.a.victim[key].state))
-        end
+    local weapon_aimed = act_it and act_it:is_weapon() and not act_it:is_binoculars()
+    
+    if weapon_aimed and act_it:get_weapon().lowered_active then
+        weapon_aimed = false
     end
-    return "nil"
+
+    local config = weapon_aimed and self.a.victim_wpn or self.a.victim
+    local key = self:get_key_from_distance(config)
+    
+    if not key then return "nil" end
+    local result = xr_logic.pick_section_from_condlist(db.actor, self.npc, config[key].state)
+    return tostring(result or "nil")
 end
 
 function Cmeet_manager:actor_targets_npc(npc)
@@ -326,6 +314,7 @@ function Cmeet_manager:get_key_from_distance(t)
     end
     return key
 end
+
 function Cmeet_manager:get_key_from_zone(t)
     for k, v in pairs(t) do
         if utils.npc_in_zone(db.actor, db.zone_by_name[v.zone]) then
@@ -334,6 +323,7 @@ function Cmeet_manager:get_key_from_zone(t)
     end
     return nil
 end
+
 function Cmeet_manager:process_use()
     local is_talking = self.npc:is_talking()
     -- запрещаем юзать спящих
