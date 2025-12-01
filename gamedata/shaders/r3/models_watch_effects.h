@@ -155,7 +155,7 @@ float3 GetIconColor(float param)
     float3 green_color = float3(0.0, 0.9, 0.1);
     float3 blue_color = float3(0.0, 0.1, 0.5);
 
-    return param < 0.0 ? lerp(blue_color, def_color, param) : lerp(red_color, green_color, param);
+    return param < -0.9 ? lerp(blue_color, def_color, param) : lerp(red_color, green_color, param);
 }
 
 float3 NixieTime(float2 uv)
