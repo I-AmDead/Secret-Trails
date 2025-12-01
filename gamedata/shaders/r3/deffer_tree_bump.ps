@@ -5,17 +5,12 @@
 // SSS Settings
 #include "screenspace\settings_screenspace_FLORA.h"
 
-uniform float4 ssfx_floravariation; // Grass Int, Grass Freq, Foliage Int, Foliage Freq
-
-float3 color_variation(float t) { return sin(t + float3(0.0f, 0.33f, 0.66f) * 6.28f) * 0.5f; }
-
 f_deffer main(p_bumped I)
 {
     surface_bumped S = sload(I);
 
 #ifdef USE_AREF
     hashed_alpha_test(I.tcdh.xy, S.base.a);
-    S.base.rgb = saturate(S.base.rgb + color_variation(I.sss_extra.z * 4.0f) * ssfx_floravariation.z);
 #endif
 
 // FLORA FIXES & IMPROVEMENTS - SSS Update 18

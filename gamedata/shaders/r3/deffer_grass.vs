@@ -17,8 +17,6 @@ cbuffer dynamic_inter_grass
 #include "screenspace\screenspace_wind.h"
 #endif
 
-uniform float4 ssfx_floravariation; // Grass Int, Grass Freq, Foliage Int, Foliage Freq
-
 v2p_bumped main(v_detail v)
 {
     v2p_bumped O;
@@ -148,8 +146,6 @@ v2p_bumped main(v_detail v)
     /////////////
     O.hpos_old = mul(m_VP_old, w_pos_previous);
     O.hpos_curr = O.hpos;
-
-    O.sss_extra = float4(0, 0, hash12(floor((P.xz + v.m0.xx * 2.0f) * ssfx_floravariation.y)), H);
 
     if (!m_taa_jitter_disable)
     { // Disable for shadows generation

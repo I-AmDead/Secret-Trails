@@ -20,8 +20,6 @@ cbuffer dynamic_inter_grass
 #include "screenspace\screenspace_wind.h"
 #endif
 
-uniform float4 ssfx_floravariation; // Grass Int, Grass Freq, Foliage Int, Foliage Freq
-
 v2p_bumped main(v_tree I)
 {
     float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
@@ -121,10 +119,6 @@ v2p_bumped main(v_tree I)
     //////////
     O.hpos_old = mul(m_VP_old, w_pos_previous);
     O.hpos_curr = O.hpos;
-
-    float2 tree_pos = m_xform._14_34 + m_xform._11_11 * 10;
-    O.sss_extra = float4(0, 0, hash12(floor(tree_pos * ssfx_floravariation.w)), H);
-
     O.hpos.xy = get_taa_jitter(O.hpos);
     /////////////
 
