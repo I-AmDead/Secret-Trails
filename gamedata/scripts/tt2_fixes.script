@@ -49,6 +49,17 @@ function quest_fail()
     end
 end
 
+local function fix_bar_ac()
+    if ogse.var_exists("fix_exit_to_military_01") then
+        return
+    end
+    local obj = alife():object("exit_to_military_01")
+    if obj then
+        alife():release(obj)
+        ogse.save_var("fix_exit_to_military_01", true)
+    end
+end
+
 local function on_drag_drop(obj)
     local section = obj:section()
 
@@ -225,6 +236,7 @@ local function fix_new_first()
     ded_secret()
     del_phobj()
     swamp_secret()
+    fix_bar_ac()
 end
 
 local show_engine_legs
