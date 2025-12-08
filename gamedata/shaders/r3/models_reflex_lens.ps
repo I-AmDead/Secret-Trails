@@ -20,7 +20,7 @@ struct vf
     float3 P : TEXCOORD4;
 };
 
-TextureCube s_env0;
+TextureCube s_env0; 
 TextureCube s_env1;
 
 float3 sample_sky(float3 dir)
@@ -53,7 +53,7 @@ float4 sample_reflections(float2 tc, float3x3 TBNw_inv, float3 w_pos, float3 w_n
     float3 normalmap = sample_lens_normalmap(tc, 2);
     float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
 
-    float3 reflections = sample_sky(reflect(normalize(normalize(w_pos - eye_position)), lensnormal));
+    float3 reflections = sample_sky(reflect(normalize(normalize(w_pos - eye_position)), lensnormal)) * 0.5;
 
     float angle_factor = (dot(normalize(w_pos - eye_position), normalize(w_nrm)) + 1) / 2;
 

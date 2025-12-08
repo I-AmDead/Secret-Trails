@@ -16,7 +16,10 @@ vf _main(v_model v)
     vf o;
 
     o.hpos = mul(m_WVP, v.P);
+    o.hpos.xy = get_taa_jitter(o.hpos);
+
     o.tc0 = v.tc.xy;
+
     o.T = mul(m_W, v.T).xyz;
     o.B = mul(m_W, v.B).xyz;
     o.N = mul(m_W, v.N).xyz;
