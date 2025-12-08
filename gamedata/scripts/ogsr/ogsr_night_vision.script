@@ -15,7 +15,7 @@ end
 
 -- ==========================================================Настройки=================================================================
 -- Флаги
-local night_vision_fx_on = ogse.load_var("pnv", false) -- флаг работающего ПНВ
+local night_vision_fx_on
 
 -- Звуки
 local snd_nv_start = xr_sound.get_safe_sound_object("weapons\\nv_start") -- звук включения ПНВ
@@ -56,10 +56,11 @@ function is_nv_working() -- Проверка, включен ли ПНВ.
 end
 
 function on_save() -- Сохраняем состояние работы пнв
-    ogse.save_var("pnv", is_nv_working())
+    ogse.save_var("pnv", night_vision_fx_on)
 end
 
 function try_to_restart_nv_fx() -- Восстанавливаем работу ПНВ после загрузки сейва
+    night_vision_fx_on = ogse.load_var("pnv", false)
     cmd("r_pnv_mode", 0)
     if is_nv_working() then
         nv_fx_on() -- включаем обычный ПНВ
@@ -121,7 +122,6 @@ function nv_fx_on() -- Старт/остановка работы прибора
 end
 
 function turn_on_nv_fx(section) -- Старт ПНВ
-    if is_nv_working() then return end
     apply_nv_settings(section)
     night_vision_fx_on = true
     snd_fx_start()
