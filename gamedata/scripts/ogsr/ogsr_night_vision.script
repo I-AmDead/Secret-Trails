@@ -1,18 +1,3 @@
---[[-------------------------------------------------------------------------
--|ogse_night_vision.script
--|Модуль приборов ночного видения
--|version 2.5 : OGS Evolution Team © 2010
--|version 3.0 : KRodin, Dsh © 2015 - 2016
--|version for Secret Trails : I am dead
----------------------------------------------------------------------------]] 
-
-function attach(sm)
-    sm:subscribe({signal = "on_first_update", fun = this.try_to_restart_nv_fx})
-    sm:subscribe({signal = "on_drop",         fun = this.chek_drop_pnv})
-    sm:subscribe({signal = "on_item_to_ruck", fun = this.chek_drop_pnv})
-    sm:subscribe({signal = "on_save",         fun = this.on_save})
-end
-
 -- ==========================================================Настройки=================================================================
 -- Флаги
 local night_vision_fx_on
@@ -51,42 +36,7 @@ local function lcalls(count, radius, sub)
     )
 end
 
-function is_nv_working() -- Проверка, включен ли ПНВ.
-    return night_vision_fx_on
-end
-
-function on_save() -- Сохраняем состояние работы пнв
-    ogse.save_var("pnv", night_vision_fx_on)
-end
-
-function try_to_restart_nv_fx() -- Восстанавливаем работу ПНВ после загрузки сейва
-    night_vision_fx_on = ogse.load_var("pnv", false)
-    cmd("r_pnv_mode", 0)
-    if is_nv_working() then
-        nv_fx_on() -- включаем обычный ПНВ
-    end
-end
-
-function call_pnv()
-    if is_nv_working() then
-        turn_off_nv_fx()
-    else
-        nv_fx_on()
-    end
-end
-
-function chek_drop_pnv(obj) -- Проверка выкладывания работающего ПНВ
-    if not db.actor:item_in_slot(11) and is_nv_working() then
-        ogsr_actor_animation.torch_and_nvg_switch(true)
-    end
-end
-
-function get_nightvision_section_for_nv_fx()
-    local nv_in_slot = db.actor:item_in_slot(11)
-    return nv_in_slot and nv_in_slot:section()
-end
-
-function apply_nv_settings(section)
+local function apply_nv_settings(section)
     if not section then return end
 
     local r_pnv_mode = get_u32(section, "r_pnv_mode", 0)
@@ -114,28 +64,7 @@ function apply_nv_settings(section)
     end
 end
 
-function nv_fx_on() -- Старт/остановка работы прибора ПНВ
-    local section = get_nightvision_section_for_nv_fx()
-    if section then
-        turn_on_nv_fx(section)
-    end
-end
-
-function turn_on_nv_fx(section) -- Старт ПНВ
-    apply_nv_settings(section)
-    night_vision_fx_on = true
-    snd_fx_start()
-end
-
-function turn_off_nv_fx() -- Остановка ПНВ
-    if not is_nv_working() then return end
-    local section = get_nightvision_section_for_nv_fx()
-    lcalls(100, get_float(section, "r_pnv_radius", 0.5), true)
-    night_vision_fx_on = false
-    snd_fx_stop()
-end
-
-function snd_fx_start() -- Старт звукового сопровождения работы ПНВ
+local function snd_fx_start() -- Старт звукового сопровождения работы ПНВ
     if snd_nv_start then
         snd_nv_start:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
         snd_nv_start.volume = snd_nv_fx_volume * snd_nv_start_subvolume
@@ -146,11 +75,72 @@ function snd_fx_start() -- Старт звукового сопровожден�
     end
 end
 
-function snd_fx_stop() -- Остановка звукового сопровождения работы ПНВ
+local function snd_fx_stop() -- Остановка звукового сопровождения работы ПНВ
     if snd_nv_start:playing() then snd_nv_start:stop() end
     if snd_nv_work:playing() then snd_nv_work:stop() end
     if snd_nv_stop then
         snd_nv_stop:play_at_pos(db.actor, vector():set(0, 0, 0), 0, sound_object.s2d)
         snd_nv_stop.volume = snd_nv_fx_volume * snd_nv_stop_subvolume
     end
+end
+
+local function turn_on_nv_fx(section) -- Старт ПНВ
+    apply_nv_settings(section)
+    night_vision_fx_on = true
+    snd_fx_start()
+end
+
+local function turn_off_nv_fx() -- Остановка ПНВ
+    if not is_nv_working() then return end
+    local section = get_nightvision_section_for_nv_fx()
+    lcalls(100, get_float(section, "r_pnv_radius", 0.5), true)
+    night_vision_fx_on = false
+    snd_fx_stop()
+end
+
+local function nv_fx_on() -- Старт/остановка работы прибора ПНВ
+    local section = get_nightvision_section_for_nv_fx()
+    if section then
+        turn_on_nv_fx(section)
+    end
+end
+
+function is_nv_working() return night_vision_fx_on end -- Проверка, включен ли ПНВ.
+
+function call_pnv()
+    if is_nv_working() then
+        turn_off_nv_fx()
+    else
+        nv_fx_on()
+    end
+end
+
+function get_nightvision_section_for_nv_fx()
+    local nv_in_slot = db.actor:item_in_slot(11)
+    return nv_in_slot and nv_in_slot:section()
+end
+
+local function try_to_restart_nv_fx() -- Восстанавливаем работу ПНВ после загрузки сейва
+    night_vision_fx_on = ogse.load_var("pnv", false)
+    cmd("r_pnv_mode", 0)
+    if is_nv_working() then
+        nv_fx_on() -- включаем обычный ПНВ
+    end
+end
+
+local function chek_drop_pnv(obj) -- Проверка выкладывания работающего ПНВ
+    if not db.actor:item_in_slot(11) and is_nv_working() then
+        ogsr_actor_animation.torch_and_nvg_switch(true)
+    end
+end
+
+local function on_save() -- Сохраняем состояние работы пнв
+    ogse.save_var("pnv", night_vision_fx_on)
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_first_update", fun = try_to_restart_nv_fx})
+    sm:subscribe({signal = "on_drop",         fun = chek_drop_pnv})
+    sm:subscribe({signal = "on_item_to_ruck", fun = chek_drop_pnv})
+    sm:subscribe({signal = "on_save",         fun = on_save})
 end
