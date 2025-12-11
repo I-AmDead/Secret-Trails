@@ -95,8 +95,8 @@ function opt_adv:InitControls(xml, handler)
     self.scroll_v = xml:InitScrollView("option_adv:scroll_v", self)
 
     for i = #self.options, 1, -1 do
-        local opt, group, ctr_type, desc, control_params = unpack(self.options[i])
-        local label, color, hint_caption, hint_string = unpack(desc)
+        local opt, group, ctr_type, params, control_params = unpack(self.options[i])
+        local name, desc, color = unpack(params)
 
         control_params = control_params or {}
 
@@ -111,16 +111,12 @@ function opt_adv:InitControls(xml, handler)
 
         if enabled then
             local item = xml:InitStatic("option_adv:templ_item", self.scroll_v)
-            item.label = label
+            item.label = name
             table.insert(self.items, item)
-
-            if not hint_caption or #hint_caption == 0 then
-                hint_caption = label
-            end
 
             if ctr_type == "separator" then
                 local caption = xml:InitStatic("option_adv:sep_item", item)
-                caption:SetTextST(label)
+                caption:SetTextST(name)
                 if color then
                     caption:SetTextColor(unpack(color))
                 end
@@ -128,7 +124,7 @@ function opt_adv:InitControls(xml, handler)
                 local caption = xml:InitStatic("option_adv:cap_item_back", item)
                 caption = xml:InitStatic("option_adv:cap_key_back", item)
                 caption = xml:InitStatic("option_adv:cap_item", item)
-                caption:SetText(game.translate_string(label) .. (control_params.depend and "*" or ""))
+                caption:SetText(game.translate_string(name) .. (control_params.depend and "*" or ""))
                 if dbg_tooltip then
                     caption:SetHint(opt .. (index and ":" .. index or ""))
                 end
@@ -138,10 +134,9 @@ function opt_adv:InitControls(xml, handler)
                 handler:Register(caption, "option_adv_cap_" .. opt_key)
                 handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:HintRefresh() end)
                 handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function()
-                    if (hint_caption and #hint_caption > 0) or (hint_string and #hint_string > 0) then
-                        local settings_name = hint_caption and game.translate_string(hint_caption) or ""
-                        local settings_description = hint_string and game.translate_string(hint_string) or ""
-                        handler.hint_name:SetText(settings_name .. "\\n" .. settings_description)
+                    if desc and #desc > 0 then
+                        local settings_description = desc and game.translate_string(desc) or ""
+                        handler.hint_name:SetText(settings_description)
                         handler.hint_name:AdjustHeightToText()
                         handler.hint_frame:Show(true)
                         handler.hint_frame:SetWndSize(handler.hint_name:GetWidth() + 10, handler.hint_name:GetHeight() + 10)
