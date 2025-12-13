@@ -106,7 +106,6 @@ function npc_update(npc, st) -- порядок важен
         xrs_armor.npc_update(npc, st)
     end
     eat_medkit(npc)
-    look_into_optical_sight(npc)
     rx_sound.npc_update(npc)
     -- planner
     local action_id = st.planner:current_action_id()
@@ -554,81 +553,6 @@ function eat_medkit(npc)
                 return
             end
         end
-    end
-end
-
-------------------------------------lios-----------------------------------------
-local lios = {
-    enabled = rx_ini:section_exist("look_into_os") and rx_ini:r_bool("look_into_os", "enabled")
-}
-function lios_init()
-    local sect = "look_into_os"
-    lios.exc_comms = rx_utils.parse_list(rx_ini, sect, "excluded_communities", true)
-    lios.exc_npcs = rx_utils.parse_list(rx_ini, sect, "excluded_npcs", true)
-    lios.range_add = rx_utils.read_from_ini(rx_ini, sect, "range_add", 0.5) / 100
-    lios.fov_add = rx_utils.read_from_ini(rx_ini, sect, "fov_add", -0.3) / 100
-    lios.zoom_factor = {}
-    lios.fire_dist = {}
-end
-function look_into_optical_sight(npc)
-    if not lios.enabled then
-        return
-    elseif not lios.range_add then
-        lios_init()
-    end
-    local storage = get_storage(npc:id(), "lios")
-    if storage.disabled then
-        return
-    end
-    if not storage.range then
-        if lios.exc_comms[npc:character_community()] or lios.exc_npcs[npc:name()] then
-            storage.disabled = true
-        else
-            storage.range = npc:range()
-            storage.fov = npc:fov()
-            storage.ch = false
-        end
-        return
-    end
-    local act = false
-    local weapon = npc:active_item()
-    if rx_utils.item_is_fa(weapon) and rx_utils.addon_attached(weapon, "sc") then
-        local move_type, mental_state = npc:movement_type(), npc:mental_state()
-        if (move_type == move.stand or move_type == move.walk) and mental_state == anim.danger then
-            act = true
-        end
-    end
-    if storage.ch ~= act then
-        local range, fov = storage.range, storage.fov
-        if act == true then
-            local function get_zoom_factor(sect)
-                if lios.zoom_factor[sect] == nil then
-                    local scope = rx_utils.read_from_ini(nil, sect, "scope_status", nil) == 2 and
-                                      rx_utils.read_from_ini(nil, sect, "scope_name", nil, 1)
-                    if not scope then
-                        scope = sect
-                    end
-                    lios.zoom_factor[sect] = rx_utils.read_from_ini(nil, scope, "scope_zoom_factor", 30)
-                    lios.fire_dist[sect] = rx_utils.read_from_ini(nil, sect, "fire_distance", 150)
-                end
-                return lios.zoom_factor[sect], lios.fire_dist[sect]
-            end
-            local factor, max_range = get_zoom_factor(weapon:section())
-            if factor < 80 and max_range > storage.range then
-                factor = 30 / factor
-                range = range + range * lios.range_add * factor
-                if range > max_range then
-                    range = max_range
-                end
-                fov = fov + fov * lios.fov_add * factor
-                if fov < 40 then
-                    fov = 40
-                end
-            end
-        end
-        npc:set_range(range)
-        npc:set_fov(fov)
-        storage.ch = act
     end
 end
 

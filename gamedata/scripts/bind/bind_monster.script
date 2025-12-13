@@ -93,9 +93,6 @@ function generic_object_binder:update(delta)
         end
     end
 
-    local act_scheme = db.storage[self.object:id()].active_section or ""
-    local is_fake = string.find(act_scheme, "mob_fake_death") or false
-
     if has_alife_info("surge_process_stage_7") and (not self.control_override) then
         if not self.object:action() then
             -- Захватываем зверушку
@@ -277,6 +274,7 @@ function generic_object_binder:net_destroy()
 
     db.del_obj(self.object)
     db.storage[self.object:id()] = nil
+
     self.am:call("on_monster_net_destroy", self.object, self)
     self.am:cleanup_signal_subs("on_monster_update." .. self.object:id())
 
@@ -324,11 +322,8 @@ function generic_object_binder:save(packet)
         xr_logic.pstor_store(self.object, "is_invulnerable", self.object:invulnerable())
     end
 
-    ASSERT(not db.saving_obj, "found saving_obj = %s", tostring(db.saving_obj and db.saving_obj:name() or nil))
-    db.saving_obj = self.object
     object_binder.save(self, packet)
     xr_logic.save_obj(self.object, packet)
-    db.saving_obj = false
 end
 
 function generic_object_binder:load(reader)
@@ -374,4 +369,19 @@ function generic_object_binder:before_hit_callback(hit_data)
     dsh.copy_hit_data(hit_data, self.last_hit_data)
 
     self.am:call("on_monster_before_hit", self.object, hit_data)
+end
+
+--Функция проверяет, может ли объект вступать в бой с предполагаемым противником (enemy_st).
+--Если вернёт false - объект не будет вступать в бой.
+--Вызывается:
+--Одноименным калбеком из движка (для движковой боёвки)
+--Из xr_danger
+--Из xr_camper.action_patrol:process_danger()
+--Из функции check_sound в мотиваторе
+local enemy_callback_freq = 1000
+function generic_object_binder:enemy_callback( obj, enemy_st )
+    local valid, enemy = validate_enemy_object( enemy_st )
+    if not valid then return false end
+
+    return true
 end
