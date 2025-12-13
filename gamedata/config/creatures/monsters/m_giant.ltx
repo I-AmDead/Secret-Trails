@@ -39,26 +39,6 @@ Spawn_Inventory_Item_Probability         = 1.0
 
 character_use                            = giant_character_use ;айди текста описания юза
 
-;------------------------------------------------------------------------
-; Influences
-;------------------------------------------------------------------------
-fire_max_distance                        = 0
-fire_max_power                           = 5
-fire_linear_factor                       = 0
-fire_quadratic_factor                    = 0.025
-
-psy_max_distance                         = 0
-psy_max_power                            = 5
-psy_linear_factor                        = 0.05
-psy_quadratic_factor                     = 0
-
-radiation_max_distance                   = 5
-radiation_max_power                      = 0.01
-radiation_linear_factor                  = 1
-radiation_quadratic_factor               = 1
-radiation_pp_effector_name               = postprocess_rad
-radiation_pp_highest_at                  = 0.02
-
 ;---------------------------------------------------------------------
 ; Physics
 ;---------------------------------------------------------------------
@@ -199,6 +179,22 @@ sound_threaten_start                     = monsters\giant\giant_attack_0
 SoundThreshold                           = 0.1 ;range [0..1]
 max_hear_dist                            = 50
 
+;-------------------------------------------------------------------------
+; Vision
+;-------------------------------------------------------------------------
+eye_fov                                  = 100 ;120
+eye_range                                = 40 ;80
+
+min_view_distance                        = 0.5 ;коэффициент, который множится на eye_range, в зависимости от угла
+max_view_distance                        = 1.0 ;коэффициент, который множится на eye_range, в зависимости от угла
+visibility_threshold                     = 100.0 ;значение, при достижении суммой которого объект считается видимым
+always_visible_distance                  = 0.3
+time_quant                               = 0.001
+decrease_value                           = 0.01 ;значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
+velocity_factor                          = 0.5
+luminocity_factor                        = 0.5 ;фактор освещения (только для Актёра)
+transparency_threshold                   = 0.25
+
 killer_clsids                            = Z_MINCER, Z_GALANT, ZS_BFUZZ, ZS_MBALD, ZS_GALAN, ZS_MINCE
 
 idle_sound_delay                         = 85000
@@ -212,7 +208,6 @@ distant_idle_sound_range                 = 100.0
 DamagedThreshold                         = 0.0 ;0.05 ;0.2
 
 material                                 = creatures\large
-DynamicObjectsCount                      = 32
 
 squad_attack_algorithm                   = 1
 attack_effector                          = m_giant_attack_effector
@@ -262,40 +257,6 @@ monster_type                             = outdoor
 
 critical_wound_threshold                 = -1
 critical_wound_decrease_quant            = 0.
-
-;-------------------------------------------------------------------------
-; Vision
-;-------------------------------------------------------------------------
-eye_fov                                  = 100 ;120
-eye_range                                = 40 ;80
-
-vision_free_section                      = giant_vision_free
-vision_danger_section                    = giant_vision_danger
-
-; ЗНАЧЕНИЯ visibility_threshold ДОЛЖНЫ БЫТЬ РАВНЫ для денжера и фри,
-; иначе возникают артефакты с потерей видимости при переходе от денжера во фри.
-
-[giant_vision_free]
-min_view_distance                        = 0.5 ;коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance                        = 1.0 ;коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold                     = 100.0 ;значение, при достижении суммой которого объект считается видимым
-always_visible_distance                  = 0.3
-time_quant                               = 0.001
-decrease_value                           = 0.01 ;значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor                          = 0.5
-luminocity_factor                        = 0.5 ;фактор освещения (только для Актёра)
-transparency_threshold                   = 0.25
-
-[giant_vision_danger]
-min_view_distance                        = 0.5 ;коэффициент, который множится на eye_range, в зависимости от угла
-max_view_distance                        = 1.0 ;коэффициент, который множится на eye_range, в зависимости от угла
-visibility_threshold                     = 100.0 ;значение, при достижении суммой которого объект считается видимым
-always_visible_distance                  = 0.3
-time_quant                               = 0.001
-decrease_value                           = 0.01 ;значение, на которое уменьшается вес, если объект попал в фрустум, но отсёкся по каким-то причинам
-velocity_factor                          = 0.5
-luminocity_factor                        = 0.5 ;фактор освещения (только для Актёра)
-transparency_threshold                   = 0.25
 
 [giant_protections]
 skin_armor                               = 0.6
