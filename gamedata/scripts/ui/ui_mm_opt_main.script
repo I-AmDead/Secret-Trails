@@ -1,3 +1,38 @@
+class "CUIOptionDescrText"
+function CUIOptionDescrText:__init(owner)
+    local xml = CScriptXmlInit()
+    xml:ParseFile("script_wnd\\ui_mm_opt.xml")
+
+    self.owner = owner
+    self.bg = xml:InitFrame("frame_hint", self.owner)
+    self.bg:SetAutoDelete(true)
+    self.bg:Show(false)
+
+    self.text = xml:InitStatic("hint_description", self.bg)
+    self.text:SetAutoDelete(true)
+    self.text:Show(false)
+end
+
+function CUIOptionDescrText:ShowText(key)
+    if not key or key == "" then return end
+    local txt = game.translate_string(key)
+    self.text:SetText(txt)
+    self.text:AdjustHeightToText()
+    local x, y = self.owner:GetMousePosX(), self.owner:GetMousePosY()
+    local scr_w, scr_h = 1024, 768
+    local nx = math.min(x + 16, scr_w - self.text:GetWidth() - 20)
+    local ny = math.min(y + 16, scr_h - self.text:GetHeight() - 20)
+    self.bg:SetWndPos(nx, ny)
+    self.bg:SetWndSize(self.text:GetWidth() + 10, self.text:GetHeight() + 10)
+    self.bg:Show(true)
+    self.text:Show(true)
+end
+
+function CUIOptionDescrText:Hide()
+    self.bg:Show(false)
+    self.text:Show(false)
+end
+
 local hint_colors = {
     ["gray"]   = { 255, 255, 255, 255 },
     ["white"]  = { 255, 255, 255, 255 },
@@ -146,7 +181,6 @@ function options_dialog:__init(owner)
     self:SetFont(GetFontMedium())
     self.owner = owner
 
-    self.hint_name = nil
     self.current_view = nil
 
     self:InitControls()
@@ -179,6 +213,8 @@ function options_dialog:InitControls()
     end
 
     self.frame_buttons = xml:InitFrame("main_dialog:frame_buttons", self)
+
+    self.opt_descr_wnd = CUIOptionDescrText(self)
 
     local pages = {}
 
@@ -217,9 +253,6 @@ function options_dialog:InitControls()
 
     btn = xml:Init3tButton("main_dialog:btn_cancel", self.dialog)
     self:Register(btn, "btn_cancel")
-
-    self.hint_frame = xml:InitFrame("frame_hint", self)
-    self.hint_name = xml:InitStatic("hint_description", self.hint_frame)
 
     self.search_edit = xml:InitEditBox("main_dialog:search_edit", self.dialog)
     self:Register(self.search_edit, "search_edit")
@@ -272,10 +305,6 @@ function options_dialog:InitCallBacks()
     self:AddCallback("btn_accept", ui_events.BUTTON_CLICKED, self.OnBtnAccept, self)
     self:AddCallback("btn_cancel", ui_events.BUTTON_CLICKED, self.OnBtnCancel, self)
     self:AddCallback("btn_default", ui_events.BUTTON_CLICKED, self.OnBtnDefault, self)
-
-    self:AddCallback("btn_accept", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-    self:AddCallback("btn_cancel", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
-    self:AddCallback("btn_default", ui_events.STATIC_FOCUS_RECEIVED, self.HintRefresh, self)
 end
 
 function options_dialog:OpenInGame()
@@ -284,10 +313,6 @@ function options_dialog:OpenInGame()
         local binder = db.actor:binded_object()
         binder:show_ingame_options()
     end
-end
-
-function options_dialog:HintRefresh()
-    self.hint_frame:Show(false)
 end
 
 function options_dialog:OnSearchChanged()
@@ -331,8 +356,6 @@ function options_dialog:OnBtnAccept()
         self.owner:Show(true)
     end
 
-    self:HintRefresh()
-
     cmd("cfg_save")
 end
 
@@ -344,8 +367,6 @@ function options_dialog:OnBtnCancel()
     if self.owner then
         self.owner:Show(true)
     end
-
-    self:HintRefresh()
 end
 
 function options_dialog:SetPage(index)
@@ -365,8 +386,6 @@ function options_dialog:SetPage(index)
             self.pages[index]:filter(self.search_edit:GetText())
         end
     end
-
-    self:HintRefresh()
 end
 
 function options_dialog:OnKeyboard(dik, keyboard_action)
@@ -388,4 +407,14 @@ end
 
 function options_dialog:show_need_restart_wnd()
     need_restart = true
+end
+
+function options_dialog:OnOptionFocus(hint)
+    if not hint or hint == "" then return end
+    self.opt_descr_wnd:ShowText(hint)
+end
+
+function options_dialog:OnOptionBlur()
+    local desc_ctrl = game_options.description_ctrl
+    self.opt_descr_wnd:Hide()
 end

@@ -125,33 +125,13 @@ function opt_adv:InitControls(xml, handler)
                 caption = xml:InitStatic("option_adv:cap_key_back", item)
                 caption = xml:InitStatic("option_adv:cap_item", item)
                 caption:SetText(game.translate_string(name) .. (control_params.depend and "*" or ""))
-                if dbg_tooltip then
-                    caption:SetHint(opt .. (index and ":" .. index or ""))
-                end
+
                 if color then
                     caption:SetTextColor(unpack(color))
                 end
                 handler:Register(caption, "option_adv_cap_" .. opt_key)
-                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:HintRefresh() end)
-                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function()
-                    if desc and #desc > 0 then
-                        local settings_description = desc and game.translate_string(desc) or ""
-                        handler.hint_name:SetText(settings_description)
-                        handler.hint_name:AdjustHeightToText()
-                        handler.hint_frame:Show(true)
-                        handler.hint_frame:SetWndSize(handler.hint_name:GetWidth() + 10, handler.hint_name:GetHeight() + 10)
-                        local cr = handler:GetMousePosX()
-                        if cr >= 512 then
-                            cr = cr - handler.hint_frame:GetWidth()
-                        else
-                            cr = cr + 40
-                        end
-                        handler.hint_frame:SetWndPos(cr, math.min(handler:GetMousePosY(),
-                            768 - handler.hint_frame:GetHeight()))
-                    else
-                        handler:HintRefresh()
-                    end
-                end)
+                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function() handler:OnOptionFocus(desc) end)
+                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:OnOptionBlur() end)
 
                 local need_restart = control_params.depend and control_params.depend == "restart"
                 local ctl = control_init_funs[ctr_type](xml, item, control_params)
