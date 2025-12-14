@@ -60,6 +60,19 @@ local function fix_bar_ac()
     end
 end
 
+local function fix_radar_ac()
+    if db.actor:dont_has_info("osvedomitel_help_radar_start") then return end
+
+    if ogse.var_exists("fix_radar_ac") then
+        return
+    end
+    local obj = alife():object("exit_to_military_01")
+    if not obj then
+        y_level.create_ac_radar()
+        ogse.save_var("fix_radar_ac", true)
+    end
+end
+
 local function on_drag_drop(obj)
     local section = obj:section()
 
