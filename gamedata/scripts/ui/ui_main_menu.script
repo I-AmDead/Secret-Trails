@@ -206,7 +206,7 @@ function main_menu:OnKeyboard(dik, keyboard_action)
         elseif dik == DIK_keys.DIK_N then -- personal_test
             xpcall(function() dofile(getFS():update_path("$game_scripts$", "personal_test.lua")) end, log1)
         elseif dik == DIK_keys.DIK_P then -- SDATA
-            if ogse.check_game() then
+            if ogse.check_game() and ogse.check_dev() then
                 if not _sdata.GlobalEnable then
                     _sdata.subscribe()
                 else
@@ -214,11 +214,11 @@ function main_menu:OnKeyboard(dik, keyboard_action)
                 end
             end
         elseif dik == DIK_keys.DIK_F1 then
-            if ogse.check_game() and ui_cheat_main then
+            if ogse.check_game() and ogse.check_dev() and ui_cheat_main then
                 ui_cheat_main.start_menu(self)
             end
         elseif dik == DIK_keys.DIK_F2 then
-            if ogse.check_game() then
+            if ogse.check_game() and ogse.check_dev() then
                 table_treasure_l.give_all_treasures()
             end
         end
