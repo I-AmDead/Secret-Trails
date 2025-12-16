@@ -1,0 +1,33 @@
+local function actor_on_weapon_fire()
+    local wpn = db.actor:active_item()
+    if not wpn then return end
+    local ammo_mag_shot = wpn:get_magazine_size() * 0.2
+    local snd_mag_shot = sound_object(get_string(wpn:section(), "snd_mag_shot"))
+    snd_mag_shot:play(wpn, 0, sound_object.s2d)
+    snd_mag_shot.volume = 0.9 - (wpn:get_ammo_in_magazine() * 0.1)
+    snd_mag_shot.frequency = math.clamp(0.95 + (wpn:get_ammo_in_magazine() * 0.01), 0.95, 1.0)
+end
+
+local function actor_on_weapon_zoom_in()
+    local wpn = db.actor:active_item()
+    if wpn and not wpn:is_binoculars() then
+        if wpn:get_weapon().scope_zoom_factor < 0.1 then
+            game.play_hud_anm("aim_start.anm", 2, 1, 1, false)
+        end
+    end
+end
+
+local function actor_on_weapon_zoom_out()
+    local wpn = db.actor:active_item()
+    if wpn and not wpn:is_binoculars() then
+        if wpn:get_weapon().scope_zoom_factor > 0.9 then
+            game.play_hud_anm("aim_end.anm", 2, 1, 1, false) --end
+        end
+    end
+end
+
+function attach(sm)
+    sm:subscribe({ signal = "on_actor_weapon_fire",	    fun = actor_on_weapon_fire     })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_out",	fun = actor_on_weapon_zoom_out })
+    sm:subscribe({ signal = "on_actor_weapon_zoom_in",  fun = actor_on_weapon_zoom_in  })
+end

@@ -49,8 +49,6 @@ cbuffer static_globals
 
     uniform float3 eye_position;
     uniform float3 eye_direction;
-    uniform float4 eye_direction_lerp;
-    uniform float4 eye_position_lerp;
 
     uniform float4 pos_decompression_params;
     uniform float4 pos_decompression_params2;

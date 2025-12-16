@@ -18,8 +18,6 @@
 #include "screenspace\settings_screenspace_FOG.h"
 #endif
 
-float4 fakescope_params3;
-
 uniform float4 m_flare_params;
 
 Texture2D s_ssfx_bloom;
@@ -53,9 +51,7 @@ float4 main(p_screen I) : SV_Target
     // Blur sample
     float3 foggg = s_blur_2.Sample(smp_rtlinear, center);
 
-    // Scopes
-    int disablefog = (fakescope_params3.x > 0 ? 0 : 1);
-    disablefog *= (pnv_param_1.z > 0 ? 0 : 1);
+    int disablefog = pnv_param_1.z > 0 ? 0.f : 1.f;
 
     // Blend
     img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
