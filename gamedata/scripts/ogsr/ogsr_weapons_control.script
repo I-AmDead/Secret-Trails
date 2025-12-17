@@ -11,8 +11,8 @@ end
 local function actor_on_weapon_zoom_in()
     local wpn = db.actor:active_item()
     if wpn and not wpn:is_binoculars() then
-        if wpn:get_weapon().scope_zoom_factor < 0.1 then
-            game.play_hud_anm("aim_start.anm", 2, 1, 1, false)
+        if wpn:get_weapon().zoom_rotation_factor < 0.05 then
+            game.play_hud_anm("aim_end.anm", 2, 1, -0.5, false)
         end
     end
 end
@@ -20,14 +20,14 @@ end
 local function actor_on_weapon_zoom_out()
     local wpn = db.actor:active_item()
     if wpn and not wpn:is_binoculars() then
-        if wpn:get_weapon().scope_zoom_factor > 0.9 then
-            game.play_hud_anm("aim_end.anm", 2, 1, 1, false) --end
+        if wpn:get_weapon().zoom_rotation_factor > 0.95 then
+            game.play_hud_anm("aim_end.anm", 2, 1, 0.5, false)
         end
     end
 end
 
 function attach(sm)
-    sm:subscribe({ signal = "on_actor_weapon_fire",	    fun = actor_on_weapon_fire     })
+    sm:subscribe({ signal = "on_actor_weapon_fire",	fun = actor_on_weapon_fire     })
     sm:subscribe({ signal = "on_actor_weapon_zoom_out",	fun = actor_on_weapon_zoom_out })
     sm:subscribe({ signal = "on_actor_weapon_zoom_in",  fun = actor_on_weapon_zoom_in  })
 end
