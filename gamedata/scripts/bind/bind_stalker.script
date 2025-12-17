@@ -45,6 +45,12 @@ function actor_binder:net_spawn(data)
         cmd("ssfx_is_underground 0")
     end
 
+    if not ogse.var_exists("PATCH_HEMI") then
+        cmd("r2_sun_lumscale_amb 2.5")
+        cmd("r2_sun_lumscale_hemi 0.5")
+        ogse.save_var("PATCH_HEMI", true)
+    end
+
     self.am:call("on_spawn", data)
     return true
 end
