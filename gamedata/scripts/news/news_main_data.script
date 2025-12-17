@@ -4,7 +4,6 @@
 -- / Использовались некоторые наработки АМК /--
 -- / Отдельное спасибо DEXXX-у /--
 -- / Основная и вспомогательные функции для новостей /--
-local random_news = sys_ini:r_s32("options", "random_news")
 local t_koef_glob = sys_ini:r_s32("options", "random_news_delta") -- глобальный изменяемый коэффициент изменения диапазона времени выдачи сообщений
 local news_showtime = sys_ini:r_s32("options", "news_showtime") -- стандартное время показа сообщения
 local check_news_flag = 1 -- 1 - работает
@@ -31,7 +30,7 @@ local ft = {}
 -- Главная функция
 
 function show_news_main()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         if isIndoor(level.name()) or chk_Vibros() then
             return
         end
@@ -79,7 +78,7 @@ local disconnect_templates = {game.translate_string("disconnect_templates_0"),
 -- Вспомагательные функции
 
 function on_connect()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         if check_news_flag == 1 and not chk_Vibros() then
             local con_templ = connect_templates[math.random(table.getn(connect_templates))]
             if con_templ ~= nil then
@@ -91,7 +90,7 @@ function on_connect()
 end
 
 function on_connect_vbs()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         if check_news_flag == 1 and not isIndoor(level.name()) then
             local con_templ = connect_templates[math.random(table.getn(connect_templates))]
             if con_templ ~= nil then
@@ -103,7 +102,7 @@ function on_connect_vbs()
 end
 
 function on_disconnect()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         if check_news_flag == 1 and not chk_Vibros() then
             local discon_templ = disconnect_templates[math.random(table.getn(disconnect_templates))]
             if discon_templ ~= nil then
@@ -115,7 +114,7 @@ function on_disconnect()
 end
 
 function on_disconnect_vbs()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         if check_news_flag == 1 and not isIndoor(level.name()) then
             local discon_templ = disconnect_templates[math.random(table.getn(disconnect_templates))]
             if discon_templ ~= nil then
@@ -135,7 +134,7 @@ function chk_Vibros()
 end
 
 function message_filter()
-    if random_news == 1 then
+    if game_options.opt_dyn_news then
         local level_name = level.name()
         if db.actor ~= nil and level_name ~= nil then
             if check_news_flag == 1 and not isIndoor(level_name) then
