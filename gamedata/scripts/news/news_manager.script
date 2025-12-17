@@ -86,7 +86,7 @@ local function get_snd(k)
 end
 
 local pda_news = xr_sound.get_safe_sound_object([[device\pda\pda_news]])
-pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
+local pda_tips = xr_sound.get_safe_sound_object([[device\pda\pda_tip]])
 local pda_task = xr_sound.get_safe_sound_object([[device\pda\pda_objective]])
 
 -- При добавлении новых квестовиков добавлять для них иконки в ui_iconstotal и прописывать сюда полное имя, как оно идет в смс. Или прописывать sender в вызов send_tip. Сортировать по алфавиту.
@@ -152,6 +152,7 @@ function send_tip(actor, news_id, timeout, sender, showtime, sender_id)
     if pda_tips then
         pda_tips:play(db.actor, timeout, sound_object.s2d)
     end
+
     local news_snd = get_snd(news_id)
     if news_snd then
         -- ' Играем звук забитый
@@ -219,8 +220,14 @@ function send_task(actor, type, task, objective)
     -- ' Берем координаты из текстуры таска
     local task_texture, task_rect = get_texture_info("ui_iconsTotal_" .. task:get_id(), "ui_iconsTotal_locations")
 
+    local snd_fname = "interface\\task_" .. type
+    local snd_task = sound_object(snd_fname)
+    if not snd_task:playing() then
+        snd_task:play(db.actor, 0, sound_object.s2d)
+    end
+
     -- ' Играем дефолтный звук
-    if pda_task then
+    if pda_task and not snd_task:playing() then
         pda_task:play(db.actor, 0, sound_object.s2d)
     end
 
@@ -280,11 +287,7 @@ function send_task(actor, type, task, objective)
         end
     end
 
-    local snd_fname = "interface\\task_" .. type
-    local snd_task = sound_object(snd_fname)
-    snd_task:play(db.actor, 0, sound_object.s2d)
     local main_task_static = get_hud():AddCustomStatic("main_task_new", true)
-
     if main_task_static then
         --main_task_static:wnd():SetColor(GetARGB(texture_color[1], texture_color[2], texture_color[3], texture_color[4]))
         main_task_static:wnd():SetTextST(news_text)
