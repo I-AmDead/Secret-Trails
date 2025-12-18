@@ -48,11 +48,21 @@ SLOTS_DATA                   = {                      -- table to store slots da
         title                = game.translate_string("st_rq_bolts_title"),
         descr                = game.translate_string("st_rq_bolts_descr")
     },
+    ["rq_pistol"]            = {
+        id                   = 13,
+        title                = game.translate_string("st_rq_pistol_title"),
+        descr                = game.translate_string("st_rq_pistol_descr")
+    },
     ["rq_pda"]               = {
         id                   = 7,
         title                = game.translate_string("st_rq_pda_title"),
         descr                = game.translate_string("st_rq_pda_descr")
     },
+    ["rq_detector"]          = {
+        id                   = 8,
+        title                = game.translate_string("st_rq_detector_title"),
+        descr                = game.translate_string("st_rq_detector_descr")
+    }
 }
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -62,12 +72,14 @@ function get_ui()
     local GUI = arm.UIRadialMenu()
     
     local slots = {
-        { key = "rq_secondary",  ui_key = "ui_rq_secondary"  },
+        { key = "rq_pistol",     ui_key = "ui_rq_secondary"  },
+        { key = "rq_secondary",  ui_key = "ui_rq_primary"    },
+        { key = "rq_grenade",    ui_key = "ui_rq_grenade"    },
+        { key = "rq_binoculars", ui_key = "ui_rq_binoculars" },
+        { key = "rq_pda",        ui_key = "ui_rq_pda"        },
+        { key = "rq_detector",   ui_key = "ui_rq_detector"   },
+        { key = "rq_bolts",      ui_key = "ui_rq_bolts"      },
         { key = "rq_knife",      ui_key = "ui_rq_knife"      },
-        { key = "rq_grenade",    ui_key = "ui_rq_grenade"   },
-        { key = "rq_pda",        ui_key = "ui_rq_pda"       },
-        { key = "rq_binoculars", ui_key = "ui_rq_binoculars"},
-        { key = "rq_bolts",      ui_key = "ui_rq_bolts"     },
         { key = "rq_primary",    ui_key = "ui_rq_primary"    }
     }
 
@@ -87,6 +99,8 @@ function activate_slot(slot_id)
     if (not active_slot) or (active_slot ~= slot_id) then
         if slot_id == 7 then
             get_actor_obj():press_action(key_bindings.kACTIVE_JOBS)
+        elseif slot_id == 8 then
+            get_actor_obj():DetectorToogle(true)
         else
             db.actor:activate_slot(slot_id)
         end
