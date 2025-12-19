@@ -1,0 +1,28 @@
+local function send_tutorial(name)
+    if ogse.var_exists(name) then return end
+
+    tutorial_text = game.translate_string(name)
+    local hud = get_hud()
+    hud:AddCustomStatic("tutorial_static", true)
+    hud:GetCustomStatic("tutorial_static"):wnd():SetTextST(tutorial_text)
+    hud:GetCustomStatic("tutorial_static"):wnd():AdjustHeightToText()
+    hud:GetCustomStatic("tutorial_static").m_endTime = time_global() / 1000 + 20
+    xr_sound.get_safe_sound_object([[tutorial]]):play(db.actor, 0, sound_object.s2d)
+    ogse.save_var(name, true)
+end
+
+function watch_tutorial()
+    send_tutorial("tutorial_watch")
+end
+
+function headlamp_tutorial()
+    send_tutorial("tutorial_headlamp")
+end
+
+function backlight_tutorial()
+    send_tutorial("tutorial_backlight")
+end
+
+function collimsight_tutorial()
+    send_tutorial("tutorial_collimsight")
+end
