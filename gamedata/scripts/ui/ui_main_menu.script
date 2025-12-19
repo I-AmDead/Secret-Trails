@@ -38,6 +38,12 @@ function main_menu:InitControls()
     local btn_discord = self.xml:Init3tButton("btn_discord", self)
     btn_discord:SetWndPos(static_version:GetWidth() + static_version:GetWndPos().x, static_version:GetWndPos().y)
     self:Register(btn_discord, "btn_discord")
+    local static_engine = self.xml:InitStatic("static_engine", self)
+    static_engine:SetText("Based on ")
+    static_engine:AdjustWidthToText()
+    local btn_ogsr = self.xml:Init3tButton("btn_ogsr", self)
+    btn_ogsr:SetWndPos(static_engine:GetWidth() + static_engine:GetWndPos().x, static_engine:GetWndPos().y)
+    self:Register(btn_ogsr, "btn_ogsr")
 end
 
 function main_menu:Show(...)
@@ -74,6 +80,7 @@ function main_menu:InitCallBacks()
 
     self:AddCallback("btn_sale", ui_events.BUTTON_CLICKED, self.OnButton_sale, self)
     self:AddCallback("btn_discord", ui_events.BUTTON_CLICKED, self.OnButton_discord, self)
+    self:AddCallback("btn_ogsr", ui_events.BUTTON_CLICKED, self.OnButton_ogsr, self)
 
     -- message box
     self:AddCallback("msg_box", ui_events.MESSAGE_BOX_OK_CLICKED, self.OnMsgOk, self)
@@ -188,6 +195,11 @@ end
 function main_menu:OnButton_discord()
     mm:PlaySound("interface\\page")
     os.execute('start "" ' .. "https://discord.gg/tQNPCEC469")
+end
+
+function main_menu:OnButton_ogsr()
+    mm:PlaySound("interface\\page")
+    os.execute('start "" ' .. "https://github.com/OGSR")
 end
 
 function main_menu:OnButton_sale()
