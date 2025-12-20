@@ -26,3 +26,30 @@ end
 function collimsight_tutorial()
     send_tutorial("tutorial_collimsight")
 end
+
+function raindrops_tutorial()
+    send_tutorial("tutorial_raindrops")
+end
+
+local function on_info(npc, info_id)
+    if info_id == "lesnik_start" then
+        ogse_st_mgr.start_timer("watch_tutorial", 20, "ogsr_game_tutorial.watch_tutorial")
+    end
+end
+
+local function on_update()
+    if ogse.var_exists("tutorial_raindrops") then return end
+
+    if not get_con_bool("r2_rain_drops_control") then return end
+
+    if db.actor:is_ActorHide() or isIndoor(level.name()) then return end
+
+    if level.rain_factor() > 0.1 then
+        raindrops_tutorial()
+    end
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_info", fun = on_info})
+    sm:subscribe({signal = "on_update", fun = on_update})
+end

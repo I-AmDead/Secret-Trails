@@ -126,7 +126,10 @@ function mark_control(wpn, force, bind)
 
     if force then
         if not backlight then
+            ogsr_game_tutorial.collimsight_tutorial()
             settings_mark(true, dots_number, "mark_number", scope_name, wpn)
+        else
+            ogsr_game_tutorial.backlight_tutorial()
         end
         settings_mark(true, max_color, "mark_color", scope_name, wpn, backlight)
     else
@@ -183,37 +186,6 @@ end
 local function on_actor_update()
     update_rad_effect()
     on_dots_update()
-end
-
-local function modifyValue(startValue, endValue, typeValue)
-    local lcall
-    local currentValue = startValue
-    local v = shader_get_custom_param_vector(typeValue)
-    lcall = level.add_call(
-        function()
-            log3("Current value: %s", currentValue)
-            log3("typeValue = %s, v.w = %s", typeValue, v.w)
-            if startValue < endValue then
-                currentValue = currentValue + 4
-                v.w = currentValue * 0.01
-                shader_set_custom_param_vector(typeValue, v)
-                return currentValue > endValue
-            else
-                currentValue = currentValue - 4
-                v.w = currentValue * 0.01
-                shader_set_custom_param_vector(typeValue, v)
-                return currentValue < endValue
-            end
-
-            lcall:set_pause(100)
-            return false
-        end,
-        function()
-            v.w = currentValue * 0.01
-            shader_set_custom_param_vector(typeValue, v)
-            log3("typeValue = %s, v.w = %s", typeValue, v.w)
-        end
-    )
 end
 
 function attach(sm)
