@@ -37,6 +37,13 @@ local function on_info(npc, info_id)
     end
 end
 
+local function on_first_update()
+    if ogse.var_exists("watch_tutorial") then return end
+    if db.actor:has_info("les_dobralis") then
+        watch_tutorial()
+    end
+end
+
 local function on_update()
     if ogse.var_exists("tutorial_raindrops") then return end
 
@@ -52,4 +59,5 @@ end
 function attach(sm)
     sm:subscribe({signal = "on_info", fun = on_info})
     sm:subscribe({signal = "on_update", fun = on_update})
+    sm:subscribe({signal = "on_first_update", fun = on_first_update})
 end
