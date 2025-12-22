@@ -27,6 +27,19 @@ local cfg = {
     end
 }
 
+local snd_in_use = false
+local bugfix_detector = false
+
+local function animation_off()
+    level.only_allow_movekeys(false)
+    level.set_actor_allow_ladder(true)
+    game.stop_hud_motion()
+    game.stop_all_hud_anms()
+    if snd_in_use then
+        snd_in_use:stop()
+    end
+end
+
 local function apply_boost(sect)
     local boost_time = get_float(sect, "boost_time", 0)
     if boost_time then
@@ -76,7 +89,6 @@ function transform_dir(cd, dir)
     return cd
 end
 
-local bugfix_detector = false
 local function detector_hide(anm_time)
     if bugfix_detector then
         get_actor_obj():DetectorToogle(true)
@@ -88,7 +100,6 @@ local function detector_hide(anm_time)
     end
 end
 
-local snd_in_use = false
 local function play_use_sound(sect, snd_name)
     local snd = snd_name or get_string(sect, "snd_use")
     if snd then
@@ -125,7 +136,7 @@ local function play_item_use(item)
         level.start_stop_menu(level.get_car_body_wnd(), true)			
     end
 
-    ogsr_actor_animation.animation_on()
+    level.only_allow_movekeys(true)
 
     local prev_active_slot = db.actor:active_slot()
     db.actor:activate_slot(255)
@@ -145,14 +156,14 @@ local function play_item_use(item)
             level.add_cam_effector(cam_effect, 7538, false, "", 0, false)
         end
 
-        dsh.timeout(used_time, function() apply_item(item) end)
+        dsh.timeout(math.min(used_time, anm_duration), function() apply_item(item) end)
 
         if trash_spawn_time > 0 and not string.find(item_hud, "_exo_hud") then
             dsh.timeout(trash_spawn_time, function() spawn_trash(item) end)
         end
 
         dsh.timeout(anm_duration, function()
-            ogsr_actor_animation.animation_off()
+            animation_off()
             db.actor:activate_slot(prev_active_slot)
             dsh.wait_condition(function() return db.actor:active_slot() == prev_active_slot  end, detector_hide)
         end)
@@ -164,33 +175,20 @@ local function on_actor_before_use(obj, sobj)
 
     if ANIMS_ENABLED then
         local hud = get_string(sect, "hud") or get_string(sect, "hud_exo")
-        local slot_was_blocked = db.actor.inventory:is_active_slot_blocked()
-        if hud and not (slot_was_blocked and not level.main_input_receiver()) and not level.only_movekeys_allowed() then
+        if hud then
 
             obj:zero_effects()
             play_item_use(sect)
-        elseif hud and db.actor:has_info("ui_talk") then -- Нужно для того что бы диалог не обрывался если мы решили выпить\перекусить с собеседником
-            play_use_sound(sect)
         else
-            return
+            play_use_sound(sect)
         end
     else
         play_use_sound(sect)
     end
 end
 
-local function animation_off()
-    level.only_allow_movekeys(false)
-    level.set_actor_allow_ladder(true)
-    game.stop_hud_motion()
-    game.stop_all_hud_anms()
-    if snd_in_use then
-        snd_in_use:stop()
-    end
-end
-
 function attach( sm )
 	sm:subscribe({ signal = "on_actor_before_use", fun = on_actor_before_use })
-	sm:subscribe({ signal = "on_first_update",     fun = animation_off })
-	sm:subscribe({ signal = "on_actor_death",      fun = animation_off })
+	--sm:subscribe({ signal = "on_first_update",     fun = animation_off })
+	--sm:subscribe({ signal = "on_actor_death",      fun = animation_off })
 end
