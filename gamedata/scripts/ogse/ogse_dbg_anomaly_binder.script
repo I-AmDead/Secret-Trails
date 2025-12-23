@@ -173,11 +173,13 @@ function anomaly_binder:net_destroy()
 end
 
 function anomaly_binder:on_enter(zone, obj)
+	--log3("~~called zone_enter: [%s], [%s]", zone:name(), obj:name())
+
     local is_anomaly = get_bool(zone:section(), "is_anomaly", false)
 
     if obj:is_artefact() then
         if is_anomaly then
-            amk_mod.af_on_enter_zone(obj)
+            amk_mod.af_on_enter_zone(obj, zone)
 
             local is_delete = get_bool(obj:section(), "is_delete", false)
             if is_delete then

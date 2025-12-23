@@ -79,45 +79,22 @@ end
 -- '*******************************************************************************
 
 -- проверка на артефакт вошедший в зону
-function af_on_enter_zone(obj)
-    local is_komponent = get_bool(obj:section(), "is_komponent", false)
-
+function af_on_enter_zone(obj, zone)
     -- проверка не один ли это из компонентов
-    if not is_komponent then
+    if not get_bool(obj:section(), "is_komponent", false) then
         return
     end
-
-    local hasanom, anom_id, anom_pos, cls, dist, anom_radius, sect_anom =
-        ogse_anomaly.get_nearest_anomaly_by_point(obj:position())
-
-    if not (anom_id and dist < 5) then
-        return
-    end
-
-    local lv = level.object_by_id(anom_id):level_vertex_id()
-    local gv = level.object_by_id(anom_id):game_vertex_id()
-
-    if gv == 65535 then
-        gv = obj:game_vertex_id()
-    end
-
-    if gv == 65535 then
-        gv = db.actor:game_vertex_id()
-    end
-
-    if gv == 65535 then
-        return
-    end -- похоже, что рядом нету вертекса
 
     -- предмет подходит - отправляем его на экспертизу
-    -- узнаем не съели ли его или вvложили в нvчку
+    -- узнаем не съели ли его или выложили в нvчку
     local tbl = {
-        anom_id = anom_id,
+        anom_id = zone:id(),
         obj_id = obj:id(),
-        lv = lv,
-        gv = gv
+        lv = zone:level_vertex_id(),
+        gv = zone:game_vertex_id()
     }
     dsh.start_timer("timer_drop_obj_varka", 0.2, "amk_mod.timer_drop_varka", tbl)
+	log3("~~called timer_drop_obj_varka: [%s], [%s]", zone:name(), obj:name())
 end
 
 -- проверка: является ли компонентом для варки
