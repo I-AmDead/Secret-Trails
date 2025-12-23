@@ -619,7 +619,7 @@ function action_fire_in_the_hole:execute()
     end
 
     if tg > self.end_time then
-        local obj = create_grenade(grenade:section(), self.a.grenades_from_pos, npc:level_vertex_id(),
+        local obj = create_grenade(grenade:section().."_fake", self.a.grenades_from_pos, npc:level_vertex_id(),
             npc:game_vertex_id())
         level.client_spawn_manager():add(obj.id, -1, throw, self.a)
         self.a.grenade_data = {
@@ -701,8 +701,7 @@ function action_fire_in_the_hole:death_callback()
     if grenade and grenade:parent() then
         local npc = self.object
         if not self.finalized and self.armed_time and self.armed_time < time_global() then
-            local obj = create_grenade(grenade:section(), npc:bone_position("bip01_r_hand"), npc:level_vertex_id(),
-                npc:game_vertex_id())
+            local obj = create_grenade(grenade:section().."_fake", npc:bone_position("bip01_r_hand"), npc:level_vertex_id(), npc:game_vertex_id())
             local d = {
                 section = grenade:section(),
                 target = grenade:position()
@@ -982,7 +981,7 @@ function action_psyh:execute()
     end
 
     if self.armed_time and time_global() - self.armed_time > grenade_params[self.a.psyh_grenade].explode_time then
-        local obj = create_grenade(self.a.psyh_grenade, npc:bone_position("bip01_r_hand"), npc:level_vertex_id(),
+        local obj = create_grenade(self.a.psyh_grenade.."_fake", npc:bone_position("bip01_r_hand"), npc:level_vertex_id(),
             npc:game_vertex_id())
         level.client_spawn_manager():add(obj.id, -1, explode, {
             section = self.a.psyh_grenade,
@@ -1013,7 +1012,7 @@ function action_psyh:finalize()
             local enemy = npc:best_enemy()
             local pos = enemy and npc:memory_position(enemy)
             if pos and pos:distance_to(npc:position()) < 20 then
-                local obj = create_grenade(grenade:section(), npc:bone_position("bip01_head"), npc:level_vertex_id(),
+                local obj = create_grenade(grenade:section().."_fake", npc:bone_position("bip01_head"), npc:level_vertex_id(),
                     npc:game_vertex_id())
                 local d = {
                     section = grenade:section(),
@@ -1064,7 +1063,7 @@ function action_psyh:death_callback()
     if grenade and grenade:parent() then
         if self.armed_time then
             local npc = self.object
-            local obj = create_grenade(grenade:section(), npc:bone_position("bip01_r_hand"), npc:level_vertex_id(),
+            local obj = create_grenade(grenade:section().."_fake", npc:bone_position("bip01_r_hand"), npc:level_vertex_id(),
                 npc:game_vertex_id())
             local d = {
                 section = grenade:section(),
@@ -1349,7 +1348,7 @@ function spoof_grenade(t)
     if t[1] < time_global() then
         local sobj, gobj = alife():object(t[2]), get_grenade(t[2])
         if sobj and gobj and not gobj:parent() and sobj:name() == t[3] then
-            local obj = create_grenade(gobj:section(), gobj:position(), gobj:level_vertex_id(), gobj:game_vertex_id())
+            local obj = create_grenade(gobj:section().."_fake", gobj:position(), gobj:level_vertex_id(), gobj:game_vertex_id())
             local d = {
                 section = gobj:section(),
                 target = sobj.position,
