@@ -325,8 +325,7 @@ local function actor_on_update()
     local bio_radar = db.actor:item_in_slot(12) and bio_showing
 
     -- дин точки
-    local f = 50 * 50
-    local m = 20 * 20
+    local f_dist = 50 * 50
     local act_pos = db.actor:position()
     local dev_pos = dev.cam_pos
 
@@ -337,20 +336,25 @@ local function actor_on_update()
             local neutral = obj:alive() and obj:relation(db.actor) == game_object.neutral
             local friend = obj:alive() and obj:relation(db.actor) == game_object.friend
             local quest = ogse.is_quest_npc(obj)
-            local distance = quest and f or (bio_radar and m * 2 or (enemy and db.actor:see(obj) and m or m))
-            if pos:distance_to_sqr(dev_pos) < distance then
-                compass_objects[obj:id()] =
-                {
-                    obj = obj,
-                    text = quest and obj:character_name() or nil,
-                    color = (quest and quest_color) or (friend and friend_color) or (neutral and neutral_color) or (enemy and enemy_color) or nil,
-                    show_always = bio_radar and obj:alive(),
-                    spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
-                }
+            local distance = bio_radar and f_dist * 2 or f_dist
+
+            if not enemy or db.actor:see(obj) then
+                if pos:distance_to_sqr(dev_pos) < distance then
+                    compass_objects[obj:id()] =
+                    {
+                        obj = obj,
+                        text = quest and obj:character_name() or nil,
+                        color = (quest and quest_color) or (friend and friend_color) or (neutral and neutral_color) or (enemy and enemy_color) or nil,
+                        show_always = bio_radar and obj:alive(),
+                        spot = (act_pos.y + 3 < pos.y and "upper_dot") or (act_pos.y - 3 > pos.y and "lower_dot") or (obj:alive() and "alive_dot") or "corpse_dot"
+                    }
+                end
             end
         elseif bio_radar and IsMonster(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
             local pos = obj:center()
-            if pos:distance_to_sqr(dev_pos) < m * 2 then
+            local distance = bio_radar and f_dist * 2 or f_dist
+
+            if pos:distance_to_sqr(dev_pos) < distance then
                 compass_objects[obj:id()] =
                 {
                     obj = obj,
@@ -368,7 +372,8 @@ local function actor_on_update()
         if obj then
             if map_spot_limit(obj) and obj:id() ~= db.actor:id() and obj:id() ~= active_target_id then
                 local pos = obj:center()
-                local distance = IsAnomaly(obj) and m * 2 or f
+                local distance = f_dist
+
                 if pos:distance_to_sqr(dev_pos) < distance then
                     local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
                     compass_objects[obj:id()] =
@@ -382,8 +387,9 @@ local function actor_on_update()
             end
         else
             local pos = spot.position
-            local distance = f
             local spot_ignore = spot.type == "mp_hit_sector_location"
+            local distance = f_dist
+
             if not spot_ignore and level.name() == spot:level_name() and pos:distance_to_sqr(dev_pos) < distance then
                 local spot_type = spot.type
                 compass_objects[spot.object_id] =
