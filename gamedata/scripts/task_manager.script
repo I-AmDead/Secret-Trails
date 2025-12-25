@@ -162,7 +162,7 @@ function CRandomTask:__init()
         curr_task_info.no_phrase_id = self:gen_phrase_id()
 
         -- ' По умолчанию квест доступен для выдачи
-        curr_task_info.enabled = get_bool(id, "enabled", true)
+        curr_task_info.enabled = true
     
         -- ' Доступен ли квест по своим свойствам. По умолчанию всегда недоступен.
         -- ' Этот параметр зависит от наличия целей для квестов и того срабатывает ли прекондишн квеста
@@ -247,6 +247,7 @@ function CRandomTask:load()
         else
             info.last_task_time = game.CTime()
         end
+
         -- здесь адский баг. Активный selected_target может быть _только_ у выданных квестов, в остальном случае там -1.
         -- Тут проверяем активность таска. Параллельно правим еще в функции проверки завершенности таска на всякий случай.
         if info.type == "defend_lager" and info.selected_target then
@@ -411,7 +412,7 @@ function CRandomTask:action_refuse_task(actor, npc, p1, p2)
     -- ' Делаем доступными все задания данного типа
     for k, v in pairs(self.task_info) do
         if v.complex_type == task_desc.complex_type then
-            v.enabled = get_bool(k, "enabled", true)
+            v.enabled = true
         end
     end
 end
@@ -520,7 +521,7 @@ function CRandomTask:task_callback(p1, p2, state)
         -- ' восстановление других заданий данного типа
         for k, v in pairs(self.task_info) do
             if v.complex_type == self.task_info[self.active_task_by_type[p1]].complex_type then
-                v.enabled = get_bool(k, "enabled", true)
+                v.enabled = true
             end
         end
         self.active_task_by_type[p1] = nil
