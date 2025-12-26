@@ -253,6 +253,15 @@ local function fix_new_first()
     fix_radar_ac()
 end
 
+local function on_item_to_slot(obj)
+    if ogse.var_exists("g36_repair") then return end
+
+    if string.find(obj:section(), "wpn_g36") then
+        obj:set_condition(1)
+        ogse.save_var("g36_repair", true)
+    end
+end
+
 local show_engine_legs
 function show_legs()
     if show_engine_legs then
@@ -273,4 +282,5 @@ function attach(sm)
     sm:subscribe({signal = "on_update",         fun = spawn_sverhprovodnik})
     sm:subscribe({signal = "on_fake_drag_drop", fun = on_drag_drop})
     sm:subscribe({signal = "on_npc_death",      fun = death_npc_item})
+    sm:subscribe({signal = "on_item_to_slot",   fun = on_item_to_slot})
 end
