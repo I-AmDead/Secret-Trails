@@ -256,12 +256,9 @@ function se_respawn:spawn()
         -- Пробегаемся по списку уже заспавненных объектов и удаляем из них мертвые либо уничтоженные.
         for k, v in pairs(self.spawned_obj) do
             local obj = level.object_by_id(v)
-            if obj == nil then
-                obj = alife():object(v)
-            end
 
-            if obj ~= nil then
-                if (IsStalker(obj) or IsMonster(obj)) and obj:alive() ~= true then
+            if obj then
+                if (IsStalker(obj) or IsMonster(obj)) and obj:alive() then
                     table.remove(self.spawned_obj, k)
                 end
             else
@@ -269,6 +266,7 @@ function se_respawn:spawn()
             end
         end
     end
+
     if xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions) == "0" then
         return
     end
@@ -276,6 +274,7 @@ function se_respawn:spawn()
     if self.spawn_once and not self.already_once_spawned then
         self.already_once_spawned = true
     end
+
     -- экстренный спаун минимального количества объектов
     if table.getn(self.spawned_obj) < self.min_count then
         while table.getn(self.spawned_obj) < self.min_count do
