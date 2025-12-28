@@ -1,7 +1,9 @@
 #include "common.h"
 #include "lmodel.h"
 
-//	TODO: DX10: Move to Load
+// Check Screen Space Shaders modules & addons
+#include "check_screenspace.h"
+
 float4 main(float4 tc : TEXCOORD0, float4 pos2d : SV_Position) : SV_Target
 {
     const float bias_mul = 0.999f;
@@ -24,11 +26,11 @@ float4 main(float4 tc : TEXCOORD0, float4 pos2d : SV_Position) : SV_Target
     }
 
     float rsqr;
-    float4 light = plight_local(_P.w, _P, _N, _C, Ldynamic_pos, Ldynamic_pos.w, rsqr);
+    float3 light = plight_local(_P.w, _P, _N, _C, Ldynamic_pos, Ldynamic_pos.w, rsqr);
 
 #ifdef SSFX_ENHANCED_SHADERS
-    return float4(SRGBToLinear(Ldynamic_color.rgb), 1.f) * light;
+    return float4(SRGBToLinear(Ldynamic_color.rgb) * light, 0.f);
 #else
-    return float4(Ldynamic_color * light);
+    return float4(Ldynamic_color * light, 0.f);
 #endif
 }

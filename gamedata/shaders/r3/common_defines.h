@@ -17,7 +17,7 @@
 #define def_hdr float(9.h) // hight luminance range float(3.h)
 #define def_hdr_clip float(0.75h) //
 
-#define LUMINANCE_VECTOR float3(0.2125, 0.7154, 0.0721)
+#define LUMINANCE_VECTOR float3(0.213, 0.715, 0.072)
 
 // #define USE_GRASS_WAVE								// enable grass wave
 #define GRASS_WAVE_FREQ float(0.7) // frequency of waves

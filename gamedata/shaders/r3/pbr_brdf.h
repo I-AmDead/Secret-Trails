@@ -14,26 +14,20 @@
 uniform float4 ssfx_lightsetup_1; // Spec intensity
 
 // Metalness
-float calc_metalness(float4 alb_gloss, float material_ID)
+float calc_metalness(float alb_gloss, float material_ID)
 {
     // material ID experiment
     float metallerp = max(0.0, (material_ID * 4) - 0.5) / 4; // approx material + weight? //nowhere near
-    // metallerp = saturate((metallerp - 0.5) * 2); //metal threshold
-    // metallerp = saturate(((metallerp * 4) - 2) * 0.5); //metal threshold
 
     // binary metalness
     float metalness = saturate(material_ID - 0.75 - 0.001) > 0 ? 1 : 0;
-
-    // float metal_thres = METALNESS_THRESHOLD;
-    // float metal_soft = METALNESS_SOFTNESS;
 
     // float metal_thres = METALNESS_THRESHOLD * (1 - metallerp) * 2;
     float metal_thres = pow(METALNESS_THRESHOLD, exp2(metallerp));
     float metal_soft = metal_thres * 0.9;
 
     // lerp on gloss
-    // metalness *= saturate(smoothstep(METALNESS_THRESHOLD-METALNESS_SOFTNESS, METALNESS_THRESHOLD+METALNESS_SOFTNESS, alb_gloss.a));
-    metalness *= saturate((alb_gloss.a - (metal_thres - metal_soft)) / ((metal_thres + metal_soft) - (metal_thres - metal_soft)));
+    metalness *= saturate((alb_gloss - (metal_thres - metal_soft)) / ((metal_thres + metal_soft) - (metal_thres - metal_soft)));
     return metalness;
 }
 
@@ -47,51 +41,38 @@ float3 calc_albedo_boost(float3 albedo)
     return Soft_Light(albedo, blend);
 }
 
-float3 calc_albedo(float4 alb_gloss, float material_ID)
+float3 calc_albedo(float4 albedo, float material_ID)
 {
-    float metalness = calc_metalness(alb_gloss, material_ID);
+    float metalness = calc_metalness(albedo.a, material_ID);
 
-    float3 albedo = alb_gloss.rgb;
-    // albedo = SRGBToLinear(albedo);
+    albedo.rgb = calc_albedo_boost(albedo.rgb);
 
-    albedo = calc_albedo_boost(albedo);
-    // albedo = SRGBToLinear(albedo);
-
-    float3 screen_contrib = albedo;
+    float3 screen_contrib = albedo.rgb;
     screen_contrib = (1 - (1 - screen_contrib) * (1 - screen_contrib)) - lerp(dot(screen_contrib, LUMINANCE_VECTOR), screen_contrib, 0.5);
 
-    albedo = SRGBToLinear(albedo);
+    albedo.rgb = SRGBToLinear(albedo.rgb);
     screen_contrib = SRGBToLinear(screen_contrib);
 
     float3 albedo_metal = screen_contrib; // metal albedo is screen blend contrib, it gets rid of all highlights.
 
-    return saturate(lerp(albedo, albedo_metal, metalness) * ALBEDO_AMOUNT);
+    return saturate(lerp(albedo.rgb, albedo_metal, metalness) * ALBEDO_AMOUNT);
 }
 
-float3 calc_specular(float4 alb_gloss, float material_ID)
+float3 calc_specular(float4 albedo, float material_ID)
 {
-    float metalness = calc_metalness(alb_gloss, material_ID);
+    float metalness = calc_metalness(albedo.a, material_ID);
 
     float3 specular = float3(SPECULAR_BASE, SPECULAR_BASE, SPECULAR_BASE); // base fresnel to tweak
 
-    float3 specular_metal = alb_gloss.rgb; // metal uses diffuse for specular
+    float3 specular_metal = albedo.rgb; // metal uses diffuse for specular
     specular_metal = calc_albedo_boost(specular_metal); // boost albedo
     specular_metal = SRGBToLinear(specular_metal);
 
     // tweaks for specular boost
-    // material_ID = sqrt(material_ID/0.75);
     material_ID = saturate(material_ID * 1.425);
-    alb_gloss.a = sqrt(alb_gloss.a);
+    albedo.a = sqrt(albedo.a);
 
-    /*
-    //old spec boost
-    float specular_boost = ((0.5+material_ID) * (0.5+alb_gloss.a))-0.25; //0.0 - 2.0 range
-    specular_boost = specular_boost - 1; //scale in -1 to +1 range
-    specular_boost = SPECULAR_RANGE * specular_boost;
-    specular_boost = max(0, specular_boost + 1); //0 - 2
-    */
-
-    float specular_boost = (material_ID * 2 - 1) + (alb_gloss.a * 2 - 1); //-2.0 - +2.0 range
+    float specular_boost = (material_ID * 2 - 1) + (albedo.a * 2 - 1); //-2.0 - +2.0 range
     specular_boost = exp2(SPECULAR_RANGE * specular_boost);
     specular_boost = pow(specular_boost, SPECULAR_POW);
 
@@ -100,16 +81,14 @@ float3 calc_specular(float4 alb_gloss, float material_ID)
     return saturate(lerp(specular, specular_metal, metalness));
 }
 
-float calc_rough(float4 alb_gloss, float material_ID)
+float calc_rough(float albedo_gloss, float material_ID)
 {
-    float metalness = calc_metalness(alb_gloss, material_ID);
+    float metalness = calc_metalness(albedo_gloss, material_ID);
 
-    alb_gloss.a = pow(alb_gloss.a, ROUGHNESS_POW - (metalness * METAL_BOOST)); // metal boost
+    albedo_gloss = pow(albedo_gloss, ROUGHNESS_POW - (metalness * METAL_BOOST)); // metal boost
 
     float roughpow = 0.5 / max(0.001, 1 - Ldynamic_color.w);
-    float rough = pow(lerp(ROUGHNESS_HIGH, ROUGHNESS_LOW, alb_gloss.a), roughpow);
-
-    // rough = pow(rough, 1 + (metalness * METAL_BOOST)); //metal boost
+    float rough = pow(lerp(ROUGHNESS_HIGH, ROUGHNESS_LOW, albedo_gloss), roughpow);
 
     return saturate(rough * rough);
 }
@@ -120,11 +99,9 @@ float calc_rough(float4 alb_gloss, float material_ID)
 void calc_rain(inout float3 albedo, inout float3 specular, inout float rough, in float4 alb_gloss, in float material_ID, in float rainmask)
 {
     // rain based on Remember Me's implementation
-    // float wetness = saturate(rain_params.x*rainmask);
     float wetness = saturate(smoothstep(0.1, 0.9, rain_params.x * rainmask));
 
     float porosity = 1 - saturate(material_ID * 1.425); // metal material at 0, concrete at 1
-    // porosity = saturate((porosity-0.5)/0.4); //Remember Me rain porosity
 
     float factor = lerp(1, 0.2, porosity); // albedo darkening factor
 
@@ -135,10 +112,6 @@ void calc_rain(inout float3 albedo, inout float3 specular, inout float rough, in
 
 void calc_foliage(inout float3 albedo, inout float3 specular, inout float rough, in float4 alb_gloss, in float mat_id)
 {
-    // specular = (abs(mat_id-MAT_FLORA) <= MAT_FLORA_ELIPSON) ? calc_specular(alb_gloss, 0.0) : specular;
-    //	specular = (abs(mat_id-MAT_FLORA) <= MAT_FLORA_ELIPSON) ? alb_gloss.g * 0.02 : specular;
-    // specular = (abs(mat_id-MAT_FLORA) <= MAT_FLORA_ELIPSON) ? pow(alb_gloss.g * 0.1414, 2) : specular;
-
     if (abs(mat_id - MAT_FLORA) <= MAT_FLORA_ELIPSON)
     {
         // float light = 1.0f - saturate(dot(L_hemi_color.rgb, float3(1,1,1)));
@@ -153,6 +126,7 @@ void calc_foliage(inout float3 albedo, inout float3 specular, inout float rough,
 float F_Shlick(float f0, float f90, float vDotH) { return lerp(f0, f90, pow(1 - vDotH, 5)); }
 
 float3 F_Shlick(float3 f0, float3 f90, float vDotH) { return lerp(f0, f90, pow(1 - vDotH, 5)); }
+
 // We have a better approximation of the off specular peak
 // but due to the other approximations we found this one performs better .
 // N is the normal direction

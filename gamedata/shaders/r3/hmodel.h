@@ -16,7 +16,7 @@ TextureCube env_s1;
 
 uniform float4 env_color; // color.w = lerp factor
 
-void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 alb_gloss, float3 Pnt, float3 normal)
+void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 albedo, float3 Pnt, float3 normal)
 {
     // [ SSS Test ]. Overwrite terrain material
     bool m_terrain = abs(m - 0.95) <= 0.04f;
@@ -25,14 +25,11 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
         m = 0;
 
     // PBR style
-    float3 albedo = calc_albedo(alb_gloss, m);
-    float3 specular = calc_specular(alb_gloss, m);
-    float rough = calc_rough(alb_gloss, m);
-    // calc_rain(albedo, specular, rough, alb_gloss, m, h);
-    // calc_foliage(albedo, specular, rough, float4(0.05,0.05,0.05,0.05), m);
+    albedo.rgb = calc_albedo(albedo, m);
+    float3 specular = calc_specular(albedo, m);
+    float rough = calc_rough(albedo.a, m);
 
     float roughCube = rough;
-    // float roughCube = sqrt(rough); //cubemap mipmaps (brdf too?)
 
     // float RoughMip = roughCube * CUBE_MIPS;
     float RoughMip = CUBE_MIPS - ((1 - roughCube) * CUBE_MIPS);
@@ -40,12 +37,10 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     // normal vector
     normal = normalize(normal);
     float3 nw = mul(m_inv_V, normal);
-    // nw = normalize(nw);
 
     // view vector
     Pnt = normalize(Pnt);
     float3 v2Pnt = mul(m_inv_V, Pnt);
-    // v2Pnt = normalize(v2Pnt);
 
     // normal remap
     float3 nwRemap = nw;
@@ -81,17 +76,11 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     e0d += nSquared.x * (env_s0.SampleLevel(smp_base, float3(nwRemap.x, Epsilon, Epsilon), CUBE_MIPS).rgb);
     e0d += nSquared.y * (env_s0.SampleLevel(smp_base, float3(Epsilon, nwRemap.y, Epsilon), CUBE_MIPS).rgb);
     e0d += nSquared.z * (env_s0.SampleLevel(smp_base, float3(Epsilon, Epsilon, nwRemap.z), CUBE_MIPS).rgb);
-    // e0d = LinearTosRGB(e0d);
-
-    // e0d = env_s0.SampleLevel(smp_base, nwRemap, CUBE_MIPS);
 
     float3 e1d = 0;
     e1d += nSquared.x * (env_s1.SampleLevel(smp_base, float3(nwRemap.x, Epsilon, Epsilon), CUBE_MIPS).rgb);
     e1d += nSquared.y * (env_s1.SampleLevel(smp_base, float3(Epsilon, nwRemap.y, Epsilon), CUBE_MIPS).rgb);
     e1d += nSquared.z * (env_s1.SampleLevel(smp_base, float3(Epsilon, Epsilon, nwRemap.z), CUBE_MIPS).rgb);
-    // e1d = LinearTosRGB(e1d);
-
-    // e1d = env_s1.SampleLevel(smp_base, nwRemap, CUBE_MIPS);
 
     // specular color
     float3 e0s = env_s0.SampleLevel(smp_base, vreflectRemap, RoughMip);
@@ -109,9 +98,7 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     float4 light = float4(hscale, hscale, hscale, hscale);
 
     // tint color
-    // float3 env_col = 1.0;
     float3 env_col = env_color.rgb;
-    // float3 env_col = fog_color.rgb * 2.0;
 
     env_d *= env_col;
     env_s *= env_col;

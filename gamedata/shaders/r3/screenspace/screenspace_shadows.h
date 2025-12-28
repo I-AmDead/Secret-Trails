@@ -49,8 +49,6 @@ float SSFX_ScreenSpaceShadows_Far(float4 P, float2 tc)
 	return 1;
 }
 
-
-
 float SSFX_ScreenSpaceShadows(float4 P, float2 tc)
 {
 	// Light vector
