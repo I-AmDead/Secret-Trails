@@ -28,15 +28,14 @@ float4 main(flare I) : SV_Target
     float2 len = I.tc0.xy - float2(0.5, 0.5);
 
     float3 glow = s_glow.Sample(smp_base, I.tc0).rgb * GLOW_FLARE_INTENSITY;
-    float3 flare = s_flare.Sample(smp_base, I.tc0).rgb * (LENS_FLARE_INTENSITY + (rain_params.x * 0.3));
+    float3 flare = s_flare.Sample(smp_base, I.tc0).rgb * LENS_FLARE_INTENSITY;
     float4 dirt = s_dirt_mask.Sample(smp_base, I.tc1) * LENS_DIRT_INTENSITY;
 
     final.rgb = (glow + flare) * (1.0 - flare_params.x);
 
     float2 tcProj = I.tc2.xy / I.tc2.w;
-    float3 depth = gbuffer_get_pos(tcProj, I.hpos);
+    float spaceDepth = gbuffer_depth(tcProj);
 
-    float spaceDepth = depth.z;
     if (spaceDepth < 0.01f)
         spaceDepth = 100000.0f; //  filter for skybox
 
@@ -45,8 +44,6 @@ float4 main(flare I) : SV_Target
 
     final.rgb += dirt.aaa * saturate(0.3 - length(len));
     final.rgb *= flare_color.rgb;
-    final.rgb = clamp(0.0, 0.7, final.rgb);
-
     final.a *= I.fog;
 
     return final;

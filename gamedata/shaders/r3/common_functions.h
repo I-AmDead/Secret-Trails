@@ -229,15 +229,48 @@ gbuffer_data gbuffer_load_data_offset(float2 tc : TEXCOORD, float2 OffsetTC : TE
     return gbuffer_load_data(OffsetTC, pos2d + delta);
 }
 
-float3 gbuffer_get_pos(float2 tc, float2 pos2d)
+float4 gbuffer_color(float2 tc)
 {
-    float4 P = s_position.Sample(smp_nofilter, tc);
+    return s_diffuse.Sample(smp_nofilter, tc);
+}
+
+float3 gbuffer_normal(float2 tc)
+{
+    float2 pos = s_position.Sample(smp_nofilter, tc).xy;
+    return gbuf_unpack_normal(pos);
+}
+
+float3 gbuffer_view_space(float2 tc, float2 pos2d)
+{
+    float4 pos = s_position.Sample(smp_nofilter, tc);
 
     // 3d view space pos reconstruction math
     pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
-    float3 depth = float3(P.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), P.z);
+    float3 view_space = float3(pos.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), pos.z);
 
-    return depth;
+    return view_space;
+}
+
+float gbuffer_depth(float2 tc)
+{
+    return s_position.Sample(smp_nofilter, tc).z;
+}
+
+float gbuffer_material(float2 tc)
+{
+    float pos = s_position.Sample(smp_nofilter, tc).w;
+    return gbuf_unpack_mtl(pos);
+}
+
+float gbuffer_hemi(float2 tc)
+{
+    float pos = s_position.Sample(smp_nofilter, tc).w;
+    return gbuf_unpack_hemi(pos);
+}
+
+float gbuffer_gloss(float2 tc)
+{
+    return s_diffuse.Sample(smp_nofilter, tc).w;
 }
 
 float2 aspect_ratio_correction(float2 tc)

@@ -54,7 +54,7 @@ float3 greyscale(float3 img)
     return float3(Y, Y, Y);
 }
 
-float3 infrared(gbuffer_data gbd, float depth, float2 HPos, float2 Tex0)
+float3 infrared(float depth, float3 normal, float2 HPos, float2 Tex0)
 {
     float heat_mode = pnv_param_1.z - 2.f;
 
@@ -112,7 +112,7 @@ float3 infrared(gbuffer_data gbd, float depth, float2 HPos, float2 Tex0)
         }
         else
         {
-            float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
+            float projection = dot(normalize(normal), float3(0.0, 0.0, -1.0));
             mixed = lerp(color_background_min, color_background_max, projection);
         }
     }
@@ -122,7 +122,7 @@ float3 infrared(gbuffer_data gbd, float depth, float2 HPos, float2 Tex0)
     }
     else
     {
-        float projection = dot(normalize(gbd.N), float3(0.0, 0.0, -1.0));
+        float projection = dot(normalize(normal), float3(0.0, 0.0, -1.0));
 
         float FADE_DISTANCE_START = heat_fade_distance.x;
         float FADE_DISTANCE_END = heat_fade_distance.y;

@@ -11,7 +11,11 @@ struct v2p
 };
 
 Texture2D s_distort;
-#define POWER .5h
+
+#define POWER 0.5
+#define DEPTH_FALLOFF 5.0
+#define DISTORT_POWER 0.5
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
 float4 main(v2p I) : SV_Target
@@ -20,26 +24,19 @@ float4 main(v2p I) : SV_Target
 
     float2 t_d0 = s_distort.Sample(smp_base, I.tdist0);
     float2 t_d1 = s_distort.Sample(smp_base, I.tdist1);
-    float2 distort = (t_d0 + t_d1) * 0.5; // average
+    float2 distort = (t_d0 + t_d1) * DISTORT_POWER; // average
     float2 zero = float2(0.5, 0.5);
     float2 faded = lerp(distort, zero, t_base.a);
 
-    //	Igor: additional depth test
     float alphaDistort;
     float2 PosTc = I.tctexgen.xy / I.tctexgen.z;
+    float waterDepth = gbuffer_depth(PosTc) - I.tctexgen.z;
 
-    gbuffer_data gbd = gbuffer_load_data(PosTc, I.hpos.xy);
-    float4 _P = float4(gbd.P, gbd.mtl);
-    float waterDepth = _P.z - I.tctexgen.z;
-    alphaDistort = saturate(5 * waterDepth);
+    alphaDistort = saturate(DEPTH_FALLOFF * waterDepth);
     faded = lerp(zero, faded, alphaDistort);
 
-    float2 faded_bx2 = (faded * 2 - 1) * W_DISTORT_POWER;
-    float faded_dot = dot(float3(faded_bx2, 0), .75); // 0.75
-    float alpha = .5f; // abs          (faded_dot);
+    float alpha = 0.5f;
+    faded = faded * POWER - 0.5 * POWER + 0.5;
 
-    faded = faded * POWER - .5 * POWER + 0.5;
-
-    //	Igor: need for alpha water
-    return float4(faded, 0.0h, alpha);
+    return float4(faded, 0.f, alpha);
 }

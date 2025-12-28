@@ -59,7 +59,6 @@ float4 plight_local(float m, float3 pnt, float3 normal, float4 c_tex, float3 lig
     float3 L2P = pnt - light_position; // light2point
     rsqr = dot(L2P, L2P); // distance 2 light (squared)
     rsqr = max(rsqr, atteps);
-    // rsqr = rsqr + 1.0;
 
     // vanilla atten - linear
     float att = saturate(1.0 - rsqr * light_range_rsq); // q-linear attenuate

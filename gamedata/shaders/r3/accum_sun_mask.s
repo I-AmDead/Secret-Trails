@@ -12,7 +12,6 @@ function element_1(shader, t_base, t_second, t_detail)
 		:blend(true, blend.zero,blend.one)
 		:aref(true, 1)
 	shader:dx10texture("s_position", "$user$position")
-	shader:dx10texture("s_diffuse", "$user$albedo")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10color_write_enable(false, false, false, false)
 end

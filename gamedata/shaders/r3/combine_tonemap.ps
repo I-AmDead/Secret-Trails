@@ -15,9 +15,11 @@ float4 main(p_screen I) : SV_Target
 
     // Simp: TODO: перенести в вершинный шейдер?
     float tm_scale = s_tonemap.Load(int3(0, 0, 0)).x;
+
 #ifndef SSFX_BEEFS_NVG
     img = tonemap(img, tm_scale);
 #else
+
     /////////// BEEFS NVGS CHANGES ///////////
     float lua_param_nvg_generation = pnv_param_2.w;
     float lua_param_nvg_gain_current = pnv_param_2.y;
@@ -34,15 +36,15 @@ float4 main(p_screen I) : SV_Target
 
         img.r *= 4.0f;
 
-        gbuffer_data gbd = gbuffer_load_data(center, I.hpos);
+        float4 diffuse = gbuffer_color(center);
         float4 L = s_accumulator.Sample(smp_nofilter, center); // diffuse.specular
-        L.rgb += L.a * SRGBToLinear(gbd.C.rgb); // illum in alpha
+        L.rgb += L.a * SRGBToLinear(diffuse.rgb); // illum in alpha
 
         // Turn s_accumulator data in to YUV and discard UV
         img.g = pow(dot(L.rgb, luma_conversion_coeff), 2.0f) * 1.3f;
 
         // Turn albedo into YUV and discard UV
-        img.b = dot(gbd.C.rgb, luma_conversion_coeff);
+        img.b = dot(diffuse.rgb, luma_conversion_coeff);
 
         img *= lua_param_nvg_gain_current;
 

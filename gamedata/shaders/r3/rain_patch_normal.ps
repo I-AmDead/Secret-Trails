@@ -66,20 +66,19 @@ float3 GetWaterFall(Texture2D s_texture, float2 tc)
 
 float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR, float4 pos2d : SV_Position) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(tc, pos2d);
-
     // Buffers
-    float4 _P = float4(gbd.P, 1.0);
-    float3 _N = normalize(gbd.N.xyz);
-    float3 _D = gbd.C;
-    float _M = gbd.mtl;
+    float3 view_space = gbuffer_view_space(tc, pos2d);
+    float3 normal = normalize(gbuffer_normal(tc));
+    float material = gbuffer_material(tc);
+    float hemi = gbuffer_hemi(tc);
+    float gloss = gbuffer_gloss(tc);
 
-    float4 PS = mul(m_shadow, _P);
-    float3 WorldP = mul(m_sunmask, _P);
-    float3 WorldN = mul(m_sunmask, _N.xyz);
+    float4 PS = mul(m_shadow, float4(view_space, 1.0));
+    float3 WorldP = mul(m_sunmask, float4(view_space, 1.0));
+    float3 WorldN = mul(m_sunmask, normal);
 
 #ifdef INDOOR_LEAKS_FIX
-    float Cover = shadow_hw(PS) * saturate(gbd.hemi * 10.0f);
+    float Cover = shadow_hw(PS) * saturate(hemi * 10.0f);
 #else
     // Read rain projection with some jetter. Also adding pixel normal
     // factor to jitter to make rain strips more realistic.
@@ -87,9 +86,9 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
 #endif
 
     // Distance
-    float p_len = length(_P.xyz);
-    bool is_flora = abs(_M - 0.15) < 0.04f;
-    bool is_terrain = abs(_M - 0.95) < 0.04f;
+    float p_len = length(view_space);
+    bool is_flora = abs(material - 0.15) < 0.04f;
+    bool is_terrain = abs(material - 0.95) < 0.04f;
 
     // Rain parameters ( Wetness > 0.5 = 100% | Rain Intensity > 0.66 = 100% )
     float Wetness = saturate(rain_params.y * 2.0f);
@@ -97,7 +96,7 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
 
     // [ BUMP ] -------------------------------------------
     float3 waterSplash = 0;
-    waterSplash.xy = ssfx_rain_ripples(s_water, WorldP.xz * ssfx_wetsurfaces_1.x, float3(RainInt, ssfx_wetsurfaces_1.w, 6), _P.z); // 0.9
+    waterSplash.xy = ssfx_rain_ripples(s_water, WorldP.xz * ssfx_wetsurfaces_1.x, float3(RainInt, ssfx_wetsurfaces_1.w, 6), view_space.z); // 0.9
 
     // Blending weights ( We don't want splashes or fall water on FLORA )
     float3 weights = WorldN.xyz * !is_flora;
@@ -111,7 +110,6 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
 
     // Adjust Water fall and add to the Normal
     weights.xz = saturate(abs(weights.xz) - 0.15f);
-
     weights.xz *= float2(weights.x > weights.z, weights.x < weights.z);
 
     water += waterFallX.yxz * weights.x;
@@ -127,19 +125,19 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
     water = mul(m_V, water);
 
     // Add water normal
-    _N = normalize(_N + water.xyz);
+    normal = normalize(normal + water.xyz);
 
     // [ GLOSS ] ------------------------------------------
     float Gloss = (0.15f + saturate(RainInt) * 0.05) * Wetness; // Wetness
 
     // Fade to full cover. ( RainFallof.y = far shadow rain rendering )
-    Cover += smoothstep(RainFallof.y - 20, RainFallof.y, _P.z);
+    Cover += smoothstep(RainFallof.y - 20, RainFallof.y, view_space.z);
 
     // If gloss is high, remove cover factor
-    Gloss *= HUD_Attenuation * saturate(Cover + (gbd.gloss > 0.3f));
+    Gloss *= HUD_Attenuation * saturate(Cover + (gloss > 0.3f));
 
     // Limit gloss on terrain ( Puddles )
-    Gloss = (is_terrain && gbd.gloss > 0.3f) ? 0.15f : Gloss;
+    Gloss = (is_terrain && gloss > 0.3f) ? 0.15f : Gloss;
 
     // Remove rain gloss from bottom surfaces
     Gloss *= saturate(weights.y * 1.5f);
@@ -147,5 +145,5 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
     //	Apply distance falloff
     Gloss *= smoothstep(250, 200, p_len);
 
-    return float4(_N.xyz, Gloss);
+    return float4(normal, Gloss);
 }

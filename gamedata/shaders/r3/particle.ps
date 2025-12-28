@@ -26,9 +26,9 @@ p_particle_out main(v2p I) : SV_Target
     float4 result = I.c * s_base.Sample(smp_base, I.tc0);
 
     float2 tcProj = I.tctexgen.xy / I.tctexgen.w;
-    float3 depth = gbuffer_get_pos(tcProj, I.hpos);
+    float depth = gbuffer_depth(tcProj);
+    float spaceDepth = depth - I.tctexgen.z - DEPTH_EPSILON;
 
-    float spaceDepth = depth.z - I.tctexgen.z - DEPTH_EPSILON;
     if (spaceDepth < -2 * DEPTH_EPSILON)
         spaceDepth = 100000.0h; //  Skybox doesn't draw into position buffer
 

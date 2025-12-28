@@ -37,12 +37,10 @@ float4 main(v2p_volume I) : SV_Target
     if (any(tc <= 0.0) || any(tc >= 1.0))
         return float4(0, 0, 0, 0);
 
-    gbuffer_data gbd = gbuffer_load_data(tc, pos2d);
+    float3 view_space = gbuffer_view_space(tc, pos2d);
+    float depth = view_space.z;
 
-    float3 P = gbd.P;
-    float depth = P.z;
-
-    float distance = length(P.xyz);
+    float distance = length(view_space);
     float fog = saturate(distance * fog_params.w + fog_params.x);
     fog = 1.0 - (1.0 - fog) * (1.0 - fog);
 
@@ -50,7 +48,7 @@ float4 main(v2p_volume I) : SV_Target
     float jitter = jitter0.Sample(smp_jitter, tc * screen_res.x / JITTER_TEXTURE_SIZE).x;
 
     float4 ray_origin = mul(m_shadow, float4(0.0, 0.0, 0.0, 1.0));
-    float4 ray_direction = mul(m_shadow, float4(P, 1.0));
+    float4 ray_direction = mul(m_shadow, float4(view_space, 1.0));
 
     float3 ray_increment = (ray_direction - ray_origin) / RAY_SAMPLES;
     float4 ray_position = float4(ray_origin.xyz - ray_increment.xyz * jitter, 1.0);

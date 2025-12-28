@@ -52,21 +52,21 @@ float4 main(vf I) : SV_Target
 
     // Load Data
     float2 PosTc = I.tctexgen.xy / I.tctexgen.z;
-    gbuffer_data gbd = gbuffer_load_data(PosTc, I.hpos.xy);
-    float4 _P = float4(gbd.P, 1.0f);
+    float gloss = gbuffer_gloss(PosTc);
+    float depth = gbuffer_depth(PosTc);
 
     // Water Surface to world space
     float3 w_s = mul(m_inv_V, Pv);
 
     // Trick to check if rain can fall on the water, gloss include the rain_apply_gloss
-    float rain_cover = step(0.035f * (-0.4f + rain_params.x), gbd.gloss - 0.04f);
+    float rain_cover = step(0.035f * (-0.4f + rain_params.x), gloss - 0.04f);
 
     // Rain intensity. Fadeout and rain cover
     half is_raining = rain_params.x > 0 ? 1.0f : 0.0f;
     float RainInt = clamp(rain_params.x * 1.6f, 0.65f * is_raining, 1.0f);
 
     // Ripples normal
-    float2 Ripples = ssfx_rain_ripples(s_rainsplash, (w_s.xz + eye_position.xz) * 0.13f, float3(RainInt, G_SSR_WATER_RAIN, 15.0f), _P.z);
+    float2 Ripples = ssfx_rain_ripples(s_rainsplash, (w_s.xz + eye_position.xz) * 0.13f, float3(RainInt, G_SSR_WATER_RAIN, 15.0f), depth);
     basenormal += float3(Ripples, 0) * is_raining;
 
     // Water wave intensity
