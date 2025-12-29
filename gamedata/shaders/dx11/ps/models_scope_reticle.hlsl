@@ -9,8 +9,8 @@
 */
 
 #include "common\common.h"
-#include "nv_utils.h"
-#include "thermal_utils.h"
+#include "common\nv_utils.h"
+#include "common\thermal_utils.h"
 
 #define REFLECTIONS_FACTOR 0.0
 #define SPECULAR_FACTOR 1.0
