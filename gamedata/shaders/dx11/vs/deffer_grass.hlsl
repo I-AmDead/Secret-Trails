@@ -135,10 +135,6 @@ v2p_bumped main(v_detail v)
     O.M3 = xform[2];
 
     // Eye-space pos/normal
-
-    // Simp: clamp ??????? ? ????, ?????? ??? ????????????????!
-    /// hemi = clamp(hemi, 0.05f, 1.0f); // Some spots are bugged ( Full black ), better if we limit the value till a better solution. // Option -> v_hemi(N);
-
     float3 Pe = mul(m_V, pos);
     O.tcdh = v.misc.xyyy;
     O.hpos = mul(m_VP, pos);
