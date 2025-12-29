@@ -1,0 +1,5 @@
+#include "common\common.h"
+
+uniform Texture2D samplero_pepero;
+
+float4 main(p_screen I) : SV_TARGET { return samplero_pepero.Sample(smp_nofilter, I.tc0); }

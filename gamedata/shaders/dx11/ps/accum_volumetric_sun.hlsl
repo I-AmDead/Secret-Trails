@@ -1,0 +1,77 @@
+#include "common\common.h"
+
+#undef ULTRA_SHADOWS_ON
+#undef USE_ULTRA_SHADOWS
+
+#define RAY_PATH 2.0h
+#define JITTER_TEXTURE_SIZE 64.0f
+
+#ifdef SUN_SHAFTS_QUALITY
+#if SUN_SHAFTS_QUALITY == 1
+#define FILTER_LOW
+#define RAY_SAMPLES 15
+#elif SUN_SHAFTS_QUALITY == 2
+#define RAY_SAMPLES 25
+#elif SUN_SHAFTS_QUALITY == 3
+#define RAY_SAMPLES 30
+#endif
+#endif
+
+#include "common\shadow.h"
+
+float4 sun_shafts_intensity;
+
+uniform float4 any_test;
+float4 main(v2p_volume I) : SV_Target
+{
+#ifndef SUN_SHAFTS_QUALITY
+    return float4(0, 0, 0, 0);
+#else //	SUN_SHAFTS_QUALITY
+
+    float max_density = sun_shafts_intensity;
+    float inner_density = 4.0f;
+
+    float2 tc = I.tc.xy / I.tc.w;
+    float4 pos2d = I.hpos;
+
+    if (any(tc <= 0.0) || any(tc >= 1.0))
+        return float4(0, 0, 0, 0);
+
+    float3 view_space = gbuffer_view_space(tc, pos2d);
+    float depth = view_space.z;
+
+    float distance = length(view_space);
+    float fog = saturate(distance * fog_params.w + fog_params.x);
+    fog = 1.0 - (1.0 - fog) * (1.0 - fog);
+
+    // Variable ray length, variable step dencity, use jittering
+    float jitter = jitter0.Sample(smp_jitter, tc * screen_res.x / JITTER_TEXTURE_SIZE).x;
+
+    float4 ray_origin = mul(m_shadow, float4(0.0, 0.0, 0.0, 1.0));
+    float4 ray_direction = mul(m_shadow, float4(view_space, 1.0));
+
+    float3 ray_increment = (ray_direction - ray_origin) / RAY_SAMPLES;
+    float4 ray_position = float4(ray_origin.xyz - ray_increment.xyz * jitter, 1.0);
+
+    float total_light = 0.0;
+
+    if (depth > 0.3)
+    {
+        [loop] for (int i = 0; i < RAY_SAMPLES; i++)
+        {
+            float shadow = sample_hw_pcf(ray_position, 0);
+            total_light += lerp(shadow, 1.0, fog);
+            ray_position.xyz += lerp(ray_increment, float3(0.0, 0.0, 0.0), saturate(fog));
+        }
+    }
+
+    total_light *= length(ray_increment);
+
+    if (depth < 0.0001)
+        total_light = sun_shafts_intensity;
+
+    total_light = 1.0 - saturate(exp(-total_light * inner_density));
+
+    return Ldynamic_color * total_light * max_density;
+#endif //	SUN_SHAFTS_QUALITY
+}

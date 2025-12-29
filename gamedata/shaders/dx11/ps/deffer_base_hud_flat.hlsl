@@ -1,0 +1,69 @@
+#include "common\common.h"
+#include "common\sload.h"
+#include "common\screenspace\screenspace_hud_raindrops.h"
+
+f_deffer main(p_flat I)
+{
+    f_deffer O;
+
+    // HUD Rain drops - SSS Update 17
+    // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
+
+    float4 drops = 0; // xy = Normal | z = Overall str | w = reflection str
+
+#ifndef USE_AREF
+    if (ssfx_hud_drops_1.y > 0)
+    {
+        // Calc droplets
+        drops.xyz = ssfx_hud_raindrops(s_hud_rain, I.RDrops.xyz, 1.0f);
+
+        // Only apply to facing up surfaces [ World Y+ ]
+        drops.xyz *= saturate(I.RDrops.w);
+
+        // Intensity from script ( Cover + Rain intensity )
+        drops.xyz *= ssfx_hud_drops_1.y;
+
+        // Refraction
+        I.tcdh.xy = saturate(I.tcdh.xy + drops.xy * ssfx_hud_drops_1.w * 0.1f);
+
+        // Reflection adjustments
+        drops.w = ssfx_hud_drops_1.z * dot(L_hemi_color, SSFX_HUD_LIGHTVECTOR);
+        drops.w = max(drops.w * 0.1f, 3.0f);
+    }
+
+    float gloss = drops.z * ssfx_hud_drops_2.w * 0.25f;
+    gloss += ssfx_gloss.w;
+#else
+    float gloss = def_gloss;
+    gloss += ssfx_gloss.w;
+#endif
+
+    // diffuse
+    float3 D = tbase(I.tcdh);
+
+#ifdef USE_AREF
+    hashed_alpha_test(I.tcdh.xy, D.a);
+#endif
+
+#ifdef USE_TDETAIL
+    //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
+    D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
+#endif
+
+    // hemi,sun,material
+    float ms = xmaterial;
+#ifdef USE_LM_HEMI
+    float4 lm = s_hemi.Sample(smp_rtlinear, I.lmh);
+    float h = get_hemi(lm);
+#else
+    float h = I.position.w;
+#endif
+
+    // 2. Standart output
+    float4 Ne = float4(normalize((float3)I.N.xyz + float3(drops.xy * drops.w, 0.0f)), h);
+    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, gloss));
+
+    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+
+    return O;
+}

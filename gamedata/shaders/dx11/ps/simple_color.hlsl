@@ -1,0 +1,10 @@
+#include "common\common.h"
+
+uniform float3 crosshair_color;
+
+float4 main(float4 C : COLOR0) : SV_Target
+{
+    float4 color = C;
+
+    return color;
+}

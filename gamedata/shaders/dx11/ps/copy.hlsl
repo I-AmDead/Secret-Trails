@@ -1,0 +1,6 @@
+#include "common\common.h"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+//	TODO: DX10: move to load instead of sample (will need to provide integer texture coordinates)
+float4 main(float2 tc : TEXCOORD0) : SV_Target { return s_generic.Sample(smp_nofilter, tc); }

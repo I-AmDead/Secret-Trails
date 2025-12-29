@@ -1,0 +1,58 @@
+#include "common\common.h"
+#include "common\lmodel.h"
+
+#if SUN_QUALITY > 2
+#define ULTRA_SHADOWS_ON
+#endif
+
+#ifdef ULTRA_SHADOWS_ON
+#define USE_ULTRA_SHADOWS
+#endif
+
+#include "common\shadow.h"
+
+// Check Screen Space Shaders modules & addons
+#include "common\screenspace\check_screenspace.h"
+
+#ifdef SSFX_SSS
+#include "common\screenspace\screenspace_shadows.h"
+#endif
+
+float4 main(v2p_volume I) : SV_Target
+{
+    gbuffer_data gbd = gbuffer_load_data(I.tc.xy / I.tc.w, I.hpos);
+
+    //	Emulate virtual offset
+    gbd.P += gbd.N * 0.015f;
+
+    float4 _P = float4(gbd.P, gbd.mtl);
+    float4 _N = float4(gbd.N, gbd.hemi);
+    float4 _C = float4(gbd.C, gbd.gloss);
+
+    float3 light = plight_infinity(_P.w, _P, _N, _C, Ldynamic_dir);
+
+    // SHADOWS FIXES - SSS Update 19
+    // Normal Offset for biasing
+    float3 NormalOffset = 0;
+
+#ifdef SSFX_SHADOWS
+    NormalOffset = _N * ssfx_shadow_bias.y;
+#endif
+
+    float4 P4 = float4(_P.xyz + NormalOffset, 1.0);
+    float4 PS = mul(m_shadow, P4);
+    float s = sunmask(P4);
+    s *= shadow(PS);
+
+#ifdef SSFX_SSS
+    s *= SSFX_ScreenSpaceShadows(_P, I.hpos);
+#endif
+
+#ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed
+    float3 result = SRGBToLinear(s);
+    result.rgb *= light * SRGBToLinear(Ldynamic_color.rgb);
+    return float4(result.rgb, 0.f);
+#else
+    return float4(Ldynamic_color * light * s, 0.f);
+#endif
+}

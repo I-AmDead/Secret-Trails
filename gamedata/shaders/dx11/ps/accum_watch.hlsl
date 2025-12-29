@@ -1,0 +1,38 @@
+#include "common\common.h"
+#include "common\models_watch_effects.h"
+
+uniform float4 m_affects;
+
+float4 main(p_flat I) : SV_Target
+{
+    // diffuse
+    float3 D = s_base.Sample(smp_base, I.tcdh); // IN:  rgb.a
+    D = SRGBToLinear(D);
+
+    if (m_affects.x > 0.41)
+        D += glitch_cube(I.tcdh);
+    else
+    {
+        if (m_affects.a == 0)
+        {
+            D += NixieTime(I.tcdh);
+        }
+    }
+
+    if (m_affects.a > 0 && m_affects.x >= 0.08)
+        D += watch_loading(I.tcdh);
+
+    float brightness = 1.0 - m_affects.x - m_affects.x;
+    float4 color = float4(D.rgb, brightness);
+
+    float mig = m_affects.x < 0.41 ? 1.0f - (m_affects.x * 2.f) : 1.f;
+
+    color.x *= 0.3;
+    color.y *= 0.3;
+    color.z *= 0.3;
+    color.w *= 0.3;
+
+    float4 finalcolor = random(timers.xz) > mig ? float4(0.f, 0.f, 0.f, 0.f) : color;
+
+    return finalcolor;
+}
