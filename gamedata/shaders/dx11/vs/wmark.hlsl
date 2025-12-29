@@ -1,5 +1,5 @@
 #include "common\common.h"
-#include "shared\wmark.h"
+#include "common\shared\wmark.h"
 
 struct vf
 {
