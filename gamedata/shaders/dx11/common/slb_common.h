@@ -1,7 +1,7 @@
 #ifndef SLB_COMMON_H
 #define SLB_COMMON_H
 
-#include "slb_aliases.h"
+#include "common\slb_aliases.h"
 
 #define SLB_PI 3.14159265358979323846
 #define SLB_TAU 6.28318530717958647693

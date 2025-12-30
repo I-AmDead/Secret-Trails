@@ -1,8 +1,8 @@
 #ifndef SLB_MOTION_BLUR_H
 #define SLB_MOTION_BLUR_H
 
-#include "slb_common.h"
-#include "slb_motion_blur_settings.h"
+#include "common\slb_common.h"
+#include "common\slb_motion_blur_settings.h"
 
 float3 SLB_Screen_GetImage(float2 tc) { return SLB_SAMPLER_LOAD(s_image, int3(tc * screen_res.xy - 0.25, 0)).rgb; }
 
