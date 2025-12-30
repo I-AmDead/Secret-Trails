@@ -377,7 +377,7 @@ end
 -- ' Таблица для хранения созданных саунд обжектов.
 sound_object_by_theme = {}
 -- ' type = [random|seq|looped]
-function get_sound_object(theme, t_type)
+function get_sound_object(theme, t_type, s_type)
     -- log3("ph_snd_themes for theme %s: %s", theme, ph_snd_themes[theme])
     if not ph_snd_themes[theme] then
         -- abort("ph_snd_themes for theme %s", tostring(theme))
@@ -434,12 +434,10 @@ function get_sound_object(theme, t_type)
     -- ' Проверяем создан ли у нас соответствующий саунд обжект или его надо создать
     if not sound_object_by_theme[theme][play_id] then
         if type(ph_snd_themes[theme][play_id]) == "table" then
-            sound_object_by_theme[theme][play_id .. "_r"] = get_safe_sound_object(
-                ph_snd_themes[theme][play_id][1] .. "_r")
-            sound_object_by_theme[theme][play_id .. "_l"] = get_safe_sound_object(
-                ph_snd_themes[theme][play_id][1] .. "_l")
+            sound_object_by_theme[theme][play_id .. "_r"] = get_safe_sound_object(ph_snd_themes[theme][play_id][1] .. "_r", s_type)
+            sound_object_by_theme[theme][play_id .. "_l"] = get_safe_sound_object(ph_snd_themes[theme][play_id][1] .. "_l", s_type)
         else
-            sound_object_by_theme[theme][play_id] = get_safe_sound_object(ph_snd_themes[theme][play_id])
+            sound_object_by_theme[theme][play_id] = get_safe_sound_object(ph_snd_themes[theme][play_id], s_type)
         end
     end
 
@@ -456,11 +454,18 @@ end
 -- Обертка вокруг функции, возвращающий звуковой объект.
 local sound_object_by_path = {}
 
-function get_safe_sound_object(path)
+function get_safe_sound_object(path, s_type)
     ASSERT(path, "path is required")
-    if not sound_object_by_path[path] then
-        sound_object_by_path[path] = sound_object(path)
+
+    local stype = sound_object.effect
+    if s_type == "music" then
+        stype = sound_object.music
     end
+
+    if not sound_object_by_path[path] then
+        sound_object_by_path[path] = sound_object(path, snd_type.no_sound, stype)
+    end
+
     return sound_object_by_path[path]
 end
 
