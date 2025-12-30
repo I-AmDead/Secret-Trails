@@ -254,15 +254,29 @@ end
 function se_respawn:spawn()
     if not self.spawn_once then
         -- Пробегаемся по списку уже заспавненных объектов и удаляем из них мертвые либо уничтоженные.
-        for k, v in pairs(self.spawned_obj) do
-            local obj = level.object_by_id(v)
+        for i = #self.spawned_obj, 1, -1 do
+            local obj_id = self.spawned_obj[i]
+            local obj = level.object_by_id(obj_id)
+            local is_level_object = true
+    
+            -- Если не нашли на уровне, ищем в ALife
+            if not obj then
+                obj = alife():object(obj_id)
+                is_level_object = false
+            end
 
             if obj then
-                if (IsStalker(obj) or IsMonster(obj)) and obj:alive() then
-                    table.remove(self.spawned_obj, k)
+                if IsStalker(obj) or IsMonster(obj) then
+                    if is_level_object then
+                        if obj:alive() then
+                            table.remove(self.spawned_obj, i)
+                        end
+                    else
+                        table.remove(self.spawned_obj, i)
+                    end
                 end
             else
-                table.remove(self.spawned_obj, k)
+                table.remove(self.spawned_obj, i)
             end
         end
     end
@@ -410,8 +424,8 @@ function init_respawn_params(obj)
 
     obj.spawned_goes_online = get_bool(sect, "spawned_goes_online", nil, ini)
     obj.spawn_once = get_bool(sect, "spawn_once", false, ini)
-    obj.min_count = get_u32(sect, "min_count", 0, ini)
-    obj.max_count = get_float(sect, "max_count", -1, ini)
+    obj.min_count = get_u32(sect, "min_spawn", 0, ini)
+    obj.max_count = get_float(sect, "max_spawn", -1, ini)
     if obj.min_count > obj.max_count and obj.max_count ~= -1 then
         abort("RESPAWN: [%s] min_count > max_count", obj:name())
     end
