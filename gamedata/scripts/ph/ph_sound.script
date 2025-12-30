@@ -46,8 +46,7 @@ end
 
 function snd_source:use_callback(obj, actor)
     if self.st.on_use then
-        if xr_logic.switch_to_section(self.object, self.st, xr_logic.pick_section_from_condlist(db.actor, self.object,
-            self.st.on_use.condlist)) then
+        if xr_logic.switch_to_section(self.object, self.st, xr_logic.pick_section_from_condlist(db.actor, self.object, self.st.on_use.condlist)) then
             return true
         end
     end
@@ -84,10 +83,12 @@ function snd_source:update(delta)
             if self.st.looped and self.st.snd_object then -- Зациклить звук можно только если он один. А при `looped = true` в секции логики предполагается что xr_sound.get_sound_object должен выбирать звуки из таблицы последовательно (их может быть много)
                 flags = flags + sound_object.looped
             end
+            flags = flags + sound_object.music
             self.played_sound:play_at_pos(self.object, self.object:position(), 0, flags)
         else
             self.st.signals["theme_end"] = true
         end
+    
         self.first_sound = false
     end
     if self.played_sound and self.st.volume_control then
