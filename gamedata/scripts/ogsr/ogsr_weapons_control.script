@@ -9,6 +9,8 @@ local function actor_on_weapon_fire()
 end
 
 local function actor_on_weapon_zoom_in(obj)
+    if not obj:get_weapon() then return end
+
     if not obj:is_binoculars() then
         if obj:get_weapon().zoom_rotation_factor < 0.05 then
             game.play_hud_anm("aim_end.anm", 2, 1, -0.5, false)
@@ -17,6 +19,8 @@ local function actor_on_weapon_zoom_in(obj)
 end
 
 local function actor_on_weapon_zoom_out(obj)
+    if not obj:get_weapon() then return end
+
     if not obj:is_binoculars() then
         if obj:get_weapon().zoom_rotation_factor > 0.95 then
             game.play_hud_anm("aim_end.anm", 2, 1, 0.5, false)
@@ -25,9 +29,10 @@ local function actor_on_weapon_zoom_out(obj)
 end
 
 local function on_actor_weapon_zoom_change(obj)
+    if not obj:get_weapon() then return end
+
     if ogse_wpn_utils.get_dynamic_zoom_enable(obj) then
         ogse.save_var(obj:section() .. "dynamic_factor", ogse_wpn_utils.get_zoom_factor(obj))
-        log3("obj sect = %s, dynzoom_factor = %s", obj:section(), ogse_wpn_utils.get_zoom_factor(obj))
     end
 end
 
@@ -38,14 +43,16 @@ local function on_update()
     local wpn = db.actor:active_item()
     if not wpn then return end
 
+    if not wpn:get_weapon() then return end
+
     if last_weapon_id and last_weapon_id == wpn:id() then return end
     last_weapon_id = wpn:id()
 
-    local dynzoom_factor = ogse.load_var(wpn:section() .. "dynamic_factor", ogse_wpn_utils.get_zoom_factor(wpn))
-    ogse_wpn_utils.set_dynamic_factor(wpn, dynzoom_factor)
-    ogse_wpn_utils.set_zoom_factor(wpn, dynzoom_factor)
-
-    log3("wpn sect = %s, dynzoom_factor = %s", wpn:section(), dynzoom_factor)
+    if ogse_wpn_utils.get_dynamic_zoom_enable(wpn) then
+        local dynzoom_factor = ogse.load_var(wpn:section() .. "dynamic_factor", ogse_wpn_utils.get_zoom_factor(wpn))
+        ogse_wpn_utils.set_dynamic_factor(wpn, dynzoom_factor)
+        ogse_wpn_utils.set_zoom_factor(wpn, dynzoom_factor)
+    end
 end
 
 function attach(sm)
