@@ -1,7 +1,7 @@
 #include "common\common.h"
 #include "common\tess.h"
 
-HS_CONSTANT_DATA_OUTPUT PatchConstantsHS(InputPatch<p_bumped, 3> ip, uint PatchID : SV_PrimitiveID)
+HS_CONSTANT_DATA_OUTPUT PatchConstantsHS(in InputPatch<p_bumped, 3> ip, in uint PatchID : SV_PrimitiveID)
 {
     HS_CONSTANT_DATA_OUTPUT Output;
 
@@ -26,20 +26,15 @@ HS_CONSTANT_DATA_OUTPUT PatchConstantsHS(InputPatch<p_bumped, 3> ip, uint PatchI
 
 #endif
 
-    //	Data for interpolation in screen space
-    //	float w0 = mul(m_P, float4(ip[2].position.xyz, 1)).w;
-    //	float w1 = mul(m_P, float4(ip[1].position.xyz, 1)).w;
-    //	float w2 = mul(m_P, float4(ip[0].position.xyz, 1)).w;
-
-    //	Output.www = float3(w0, w1, w2);
-
     return Output;
 }
 
-[domain("tri")][partitioning("pow2")][outputtopology("triangle_ccw")][outputcontrolpoints(3)][patchconstantfunc("PatchConstantsHS")] p_bumped
-main(InputPatch<p_bumped, 3> ip, uint i
-     : SV_OutputControlPointID, uint PatchID
-     : SV_PrimitiveID)
+[domain("tri")]
+[partitioning("pow2")]
+[outputtopology("triangle_ccw")]
+[outputcontrolpoints(3)]
+[patchconstantfunc("PatchConstantsHS")]
+p_bumped main(in InputPatch<p_bumped, 3> ip, in uint i : SV_OutputControlPointID, in uint PatchID : SV_PrimitiveID)
 {
     p_bumped ouput;
 
@@ -48,16 +43,21 @@ main(InputPatch<p_bumped, 3> ip, uint i
     ouput.M1 = ip[i].M1;
     ouput.M2 = ip[i].M2;
     ouput.M3 = ip[i].M3;
+
 #ifdef USE_TDETAIL
     ouput.tcdbump = ip[i].tcdbump;
 #endif
+
 #ifdef USE_LM_HEMI
     ouput.lmh = ip[i].lmh;
 #endif
+
     ouput.RDrops = ip[i].RDrops;
 
     ouput.hpos_curr = ip[i].hpos_curr;
     ouput.hpos_old = ip[i].hpos_old;
+
+    ouput.hpos = ip[i].hpos;
 
     return ouput;
 }
