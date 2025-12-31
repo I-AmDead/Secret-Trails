@@ -181,6 +181,7 @@ function se_respawn:create(prob)
     elseif tostring(prob) == "false" then
         prob = 0
     end
+
     if tonumber(prob) == nil then
         abort("RESPAWN[%s]spawn probability doesn't set", tostring(self:name()))
         prob = 0
@@ -222,8 +223,10 @@ function se_respawn:create(prob)
         local obj
         if not parent_id then
             obj = alife():create(spawn_section, pos, lvid, gvid)
+            log3("se respawn: create section %s, position = %s, %s, %s", spawn_section, pos.x, pos.y, pos.z)
         else
             obj = alife():create(spawn_section, pos, lvid, gvid, parent_id)
+            log3("se respawn: create section %s, position = %s, %s, %s", spawn_section, pos.x, pos.y, pos.z)
         end
 
         local tt = self.sectSpawnProps[spawn_section]
@@ -257,36 +260,19 @@ function se_respawn:spawn()
         for i = #self.spawned_obj, 1, -1 do
             local obj_id = self.spawned_obj[i]
             local obj = level.object_by_id(obj_id)
-            local is_level_object = true
-    
-            -- Если не нашли на уровне, ищем в ALife
-            if not obj then
-                obj = alife():object(obj_id)
-                is_level_object = false
-            end
 
             if obj then
                 if IsStalker(obj) or IsMonster(obj) then
-                    if is_level_object then
-                        if obj:alive() then
-                            table.remove(self.spawned_obj, i)
-                        end
-                    else
+                    if not obj:alive() then
                         table.remove(self.spawned_obj, i)
                     end
                 end
-            else
-                table.remove(self.spawned_obj, i)
             end
         end
     end
 
     if xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions) == "0" then
         return
-    end
-
-    if self.spawn_once and not self.already_once_spawned then
-        self.already_once_spawned = true
     end
 
     -- экстренный спаун минимального количества объектов
@@ -322,9 +308,6 @@ end
 
 -- Обновление респавнера. В зависимости от настроек обновляется либо только в офлайне, либо и там и там.
 function se_respawn:execute()
-    if self.already_once_spawned == true then
-        return
-    end
     -- ' Выходим, если у нас установлен событийный спавн.
     if self.idle_spawn_min == -1 then
         return
@@ -423,7 +406,6 @@ function init_respawn_params(obj)
     end
 
     obj.spawned_goes_online = get_bool(sect, "spawned_goes_online", nil, ini)
-    obj.spawn_once = get_bool(sect, "spawn_once", false, ini)
     obj.min_count = get_u32(sect, "min_spawn", 0, ini)
     obj.max_count = get_float(sect, "max_spawn", -1, ini)
     if obj.min_count > obj.max_count and obj.max_count ~= -1 then
