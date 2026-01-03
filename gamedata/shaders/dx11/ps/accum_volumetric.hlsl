@@ -1,67 +1,39 @@
-/**
- * @ Version: SCREEN SPACE SHADERS - UPDATE 20
- * @ Description: Non-directional volumetric shader
- * @ Modified time: 2024-02-20 07:26
- * @ Author: https://www.moddb.com/members/ascii1457
- * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
- */
-
 #include "common\common.h"
 #include "common\shadow.h"
 
-#ifndef ISAMPLE
-#define ISAMPLE 0
-#endif
-
-struct v2p
+struct PSInput
 {
-    float3 lightToPos : TEXCOORD0; // light center to plane vector
-    float3 vPos : TEXCOORD1; // position in camera space
-    float fDensity : TEXCOORD2; // plane density along Z axis
+    float4 hpos : SV_Position;
+    float4 hpos2d : TEXCOORD0;
 };
-
-float4 m_lmap[2];
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Pixel
-float4 main(v2p I) : SV_Target
+float4 main(PSInput s) : SV_Target
 {
-    // Screen UV (view to uv) // TODO : Use the Matrix mul from the vertex shader
-    float4 Postc = mul(m_P, float4(I.vPos, 1));
-    float2 tc = (Postc.xy / Postc.w) * float2(0.5f, -0.5f) + 0.5f;
-
-    // Shadow matrix
-    float4 P4 = float4(I.vPos, 1);
-    float4 PS = mul(m_shadow, P4);
-    PS.xyz /= PS.w;
-
-    // Occlusion from light perspective.
-    float occ = s_smap.SampleCmpLevelZero(smp_smap, PS.xy, PS.z).x;
-
-    // Occlusion from player perspective.
-    float _depth = 0;
-    _depth = s_position.Sample(smp_nofilter, tc).z;
-    _depth = _depth <= SKY_EPS ? 10000 : _depth; // Sky
-
-    occ *= _depth < Postc.z ? 0.0f : 1.0f;
-
-    // Texture mask
-    PS.x = dot(P4, m_lmap[0]);
-    PS.y = dot(P4, m_lmap[1]);
-    PS.xy /= PS.w;
-    float4 lightmap = s_lmap.Sample(smp_jitter, PS.xy);
-
-    // Attenuate (Vanilla light attenuation)
-    float rsqr = dot(I.lightToPos, I.lightToPos); // distance 2 light (squared)
-    float att = saturate(1.0f - rsqr * Ldynamic_pos.w); // q-linear attenuate
-
-    // Add extra attenuation when passing through.
-    att *= saturate(Postc.z * 2.5f);
-
-    // Result
-    float3 result = I.fDensity * occ * att;
-    result *= lightmap;
-    result *= Ldynamic_color;
-
-    return float4(result, 0);
+    if (Ldynamic_color.w == 0.)
+        return 0..xxxx;
+    uint2 r = uint2(s.hpos.xy);
+    uint m = (r.x ^ r.y) << 1u;
+    float z = float((m & 4u | r.y & 2u) >> 1u | (m & 2u | r.y & 1u) << 2u) * .0625;
+    float2 f = s.hpos2d.xy / s.hpos2d.w * float2(.5, -.5) + .5, w = f * screen_res.xy;
+    float u = s_position.SampleLevel(smp_nofilter, f, 0.).z;
+    u = u < 1e-4 ? 10000 : u;
+    u = min(u, s.hpos.w);
+    float3 h = float3(u * (w * pos_decompression_params.zw - pos_decompression_params.xy), u), e = mul(m_inv_V, float4(h, 1.)).xyz;
+    uint x = 8;
+    float p = length(e - eye_position) / x;
+    float3 l = eye_position, n = normalize(e - eye_position), y = n * p, d = l + y * z;
+    float L = 0.;
+    [loop] for (uint P = 0; P < x; ++P)
+    {
+        float4 o = mul(m_shadow, float4(d, 1.));
+        o /= o.w;
+        float t = s_smap.SampleCmpLevelZero(smp_smap, o.xy, o.z + 2e-4).x;
+        float3 V = Ldynamic_pos.xyz - d.xyz;
+        float a = dot(V, V), i = saturate(1. - a * Ldynamic_pos.w);
+        i *= saturate(dot(-Ldynamic_dir.xyz, V * rsqrt(a)) + Ldynamic_dir.w);
+        L += t * i;
+        d += y;
+    }
+    L *= length(y);
+    L = 1. - exp(-L / 8);
+    return float4(L * Ldynamic_color.xyz, 0.);
 }

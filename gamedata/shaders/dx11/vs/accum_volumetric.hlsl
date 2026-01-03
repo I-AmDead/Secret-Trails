@@ -1,37 +1,17 @@
-#include "common\common.h"
-
-uniform float3 vMinBounds;
-uniform float3 vMaxBounds;
-uniform float4 FrustumClipPlane[6];
-
-struct v2p
+struct VSOutput
 {
-    float3 lightToPos : TEXCOORD0; // light center to plane vector
-    float3 vPos : TEXCOORD1; // position in camera space
-    float fDensity : TEXCOORD2; // plane density alon Z axis
-    float3 clip0 : SV_ClipDistance0;
-    float3 clip1 : SV_ClipDistance1;
     float4 hpos : SV_Position;
+    float4 hpos2d : TEXCOORD0;
 };
 
-v2p main(float3 P : POSITION)
+float4x4 m_WVP;
+
+VSOutput main(in float3 vertices : POSITION)
 {
-    v2p o;
-    float4 vPos;
-    vPos.xyz = lerp(vMinBounds, vMaxBounds, P); //	Position in camera space
-    vPos.w = 1.f;
-    o.hpos = mul(m_P, vPos); // xform, input in camera coordinates
+    VSOutput O;
 
-    o.lightToPos = vPos.xyz - Ldynamic_pos.xyz;
-    o.vPos = vPos;
+    O.hpos = mul(m_WVP, float4(vertices, 1.0));
+    O.hpos2d = O.hpos; // No transformation
 
-    o.fDensity = 1.0 / 40.0;
-
-    for (int i = 0; i < 3; ++i)
-    {
-        o.clip0[i] = dot(o.hpos, FrustumClipPlane[i]);
-        o.clip1[i] = dot(o.hpos, FrustumClipPlane[i + 3]);
-    }
-
-    return o;
+    return O;
 }
