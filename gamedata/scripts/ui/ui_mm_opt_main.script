@@ -51,6 +51,8 @@ local gameplay_params = {
 
     --{ "g_game_difficulty",           "mm_opt_gameplay",  "track",  { "ui_mm_difficulty", hint_colors.white, "", "" },                                                         { is_token = true} },
 
+    { "g_language",                  "mm_opt_gameplay",  "track", { "ui_mm_language", "", hint_colors.white },                                                                { is_token = true, depend = "lang" } },
+
     { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_r", "", hint_colors.white },                                                           { index = 0, step = 0.01, min = 0, max = 1 } },
     { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_g", "", hint_colors.white },                                                           { index = 1, step = 0.01, min = 0, max = 1 } },
     { "watch_color_params",          "mm_opt_gameplay",  "track", { "ui_mm_watch_color_b", "", hint_colors.white },                                                           { index = 2, step = 0.01, min = 0, max = 1 } },
@@ -89,7 +91,7 @@ local audio_params = {
     separator("sep_audio"),
     separator(""),
 
-    { "snd_device",                  "mm_opt_sound",     "track", { "ui_mm_snd_device", "", hint_colors.white },                                                              { is_token = true, depend = "restart"} },
+    { "snd_device",                  "mm_opt_sound",     "track", { "ui_mm_snd_device", "", hint_colors.white },                                                              { is_token = true, depend = "snd"} },
     { "snd_volume",                  "mm_opt_sound",     "track", { "ui_mm_master_volume", "", hint_colors.white },                                                           { step = 0.01} },
     { "snd_volume_effect",           "mm_opt_sound",     "track", { "ui_mm_effect_volume", "", hint_colors.white },                                                           { step = 0.01} },
     { "snd_volume_weapon",           "mm_opt_sound",     "track", { "ui_mm_weapon_volume", "", hint_colors.white },                                                           { step = 0.01} },
@@ -357,9 +359,7 @@ function options_dialog:OnBtnAccept()
     self:UpdateOptValues(true)
 
     self:GetHolder():start_stop_menu(self, true)
-    if self.owner then
-        self.owner:Show(true)
-    end
+
 
     cmd("cfg_save")
 end
@@ -369,9 +369,7 @@ function options_dialog:OnBtnCancel()
     self:UpdateOptValues(false)
 
     self:GetHolder():start_stop_menu(self, true)
-    if self.owner then
-        self.owner:Show(true)
-    end
+
 end
 
 function options_dialog:SetPage(index)
