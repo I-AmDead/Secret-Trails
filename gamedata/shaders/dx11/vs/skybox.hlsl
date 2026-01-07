@@ -33,7 +33,7 @@ v2p main(vi v)
     o.tc0.xyz = v.tc0; // copy tc
     o.tc1.xyz = v.tc1; // copy tc
 
-    float3 tint = v.c.rgb * 1.7;
+    float3 tint = v.c.rgb * 1.5;
 
     o.c = float4(tint, v.c.a); // copy color, pre-scale by tonemap
 

@@ -37,8 +37,7 @@ float3 Lit_GGX(float NdotL, float NdotH, float NdotV, float VdotH, float3 F0, fl
     float D = D_GGX(NdotH, a2);
 
     // Masking-shadowing
-    // float V = G2_Smith_Correlated(NdotL, NdotV, a);
-    float V = G2_SmithJointApprox(NdotL, NdotV, a); // denom included?
+    float V = G2_Smith_Correlated(NdotL, NdotV, a);
 
     // Fresnel
     float3 f90Atten = saturate(50 * F0); // UE4 specular shadowing
@@ -48,10 +47,9 @@ float3 Lit_GGX(float NdotL, float NdotH, float NdotV, float VdotH, float3 F0, fl
     float3 numerator = (D * V) * F;
 
     // Denominator
-    // float denominator = 4.0 * NdotV;
+    float denominator = max(1e-5, 4.0 * NdotV * NdotL);
 
-    return numerator; // UE4 has no denom
-    // return numerator / denominator;
+    return numerator / denominator;
 }
 
 // UE4 mobile approx
@@ -106,8 +104,8 @@ float2 integrate_brdf(float roughness, float NV)
 float3 EnvGGX(float3 f0, float rough, float nDotV)
 {
     // UE4 GGX
-    float3 f90Atten = saturate(50 * f0); // UE4 specular shadowing
-    float2 AB = EnvBRDFApprox(rough, nDotV);
+    float3 f90Atten = saturate(1.0 - rough);
+    float2 AB = GGXEnvironmentBRDFScaleBias(rough, nDotV);
 
     // Matt Pettineo GGX
     // float2 AB = GGXEnvironmentBRDFScaleBias(rough, nDotV);

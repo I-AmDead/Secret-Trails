@@ -128,7 +128,7 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
     normal = normalize(normal + water.xyz);
 
     // [ GLOSS ] ------------------------------------------
-    float Gloss = (0.15f + saturate(RainInt) * 0.05) * Wetness; // Wetness
+    float Gloss = (0.05f + saturate(RainInt) * 0.03) * Wetness; // Wetness
 
     // Fade to full cover. ( RainFallof.y = far shadow rain rendering )
     Cover += smoothstep(RainFallof.y - 20, RainFallof.y, view_space.z);
@@ -137,7 +137,7 @@ float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR,
     Gloss *= HUD_Attenuation * saturate(Cover + (gloss > 0.3f));
 
     // Limit gloss on terrain ( Puddles )
-    Gloss = (is_terrain && gloss > 0.3f) ? 0.15f : Gloss;
+    Gloss = (is_terrain && gloss > 0.3f) ? 0.08f : Gloss;
 
     // Remove rain gloss from bottom surfaces
     Gloss *= saturate(weights.y * 1.5f);

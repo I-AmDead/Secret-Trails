@@ -1,39 +1,30 @@
-/**
- * @ Description: Enhanced Shaders and Color Grading 1.10
- * @ Author: https://www.moddb.com/members/kennshade
- * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/enhanced-shaders-and-color-grading-for-151
- */
-
 #ifndef HMODEL_H
 #define HMODEL_H
-#define CUBE_MIPS 6 // mipmaps for ambient shading and specular
+#define CUBE_MIPS 6
 
 #include "common\pbr_cubemap_check.h"
-// gamma correction is set up to be semi gamma correct
 
 TextureCube env_s0;
 TextureCube env_s1;
 
-uniform float4 env_color; // color.w = lerp factor
+uniform float4 env_color;
 
 void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 albedo, float3 Pnt, float3 normal)
 {
-    // [ SSS Test ]. Overwrite terrain material
     bool m_terrain = abs(m - 0.95) <= 0.04f;
     bool m_flora = abs(m - 0.15) <= 0.04f;
     if (m_terrain)
         m = 0;
 
-    // PBR style
     albedo.rgb = calc_albedo(albedo, m);
     float3 specular = calc_specular(albedo, m);
     float rough = calc_rough(albedo.a, m);
+    calc_foliage(albedo.rgb, specular, rough, albedo, m);
 
     float roughCube = rough;
 
     // float RoughMip = roughCube * CUBE_MIPS;
-    float RoughMip = CUBE_MIPS - ((1 - roughCube) * CUBE_MIPS);
-
+    float RoughMip = pow(roughCube, 0.6) * CUBE_MIPS;
     // normal vector
     normal = normalize(normal);
     float3 nw = mul(m_inv_V, normal);
@@ -48,24 +39,20 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     float vnormmax = max(vnormabs.x, max(vnormabs.y, vnormabs.z));
     nwRemap /= vnormmax;
     if (nwRemap.y < 0.999)
-        nwRemap.y = nwRemap.y * 2 - 1; // fake remapping
+        nwRemap.y = nwRemap.y * 2 - 1;
 
     // reflection vector
     float3 vreflect = reflect(v2Pnt, nw);
-
-    // reflect remap
     float3 vreflectRemap = vreflect;
     float3 vreflectabs = abs(vreflectRemap);
     float vreflectmax = max(vreflectabs.x, max(vreflectabs.y, vreflectabs.z));
     vreflectRemap /= vreflectmax;
     if (vreflectRemap.y < 0.999)
-        vreflectRemap.y = vreflectRemap.y * 2 - 1; // fake remapping
+        vreflectRemap.y = vreflectRemap.y * 2 - 1;
 
     // normalize
     nwRemap = normalize(nwRemap);
     vreflectRemap = normalize(vreflectRemap);
-
-    // DICE reflection vector roughness
     vreflectRemap = getSpecularDominantDir(nwRemap, vreflectRemap, rough);
 
     // Valve style ambient cube to prevent seams
@@ -90,14 +77,10 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     float3 env_d = lerp(e0d, e1d, env_color.w);
     float3 env_s = lerp(e0s, e1s, env_color.w);
 
-    // hscale - something like diffuse reflection
-    float hscale = h; //. * (.5h + .5h*nw.y);
-    float hspec = .5h + .5h * dot(vreflect, v2Pnt);
+    float hscale = h;
 
-    // TODO - make hscale normal mapped
     float4 light = float4(hscale, hscale, hscale, hscale);
 
-    // tint color
     float3 env_col = env_color.rgb;
 
     env_d *= env_col;
@@ -110,12 +93,25 @@ void hmodel(out float3 hdiffuse, out float3 hspecular, float m, float h, float4 
     // ambient color
     float3 amb_col = L_ambient.rgb;
     env_d += amb_col;
-    env_s += amb_col; //*(env_s/env_d);
+
+    // [FIX] "Ambient Specular Bleed" - UPDATED BY HIPPOBOT
+    // We calculate metalness here to MASK the ambient bleed.
+    // Metals should rely purely on the Cubemap (env_s), not fake ambient boost?
+    float metal_check = calc_metalness(albedo.rgb, m);
+
+    float rough_ambient = smoothstep(0.1, 1.0, rough);
+
+    // Multiply by (1.0 - metal_check) to ensure this only affects non-metals (cloth, wood, dirt)
+    float metal_mask = 1.0 - (metal_check * 0.55);
+
+    env_s += amb_col * rough_ambient * metal_mask * h * 0.4;
 
     env_d = SRGBToLinear(env_d);
-    env_s = SRGBToLinear(env_s); // gamma correct
+    env_s = SRGBToLinear(env_s);
 
-    hdiffuse = Amb_BRDF(rough, albedo, specular, env_d, env_s * !m_flora, -v2Pnt, nw).rgb;
-    hspecular = 0; // do not use hspec at all
+    env_s *= 1.0f - m_flora * 0.75f;
+
+    hdiffuse = Amb_BRDF(rough, albedo, specular, env_d, env_s, -v2Pnt, nw).rgb;
+    hspecular = 0;
 }
 #endif

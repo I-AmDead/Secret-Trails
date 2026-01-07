@@ -1,9 +1,3 @@
-/**
- * @ Description: Enhanced Shaders and Color Grading 1.10
- * @ Author: https://www.moddb.com/members/kennshade
- * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/enhanced-shaders-and-color-grading-for-151
- */
-
 #ifndef LMODEL_H
 #define LMODEL_H
 
@@ -11,12 +5,8 @@
 #include "common\common_brdf.h"
 #include "common\pbr_brdf.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Lighting formulas
-
 float3 compute_lighting(float3 N, float3 V, float3 L, float4 albedo, float mat_id)
 {
-    // [ SSS Test ]. Overwrite terrain material
     bool m_terrain = abs(mat_id - 0.95) <= 0.04f;
     if (m_terrain)
         mat_id = 0;
@@ -28,10 +18,8 @@ float3 compute_lighting(float3 N, float3 V, float3 L, float4 albedo, float mat_i
 
     float3 light = Lit_BRDF(rough, albedo.rgb, specular, V, N, L);
 
-    // if(mat_id == MAT_FLORA) //Be aware of precision loss/errors
-    if (abs(mat_id - MAT_FLORA) <= MAT_FLORA_ELIPSON) // Be aware of precision loss/errors
+    if (abs(mat_id - MAT_FLORA) <= MAT_FLORA_ELIPSON)
     {
-        // Simple subsurface scattering
         float3 subsurface = SSS(N, V, L);
         light += subsurface * albedo.rgb;
     }
@@ -41,35 +29,35 @@ float3 compute_lighting(float3 N, float3 V, float3 L, float4 albedo, float mat_i
 
 float3 plight_infinity(float m, float3 pnt, float3 normal, float4 c_tex, float3 light_direction)
 {
-    // gsc vanilla stuff
-    float3 N = normalize(normal); // normal
-    float3 V = normalize(-pnt); // vector2eye
-    float3 L = normalize(-light_direction); // vector2light
+    float3 N = normalize(normal);
+    float3 V = normalize(-pnt);
+    float3 L = normalize(-light_direction);
 
     float3 light = compute_lighting(N, V, L, c_tex, m);
 
-    return light; // output (albedo.gloss)
+    return light;
 }
 
 float3 plight_local(float m, float3 pnt, float3 normal, float4 c_tex, float3 light_position, float light_range_rsq, out float rsqr)
 {
-    float atteps = 0.1;
+    float atteps = 0.1f;
 
-    float3 L2P = pnt - light_position; // light2point
-    rsqr = dot(L2P, L2P); // distance 2 light (squared)
+    float3 L2P = pnt - light_position;
+    rsqr = dot(L2P, L2P);
     rsqr = max(rsqr, atteps);
 
-    // vanilla atten - linear
-    float att = saturate(1.0 - rsqr * light_range_rsq); // q-linear attenuate
+    float r2 = rsqr * light_range_rsq * 1.00f; // 0.85f = slightly longer, softer reach
+    float att = (1.0f - r2) / (3.0f * r2 + 1.0f);
+    att = saturate(att);
     att = SRGBToLinear(att);
 
-    float3 N = normalize(normal); // normal
-    float3 V = normalize(-pnt); // vector2eye
-    float3 L = normalize(-L2P); // vector2light
+    float3 N = normalize(normal);
+    float3 V = normalize(-pnt);
+    float3 L = normalize(-L2P);
 
     float3 light = compute_lighting(N, V, L, c_tex, m);
 
-    return light * att; // output (albedo.gloss)
+    return light * att;
 }
 
 float3 specular_phong(float3 pnt, float3 normal, float3 light_direction)
@@ -79,11 +67,11 @@ float3 specular_phong(float3 pnt, float3 normal, float3 light_direction)
     float nDotH = saturate(dot(normal, H));
     float nDotV = saturate(dot(normal, pnt));
     float lDotH = saturate(dot(light_direction, H));
-    // float vDotH = saturate(dot(pnt, H));
+
     return L_sun_color.rgb * Lit_Specular(nDotL, nDotH, nDotV, lDotH, 0.02, 0.1);
 }
 
-//	TODO: DX10: Remove path without blending
+
 half4 blendp(half4 value, float4 tcp) { return value; }
 
 half4 blend(half4 value, float2 tc) { return value; }
