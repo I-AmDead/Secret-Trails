@@ -10,7 +10,7 @@ float4 main(p_screen I) : SV_Target
     color += s_vollight2.SampleLevel(smp_linear, I.tc0.xy, 0);
 
     // Read Depth
-    float _depth = s_position.Sample(smp_nofilter, I.tc0.xy).z;
+    float depth = gbuffer_depth(I.tc0.xy);
 
     // Noise TC
     float2 uv_noise = I.tc0.xy;
@@ -20,7 +20,7 @@ float4 main(p_screen I) : SV_Target
     color = saturate(color - noise_tex.Sample(smp_linear, uv_noise * 2.5).xxxx * 0.01f);
 
     // Discard Sky.
-    color *= _depth < 0.001 ? 1.0f : saturate(_depth * 1.5f);
+    color *= depth < 0.001 ? 1.0f : saturate(depth * 1.5f);
 
     return color;
 }

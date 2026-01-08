@@ -5,7 +5,7 @@
 
 #ifndef SSAO_QUALITY
 
-float calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord, uint iSample) { return 1.0; }
+float calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord) { return 1.0; }
 
 #else
 
@@ -40,13 +40,13 @@ float GTAO_Noise(float2 position) { return frac(52.9829189f * frac(dot(position,
 
 float3 gbuf_unpack_position(float z, float2 pos2d) { return float3(z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), z); }
 
-float3 unpack_position(float2 tc, uint iSample : SV_SAMPLEINDEX)
+float3 unpack_position(float2 tc)
 {
     float depth = s_position.Sample(smp_nofilter, tc).z;
     return gbuf_unpack_position((depth > 0.01f ? depth : 1000.f), tc * pos_decompression_params2.xy);
 }
 
-float3 calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord, uint iSample)
+float3 calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord)
 {
     float fov = atan(1.0 / m_P._m11);
     float proj_scale = float(pos_decompression_params2.y) / (tan(fov * 0.5f) * 2.f);
@@ -86,7 +86,7 @@ float3 calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord, uint iSample)
             {
                 float2 s = max(screen_radius * (float(sample) + noiseOffset), 4.f + float(sample)) * screen_res_mul; // fix for multiplying s by sample=0 from Unity code
                 float2 sTexCoord = cTexCoord + (-1.f + 2.f * side) * s * float2(omega.x, -omega.y);
-                float3 sPosV = unpack_position(sTexCoord, iSample);
+                float3 sPosV = unpack_position(sTexCoord);
                 float3 sHorizonV = sPosV - cPosV;
                 float falloff = saturate(dot(sHorizonV, sHorizonV) * falloff_mul);
                 float H = dot(normalize(sHorizonV), viewV);

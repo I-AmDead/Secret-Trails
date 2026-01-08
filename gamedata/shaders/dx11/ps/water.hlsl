@@ -76,7 +76,7 @@ float4 main(vf I) : SV_Target
     float2 N_Scr = normalize(float3(basenormal.x * G_SSR_WATER_REFRACTION, basenormal.y * G_SSR_WATER_REFRACTION, basenormal.z));
 
     // Discard refractions from things above the water ( Like weapons )
-    float Refraction_Discard = Pv.z < SSFX_get_depth(PosTc + N_Scr);
+    float Refraction_Discard = Pv.z < gbuffer_depth(PosTc + N_Scr);
 
     // Screen UV + Discard
     float2 Refraction_UV = N_Scr * Refraction_Discard;
@@ -156,10 +156,10 @@ float4 main(vf I) : SV_Target
     float2 N_Tex = normalize(float3(basenormal.x * G_SSR_WATER_TEX_DISTORTION, basenormal.y * G_SSR_WATER_TEX_DISTORTION, basenormal.z));
 
     // Get Position with Refraction discard
-    float3 _P2 = SSFX_get_position(PosTc + Refraction_UV); // Simp: ??? ?? ???????? ????????? ??????? ?? taa jitter, ?????? ??? ?? ???? ????? ? ????? ?? ????????
+    float wdepth = gbuffer_depth(PosTc + Refraction_UV); // Simp: ??? ?? ???????? ????????? ??????? ?? taa jitter, ?????? ??? ?? ???? ????? ? ????? ?? ????????
 
     // 3d view space pos reconstruction math
-    _P2 = float3(_P2.z * (I.hpos.xy * pos_decompression_params.zw - pos_decompression_params.xy), _P2.z);
+    float3 _P2 = float3(wdepth * (I.hpos.xy * pos_decompression_params.zw - pos_decompression_params.xy), wdepth);
 
     // Bottom of the water to world space ( Project the caustics and water fog )
     float3 w_b = mul(m_inv_V, float4(_P2, 1));

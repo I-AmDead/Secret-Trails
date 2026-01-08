@@ -21,8 +21,7 @@ f_deffer main(p_bumped I)
     float ms = xmaterial;
 
 #ifdef USE_LM_HEMI
-    float4 lm = s_hemi.Sample(smp_rtlinear, I.lmh);
-    float h = get_hemi(lm);
+    float h = s_hemi.Sample(smp_rtlinear, I.lmh).a;
 #else
     float h = I.position.w;
 #endif

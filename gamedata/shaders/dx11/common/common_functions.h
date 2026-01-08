@@ -112,10 +112,6 @@ float3 p_hemi(float2 tc)
     return t_lmh.a;
 }
 
-float get_hemi(float4 lmh) { return lmh.a; }
-
-float get_sun(float4 lmh) { return lmh.g; }
-
 float3 v_hemi(float3 n) { return L_hemi_color * (.5f + .5f * n.y); }
 
 float3 v_sun(float3 n) { return L_sun_color * dot(n, -L_sun_dir_w); }

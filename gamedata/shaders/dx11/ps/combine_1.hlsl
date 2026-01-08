@@ -16,7 +16,7 @@
 
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
-#include "gtao.h"
+#include "common\gtao.h"
 #else
 #include "ps\ssdo.hlsl"
 #endif
@@ -46,9 +46,9 @@ float4 main(p_screen I) : SV_Target
 
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
-    occ = calc_gtao(P, N, I.tc0, 0);
+    occ = calc_gtao(P, N, I.tc0);
 #else
-    occ = calc_ssdo(P, N, I.tc0, I.hpos, 0);
+    occ = calc_ssdo(P, N, I.tc0, I.hpos);
 #endif
     occ = compute_colored_ao(occ.x, D.xyz);
 #endif

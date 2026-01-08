@@ -40,7 +40,7 @@ float4 main(p_Rain I) : SV_Target
 
 #if SSFX_RAIN_QUALITY > 0
     // Remove incorrect refraction
-    float Depth = SSFX_get_depth(saturate(PosTc + UV_Offset.xy));
+    float Depth = gbuffer_depth(saturate(PosTc + UV_Offset.xy));
     UV_Offset.xy *= (I.tc.w < Depth || Depth <= SKY_EPS);
 #endif
 

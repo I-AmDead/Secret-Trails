@@ -14,7 +14,7 @@ float4 main(PSInput s) : SV_Target
     uint m = (r.x ^ r.y) << 1u;
     float z = float((m & 4u | r.y & 2u) >> 1u | (m & 2u | r.y & 1u) << 2u) * .0625;
     float2 f = s.hpos2d.xy / s.hpos2d.w * float2(.5, -.5) + .5, w = f * screen_res.xy;
-    float u = s_position.SampleLevel(smp_nofilter, f, 0.).z;
+    float u = gbuffer_depth(f);
     u = u < 1e-4 ? 10000 : u;
     u = min(u, s.hpos.w);
     float3 h = float3(u * (w * pos_decompression_params.zw - pos_decompression_params.xy), u), e = mul(m_inv_V, float4(h, 1.)).xyz;

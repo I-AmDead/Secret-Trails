@@ -34,7 +34,7 @@ float3 SSFX_ssr_water_ray(float3 ray_start_vs, float3 ray_dir_vs, float noise)
 	float ori_x = ssr_ray.r_step.x;
 
 	// Depth from the start of the ray
-	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start);
+	float ray_depthstart = gbuffer_depth(ssr_ray.r_start);
 
 	// Ray-march
 	[unroll (q_steps[G_SSR_WATER_QUALITY].x)]

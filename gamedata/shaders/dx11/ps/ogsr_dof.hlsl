@@ -4,8 +4,8 @@
 
 float4 main(p_screen I) : SV_TARGET
 {
-    float3 P = SSFX_get_position(I.tc0);
+    float depth = gbuffer_depth(I.tc0);
     float3 img = s_image.Sample(smp_nofilter, I.tc0).rgb;
 
-    return float4(SSFX_DOF(I.tc0, P, img), 1.0);
+    return float4(SSFX_DOF(I.tc0, depth, img), 1.0);
 }

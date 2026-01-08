@@ -46,7 +46,7 @@ float4 SSFX_ssr_fast_ray(float3 ray_start_vs, float3 ray_dir_vs, float2 tc)
 	float ori_x = ssr_ray.r_step.x;
 
 	// Depth from the start of the ray
-	float ray_depthstart = SSFX_get_depth(ssr_ray.r_start);
+	float ray_depthstart = gbuffer_depth(ssr_ray.r_start);
 	
 	float2 ray_check = 0;
 

@@ -15,12 +15,12 @@ Texture2D s_emissive;
 
 float4 main(p_screen I) : SV_Target
 {
-    float3 P = s_position.Sample(smp_nofilter, I.tc0.xy).xyz;
+    float depth = gbuffer_depth(I.tc0.xy);
 
     float3 Result = s_scene.SampleLevel(smp_linear, I.tc0.xy, 0).rgb;
 
     // Sky Intensity
-    Result *= P.z <= SKY_EPS ? ssfx_bloom_1.w : 1.0f;
+    Result *= depth <= SKY_EPS ? ssfx_bloom_1.w : 1.0f;
 
     // Threshold
     Result = pow(abs(Result), ssfx_bloom_1.x);

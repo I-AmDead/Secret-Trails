@@ -13,7 +13,7 @@
 #include "common\screenspace\settings_screenspace_AO.h"
 
 #ifndef SSAO_QUALITY
-float calc_ssdo(float3 P, float3 N, float2 tc, float4 pos2d, uint iSample) { return 1.0; }
+float calc_ssdo(float3 P, float3 N, float2 tc, float4 pos2d) { return 1.0; }
 
 #else // SSAO_QUALITY
 
@@ -26,7 +26,7 @@ float calc_ssdo(float3 P, float3 N, float2 tc, float4 pos2d, uint iSample) { ret
 #define G_SSDO_SAMPLE 8
 #endif
 
-float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d, uint iSample)
+float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d)
 {
     // Rendering AO till G_SSDO_RENDER_DIST
     if (P.z >= G_SSDO_RENDER_DIST || P.z <= SKY_EPS)
@@ -72,13 +72,13 @@ float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d, uint iSample)
         if (SSFX_is_valid_uv(occ_pos_uv))
         {
             // Sample depth buffer
-            float4 sample_pos = SSFX_get_position(occ_pos_uv);
+            float depth = gbuffer_depth(occ_pos_uv);
 
             // AO Distance attenuation. To discard incorrect AO and add some attenuation through distance.
-            float atte = lerp(0.1f, 4.0f, smoothstep(G_SSDO_WEAPON_LENGTH * 0.5f, G_SSDO_WEAPON_LENGTH, sample_pos.z));
+            float atte = lerp(0.1f, 4.0f, smoothstep(G_SSDO_WEAPON_LENGTH * 0.5f, G_SSDO_WEAPON_LENGTH, depth));
 
             // Pixel occluded?
-            float AO = step(sample_pos.z, occ_pos.z);
+            float AO = step(depth, occ_pos.z);
 
             // Detailed Search if there's no AO
 #ifdef G_SSDO_DETAILED_SEARCH
@@ -87,32 +87,32 @@ float calc_ssdo(float4 P, float3 N, float2 tc, float4 pos2d, uint iSample)
                 // Same has before but with smaller radius
                 occ_pos = P.xyz + sample_rays * detail_radius;
                 occ_pos_uv = SSFX_view_to_uv(occ_pos); // We don't check for a valid UV coor, is already done and this sample radius is smaller ( in theory )
-                sample_pos = SSFX_get_position(occ_pos_uv); // Get Sample
-                AO = step(sample_pos.z, occ_pos.z); // Check occlusion
+                depth = gbuffer_depth(occ_pos_uv);
+                AO = step(depth, occ_pos.z); // Check occlusion
                 atte *= saturate(detail_radius + WeaponFactor); // Adjust attenuation for the scenary AO
             }
 #endif
 
             // Distance between pixel and "occluder"
-            float3 Dist = distance(float3(occ_pos_uv.x, occ_pos_uv.y, sample_pos.z), float3(tc.x, tc.y, P.z));
+            float3 Dist = distance(float3(occ_pos_uv.x, occ_pos_uv.y, depth), float3(tc.x, tc.y, P.z));
 
             // Difference attenuation
             AO *= 1.0 - smoothstep(0.0f, atte, Dist);
 
             // MAT_FLORA from sample?
-            bool sample_mat_flora = abs(gbuf_unpack_mtl(sample_pos.w) - MAT_FLORA) <= 0.04f || mat_flora;
+            bool sample_mat_flora = abs(gbuffer_material(occ_pos_uv) - MAT_FLORA) <= 0.04f || mat_flora;
 
             // Value for dot product for full intensity ( Adjust value for WeaponFactor, we want a extremely sensitive AO for weapons )
             float N_a = saturate(WeaponFactor) * 0.8f;
 
             // Dot product using current normal and sampled normal to adjust intensity ( Change mode if MAT_FLORA )
             if (!sample_mat_flora)
-                AO *= smoothstep(1.0f, N_a, dot(gbuf_unpack_normal(sample_pos.xy), N));
+                AO *= smoothstep(1.0f, N_a, dot(gbuffer_normal(occ_pos_uv), N));
             else
                 AO *= G_SSDO_FLORA_INTENSITY;
 
             // Discard incorrect occlusion from the sky.
-            AO *= !is_sky(sample_pos.z);
+            AO *= !is_sky(depth);
 
             // Accumulate final AO
             occ += AO;
