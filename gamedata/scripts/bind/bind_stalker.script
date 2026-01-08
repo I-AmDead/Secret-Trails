@@ -45,34 +45,6 @@ function actor_binder:net_spawn(data)
         cmd("ssfx_is_underground 0")
     end
 
-    if not ogse.var_exists("PATCH_HEMI") then
-        cmd("r2_sun_lumscale_amb 2.5")
-        cmd("r2_sun_lumscale_hemi 0.5")
-        ogse.save_var("PATCH_HEMI", true)
-    end
-
-    if not ogse.var_exists("PATCH_1") then
-        cmd("lua_gc_method gc_step")
-        cmd("g_camera_collision_cop_mode on")
-        ogse.save_var("PATCH_1", true)
-    end
-
-    if not ogse.var_exists("PATCH_2") then
-        se_respawn.kill_all_spawned_creatures()
-        ogse.save_var("PATCH_2", true)
-    end
-
-    if not ogse.var_exists("PATCH_3") then
-        for a, obj in alife():objects() do
-            if obj and IsMonster(obj) then
-                if not obj.custom_data or obj.custom_data == "" then
-                    alife():release(obj, true)
-                end
-            end
-        end
-        ogse.save_var("PATCH_3", true)
-    end
-
     self.am:call("on_spawn", data)
     return true
 end
