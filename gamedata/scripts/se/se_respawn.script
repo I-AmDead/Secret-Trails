@@ -265,6 +265,10 @@ function se_respawn:spawn()
         return
     end
 
+    if self.spawn_once and not self.already_once_spawned then
+        self.already_once_spawned = true
+    end
+
     -- экстренный спаун минимального количества объектов
     if table.getn(self.spawned_obj) < self.min_count then
         while table.getn(self.spawned_obj) < self.min_count do
@@ -276,9 +280,10 @@ function se_respawn:spawn()
     end
 
     -- делаем несколько попыток заспаунить объект.
-    for i = 1, self.max_count do
-        if table.getn(self.spawned_obj) >= self.max_count then return end
-    
+    for i = 1, self.max_spawn do
+        if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
+            return
+        end
         if self:create(xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions)) == false then
             return
         end
@@ -296,8 +301,15 @@ function se_respawn:remove_spawned(id)
 end
 
 -- Обновление в офлайне
-function se_respawn:update()
-    cse_alife_smart_zone.update(self)
+function se_respawn:execute()
+    if self.already_once_spawned == true then
+        return
+    end
+
+    -- ' Выходим, если у нас установлен событийный спавн.
+    if self.idle_spawn == -1 then
+        return
+    end
 
     if self.respawn_time < game.get_game_time() then
         local idle_time = game.CTime()
@@ -311,12 +323,18 @@ function se_respawn:update()
     end
 end
 
+-- Обновление в офлайне
+function se_respawn:update()
+    cse_alife_smart_zone.update(self)
+    self:execute()
+end
+
 -- Обновление в онлайне
 function se_respawn:update_online()
     if self.respawn_radius == -1 then return end
 
     if db.actor:position():distance_to(self.position) >= self.respawn_radius then
-        self:update()
+        self:execute()
     end
 end
 
@@ -325,8 +343,8 @@ function spawn(name)
     if not spawner then
         return
     end
-    for i = 1, spawner.max_count do
-        if table.getn(spawner.spawned_obj) >= spawner.max_count then
+    for i = 1, spawner.max_spawn do
+        if spawner.max_count ~= -1 and table.getn(spawner.spawned_obj) >= spawner.max_count then
             return
         end
         if spawner:create(xr_logic.pick_section_from_condlist(db.actor_proxy, spawner, spawner.conditions)) == false then
@@ -384,8 +402,10 @@ function init_respawn_params(obj)
     end
 
     obj.spawned_goes_online = get_bool(sect, "spawned_goes_online", nil, ini)
-    obj.min_count = get_u32(sect, "min_spawn", 0, ini)
-    obj.max_count = get_u32(sect, "max_spawn", 1, ini)
+    obj.spawn_once = get_bool(sect, "spawn_once", false, ini)
+    obj.min_count = get_u32(sect, "min_count", 0, ini)
+    obj.max_count = get_u32(sect, "max_count", -1, ini)
+    obj.max_spawn = get_u32(sect, "max_spawn", 1, ini)
     obj.idle_spawn = get_u32(sect, "idle_spawn", 86400, ini)
 
     if obj.min_count > obj.max_count and obj.max_count ~= -1 then
@@ -395,6 +415,8 @@ function init_respawn_params(obj)
     -- ' Вычитка пресетов
     if idle_spawn_preset[obj.idle_spawn] then
         obj.idle_spawn = idle_spawn_preset[obj.idle_spawn]
+    else
+        obj.idle_spawn = tonumber(obj.idle_spawn)
     end
 
     obj.str_conditions = get_string(sect, "conditions", 100, ini)
@@ -404,6 +426,13 @@ function init_respawn_params(obj)
     -- ' Спешкейс, чтобы сохранить совместимость сейвов.
     if obj:name() == "mil_freedom_barier_respawn_1" then
         obj.respawn_radius = -1
+    end
+
+    if obj:name() == "mil_freedom_respawn_1" then
+        obj.min_count = 1
+        obj.max_spawn = 5
+        obj.max_count = 15
+        obj.respawn_radius = 5
     end
 
     obj.parent = get_u32(sect, "parent", nil, ini)
@@ -445,15 +474,15 @@ function kill_all_spawned_creatures()
                 if IsStalker(obj) or IsMonster(obj) then
                     alife():release(obj)
                 end
+
+                table.remove(respawner.spawned_obj, i)
             end
-            
-            table.remove(respawner.spawned_obj, i)
         end
     end
-    
+
     for parent_id, respawner in pairs(respawners_by_parent) do
         respawner.spawned_obj = {}
     end
-    
+
     log1("se_respawn: All spawned creatures release")
 end
