@@ -97,6 +97,22 @@ function r_spawns(spawn_ini, section, line, sectSpawnProps)
     return nil
 end
 
+function spawn(name)
+    local spawner = respawners[name]
+    if not spawner then
+        return
+    end
+
+    if spawner.max_count == -1 then return end
+
+    for i = 1, spawner.max_spawn do
+        if table.getn(spawner.spawned_obj) >= spawner.max_count then return end
+        if spawner:create(xr_logic.pick_section_from_condlist(db.actor_proxy, spawner, spawner.conditions)) == false then
+            return
+        end
+    end
+end
+
 --------------------------------------------------------------------------------
 -- Серверный объект спавнера
 --------------------------------------------------------------------------------
@@ -281,11 +297,11 @@ function se_respawn:spawn()
         return
     end
 
+    if self.max_count == -1 then return end
+
     -- делаем несколько попыток заспаунить объект.
     for i = 1, self.max_spawn do
-        if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
-            return
-        end
+        if table.getn(self.spawned_obj) >= self.max_count then return end
         if self:create(xr_logic.pick_section_from_condlist(db.actor_proxy, self, self.conditions)) == false then
             return
         end
@@ -337,21 +353,6 @@ function se_respawn:update_online()
 
     if db.actor:position():distance_to(self.position) >= self.respawn_radius then
         self:execute()
-    end
-end
-
-function spawn(name)
-    local spawner = respawners[name]
-    if not spawner then
-        return
-    end
-    for i = 1, spawner.max_spawn do
-        if spawner.max_count ~= -1 and table.getn(spawner.spawned_obj) >= spawner.max_count then
-            return
-        end
-        if spawner:create(xr_logic.pick_section_from_condlist(db.actor_proxy, spawner, spawner.conditions)) == false then
-            return
-        end
     end
 end
 
@@ -454,6 +455,10 @@ function override_respawner(obj)
     end
 
     if obj:name() == "prip_monolit_respawn" then
+        obj.spawn_once = true
+    end
+
+    if obj:name() == "yantar_respawn_zombi" then
         obj.spawn_once = true
     end
 end
