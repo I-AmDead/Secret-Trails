@@ -285,6 +285,33 @@ local function first_patch()
     end
 end
 
+local lamp_list = {}
+local function lamp_lists()
+    if not ogse.var_exists("lamp_list") then return end
+
+    for a = 1, 65535 do
+        local obj = alife():object(a)
+        if obj and obj:get_hanging_lamp() then
+            table.insert(lamp_list, a)
+        end
+    end
+
+    ogse.save_var("lamp_list", lamp_list)
+end
+
+local function lamp_settings()
+    lamp_list = ogse.load_var("lamp_list", {})
+    for i = 1, #lamp_list do
+        local obj = level.object_by_id(lamp_list[i])
+        if obj then
+            local vis_name = obj:get_visual_name()
+            if vis_name and string.find(vis_name, "light_galogen_1_glass") then
+                obj:get_hanging_lamp():set_volumetric(true)
+            end
+        end
+    end
+end
+
 local function fix_new_first()
     if level.name() == "fake_start" or level.name() == "test_poligon_v1" then return end
     ded_luck()
@@ -293,6 +320,8 @@ local function fix_new_first()
     swamp_secret()
     fix_bar_ac()
     fix_radar_ac()
+    lamp_lists()
+    lamp_settings()
     first_patch()
 end
 
