@@ -12,19 +12,19 @@ local nlc7_act_breath = {
       { "actor\\nlc7\\without_mask_3_",  6, 1   },
     },
     [ "gas" ] = {
-      { "actor\\nlc7\\gas_mask_1_",      6, 1.2 },
-      { "actor\\nlc7\\gas_mask_2_",      6, 1.0 },
-      { "actor\\nlc7\\gas_mask_3_",     10, 0.9 },
+      { "actor\\nlc7\\gas_mask_1_",      6, 1.0 },
+      { "actor\\nlc7\\gas_mask_2_",     10, 0.9 },
+      { "actor\\nlc7\\gas_mask_3_",     10, 0.8 },
     },
     [ "exo" ] = {
       { "actor\\nlc7\\exo_mask_1_",      9, 1.7 },
       { "actor\\nlc7\\exo_mask_2_",      9, 1.5 },
-      { "actor\\nlc7\\exo_mask_3_",      9, 1.3 },
+      { "actor\\nlc7\\exo_mask_3_",      8, 1.3 },
     },
     [ "scn" ] = {
-      { "actor\\nlc7\\scient_mask_1_",   2, 1.8 },
-      { "actor\\nlc7\\scient_mask_2_",   2, 1.6 },
-      { "actor\\nlc7\\scient_mask_3_",   2, 1.4 },
+      { "actor\\nlc7\\scient_mask_1_",   2, 1.6 },
+      { "actor\\nlc7\\scient_mask_2_",   2, 1.4 },
+      { "actor\\nlc7\\scient_mask_3_",   6, 1.2 },
     },
   }
 
@@ -225,13 +225,15 @@ function nlc7_actor_heart()
     local outfit = db.actor:item_in_slot(6)
     if outfit then
         local outfitname = outfit:section()
-        local intensity = get_string(outfitname, "intensity")
-        if intensity == "0.3" then
-            tip = "gas"
-        elseif intensity == "0.5" or intensity == "0.6" then
-            tip = "exo"
-        elseif intensity == "0.75" then
-            tip = "scn"
+        local intensity = get_float(outfitname, "intensity")
+        if intensity > 0.0 then
+            if intensity > 0.4 then
+                tip = "scn"
+            elseif intensity > 0.2 then
+                tip = "exo"
+            else
+                tip = "gas"
+            end
         else
             tip = "wht"
         end
@@ -256,7 +258,7 @@ function nlc7_actor_heart()
 
         local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
         local snd = xr_sound.get_safe_sound_object(snd_fname)
-        snd.volume = 2.5 - nlc7_act_breath[tip][step][3] - r_h
+        snd.volume = 2.0 - nlc7_act_breath[tip][step][3] - r_h
 
         if tip ~= "wht" or r_h < 0.79 then
             snd:play(db.actor, 0, sound_object.s2d)
