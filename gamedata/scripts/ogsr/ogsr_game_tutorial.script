@@ -1,6 +1,14 @@
+local tutorial_queue = {}
+local is_showing_tutorial = false
+
 local function send_tutorial(name)
     if ogse.var_exists(name) then return end
-
+    
+    if is_showing_tutorial then
+        table.insert(tutorial_queue, name)
+        return
+    end
+    
     tutorial_text = game.translate_string(name)
     local hud = get_hud()
     hud:AddCustomStatic("tutorial_static", true)
@@ -9,6 +17,47 @@ local function send_tutorial(name)
     hud:GetCustomStatic("tutorial_static").m_endTime = time_global() / 1000 + 20
     xr_sound.get_safe_sound_object([[tutorial]]):play(db.actor, 0, sound_object.s2d)
     ogse.save_var(name, true)
+    
+    is_showing_tutorial = true
+end
+
+local function show_next_queued_tutorial()
+    if #tutorial_queue > 0 and not is_showing_tutorial then
+        local next_tutorial = tutorial_queue[1]
+        table.remove(tutorial_queue, 1)
+        send_tutorial(next_tutorial)
+    end
+end
+
+local function on_info(npc, info_id)
+    if info_id == "lesnik_start" then
+        ogse_st_mgr.start_timer("watch_tutorial", 10, "ogsr_game_tutorial.watch_tutorial")
+    end
+end
+
+local function on_first_update()
+    if ogse.var_exists("watch_tutorial") then return end
+    if db.actor:has_info("les_dobralis") then
+        watch_tutorial()
+    end
+end
+
+local function on_update()
+    if is_showing_tutorial then
+        local hud = get_hud()
+        local static = hud:GetCustomStatic("tutorial_static")
+        if not static or static.m_endTime <= time_global() / 1000 then
+            is_showing_tutorial = false
+            show_next_queued_tutorial()
+        end
+    end
+
+    if ogse.var_exists("tutorial_raindrops") or not get_con_bool("r2_rain_drops_control") then return end
+    if not db.actor:is_ActorHide() and not isIndoor(level.name()) then
+        if level.rain_factor() > 0.1 then
+            raindrops_tutorial()
+        end
+    end
 end
 
 function watch_tutorial()
@@ -29,31 +78,6 @@ end
 
 function raindrops_tutorial()
     send_tutorial("tutorial_raindrops")
-end
-
-local function on_info(npc, info_id)
-    if info_id == "lesnik_start" then
-        ogse_st_mgr.start_timer("watch_tutorial", 20, "ogsr_game_tutorial.watch_tutorial")
-    end
-end
-
-local function on_first_update()
-    if ogse.var_exists("watch_tutorial") then return end
-    if db.actor:has_info("les_dobralis") then
-        watch_tutorial()
-    end
-end
-
-local function on_update()
-    if ogse.var_exists("tutorial_raindrops") then return end
-
-    if not get_con_bool("r2_rain_drops_control") then return end
-
-    if db.actor:is_ActorHide() or isIndoor(level.name()) then return end
-
-    if level.rain_factor() > 0.1 then
-        raindrops_tutorial()
-    end
 end
 
 function attach(sm)
