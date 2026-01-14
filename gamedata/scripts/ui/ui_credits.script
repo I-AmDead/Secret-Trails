@@ -6,8 +6,10 @@ local FADE_SPEED = 1.0
 
 local fade_background, fade_vignette = 0, 0
 local fade_timer
-local snd_volume_eff
-local snd_volume_mus
+
+local snd_volume_effect
+local snd_volume_music
+local snd_volume_weapon
 
 ui_credits_window = nil
 
@@ -51,8 +53,9 @@ function ui_credits:StopMusic()
 end
 
 function ui_credits:Close()
-	cmd("snd_volume_eff", tostring(snd_volume_eff))
-	cmd("snd_volume_music", tostring(snd_volume_mus))
+	cmd("snd_volume_effect", tostring(snd_volume_effect))
+	cmd("snd_volume_music", tostring(snd_volume_music))
+	cmd("snd_volume_weapon", tostring(snd_volume_weapon))
 	self:StopMusic()
 	ui_credits_window:ShowDialog(false)
 	ui_credits_window = nil
@@ -135,9 +138,11 @@ function StartCredits(no_game)
 	ui_credits_window = ui_credits()
 	ui_credits_window:ShowDialog(true)
 
-	snd_volume_eff = get_con_float("snd_volume_eff", 1.0)
-	snd_volume_mus = get_con_float("snd_volume_music", 1.0)
+	snd_volume_effect = get_con_float("snd_volume_eff", 1.0)
+	snd_volume_music = get_con_float("snd_volume_music", 1.0)
+	snd_volume_weapon = get_con_float("snd_volume_music", 1.0)
 
-	cmd("snd_volume_eff", 0.0)
+	cmd("snd_volume_effect", 0.0)
+	cmd("snd_volume_weapon", 0.0)
 	cmd("snd_volume_music", 1.0)
 end
