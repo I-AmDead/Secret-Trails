@@ -24,9 +24,9 @@ struct vf
     float4 hpos : SV_Position;
     float2 tc0 : TEXCOORD0;
     float3 P : TEXCOORD1;
-    float3 T : TEXCOORD3;
-    float3 B : TEXCOORD4;
-    float3 N : TEXCOORD5;
+    float3 T : TEXCOORD2;
+    float3 B : TEXCOORD3;
+    float3 N : TEXCOORD4;
 };
 
 int mark_sides()
