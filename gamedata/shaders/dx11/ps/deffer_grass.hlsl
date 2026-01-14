@@ -15,32 +15,24 @@
 static float DITHER_THRESHOLDS[16] = {1.0 / 17.0, 9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0, 13.0 / 17.0, 5.0 / 17.0, 15.0 / 17.0, 7.0 / 17.0,
                                       4.0 / 17.0, 12.0 / 17.0, 2.0 / 17.0, 10.0 / 17.0, 16.0 / 17.0, 8.0 / 17.0, 14.0 / 17.0, 6.0 / 17.0};
 
-f_deffer main(p_bumped I)
+struct p_grass
 {
-    f_deffer O;
+    float2 tcdh : TEXCOORD0; // Texture coordinates
+    float4 position : TEXCOORD1; // position + hemi
+    float4 N : TEXCOORD2; // nmap 2 eye - 1
+    float4 hpos_curr : TEXCOORD8;
+    float4 hpos_old : TEXCOORD9;
+    float4 hpos : SV_Position;
+};
 
-    surface_bumped S = sload(I);
+f_deffer main(p_grass I)
+{
+    float4 D = tbase(I.tcdh);
 
-    hashed_alpha_test(I.tcdh.xy, S.base.a);
-
-    // FLORA FIXES & IMPROVEMENTS - SSS Update 18
-    // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
-    // S.normal.xy += float2(0.1f, 0.1f);
-    S.normal.xy *= max(10.0f * rain_params.y, 3.0f);
-
-    // FLORA FIXES & IMPROVEMENTS - SSS Update 22
-    // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
-
-    // Fake UP Normal
-    float3 fN = mul(m_WV, float3(S.normal.x, 1.0f, S.normal.y));
-    fN = normalize(fN);
-
-    // Terrain Normal ( Engine feed the terrain normals )
-    float3 Ne = float3(I.M1.z, I.M2.z, I.M3.z) + fN;
-    Ne = normalize(Ne);
+    hashed_alpha_test(I.tcdh.xy, D.a);
 
     float ms = xmaterial;
-    S.gloss = def_gloss;
+    float gloss = def_gloss;
 
     // Dither
     float4 Postc = mul(m_P, float4(I.position.xyz, 1));
@@ -49,16 +41,15 @@ f_deffer main(p_bumped I)
     float2 dither_uv = tc * screen_res.xy; // Aspect ratio
     uint dither_idx = (uint(dither_uv.x) % 4) * 4 + uint(dither_uv.y) % 4;
 
-    clip(I.M1.x - DITHER_THRESHOLDS[dither_idx]);
+    clip(I.N.w - DITHER_THRESHOLDS[dither_idx]);
 
 #ifdef SSFX_FLORAFIX
     // Material value ( MAT_FLORA )
     ms = MAT_FLORA;
 
     // Fake gloss
-    S.gloss = lerp(ssfx_florafixes_1.x, ssfx_florafixes_1.y, rain_params.y);
+    gloss = lerp(ssfx_florafixes_1.x, ssfx_florafixes_1.y, rain_params.y);
 #endif
-    // -----------------------------------------------------------------------
 
 #ifdef USE_LM_HEMI
     float h = s_hemi.Sample(smp_rtlinear, I.lmh).a;
@@ -66,7 +57,9 @@ f_deffer main(p_bumped I)
     float h = I.position.w;
 #endif
 
-    O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.rgb, S.gloss));
+    float4 Ne = float4(normalize((float3)I.N.xyz), h);
+
+    f_deffer O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, gloss));
 
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
 
