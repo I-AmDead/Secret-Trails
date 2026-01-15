@@ -133,7 +133,7 @@ local function on_first_update()
     end
 
     if level.name() == "l02_garbage" then
-        if not db.actor:has_info("art_garbage_spawn") then
+        if db.actor:dont_has_info("art_garbage_spawn") then
             spawn_ai_location("af_electra_flash", vector():set(-12.316145896912, 20.0, 117.60050964355), "l02_garbage")
             spawn_ai_location("af_rusty_sea-urchin", vector():set(-75.99243927002, 23.0, 112.10626220703), "l02_garbage")
             spawn_ai_location("af_rusty_kristall", vector():set(-195.3737487793, 3.43506217, 208.96646118164), "l02_garbage")
@@ -403,14 +403,6 @@ local function on_first_update()
             db.actor:give_info_portion("mahon_sar_finish")
         end
 
-        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("chaes_final_spawn") then
-            db.actor:give_info_portion("chaes_final_spawn")
-        end
-
-        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("pauk_final_spawn") then
-            db.actor:give_info_portion("pauk_final_spawn")
-        end
-
         if db.actor:has_info("second_urok_dialog_done") and db.actor:dont_has_info("mervin2_delete") then
             db.actor:give_info_portion("mervin2_delete")
         end
@@ -421,32 +413,16 @@ local function on_first_update()
     end
 
     if level.name() == "l12_stancia_2" then
-        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("sled_spawn") then
-            db.actor:give_info_portion("sled_spawn")
-        end
-
-        if db.actor:has_info("haron_need_stalker_start") then
-            db.actor:give_info_portion("haron_need_stalker_spawn")
-        end
-
         if db.actor:has_info("semecky_first_dialog_done") and db.actor:dont_has_info("semecky_delete") then
             db.actor:give_info_portion("semecky_delete")
         end
 
         if db.actor:has_info("monolit_bunker_doc_start") and db.actor:dont_has_info("monolit_bunker_doc_spawn") then
-            solomon_grabs()
-            ograblen()
-            z_teleport.aes_tele()
             db.actor:give_info_portion("monolit_bunker_doc_spawn")
         end
     end
 
     if level.name() == "l12u_sarcofag" then
-
-        if db.actor:has_info("magomet_start_dialog_start") and db.actor:dont_has_info("semecky_spawn") then
-            db.actor:give_info_portion("semecky_spawn")
-        end
-
         if db.actor:has_info("sled_dialog_start") and db.actor:dont_has_info("vhod_new") then
             db.actor:give_info_portion("vhod_new")
         end
@@ -484,10 +460,6 @@ local function on_first_update()
     end
 
     if level.name() == "l12u_control_monolith" then
-        if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("gromov_spawn") then
-            db.actor:give_info_portion("gromov_spawn")
-        end
-
         if db.actor:has_info("actor_poslednii_put") and db.actor:dont_has_info("actor_finish") then
             db.actor:give_info_portion("actor_finish")
         end
@@ -495,58 +467,25 @@ local function on_first_update()
 end
 
 local function on_info(npc, info_id)
-    if level.name() == "l10_red_forest" then
-        if db.actor:has_info("babka_dialog_start") and db.actor:dont_has_info("babka_del") then
-            db.actor:give_info_portion("babka_del")
-        end
-    end
-
     if level.name() == "l01_escape" then
-        if db.actor:has_info("mayor_yarofeev_start") and db.actor:dont_has_info("mayor_yarofeev_spawn") then
-            db.actor:give_info_portion("mayor_yarofeev_spawn")
-        end
-
-        if db.actor:has_info("mayor_yarofeev_done") and db.actor:dont_has_info("sidr_sms_info") then
+        if info_id == "mayor_yarofeev_done" then
             ogse_st_mgr.start_timer("sms_sidr", math.random(10, 20), "braad_test.sms_sidr")
-            db.actor:give_info_portion("sidr_sms_info")
-        end
-    end
-
-    if level.name() == "l03_agroprom" then
-        if db.actor:has_info("kruglov_art_have") then
-            contr_art_spawn()
         end
     end
 
     if level.name() == "l04_darkvalley" then
-        if db.actor:has_info("doronin_help_have") and db.actor:dont_has_info("naem_td_spawn") then
-            db.actor:give_info_portion("naem_td_spawn")
-        end
-
         if info_id == "voronin_nychka_begin" and db.actor:dont_has_info("voronin_nychka_soglasen") then
             dsh.start_timer("voronin_deal", 5, "braad_test.voronin_deal")
         end
     end
 
-    if level.name() == "l05_bar" then
-        if db.actor:has_info("dolg_attak_dialog_start") and db.actor:dont_has_info("sledopyt_delete") then
-            db.actor:give_info_portion("sledopyt_delete")
-        end
-    end
-
     if level.name() == "l11_pripyat" then
-        if db.actor:has_info("prizrak_kill_speak") and db.actor:dont_has_info("mono_prizrak_spawn") then
+        if info_id == "prizrak_kill_speak" then
             ogse_st_mgr.start_timer("mono_prizrak_spawn", math.random(70, 80), "braad_test.mono_prizrak_spawn")
-            db.actor:give_info_portion("mono_prizrak_spawn")
         end
 
-        if db.actor:has_info("ubity_mervina_done") and db.actor:dont_has_info("vozvrat_sms") then
-            db.actor:give_info_portion("vozvrat_sms")
-        end
-
-        if db.actor:has_info("prizrak_help_have") and db.actor:dont_has_info("haron_sms") then
-            ogse_st_mgr.start_timer("sms_new", math.random(100, 120), "braad_test.sms_new")
-            db.actor:give_info_portion("haron_sms")
+        if info_id == "prizrak_help_have" then
+            ogse_st_mgr.start_timer("sms_new", math.random(30, 60), "braad_test.sms_new")
         end
 
         if info_id == "five_urok_dialog_start" then
@@ -560,31 +499,14 @@ local function on_info(npc, info_id)
         end
     end
 
-    if level.name() == "l12_stancia_2" then
-        if db.actor:has_info("control_monolit_have") and db.actor:dont_has_info("keys_sms") then
-            db.actor:give_info_portion("keys_sms")
-        end
-    end
-
-    if level.name() == "l12u_sarcofag" then
-        if db.actor:has_info("haron_naem_done") and db.actor:dont_has_info("mervin3_spawn") then
-            db.actor:give_info_portion("mervin3_spawn")
-        end
-    end
-
     if level.name() == "l12u_control_monolith" then
-        if db.actor:has_info("gromov_first_dialog_done") and db.actor:dont_has_info("gromov_del") then
-            db.actor:give_info_portion("gromov_del")
+        if info_id == "control_monolit_have" then
+            ogse_st_mgr.start_timer("sms_keys", math.random(20, 30), "braad_test.sms_keys")
         end
     end
 
-    if db.actor:has_info("semeckii_treasure_start") and db.actor:dont_has_info("semeckii_treasure_article") then
-        db.actor:give_info_portion("semeckii_treasure_article")
-    end
-
-    if db.actor:has_info("black_box_done") and db.actor:dont_has_info("prizrak_about_pda_sms") then
+    if info_id == "black_box_done" then
         ogse_st_mgr.start_timer("prizrak_pda", math.random(20, 30), "braad_test.prizrak_pda")
-        db.actor:give_info_portion("prizrak_about_pda_sms")
     end
 
     if (db.actor:has_info("mil_lucash_dead") or db.actor:has_info("mil_blockpost_leader_dead"))
@@ -601,12 +523,11 @@ local function on_info(npc, info_id)
         db.actor:give_info_portion("sveeblov_predatel_fail")
     end
 
-    if db.actor:has_info("aes_solmon_have") and db.actor:dont_has_info("aes_solmon_sms") then
+    if info_id == "aes_solmon_have" then
         ogse_st_mgr.start_timer("sms_solomon", math.random(20, 30), "braad_test.sms_solomon")
-        db.actor:give_info_portion("aes_solmon_sms")
     end
 
-    if db.actor:has_info("fanat_recept_start") and not db.actor:has_info("art_escape_spawn") then
+    if info_id == "fanat_recept_start" then
         spawn_ai_location("gold_art", vector():set(75.451988220215, 16.426797866821, 34.290096), "l02_garbage")
         spawn_ai_location("gold_art", vector():set(270.66116333008, -8.7369184494019, -126.34954), "l02_garbage")
         spawn_ai_location("gold_art", vector():set(-234.88185119629, 8.3708419799805, 177.88945007324), "l06_rostok")
@@ -621,8 +542,6 @@ local function on_info(npc, info_id)
         spawn_ai_location("af_night_star", vector():set(33.511577606201, -4.7631421089172, -361.11657714844), "l04_darkvalley")
         spawn_ai_location("af_soul", vector():set(-45.467483520508, 3.7723202705383, -12.004273414612), "l04_darkvalley")
         spawn_ai_location("af_rusty_kristall", vector():set(59.396793365479, 19.6898231506, 156.72634887695), "l01_escape")
-
-        db.actor:give_info_portion("art_escape_spawn")
     end
 
     if db.actor:has_info("garbage_stalker_wound_dead") and db.actor:has_info("knyaz_dolg_start")
@@ -673,10 +592,6 @@ local function on_info(npc, info_id)
     if db.actor:has_info("bloodsucker_strong_ucen_need") and db.actor:has_info("bloodsucker_strong_ucen_dead")
     and db.actor:dont_has_info("ucen_need_metka_bloodsucker_have") then
         db.actor:give_info_portion("ucen_need_metka_fail")
-    end
-
-    if db.actor:has_info("nato_enemy") and db.actor:dont_has_info("nato_zasada") then
-        db.actor:give_info_portion("nato_zasada")
     end
 end
 
@@ -850,7 +765,6 @@ function sms_doc()
 end
 
 function sms_keys()
-    db.actor:give_info_portion("keys_talk")
     news_manager.send_tip(db.actor, "sms_keys")
 end
 
@@ -1488,6 +1402,7 @@ function new_logic()
 end
 
 function mayor_yarofeev_spawn()
+    db.actor:give_info_portion("mayor_yarofeev_spawn")
     spawn_patrol("krevoshaev_specnaz1", "commander_krevoshaev_specnaz1_walk")
     spawn_patrol("krevoshaev_specnaz2", "commander_krevoshaev_specnaz2_walk")
     spawn_patrol("krevoshaev_specnaz3", "commander_krevoshaev_specnaz2_walk")
