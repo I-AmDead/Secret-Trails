@@ -1,0 +1,511 @@
+-- Автор: Dsh
+-- https://github.com/dsh2dsh/op2ogse/blob/master/gamedata/scripts/dsh_respawn.script
+-- KRodin (c) 2016: Добавил поддержку чтения настроек из кастомдаты объектов класса 'se_respawn'
+
+--TODO: Снести вообще все респавнеры из оллспавна, а настройки из их кастомдаты вынести в конфиги. И читать настройки, соответственно, оттуда.
+
+function attach(sm)
+    sm:subscribe({ signal = "on_spawn", fun = this.on_spawn })
+    sm:subscribe({ signal = "on_release_npc", fun = this.on_release_npc })
+    sm:subscribe({ signal = "on_save", fun = this.on_save })
+end
+
+local t_common = get_u32("options", "t_common") --Минимальное кол-во часов до следуюшего респавна. Максимальное кол-во часов = t_common * 2
+
+local all_spawn_respawners = {} --Таблица [имя] = id с респаунерами из оллспавна
+local all_spawned_obj = {} --Хэш id всех созданных объектов. В качестве значения будет имя респаунера.
+local active = {}
+
+function init() --Заносим все респавнеры в таблицу. Выполняется только один раз.
+    for id, sobj in alife():objects() do
+        if sobj:clsid() == clsid.respawn then
+            all_spawn_respawners[sobj:name()] = id --Добавили в таблицу
+            --Объект никогда не выйдет в онлайн
+            sobj:can_switch_online(false)
+            sobj:can_switch_offline(true)
+        end
+    end
+end
+
+function on_spawn()
+    if ogse.var_exists("all_spawn_respawners") then
+        all_spawn_respawners = ogse.load_var("all_spawn_respawners")
+    else
+        init()
+    end
+    --log3("--Allspwn respawners tbl: %s", all_spawn_respawners)
+
+    for name, id in pairs(all_spawn_respawners) do
+        local sobj = alife():object(tonumber(id))
+        if sobj then
+            local respawn = dsh_respawner(name)
+            active[name] = respawn
+            if not ogse_st_mgr.timer_exists(name) then
+                respawn:refresh_spawned_obj()
+            end
+        else
+            release_respawner_by_name(name)
+        end
+    end
+end
+
+-- Удалить id моба как можно скорее, что бы не успел создасться какой-нибудь
+-- объект с этим же id. А то после такого можно наблюдать, что в респаунере
+-- с крысами, в подземке Агропрома, зарегестрирована Гроза. Как пример.
+-- Потому, что ей был присвоен id убиенной крысы.
+function on_release_npc(id)
+    local name = all_spawned_obj[id]
+    if name then
+        local respawn = active[name]
+        respawn:remove_spawned(id)
+    end
+end
+
+function on_save()
+    ogse.save_var("all_spawn_respawners", all_spawn_respawners)
+    for name, respawn in pairs(active) do
+        respawn:save()
+    end
+end
+
+local function r_spawns(spawn_ini, section, line, sectSpawnProps)
+    if spawn_ini:line_exist(section, line) then
+        -- если default-ов больше, чем значений в ini, то забить недостающие последним значением из ini
+        local t = parse_names(get_string(section, line, nil, spawn_ini))
+        local n = table.getn(t)
+
+        local ret_table = {}
+        local k = 1
+        while k <= n do
+            local spawn = {}
+            spawn.section = t[k]
+            -- Проверяем что это не последняя запись
+            if t[k + 1] ~= nil then
+                local p = tonumber(t[k + 1])
+                -- проверяем что вторым числом задана вероятность, а не другая секция спавну
+                if p then
+                    -- забиваем число
+                    spawn.prob = p
+                    k = k + 2
+                else
+                    -- забиваем дефолт 1
+                    spawn.prob = 1
+                    k = k + 1
+                end
+            else
+                spawn.prob = 1
+                k = k + 1
+            end
+            table.insert(ret_table, spawn)
+
+            -- Вычитываем настройки секций респавна и кешируем их.
+            if not sectSpawnProps[spawn.section] then
+                local check = true
+                local community = get_string(spawn.section, "community", "nil")
+                local rank = get_string(spawn.section, "spec_rank", "nil")
+                local custom_data = get_string(spawn.section, "custom_data", nil)
+                if custom_data then
+                    local ltx = dsh.cached_ini_file(custom_data)
+                    if ltx:section_exist("smart_terrains") then
+                        if
+                            get_bool("smart_terrains", "none", false, ltx)
+                            or not get_bool("smart_terrains", "respawn_check", true, ltx)
+                        then
+                            check = false
+                        end
+                    end
+                end
+                sectSpawnProps[spawn.section] = { community = community, rank = rank, check = check }
+            end
+        end
+        return ret_table
+    end
+    return nil
+end
+
+--Служебный таймер. Использовать только здесь и больше нигде.
+class("swith_online_cond_timer")(ogse_st_mgr.savable_timer)
+function swith_online_cond_timer:__init(timer_id)
+    super(timer_id)
+    self.class = script_name() .. ".swith_online_cond_timer"
+end
+
+function swith_online_cond_timer:init(npc_id)
+    self.npc_id = npc_id
+    return self
+end
+
+function swith_online_cond_timer:load(t)
+    self.npc_id = unpack(t)
+end
+
+function swith_online_cond_timer:save(t, template)
+    table.insert(template, "u16")
+    table.insert(t, self.npc_id)
+    return template
+end
+
+function swith_online_cond_timer:condition()
+    self.npc_sobj = alife():object(self.npc_id)
+    return self.npc_sobj.position:distance_to(db.actor:position()) > alife():switch_distance()
+end
+
+function swith_online_cond_timer:action()
+    --log3("--[%s] Switching online: [%s]", script_name(), self.npc_sobj:name())
+    switch_online(self.npc_sobj.id)
+end
+
+class "dsh_respawner"
+function dsh_respawner:__init(name)
+    self.name = name
+    self.object = alife():object(name)
+    self:init_respawn_params()
+    self:load_spawned_obj()
+end
+
+function dsh_respawner:name()
+    return self.name
+end
+
+function dsh_respawner:init_respawn_params() --Вычитываем настройки спауна
+    local ini = self.object:spawn_ini()
+    ASSERT(ini:section_exist("respawn"), "Section 'respawn' not found in cd [%s]", self.name)
+
+    self.sectSpawnProps = {} --Таблица для кеширования свойств секций респавна.
+    self.respawn_section = r_spawns(ini, "respawn", "respawn_section", self.sectSpawnProps)
+    ASSERT(self.respawn_section, "RESPAWN: [%s] field 'respawn_section' doesn't exist.", self.name)
+    self.spawn_once = get_bool("respawn", "spawn_once", false, ini) --Спавнится ли предмет однократно. В огсе таких нет, но для совместимости оставлю проверку.
+    self.min_count = get_float("respawn", "min_count", 0, ini)
+    self.max_count = get_float("respawn", "max_count", -1, ini)
+    if self.min_count > self.max_count and self.max_count ~= -1 then
+        abort("RESPAWN: [%s] min_count > max_count", self.name)
+    end
+    self.max_spawn = get_float("respawn", "max_spawn", 1, ini)
+    local str_conditions = get_string("respawn", "conditions", 100, ini)
+    self.conditions = xr_logic.parse_condlist(self.object, "respawn", "conditions", str_conditions)
+
+    --В оригинале использовалось для проверки расстояния до актора при онлайновом апдейте. Здесь этого нет, поэтому закомментировал. Может, пригодится ещё.
+    --self.respawn_radius = get_float("respawn", "respawn_radius", -1, ini)
+    --if self.name == "mil_freedom_barier_respawn_1" then --Спешкейс, чтобы сохранить совместимость сейвов.
+    --  self.respawn_radius = -1
+    --end
+
+    self.parent = get_float("respawn", "parent", nil, ini)
+    self.item_spawn = get_bool("respawn", "item_spawn", false, ini)
+
+    --log3("--[%s] respawner [%s] item_spawn is [%s]", script_name(), self.name, self.item_spawn)
+end
+
+function dsh_respawner:read_spawned_obj()
+    local tname = self.name .. ".spawned_obj"
+    local objs = {}
+    for _, id in ipairs(ogse.load_var(tname, {})) do
+        table.insert(objs, tonumber(id))
+    end
+    return objs
+end
+
+function dsh_respawner:save()
+    local tname = self.name .. ".spawned_obj"
+    if table.getn(self.spawned_obj) > 0 then
+        ogse.save_var(tname, self.spawned_obj)
+    else
+        ogse.delete_var(tname)
+    end
+end
+
+function dsh_respawner:load_spawned_obj()
+    local objs = self:read_spawned_obj()
+    self.spawned_obj = {}
+    for _, k in ipairs(objs) do
+        local sobj = alife():object(k)
+        if sobj then
+            all_spawned_obj[k] = self.name
+            table.insert(self.spawned_obj, k)
+        end
+    end
+end
+
+function dsh_respawner:remove_spawned(id)
+    ASSERT(table.getn(self.spawned_obj) > 0, "Trying to remove %s from empty %s", id, self.name)
+    local filtered = {}
+    for _, k in ipairs(self.spawned_obj) do
+        if k ~= id then
+            table.insert(filtered, k)
+        end
+    end
+    all_spawned_obj[id] = nil
+    self.spawned_obj = filtered
+end
+
+function dsh_respawner:refresh_spawned_obj()
+    local res = self:do_refresh_spawned_obj()
+    self:schedule_next_spawn()
+    return res
+end
+
+function dsh_respawner:do_refresh_spawned_obj()
+    local our_sections = {}
+    for _, v in ipairs(self.respawn_section) do
+        our_sections[v.section] = true
+    end
+    -- Пробегаемся по списку уже заспавненных объектов и удаляем из
+    -- них мертвые либо уничтоженные.
+    if table.getn(self.spawned_obj) > 0 then
+        local filtered = {}
+        for _, v in ipairs(self.spawned_obj) do
+            local sobj = alife():object(v)
+            if sobj and our_sections[sobj:section_name()] then
+                if IsStalker(sobj) or IsMonster(sobj) then
+                    if sobj:alive() then
+                        table.insert(filtered, v)
+                    else
+                        all_spawned_obj[v] = nil
+                    end
+                else
+                    table.insert(filtered, v)
+                end
+            else
+                --log3("!!Remove object with id [%s], sect: [%s]", v, sobj and sobj:section() or "NOT FOUND")
+                all_spawned_obj[v] = nil
+            end
+        end
+        self.spawned_obj = filtered
+    end
+
+    --Если спавн событийный - далее делать нечего. Иначе будет бешеный респавн содержимого ящиков.
+    if self.item_spawn then
+        return
+    end
+
+    if xr_logic.pick_section_from_condlist(db.actor_proxy, self.object, self.conditions) == "0" then
+        return
+    end
+
+    -- экстренный спаун минимального количества объектов
+    if table.getn(self.spawned_obj) < self.min_count then
+        while table.getn(self.spawned_obj) < self.min_count do
+            if self:create(100) == false then
+                return
+            end
+        end
+        return
+    end
+
+    -- делаем несколько попыток заспаунить объект.
+    for i = 1, self.max_spawn do
+        if self.max_count ~= -1 and table.getn(self.spawned_obj) >= self.max_count then
+            return
+        end
+        if self:create(xr_logic.pick_section_from_condlist(db.actor_proxy, self.object, self.conditions)) == false then
+            return
+        end
+    end
+end
+
+function dsh_respawner:create(prob)
+    if tostring(prob) == "true" then
+        prob = 80
+    elseif tostring(prob) == "false" then
+        prob = 0
+    end
+    prob = tonumber(prob)
+    ASSERT(prob ~= nil, "RESPAWN: [%s] spawn probability doesn't set", self.name)
+
+    if math.random(100) <= prob then
+        local spawn_section
+        local sum = 0
+        -- Производим рандомную взвешенную выборку с учетом уже
+        -- заспавленного количества человек.
+        for k, v in pairs(self.respawn_section) do
+            sum = sum + v.prob
+        end
+        sum = math.random(0, sum)
+        for _, v in ipairs(self.respawn_section) do
+            sum = sum - v.prob
+            if sum <= 0 then
+                spawn_section = v.section
+                break
+            end
+        end
+
+        local parent_id
+        if self.parent then
+            local s_obj = alife():story_object(self.parent)
+            ASSERT(s_obj, "SPAWNING [%s], cant find parent with SID [%s]", self.name, self.parent)
+            parent_id = s_obj.id
+        end
+
+        local sobj
+        if not parent_id then
+            sobj = alife():create(
+                spawn_section,
+                self.object.position,
+                self.object.m_level_vertex_id,
+                self.object.m_game_vertex_id
+            )
+        	--log3("~~[%s] spawned object [%s] in resp [%s]", script_name(), sobj:name(), self.name)
+        else
+            sobj = alife():create(
+                spawn_section,
+                self.object.position,
+                self.object.m_level_vertex_id,
+                self.object.m_game_vertex_id,
+                parent_id
+            )
+            --log3("~~[%s] spawned item [%s] in resp [%s]", script_name(), sobj:name(), self.name)
+        end
+
+        local tt = self.sectSpawnProps[spawn_section]
+        if not self.parent then
+            if tt.check == true then
+                sobj:brain():update()
+                if sobj:smart_terrain_id() == 65535 then
+                    --log3("!![%s] [%s] -> [%s], NO SMART_TERRAIN AVAILABLE!!!", script_name(), sobj:name(), self.name)
+                    alife():release(sobj, true)
+                    return false
+                else
+                    --Чтобы неписи и монстры не спавнились в присутствии актора.
+                    if object_level_name(sobj) == level.name() and sobj.position:distance_to(db.actor:position()) <= alife():switch_distance() then
+                        --log3("--[%s] Switching offline: [%s] on level: [%s]", script_name(), sobj:name(), object_level_name(sobj))
+                        switch_offline(sobj.id)
+                        swith_online_cond_timer("swith_online_cond_timer " .. sobj:name()):init(sobj.id):start()
+                    end
+                end
+            end
+        end
+
+		if sobj then
+			log3("~~[%s] spawned object [%s] in resp [%s]", script_name(), sobj:name(), self.name)
+        	level.map_add_object_spot_ser(sobj.id, "red_location", script_name()..": "..sobj:name())
+		end
+
+        table.insert(self.spawned_obj, sobj.id)
+        all_spawned_obj[sobj.id] = self.name
+
+        --log3("--SPAWNING [%s] -> [%s]", self.name, spawn_section)
+        return true
+    end
+end
+
+function dsh_respawner:schedule_next_spawn()
+    if self.spawn_once then
+        return
+    end --Выходим, если объект спавнится только один раз
+    if self.parent then
+        return
+    end --Выходим, если у нас установлен событийный спавн
+
+    return ogse_st_mgr
+        .delayed_fun_start(self.name)
+        :set_gdelayDHMS(0, math.random(t_common, t_common * 2), math.random(0, 59), 0)
+        :init(script_name() .. ".on_timer", self.name)
+        :start()
+end
+
+function on_timer(name)
+    local respawn = active[name]
+    if respawn then
+        respawn:refresh_spawned_obj()
+    end
+end
+
+function release_respawner_by_name(name) --Удаление респавнера без удаления заспавненных им бъектов
+    if ogse_st_mgr.timer_exists(name) then
+        local t = ogse_st_mgr.get_timer(name)
+        t:stop()
+    end
+    if ogse.var_exists(name .. ".spawned_obj") then
+        for _, k in ipairs(ogse.load_var(name .. ".spawned_obj", {})) do
+            all_spawned_obj[tonumber(k)] = nil
+        end
+        ogse.delete_var(name .. ".spawned_obj")
+    end
+    active[name] = nil
+    local sobj = alife():object(name)
+    if sobj then
+        alife():release(sobj, true)
+    end
+    all_spawn_respawners[name] = nil
+    --log3("!!Released respawner with name: %s", name)
+end
+
+function iterate_respawners(f)
+    for name, respawn in pairs(active) do
+        f(respawn)
+    end
+end
+
+function get_respawner(name)
+    return active[name]
+end
+
+
+function spawn(name) --Спавн по каким-то событиям в гулагах. Вызывается из smart_terrain.script
+    --log3("~~[%s.spawn] Called with name [%s]", script_name(), name)
+    local spawner = get_respawner(name)
+    if not spawner then
+        --log3("!![%s.spawn] Respawner with name [%s] not found!", script_name(), name)
+        return
+    end
+
+    for i = 1, spawner.max_spawn do
+        if spawner.max_count ~= -1 and table.getn(spawner.spawned_obj) >= spawner.max_count then
+            return
+        end
+        if spawner:create(xr_logic.pick_section_from_condlist(db.actor_proxy, spawner.object, spawner.conditions)) == false then
+            return
+        end
+    end
+end
+
+-- Отладочная функция для проверки респаунеров.
+function cleanup_respawners()
+    iterate_respawners(function(respawner)
+        if respawner.parent then
+            return
+        end
+        local ids = {}
+        for _, id in ipairs(respawner.spawned_obj) do
+            table.insert(ids, id)
+        end
+        for _, id in ipairs(ids) do
+            local sobj = alife():object(id)
+            if sobj then
+                local strn_id
+                if (IsStalker(sobj) or IsMonster(sobj)) and sobj.smart_terrain_id then
+                    strn_id = sobj:smart_terrain_id()
+                else
+                    strn_id = 65535
+                end
+                if strn_id ~= 65535 then
+                    local strn = alife():object(strn_id)
+                    if strn then
+                        if not smart_terrain.is_same_level_group(object_level_name(strn), object_level_name(sobj)) then
+                            log3(
+                                "!![cleanup_respawners]: remove %s from %s: smart_terrain %s has different level group: %s and %s",
+                                id,
+                                respawner:name(),
+                                strn:name(),
+                                object_level_name(strn),
+                                object_level_name(sobj)
+                            )
+                            respawner:remove_spawned(id)
+                        end
+                    else
+                        log3(
+                            "!![cleanup_respawners]: remove %s from %s: smart_terrain %s not found",
+                            id,
+                            respawner:name(),
+                            strn_id
+                        )
+                        respawner:remove_spawned(id)
+                    end
+                end
+            else
+                log3("!![cleanup_respawners]: remove %s from %s: not found", id, respawner:name())
+                respawner:remove_spawned(id)
+            end
+        end
+    end)
+end

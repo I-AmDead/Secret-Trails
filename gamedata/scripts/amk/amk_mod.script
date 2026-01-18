@@ -404,80 +404,33 @@ end
 -- '*******************************************************************************
 -- '   **   **   **   **   **    **   **   **       AMK_RESPAWNS     **   **   **   **   **    **   **   **   
 -- '*******************************************************************************
-function switch_monster_online(obj)
-    se_monster.need_be_online[obj.id] = true
-end
 
-function switch_monster_offline(obj)
-    se_monster.need_be_online[obj.id] = false
-end
-
-function respawned(obj, respawner)
-    if IsMonster(obj) or IsStalker(obj) then
-        local sini = respawner:spawn_ini()
-        if sini:line_exist("respawn", "creature_binded_logic") then
-            local cfg_name = string_concat(get_string("respawn", "creature_binded_logic", "", sini), false)
-            obj.custom_data = "[logic]\ncfg = scripts\\amk\\" .. cfg_name .. ".ltx"
-        end
-    end
-end
-
-local respawners = {}
-local sini = ini_file("scripts\\amk\\amk_respawns.ltx")
+local respawn_ini = ini_file("scripts\\amk\\amk_respawns.ltx")
 
 function spawn_unspawned_respawners()
-    for a = 1, 65535 do
-        local obj = alife():object(a)
-        if obj then
-            local oini = obj:spawn_ini()
-            if oini:line_exist("respawn", "amk_name") then
-                local amk_name = string_concat(get_string("respawn", "amk_name", false, oini), false)
-                if amk_name then
-                    respawners[amk_name] = true
+    if respawn_ini:section_exist("amk_respawns") then
+        for i = 0, respawn_ini:line_count("amk_respawns") - 1 do
+            local key, id, value = respawn_ini:r_line("amk_respawns", i, "", "")
+        
+            if id and id ~= "" and get_bool("amk_respawns", id, false, respawn_ini) then
+                local t = get_section_keys_and_values(id, respawn_ini)
+                local position = get_vector(id, "pos", vector():set(0, 0, 0), respawn_ini)
+                local level_name = get_string(id, "level_name", nil, respawn_ini)
+            
+                if level_name and position then
+                    local respawner = alife_create("respawn", level_name, position)
+                
+                    local ini = respawner:spawn_ini()
+                    ini.readonly = false
+                
+                    for k, v in pairs(t) do
+                        if k ~= "pos" and k ~= "level_name" then
+                            ini:w_string("respawn", k, v)
+                        end
+                    end
+                
+                    respawner:save_spawn_ini()
                 end
-            end
-        end
-    end
-
-    local dv = {}
-
-    if sini:section_exist("default_values") then
-        for a = 0, sini:line_count("default_values") - 1 do
-            local result, id, value = sini:r_line("default_values", a, "", "")
-            if id and id ~= "" then
-                dv[string.trim(id)] = string.trim(value)
-            end
-        end
-    end
-
-    if sini:section_exist("amk_respawns") then
-        local tmp = {}
-
-        for a = 0, sini:line_count("amk_respawns") - 1 do
-            local result, id, value = sini:r_line("amk_respawns", a, "", "")
-            if id and id ~= "" then
-                table.insert(tmp, string.trim(id))
-            end
-        end
-
-        for _, v in ipairs(tmp) do
-            local flag = get_bool("amk_respawns", v, false, sini)
-            if not respawners[v] and flag then
-                local t = get_section_keys_and_values(v, sini)
-                local position = get_vector(v, "pos", vector():set(0, 0, 0), sini)
-                local level_name = get_string(v, "level_name", nil, sini)
-                local respawner = alife_create("respawn", level_name, position)
-
-                t.pos = nil
-                t.amk_name = v
-
-                local pk = get_netpk(respawner, 1)
-                ASSERT((pk and pk:isOk()), "can't read netpacket of %s", respawner:name())
-                local data = pk:get()
-                data.custom_data:setTable({respawn = t})
-                pk:set(data)
-
-                se_respawn.reinit_spawner_params(respawner:name())
             end
         end
     end
