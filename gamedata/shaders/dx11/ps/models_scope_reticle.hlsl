@@ -475,10 +475,7 @@ float4 main(vf I) : SV_Target
     // Parallax shadow
     float2 exit_pupil_tc = project(I.tc0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL * (SETTING(SETTINGS, ST_SEE_THROUGH) ? 1 : m_hud_params.x));
     float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH + 0.02 * (current_zoom - 1));
-    if (!SETTING(SETTINGS, ST_PARALLAX_SHADOW))
-    {
-        shadow_texture *= 1 - m_hud_params.x;
-    }
+
 
     // LED-illuminated inside walls
     float4 inside = s_inside.Sample(smp_base, clamp((reticle_lens_tc - 0.5) * 0.62 + 0.5, 0, 1));
