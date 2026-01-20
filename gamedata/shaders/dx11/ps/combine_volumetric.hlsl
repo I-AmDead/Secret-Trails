@@ -11,10 +11,6 @@ float4 main(p_screen I) : SV_Target
     // Read Depth
     float depth = gbuffer_depth(I.tc0.xy);
 
-    // Noise TC
-    float2 uv_noise = I.tc0.xy;
-    uv_noise.x *= screen_res.x / screen_res.y;
-
     // Discard Sky.
     color *= depth < 0.001 ? 1.0f : saturate(depth * 1.5f);
 
