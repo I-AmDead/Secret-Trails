@@ -160,6 +160,7 @@ function dsh_respawner:__init(name)
     self.name = name
     self.object = alife():object(name)
     self:init_respawn_params()
+    self:reinit_respawn_params()
     self:load_spawned_obj()
 end
 
@@ -194,6 +195,61 @@ function dsh_respawner:init_respawn_params() --Вычитываем настро
     self.item_spawn = get_bool("respawn", "item_spawn", false, ini)
 
     --log3("--[%s] respawner [%s] item_spawn is [%s]", script_name(), self.name, self.item_spawn)
+end
+
+function dsh_respawner:reinit_respawn_params()
+    local dsh_override_opts = {
+        ["spawn_once"] = {
+            ["getter"] = function(...)
+                return get_bool(...)
+            end,
+            ["setter"] = function(v)
+                self.spawn_once = v
+            end
+        },
+        ["min_count"] = {
+            ["getter"] = function(...)
+                return get_float(...)
+            end,
+            ["setter"] = function(v)
+                self.min_count = v
+            end
+        },
+        ["max_count"] = {
+            ["getter"] = function(...)
+                return get_float(...)
+            end,
+            ["setter"] = function(v)
+                self.max_count = v
+            end
+        },
+        ["max_spawn"] = {
+            ["getter"] = function(...)
+                return get_float(...)
+            end,
+            ["setter"] = function(v)
+                self.max_spawn = v
+            end
+        },
+        ["conditions"] = {
+            ["getter"] = function(...)
+                return get_string(...)
+            end,
+            ["setter"] = function(v, sect)
+                self.conditions = xr_logic.parse_condlist(self.object, sect, "conditions", v)
+            end
+        }
+    }
+
+    local sect = self.name .. "_override"
+    if sys_ini:section_exist(sect) then
+        for k, v in pairs(dsh_override_opts) do
+            if sys_ini:line_exist(sect, k) then
+                local value = v.getter(sect, k)
+                v.setter(value, sect)
+            end
+        end
+    end
 end
 
 function dsh_respawner:read_spawned_obj()
