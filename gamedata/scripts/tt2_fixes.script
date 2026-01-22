@@ -299,6 +299,48 @@ local function lamp_settings()
     end
 end
 
+local function find_and_process(names)
+    for a, obj in alife():objects() do
+        if obj and string.find(obj:name(), names) then
+            return true
+        end
+    end
+    return false
+end
+
+local function fix_hueta()
+    if ogse.var_exists("storyline_actor_start") then return end
+
+    if level.name() == "l04u_labx18" then
+        if db.actor:has_info("tankist_start_dialog_start") and db.actor:dont_has_info("zombak_spawn") then
+            if find_and_process("uchen_zombak") then
+                db.actor:give_info_portion("zombak_spawn")
+            else
+                db.actor:give_info_portion("zombak_spawn")
+                antreg.spawn_uchen_zombak()
+            end
+        end
+    end
+
+    if level.name() == "l09_deadcity" then
+        if db.actor:has_info("about_magomet_dialog_start") and db.actor:dont_has_info("spawn_drug") then
+            if find_and_process("drug_magometa") then
+                db.actor:give_info_portion("spawn_drug")
+            else
+                db.actor:give_info_portion("spawn_drug")
+                antreg.drug_spawn()
+            end
+        end
+    end
+
+    if level.name() == "l06_rostok" then
+        if db.actor:has_info("graf_tri_dialog_have") and db.actor:dont_has_info("perehod_yantar") then
+            db.actor:give_info_portion("perehod_yantar")
+            braad_test.create_rostok_restr()
+        end
+    end
+end
+
 local function fix_new_first()
     if level.name() == "fake_start" or level.name() == "test_poligon_v1" then return end
     ded_luck()
@@ -310,6 +352,7 @@ local function fix_new_first()
     lamp_lists()
     lamp_settings()
     first_patch()
+    fix_hueta()
 end
 
 local function on_item_to_slot(obj)
