@@ -160,6 +160,18 @@ local function on_info()
     end
 end
 
+function elevator_teleport(community1, community2)
+    dsh.wait_condition(function() return db.actor:dont_has_info("ui_talk") end, 
+    function()
+        level.add_pp_effector("black.ppe", 2006, false)
+        dsh.timeout(1000, function()
+            local pos = patrol("esc_fabrika_nebo_esc_fabrika1_walk")
+            alife():teleport_object(id_by_sid(story_ids.esc_tolik), pos:point(0), pos:level_vertex_id(0), pos:game_vertex_id(0))
+            db.actor:set_actor_position(pos:point(0))
+        end)
+    end)
+end
+
 function enemy_skit(community1, community2)
     relation_registry.set_community_goodwill("wanderer", "actor", -5000)
 end
