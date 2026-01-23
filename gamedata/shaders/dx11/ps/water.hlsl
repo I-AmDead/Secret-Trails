@@ -13,9 +13,7 @@
 #include "common\screenspace\check_screenspace.h"
 #include "common\screenspace\screenspace_water.h"
 
-#ifdef SSFX_FOG
 #include "common\screenspace\screenspace_fog.h"
-#endif
 
 struct vf
 {
@@ -204,11 +202,7 @@ float4 main(vf I) : SV_Target
 #endif
 
     // Fogging
-#ifdef SSFX_FOG
     float fogging = SSFX_FOGGING(1.0 - I.fog, w_s.y);
-#else
-    float fogging = I.fog;
-#endif
     acc = lerp(fog_color, acc, fogging);
 
     // Soft border

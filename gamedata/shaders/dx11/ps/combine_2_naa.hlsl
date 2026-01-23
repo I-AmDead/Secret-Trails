@@ -13,10 +13,8 @@
 #include "common\screenspace\screenspace_debanding.h"
 #endif
 
-#ifdef SSFX_FOG
 #include "common\screenspace\screenspace_fog.h"
 #include "common\screenspace\settings_screenspace_FOG.h"
-#endif
 
 uniform float4 m_flare_params;
 
@@ -40,7 +38,6 @@ float4 main(p_screen I) : SV_Target
     img = lerp(img, ssfx_debanding(img, center), view_space.z <= SKY_EPS);
 #endif
 
-#ifdef SSFX_FOG
     float fogresult = SSFX_CALC_FOG(view_space);
     fogresult *= fogresult;
 
@@ -53,7 +50,6 @@ float4 main(p_screen I) : SV_Target
 
     // Blend
     img = lerp(img, max(img, foggg), smoothstep(0.2f, 0.8f, fogresult) * disablefog);
-#endif
 #endif
 
     if (pnv_param_1.z < 1.f)

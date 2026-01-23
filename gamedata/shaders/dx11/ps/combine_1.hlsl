@@ -7,9 +7,7 @@
 #include "common\night_vision.h"
 #endif
 
-#ifdef SSFX_FOG
 #include "common\screenspace\screenspace_fog.h"
-#endif
 
 #include "common\lmodel.h"
 #include "common\hmodel.h"
@@ -78,15 +76,8 @@ float4 main(p_screen I) : SV_Target
 #endif
 
     // here should be distance fog
-#ifdef SSFX_FOG
     float3 WorldP = mul(m_inv_V, float4(P.xyz, 1));
     float fog = SSFX_HEIGHT_FOG(P.xyz, WorldP.y, color);
-#else
-    float3 pos = P.xyz;
-    float distance = length(pos);
-    float fog = saturate(distance * fog_params.w + fog_params.x);
-    color = lerp(color, fog_color, fog);
-#endif
 
     float skyblend = 0.0; // saturate(fog * fog);  // ??? 0.0 ?????? ??? ??? ?? ??????? ????????
 

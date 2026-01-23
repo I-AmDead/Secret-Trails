@@ -10,10 +10,7 @@
 #include "common\skin.h"
 
 #include "common\screenspace\check_screenspace.h"
-
-#ifdef SSFX_FOG
 #include "common\screenspace\screenspace_fog.h"
-#endif
 
 struct vf
 {
