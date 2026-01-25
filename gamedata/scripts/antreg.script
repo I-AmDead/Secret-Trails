@@ -93,14 +93,6 @@ local function on_first_update()
         end
     end
 
-    if level.name() == "l08_yantar" then
-        if has_alife_info("vasil2_yantar") and not has_alife_info("vasil2_spawn") then
-            db.actor:give_info_portion("vasil2_spawn")
-            local patrol = patrol("lc_aver_yantar_desc")
-            alife():teleport_object(id_by_sid(story_ids.vasil2), patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
-        end
-    end
-
     if level.name() == "l10_radar" then
         if not has_alife_info("spawn_rad_soldat") then
             db.actor:give_info_portion("spawn_rad_soldat")
@@ -146,16 +138,6 @@ local function on_first_update()
 
         if has_alife_info("karina_pda_est_start") and not has_alife_info("karina_razgovor") then
             db.actor:give_info_portion("karina_razgovor")
-        end
-    end
-end
-
-local function on_info()
-    if level.name() == "l08_yantar" then
-        if has_alife_info("vasil2_yantar") and not has_alife_info("vasil2_spawn") then
-            db.actor:give_info_portion("vasil2_spawn")
-            local patrol = patrol("lc_aver_yantar_desc")
-            alife():teleport_object(id_by_sid(story_ids.vasil2), patrol:point(0), patrol:level_vertex_id(0), patrol:game_vertex_id(0))
         end
     end
 end
@@ -2096,5 +2078,4 @@ end
 function attach(sm)
     sm:subscribe({signal = "on_update",         fun = distance_check})
     sm:subscribe({signal = "on_first_update",   fun = on_first_update})
-    sm:subscribe({signal = "on_info",           fun = on_info})
 end
