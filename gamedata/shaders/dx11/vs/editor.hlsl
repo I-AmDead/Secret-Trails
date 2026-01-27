@@ -1,24 +1,19 @@
 #include "common\common.h"
 
-struct vf
+struct VSOutput
 {
-    float4 C : COLOR0;
-    float4 P : POSITION;
-};
-
-struct v2p
-{
-    float4 C : COLOR0;
+    float4 Color : COLOR0;
     float4 P : SV_Position;
 };
 
 uniform float4 tfactor;
-v2p main(vf i)
+
+VSOutput main(float4 P : POSITION)
 {
-    v2p o;
+    VSOutput O;
 
-    o.P = mul(m_WVP, i.P); // xform, input in world coords
-    o.C = tfactor;
+    O.P = mul(m_WVP, P);
+    O.Color = tfactor;
 
-    return o;
+    return O;
 }

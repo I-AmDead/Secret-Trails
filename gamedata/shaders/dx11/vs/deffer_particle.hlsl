@@ -1,40 +1,32 @@
 #include "common\common.h"
 
-struct vv
+struct VSOtput
 {
-    float4 P : POSITION;
-    float2 tc : TEXCOORD0;
-    float4 c : COLOR0;
+    float4 Color : COLOR0;
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float3 Tex2 : TEXCOORD2;
+    float4 HPos_curr : TEXCOORD3;
+    float4 HPos_old : TEXCOORD4;
+    float4 HPos : SV_Position;
 };
 
-struct v2p_particle
+VSOtput main(v_TL I)
 {
-    float4 color : COLOR0;
-    v2p_flat base;
-};
+    VSOtput O;
 
-v2p_particle main(vv I)
-{
-    float4 w_pos = I.P;
-
-    // Eye-space pos/normal
-    v2p_flat O;
-    O.hpos = mul(m_WVP, w_pos);
-    O.hpos_curr = O.hpos;
-    O.hpos_old = mul(m_WVP_old, w_pos);
-    O.N = normalize(eye_position - w_pos);
     float3 Pe = mul(m_WV, I.P);
-    O.tcdh = float4(I.tc.xyyy);
-    O.position = float4(Pe, .2h);
-    O.hpos.xy = get_taa_jitter(O.hpos);
 
-#ifdef USE_TDETAIL
-    O.tcdbump = O.tcdh * dt_params; // dt tc
-#endif
+    O.HPos = mul(m_WVP, I.P);
+    O.HPos_curr = O.HPos;
+    O.HPos_old = mul(m_WVP_old, I.P);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    v2p_particle pp;
-    pp.color = I.c;
-    pp.base = O;
+    O.Tex0 = I.Tex0;
+    O.Tex1 = float4(Pe, .2h);
+    O.Tex2 = normalize(eye_position - I.P);
 
-    return pp;
+    O.Color = I.Color;
+
+    return O;
 }

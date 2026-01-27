@@ -10,17 +10,17 @@
 
 uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offset size ]
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float2 HalfPixel = ((1.0f / blur_setup.xy) * 0.5) * blur_setup.w;
 
     const float2 Coords[4] = {float2(-HalfPixel.x, HalfPixel.y), float2(HalfPixel.x, HalfPixel.y), float2(HalfPixel.x, -HalfPixel.y), float2(-HalfPixel.x, -HalfPixel.y)};
 
-    float4 Color = s_bloom.Sample(smp_rtlinear, I.tc0) * 4.0f;
+    float4 Color = s_bloom.Sample(smp_rtlinear, Tex0) * 4.0f;
 
     for (int x = 0; x < 4; x++)
     {
-        Color += s_bloom.Sample(smp_rtlinear, I.tc0 + Coords[x]);
+        Color += s_bloom.Sample(smp_rtlinear, Tex0 + Coords[x]);
     }
 
     Color = Color / 8.0f;

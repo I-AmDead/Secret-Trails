@@ -12,22 +12,21 @@
 // Screen space functions
 #include "common\screenspace\check_screenspace.h"
 #include "common\screenspace\screenspace_water.h"
-
 #include "common\screenspace\screenspace_fog.h"
 
-struct vf
+struct PSInput
 {
-    float2 tbase : TEXCOORD0; // base
-    float4 tnorm0 : TEXCOORD1; // nm0
-    float3 position_w : TEXCOORD2; // nm1
-    float3 M1 : TEXCOORD3;
-    float3 M2 : TEXCOORD4;
-    float3 M3 : TEXCOORD5;
-    float3 v2point_w : TEXCOORD6;
-    float4 tctexgen : TEXCOORD7;
-    float4 c0 : COLOR0;
-    float fog : FOG;
-    float4 hpos : SV_Position;
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float3 Tex2 : TEXCOORD2;
+    float3 Tex3 : TEXCOORD3;
+    float3 Tex4 : TEXCOORD4;
+    float3 Tex5 : TEXCOORD5;
+    float3 Tex6 : TEXCOORD6;
+    float4 Tex7 : TEXCOORD7;
+    float4 Color : COLOR0;
+    float Fog : FOG;
+    float4 HPos : SV_Position;
 };
 
 Texture2D s_nmap;
@@ -37,19 +36,19 @@ Texture2D s_watercaustics;
 
 uniform float4 ssfx_is_underground;
 
-float4 main(vf I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
     // 3d view space pos reconstruction math
-    float3 Pv = float3(I.tctexgen.z * (I.hpos.xy * pos_decompression_params.zw - pos_decompression_params.xy), I.tctexgen.z);
+    float3 Pv = float3(I.Tex7.z * (I.HPos.xy * pos_decompression_params.zw - pos_decompression_params.xy), I.Tex7.z);
 
     // Normal Textures
-    float3 n0 = s_nmap.Sample(smp_base, I.tnorm0.xy);
-    float3 n1 = s_nmap.Sample(smp_base, I.tnorm0.zw);
+    float3 n0 = s_nmap.Sample(smp_base, I.Tex1.xy);
+    float3 n1 = s_nmap.Sample(smp_base, I.Tex1.zw);
     float3 basenormal = ((n0 + n1) * 0.5f) * 2.0f - 1.0f;
     basenormal += float3(0.1f, 0.1f, 0.1f); // Offset the normal to "center" the textures again
 
     // Load Data
-    float2 PosTc = I.tctexgen.xy / I.tctexgen.z;
+    float2 PosTc = I.Tex7.xy / I.Tex7.z;
     float gloss = gbuffer_gloss(PosTc);
     float depth = gbuffer_depth(PosTc);
 
@@ -82,10 +81,10 @@ float4 main(vf I) : SV_Target
     // Shadows to do some tricks
     float water_shadows = saturate(s_accumulator.Sample(smp_nofilter, PosTc + Refraction_UV).r * 2000);
 
-    float3 Nw = mul(float3x3(I.M1, I.M2, I.M3), Navg);
+    float3 Nw = mul(float3x3(I.Tex3, I.Tex4, I.Tex5), Navg);
     Nw = normalize(Nw);
 
-    float3 v2point = normalize(I.v2point_w);
+    float3 v2point = normalize(I.Tex6);
     float3 vreflect = reflect(v2point, Nw.xyz);
 
     float3 eyedir = normalize(Pv);
@@ -100,7 +99,7 @@ float4 main(vf I) : SV_Target
 
     // Blue Noise & Normal for noise
     float3 NN = normalize(float3(basenormal.x * 0.15f, basenormal.y * 0.15f, basenormal.z));
-    float blue_noise = s_bluenoise.Sample(smp_linear, I.tbase * float2(0.05f, 0.05f) + NN).b * 1.5f;
+    float blue_noise = s_bluenoise.Sample(smp_linear, I.Tex0 * float2(0.05f, 0.05f) + NN).b * 1.5f;
 
     // Compute reflection bounce
     float3 wreflect = reflect(eyedir, Nv);
@@ -157,7 +156,7 @@ float4 main(vf I) : SV_Target
     float wdepth = gbuffer_depth(PosTc + Refraction_UV); // Simp: ??? ?? ???????? ????????? ??????? ?? taa jitter, ?????? ??? ?? ???? ????? ? ????? ?? ????????
 
     // 3d view space pos reconstruction math
-    float3 _P2 = float3(wdepth * (I.hpos.xy * pos_decompression_params.zw - pos_decompression_params.xy), wdepth);
+    float3 _P2 = float3(wdepth * (I.HPos.xy * pos_decompression_params.zw - pos_decompression_params.xy), wdepth);
 
     // Bottom of the water to world space ( Project the caustics and water fog )
     float3 w_b = mul(m_inv_V, float4(_P2, 1));
@@ -183,7 +182,7 @@ float4 main(vf I) : SV_Target
     float3 base_tex = s_base.Sample(smp_base, (w_s.xz + eye_position.xz) * 0.1f + N_Tex).rgb;
 
     // Texture * base color
-    base_tex *= I.c0.rgb;
+    base_tex *= I.Color.rgb;
 
     // Mix refraction ( 100% clear water ) & base texture ( Turbidity )
     float3 turbidity = lerp(base_tex, screen, smoothstep(G_SSR_WATER_FOG_MAXDEPTH, -G_SSR_WATER_TURBIDITY, waterFog));
@@ -202,7 +201,7 @@ float4 main(vf I) : SV_Target
 #endif
 
     // Fogging
-    float fogging = SSFX_FOGGING(1.0 - I.fog, w_s.y);
+    float fogging = SSFX_FOGGING(1.0 - I.Fog, w_s.y);
     acc = lerp(fog_color, acc, fogging);
 
     // Soft border

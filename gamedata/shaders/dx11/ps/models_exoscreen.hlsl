@@ -1,26 +1,17 @@
 #include "common\common.h"
 
-struct v2p
-{
-    float2 tc0 : TEXCOORD0; // base
-    // 	float2 	tc1: 		TEXCOORD1;	// lmap
-    float4 c0 : COLOR0; // sun
-};
-
 uniform float4 m_affects;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-float4 main(v2p I) : SV_Target
+float4 main(p_TL I) : SV_Target
 {
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
+    float4 t_base = s_base.Sample(smp_base, I.Tex0);
 
-    // ??? ??? ???????
-    float noise = get_noise(I.tc0 * timers.z) * m_affects.x * 2;
+    float noise = get_noise(I.Tex0 * timers.z) * m_affects.x * 2;
     t_base.r += noise;
     t_base.g += noise;
     t_base.b += noise;
 
-    // out
-    return float4(t_base.r, t_base.g, t_base.b, t_base.a * I.c0.a);
+    return float4(t_base.r, t_base.g, t_base.b, t_base.a * I.Color.a);
 }

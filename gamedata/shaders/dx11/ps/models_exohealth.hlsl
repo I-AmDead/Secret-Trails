@@ -2,22 +2,15 @@
 
 uniform float4 m_affects;
 
-struct v2p
-{
-    float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
-    float4 c0 : COLOR0; // sun.(fog*fog)
-};
-
-float4 main(v2p I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float problems = cos((frac(timers.z * 4) - 0.5) * 3.1416) * 2 - 0.8;
     float AMPL = 0.3;
-    I.tc0.y -= (m_affects.x > 0.15 && I.tc0.x > problems - AMPL && I.tc0.x < problems + AMPL) ?
-        cos(4.71 * (I.tc0.x - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * (m_affects.x / 10) * (AMPL - abs(I.tc0.x - problems)) / AMPL :
+    I.Tex0.y -= (m_affects.x > 0.15 && I.Tex0.x > problems - AMPL && I.Tex0.x < problems + AMPL) ?
+        cos(4.71 * (I.Tex0.x - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * (m_affects.x / 10) * (AMPL - abs(I.Tex0.x - problems)) / AMPL :
         0;
 
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
+    float4 t_base = s_base.Sample(smp_base, I.Tex0);
 
     float tmp = 1 - m_actor_params.y;
     tmp = clamp(tmp, 0, 0.5);
@@ -27,7 +20,7 @@ float4 main(v2p I) : SV_Target
     tmp = clamp(tmp, 0, 0.5);
     t_base.g += tmp * t_base.a;
 
-    float noise = get_noise(I.tc0 * timers.z) * m_affects.x * 2;
+    float noise = get_noise(I.Tex0 * timers.z) * m_affects.x * 2;
     t_base.r += noise;
     t_base.g += noise;
     t_base.b += noise;

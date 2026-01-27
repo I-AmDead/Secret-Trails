@@ -1,15 +1,15 @@
 #include "common\common.h"
 #include "common\sload.h"
 
-struct vf
+struct PSInput
 {
-    float3 position : TEXCOORD0;
-    float2 tc0 : TEXCOORD1; // base0
-    float2 tc1 : TEXCOORD2; // base1
-    float4 hpos_curr : TEXCOORD3;
-    float4 hpos_old : TEXCOORD4;
-    float4 af : COLOR1; // alpha&factor
-    float4 hpos : SV_Position;
+    float3 Pos : TEXCOORD0;
+    float2 Tex0 : TEXCOORD1;
+    float2 Tex1 : TEXCOORD2;
+    float4 HPos_curr : TEXCOORD3;
+    float4 HPos_old : TEXCOORD4;
+    float4 Color : COLOR1;
+    float4 HPos : SV_Position;
 };
 
 void sample_Textures(inout float4 D, inout float4 H, float2 tc1, float2 tc0, float4 af, float2 pixeloffset)
@@ -33,19 +33,19 @@ void sample_Textures(inout float4 D, inout float4 H, float2 tc1, float2 tc0, flo
     H.w *= af.x; // multiply hemi
 }
 
-f_deffer main(vf I)
+f_deffer main(PSInput I)
 {
     float4 D;
     float4 H;
 
-    sample_Textures(D, H, I.tc1, I.tc0, I.af, float2(0, 0));
+    sample_Textures(D, H, I.Tex1, I.Tex0, I.Color, float2(0, 0));
 
     clip(D.w - (96.h / 255.h));
 
     float3 N = normalize(H.xyz);
 
-    f_deffer O = pack_gbuffer(float4(N, H.w), float4(I.position + N * def_virtualh / 2.h, 0), float4(D.x, D.y, D.z, def_gloss));
-    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+    f_deffer O = pack_gbuffer(float4(N, H.w), float4(I.Pos + N * def_virtualh / 2.h, 0), float4(D.x, D.y, D.z, def_gloss));
+    O.Velocity = get_motion_vector(I.HPos_curr, I.HPos_old);
 
     O.H = float4(0.0, 0.0, 0.0, 0.0);
 

@@ -1,30 +1,30 @@
 #include "common\common.h"
 
-struct v2p
+struct PSInput
 {
-    float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
-    float3 c0 : COLOR0; // sun
-    float fog : FOG;
+    float2 Tex0 : TEXCOORD0;
+    float3 Tex1 : TEXCOORD1;
+    float3 Color0 : COLOR0;
+    float Fog : FOG;
 };
+
+TextureCube s_env;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-// uniform samplerCUBE 	s_env	;
-TextureCube s_env; //	Environment for forward rendering
 
-float4 main(v2p I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
-    float4 t_env = s_env.Sample(smp_rtlinear, I.tc1);
+    float4 t_base = s_base.Sample(smp_base, I.Tex0);
+    float4 t_env = s_env.Sample(smp_rtlinear, I.Tex1);
 
     float3 base = lerp(t_env, t_base, t_base.a);
-    float3 light = I.c0;
+    float3 light = I.Color0;
     float3 final = light * base * 2;
 
-    //	Fogging
-    final = lerp(fog_color, final, I.fog);
+    // Fogging
+    final = lerp(fog_color, final, I.Fog);
 
     // out
-    return float4(final.r, final.g, final.b, t_base.a * I.fog * I.fog);
+    return float4(final.r, final.g, final.b, t_base.a * I.Fog * I.Fog);
 }

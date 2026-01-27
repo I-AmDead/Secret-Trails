@@ -1,26 +1,18 @@
 #include "common\common.h"
 
-struct p_sun
-{
-    float2 Tex0 : TEXCOORD0;
-    float4 tctexgen : TEXCOORD1;
-    float4 Color : COLOR;
-    float4 HPos : SV_Position;
-};
-
 #define	CLIP_DISTANCE 1.5f
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-float4 main(p_sun I) : SV_Target
+float4 main(v2p_TLD4 I) : SV_Target
 {
     float4 t_base = s_base.Sample(smp_base, I.Tex0) * I.Color;
 
-    float2 tcProj = I.tctexgen.xy / I.tctexgen.w;
+    float2 tcProj = I.Tex1.xy / I.Tex1.w;
     float spaceDepth = gbuffer_depth(tcProj);
 
     if (spaceDepth < 0.01f)
-        spaceDepth = 100000.0f; //  filter for skybox
+        spaceDepth = 100000.0f;
 
     // clip pixels on hud
     clip(spaceDepth - CLIP_DISTANCE);

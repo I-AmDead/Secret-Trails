@@ -1,10 +1,22 @@
-#include "common\common.h"
+#include "common\shared\common.h"
+
+struct VSInput
+{
+    float4 P : POSITIONT;
+    float4 Color : COLOR;
+};
+
+struct VSOutput
+{
+    float4 Color : COLOR;
+    float4 P : SV_Position;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_TL0uv main(v_TL0uv_positiont I)
+VSOutput main(VSInput I)
 {
-    v2p_TL0uv O;
+    VSOutput O;
 
     I.P.xy += 0.5f;
     O.HPos.x = I.P.x * screen_res.z * 2 - 1;

@@ -17,10 +17,10 @@ static float Fisheye_Tan = tan(Fisheye_FOV / 2.0);
 Texture2D s_emissive;
 Texture2D s_lenscolors;
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Fisheye UV
-    float2 uv = I.tc0.xy * 2.0f - 1.0f;
+    float2 uv = Tex0.xy * 2.0f - 1.0f;
     uv.y /= screen_res.x / screen_res.y;
 
     float xy_len = length(uv);
@@ -42,7 +42,7 @@ float4 main(p_screen I) : SV_Target
     }
 
     // Add base color
-    Flares *= s_lenscolors.Sample(smp_linear, I.tc0.xy).rgb;
+    Flares *= s_lenscolors.Sample(smp_linear, Tex0.xy).rgb;
 
     return float4(Flares, 1);
 }

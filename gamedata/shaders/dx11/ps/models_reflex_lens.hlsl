@@ -10,10 +10,9 @@
 
 #include "common\common.h"
 
-struct vf
+struct PSInput
 {
-    float4 hpos : SV_Position;
-    float2 tc0 : TEXCOORD0;
+    float2 Tex0 : TEXCOORD0;
     float3 T : TEXCOORD1;
     float3 B : TEXCOORD2;
     float3 N : TEXCOORD3;
@@ -78,13 +77,13 @@ float4 rgba_blend(float4 b, float4 a)
     return float4(nc, na);
 }
 
-float4 main(vf I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
-    float4 lens = s_base.Sample(smp_rtlinear, I.tc0 / 2);
+    float4 lens = s_base.Sample(smp_rtlinear, I.Tex0 / 2);
     lens.a *= current_lum();
 
-    float4 reflections = sample_reflections(I.tc0, transpose(float3x3(I.T, I.B, I.N)), I.P, I.N);
-    float4 dirt = sample_dirt(I.tc0, I.N);
+    float4 reflections = sample_reflections(I.Tex0, transpose(float3x3(I.T, I.B, I.N)), I.P, I.N);
+    float4 dirt = sample_dirt(I.Tex0, I.N);
 
     return rgba_blend(rgba_blend(lens, reflections), dirt);
 }

@@ -1,22 +1,20 @@
 #include "common\common.h"
 #include "common\shadow.h"
 
-struct PSInput
-{
-    float4 hpos : SV_Position;
-    float4 hpos2d : TEXCOORD0;
-};
-float4 main(PSInput s) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
     if (Ldynamic_color.w == 0.)
         return 0..xxxx;
-    uint2 r = uint2(s.hpos.xy);
+
+    uint2 r = uint2(I.HPos.xy);
     uint m = (r.x ^ r.y) << 1u;
     float z = float((m & 4u | r.y & 2u) >> 1u | (m & 2u | r.y & 1u) << 2u) * .0625;
-    float2 f = s.hpos2d.xy / s.hpos2d.w * float2(.5, -.5) + .5, w = f * screen_res.xy;
+    float2 f = I.Tex0.xy / I.Tex0.w * float2(.5, -.5) + .5, w = f * screen_res.xy;
+
     float u = gbuffer_depth(f);
     u = u < 1e-4 ? 10000 : u;
-    u = min(u, s.hpos.w);
+    u = min(u, I.HPos.w);
+
     float3 h = float3(u * (w * pos_decompression_params.zw - pos_decompression_params.xy), u), e = mul(m_inv_V, float4(h, 1.)).xyz;
     uint x = 8;
     float p = length(e - eye_position) / x;
@@ -33,7 +31,9 @@ float4 main(PSInput s) : SV_Target
         L += t * i;
         d += y;
     }
+
     L *= length(y);
     L = 1. - exp(-L / 8);
+
     return float4(L * Ldynamic_color.xyz, 0.);
 }

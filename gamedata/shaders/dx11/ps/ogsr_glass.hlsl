@@ -9,39 +9,38 @@
 #include "common\common.h"
 #include "common\screenspace\settings_screenspace_GLASS.h"
 
-struct v2p
+struct PSInput
 {
     float4 P : POSITION;
-    float2 tc0 : TEXCOORD0;
-    float3 tc1 : TEXCOORD1;
-    float4 hpos : SV_Position;
-    float fog : FOG;
-
-    float3 v2point : TEXCOORD2;
-    float3 nor : TEXCOORD3;
+    float2 Tex0 : TEXCOORD0;
+    float3 Tex1 : TEXCOORD1;
+    float3 Tex2 : TEXCOORD2;
+    float3 Tex3 : TEXCOORD3;
+    float4 HPos : SV_Position;
+    float Fog : FOG;
 };
 
 TextureCube s_env;
 Texture2D s_glass;
 Texture2D s_screen;
 
-float4 main(v2p I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
-    float4 t_env = s_env.Sample(smp_rtlinear, I.tc1) * 0.5;
+    float4 t_base = s_base.Sample(smp_base, I.Tex0);
+    float4 t_env = s_env.Sample(smp_rtlinear, I.Tex1) * 0.5;
 
     float3 base = lerp(t_env, t_base, t_base.a);
     float3 final = 0;
 
     // Scale
-    float2 tc_screen = I.hpos.xy / screen_res.xy;
+    float2 tc_screen = I.HPos.xy / screen_res.xy;
     float pixelsize = (1.0f / screen_res.xy) * 2.0f;
     float3 screen = 0;
 
     float acc = saturate(s_accumulator.Sample(smp_nofilter, tc_screen).r * 2000);
 
     // Fresnel
-    float fresnel = saturate(dot(reflect(I.v2point, I.nor), I.v2point));
+    float fresnel = saturate(dot(reflect(I.Tex2, I.Tex3), I.Tex2));
     fresnel = pow(fresnel, 5);
 
     // Fake Triplanar
@@ -59,7 +58,7 @@ float4 main(v2p I) : SV_Target
 
     // Normal offset
     float2 tc_offset = s_glass.Sample(smp_base, uvs * SSFX_GLASS_BUMP_SCALE);
-    tc_offset = (tc_offset.xy * 2 - 1) * max((SSFX_GLASS_REFRACTION + fresnel * 0.05) / I.hpos.w, (SSFX_GLASS_REFRACTION + fresnel * 0.05));
+    tc_offset = (tc_offset.xy * 2 - 1) * max((SSFX_GLASS_REFRACTION + fresnel * 0.05) / I.HPos.w, (SSFX_GLASS_REFRACTION + fresnel * 0.05));
 
     tc_offset = clamp(tc_offset, -1.0f, 1.0f);
 
@@ -69,7 +68,7 @@ float4 main(v2p I) : SV_Target
     screen.b = s_screen.SampleLevel(smp_rtlinear, (tc_screen - pixelsize.xx) + tc_offset, 0).b;
 
     // Add texture
-    final = lerp(screen.rgb * saturate(base * 1.5f), screen.rgb, 1.0f - I.fog);
+    final = lerp(screen.rgb * saturate(base * 1.5f), screen.rgb, 1.0f - I.Fog);
 
     // Apply Fresnel
     final += fresnel.xxx * SSFX_GLASS_FRESNEL * float3(0.9f, 1.0f, 0.9f) * acc; // Tint

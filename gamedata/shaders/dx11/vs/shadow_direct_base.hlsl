@@ -1,24 +1,25 @@
 #include "common\common.h"
 
-struct v_shadow
+struct VSInput
 {
 #ifdef USE_AREF
-    float4 Nh : NORMAL; // (nx,ny,nz,hemi occlusion)
-    float4 T : TANGENT; // tangent
-    float4 B : BINORMAL; // binormal
-    int2 tc : TEXCOORD0; // (u,v)
+    float4 T : TANGENT;
+    float4 B : BINORMAL;
+    int2 Tex0 : TEXCOORD0;
 #endif
-    float4 P : POSITION; // (float,float,float,1)
+    float4 P : POSITION;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_shadow_direct main(v_shadow I)
+v2p_shadow_direct main(VSInput I)
 {
     v2p_shadow_direct O;
-    O.hpos = mul(m_WVP, I.P);
+    O.HPos = mul(m_WVP, I.P);
+
 #ifdef USE_AREF
-    O.tc0 = unpack_tc_base(I.tc, I.T.w, I.B.w); // copy tc
+    O.Tex0 = unpack_tc_base(I.Tex0, I.T.w, I.B.w);
 #endif
+
     return O;
 }

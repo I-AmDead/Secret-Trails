@@ -5,22 +5,13 @@
 // Check Screen Space Shaders modules & addons
 #include "common\screenspace\check_screenspace.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// This is the basic primitive used by convex, volumetric lights
-// for example spot-lights, one face of the omni lights, etc.
-//////////////////////////////////////////////////////////////////////////////////////////
-// following options are available to configure compilation:
-// USE_LMAP
-// USE_LMAPXFORM
-// USE_SHADOW
-//////////////////////////////////////////////////////////////////////////////////////////
 float4 m_lmap[2];
 
-float4 main(p_volume I, float4 pos2d : SV_Position) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
-    float2 tcProj = I.tc.xy / I.tc.w;
+    float2 tcProj = I.Tex0.xy / I.Tex0.w;
 
-    gbuffer_data gbd = gbuffer_load_data(tcProj, pos2d);
+    gbuffer_data gbd = gbuffer_load_data(tcProj, I.HPos);
 
     gbd.P += gbd.N * 0.025f;
 

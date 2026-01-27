@@ -1,26 +1,19 @@
 #include "common\common.h"
 
-struct vf
+v2p_TL main(v_static I)
 {
-    float2 tc0 : TEXCOORD0; // base
-    float4 c0 : COLOR0; // color
-    float4 hpos : SV_Position;
-};
+    v2p_TL O;
 
-vf main(v_static v)
-{
-    vf o;
+    O.HPos = mul(m_WVP, I.P); // xform, input in world coords
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.hpos = mul(m_WVP, v.P); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
-
-    o.tc0 = unpack_tc_base(v.tc, v.T.w, v.B.w); // copy tc
+    O.Tex0 = unpack_tc_base(I.Tex0, I.T.w, I.B.w); // copy tc
 
     // calculate fade
-    float3 dir_v = normalize(mul(m_WV, v.P));
-    float3 norm_v = normalize(mul(m_WV, unpack_normal(v.Nh).zyx));
+    float3 dir_v = normalize(mul(m_WV, I.P));
+    float3 norm_v = normalize(mul(m_WV, unpack_normal(I.N).zyx));
     float fade = abs(dot(dir_v, norm_v));
-    o.c0 = fade;
+    O.Color = fade;
 
-    return o;
+    return O;
 }

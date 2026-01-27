@@ -12,67 +12,66 @@
 #include "common\screenspace\check_screenspace.h"
 #include "common\screenspace\screenspace_fog.h"
 
-struct vf
+struct VSOutput
 {
     float4 P : POSITION;
-    float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
-    float4 hpos : SV_Position;
-    float fog : FOG;
-
-    float3 v2point : TEXCOORD2;
-    float3 nor : TEXCOORD3;
+    float2 Tex0 : TEXCOORD0; // base
+    float3 Tex1 : TEXCOORD1; // environment
+    float3 Tex2 : TEXCOORD2;
+    float3 Tex3 : TEXCOORD3;
+    float4 HPos : SV_Position;
+    float Fog : FOG;
 };
 
-vf _main(v_model v, float3 psp)
+VSOutput _main(v_model I, float3 psp)
 {
-    vf o;
+    VSOutput O;
 
-    float4 pos = v.P;
+    float4 pos = I.P;
     float3 pos_w = mul(m_W, pos);
-    float3 norm_w = normalize(mul(m_W, v.N));
+    float3 norm_w = normalize(mul(m_W, I.N));
 
-    o.hpos = mul(m_WVP, pos); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, pos); // xform, input in world coords
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0 = v.tc.xy; // copy tc
-    o.tc1 = calc_reflection(pos_w, norm_w);
+    O.Tex0 = I.Tex0.xy; // copy tc
+    O.Tex1 = calc_reflection(pos_w, norm_w);
 
-    o.fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
-    o.fog = SSFX_FOGGING(1.0 - o.fog, pos.y); // Add SSFX Fog
+    O.Fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
+    O.Fog = SSFX_FOGGING(1.0 - O.Fog, pos.y); // Add SSFX Fog
 
-    o.v2point = normalize(pos_w - eye_position);
-    o.nor = norm_w;
+    O.Tex2 = normalize(pos_w - eye_position);
+    O.Tex3 = norm_w;
 
     if (!all(psp))
-        o.P.xyz = pos.xyz;
+        O.P.xyz = pos.xyz;
     else
-        o.P.xyz = psp;
+        O.P.xyz = psp;
 
-    return o;
+    return O;
 }
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-vf main(v_model v) { return _main(v, 0); }
+VSOutput main(v_model I) { return _main(I, 0); }
 #endif
 
 #ifdef SKIN_0
-vf main(v_model_skinned_0 v) { return _main(skinning_0(v), v.P); }
+VSOutput main(v_model_skinned_0 I) { return _main(skinning_0(I), I.P); }
 #endif
 
 #ifdef SKIN_1
-vf main(v_model_skinned_1 v) { return _main(skinning_1(v), v.P); }
+VSOutput main(v_model_skinned_1 I) { return _main(skinning_1(I), I.P); }
 #endif
 
 #ifdef SKIN_2
-vf main(v_model_skinned_2 v) { return _main(skinning_2(v), v.P); }
+VSOutput main(v_model_skinned_2 I) { return _main(skinning_2(I), I.P); }
 #endif
 
 #ifdef SKIN_3
-vf main(v_model_skinned_3 v) { return _main(skinning_3(v), v.P); }
+VSOutput main(v_model_skinned_3 I) { return _main(skinning_3(I), I.P); }
 #endif
 
 #ifdef SKIN_4
-vf main(v_model_skinned_4 v) { return _main(skinning_4(v), v.P); }
+VSOutput main(v_model_skinned_4 I) { return _main(skinning_4(I), I.P); }
 #endif

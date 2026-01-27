@@ -1,22 +1,12 @@
-#include "common\common.h"
-
-struct _in
-{
-    float4 P : POSITIONT; // xy=pos, zw=tc0
-    float2 tcJ : TEXCOORD0; // jitter coords
-};
-
-struct v2p
-{
-    float2 tc0 : TEXCOORD0; // tc.xy
-    float4 hpos : SV_Position;
-};
+#include "common\common_iostructs.h"
 
 // Vertex
-v2p main(_in I)
+v2p_screen main(float4 P : POSITIONT)
 {
-    v2p O;
-    O.hpos = float4(I.P.x, -I.P.y, 0, 1);
-    O.tc0 = I.P.zw;
+    v2p_screen O;
+
+    O.HPos = float4(P.x, -P.y, 0, 1);
+    O.Tex0 = P.zw;
+
     return O;
 }

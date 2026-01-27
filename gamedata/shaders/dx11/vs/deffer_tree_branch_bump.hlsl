@@ -22,10 +22,10 @@ cbuffer dynamic_inter_grass
 
 v2p_bumped main(v_tree I)
 {
-    float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
-    float4 consts = I.consts;
+    float3x4 m_xform = float3x4(I.M0, I.M1, I.M2);
+    float4 consts = I.Consts;
 
-    I.Nh = unpack_D3DCOLOR(I.Nh);
+    I.N = unpack_D3DCOLOR(I.N);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
 
@@ -33,7 +33,7 @@ v2p_bumped main(v_tree I)
 
     float3 pos = mul(m_xform, I.P);
     float H = pos.y - m_xform._24; // height of vertex
-    float2 tc = (I.tc * consts).xy;
+    float2 tc = (I.Tex0 * consts).xy;
 
 #ifndef SSFX_WIND
     float4 w_pos = float4(pos.xyz, 1);
@@ -107,13 +107,13 @@ v2p_bumped main(v_tree I)
     }
 #endif
 
-    float hemi = clamp(I.Nh.w * consts.z + consts.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
-    // float hemi = I.Nh.w;
+    float hemi = clamp(I.N.w * consts.z + consts.w, 0.3f, 1.0f); // Limit hemi - SSS Update 14.5
+    // float hemi = I.N.w;
 
     // Eye-space pos/normal
     v2p_bumped O;
     float3 Pe = mul(m_V, w_pos);
-    O.tcdh = float4(tc.xyyy);
+    O.tcdh = tc;
     O.hpos = mul(m_VP, w_pos);
 
     //////////
@@ -127,7 +127,7 @@ v2p_bumped main(v_tree I)
     // FLORA FIXES & IMPROVEMENTS - SSS Update 14
     // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
     // Use real tree Normal, Tangent and Binormal.
-    float3 N = unpack_bx4(I.Nh);
+    float3 N = unpack_bx4(I.N);
     float3 T = unpack_bx4(I.T);
     float3 B = unpack_bx4(I.B);
 

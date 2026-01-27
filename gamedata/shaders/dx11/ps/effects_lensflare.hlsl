@@ -5,14 +5,12 @@
 #define LENS_DIRT_INTENSITY 0.7
 #define CLIP_DISTANCE 1.5f
 
-struct flare
+struct PSInput
 {
-    float4 hpos : SV_Position;
-    float2 tc0 : TEXCOORD0;
-    float4 tc1 : TEXCOORD1;
-    float4 tc2 : TEXCOORD2;
-    float4 c0 : COLOR;
-    float fog : FOG;
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 Tex2 : TEXCOORD2;
+    float Fog : FOG;
 };
 
 uniform Texture2D s_glow;
@@ -22,18 +20,18 @@ uniform Texture2D s_dirt_mask;
 uniform float4 flare_params;
 uniform float4 flare_color;
 
-float4 main(flare I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
     float4 final = {0.0, 0.0, 0.0, 1.0};
-    float2 len = I.tc0.xy - float2(0.5, 0.5);
+    float2 len = I.Tex0.xy - float2(0.5, 0.5);
 
-    float3 glow = s_glow.Sample(smp_base, I.tc0).rgb * GLOW_FLARE_INTENSITY;
-    float3 flare = s_flare.Sample(smp_base, I.tc0).rgb * LENS_FLARE_INTENSITY;
-    float4 dirt = s_dirt_mask.Sample(smp_base, I.tc1) * LENS_DIRT_INTENSITY;
+    float3 glow = s_glow.Sample(smp_base, I.Tex0).rgb * GLOW_FLARE_INTENSITY;
+    float3 flare = s_flare.Sample(smp_base, I.Tex0).rgb * LENS_FLARE_INTENSITY;
+    float4 dirt = s_dirt_mask.Sample(smp_base, I.Tex1) * LENS_DIRT_INTENSITY;
 
     final.rgb = (glow + flare) * (1.0 - flare_params.x);
 
-    float2 tcProj = I.tc2.xy / I.tc2.w;
+    float2 tcProj = I.Tex2.xy / I.Tex2.w;
     float spaceDepth = gbuffer_depth(tcProj);
 
     if (spaceDepth < 0.01f)
@@ -44,7 +42,7 @@ float4 main(flare I) : SV_Target
 
     final.rgb += dirt.aaa * saturate(0.3 - length(len));
     final.rgb *= flare_color.rgb;
-    final.a *= I.fog;
+    final.a *= I.Fog;
 
     return final;
 }

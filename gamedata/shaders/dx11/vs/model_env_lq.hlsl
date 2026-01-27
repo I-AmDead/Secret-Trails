@@ -2,57 +2,57 @@
 #include "common\skin.h"
 #include "common\screenspace\screenspace_fog.h"
 
-struct vf
+struct VSOutput
 {
-    float2 tc0 : TEXCOORD0; // base
-    float3 tc1 : TEXCOORD1; // environment
-    float3 c0 : COLOR0; // color
-    float fog : FOG;
-    float4 hpos : SV_Position;
+    float2 Tex0 : TEXCOORD0; // base
+    float3 Tex1 : TEXCOORD1; // environment
+    float3 Color : COLOR0; // color
+    float Fog : FOG;
+    float4 HPos : SV_Position;
 };
 
-vf _main(v_model v)
+VSOutput _main(v_model I)
 {
-    vf o;
+    VSOutput O;
 
-    float4 pos = v.P;
+    float4 pos = I.P;
     float3 pos_w = mul(m_W, pos);
-    float3 norm_w = normalize(mul(m_W, v.N));
+    float3 norm_w = normalize(mul(m_W, I.N));
 
-    o.hpos = mul(m_WVP, pos); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, pos);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0 = v.tc.xy; // copy tc
-    o.tc1 = calc_reflection(pos_w, norm_w);
-    o.c0 = calc_model_lq_lighting(float3(0, 1, 0)); // SSS 14.5 - Improve the illumination a little using a fake normal
+    O.Tex0 = I.Tex0.xy; // copy tc
+    O.Tex1 = calc_reflection(pos_w, norm_w);
+    O.Color = calc_model_lq_lighting(float3(0, 1, 0)); // SSS 14.5 - Improve the illumination a little using a fake normal
 
-    o.fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
-    o.fog = SSFX_FOGGING(1.0 - o.fog, pos.y); // Add SSFX Fog
+    O.Fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
+    O.Fog = SSFX_FOGGING(1.0 - O.Fog, pos.y); // Add SSFX Fog
 
-    return o;
+    return O;
 }
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-vf main(v_model v) { return _main(v); }
+VSOutput main(v_model I) { return _main(I); }
 #endif
 
 #ifdef SKIN_0
-vf main(v_model_skinned_0 v) { return _main(skinning_0(v)); }
+VSOutput main(v_model_skinned_0 I) { return _main(skinning_0(I)); }
 #endif
 
 #ifdef SKIN_1
-vf main(v_model_skinned_1 v) { return _main(skinning_1(v)); }
+VSOutput main(v_model_skinned_1 I) { return _main(skinning_1(I)); }
 #endif
 
 #ifdef SKIN_2
-vf main(v_model_skinned_2 v) { return _main(skinning_2(v)); }
+VSOutput main(v_model_skinned_2 I) { return _main(skinning_2(I)); }
 #endif
 
 #ifdef SKIN_3
-vf main(v_model_skinned_3 v) { return _main(skinning_3(v)); }
+VSOutput main(v_model_skinned_3 I) { return _main(skinning_3(I)); }
 #endif
 
 #ifdef SKIN_4
-vf main(v_model_skinned_4 v) { return _main(skinning_4(v)); }
+VSOutput main(v_model_skinned_4 I) { return _main(skinning_4(I)); }
 #endif

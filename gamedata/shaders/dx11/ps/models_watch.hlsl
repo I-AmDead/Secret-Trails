@@ -7,18 +7,15 @@ uniform float4 m_affects;
 
 f_deffer main(p_flat I)
 {
-    // ????? ??????? ?????????
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x)) * 2;
     I.tcdh.x += (m_affects.x > 0.09 && I.tcdh.y > problems - 0.01 && I.tcdh.y < problems) ? sin((I.tcdh.y - problems) * 5 * m_affects.y * 2) : 0;
 
-    // ??????? ??????? ?????????
     problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
     float AMPL = 0.13;
     I.tcdh.x -= (m_affects.x > 0.15 && I.tcdh.y > problems - AMPL && I.tcdh.y < problems + AMPL) ?
         (cos(4.71 * (I.tcdh.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tcdh.y - problems)) / AMPL) :
         0;
 
-    // ?????? ?????-?????? ? ????????? ??????
     I.tcdh.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0;
 
     // diffuse
@@ -40,7 +37,6 @@ f_deffer main(p_flat I)
     if (m_affects.a > 0 && m_affects.x >= 0.08)
         D += watch_loading(I.tcdh);
 
-    // ??? ??? ???????
     float noise = (m_affects.x < 0.41 && m_affects.x > 0.0) ? get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 20 : 0.0;
 
     D.x += noise;

@@ -6,14 +6,14 @@
 uniform float4 ssss_params;
 uniform Texture2D s_mask_blur; // smoothed mask
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float sunFar = 100.0f / sqrt(1 - L_sun_dir_w.y * L_sun_dir_w.y);
     float4 sunProj = mul(m_VP, float4(sunFar * L_sun_dir_w + eye_position, 1));
     float4 sunScreen = proj_to_screen(sunProj) / sunProj.w; // projective 2 screen and normalize
 
     float fSign = dot(-eye_direction, normalize(L_sun_dir_w));
-    float2 sunVector = sunScreen.xy - I.tc0.xy;
+    float2 sunVector = sunScreen.xy - Tex0.xy;
     float fAspectRatio = 1.333f * screen_res.y / screen_res.x;
 
     float sunDist = saturate(fSign) * saturate(1 - saturate(length(sunVector * float2(1, fAspectRatio)) * ssss_params.y));
@@ -23,7 +23,7 @@ float4 main(p_screen I) : SV_Target
 
     [unroll] for (int i = 0; i < NUM_SAMPLES; ++i)
     {
-        float4 depth = s_mask_blur.Load(int3((I.tc0.xy + sunDir.xy * i) * screen_res.xy, 0), 0);
+        float4 depth = s_mask_blur.Load(int3((Tex0.xy + sunDir.xy * i) * screen_res.xy, 0), 0);
         accum += depth * (1 - i / NUM_SAMPLES);
     }
     accum /= NUM_SAMPLES;

@@ -29,10 +29,10 @@ float fbm(float2 texcoord, int iterations)
     return value / total_weight;
 }
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // texcoord
-    float2 texcoord = I.tc0;
+    float2 texcoord = Tex0;
     float3 image_orig = s_image.Sample(smp_rtlinear, texcoord).xyz;
     float3 image = image_orig;
     float3 image_blur = s_image_blurred.Sample(smp_rtlinear, texcoord).xyz;
@@ -43,7 +43,7 @@ float4 main(p_screen I) : SV_Target
 
     // ratio correction (remember that only circle tc should be corrected)
     float4 circle_tc_pos;
-    circle_tc_pos.xy = I.tc0; // texcoord
+    circle_tc_pos.xy = Tex0; // texcoord
     circle_tc_pos.x -= 0.5;
     circle_tc_pos.x *= screen_res.x * screen_res.w;
     circle_tc_pos.x += 0.5;

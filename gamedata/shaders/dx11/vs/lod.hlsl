@@ -1,54 +1,55 @@
 #include "common\common.h"
 
-struct vv
+struct VSInput
 {
-    float3 pos0 : POSITION0;
-    float3 pos1 : POSITION1;
-    float3 n0 : NORMAL0;
-    float3 n1 : NORMAL1;
-    float2 tc0 : TEXCOORD0;
-    float2 tc1 : TEXCOORD1;
-    float4 rgbh0 : TEXCOORD2; // rgb.h
-    float4 rgbh1 : TEXCOORD3; // rgb.h
-    float4 sun_af : COLOR0; // x=sun_0, y=sun_1, z=alpha, w=factor
+    float3 P0 : POSITION0;
+    float3 P1 : POSITION1;
+    float2 Tex0 : TEXCOORD0;
+    float2 Tex1 : TEXCOORD1;
+    float4 Tex3 : TEXCOORD2;
+    float4 Tex4 : TEXCOORD3;
+    float4 Color : COLOR0;
 };
-struct vf
+
+struct VSOutput
 {
-    float3 Pe : TEXCOORD0;
-    float2 tc0 : TEXCOORD1; // base0
-    float2 tc1 : TEXCOORD2; // base1
-    float4 hpos_curr : TEXCOORD3;
-    float4 hpos_old : TEXCOORD4;
-    float4 af : COLOR1; // alpha&factor
-    float4 hpos : SV_Position;
+    float3 P : TEXCOORD0;
+    float2 Tex0 : TEXCOORD1;
+    float2 Tex1 : TEXCOORD2;
+    float4 HPos_curr : TEXCOORD3;
+    float4 HPos_old : TEXCOORD4;
+    float4 Color : COLOR1;
+    float4 HPos : SV_Position;
 };
 
 #define L_SCALE (2.0h * 1.55h)
-vf main(vv I)
-{
-    vf o;
 
-    I.sun_af.xyz = I.sun_af.zyx;
-    I.rgbh0.xyz = I.rgbh0.zyx;
-    I.rgbh1.xyz = I.rgbh1.zyx;
+VSOutput main(VSInput I)
+{
+    VSOutput O;
+
+    I.Color.xyz = I.Color.zyx;
+    I.Tex3.xyz = I.Tex3.zyx;
+    I.Tex4.xyz = I.Tex4.zyx;
 
     // lerp pos
-    float factor = I.sun_af.w;
-    float4 pos = float4(lerp(I.pos0, I.pos1, factor), 1);
+    float factor = I.Color.w;
+    float4 pos = float4(lerp(I.P0, I.P1, factor), 1);
 
-    float h = lerp(I.rgbh0.w, I.rgbh1.w, factor) * L_SCALE;
+    float h = lerp(I.Tex3.w, I.Tex4.w, factor) * L_SCALE;
 
-    o.hpos = mul(m_VP, pos); // xform, input in world coords
-    o.hpos_curr = o.hpos;
-    o.hpos_old = mul(m_VP_old, pos);
-    o.Pe = mul(m_V, pos);
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_VP, pos); // xform, input in world coords
+    O.HPos_curr = O.HPos;
+    O.HPos_old = mul(m_VP_old, pos);
+    O.P = mul(m_V, pos);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
     // replicate TCs
-    o.tc0 = I.tc0;
-    o.tc1 = I.tc1;
+    O.Tex0 = I.Tex0;
+    O.Tex1 = I.Tex1;
 
     // calc normal & lighting
-    o.af = float4(h, h, I.sun_af.z, factor);
-    return o;
+    O.Color = float4(h, h, I.Color.z, factor);
+
+    return O;
 }

@@ -19,14 +19,13 @@ uniform float4 mark_number;
 uniform float4 mark_color;
 uniform float4 m_hud_params;
 
-struct vf
+struct PSInput
 {
-    float4 hpos : SV_Position;
-    float2 tc0 : TEXCOORD0;
-    float3 P : TEXCOORD1;
-    float3 T : TEXCOORD2;
-    float3 B : TEXCOORD3;
-    float3 N : TEXCOORD4;
+    float2 Tex0 : TEXCOORD0;
+    float3 T : TEXCOORD1;
+    float3 B : TEXCOORD2;
+    float3 N : TEXCOORD3;
+    float3 P : TEXCOORD4;
 };
 
 int mark_sides()
@@ -53,11 +52,11 @@ float2 mark_adjust(float2 pos)
     return float2(p_x, p_y);
 }
 
-float4 main(vf I) : SV_Target
+float4 main(PSInput I) : SV_Target
 {
     float3x3 TBN = float3x3(I.T + OFFSET, I.B + OFFSET, I.N);
     float3 V_tangent = normalize(float3(dot(-I.P, TBN[0]), dot(-I.P, TBN[1]), dot(-I.P, TBN[2])));
-    float2 parallax_tc = I.tc0 - V_tangent.xy * PARALLAX;
+    float2 parallax_tc = I.Tex0 - V_tangent.xy * PARALLAX;
 
     parallax_tc = (parallax_tc + (SCALE - 1) / 2) / SCALE;
 

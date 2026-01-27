@@ -17,7 +17,7 @@
 #define ROUGHNESS_HIGH 0.95
 #define ROUGHNESS_POW 1.0
 
-#define SPECULAR_BASE 0.04
+#define SPECULAR_BASE 0.03
 #define SPECULAR_RANGE 1.0
 #define SPECULAR_POW 1.0
 

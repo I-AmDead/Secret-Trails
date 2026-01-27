@@ -8,26 +8,15 @@
 
 #include "common\screenspace\screenspace_common.h"
 
-#ifdef SSFX_BEEFS_NVG
-float4 pnv_param_1;
-#endif
-
-// Pixel Struct
-struct p_Rain
-{
-    float2 Tex0 : TEXCOORD0;
-    float4 tc : TEXCOORD1;
-};
-
 float4 ssfx_rain_setup; // Alpha, Brigthness, Refraction, Reflection
 
-float4 main(p_Rain I) : SV_Target
+float4 main(v2p_TLD4 I) : SV_Target
 {
     // Factor to adjust the effect depending on light conditions
     float HemiFactor = saturate(dot(L_hemi_color.rgb, float3(1.0f, 1.0f, 1.0f)));
 
     // Screen Space
-    float2 PosTc = I.tc.xy / I.tc.w;
+    float2 PosTc = I.Tex1.xy / I.Tex1.w;
 
     // Normal Setup
     float4 N0 = s_base.Sample(smp_rtlinear, I.Tex0);
@@ -41,7 +30,7 @@ float4 main(p_Rain I) : SV_Target
 #if SSFX_RAIN_QUALITY > 0
     // Remove incorrect refraction
     float Depth = gbuffer_depth(saturate(PosTc + UV_Offset.xy));
-    UV_Offset.xy *= (I.tc.w < Depth || Depth <= SKY_EPS);
+    UV_Offset.xy *= (I.Tex1.w < Depth || Depth <= SKY_EPS);
 #endif
 
     // Screen Buffer ( Blur )
@@ -60,10 +49,6 @@ float4 main(p_Rain I) : SV_Target
 
     // Add Brightness
     Screen += L_hemi_color.rgb * ssfx_rain_setup.y;
-
-#ifdef SSFX_BEEFS_NVG
-    N0.w *= pnv_param_1.z > 0 ? 0.5f : 1.0f;
-#endif
 
     // Result
     return float4(saturate(Screen), N0.w * ssfx_rain_setup.x);

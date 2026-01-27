@@ -3,8 +3,8 @@
 v2p_bumped main(v_static I)
 {
     float4 w_pos = I.P;
-    float2 tc = unpack_tc_base(I.tc, I.T.w, I.B.w); // copy tc
-    float hemi = I.Nh.w;
+    float2 tc = unpack_tc_base(I.Tex0, I.T.w, I.B.w); // copy tc
+    float hemi = I.N.w;
 
     // Eye-space pos/normal
     v2p_bumped O;
@@ -12,15 +12,15 @@ v2p_bumped main(v_static I)
     O.hpos = mul(m_WVP, w_pos);
     O.hpos_curr = O.hpos;
     O.hpos_old = mul(m_WVP_old, w_pos);
-    O.tcdh = float4(tc.xyyy);
+    O.tcdh = tc;
     O.position = float4(Pe, hemi);
     O.hpos.xy = get_taa_jitter(O.hpos);
 
     // Calculate the 3x3 transform from tangent space to eye-space
-    I.Nh = unpack_D3DCOLOR(I.Nh);
+    I.N = unpack_D3DCOLOR(I.N);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
-    float3 N = unpack_bx4(I.Nh); // just scale (assume normal in the -.5f, .5f)
+    float3 N = unpack_bx4(I.N); // just scale (assume normal in the -.5f, .5f)
     float3 T = unpack_bx4(I.T); //
     float3 B = unpack_bx4(I.B); //
     float3x3 xform = mul((float3x3)m_WV, float3x3(T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z));
@@ -35,7 +35,8 @@ v2p_bumped main(v_static I)
 #endif
 
 #ifdef USE_LM_HEMI
-    O.lmh = unpack_tc_lmap(I.lmh);
+    O.lmh = unpack_tc_lmap(I.Tex1);
 #endif
+
     return O;
 }

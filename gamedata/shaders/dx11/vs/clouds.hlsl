@@ -1,37 +1,28 @@
 #include "common\common.h"
 #include "common\shared\cloudconfig.h"
 
-struct vi
+struct VSInput
 {
-    float4 p : POSITION;
-    float4 dir : COLOR0; // dir0,dir1(w<->z)
-    float4 color : COLOR1; // rgb. intensity
+    float4 P : POSITION;
+    float4 Color0 : COLOR0;
+    float4 Color1 : COLOR1;
 };
 
-struct vf
+v2p_TLD2 main(VSInput I)
 {
-    float4 color : COLOR0; // rgb. intensity, for SM3 - tonemap-prescaled, HI-res
-    float2 tc0 : TEXCOORD0;
-    float2 tc1 : TEXCOORD1;
-    float4 hpos : SV_Position;
-};
+    v2p_TLD2 O;
 
-vf main(vi v)
-{
-    vf o;
-    o.hpos = mul(m_WVP, v.p); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, I.P);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
     // generate tcs
-    float2 d0 = v.dir.xy * 2.0f - 1.0f;
-    float2 d1 = v.dir.wz * 2.0f - 1.0f;
-    float2 _0 = v.p.xz * CLOUD_TILE0 + d0 * timers.z * CLOUD_SPEED0;
-    float2 _1 = v.p.xz * CLOUD_TILE1 + d1 * timers.z * CLOUD_SPEED1;
-    o.tc0 = _0;
-    o.tc1 = _1;
+    float2 d0 = I.Color0.xy * 2.0f - 1.0f;
+    float2 d1 = I.Color0.wz * 2.0f - 1.0f;
+    O.Tex0 = I.P.xz * CLOUD_TILE0 + d0 * timers.z * CLOUD_SPEED0;
+    O.Tex1 = I.P.xz * CLOUD_TILE1 + d1 * timers.z * CLOUD_SPEED1;
 
-    o.color = v.color;
-    o.color.w *= pow(v.p.y, 25.0f);
+    O.Color = I.Color1;
+    O.Color.w *= pow(I.P.y, 25.0f);
 
-    return o;
+    return O;
 }

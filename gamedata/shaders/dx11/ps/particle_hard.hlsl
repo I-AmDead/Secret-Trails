@@ -1,14 +1,6 @@
 #include "common\common.h"
 
-struct v2p
-{
-    float2 tc0 : TEXCOORD0;
-    float4 c : COLOR0;
-    float4 hpos : SV_Position;
-    float fog : FOG; // fog
-};
-
-struct p_particle_out
+struct PSOutput
 {
     float4 main : SV_Target0;
     float4 additional : SV_Target1;
@@ -16,14 +8,14 @@ struct p_particle_out
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-p_particle_out main(v2p I) : SV_Target
+PSOutput main(v2p_TL_FOG I) : SV_Target
 {
-    p_particle_out O;
+    PSOutput O;
 
-    float4 result = I.c * s_base.Sample(smp_base, I.tc0);
+    float4 result = I.Color * s_base.Sample(smp_base, I.Tex0);
 
     clip(result.a - (0.01f / 255.0f));
-    result.a *= I.fog * I.fog; // ForserX: Port Skyloader fog fix
+    result.a *= I.Fog * I.Fog; // ForserX: Port Skyloader fog fix
 
     O.main = result;
     O.additional = float4(0.0, result.a > 0.2 ? (result.r + result.g + result.b) / 3.0f : 0.0, 0.0, result.a > 0.2 ? 1.0 : 0.0);

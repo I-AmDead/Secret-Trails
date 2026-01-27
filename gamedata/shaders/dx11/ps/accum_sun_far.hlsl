@@ -14,9 +14,9 @@
 
 #include "common\shadow.h"
 
-float4 main(v2p_volume I) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(I.tc.xy / I.tc.w, I.hpos);
+    gbuffer_data gbd = gbuffer_load_data(I.Tex0.xy / I.Tex0.w, I.HPos);
 
     //	Emulate virtual offset
     gbd.P += gbd.N * 0.015f;
@@ -44,7 +44,7 @@ float4 main(v2p_volume I) : SV_Target
     s += (1.f - s) * (1.f - f);
 
 #ifdef SSFX_SSS
-    s *= SSFX_ScreenSpaceShadows_Far(_P, I.hpos);
+    s *= SSFX_ScreenSpaceShadows_Far(_P, I.HPos);
 #endif
 
     // Add Shadows
@@ -54,8 +54,8 @@ float4 main(v2p_volume I) : SV_Target
     float3 result = SRGBToLinear(s);
     result *= light * SRGBToLinear(Ldynamic_color.rgb);
 
-    return blend(float4(result, 0.f), I.tc);
+    return blend(float4(result, 0.f), I.Tex0);
 #else
-    return blend(float4(Ldynamic_color * light * shadows, 0.f), I.tc);
+    return blend(float4(Ldynamic_color * light * shadows, 0.f), I.Tex0);
 #endif
 }

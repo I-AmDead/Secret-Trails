@@ -35,15 +35,15 @@ float3 UnchartedToneMapping(float3 col, float exposure)
     return col;
 }
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Bloom ///////////////////////////////////////////////////////////////////////////////////
 
     float4 bloom = 0;
 
-    bloom.r = s_ssfx_bloom.Sample(smp_rtlinear, I.tc0.xy + (float2(4.5f, 5.3f) / screen_res.xy)).r;
-    bloom.ga = s_ssfx_bloom.Sample(smp_rtlinear, I.tc0.xy).ga;
-    bloom.b = s_ssfx_bloom.Sample(smp_rtlinear, I.tc0.xy - (float2(3.2f, 4.1f) / screen_res.xy)).b;
+    bloom.r = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy + (float2(4.5f, 5.3f) / screen_res.xy)).r;
+    bloom.ga = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy).ga;
+    bloom.b = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy - (float2(3.2f, 4.1f) / screen_res.xy)).b;
 
     // Adjust intensity
     bloom = pow(abs(bloom), 0.5f);
@@ -63,7 +63,7 @@ float4 main(p_screen I) : SV_Target
     float sOffset = dot(m_V[0], float3(0, 0, 1)) + dot(m_V[1], float3(0, 1, 0)) * 2; // Camera Angle
 
     // Radial UV
-    float2 cUV = I.tc0.xy - 0.5f;
+    float2 cUV = Tex0.xy - 0.5f;
     float cUV_len = length(cUV);
     float radial = acos(cUV.x / cUV_len) * 2.0f;
     float starburst = s_starburst.Sample(smp_linear, radial.xx + sOffset).r;
@@ -72,9 +72,9 @@ float4 main(p_screen I) : SV_Target
     // Lens flares
     float3 Flares = 0;
 
-    Flares.r = s_bloom_lens.Sample(smp_rtlinear, I.tc0.xy + (float2(18.5f, 21.1f) / screen_res.xy)).r;
-    Flares.g = s_bloom_lens.Sample(smp_rtlinear, I.tc0.xy).g;
-    Flares.b = s_bloom_lens.Sample(smp_rtlinear, I.tc0.xy - (float2(12.5f, 18.1f) / screen_res.xy)).b;
+    Flares.r = s_bloom_lens.Sample(smp_rtlinear, Tex0.xy + (float2(18.5f, 21.1f) / screen_res.xy)).r;
+    Flares.g = s_bloom_lens.Sample(smp_rtlinear, Tex0.xy).g;
+    Flares.b = s_bloom_lens.Sample(smp_rtlinear, Tex0.xy - (float2(12.5f, 18.1f) / screen_res.xy)).b;
 
     Flares = saturate(Flares * starburst * ssfx_bloom_2.z);
 
@@ -86,7 +86,7 @@ float4 main(p_screen I) : SV_Target
     bloom.rgb = blend_soft(bloom.rgb, Flares);
 
     // Dirt Layer
-    float3 MaskDirt = s_ssfx_lensdirt.Sample(smp_rtlinear, I.tc0.xy) * saturate(bloom.rgb + bloom.aaa);
+    float3 MaskDirt = s_ssfx_lensdirt.Sample(smp_rtlinear, Tex0.xy) * saturate(bloom.rgb + bloom.aaa);
     MaskDirt *= 2.5f * ssfx_bloom_2.w * saturate(mask_control.x);
 
     bloom.rgb = blend_soft(bloom.rgb, MaskDirt.rgb);

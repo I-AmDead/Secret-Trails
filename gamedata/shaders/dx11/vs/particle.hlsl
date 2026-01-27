@@ -1,37 +1,30 @@
 #include "common\common.h"
 
-struct vv
+struct VSOutput
 {
-    float4 P : POSITION;
-    float2 tc : TEXCOORD0;
-    float4 c : COLOR0;
-};
-
-struct v2p
-{
-    float2 tc : TEXCOORD0;
-    float4 c : COLOR0;
-    float4 hpos : SV_Position;
-    float fog : FOG; // Fog
-    float4 tctexgen : TEXCOORD1;
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 Color : COLOR0;
+    float Fog : FOG;
+    float4 HPos : SV_Position;
 };
 
 uniform float4x4 mVPTexgen;
 
-v2p main(vv v)
+VSOutput main(v_TL I)
 {
-    v2p o;
+    VSOutput O;
 
-    o.hpos = mul(m_WVP, v.P); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, I.P); // xform, input in world coords
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc = v.tc; // copy tc
-    o.c = unpack_D3DCOLOR(v.c); // copy color
+    O.Tex0 = I.Tex0; // copy tc
+    O.Color = unpack_D3DCOLOR(I.Color); // copy color
 
-    o.tctexgen = mul(mVPTexgen, v.P);
-    o.tctexgen.z = o.hpos.z;
+    O.Tex1 = mul(mVPTexgen, I.P);
+    O.Tex1.z = O.HPos.z;
 
-    o.fog = saturate(calc_fogging(v.P)); // // ForserX (Port SkyLoader fog fix): fog, input in world coords
+    O.Fog = saturate(calc_fogging(I.P)); // // ForserX (Port SkyLoader fog fix): fog, input in world coords
 
-    return o;
+    return O;
 }

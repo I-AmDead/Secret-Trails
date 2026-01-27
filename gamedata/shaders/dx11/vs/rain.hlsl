@@ -1,4 +1,4 @@
-#include "common\shared\common.h"
+#include "common\common.h"
 
 struct VSInput
 {
@@ -8,24 +8,16 @@ struct VSInput
     float4 Color : COLOR;
 };
 
-struct VSOutput
-{
-    float2 Tex0 : TEXCOORD0;
-    float2 Tex1 : TEXCOORD1;
-    float4 Color : COLOR;
-    float4 HPos : SV_Position;
-};
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-VSOutput main(VSInput I)
+v2p_TLD2 main(VSInput I)
 {
-    VSOutput O;
+    v2p_TLD2 O;
 
     O.HPos = I.P;
     O.Tex0 = I.Tex0;
     O.Tex1 = I.Tex1;
-    O.Color = I.Color.bgra; //	swizzle vertex colour
+    O.Color = I.Color.bgra;
 
     return O;
 }

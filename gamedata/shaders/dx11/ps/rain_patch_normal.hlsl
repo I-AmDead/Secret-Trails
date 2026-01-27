@@ -12,7 +12,6 @@
 
 #include "common\screenspace\screenspace_common_ripples.h"
 
-// ???? ????? ?? ??????? ???? ?? ?????? ?????? ?????????
 #define INDOOR_LEAKS_FIX
 
 uniform float4 ssfx_wetsurfaces_1; // Ripples [ Size, Speed, Min Speed, Int ]
@@ -64,14 +63,14 @@ float3 GetWaterFall(Texture2D s_texture, float2 tc)
     return water.xyz;
 }
 
-float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 Color : COLOR, float4 pos2d : SV_Position) : SV_Target
+float4 main(v2p_TLD2 I) : SV_Target
 {
     // Buffers
-    float3 view_space = gbuffer_view_space(tc, pos2d);
-    float3 normal = normalize(gbuffer_normal(tc));
-    float material = gbuffer_material(tc);
-    float hemi = gbuffer_hemi(tc);
-    float gloss = gbuffer_gloss(tc);
+    float3 view_space = gbuffer_view_space(I.Tex0, I.HPos);
+    float3 normal = normalize(gbuffer_normal(I.Tex0));
+    float material = gbuffer_material(I.Tex0);
+    float hemi = gbuffer_hemi(I.Tex0);
+    float gloss = gbuffer_gloss(I.Tex0);
 
     float4 PS = mul(m_shadow, float4(view_space, 1.0));
     float3 WorldP = mul(m_sunmask, float4(view_space, 1.0));

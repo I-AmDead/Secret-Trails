@@ -22,13 +22,13 @@
 
 float4 main(p_screen I) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(I.tc0, I.hpos);
+    gbuffer_data gbd = gbuffer_load_data(I.Tex0, I.HPos);
 
     // Sample the buffers:
     float4 P = float4(gbd.P, gbd.mtl); // position.(mtl or sun)
     float4 N = float4(gbd.N, gbd.hemi); // normal.hemi
     float4 D = float4(gbd.C, gbd.gloss); // rgb.gloss
-    float4 L = s_accumulator.Sample(smp_nofilter, I.tc0); // diffuse.specular
+    float4 L = s_accumulator.Sample(smp_nofilter, I.Tex0); // diffuse.specular
 
 #ifndef SSFX_NEWGLOSS
     if (abs(P.w - MAT_FLORA) <= 0.05)
@@ -44,9 +44,9 @@ float4 main(p_screen I) : SV_Target
 
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
-    occ = calc_gtao(P, N, I.tc0);
+    occ = calc_gtao(P, N, I.Tex0);
 #else
-    occ = calc_ssdo(P, N, I.tc0, I.hpos);
+    occ = calc_ssdo(P, N, I.Tex0, I.HPos);
 #endif
     occ = compute_colored_ao(occ.x, D.xyz);
 #endif
@@ -72,7 +72,7 @@ float4 main(p_screen I) : SV_Target
 #ifdef SSFX_BEEFS_NVG
     float lua_param_nvg_num_tubes = pnv_param_4.x; // 1, 2, 4, 1.1, or 1.2
     // NVG reduces gloss to 0 inside mask
-    D.a *= (1.0 - compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes));
+    D.a *= (1.0 - compute_lens_mask(aspect_ratio_correction(I.Tex0), lua_param_nvg_num_tubes));
 #endif
 
     // here should be distance fog

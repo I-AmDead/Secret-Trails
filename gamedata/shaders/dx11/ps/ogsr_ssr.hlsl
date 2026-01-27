@@ -18,8 +18,8 @@ float4 main(p_screen I) : SV_Target
     // Sample buffers and prepare all requiered data ------------------
 
     // Scale TexCoor
-    float2 tc = I.tc0 * ssr_setup.x;
-    float2 Pos2D = I.hpos * ssr_setup.x;
+    float2 tc = I.Tex0 * ssr_setup.x;
+    float2 Pos2D = I.HPos * ssr_setup.x;
 
     // Sample buffers
     float4 Pos = s_position.Sample(smp_nofilter, tc);
@@ -34,11 +34,11 @@ float4 main(p_screen I) : SV_Target
     float4 ssr_result = 0;
 
     // Do the SSR
-    SSFX_ScreenSpaceReflections(I.tc0, float4(P, mtl), N, gloss, ssr_result);
+    SSFX_ScreenSpaceReflections(I.Tex0, float4(P, mtl), N, gloss, ssr_result);
 
     // Accumulation ---------------------------------------------------
 
-    float3 prev = ssr_image.Sample(smp_nofilter, I.tc0);
+    float3 prev = ssr_image.Sample(smp_nofilter, I.Tex0);
 
     // Position
     float4 P4 = float4(P, 1.0);

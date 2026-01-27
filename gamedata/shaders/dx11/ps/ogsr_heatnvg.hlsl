@@ -43,22 +43,22 @@ float4 main(p_screen I) : SV_Target
 
     // ????? ??????? ?????????
     float problems = frac(timers.z * 5 * (1 + 2 * m_affects.x));
-    I.tc0.x += (m_affects.x > 0.09 && I.tc0.y > problems - 0.01 && I.tc0.y < problems) ? sin((I.tc0.y - problems) * 5 * m_affects.y) : 0;
+    I.Tex0.x += (m_affects.x > 0.09 && I.Tex0.y > problems - 0.01 && I.Tex0.y < problems) ? sin((I.Tex0.y - problems) * 5 * m_affects.y) : 0;
 
     // ??????? ??????? ?????????
     problems = cos((frac(timers.z * 2) - 0.5) * 3.1416) * 2 - 0.8;
     float AMPL = 0.13;
-    I.tc0.x -= (m_affects.x > 0.15 && I.tc0.y > problems - AMPL && I.tc0.y < problems + AMPL) ?
-        cos(4.71 * (I.tc0.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.tc0.y - problems)) / AMPL :
+    I.Tex0.x -= (m_affects.x > 0.15 && I.Tex0.y > problems - AMPL && I.Tex0.y < problems + AMPL) ?
+        cos(4.71 * (I.Tex0.y - problems) / AMPL) * sin(frac(timers.z) * 6.2831 * 90) * 0.02 * (AMPL - abs(I.Tex0.y - problems)) / AMPL :
         0;
 
     // ?????? ?????-?????? ? ????????? ??????
-    I.tc0.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0.0;
+    I.Tex0.x += (m_affects.x > 0.38) ? (m_affects.y - 0.5) * 0.04 : 0.0;
 
-    float2 corrected_texturecoords = aspect_ratio_correction(I.tc0);
+    float2 corrected_texturecoords = aspect_ratio_correction(I.Tex0);
 
-    float3 image = s_image.Sample(smp_rtlinear, I.tc0).xyz;
-    float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
+    float3 image = s_image.Sample(smp_rtlinear, I.Tex0).xyz;
+    float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.Tex0).rgb;
 
     float lua_param_nvg_num_tubes = pnv_param_4.x;
     float lua_param_glitch_power = pnv_param_4.z;
@@ -69,21 +69,21 @@ float4 main(p_screen I) : SV_Target
     if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
     {
         // GRAB SAMPLES FOR NVG SHADER
-        float3 eighth_res_bloom = s_blur_8.Sample(smp_rtlinear, I.tc0).rgb;
-        float3 quarter_res_bloom = s_blur_4.Sample(smp_rtlinear, I.tc0).rgb;
+        float3 eighth_res_bloom = s_blur_8.Sample(smp_rtlinear, I.Tex0).rgb;
+        float3 quarter_res_bloom = s_blur_4.Sample(smp_rtlinear, I.Tex0).rgb;
 
-        float4 jitter = float4(frac(sin(dot(I.tc0, float2(12.0, 78.0) + (timers.x))) * 12345.0),
-                               frac(sin(dot(I.tc0 - fmod(I.tc0, float2(3.0, 3.0) / screen_res.xy), float2(12.0, 78.0) + (timers.x))) * 22738.0),
-                               frac(sin(dot(I.tc0 - fmod(I.tc0, float2(3.0, 3.0) / screen_res.xy), float2(12.0, 78.0) + (timers.x))) * 78372.0),
-                               frac(sin(dot(I.tc0, float2(12.0, 78.0) + (timers.x))) * 37857.0));
+        float4 jitter = float4(frac(sin(dot(I.Tex0, float2(12.0, 78.0) + (timers.x))) * 12345.0),
+                               frac(sin(dot(I.Tex0 - fmod(I.Tex0, float2(3.0, 3.0) / screen_res.xy), float2(12.0, 78.0) + (timers.x))) * 22738.0),
+                               frac(sin(dot(I.Tex0 - fmod(I.Tex0, float2(3.0, 3.0) / screen_res.xy), float2(12.0, 78.0) + (timers.x))) * 78372.0),
+                               frac(sin(dot(I.Tex0, float2(12.0, 78.0) + (timers.x))) * 37857.0));
 
         if (pnv_param_1.z > 1)
         {
-            image.rgb = infrared(gbuffer_depth(I.tc0), gbuffer_normal(I.tc0), I.hpos.xy, I.tc0);
+            image.rgb = infrared(gbuffer_depth(I.Tex0), gbuffer_normal(I.Tex0), I.HPos.xy, I.Tex0);
         }
         else
         {
-            float depth = blurred_depth(I.tc0);
+            float depth = blurred_depth(I.Tex0);
 
             image = pow(image, 0.85);
             image = lerp(image, half_res_blur, clamp(1 - smoothstep(0, 15, depth), 0.2, 1)); // NEAR BLUR
@@ -97,17 +97,17 @@ float4 main(p_screen I) : SV_Target
 
             // GLITCH EFFECT -- TO DO
             if (lua_param_glitch_power > 0.0f)
-                image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power), 0.9);
+                image = lerp(image, glitchEffect(image, I.Tex0, lua_param_glitch_power), 0.9);
 
             // APPLY BLOOM / WASHOUT
-            float addon = bokeh_pass_3((eighth_res_bloom.g + quarter_res_bloom.g), I.tc0);
+            float addon = bokeh_pass_3((eighth_res_bloom.g + quarter_res_bloom.g), I.Tex0);
             float addon_hard = max(addon - 0.7, 0.0) * 2.0f;
             float addon_soft = (max(half_res_blur.g - 0.6, 0.0f) / 0.6) / 1.0f;
             image = image + (float3)addon_soft + (float3)addon_hard;
         }
 
         // APPLY CRT EFFECT
-        image = lerp(image, make_crt_ified(half_res_blur, I.tc0), pnv_param_3.y); // Adds a CRT effect that I think looks better than draw_scanlines
+        image = lerp(image, make_crt_ified(half_res_blur, I.Tex0), pnv_param_3.y); // Adds a CRT effect that I think looks better than draw_scanlines
 
         // APPLY SCINTILLATION EFFECT
         if (jitter.z > (pnv_param_3.z - ((1.0 - pnv_param_3.z) * (lua_param_nvg_gain_current - 1.0f))))
@@ -122,7 +122,7 @@ float4 main(p_screen I) : SV_Target
         }
 
         // APPLY VIGNETTE
-        float2 uv = I.tc0;
+        float2 uv = I.Tex0;
 
         float vignette = calc_vignette(lua_param_nvg_num_tubes, uv, lua_param_vignette_current);
         image = clamp(image, 0.0, 1.0);

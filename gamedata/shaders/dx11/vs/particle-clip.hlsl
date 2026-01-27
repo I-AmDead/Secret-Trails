@@ -1,29 +1,16 @@
 #include "common\common.h"
 
-struct vv
+v2p_TL main(v_TL I)
 {
-    float4 P : POSITION;
-    float2 tc : TEXCOORD0;
-    float4 c : COLOR0;
-};
-struct v2p
-{
-    float2 tc : TEXCOORD0;
-    float4 c : COLOR0;
-    float4 hpos : SV_Position;
-};
+    v2p_TL O;
 
-v2p main(vv v)
-{
-    v2p o;
+    O.HPos = mul(m_WVP, I.P); // xform, input in world coords
+    O.HPos.z = abs(O.HPos.z);
+    O.HPos.w = abs(O.HPos.w);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.hpos = mul(m_WVP, v.P); // xform, input in world coords
-    o.hpos.z = abs(o.hpos.z);
-    o.hpos.w = abs(o.hpos.w);
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.Tex0 = I.Tex0;
+    O.Color = I.Color;
 
-    o.tc = v.tc; // copy tc
-    o.c = v.c; // copy color
-
-    return o;
+    return O;
 }

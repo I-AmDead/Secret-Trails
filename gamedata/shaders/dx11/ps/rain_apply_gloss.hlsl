@@ -2,9 +2,9 @@
 
 Texture2D s_patched_normal;
 
-float4 main(float2 tc : TEXCOORD0) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float Gloss = s_patched_normal.Sample(smp_nofilter, tc).a;
+    float Gloss = s_patched_normal.Sample(smp_nofilter, Tex0).a;
 
     float rain = rain_params.x;
 

@@ -13,11 +13,11 @@ uniform float4 ssfx_bloom_1; // Threshold, Exposure, Emmisive, Sky
 Texture2D s_scene;
 Texture2D s_emissive;
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float depth = gbuffer_depth(I.tc0.xy);
+    float depth = gbuffer_depth(Tex0.xy);
 
-    float3 Result = s_scene.SampleLevel(smp_linear, I.tc0.xy, 0).rgb;
+    float3 Result = s_scene.SampleLevel(smp_linear, Tex0.xy, 0).rgb;
 
     // Sky Intensity
     Result *= depth <= SKY_EPS ? ssfx_bloom_1.w : 1.0f;
@@ -25,7 +25,7 @@ float4 main(p_screen I) : SV_Target
     // Threshold
     Result = pow(abs(Result), ssfx_bloom_1.x);
 
-    float3 Emissive = s_emissive.SampleLevel(smp_linear, I.tc0.xy, 0).rgb;
+    float3 Emissive = s_emissive.SampleLevel(smp_linear, Tex0.xy, 0).rgb;
 
     // Emissive doesn't use threshold
     Result = saturate(Result + Emissive);

@@ -1,27 +1,20 @@
 #include "common\common.h"
 #include "common\shared\wmark.h"
 
-struct vf
+v2p_TL_FOG main(v_static I)
 {
-    float2 tc0 : TEXCOORD0;
-    float3 c0 : COLOR0; // c0=all lighting
-    float fog : FOG;
-    float4 hpos : SV_Position;
-};
+    v2p_TL_FOG O;
 
-vf main(v_static v)
-{
-    vf o;
+    float3 N = unpack_normal(I.N);
+    float4 P = wmark_shift(I.P, N);
 
-    float3 N = unpack_normal(v.Nh);
-    float4 P = wmark_shift(v.P, N);
-    o.hpos = mul(m_VP, P); // xform, input in world coords
-    o.tc0 = unpack_tc_base(v.tc, v.T.w, v.B.w); // copy tc
+    O.HPos = mul(m_VP, P);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.Tex0 = unpack_tc_base(I.Tex0, I.T.w, I.B.w);
 
-    o.c0 = 0; // L_final;
-    o.fog = saturate(calc_fogging(v.P)); // fog, input in world coords
+    O.Color = 0;
+    O.Fog = saturate(calc_fogging(I.P));
 
-    return o;
+    return O;
 }

@@ -15,17 +15,17 @@
 static float DITHER_THRESHOLDS[16] = {1.0 / 17.0, 9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0, 13.0 / 17.0, 5.0 / 17.0, 15.0 / 17.0, 7.0 / 17.0,
                                       4.0 / 17.0, 12.0 / 17.0, 2.0 / 17.0, 10.0 / 17.0, 16.0 / 17.0, 8.0 / 17.0, 14.0 / 17.0, 6.0 / 17.0};
 
-struct p_grass
+struct PSInput
 {
-    float2 tcdh : TEXCOORD0; // Texture coordinates
-    float4 position : TEXCOORD1; // position + hemi
-    float4 N : TEXCOORD2; // nmap 2 eye - 1
+    float2 tcdh : TEXCOORD0;
+    float4 position : TEXCOORD1;
+    float4 N : TEXCOORD2;
     float4 hpos_curr : TEXCOORD8;
     float4 hpos_old : TEXCOORD9;
     float4 hpos : SV_Position;
 };
 
-f_deffer main(p_grass I)
+f_deffer main(PSInput I)
 {
     float4 D = tbase(I.tcdh);
 

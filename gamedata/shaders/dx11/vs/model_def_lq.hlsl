@@ -2,54 +2,46 @@
 #include "common\skin.h"
 #include "common\screenspace\screenspace_fog.h"
 
-struct v2p
+v2p_TL_FOG _main(v_model I)
 {
-    float2 tc0 : TEXCOORD0; // base
-    float3 c0 : COLOR0; // color
-    float fog : FOG;
-    float4 hpos : SV_Position;
-};
+    v2p_TL_FOG O;
 
-v2p _main(v_model v)
-{
-    v2p o;
-
-    float4 pos = v.P;
+    float4 pos = I.P;
     float3 pos_w = mul(m_W, pos);
-    float3 norm_w = normalize(mul(m_W, v.N));
+    float3 norm_w = normalize(mul(m_W, I.N));
 
-    o.hpos = mul(m_WVP, pos); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, pos); // xform, input in world coords
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0 = v.tc.xy; // copy tc
-    o.c0 = calc_model_lq_lighting(norm_w);
-    o.fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
-    o.fog = SSFX_FOGGING(1.0 - o.fog, pos.y); // Add SSFX Fog
+    O.Tex0 = I.Tex0.xy; // copy tc
+    O.Color = calc_model_lq_lighting(norm_w);
+    O.Fog = saturate(calc_fogging(float4(pos_w, 1))); // fog, input in world coords
+    O.Fog = SSFX_FOGGING(1.0 - O.fog, pos.y); // Add SSFX Fog
 
-    return o;
+    return O;
 }
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-v2p main(v_model v) { return _main(v); }
+v2p_TL_FOG main(v_model I) { return _main(I); }
 #endif
 
 #ifdef SKIN_0
-v2p main(v_model_skinned_0 v) { return _main(skinning_0(v)); }
+v2p_TL_FOG main(v_model_skinned_0 I) { return _main(skinning_0(I)); }
 #endif
 
 #ifdef SKIN_1
-v2p main(v_model_skinned_1 v) { return _main(skinning_1(v)); }
+v2p_TL_FOG main(v_model_skinned_1 I) { return _main(skinning_1(I)); }
 #endif
 
 #ifdef SKIN_2
-v2p main(v_model_skinned_2 v) { return _main(skinning_2(v)); }
+v2p_TL_FOG main(v_model_skinned_2 I) { return _main(skinning_2(I)); }
 #endif
 
 #ifdef SKIN_3
-v2p main(v_model_skinned_3 v) { return _main(skinning_3(v)); }
+v2p_TL_FOG main(v_model_skinned_3 I) { return _main(skinning_3(I)); }
 #endif
 
 #ifdef SKIN_4
-v2p main(v_model_skinned_4 v) { return _main(skinning_4(v)); }
+v2p_TL_FOG main(v_model_skinned_4 I) { return _main(skinning_4(I)); }
 #endif

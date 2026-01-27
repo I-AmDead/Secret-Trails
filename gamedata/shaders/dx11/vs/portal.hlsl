@@ -1,31 +1,31 @@
 #include "common\common.h"
 #include "common\screenspace\screenspace_fog.h"
 
-struct v_vert
+struct VSInput
 {
-    float4 pos : POSITION; // (float,float,float,1)
-    float4 color : COLOR0; // (r,g,b,dir-occlusion)
+    float4 HPos : POSITION; // (float,float,float,1)
+    float4 Color : COLOR0; // (r,g,b,dir-occlusion)
 };
 
-struct v2p
+struct VSOutput
 {
-    float4 c : COLOR0;
-    float fog : FOG;
-    float4 hpos : SV_Position;
+    float4 Color : COLOR0;
+    float Fog : FOG;
+    float4 HPos : SV_Position;
 };
 
-v2p main(v_vert v)
+VSOutput main(VSInput I)
 {
-    v2p o;
+    VSOutput O;
 
-    o.hpos = mul(m_VP, v.pos); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_VP, I.HPos);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    float fog = saturate(calc_fogging(v.pos)); // fog, input in world coords
-    o.fog = SSFX_FOGGING(1.0 - fog, v.pos.y); // Add SSFX Fog
+    float fog = saturate(calc_fogging(I.HPos));
+    O.Fog = SSFX_FOGGING(1.0 - fog, I.HPos.y);
 
-    o.c.rgb = lerp(fog_color, v.color, o.fog * o.fog); // fog blending
-    o.c.a = o.fog; // Alpha
+    O.Color.rgb = lerp(fog_color, I.Color, O.Fog * O.Fog);
+    O.Color.a = O.Fog;
 
-    return o;
+    return O;
 }

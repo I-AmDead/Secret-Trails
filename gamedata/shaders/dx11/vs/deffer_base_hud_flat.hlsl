@@ -15,7 +15,7 @@ v2p_flat _main(v_model I, float3 psp)
     O.hpos.xy = get_taa_jitter(O.hpos);
     O.N = mul((float3x3)m_WV, (float3)I.N);
 
-    O.tcdh = float4(I.tc.xyyy);
+    O.tcdh = float4(I.Tex0.xyyy);
 
     //  Hemi cube lighting
     float3 Nw = mul((float3x3)m_W, (float3)I.N);
@@ -45,25 +45,25 @@ v2p_flat _main(v_model I, float3 psp)
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-v2p_flat main(v_model v) { return _main(v, 0); }
+v2p_flat main(v_model I) { return _main(I, 0); }
 #endif
 
 #ifdef SKIN_0
-v2p_flat main(v_model_skinned_0 v) { return _main(skinning_0(v), v.P); }
+v2p_flat main(v_model_skinned_0 I) { return _main(skinning_0(I), I.P); }
 #endif
 
 #ifdef SKIN_1
-v2p_flat main(v_model_skinned_1 v) { return _main(skinning_1(v), v.P); }
+v2p_flat main(v_model_skinned_1 I) { return _main(skinning_1(I), I.P); }
 #endif
 
 #ifdef SKIN_2
-v2p_flat main(v_model_skinned_2 v) { return _main(skinning_2(v), v.P); }
+v2p_flat main(v_model_skinned_2 I) { return _main(skinning_2(I), I.P); }
 #endif
 
 #ifdef SKIN_3
-v2p_flat main(v_model_skinned_3 v) { return _main(skinning_3(v), v.P); }
+v2p_flat main(v_model_skinned_3 I) { return _main(skinning_3(I), I.P); }
 #endif
 
 #ifdef SKIN_4
-v2p_flat main(v_model_skinned_4 v) { return _main(skinning_4(v), v.P); }
+v2p_flat main(v_model_skinned_4 I) { return _main(skinning_4(I), I.P); }
 #endif

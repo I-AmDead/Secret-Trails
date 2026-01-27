@@ -15,7 +15,7 @@ v2p_flat _main(v_model I)
     O.hpos.xy = get_taa_jitter(O.hpos);
     O.N = mul((float3x3)m_WV, (float3)I.N);
 
-    O.tcdh = float4(I.tc.xyyy);
+    O.tcdh = float4(I.Tex0.xyyy);
 
     //  Hemi cube lighting
     float3 Nw = mul((float3x3)m_W, (float3)I.N);

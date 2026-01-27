@@ -3,21 +3,14 @@
 uniform float4 laser_params;
 uniform float4 m_affects;
 
-struct v2p
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float2 tc0 : TEXCOORD0; // base
-    float4 c0 : COLOR0; // sun
-};
-
-float4 main(v2p I) : SV_Target
-{
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
+    float4 t_base = s_base.Sample(smp_base, Tex0);
     t_base.rgb = t_base.rgb * 0.9;
 
-    // ??????? ?????? ??? ???????
     float mig = 1.0f - (m_affects.x * 2.f);
 
-    float noise = get_noise(I.tc0 * timers.z) * 0.25 * 0.25 * 15;
+    float noise = get_noise(Tex0 * timers.z) * 0.25 * 0.25 * 15;
     t_base.r += noise;
     t_base.g += noise;
     t_base.b += noise;

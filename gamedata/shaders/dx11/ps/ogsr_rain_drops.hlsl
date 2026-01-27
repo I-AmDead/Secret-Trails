@@ -130,10 +130,10 @@ float2 Drops(float2 uv, float t, float l0, float l1, float l2)
     return float2(c, max(m1.y * l0, m2.y * l1));
 }
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float rainAmount = rain_drops_params.x;
-    float2 uv = I.tc0;
+    float2 uv = Tex0;
 
     float T = rain_drops_params.z * (timers.x + rainAmount * 2.);
 

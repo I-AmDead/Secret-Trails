@@ -4,16 +4,16 @@
 
 Texture2D s_water;
 
-float4 main(float2 tc : TEXCOORD0, float2 tcJ : TEXCOORD1, float4 pos2d : SV_Position) : SV_Target
+float4 main(v2p_TLD2 I) : SV_Target
 {
-    float3 view_space = gbuffer_view_space(tc, pos2d);
+    float3 view_space = gbuffer_view_space(I.Tex0, I.HPos);
     float4 _P = float4(view_space, 1.0);
 
     float4 PS = mul(m_shadow, _P);
 
     float s = shadow(PS);
 
-    float2 tc1 = mul(m_sunmask, _P); //
+    float2 tc1 = mul(m_sunmask, _P);
     tc1 /= 2;
     tc1 = frac(tc1);
 

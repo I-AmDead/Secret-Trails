@@ -3,28 +3,19 @@
 #include "common\shared\common.h"
 #include "common\shared\wmark.h"
 
-#define SS_LENGTH float(1.0) // ????? ?????. ??? ?????? ?????, ??? ?????? ??????????????????
+#define SS_LENGTH float(1.0)
+#define num_iter int(55) // Extreme
 
 uniform float4 ssss_params; // x - exposure, y - density, z - sample size, w - radius
 Texture2D s_sun_shafts; // current sunshafts texture
 
-/*#if !defined(SUN_SHAFTS_QUALITY) || (SUN_SHAFTS_QUALITY <= 1) || (SUN_SHAFTS_QUALITY > 4)
-    #define num_iter int(25) // Low
-#elif SUN_SHAFTS_QUALITY==2
-    #define num_iter int(35) // Medium
-#elif SUN_SHAFTS_QUALITY==3
-    #define num_iter int(45) // High
-#else*/
-#define num_iter int(55) // Extreme
-// #endif
-
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Prepare some constants
     float len = SS_LENGTH * 0.2f;
     float NUM = num_iter * len;
 
-    float2 tc = I.tc0.xy;
+    float2 tc = Tex0.xy;
     // Distance to the sun
     float sun_dist = FARPLANE / (sqrt(1.0f - L_sun_dir_w.y * L_sun_dir_w.y));
     // Sun pos

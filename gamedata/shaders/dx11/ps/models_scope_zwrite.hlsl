@@ -2,18 +2,7 @@
 
 Texture2D rt_tempzb;
 
-struct PSOutput
+float main(float4 HPos : SV_Position) : SV_Depth
 {
-    float4 mask : SV_Target4;
-    float depth : SV_Depth;
-};
-
-PSOutput main(float4 hpos : SV_Position)
-{
-    PSOutput output;
-
-    output.depth = rt_tempzb[hpos.xy].x;
-    //output.mask = float4(1.0, 0.0, 0.0, 0.0);
-
-    return output;
+    return rt_tempzb.Load(int3(HPos.xy, 0)).x;
 }

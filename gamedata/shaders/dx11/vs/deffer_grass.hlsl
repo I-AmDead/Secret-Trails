@@ -3,6 +3,10 @@
 #include "common\common.h"
 #include "common\screenspace\check_screenspace.h"
 
+#ifdef SSFX_WIND
+#include "common\screenspace\screenspace_wind.h"
+#endif
+
 cbuffer dynamic_inter_grass
 {
     float4 benders_pos[32];
@@ -13,11 +17,19 @@ cbuffer dynamic_inter_grass
     uniform int grass_align;
 }
 
-#ifdef SSFX_WIND
-#include "common\screenspace\screenspace_wind.h"
-#endif
+struct VSInput
+{
+    float4 pos : POSITION; // (float,float,float,0)
+    float4 misc : NORMAL; // (u,v,frac,0)
 
-struct v2p_grass
+    float4 m0 : COLOR0;
+    float4 m1 : COLOR1;
+    float4 m2 : COLOR2;
+    float4 consts : COLOR3;
+    float4 tnorm : COLOR4;
+};
+
+struct VSOutput
 {
     float2 tcdh : TEXCOORD0; // Texture coordinates
     float4 position : TEXCOORD1; // position + hemi
@@ -27,18 +39,18 @@ struct v2p_grass
     float4 hpos : SV_Position;
 };
 
-v2p_grass main(v_detail v)
+VSOutput main(VSInput I)
 {
-    v2p_grass O;
+    VSOutput O;
 
-    const float3x4 m_xform = float3x4(v.m0, v.m1, v.m2);
-    const float hemi = v.consts.x;
-    const float alpha = v.consts.y;
-    const bool use_wave = v.consts.z == 0.f;
-    const float3 data = v.tnorm.xyz; // Terrain Normal [xyz
+    const float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
+    const float hemi = I.consts.x;
+    const float alpha = I.consts.y;
+    const bool use_wave = I.consts.z == 0.f;
+    const float3 data = I.tnorm.xyz; // Terrain Normal [xyz
 
     // Transform pos to world coords
-    float3 P = mul(m_xform, v.pos);
+    float3 P = mul(m_xform, I.pos);
     float H = P.y - m_xform._24; // height of vertex
 
     // Force grass to go up
@@ -129,7 +141,7 @@ v2p_grass main(v_detail v)
 
     // Eye-space pos/normal
     float3 Pe = mul(m_V, pos);
-    O.tcdh = v.misc.xyyy;
+    O.tcdh = I.misc.xyyy;
     O.hpos = mul(m_VP, pos);
 
     /////////////

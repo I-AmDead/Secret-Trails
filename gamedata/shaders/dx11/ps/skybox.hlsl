@@ -6,16 +6,17 @@
 #include "common\night_vision.h"
 #endif
 
-struct v2p
+struct PSInput
 {
-    float4 factor : COLOR0; // rgb tint
-    float3 tc0 : TEXCOORD0;
-    float3 tc1 : TEXCOORD1;
-    float4 hpos_curr : HPOS_CURRENT;
-    float4 hpos_old : HPOS_PREVIOUS;
-    float4 hpos : SV_Position;
+    float4 Color : COLOR0; // rgb tint
+    float3 Tex0 : TEXCOORD0;
+    float3 Tex1 : TEXCOORD1;
+    float4 HPos_curr : HPOS_CURRENT;
+    float4 HPos_old : HPOS_PREVIOUS;
+    float4 HPos : SV_Position;
 };
-struct _out
+
+struct PSOutput
 {
     float4 Color : SV_Target0;
     float2 Velocity : SV_Target1;
@@ -26,15 +27,15 @@ TextureCube s_sky1 : register(t1);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-_out main(v2p I)
+PSOutput main(PSInput I)
 {
-    float3 s0 = s_sky0.Sample(smp_rtlinear, I.tc0);
-    float3 s1 = s_sky1.Sample(smp_rtlinear, I.tc1);
+    float3 s0 = s_sky0.Sample(smp_rtlinear, I.Tex0);
+    float3 s1 = s_sky1.Sample(smp_rtlinear, I.Tex1);
 
-    float3 sky = lerp(s0, s1, I.factor.w);
+    float3 sky = lerp(s0, s1, I.Color.w);
 
     // srgb tint (matches hmodel)
-    float3 SkyTint = I.factor.rgb;
+    float3 SkyTint = I.Color.rgb;
     float TintPow = 1.0;
 
     sky = pow(sky, TintPow);
@@ -42,13 +43,13 @@ _out main(v2p I)
     sky = pow(sky, 1 / TintPow);
 
     // final tone-mapping
-    _out o;
+    PSOutput O;
 
-    o.Color = float4(sky, 0.0);
+    O.Color = float4(sky, 0.0);
 
 #ifdef SSFX_BEEFS_NVG
-    float2 texturecoord = I.hpos.xy / screen_res.xy;
-    float2 texturecoord_2 = I.hpos.xy / screen_res.xy;
+    float2 texturecoord = I.HPos.xy / screen_res.xy;
+    float2 texturecoord_2 = I.HPos.xy / screen_res.xy;
 
     float lua_param_nvg_num_tubes = pnv_param_4.x; // 1, 2, 4, 1.1, or 1.2
     float lua_param_nvg_gain_current = pnv_param_2.y;
@@ -58,21 +59,21 @@ _out main(v2p I)
         ((compute_lens_mask(aspect_ratio_correction(texturecoord), lua_param_nvg_num_tubes) == 1.0f ||
           compute_lens_mask(aspect_ratio_correction(texturecoord_2), lua_param_nvg_num_tubes) == 1.0f))) //
     {
-        o.Color.r = dot(o.Color.rgb * 5.0f, luma_conversion_coeff);
+        O.Color.r = dot(O.Color.rgb * 5.0f, luma_conversion_coeff);
 
-        o.Color.gb = 0.0f;
+        O.Color.gb = 0.0f;
 
-        o.Color *= lua_param_nvg_gain_current * sky_brightness_factor;
+        O.Color *= lua_param_nvg_gain_current * sky_brightness_factor;
 
-        o.Color = clamp(o.Color, 0.0, 1.0);
+        O.Color = clamp(O.Color, 0.0, 1.0);
 
         float vignette = calc_vignette(lua_param_nvg_num_tubes, texturecoord, lua_param_vignette_current);
         float vignette_2 = calc_vignette(lua_param_nvg_num_tubes, texturecoord_2, lua_param_vignette_current);
-        o.Color *= (vignette * vignette_2);
+        O.Color *= (vignette * vignette_2);
     }
 #endif
 
-    o.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
+    O.Velocity = get_motion_vector(I.HPos_curr, I.HPos_old);
 
-    return o;
+    return O;
 }

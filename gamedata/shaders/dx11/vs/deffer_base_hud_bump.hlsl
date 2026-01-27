@@ -11,9 +11,9 @@ v2p_bumped _main(v_model I, float3 psp)
     O.hpos_curr = O.hpos;
     O.hpos_old = mul(m_WVP_old, I.P_old);
     O.hpos.xy = get_taa_jitter(O.hpos);
-    float2 tc = I.tc;
+    float2 tc = I.Tex0;
     float3 Pe = mul(m_WV, w_pos);
-    O.tcdh = float4(tc.xyyy);
+    O.tcdh = tc;
 
     //  Hemi cube lighting
     float3 Nw = mul((float3x3)m_W, (float3)I.N);
