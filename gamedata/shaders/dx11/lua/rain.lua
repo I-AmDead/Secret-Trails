@@ -1,5 +1,5 @@
 ﻿function element_0(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform_2uv", "rain_layer")
+	shader:begin("rain", "rain_layer")
 		:fog(false)
 		:zb(true, false, true)
 	shader:dx10zfunc(cmp_func.greater)
@@ -18,7 +18,7 @@
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform_2uv", "rain_patch_normal")
+	shader:begin("rain", "rain_patch_normal")
 		:fog(false)
 		:zb(true, false, true)
 	shader:dx10zfunc(cmp_func.greater)
@@ -39,7 +39,7 @@ function element_1(shader, t_base, t_second, t_detail)
 end
 
 function element_2(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform_2uv", "rain_apply_normal")
+	shader:begin("rain", "rain_apply_normal")
 		:fog(false)
 		:zb(true, false, true)
 	shader:dx10zfunc(cmp_func.greater)
@@ -52,7 +52,7 @@ function element_2(shader, t_base, t_second, t_detail)
 end
 
 function element_3(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform_2uv", "rain_apply_gloss")
+	shader:begin("rain", "rain_apply_gloss")
 		:fog(false)
 		:zb(true, false, true)
 		:blend(true, blend.one, blend.one)

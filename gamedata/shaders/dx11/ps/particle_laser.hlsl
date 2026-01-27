@@ -6,9 +6,9 @@ struct v2p
 {
     float2 tc0 : TEXCOORD0;
     float4 c : COLOR0;
-    float4 tctexgen : TEXCOORD1;
-    float fog : FOG; // fog
     float4 hpos : SV_Position;
+    float fog : FOG;
+    float4 tctexgen : TEXCOORD1;
 };
 
 struct p_particle_out

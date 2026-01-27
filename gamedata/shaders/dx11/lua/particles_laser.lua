@@ -1,5 +1,5 @@
 ﻿function normal(shader, t_base, t_second, t_detail)
-	shader:begin("particles_laser", "particles_laser")
+	shader:begin("particle", "particle_laser")
 		:sorting(3, false)
 		:blend(true,blend.one,blend.one)
 		:aref(false, 0)
