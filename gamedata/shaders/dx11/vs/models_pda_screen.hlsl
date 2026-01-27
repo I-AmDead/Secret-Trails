@@ -1,57 +1,57 @@
 #include "common\common.h"
 #include "common\skin.h"
 
-struct vf
+struct VSOutput
 {
-    float2 tc0 : TEXCOORD0; // base
+    float2 Tex0 : TEXCOORD0; // base
     float3 RDrops : TEXCOORD1;
-    float4 c0 : COLOR0; // color
-    float4 hpos : SV_Position;
+    float4 Color : COLOR0; // color
+    float4 HPos : SV_Position;
 };
 
-vf _main(v_model v)
+VSOutput _main(v_model I)
 {
-    vf o;
+    VSOutput O;
 
-    o.hpos = mul(m_WVP, v.P); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_WVP, I.P); // xform, input in world coords
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0 = v.tc.xy; // copy tc
+    O.Tex0 = I.Tex0.xy; // copy tc
 
     // calculate fade
-    float3 dir_v = normalize(mul(m_WV, v.P));
-    float3 norm_v = normalize(mul(m_WV, v.N));
+    float3 dir_v = normalize(mul(m_WV, I.P));
+    float3 norm_v = normalize(mul(m_WV, I.N));
     float fade = abs(dot(dir_v, norm_v));
-    o.c0 = fade;
+    O.Color = fade;
 
     // HUD Rain drops - SSS Update 17
     // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
-    o.RDrops.xyz = mul(m_W, v.N); // Normal [ World Space ]
+    O.RDrops.xyz = mul(m_W, I.N); // Normal [ World Space ]
 
-    return o;
+    return O;
 }
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-vf main(v_model v) { return _main(v); }
+VSOutput main(v_model I) { return _main(I); }
 #endif
 
 #ifdef SKIN_0
-vf main(v_model_skinned_0 v) { return _main(skinning_0(v)); }
+VSOutput main(v_model_skinned_0 I) { return _main(skinning_0(I)); }
 #endif
 
 #ifdef SKIN_1
-vf main(v_model_skinned_1 v) { return _main(skinning_1(v)); }
+VSOutput main(v_model_skinned_1 I) { return _main(skinning_1(I)); }
 #endif
 
 #ifdef SKIN_2
-vf main(v_model_skinned_2 v) { return _main(skinning_2(v)); }
+VSOutput main(v_model_skinned_2 I) { return _main(skinning_2(I)); }
 #endif
 
 #ifdef SKIN_3
-vf main(v_model_skinned_3 v) { return _main(skinning_3(v)); }
+VSOutput main(v_model_skinned_3 I) { return _main(skinning_3(I)); }
 #endif
 
 #ifdef SKIN_4
-vf main(v_model_skinned_4 v) { return _main(skinning_4(v)); }
+VSOutput main(v_model_skinned_4 I) { return _main(skinning_4(I)); }
 #endif

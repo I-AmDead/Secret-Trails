@@ -1,6 +1,6 @@
 #include "common\common.h"
 
-struct v2p_flare
+struct VSOutput
 {
     float2 Tex0 : TEXCOORD0;
     float4 Tex1	: TEXCOORD1;
@@ -12,9 +12,9 @@ uniform float4x4 mVPTexgen;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_flare main(v_TL I)
+VSOutput main(v_TL I)
 {
-    v2p_flare O;
+    VSOutput O;
 
     O.HPos = mul(m_VP, I.P); // xform, input in world coords
 

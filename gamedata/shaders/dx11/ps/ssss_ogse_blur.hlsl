@@ -18,13 +18,13 @@ Texture2D s_sun_shafts; // current sunshafts texture
 #define num_iter int(55) // Extreme
 // #endif
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Prepare some constants
     float len = SS_LENGTH * 0.2f;
     float NUM = num_iter * len;
 
-    float2 tc = I.tc0.xy;
+    float2 tc = Tex0.xy;
     // Distance to the sun
     float sun_dist = FARPLANE / (sqrt(1.0f - L_sun_dir_w.y * L_sun_dir_w.y));
     // Sun pos

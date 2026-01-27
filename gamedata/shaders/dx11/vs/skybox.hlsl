@@ -1,41 +1,41 @@
 #include "common\common.h"
 
-struct vi
+struct VSInput
 {
-    float4 p : POSITION;
-    float4 c : COLOR0;
-    float3 tc0 : TEXCOORD0;
-    float3 tc1 : TEXCOORD1;
+    float4 P : POSITION;
+    float4 Color : COLOR0;
+    float3 Tex0 : TEXCOORD0;
+    float3 Tex1 : TEXCOORD1;
 };
 
-struct v2p
+struct VSOutput
 {
-    float4 c : COLOR0;
-    float3 tc0 : TEXCOORD0;
-    float3 tc1 : TEXCOORD1;
-    float4 hpos_curr : HPOS_CURRENT;
-    float4 hpos_old : HPOS_PREVIOUS;
-    float4 hpos : SV_Position;
+    float4 Color : COLOR0;
+    float3 Tex0 : TEXCOORD0;
+    float3 Tex1 : TEXCOORD1;
+    float4 HPos_curr : HPOS_CURRENT;
+    float4 HPos_old : HPOS_PREVIOUS;
+    float4 HPos : SV_Position;
 };
 
-v2p main(vi v)
+VSOutput main(VSInput I)
 {
-    v2p o;
+    VSOutput O;
 
-    float4 tpos = mul(v.p, 2000);
-    o.hpos = mul(m_WVP, tpos);
-    o.hpos.z = o.hpos.w;
-    o.hpos_curr = o.hpos;
-    o.hpos_old = mul(m_WVP_old, tpos);
-    o.hpos_old.z = o.hpos_old.w;
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    float4 tpos = mul(I.P, 2000);
+    O.HPos = mul(m_WVP, tpos);
+    O.HPos.z = O.HPos.w;
+    O.HPos_curr = O.HPos;
+    O.HPos_old = mul(m_WVP_old, tpos);
+    O.HPos_old.z = O.HPos_old.w;
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0.xyz = v.tc0; // copy tc
-    o.tc1.xyz = v.tc1; // copy tc
+    O.Tex0.xyz = I.Tex0;
+    O.Tex1.xyz = I.Tex1;
 
-    float3 tint = v.c.rgb * 1.5;
+    float3 tint = I.Color.rgb * 1.5;
 
-    o.c = float4(tint, v.c.a); // copy color, pre-scale by tonemap
+    O.Color = float4(tint, I.Color.a);
 
-    return o;
+    return O;
 }

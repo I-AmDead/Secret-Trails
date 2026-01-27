@@ -16,7 +16,7 @@ Texture2D jitter_hq;
 Texture2D s_sun_shafts; // current sunshafts texture
 sampler smp_jitter;
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Dist to the sun
     float sun_dist = FARPLANE / (sqrt(1.0f - L_sun_dir_w.y * L_sun_dir_w.y));
@@ -25,21 +25,21 @@ float4 main(p_screen I) : SV_Target
     float4 sun_pos_projected = mul(m_VP, float4(sun_pos_world, 1.0f));
     float4 sun_pos_screen = proj_to_screen(sun_pos_projected) / sun_pos_projected.w;
     // sun-pixel vector
-    float2 sun_vec_screen = normalize(sun_pos_screen.xy - I.tc0.xy);
+    float2 sun_vec_screen = normalize(sun_pos_screen.xy - Tex0.xy);
     // smooth shafts
-    float4 cSunShafts = s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy);
+    float4 cSunShafts = s_sun_shafts.Sample(smp_rtlinear, Tex0.xy);
     // #ifdef SUN_SHAFTS_QUALITY
     // # if SUN_SHAFTS_QUALITY > 1
     cSunShafts *= 0.5;
-    cSunShafts += s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy + sun_vec_screen.yx * screen_res.zw) * 0.25f;
-    cSunShafts += s_sun_shafts.Sample(smp_rtlinear, I.tc0.xy - sun_vec_screen.yx * screen_res.zw) * 0.25f;
+    cSunShafts += s_sun_shafts.Sample(smp_rtlinear, Tex0.xy + sun_vec_screen.yx * screen_res.zw) * 0.25f;
+    cSunShafts += s_sun_shafts.Sample(smp_rtlinear, Tex0.xy - sun_vec_screen.yx * screen_res.zw) * 0.25f;
     // # endif
     // #endif
-    float3 img = s_image.Sample(smp_rtlinear, I.tc0.xy).xyz;
+    float3 img = s_image.Sample(smp_rtlinear, Tex0.xy).xyz;
 
     float dust_size = 8 / SS_DUST_SIZE;
     float3 jit;
-    float2 jtc = I.tc0.xy;
+    float2 jtc = Tex0.xy;
     float2 sun_dir_e = L_sun_dir_e.xy;
     sun_dir_e /= sin(ogse_c_screen.y);
     sun_dir_e *= ogse_c_screen.x;
@@ -58,7 +58,7 @@ float4 main(p_screen I) : SV_Target
     float len = length(dust);
     dust *= SS_DUST_INTENSITY;
 
-    float dep = s_position.Load(int3(I.tc0.xy * screen_res.xy, 0), 0).z;
+    float dep = s_position.Load(int3(Tex0.xy * screen_res.xy, 0), 0).z;
     if (dep < 0.00001f)
         dep = SKY_DEPTH;
     dust = lerp(0.0f, dust, (1.0f - saturate(dep * 0.2f)) * (1.0f - saturate(is_sky(dep))));

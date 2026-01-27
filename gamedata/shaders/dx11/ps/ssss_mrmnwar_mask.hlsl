@@ -2,10 +2,10 @@
 
 float NormalizeDepth(float Depth) { return saturate(Depth / 100.f); }
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float4 scene = s_image.Load(int3(I.tc0.xy * screen_res.xy, 0), 0);
-    float sceneDepth = s_position.Load(int3(I.tc0.xy * screen_res.xy, 0), 0).z;
+    float4 scene = s_image.Load(int3(Tex0.xy * screen_res.xy, 0), 0);
+    float sceneDepth = s_position.Load(int3(Tex0.xy * screen_res.xy, 0), 0).z;
 
     float RESDepth = NormalizeDepth(sceneDepth) * 1000;
 

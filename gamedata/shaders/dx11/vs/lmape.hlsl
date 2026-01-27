@@ -1,36 +1,37 @@
-//	TODO: DX10: Check r2 path. If we always get hemi here
 #define USE_LM_HEMI
 #include "common\common.h"
 
-struct vf
+struct VSOutput
 {
-    float2 tc0 : TEXCOORD0;
-    float2 tc1 : TEXCOORD1;
-    float2 tch : TEXCOORD2;
-    float3 tc2 : TEXCOORD3;
-    float3 c0 : COLOR0; // c0=hemi+v-lights, 	c0.a = dt*
-    float3 c1 : COLOR1; // c1=sun, 		c1.a = dt+
-    float fog : FOG;
-    float4 hpos : SV_Position;
+    float2 Tex0 : TEXCOORD0;
+    float2 Tex1 : TEXCOORD1;
+    float2 Tex2 : TEXCOORD2;
+    float3 Tex3 : TEXCOORD3;
+    float3 Color0 : COLOR0;
+    float3 Color1 : COLOR1;
+    float Fog : FOG;
+    float4 HPos : SV_Position;
 };
 
-vf main(v_static v)
+VSOutput main(v_static I)
 {
-    vf o;
+    VSOutput O;
 
-    float3 pos_w = v.P;
-    float3 norm_w = normalize(unpack_normal(v.Nh));
+    float3 pos_w = I.P;
+    float3 norm_w = normalize(unpack_normal(I.N));
 
-    o.hpos = mul(m_VP, v.P); // xform, input in world coords
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.HPos = mul(m_VP, I.P);
+    O.HPos.xy = get_taa_jitter(O.HPos);
 
-    o.tc0 = unpack_tc_base(v.tc, v.T.w, v.B.w); // copy tc
-    o.tc1 = unpack_tc_lmap(v.lmh); // copy tc
-    o.tch = o.tc1;
-    o.tc2 = calc_reflection(pos_w, norm_w);
-    o.c0 = v_hemi(norm_w); // just hemisphere
-    o.c1 = v_sun(norm_w); // sun
-    o.fog.x = saturate(calc_fogging(v.P)); // fog, input in world coords
+    O.Tex0 = unpack_tc_base(I.Tex0, I.T.w, I.B.w);
+    O.Tex1 = unpack_tc_lmap(I.Tex1);
+    O.Tex2 = O.Tex1;
+    O.Tex3 = calc_reflection(pos_w, norm_w);
 
-    return o;
+    O.Color0 = v_hemi(norm_w);
+    O.Color1 = v_sun(norm_w);
+
+    O.Fog = saturate(calc_fogging(I.P));
+
+    return O;
 }

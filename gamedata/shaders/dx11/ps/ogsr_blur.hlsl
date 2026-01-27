@@ -11,11 +11,11 @@ float4 blur_params;
 
 #ifndef SSFX_BEEFS_NVG
 
-float4 main(p_screen I) : SV_Target { return SSFX_Blur(I.tc0, 0.25f); }
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target { return SSFX_Blur(Tex0, 0.25f); }
 
 #else
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Defines
     float3 image;
@@ -26,18 +26,18 @@ float4 main(p_screen I) : SV_Target
     float lua_param_nvg_washout_thresh = pnv_param_4.y;
     float lua_param_vignette_current = pnv_param_2.z;
 
-    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes) == 1.0f) // if NVGs are enabled ...
+    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(Tex0), lua_param_nvg_num_tubes) == 1.0f) // if NVGs are enabled ...
     {
         // HALF RES BLUR - PASS 1 - R = LUMA, G = LIGHTMAP, B = NORMALIZED DEPTH OUT TO FARTHEST_DEPTH (defined in night_vision.h)
         if (blur_params.x == 1 && blur_params.z == (screen_res.x / 2.0f))
         {
-            image = float3(s_image.Sample(smp_rtlinear, I.tc0).rg, saturate(s_position.Load(int3((I.tc0) * screen_res.xy, 0), 0).z / farthest_depth));
+            image = float3(s_image.Sample(smp_rtlinear, Tex0).rg, saturate(s_position.Load(int3((Tex0) * screen_res.xy, 0), 0).z / farthest_depth));
             if (image.b == 0.0f)
             {
                 image.b = 1.0f;
             }
             float scale = 0.05f;
-            scale *= (IGN_calc(I.tc0 / 2.0 * screen_res.xy));
+            scale *= (IGN_calc(Tex0 / 2.0 * screen_res.xy));
             float3 total = 0.0f;
             float divisor = 0.0f;
             float total_depth = image.b;
@@ -49,8 +49,8 @@ float4 main(p_screen I) : SV_Target
             {
                 r += 1.0f / r;
                 offset = mul(offset, G);
-                float3 color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (offset * (r - 1.0f) * 1.0f / screen_res.xy), 0).rgb;
-                color.b = saturate(s_position.Load(int3((I.tc0 * screen_res.xy) + (offset * (r - 1.0f)), 0), 0).z / (farthest_depth));
+                float3 color = s_image.SampleLevel(smp_rtlinear, Tex0 + (offset * (r - 1.0f) * 1.0f / screen_res.xy), 0).rgb;
+                color.b = saturate(s_position.Load(int3((Tex0 * screen_res.xy) + (offset * (r - 1.0f)), 0), 0).z / (farthest_depth));
                 if (color.b == 0.0f)
                 {
                     color.b = 1.0f;
@@ -65,7 +65,7 @@ float4 main(p_screen I) : SV_Target
                 }
             }
             image = float3(max((total.rg / divisor), 0), max((total_depth / divisor_depth), 0));
-            float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
+            float vignette = calc_vignette(lua_param_nvg_num_tubes, Tex0, lua_param_vignette_current);
             image = clamp(image, 0.0, 1.0);
             image *= vignette;
             return float4(image, 1.0f);
@@ -74,10 +74,10 @@ float4 main(p_screen I) : SV_Target
         // HALF RES BLUR - PASS 2 - R = LUMA, G = LIGHTMAP, B = BLURRED DEPTH
         else if (blur_params.x == 0 && blur_params.z == (screen_res.x / 2.0f)) // half-res fixed DOF blur pass 2
         {
-            image = s_image.Sample(smp_rtlinear, I.tc0).rgb;
+            image = s_image.Sample(smp_rtlinear, Tex0).rgb;
             float scale = 0.3f;
             float center_depth = image.b;
-            scale *= (IGN_calc(I.tc0 / 2.0 * screen_res.xy));
+            scale *= (IGN_calc(Tex0 / 2.0 * screen_res.xy));
             float3 total = 0.0f;
             float divisor = 0.0f;
             float r = 1.0f;
@@ -88,13 +88,13 @@ float4 main(p_screen I) : SV_Target
                 r += 1.0f / r;
                 offset = mul(offset, G);
                 float falloff = saturate((1.2f * center_depth) - log(center_depth * 6.4f) - (0.4f * pow(center_depth, 2.3f)));
-                float3 color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (offset * (falloff) * (r - 1.02f) * 1.0f / screen_res.xy), 0).rgb;
+                float3 color = s_image.SampleLevel(smp_rtlinear, Tex0 + (offset * (falloff) * (r - 1.02f) * 1.0f / screen_res.xy), 0).rgb;
                 float weight = 1.0f;
                 total += color * weight;
                 divisor += weight;
             }
             image = max((total.rgb / divisor), 0);
-            float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
+            float vignette = calc_vignette(lua_param_nvg_num_tubes, Tex0, lua_param_vignette_current);
             image = clamp(image, 0.0, 1.0);
             image *= vignette;
             return float4(image, 1.0f);
@@ -110,14 +110,14 @@ float4 main(p_screen I) : SV_Target
             float blur_quality = 6.0;
             float blur_radius = 1.5;
             float3 color = 0.0f;
-            float3 color_average = s_image.Sample(smp_rtlinear, I.tc0).rgb;
+            float3 color_average = s_image.Sample(smp_rtlinear, Tex0).rgb;
             float weight = 0.0f;
             float light_avgs = 0.0f;
             for (float i = 1.0; i <= blur_quality; i++)
             {
                 for (float d = 0.0; d < Pi; d += Pi / blur_directions)
                 {
-                    color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
+                    color = s_image.SampleLevel(smp_rtlinear, Tex0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
                     color.rb *= color.rb;
                     color.rb = saturate((color.rb - general_threshold) / (1.0f - general_threshold));
                     color.g = saturate((color.g - light_thresh) / (1.0f - light_thresh));
@@ -147,7 +147,7 @@ float4 main(p_screen I) : SV_Target
             float blur_quality = 4.0;
             float blur_radius = 4;
             float3 color = 0.0f;
-            float3 color_average = s_image.Sample(smp_rtlinear, I.tc0).rgb;
+            float3 color_average = s_image.Sample(smp_rtlinear, Tex0).rgb;
             float light_avgs = 0.0f;
             float weight = 0.0f;
             float total_weight = 0.0f;
@@ -155,7 +155,7 @@ float4 main(p_screen I) : SV_Target
             {
                 for (float d = 0.0; d < Pi; d += Pi / blur_directions)
                 {
-                    color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
+                    color = s_image.SampleLevel(smp_rtlinear, Tex0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
                     if (color.g > 0.0f)
                     {
                         color.g *= 4.0f;
@@ -183,7 +183,7 @@ float4 main(p_screen I) : SV_Target
             float blur_quality = 4.0;
             float blur_radius = 1;
             float3 color = 0.0f;
-            float3 color_average = s_image.Sample(smp_rtlinear, I.tc0).rgb;
+            float3 color_average = s_image.Sample(smp_rtlinear, Tex0).rgb;
             float weight = 0.0f;
             float total_weight = 0.0f;
             float light_avgs = 0.0f;
@@ -191,7 +191,7 @@ float4 main(p_screen I) : SV_Target
             {
                 for (float d = 0.0; d < Pi; d += Pi / blur_directions)
                 {
-                    color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
+                    color = s_image.SampleLevel(smp_rtlinear, Tex0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
                     color.rb *= color.rb;
                     color.rb = saturate((color.rb - general_threshold) / (1.0f - general_threshold));
                     color.g = saturate((color.g - light_thresh) / (1.0f - light_thresh));
@@ -221,7 +221,7 @@ float4 main(p_screen I) : SV_Target
             float blur_quality = 4.0;
             float blur_radius = 4;
             float3 color = 0.0f;
-            float3 color_average = s_image.Sample(smp_rtlinear, I.tc0).rgb;
+            float3 color_average = s_image.Sample(smp_rtlinear, Tex0).rgb;
             float light_avgs = 0.0f;
             float weight = 0.0f;
             float total_weight = 0.0f;
@@ -229,7 +229,7 @@ float4 main(p_screen I) : SV_Target
             {
                 for (float d = 0.0; d < Pi; d += Pi / blur_directions)
                 {
-                    color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
+                    color = s_image.SampleLevel(smp_rtlinear, Tex0 + (float2(cos(d), sin(d)) * blur_radius * i / screen_res.xy), 0).rgb;
                     if (color.g > 0.0f)
                     {
                         color.g *= 4.0f;
@@ -249,7 +249,7 @@ float4 main(p_screen I) : SV_Target
     }
 
     // OTHERWISE, DO NORMAL BLUR
-    return SSFX_Blur(I.tc0, 0.25f);
+    return SSFX_Blur(Tex0, 0.25f);
 }
 
 #endif

@@ -15,14 +15,14 @@
 
 v2p_flat main(v_tree I)
 {
-    float3x4 m_xform = float3x4(I.m0, I.m1, I.m2);
-    float4 consts = I.consts;
+    float3x4 m_xform = float3x4(I.M0, I.M1, I.M2);
+    float4 consts = I.Consts;
 
-    I.Nh = unpack_D3DCOLOR(I.Nh);
+    I.N = unpack_D3DCOLOR(I.N);
     I.T = unpack_D3DCOLOR(I.T);
     I.B = unpack_D3DCOLOR(I.B);
 
-    v2p_flat o;
+    v2p_flat O;
 
     // Transform to world coords
     float3 pos = mul(m_xform, I.P);
@@ -45,28 +45,27 @@ v2p_flat main(v_tree I)
 
     // Final xform
     float3 Pe = mul(m_V, f_pos);
-    float hemi = I.Nh.w * consts.z + consts.w;
-    // float hemi = I.Nh.w;
-    o.hpos = mul(m_VP, f_pos);
+    float hemi = I.N.w * consts.z + consts.w;
 
     /////////////
-    o.hpos_old = mul(m_VP_old, f_pos_previous);
-    o.hpos_curr = o.hpos;
-    o.hpos.xy = get_taa_jitter(o.hpos);
+    O.hpos = mul(m_VP, f_pos);
+    O.hpos_old = mul(m_VP_old, f_pos_previous);
+    O.hpos_curr = O.hpos;
+    O.hpos.xy = get_taa_jitter(O.hpos);
     /////////////
 
     float3x3 m_xform_v = mul((float3x3)m_V, (float3x3)m_xform);
-    o.N = mul(m_xform_v, unpack_bx2(I.Nh));
-    o.tcdh = float4((I.tc * consts).xyyy);
-    o.position = float4(Pe, hemi);
+    O.N = mul(m_xform_v, unpack_bx2(I.N));
+    O.tcdh = float4((I.Tex0 * consts).xyyy);
+    O.position = float4(Pe, hemi);
 
 #ifdef USE_GRASS_WAVE
-    o.tcdh.z = 1.f;
+    O.tcdh.z = 1.f;
 #endif
 
 #ifdef USE_TDETAIL
-    o.tcdbump = o.tcdh * dt_params; // dt tc
+    O.tcdbump = o.tcdh * dt_params;
 #endif
 
-    return o;
+    return O;
 }

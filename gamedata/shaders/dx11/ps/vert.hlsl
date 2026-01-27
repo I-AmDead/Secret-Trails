@@ -1,23 +1,15 @@
 #include "common\common.h"
 
-struct v2p
-{
-    float2 tc0 : TEXCOORD0; // base
-    float3 c0 : COLOR0;
-    float fog : FOG;
-};
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-float4 main(v2p I) : SV_Target
+float4 main(v2p_TL_FOG I) : SV_Target
 {
-    //	float4	t_base 	= tex2D		(s_base,I.tc0);
-    float4 t_base = s_base.Sample(smp_base, I.tc0);
-    float3 final = t_base * I.c0 * 2;
+    float4 t_base = s_base.Sample(smp_base, I.Tex0);
+    float3 final = t_base * I.Color * 2;
 
-    //	Fogging
-    final = lerp(fog_color, final, I.fog);
+    // Fogging
+    final = lerp(fog_color, final, I.Fog);
 
     // out
-    return float4(final, t_base.a * I.fog * I.fog);
+    return float4(final, t_base.a * I.Fog * I.Fog);
 }

@@ -1,12 +1,8 @@
-#include "common\common.h"
+#include "common\shared\common.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_dumb main(v_dumb I)
+float4 main(float4 P : POSITION) : SV_Position
 {
-    v2p_dumb O;
-
-    O.HPos = mul(m_WVP, I.P);
-
-    return O;
+    return mul(m_WVP, P);
 }

@@ -9,35 +9,35 @@
 #include "common\ogsr_gasmask_common.h"
 #include "common\visor.h"
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Sample gasmask texture
     float4 gasmask_tex;
 
     if (m_actor_params.y > 0.9)
-        gasmask_tex = s_mask_nm_1.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_1.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.8)
-        gasmask_tex = s_mask_nm_2.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_2.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.7)
-        gasmask_tex = s_mask_nm_3.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_3.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.6)
-        gasmask_tex = s_mask_nm_4.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_4.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.5)
-        gasmask_tex = s_mask_nm_5.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_5.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.4)
-        gasmask_tex = s_mask_nm_6.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_6.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.3)
-        gasmask_tex = s_mask_nm_7.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_7.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.2)
-        gasmask_tex = s_mask_nm_8.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_8.Sample(smp_nofilter, Tex0);
     else if (m_actor_params.y > 0.1)
-        gasmask_tex = s_mask_nm_9.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_9.Sample(smp_nofilter, Tex0);
     else
-        gasmask_tex = s_mask_nm_10.Sample(smp_nofilter, I.tc0);
+        gasmask_tex = s_mask_nm_10.Sample(smp_nofilter, Tex0);
 
     // Prepare refracted texcoord
     float2 gasmask_tc = (gasmask_tex.xy * 2.0 - 1.0) * GM_DIST_INT;
-    float2 refr_tc = I.tc0.xy + gasmask_tc;
+    float2 refr_tc = Tex0.xy + gasmask_tc;
 
     // Sample scene with refracted texcoord
     float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
@@ -50,7 +50,7 @@ float4 main(p_screen I) : SV_Target
 
     // Add glass reflection on top
     if (mask_control.y == 1)
-        image = visor_reflection(image, I.tc0.xy);
+        image = visor_reflection(image, Tex0.xy);
 
     float gasmask_tex_alpha = gasmask_tex.w * GM_DIFF_INT;
 

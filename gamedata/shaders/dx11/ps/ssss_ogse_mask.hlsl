@@ -1,12 +1,12 @@
 #include "common\common.h"
 #include "common\ogse_functions.h"
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float4 depth;
-    depth.x = s_position.Load(int3((I.tc0.xy + float2(0, 1.0f) * screen_res.zw) * screen_res.xy, 0), 0).z;
-    depth.y = s_position.Load(int3((I.tc0.xy + float2(1, 0.65f) * screen_res.zw) * screen_res.xy, 0), 0).z;
-    depth.z = s_position.Load(int3((I.tc0.xy + float2(-1, 0.65f) * screen_res.zw) * screen_res.xy, 0), 0).z;
+    depth.x = s_position.Load(int3((Tex0.xy + float2(0, 1.0f) * screen_res.zw) * screen_res.xy, 0), 0).z;
+    depth.y = s_position.Load(int3((Tex0.xy + float2(1, 0.65f) * screen_res.zw) * screen_res.xy, 0), 0).z;
+    depth.z = s_position.Load(int3((Tex0.xy + float2(-1, 0.65f) * screen_res.zw) * screen_res.xy, 0), 0).z;
 
     float4 sceneDepth;
     sceneDepth.x = normalize_depth(depth.x) * is_not_sky(depth.x);

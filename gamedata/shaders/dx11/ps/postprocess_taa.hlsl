@@ -28,21 +28,21 @@ float3 SMAABicubicFilter(float3 current_top, float3 current_bottom, float3 curre
 }
 
 // Cheapest way to get 3x3 neighborhood of single channel texture
-void get_3x3_depth(float2 tc0, inout float d_3x3[9])
+void get_3x3_depth(float2 uv, inout float d_3x3[9])
 {
     // https://wojtsterna.blogspot.com/2018/02/directx-11-hlsl-gatherred.html
-    float2 gather_texcoord = tc0 + screen_res.zw * 0.5;
+    float2 gather_texcoord = uv + screen_res.zw * 0.5;
 
     float4 d_gather0 = t_zbuffer.Gather(smp_nofilter, gather_texcoord);
     float4 d_gather1 = t_zbuffer.Gather(smp_nofilter, gather_texcoord, int2(-1, -1));
 
     d_3x3[0] = d_gather1.w;
     d_3x3[1] = d_gather1.z;
-    d_3x3[2] = t_zbuffer.SampleLevel(smp_nofilter, tc0, 0, int2(1, -1)).x;
+    d_3x3[2] = t_zbuffer.SampleLevel(smp_nofilter, uv, 0, int2(1, -1)).x;
     d_3x3[3] = d_gather1.x;
     d_3x3[4] = d_gather0.w; // d_gather1.y overlap
     d_3x3[5] = d_gather0.z;
-    d_3x3[6] = t_zbuffer.SampleLevel(smp_nofilter, tc0, 0, int2(-1, 1)).x;
+    d_3x3[6] = t_zbuffer.SampleLevel(smp_nofilter, uv, 0, int2(-1, 1)).x;
     d_3x3[7] = d_gather0.x;
     d_3x3[8] = d_gather0.y;
 }
@@ -51,7 +51,7 @@ float4 main(p_screen I) : SV_Target
 {
     // Fetch 3x3 depth neighborhood
     float d_3x3[9];
-    get_3x3_depth(I.tc0.xy, d_3x3);
+    get_3x3_depth(I.Tex0.xy, d_3x3);
 
     // Fetch 3x3 color neighborhood and find closest depth
     float3 c_3x3[9];
@@ -60,7 +60,7 @@ float4 main(p_screen I) : SV_Target
 
     [unroll] for (int i = 0; i < 9; i++)
     {
-        int2 offset_hpos = clamp(I.hpos.xy + offset_3x3[i], 0, screen_res.xy - 1);
+        int2 offset_hpos = clamp(I.HPos.xy + offset_3x3[i], 0, screen_res.xy - 1);
 
         float sampled_depth = d_3x3[i]; // Down to 2 gathers and 2 SampleLevel
         c_3x3[i] = Lottes_Tonemap(t_current[offset_hpos].xyz); // This can be optimized to 3 gathers and 5 SampleLevel, on DX11...
@@ -82,8 +82,8 @@ float4 main(p_screen I) : SV_Target
     c_max *= 0.5;
 
     // Fetch motion vectors and reproject
-    float2 motion_vector = t_motion_vectors[clamp(I.hpos.xy + depth_offset, 0, screen_res.xy - 1)].xy;
-    float2 reprojected_tc = I.tc0.xy - motion_vector * float2(0.5, -0.5);
+    float2 motion_vector = t_motion_vectors[clamp(I.HPos.xy + depth_offset, 0, screen_res.xy - 1)].xy;
+    float2 reprojected_tc = I.Tex0.xy - motion_vector * float2(0.5, -0.5);
 
     // Early quit
     if (any(reprojected_tc != saturate(reprojected_tc)))

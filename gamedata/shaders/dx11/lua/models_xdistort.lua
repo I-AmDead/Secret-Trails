@@ -1,5 +1,5 @@
 ﻿function normal(shader, t_base, t_second, t_detail)
-	shader:begin("models_distort", "particle_alphaonly")    -- particle_alphaonly
+	shader:begin("models_distort", "particle_alphaonly")
 		:sorting(3, false)
 		:blend(true,blend.srcalpha,blend.invsrcalpha)
 		:aref(true,0)

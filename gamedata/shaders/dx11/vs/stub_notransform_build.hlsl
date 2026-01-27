@@ -1,10 +1,28 @@
-#include "common\common.h"
+#include "common\shared\common.h"
+
+struct VSInput
+{
+    float4 P : POSITIONT;
+    float2 Tex0 : TEXCOORD0;
+    float2 Tex1 : TEXCOORD1;
+    float2 Tex2 : TEXCOORD2;
+    float2 Tex3 : TEXCOORD3;
+};
+
+struct VSOutput
+{
+    float2 Tex0 : TEXCOORD0;
+    float2 Tex1 : TEXCOORD1;
+    float2 Tex2 : TEXCOORD2;
+    float2 Tex3 : TEXCOORD3;
+    float4 HPos : SV_Position;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_build main(v_build I)
+VSOutput main(VSInput I)
 {
-    v2p_build O;
+    VSOutput O;
 
     I.P.xy += 0.5f;
     O.HPos.x = I.P.x * screen_res.z * 2 - 1;

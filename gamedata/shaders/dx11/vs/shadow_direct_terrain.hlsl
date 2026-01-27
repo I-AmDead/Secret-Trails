@@ -8,22 +8,17 @@
 
 #include "common\common.h"
 
-struct a2v
-{
-    float4 P : POSITION; // Object-space position
-};
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_shadow_direct main(a2v I)
+v2p_shadow_direct main(float4 P : POSITION)
 {
     v2p_shadow_direct O;
 
     // Apply a small offset to avoid the Parallax depth offset.
-    float4 pos = I.P;
+    float4 pos = P;
     pos.y -= 0.1f;
 
-    O.hpos = mul(m_WVP, pos);
+    O.HPos = mul(m_WVP, pos);
 
     return O;
 }

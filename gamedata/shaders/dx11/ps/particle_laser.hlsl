@@ -2,13 +2,12 @@
 
 uniform float4 m_affects;
 
-struct v2p
+struct PSInput
 {
-    float2 tc0 : TEXCOORD0;
-    float4 c : COLOR0;
-    float4 hpos : SV_Position;
-    float fog : FOG;
-    float4 tctexgen : TEXCOORD1;
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 Color : COLOR0;
+    float Fog : FOG;
 };
 
 struct p_particle_out
@@ -22,20 +21,19 @@ struct p_particle_out
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Pixel
-p_particle_out main(v2p I) : SV_Target
+p_particle_out main(PSInput I) : SV_Target
 {
     p_particle_out O;
 
-    float4 result = I.c * s_base.Sample(smp_base, I.tc0);
+    float4 result = I.Color * s_base.Sample(smp_base, I.Tex0);
     result.rgb = result.rgb * 0.9;
 
-    // ??????? ?????? ??? ???????
     float mig = 1.0f - (m_affects.x * 2.f);
     result.a = random(timers.xz) > mig ? 0.f : result.a;
 
-    float2 tcProj = I.tctexgen.xy / I.tctexgen.w;
+    float2 tcProj = I.Tex1.xy / I.Tex1.w;
     float3 depth = gbuffer_depth(tcProj);
-    float spaceDepth = depth.z - I.tctexgen.z - DEPTH_EPSILON;
+    float spaceDepth = depth.z - I.Tex1.z - DEPTH_EPSILON;
 
     if (spaceDepth < -2 * DEPTH_EPSILON)
         spaceDepth = 100000.0h; //  Skybox doesn't draw into position buffer
@@ -44,7 +42,7 @@ p_particle_out main(v2p I) : SV_Target
     result.rgb *= Contrast(saturate(spaceDepth * 1.3h), 2);
 
     clip(result.a - (0.01f / 255.0f));
-    result.a *= I.fog * I.fog; // ForserX: Port Skyloader fog fix
+    result.a *= I.Fog * I.Fog; // ForserX: Port Skyloader fog fix
 
     O.main = result;
 

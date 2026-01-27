@@ -21,22 +21,20 @@
 float4 sun_shafts_intensity;
 
 uniform float4 any_test;
-float4 main(v2p_volume I) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
 #ifndef SUN_SHAFTS_QUALITY
     return float4(0, 0, 0, 0);
-#else //	SUN_SHAFTS_QUALITY
+#else
 
     float max_density = sun_shafts_intensity;
     float inner_density = 4.0f;
-
-    float2 tc = I.tc.xy / I.tc.w;
-    float4 pos2d = I.hpos;
+    float2 tc = I.Tex0.xy / I.Tex0.w;
 
     if (any(tc <= 0.0) || any(tc >= 1.0))
         return float4(0, 0, 0, 0);
 
-    float3 view_space = gbuffer_view_space(tc, pos2d);
+    float3 view_space = gbuffer_view_space(tc, I.HPos);
     float depth = view_space.z;
 
     float distance = length(view_space);

@@ -11,9 +11,9 @@ SamplerState SamplerLinearClamp;
 // CBuffers
 uniform float4 f_cas_intensity;
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float2 texcoord = I.tc0;
+    float2 texcoord = Tex0;
 
     // fetch a 3x3 neighborhood around the pixel 'e',
     //  a b c

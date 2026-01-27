@@ -7,9 +7,9 @@
 #include "common\night_vision.h"
 #endif
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float2 center = I.tc0;
+    float2 center = Tex0;
     float4 color = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
     float3 img = color.rgb;
 

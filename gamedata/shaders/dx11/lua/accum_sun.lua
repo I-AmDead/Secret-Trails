@@ -1,5 +1,5 @@
 ﻿function elements(shader, t_base, t_second, t_detail)
-	shader:begin("accum_sun", "accum_sun_near")
+	shader:begin("accum_volume", "accum_sun_near")
 		:fog(false)
 		:zb(true, false, true)
 		:blend(false, blend.one, blend.zero)
@@ -28,7 +28,7 @@ function element_1(shader, t_base, t_second, t_detail)
 end
 
 function element_2(shader, t_base, t_second, t_detail)
-	shader:begin("accum_sun", "accum_sun_far")
+	shader:begin("accum_volume", "accum_sun_far")
 		:fog(false)
 		:zb(true, false)
 		:blend(false, blend.one, blend.zero)

@@ -13,19 +13,19 @@ Texture2D s_vollight;
 uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offset size ]
 // uniform float4 shader_param_6;
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float4 Blur = 0;
 
     // Scale sample to use the linear filtering
-    float2 tc = I.tc0.xy * blur_setup.ww;
+    float2 uv = Tex0.xy * blur_setup.ww;
     float2 offset = ((blur_setup.zz + 0.5f) / (blur_setup.xy / blur_setup.ww)); // * shader_param_6.x;
 
-    Blur += s_vollight.SampleLevel(smp_linear, tc + offset, 0);
-    Blur += s_vollight.SampleLevel(smp_linear, tc - offset, 0);
+    Blur += s_vollight.SampleLevel(smp_linear, uv + offset, 0);
+    Blur += s_vollight.SampleLevel(smp_linear, uv - offset, 0);
     offset = float2(-offset.x, offset.x);
-    Blur += s_vollight.SampleLevel(smp_linear, tc + offset, 0);
-    Blur += s_vollight.SampleLevel(smp_linear, tc - offset, 0);
+    Blur += s_vollight.SampleLevel(smp_linear, uv + offset, 0);
+    Blur += s_vollight.SampleLevel(smp_linear, uv - offset, 0);
 
     return Blur / 4.0f;
 }

@@ -9,26 +9,26 @@
 #include "common\common.h"
 
 // Vertex Struct
-struct v2p_Rain
+struct VSOutput
 {
     float2 Tex0 : TEXCOORD0;
-    float4 tc : TEXCOORD1;
+    float4 Tex1 : TEXCOORD1;
     float4 HPos : SV_Position;
 };
 
 uniform float4x4 mVPTexgen;
 
-v2p_Rain main(v_TL I)
+VSOutput main(v_TL I)
 {
-    v2p_Rain O;
+    VSOutput O;
 
     // Basic Stuff
     O.HPos = mul(m_WVP, I.P);
     O.Tex0 = I.Tex0;
 
     // Screen Space Data
-    O.tc = mul(mVPTexgen, I.P);
-    O.tc.z = O.HPos.z;
+    O.Tex1 = mul(mVPTexgen, I.P);
+    O.Tex1.z = O.HPos.z;
 
     return O;
 }

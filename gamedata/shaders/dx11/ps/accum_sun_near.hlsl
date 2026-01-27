@@ -14,9 +14,9 @@
 #include "common\screenspace\screenspace_shadows.h"
 #endif
 
-float4 main(v2p_volume I) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
-    gbuffer_data gbd = gbuffer_load_data(I.tc.xy / I.tc.w, I.hpos);
+    gbuffer_data gbd = gbuffer_load_data(I.Tex0.xy / I.Tex0.w, I.HPos);
 
     //	Emulate virtual offset
     gbd.P += gbd.N * 0.015f;
@@ -33,7 +33,7 @@ float4 main(v2p_volume I) : SV_Target
     s *= shadow(PS);
 
 #ifdef SSFX_SSS
-    s *= SSFX_ScreenSpaceShadows(_P, I.hpos);
+    s *= SSFX_ScreenSpaceShadows(_P, I.HPos);
 #endif
 
 #ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed

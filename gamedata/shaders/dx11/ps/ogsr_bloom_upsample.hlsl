@@ -13,7 +13,7 @@ Texture2D s_downsample;
 
 uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offset size ]
 
-float4 main(p_screen I) : SV_Target
+float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float2 PixelSize = (1.0f / blur_setup.xy) * blur_setup.w;
 
@@ -25,13 +25,13 @@ float4 main(p_screen I) : SV_Target
 
     for (int i = 0; i < 9; i++)
     {
-        Color += s_bloom.Sample(smp_rtlinear, I.tc0 + Coords[i]);
+        Color += s_bloom.Sample(smp_rtlinear, Tex0 + Coords[i]);
     }
 
-    Color += s_downsample.Sample(smp_rtlinear, I.tc0 + Coords[1]);
-    Color += s_downsample.Sample(smp_rtlinear, I.tc0 + Coords[3]);
-    Color += s_downsample.Sample(smp_rtlinear, I.tc0 + Coords[5]);
-    Color += s_downsample.Sample(smp_rtlinear, I.tc0 + Coords[7]);
+    Color += s_downsample.Sample(smp_rtlinear, Tex0 + Coords[1]);
+    Color += s_downsample.Sample(smp_rtlinear, Tex0 + Coords[3]);
+    Color += s_downsample.Sample(smp_rtlinear, Tex0 + Coords[5]);
+    Color += s_downsample.Sample(smp_rtlinear, Tex0 + Coords[7]);
 
     Color /= 13;
 

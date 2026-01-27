@@ -1,10 +1,36 @@
-#include "common\common.h"
+#include "common\shared\common.h"
+
+struct VSInput
+{
+    float4 P : POSITIONT;
+    float4 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 Tex2 : TEXCOORD2;
+    float4 Tex3 : TEXCOORD3;
+    float4 Tex4 : TEXCOORD4;
+    float4 Tex5 : TEXCOORD5;
+    float4 Tex6 : TEXCOORD6;
+    float4 Tex7 : TEXCOORD7;
+};
+
+struct VSOutput
+{
+    float4 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 Tex2 : TEXCOORD2;
+    float4 Tex3 : TEXCOORD3;
+    float4 Tex4 : TEXCOORD4;
+    float4 Tex5 : TEXCOORD5;
+    float4 Tex6 : TEXCOORD6;
+    float4 Tex7 : TEXCOORD7;
+    float4 HPos : SV_Position;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Vertex
-v2p_filter main(v_filter I)
+VSOutput main(VSInput I)
 {
-    v2p_filter O;
+    VSOutput O;
 
     I.P.xy += 0.5f; //	Bugs with rasterizer??? Possible float-pixel shift.
     O.HPos.x = I.P.x * screen_res.z * 2 - 1;

@@ -1,26 +1,13 @@
 #include "common\common.h"
 
-struct ui_vert_in
+p_screen main(v_TL I)
 {
-    float4 P : POSITION;
-    float4 color : COLOR0;
-    float2 uv : TEXCOORD0;
-};
+    p_screen O;
 
-struct ui_vert_out
-{
-    float2 tc0 : TEXCOORD0;
-    float4 P : SV_Position;
-};
-
-ui_vert_out main(ui_vert_in v)
-{
-    ui_vert_out O;
-
-    O.tc0 = v.uv;
-    O.P = v.P / 10000;
-    O.P.w = 1;
-    O.P = mul(m_WVP, O.P);
+    O.Tex0 = I.Tex0;
+    O.HPos = I.P / 10000;
+    O.HPos.w = 1;
+    O.HPos = mul(m_WVP, O.HPos);
 
     return O;
 }
