@@ -13,7 +13,6 @@ function normal                (shader, t_base, t_second, t_detail)
     		:sorting	(2, false)
 			:blend		(true,blend.srcalpha,blend.invsrcalpha)
 			:zb			(true,false)
-			:distort	(true)
 			:fog		(true)
 
 	shader:dx10texture	("s_base",		tex_base)
@@ -34,21 +33,4 @@ shader:dx10texture  ("s_watercaustics", tex_caustics)
 	shader:dx10sampler	("smp_linear")
 	shader:dx10sampler	("smp_nofilter")
 	shader:dx10sampler	("smp_rtlinear")
-end
-
-function l_special        (shader, t_base, t_second, t_detail)
-	shader	:begin                ("waterd","waterd")
-			:sorting        (2, true)
-			:blend                (true,blend.srcalpha,blend.invsrcalpha)
-			:zb                (true,false)
-			:fog                (false)
-			:distort        (true)
-
-	shader: dx10color_write_enable( true, true, true, false)
-
-	shader:dx10texture	("s_base",		tex_base)
-	shader:dx10texture	("s_distort",	tex_dist)
-
-	shader:dx10sampler	("smp_base")
-	shader:dx10sampler	("smp_nofilter")	
 end
