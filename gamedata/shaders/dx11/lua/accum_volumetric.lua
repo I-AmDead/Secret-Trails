@@ -1,4 +1,4 @@
-function element_0(shader, t_base, t_second, t_detail)
+﻿function element_0(shader, t_base, t_second, t_detail)
 	shader:begin("accum_volumetric", "accum_volumetric")
 		:fog(false)
 		:zb(false, false)

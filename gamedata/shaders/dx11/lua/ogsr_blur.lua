@@ -1,4 +1,4 @@
-function elemets(shader, t_base, t_second, t_detail, s_image)
+﻿function elemets(shader, t_base, t_second, t_detail, s_image)
 	shader:begin("ogsr_blur", "ogsr_blur")
 		:fog(false)
 		:zb(false, false)

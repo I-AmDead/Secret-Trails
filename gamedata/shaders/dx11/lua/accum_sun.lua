@@ -1,4 +1,4 @@
-function elements(shader, t_base, t_second, t_detail)
+﻿function elements(shader, t_base, t_second, t_detail)
 	shader:begin("accum_sun", "accum_sun_near")
 		:fog(false)
 		:zb(true, false, true)
