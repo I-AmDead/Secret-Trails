@@ -9,10 +9,6 @@
 #endif
 
 #if SUN_QUALITY > 2
-#define ULTRA_SHADOWS_ON
-#endif
-
-#ifdef ULTRA_SHADOWS_ON
 #define USE_ULTRA_SHADOWS
 #endif
 

@@ -1,6 +1,5 @@
 #include "common\common.h"
 
-#undef ULTRA_SHADOWS_ON
 #undef USE_ULTRA_SHADOWS
 
 #define RAY_PATH 2.0h
