@@ -11,8 +11,6 @@ Texture2D s_smap : register(ps, t0); // 2D/cube shadowmap
 SamplerComparisonState smp_smap; //	Special comare sampler
 sampler smp_jitter;
 
-uniform float4 ssfx_shadow_bias;
-
 Texture2D jitter0;
 Texture2D jitter1;
 

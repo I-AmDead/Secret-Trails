@@ -31,15 +31,7 @@ float4 main(v2p_volume I) : SV_Target
 
     float3 light = plight_infinity(_P.w, _P, _N, _C, Ldynamic_dir);
 
-    // SHADOWS FIXES - SSS Update 19
-    // Normal Offset for biasing
-    float3 NormalOffset = 0;
-
-#ifdef SSFX_SHADOWS
-    NormalOffset = _N * ssfx_shadow_bias.y;
-#endif
-
-    float4 P4 = float4(_P.xyz + NormalOffset, 1.0);
+    float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
     float s = sunmask(P4);
     s *= shadow(PS);

@@ -22,6 +22,8 @@ float4 main(p_volume I, float4 pos2d : SV_Position) : SV_Target
 
     gbuffer_data gbd = gbuffer_load_data(tcProj, pos2d);
 
+    gbd.P += gbd.N * 0.025f;
+
     float4 _P = float4(gbd.P, gbd.mtl);
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
@@ -43,16 +45,10 @@ float4 main(p_volume I, float4 pos2d : SV_Position) : SV_Target
     float3 light = plight_local(m, _P, _N, _C, Ldynamic_pos, Ldynamic_pos.w, rsqr);
 
     // ----- shadow
-    float3 Offset = 0;
-
-#ifdef SSFX_SHADOWS
-    float bias_int = (1.0 - saturate(dot(_N, -normalize(_P - Ldynamic_pos.xyz)))) * rsqr * Ldynamic_pos.w;
-    Offset = _N * (0.025f + bias_int * ssfx_shadow_bias.x);
-#endif
-
-    float4 P4 = float4(_P.xyz + Offset, 1);
+    float4 P4 = float4(_P.xyz, 1);
     float4 PS = mul(m_shadow, P4);
     float s = 1.h;
+
 #ifdef USE_SHADOW
     s = shadow(PS);
 #endif
