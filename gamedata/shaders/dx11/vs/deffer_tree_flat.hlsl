@@ -60,7 +60,7 @@ v2p_flat main(v_tree I)
     O.position = float4(Pe, hemi);
 
 #ifdef USE_TDETAIL
-    O.tcdbump = o.tcdh * dt_params;
+    O.tcdbump = O.tcdh * dt_params;
 #endif
 
     return O;

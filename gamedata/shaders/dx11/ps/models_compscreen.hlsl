@@ -20,13 +20,11 @@ f_deffer main(p_flat I)
     float h = I.position.w;
 #endif
 
-    // ??? ??? ???????
     float noise = get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 30;
     D.r += noise;
     D.g += noise;
     D.b += noise;
 
-    // ?????????? ??????
     D.rgb = (m_affects.x > 0.41) ? 0 : D.rgb;
 
     float4 Ne = float4(normalize((float3)I.N.xyz), h);
