@@ -20,10 +20,6 @@ v2p_flat main(v_static I)
     O.position = float4(Pe, I.N.w);
     O.hpos.xy = get_taa_jitter(O.hpos);
 
-#ifdef USE_GRASS_WAVE
-    O.tcdh.z = 1.f;
-#endif
-
 #ifdef USE_TDETAIL
     O.tcdbump = O.tcdh * dt_params; // dt tc
 #endif

@@ -27,10 +27,6 @@ v2p_flat _main(v_model I)
 
     O.position = float4(Pe, hemi_val); // Use L_material.x for old behaviour;
 
-#ifdef USE_GRASS_WAVE
-    O.tcdh.z = 1.f;
-#endif
-
 #ifdef USE_TDETAIL
     O.tcdbump = O.tcdh * dt_params; // dt tc
 #endif

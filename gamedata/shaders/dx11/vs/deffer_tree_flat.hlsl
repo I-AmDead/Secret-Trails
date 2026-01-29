@@ -59,10 +59,6 @@ v2p_flat main(v_tree I)
     O.tcdh = float4((I.Tex0 * consts).xyyy);
     O.position = float4(Pe, hemi);
 
-#ifdef USE_GRASS_WAVE
-    O.tcdh.z = 1.f;
-#endif
-
 #ifdef USE_TDETAIL
     O.tcdbump = o.tcdh * dt_params;
 #endif

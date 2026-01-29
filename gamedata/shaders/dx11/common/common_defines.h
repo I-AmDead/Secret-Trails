@@ -18,8 +18,7 @@
 #define def_hdr_clip float(0.75h) //
 
 #define LUMINANCE_VECTOR float3(0.213, 0.715, 0.072)
-
-// #define USE_GRASS_WAVE								// enable grass wave
+								// enable grass wave
 #define GRASS_WAVE_FREQ float(0.7) // frequency of waves
 #define GRASS_WAVE_POWER float(3.0) // brightness of waves
 
