@@ -10,7 +10,7 @@
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	shader:begin("deffer_model_flat", "models_scope_zwrite")
+	shader:begin("models_scope_depth", "models_scope_depth")
 		:zb(false, true)
 	shader:dx10texture("rt_tempzb", "$user$temp_zb")
 	shader:dx10sampler("smp_rtlinear")
