@@ -29,7 +29,7 @@ float fbm(float2 texcoord, int iterations)
     return value / total_weight;
 }
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // texcoord
     float2 texcoord = Tex0;
@@ -65,5 +65,6 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 
     image_blur = lerp(image_blur, glossyTex.rgb, .25);
     image = lerp(image, image_blur, circleTex.xyz); // add our blurred area to the main texture
-    return float4(image, 1.0);
+
+    return image;
 }

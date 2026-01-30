@@ -35,7 +35,7 @@ float3 bokeh_pass_3(float image, float2 tc)
     return image;
 }
 
-float4 main(p_screen I) : SV_Target
+float3 main(p_screen I) : SV_Target
 {
     ///////////////////////////////////////////////////////
     // STEP 0 - LOCAL DEFINITIONS
@@ -129,7 +129,7 @@ float4 main(p_screen I) : SV_Target
         image *= vignette;
 
         // RETURN THE RESULTING IMAGE
-        return float4(image, 1.0);
+        return image;
     }
 
     ///////////////////////////////////////////////////////
@@ -155,6 +155,6 @@ float4 main(p_screen I) : SV_Target
             image = float3(0.0, 0.0, 0.0);
 
         // RETURN THE RESULTING IMAGE
-        return float4(image, 1.0);
+        return image;
     }
 }

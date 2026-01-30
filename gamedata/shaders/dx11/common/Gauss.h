@@ -1,4 +1,4 @@
-float4 Gauss_Horizontal(Texture2D t2d, float2 texCoord, float blur_factor)
+float3 Gauss_Horizontal(Texture2D t2d, float2 texCoord, float blur_factor)
 {
     static const float weights[3] = {0.441, 0.279, 0.08};
     static const float offsets[3] = {0.0, 1.384, 3.230};
@@ -16,7 +16,7 @@ float4 Gauss_Horizontal(Texture2D t2d, float2 texCoord, float blur_factor)
     return color;
 }
 
-float4 Gauss_Vertical(Texture2D t2d, float2 texCoord, float blur_factor)
+float3 Gauss_Vertical(Texture2D t2d, float2 texCoord, float blur_factor)
 {
     static const float weights[3] = {0.441, 0.279, 0.08};
     static const float offsets[3] = {0.0, 1.384, 3.230};

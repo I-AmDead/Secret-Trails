@@ -12,7 +12,7 @@ uniform float4 ssr_setup; // x: SSR Resolution | y: Blur Intensity | z: Temporal
 
 Texture2D ssr_image;
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Sample SSR
     float4 ssr = ssr_image.SampleLevel(smp_linear, Tex0 * (1.0 / ssr_setup.x), 0).rgba;
@@ -21,5 +21,5 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     float3 color = SSFX_get_image(Tex0);
 
     // Mix
-    return float4(lerp(color, ssr.rgb, ssr.a), 1.0f);
+    return lerp(color, ssr.rgb, ssr.a);
 }

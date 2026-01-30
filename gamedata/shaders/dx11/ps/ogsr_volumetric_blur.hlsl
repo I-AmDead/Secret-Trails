@@ -11,11 +11,10 @@
 Texture2D s_vollight;
 
 uniform float4 blur_setup; // Buffer Res [ x:width | y:height | z:scale | w:offset size ]
-// uniform float4 shader_param_6;
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float4 Blur = 0;
+    float3 Blur = 0;
 
     // Scale sample to use the linear filtering
     float2 uv = Tex0.xy * blur_setup.ww;

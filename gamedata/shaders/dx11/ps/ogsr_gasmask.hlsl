@@ -9,7 +9,7 @@
 #include "common\ogsr_gasmask_common.h"
 #include "common\visor.h"
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Sample gasmask texture
     float4 gasmask_tex;
@@ -58,5 +58,5 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     image += gasmask_tex_alpha * image;
 
     // Output
-    return float4(image, 1.0);
+    return image;
 }

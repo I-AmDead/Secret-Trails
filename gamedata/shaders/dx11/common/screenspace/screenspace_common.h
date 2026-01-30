@@ -247,7 +247,7 @@ float SSFX_calc_fresnel(float3 V, float3 N, float ior)
 
 static const float2x2 pp_rotation_matrix = {-0.666276f, 0.745705f, -0.745705f, -0.666276f};
 
-float4 SSFX_Blur(float2 uv, float radius)
+float3 SSFX_Blur(float2 uv, float radius)
 {
     float3 blur = 0;
     radius *= SSFX_gradient_noise_IGN(uv / 2.0 * screen_res.xy) * 6.28f;
@@ -261,7 +261,6 @@ float4 SSFX_Blur(float2 uv, float radius)
         offset = mul(offset, pp_rotation_matrix);
         blur += s_image.SampleLevel(smp_rtlinear, uv + (offset * (r - 1.0f) * ssfx_pixel_size), 0).rgb;
     }
-    float3 image = blur / 16;
 
-    return float4(image, 1.0f);
+    return blur / 16;
 }

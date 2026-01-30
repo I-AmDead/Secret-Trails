@@ -15,7 +15,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target { return SSFX_Blur(Tex0, 0.25f)
 
 #else
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     // Defines
     float3 image;
@@ -26,7 +26,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     float lua_param_nvg_washout_thresh = pnv_param_4.y;
     float lua_param_vignette_current = pnv_param_2.z;
 
-    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(Tex0), lua_param_nvg_num_tubes) == 1.0f) // if NVGs are enabled ...
+    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(Tex0), lua_param_nvg_num_tubes) == 1.0f) // if NVGs are enabled 
     {
         // HALF RES BLUR - PASS 1 - R = LUMA, G = LIGHTMAP, B = NORMALIZED DEPTH OUT TO FARTHEST_DEPTH (defined in night_vision.h)
         if (blur_params.x == 1 && blur_params.z == (screen_res.x / 2.0f))
@@ -68,7 +68,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             float vignette = calc_vignette(lua_param_nvg_num_tubes, Tex0, lua_param_vignette_current);
             image = clamp(image, 0.0, 1.0);
             image *= vignette;
-            return float4(image, 1.0f);
+            return image;
         }
 
         // HALF RES BLUR - PASS 2 - R = LUMA, G = LIGHTMAP, B = BLURRED DEPTH
@@ -97,7 +97,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             float vignette = calc_vignette(lua_param_nvg_num_tubes, Tex0, lua_param_vignette_current);
             image = clamp(image, 0.0, 1.0);
             image *= vignette;
-            return float4(image, 1.0f);
+            return image;
         }
 
         // QUARTER RES BLUR - PASS 1 - R = LUMA, G = LIGHTMAP, B = ALBEDO
@@ -136,7 +136,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             }
             image.rb = color_average.rb / (blur_directions * blur_quality);
             image.g = color_average.g / light_avgs;
-            return float4(image, 1.0f);
+            return image;
         }
 
         // QUARTER RES BLUR - PASS 2 - R = LUMA, G = LIGHTMAP, B = ALBEDO
@@ -170,7 +170,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             }
             image.rb = color_average.rb / (blur_directions * blur_quality);
             image.g = color_average.g / light_avgs;
-            return float4(image, 1.0f);
+            return image;
         }
 
         // EIGHTH RES BLUR - PASS 1 - R = LUMA, G = LIGHTMAP, B = ALBEDO
@@ -210,7 +210,8 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             }
             image.rb = color_average.rb / (blur_directions * blur_quality);
             image.g = color_average.g / light_avgs;
-            return float4(image, 1.0f);
+
+            return image;
         }
 
         // EIGHTH RES BLUR - PASS 2 - R = LUMA, G = LIGHTMAP, B = ALBEDO
@@ -244,7 +245,8 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
             }
             image.rb = color_average.rb / (blur_directions * blur_quality);
             image.g = color_average.g / light_avgs;
-            return float4(image, 1.0f);
+
+            return image;
         }
     }
 

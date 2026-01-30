@@ -14,7 +14,7 @@
     /////////////////
 */
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
     float4 circle_tc_pos;
     circle_tc_pos.xy = Tex0; // texcoord
@@ -24,6 +24,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     circle_tc_pos.zw = float2(0.5, 0.5); // position (center of the screen)
     circle_tc_pos.y -= 0.6; // push it down to bottom 1/3 of screen
 
-    float distFromCenter = distance(circle_tc_pos.xy, float2(0.5, -0.1)); // get distance between cur pos and approx center of circle
-    return float4(SSFX_Blur(Tex0, distFromCenter).xyz, 1.0); // todo use/add better blurring effect
+    float distFromCenter = distance(circle_tc_pos.xy, float2(0.5, -0.1));
+
+    return SSFX_Blur(Tex0, distFromCenter);
 }

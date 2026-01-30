@@ -21,7 +21,7 @@ uniform float4 m_flare_params;
 Texture2D s_ssfx_bloom;
 Texture2D s_flares;
 
-float4 main(p_screen I) : SV_Target
+float3 main(p_screen I) : SV_Target
 {
     float2 center = I.Tex0;
     
@@ -54,16 +54,16 @@ float4 main(p_screen I) : SV_Target
 
     if (pnv_param_1.z < 1.f)
     {
+        float3 flares = s_flares.Sample(smp_rtlinear, center);
         img = blend_soft(img, bloom.xyz * bloom.w);
         img += generate_flare(center, m_flare_params.y);
-        float4 flares = s_flares.Sample(smp_rtlinear, center);
-        img += flares.xyz;
+        img += flares;
     }
 
     // Vanilla color grading ( Exposure, saturation and gamma )
     img = img_corrections(img);
 
-    img.rgb += rad_effect(img.rgb, center);
+    img += rad_effect(img.rgb, center);
 
-    return float4(img, 1.0);
+    return img;
 }

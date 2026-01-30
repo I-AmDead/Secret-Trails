@@ -607,12 +607,13 @@ float4 main(PSInput I) : SV_Target
     final_scope_3.rgb = tonemap(final_scope_3.rgb, I.P1);
 
     // Result
-
     float3 final_scope = lerp(back, final_scope_1.rgb, final_scope_1.a);
+
     if (RETICLE_TYPE == RT_ADDITIVE)
     {
         final_scope = saturate(final_scope + mark_texture.rgb * mark_texture.a);
     }
+
     final_scope = lerp(final_scope, final_scope_2.rgb, final_scope_2.a);
     final_scope += specular;
     final_scope = lerp(final_scope, final_scope_3.rgb, final_scope_3.a);
