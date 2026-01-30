@@ -4,14 +4,14 @@
 // Check Screen Space Shaders modules & addons
 #include "common\screenspace\check_screenspace.h"
 
-float4 main(float4 tc : TEXCOORD0, float4 pos2d : SV_Position) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
     const float bias_mul = 0.999f;
 
     // Sample the fat framebuffer:
-    float2 tcProj = tc.xy / tc.w;
+    float2 tcProj = I.Tex0.xy / I.Tex0.w;
 
-    gbuffer_data gbd = gbuffer_load_data(tcProj, pos2d);
+    gbuffer_data gbd = gbuffer_load_data(tcProj, I.HPos);
 
     float4 _P = float4(gbd.P, gbd.mtl);
     float4 _N = float4(gbd.N, gbd.hemi);

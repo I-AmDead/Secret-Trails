@@ -21,7 +21,7 @@ v2p_TL _main(v_model I)
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef SKIN_NONE
-v2p_TL main(v_model I) { return _main(i); }
+v2p_TL main(v_model I) { return _main(I); }
 #endif
 
 #ifdef SKIN_0

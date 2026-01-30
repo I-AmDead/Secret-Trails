@@ -1,5 +1,5 @@
 ﻿function normal(shader, t_base, t_second, t_detail)
-	shader:begin("model_distort_inv", "particle_alphaonly")
+	shader:begin("models_distort_inv", "particle_alphaonly")
 		:sorting(3, false)
 		:blend(true,blend.srcalpha,blend.invsrcalpha)
 		:aref(true,0)
@@ -11,7 +11,7 @@
 end
 
 function l_special(shader, t_base, t_second, t_detail)
-	shader:begin("model_distort_inv", "models_distort")
+	shader:begin("models_distort_inv", "models_distort")
 		:sorting(3, false)
 		:blend(true,blend.srccolor,blend.invsrcalpha)
 		:zb(true,false)

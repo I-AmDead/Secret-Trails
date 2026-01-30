@@ -427,6 +427,10 @@ local function on_update()
 end
 
 local function on_motion_mark(state, mark, obj)
+    local act_it = db.actor:active_item()
+    local is_active_item = act_it and act_it:id() == obj:id()
+    if act_it and not is_active_item then return end
+
     if mark == "device_switch" then
         if nvg_switch then
             ogsr_night_vision.call_pnv()

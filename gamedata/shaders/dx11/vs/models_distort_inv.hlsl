@@ -13,10 +13,10 @@ v2p_TL_FOG _main(v_model I)
     // calculate fade
     float3 dir_v = normalize(mul(m_WV, I.P));
     float3 norm_v = normalize(mul(m_WV, I.N));
-    float fade = 1 - abs(dot(dir_v, norm_v));
+    float fade = abs(dot(dir_v, norm_v));
 
     O.Color = fade;
-    O.fog = saturate(calc_fogging(I.P));
+    O.Fog = saturate(calc_fogging(I.P));
 
     return O;
 }
