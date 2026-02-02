@@ -40,11 +40,8 @@ function element_2(shader, t_base, t_second, t_detail)
 		:zb(false, false)
 	shader:dx10texture("s_image", "$user$generic0")
 	shader:dx10texture("s_image_blurred", "$user$mask_drops_blur")
-	shader:dx10texture("s_breath_noise", "shaders\\gasmasks\\mask_breath_noise")
-	shader:dx10texture("s_blur_2", "$user$blur_2")
+	shader:dx10texture("s_breath", "shaders\\gasmasks\\mask_breath")
 
 	shader:dx10sampler("smp_base")
-	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
-	shader:dx10sampler("smp_linear")
 end
