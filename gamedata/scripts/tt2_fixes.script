@@ -245,38 +245,17 @@ local function death_npc_item(npc)
 end
 
 local function first_patch()
-    if not ogse.var_exists("PATCH_HEMI") then
-        cmd("r2_sun_lumscale_amb 2.5")
-        cmd("r2_sun_lumscale_hemi 0.5")
-        ogse.save_var("PATCH_HEMI", true)
-    end
-
-    if not ogse.var_exists("PATCH_1") then
+    local patch_number = 1
+    local patch_load = ogse.load_var("PATCH", 0)
+    if patch_load ~= patch_number then
         cmd("lua_gc_method gc_step")
         cmd("g_camera_collision_cop_mode on")
-        ogse.save_var("PATCH_1", true)
-    end
-
-    if not ogse.var_exists("PATCH_4") then
-        cmd("r2_sun_lumscale 1.7")
-        cmd("r2_sun_lumscale_hemi 1.2")
-        cmd("ssfx_gloss_minmax 0.4, 0.8, 0.0, 0.05")
-        ogse.save_var("PATCH_4", true)
-    end
-
-    if not ogse.var_exists("PATCH_5") then
-        db.actor:disable_info_portion("doctor_enemy")
-        ogse.save_var("PATCH_5", true)
-    end
-
-    if not ogse.var_exists("PATCH_6") then
-        cmd("ssfx_bloom_1 4, 2, 0, 0.5")
-        cmd("ssfx_bloom_2 1.7, 0.9, 0.5, 0.5")
-        cmd("ssfx_gloss_minmax 0.4, 0.8, 0.0, 0.05")
-        cmd("ssfx_rain_1 10, 0.015, 5, 2")
-        cmd("ssfx_shadow_cascades 40, 80, 300")
-        cmd("ssfx_volumetric 1, 0.9, 1")
-        ogse.save_var("PATCH_6", true)
+        cmd("r2_sun_lumscale 1.2")
+        cmd("r2_sun_lumscale_hemi 0.5")
+        cmd("r2_tonemap_middlegray 2.0")
+        cmd("ssfx_bloom_1 3.5, 3, 0, 0.6")
+        cmd("ssfx_gloss_minmax 0.7, 0.8, 0.1, 0.05")
+        ogse.save_var("PATCH", patch_number)
     end
 end
 
