@@ -1,4 +1,4 @@
-﻿local tex_base = "water\\water_studen"
+local tex_base = "water\\water_studen"
 local tex_nmap = "fx\\water_normal"
 local tex_dist = "water\\water_dudv"
 local tex_sky0 = "$user$sky0"

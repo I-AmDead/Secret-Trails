@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("models_reflex_lens", "models_reflex_lens")
 		:fog(true)
 		:zb(true,false)

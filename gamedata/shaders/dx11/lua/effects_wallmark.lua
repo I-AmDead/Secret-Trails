@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("effects_wallmark", "stub_default_ma")
 		:blend(true,blend.destcolor,blend.srccolor)
 		:zb(true,false)

@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("models_distort_inv", "particle_hard")
 		:sorting(2,true)
 		:blend(true,blend.srcalpha,blend.invsrcalpha)

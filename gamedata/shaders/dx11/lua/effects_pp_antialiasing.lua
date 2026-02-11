@@ -1,4 +1,4 @@
-﻿--// SMAA -------------------------------------------------------------------------------------------
+--// SMAA -------------------------------------------------------------------------------------------
 function element_0(shader, t_base, t_second, t_detail)		-- [0] SMAA: pass 0 - edge detection
 	shader:begin("stub_screen_space", "smaa_edge_detect")
 		:fog(false)

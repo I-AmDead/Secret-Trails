@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("effects_sun", "effects_sun")
 		:blend(true, blend.srcalpha, blend.one)
 		:zb(false, false)

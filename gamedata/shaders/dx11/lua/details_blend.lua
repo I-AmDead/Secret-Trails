@@ -1,4 +1,4 @@
-﻿--Normal pass, with bumpmapping
+--Normal pass, with bumpmapping
 function normal(shader, t_base, t_second, t_detail)
 	shader:begin("deffer_grass", "deffer_grass")
 		:fog(false)

@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("ogsr_glass", "ogsr_glass")
 		:fog(true)
 		:zb(true,false)

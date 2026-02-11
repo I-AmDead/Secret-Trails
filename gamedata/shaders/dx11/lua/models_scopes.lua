@@ -1,4 +1,4 @@
-﻿function element_0(shader, t_base, t_second, t_detail)
+function element_0(shader, t_base, t_second, t_detail)
 	shader:begin("deffer_model_flat", "deffer_base_flat")
 		:fog(false)
 		:blend(true, blend.zero, blend.one)

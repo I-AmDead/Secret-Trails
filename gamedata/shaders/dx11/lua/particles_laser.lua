@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("particle", "particle_laser")
 		:sorting(3, false)
 		:blend(true,blend.one,blend.one)

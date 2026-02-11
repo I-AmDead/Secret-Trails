@@ -1,4 +1,4 @@
-﻿function element_0(shader, t_base, t_second, t_detail)
+function element_0(shader, t_base, t_second, t_detail)
 	shader:begin("stub_screen_space", "ogsr_gasmask")
 		:fog(false)
 		:zb(false, false)

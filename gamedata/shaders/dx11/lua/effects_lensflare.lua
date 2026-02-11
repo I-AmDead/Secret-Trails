@@ -1,4 +1,4 @@
-﻿local t_glow = "shaders\\glow_white"
+local t_glow = "shaders\\glow_white"
 local t_flare = "shaders\\lensflare"
 local t_dirt = "shaders\\lensdirt"
 

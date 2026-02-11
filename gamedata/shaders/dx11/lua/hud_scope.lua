@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("hud_scope", "hud_scope")
 		:sorting(1, false)
 		:blend(true, blend.srcalpha, blend.invsrcalpha)

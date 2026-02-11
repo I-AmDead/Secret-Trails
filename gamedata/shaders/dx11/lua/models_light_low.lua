@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("deffer_model_flat", "deffer_base_flat")
 		:fog(false)
 		:emissive(true)

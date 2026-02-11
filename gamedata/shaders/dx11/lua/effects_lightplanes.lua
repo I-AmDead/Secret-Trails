@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("base_lplanes", "base_lplanes")
 		:fog(false)
 		:zb(true,false)

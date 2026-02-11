@@ -1,4 +1,4 @@
-﻿function l_special(shader, t_base, t_second, t_detail)
+function l_special(shader, t_base, t_second, t_detail)
 	shader:begin("lod", "lod")
 	shader:blend(false, blend.one, blend.zero)
 		:zb(true,  true)

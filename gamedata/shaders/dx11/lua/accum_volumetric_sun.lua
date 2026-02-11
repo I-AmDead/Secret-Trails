@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("accum_volume", "accum_volumetric_sun")
 		:fog(false)
 		:zb(false,false)

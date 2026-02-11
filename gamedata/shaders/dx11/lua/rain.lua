@@ -1,4 +1,4 @@
-﻿function element_0(shader, t_base, t_second, t_detail)
+function element_0(shader, t_base, t_second, t_detail)
 	shader:begin("rain", "rain_layer")
 		:fog(false)
 		:zb(true, false, true)

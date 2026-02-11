@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("stub_screen_space", "combine_volumetric")
 		:fog(false)
 		:zb(false,false)

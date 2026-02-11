@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("deffer_model_flat", "models_anomaly_weapons_1")
 		:fog(false)
 	shader:dx10texture("s_base", t_base)

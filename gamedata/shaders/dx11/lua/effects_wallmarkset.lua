@@ -1,4 +1,4 @@
-﻿function normal(shader, t_base, t_second, t_detail)
+function normal(shader, t_base, t_second, t_detail)
 	shader:begin("wmark", "simple")
 		:sorting(1, false)
 		:aref(false,0)

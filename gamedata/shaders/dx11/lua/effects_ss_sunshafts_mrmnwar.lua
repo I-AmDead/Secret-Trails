@@ -1,4 +1,4 @@
-﻿function element_0(shader, t_base, t_second, t_detail)		-- [0]
+function element_0(shader, t_base, t_second, t_detail)		-- [0]
 	shader:begin("stub_screen_space", "ssss_mrmnwar_mask")
 		:fog(false)
 		:zb(false, false)

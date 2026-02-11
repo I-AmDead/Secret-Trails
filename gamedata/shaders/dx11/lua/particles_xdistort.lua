@@ -1,4 +1,4 @@
-﻿function l_special(shader, t_base, t_second, t_detail)
+function l_special(shader, t_base, t_second, t_detail)
 	shader:begin("particle", "particle_distort")
 		:sorting(3, false)
 		:blend(true,blend.srcalpha,blend.invsrcalpha)
