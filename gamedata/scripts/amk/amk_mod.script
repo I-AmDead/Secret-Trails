@@ -113,12 +113,15 @@ end
 -- проверяет рецептv и компонетv
 -- если всї в порядке - запускает варку/мутациі
 function check_af_transform(obj, anom, lv, gv)
-    -- поиск по аномалиям
     local is_anomaly = get_bool(anom:section(), "is_anomaly", false)
-    --log3("anom:section() %s is_anomaly %s", anom:section(), is_anomaly)
     if not is_anomaly then
         return
     end
+
+    if not get_line_exist(anom:section(), "anomaly_recipes") then
+        return
+    end
+
     local recipe_fits = false
     -- собираем рецептv, в которvх участвует даннvй компонент
     local component_sect_string, lucky_sect_string, bad_sect_string
