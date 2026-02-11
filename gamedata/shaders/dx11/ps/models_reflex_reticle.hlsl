@@ -12,7 +12,7 @@
 
 #define OFFSET -0.003
 #define PARALLAX 100.0
-#define SCALE 9.0
+#define SCALE 8.0
 
 uniform float4 m_affects;
 uniform float4 mark_number;
