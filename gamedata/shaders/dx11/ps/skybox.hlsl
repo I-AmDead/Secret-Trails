@@ -34,16 +34,12 @@ PSOutput main(PSInput I)
 
     float3 sky = lerp(s0, s1, I.Color.w);
 
-    // srgb tint (matches hmodel)
-    float3 SkyTint = I.Color.rgb;
-    float TintPow = 1.0;
-
-    sky = pow(sky, TintPow);
-    sky *= SkyTint;
-    sky = pow(sky, 1 / TintPow);
+    sky *= I.Color.rgb;
 
     // final tone-mapping
     PSOutput O;
+
+    tonemap(sky, 1);
 
     O.Color = float4(sky, 0.0);
 
