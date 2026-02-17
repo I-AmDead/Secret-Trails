@@ -31,7 +31,7 @@ float4 problems_main(v2p_TLD2 I)
     if (m_affects.a > 0 && m_affects.x >= 0.08)
         t_vp2.rgb += pda_loading(I.Tex0);
 
-    float brightness_factor = 0.7;
+    float brightness_factor = 0.5;
     t_vp2.rgb *= brightness_factor;
 
     return float4(t_vp2.r, t_vp2.g, t_vp2.b, m_affects.z);
