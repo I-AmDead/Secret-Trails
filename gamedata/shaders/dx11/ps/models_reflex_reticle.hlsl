@@ -10,9 +10,9 @@
 
 #include "common\common.h"
 
-#define OFFSET -0.003
+#define OFFSET 0.0
 #define PARALLAX 100.0
-#define SCALE 8.0
+#define SCALE 7.0
 
 uniform float4 m_affects;
 uniform float4 mark_number;
@@ -52,13 +52,17 @@ float2 mark_adjust(float2 pos)
     return float2(p_x, p_y);
 }
 
+float resize(float input, float factor, float offset) { return (input - 0.5f + offset) / factor + 0.5f - offset; }
+
 float4 main(PSInput I) : SV_Target
 {
-    float3x3 TBN = float3x3(I.T + OFFSET, I.B + OFFSET, I.N);
+    float3x3 TBN = float3x3(normalize(I.T), normalize(I.B), normalize(I.N));
     float3 V_tangent = normalize(float3(dot(-I.P, TBN[0]), dot(-I.P, TBN[1]), dot(-I.P, TBN[2])));
-    float2 parallax_tc = I.Tex0 - V_tangent.xy * PARALLAX;
+    V_tangent *= PARALLAX;
 
-    parallax_tc = (parallax_tc + (SCALE - 1) / 2) / SCALE;
+    float2 parallax_tc = I.Tex0 - V_tangent.xy;
+    parallax_tc.x = resize(parallax_tc.x, SCALE, OFFSET);
+    parallax_tc.y = resize(parallax_tc.y, SCALE, OFFSET);
 
     if (mark_number.y > 0)
     {
