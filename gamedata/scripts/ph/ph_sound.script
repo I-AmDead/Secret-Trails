@@ -84,7 +84,10 @@ function snd_source:update(delta)
             if self.st.looped and self.st.snd_object then -- Зациклить звук можно только если он один. А при `looped = true` в секции логики предполагается что xr_sound.get_sound_object должен выбирать звуки из таблицы последовательно (их может быть много)
                 flags = flags + sound_object.looped
             end
-            flags = flags + sound_object.music
+            if self.st.type == "music" then
+                flags = flags + sound_object.music
+log3("self.st.type == music")
+            end
             self.played_sound:play_at_pos(self.object, self.object:position(), 0, flags)
         else
             self.st.signals["theme_end"] = true
@@ -163,7 +166,7 @@ function set_scheme(npc, ini, scheme, section, gulag_name)
     st.nonscript_usable = get_bool(section, "nonscript_usable", false, ini)
     st.on_use = xr_logic.cfg_get_condlist(ini, section, "on_use", npc)
     st.tips = get_string(section, "tips", "", ini)
-    st.type = get_string(section, "snd_type", "music", ini)
+    st.type = get_string(section, "snd_type", "effect", ini)
     local fname = get_string(section, "volume_control", nil, ini)
 
     if type(xr_effects[fname]) == "function" then
