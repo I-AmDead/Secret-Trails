@@ -3,16 +3,25 @@
 Texture2D s_vollight1;
 Texture2D s_vollight2;
 
-float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
+float4 main(p_screen_volume I) : SV_Target
 {
-    float4 color = s_vollight1.SampleLevel(smp_linear, Tex0.xy, 0);
-    color += s_vollight2.SampleLevel(smp_linear, Tex0.xy, 0);
-
-    // Read Depth
-    float depth = gbuffer_depth(Tex0.xy);
-
-    // Discard Sky.
-    color *= depth < 0.001 ? 1.0f : saturate(depth * 1.5f);
+    // Initialize accumulator
+    float4 color = 0.0f;
+    
+    // 4x4 box filter (16 taps)
+    for (int j = -2; j < 2; j++)
+    {
+        for (int i = -2; i < 2; i++)
+        {
+            // Sample using texture coordinates with offset
+            float2 offset = I.HPos.xy + int2(i, j);
+            color += s_vollight1[offset];
+            color += s_vollight2[offset];
+        }
+    }
+    
+    // Normalize by number of samples (16 taps)
+    color *= 0.0625;
 
     return color;
 }
