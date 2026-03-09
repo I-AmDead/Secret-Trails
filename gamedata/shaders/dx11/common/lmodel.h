@@ -71,7 +71,6 @@ float3 specular_phong(float3 pnt, float3 normal, float3 light_direction)
     return L_sun_color.rgb * Lit_Specular(nDotL, nDotH, nDotV, lDotH, 0.02, 0.1);
 }
 
-
 half4 blendp(half4 value, float4 tcp) { return value; }
 
 half4 blend(half4 value, float2 tc) { return value; }

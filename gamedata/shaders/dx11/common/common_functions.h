@@ -238,11 +238,11 @@ float3 gbuffer_normal(float2 tc)
 
 float3 gbuffer_view_space(float2 tc, float2 pos2d)
 {
-    float4 pos = s_position.Sample(smp_nofilter, tc);
+    float pos = s_position.Sample(smp_nofilter, tc).z;
 
     // 3d view space pos reconstruction math
     pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
-    float3 view_space = float3(pos.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), pos.z);
+    float3 view_space = float3(pos * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), pos);
 
     return view_space;
 }

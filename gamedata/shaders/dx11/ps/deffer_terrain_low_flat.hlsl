@@ -14,13 +14,12 @@ f_deffer main(p_flat I)
 
     // diffuse
     float4 D = s_base.Sample(smp_base, I.tcdh);
-    float G = 0.001f;
     float3 N = I.N.xyz;
 
     // 2. Standart output
     float4 Ne = float4(normalize(N), D.w);
 
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, 0.95f), float4(D.rgb, G));
+    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, 0.95f), float4(D.rgb, 0.001f));
 
     O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
 

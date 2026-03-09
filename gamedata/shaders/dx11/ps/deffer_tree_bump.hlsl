@@ -17,24 +17,16 @@ f_deffer main(p_bumped I)
 #if USE_AREF && USE_BUMP
     S.normal.xy += float2(.02f, .02f);
     S.normal.xy *= max(5.0f * rain_params.y, 3.0f);
+    S.gloss = lerp(ssfx_florafixes_1.z, ssfx_florafixes_1.w, rain_params.y);
     float3 Ne = mul(m_WV, (float3(S.normal.x, 1.0f, S.normal.y)));
+    float ms = MAT_FLORA;
 #else
     // Sample normal, rotate it by matrix, encode position
     float3 Ne = mul(float3x3(I.M1, I.M2, I.M3), S.normal);
+    float ms = xmaterial;
 #endif
 
     Ne = normalize(Ne);
-
-#if USE_AREF && USE_BUMP
-    // Material value ( MAT_FLORA )
-    float ms = MAT_FLORA;
-
-    // Gloss
-    S.gloss = lerp(ssfx_florafixes_1.z, ssfx_florafixes_1.w, rain_params.y);
-#else
-    // hemi, sun, material
-    float ms = xmaterial;
-#endif
 
 #ifdef USE_LM_HEMI
     float h = s_hemi.Sample(smp_rtlinear, I.lmh).a;

@@ -109,9 +109,9 @@ float3 dosimeter(float2 uv)
     {
         float edgeFactor = 1.0 - abs((deg / 90.0) - 1.0);
         edgeFactor = smoothstep(0.0, 1.0, edgeFactor);
-        
+
         float dynamicThickness = 15.0 * (0.3 + 0.7 * edgeFactor);
-        
+
         if (length(uv) < 190.0 && length(uv) > 190.0 - dynamicThickness)
         {
             float4 red = float4(1.0, 0.0, 0.0, 1.0);
