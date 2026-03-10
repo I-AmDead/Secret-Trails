@@ -6,7 +6,7 @@ uniform float4 m_hud_params;
 f_deffer main(p_flat I)
 {
     float4 D = tbase(I.tcdh);
-    hashed_alpha_test(I.tcdh.xy, D.a - (m_hud_params.x > 0.9 ? 1.f : 0.f));
+    hashed_alpha_test(I.tcdh.xy, D.a - (m_hud_params.x > 0.9 ? 1.f : 1.f));
 
 #ifdef USE_TDETAIL
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;

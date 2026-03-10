@@ -12,8 +12,8 @@
 #include "common\nv_utils.h"
 #include "common\thermal_utils.h"
 
-#define REFLECTIONS_FACTOR 0.0
-#define SPECULAR_FACTOR 1.0
+#define REFLECTIONS_FACTOR 0.3
+#define SPECULAR_FACTOR 4.0
 
 #define PI 3.1415926
 
@@ -25,6 +25,7 @@
 #define RT_GIPERON 5
 #define RT_SCREEN 6
 #define RT_ADDITIVE 7
+#define RT_FLAT_SCREEN 8
 
 #define IT_NONE 0
 #define IT_NV 1
@@ -259,25 +260,17 @@ float3 sample_lens_normalmap(float2 tc, float radius)
     return float3(xy, sign(radius) * sqrt(pow(radius, 2) - dot(xy, xy)));
 }
 
-float3 sample_reflections(float2 tc, float parallax_factor, float radius, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, float lum)
+float3 sample_reflections(float2 tc, float parallax_factor, float radius, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, float lum, bool is_flat)
 {
-    float3 normalmap = sample_lens_normalmap(tc, radius);
+    float3 normalmap = !is_flat ? sample_lens_normalmap(tc, radius) : float3(0.0, 0.0, 1.0);
     float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
 
     float3 reflections = s_reflection.SampleLevel(smp_base, reflect(normalize(normalize(w_pos - eye_position) - normalize(w_nrm) * parallax_factor), lensnormal), 0).rgb;
-    reflections *= sample_vignette(tc);
+
+    if (!is_flat)
+        reflections *= sample_vignette(tc);
 
     return reflections * normalize(0.3 + L_ambient.rgb + L_hemi_color.rgb);
-}
-
-float sample_reflections_weight(float dirt_factor, float3 w_pos, float3 w_nrm, float lum, bool see_through)
-{
-    float angle_factor = smoothstep(0, 0.03, (dot(normalize(w_pos - eye_position), normalize(w_nrm)) + 1) / 2);
-    if (!see_through)
-    {
-        angle_factor = lerp(1, angle_factor, m_hud_params.x);
-    }
-    return angle_factor * smoothstep(0, 1, lum) * pow(1 - dirt_factor, 10) * REFLECTIONS_FACTOR;
 }
 
 float3 sample_specular(float2 tc, float parallax_factor, float radius, float specular_factor, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, bool see_through)
@@ -327,18 +320,6 @@ float3 HSVtoRGB(float3 hsv)
     return float3(hsv.z, p, q);
 }
 
-float3 tonemap(float3 color, float3 v_pos)
-{
-    float fog = saturate(length(v_pos) * fog_params.w + fog_params.x);
-    color = lerp(color, fog_color, fog);
-    color = lerp(color, fog_color, saturate(fog * fog));
-
-    color *= s_tonemap.Load(int3(0, 0, 0)).x;
-    const float fWhiteIntensity = 1.7;
-    const float fWhiteIntensitySQR = fWhiteIntensity * fWhiteIntensity;
-    return (color * (1 + color / fWhiteIntensitySQR)) / (color + 1);
-}
-
 float4 main(PSInput I) : SV_Target
 {
     float RETICLE_SIZE = s3ds_param_1.x;
@@ -358,7 +339,7 @@ float4 main(PSInput I) : SV_Target
     float CHROMA_POWER = s3ds_param_3.w;
 
     float3 LENS_COLOR = s3ds_param_4.xyz;
-    int SETTINGS = s3ds_param_4.w;
+    int FILTER_MODE = s3ds_param_4.w;
 
     // ZOOM_FACTOR = 1 => (0, 1); ZOOM_FACTOR = 1.5 => (0.4, 1.1)
     float IMAGE_PROJECT = 0.8 * ZOOM_FACTOR - 0.8;
@@ -366,6 +347,9 @@ float4 main(PSInput I) : SV_Target
 
     float RETICLE_PROJECT = 10;
     float SHADOW_WIDTH = 0.15;
+
+    if (RETICLE_TYPE == RT_FLAT_SCREEN)
+        RETICLE_PROJECT = 0;
 
     float3x3 TBN = cotangent_frame(I.N1, I.P1, I.Tex0.xy);
     float3 V_tangent = normalize(float3(dot(-I.P1, TBN[0]), dot(-I.P1, TBN[1]), dot(-I.P1, TBN[2])));
@@ -383,7 +367,7 @@ float4 main(PSInput I) : SV_Target
         IMAGE_SIZE = 1 + (IMAGE_SIZE - 1) * zoom_part;
     }
 
-    if (!SETTING(SETTINGS, ST_CHROMATISM))
+    if (!SETTING(FILTER_MODE, ST_CHROMATISM))
     {
         CHROMA_POWER = 0;
     }
@@ -391,9 +375,16 @@ float4 main(PSInput I) : SV_Target
     float lum = current_lum();
 
     // Sight reticle
-    float2 reticle_lens_tc = project(I.Tex0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE) + fisheye(I.Tex0, V_tangent.xy) / current_zoom;
-    float2 reticle_tc =
-        project(I.Tex0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE * (FFP || RETICLE_TYPE == RT_GIPERON ? current_zoom : 1)) + fisheye(I.Tex0, V_tangent.xy) / current_zoom;
+    float2 reticle_lens_tc = project(I.Tex0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE);
+    float2 reticle_tc = project(I.Tex0, V_tangent.xy, RETICLE_PROJECT, RETICLE_SIZE * (FFP || RETICLE_TYPE == RT_GIPERON ? current_zoom : 1));
+
+    if (RETICLE_TYPE != RT_FLAT_SCREEN)
+    {
+        float2 fish = fisheye(I.Tex0, V_tangent.xy) / current_zoom;
+        reticle_lens_tc += fish;
+        reticle_tc += fish;
+    }
+
     float4 mark_texture = float4(0, 0, 0, 0);
     if (reticle_tc.x >= 0 && reticle_tc.x <= 1 && reticle_tc.y >= 0 && reticle_tc.y <= 1)
     {
@@ -419,8 +410,7 @@ float4 main(PSInput I) : SV_Target
         float3 black = float3(0, 0, 0);
         float3 text = float3(0.3, 0.3, 0.3);
         float tritium_lum = 0.2;
-        mark_texture =
-            rgba_blend(rgba_blend(float4(black, mark_texture.r), float4(mark_color.rgb * max(tritium_lum, lum * 2), mark_texture.g)), float4(text, mark_texture.b * lum));
+        mark_texture = rgba_blend(rgba_blend(float4(black, mark_texture.r), float4(mark_color.rgb * max(tritium_lum, lum * 2), mark_texture.g)), float4(text, mark_texture.b * lum));
     }
 
     if (RETICLE_TYPE == RT_LED || RETICLE_TYPE == RT_GIPERON)
@@ -447,7 +437,7 @@ float4 main(PSInput I) : SV_Target
         mark_texture = rgba_blend(float4(black, mark_texture.r), float4(mark_color.rgb, mark_texture.g));
     }
 
-    if (!SETTING(SETTINGS, ST_SEE_THROUGH))
+    if (!SETTING(FILTER_MODE, ST_SEE_THROUGH))
     {
         mark_texture.rgb *= m_hud_params.x;
         giperon_sfp.rgb *= m_hud_params.x;
@@ -464,7 +454,7 @@ float4 main(PSInput I) : SV_Target
     float4 mark_shadow = sample_shadow(reticle_lens_tc, 0.01);
     float4 mark_shadow_blue = sample_shadow(reticle_lens_tc, CHROMA_POWER / 2);
     mark_shadow_blue.rgb = float3(0.1, 0.1, 0.65);
-    if (RETICLE_TYPE == RT_SCREEN)
+    if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_FLAT_SCREEN)
     {
         if (reticle_lens_tc.y < 0 || reticle_lens_tc.y > 1 || reticle_lens_tc.x < 0 || reticle_lens_tc.x > 1)
             mark_shadow = float4(0, 0, 0, 1);
@@ -473,14 +463,15 @@ float4 main(PSInput I) : SV_Target
     }
 
     // Parallax shadow
-    float2 exit_pupil_tc = project(I.Tex0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL * (SETTING(SETTINGS, ST_SEE_THROUGH) ? 1 : m_hud_params.x));
+    float2 exit_pupil_tc = project(I.Tex0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL * (SETTING(FILTER_MODE, ST_SEE_THROUGH) ? 1 : m_hud_params.x));
     float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH + 0.02 * (current_zoom - 1));
 
 
     // LED-illuminated inside walls
     float4 inside = s_inside.Sample(smp_base, clamp((reticle_lens_tc - 0.5) * 0.62 + 0.5, 0, 1));
     inside = float4(mark_color.rgb * inside.r, inside.a);
-    if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_SPECTER || RETICLE_TYPE == RT_ACOG || FFP)
+
+    if (RETICLE_TYPE == RT_SCREEN || RETICLE_TYPE == RT_FLAT_SCREEN || RETICLE_TYPE == RT_SPECTER || RETICLE_TYPE == RT_ACOG || FFP)
     {
         inside = float4(0, 0, 0, 0);
     }
@@ -512,7 +503,7 @@ float4 main(PSInput I) : SV_Target
     float3 back;
     if ((IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR) && mark_number.x < 2)
     {
-        float pixelate = SETTING(SETTINGS, ST_THERMAL_PIXELATION) ? int(current_zoom) : 1;
+        float pixelate = SETTING(FILTER_MODE, ST_THERMAL_PIXELATION) ? int(current_zoom) : 1;
         scope_tc = (floor(scope_tc * screen_res.xy / pixelate) * pixelate + 0.5) / screen_res.xy;
 
         back = infrared(gbuffer_depth(scope_tc), gbuffer_normal(scope_tc), scope_tc * screen_res.xy, scope_tc);
@@ -527,14 +518,13 @@ float4 main(PSInput I) : SV_Target
     }
     else
     {
-        back = back_image_sample(I.Tex0, scope_tc, ogse_c_screen.x, CHROMA_POWER, false, SETTING(SETTINGS, ST_CHROMATISM));
+        back = back_image_sample(I.Tex0, scope_tc, ogse_c_screen.x, CHROMA_POWER, false, SETTING(FILTER_MODE, ST_CHROMATISM));
         back *= LENS_COLOR;
     }
 
     if (IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR)
     {
-        float3 lcdColor = float3(0.4, 0.4, 0.4);
-        back *= lcdColor;
+        back *= lcd_effect(I.HPos);
     }
 
     if (IMAGE_TYPE == IT_NV && mark_number.x == 0)
@@ -548,15 +538,18 @@ float4 main(PSInput I) : SV_Target
     float3 layer3_color = HSVtoRGB(float3(REFLECTION_HUE + 0.1, 0.4, 1));
 
     float4 reflections;
-    reflections.a = sample_reflections_weight(dirt.a, I.P0, I.N0, lum, SETTING(SETTINGS, ST_SEE_THROUGH));
-    reflections.rgb = sample_reflections(I.Tex0.xy, 0, 3, dirt.a, TBNw_inv, I.P0, I.N0, lum) * layer1_color;
-    reflections.rgb += sample_reflections(I.Tex0.xy, 100, 2, dirt.a, TBNw_inv, I.P0, I.N0, lum) * layer2_color;
-    reflections.rgb += sample_reflections(I.Tex0.xy, 40, -1, dirt.a, TBNw_inv, I.P0, I.N0, lum) * layer3_color;
+    reflections.a = !SETTING(FILTER_MODE, ST_SEE_THROUGH) ? saturate(1.0 - m_hud_params.x) : 0.f;
+    reflections.rgb = sample_reflections(I.Tex0.xy, 0, 3, dirt.a, TBNw_inv, I.P0, I.N0, lum, RETICLE_TYPE == RT_FLAT_SCREEN);
+    reflections.rgb += sample_reflections(I.Tex0.xy, 100, 2, dirt.a, TBNw_inv, I.P0, I.N0, lum, RETICLE_TYPE == RT_FLAT_SCREEN);
+    reflections.rgb += sample_reflections(I.Tex0.xy, 40, -1, dirt.a, TBNw_inv, I.P0, I.N0, lum, RETICLE_TYPE == RT_FLAT_SCREEN);
+
+    reflections.rgb *= REFLECTIONS_FACTOR;
 
     // Specular
-    float3 specular = sample_specular(I.Tex0.xy, 0, 3, SPECULAR_FACTOR, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer1_color;
-    specular += sample_specular(I.Tex0.xy, 100, 2, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer2_color;
-    specular += sample_specular(I.Tex0.xy, 40, -1, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(SETTINGS, ST_SEE_THROUGH)) * layer3_color;
+    float3 specular = sample_specular(I.Tex0.xy, 0, 3, SPECULAR_FACTOR, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(FILTER_MODE, ST_SEE_THROUGH)) * layer1_color;
+    specular += sample_specular(I.Tex0.xy, 100, 2, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(FILTER_MODE, ST_SEE_THROUGH)) * layer2_color;
+    specular += sample_specular(I.Tex0.xy, 40, -1, SPECULAR_FACTOR * 0.1, dirt.a, TBNw_inv, I.P0, I.N0, SETTING(FILTER_MODE, ST_SEE_THROUGH)) * layer3_color;
+    specular *= RETICLE_TYPE == RT_FLAT_SCREEN ? 0.f : 1.f;
 
     // Vignette
     float4 vignette = float4(0, 0, 0, smoothstep(0.4, 2, 2 * length(I.Tex0.xy - float2(0.5, 0.5))));
@@ -564,7 +557,7 @@ float4 main(PSInput I) : SV_Target
     // Split result to apply additive layers later
 
     float4 final_scope_1 = float4(0, 0, 0, 0);
-    if (RETICLE_TYPE != RT_SCREEN)
+    if (RETICLE_TYPE != RT_SCREEN && RETICLE_TYPE != RT_FLAT_SCREEN)
     {
         mark_shadow_blue.w *= BlackandWhite(back);
         final_scope_1 = rgba_blend(final_scope_1, mark_shadow_blue);
@@ -578,7 +571,7 @@ float4 main(PSInput I) : SV_Target
     }
     final_scope_2 = rgba_blend(final_scope_2, mark_shadow);
     final_scope_2 = rgba_blend(final_scope_2, inside);
-    if (RETICLE_TYPE != RT_SCREEN)
+    if (RETICLE_TYPE != RT_SCREEN && RETICLE_TYPE != RT_FLAT_SCREEN)
     {
         final_scope_2 = rgba_blend(final_scope_2, shadow_texture);
     }
@@ -595,16 +588,6 @@ float4 main(PSInput I) : SV_Target
 
     float4 final_scope_3 = float4(0, 0, 0, 0);
     final_scope_3 = rgba_blend(final_scope_3, dirt);
-
-    // Tonemapping
-
-    if (IMAGE_TYPE == IT_THERMAL || IMAGE_TYPE == IT_THERMAL_COLOR)
-    {
-        back = tonemap(back, I.P1);
-    }
-    final_scope_1.rgb = tonemap(final_scope_1.rgb, I.P1);
-    final_scope_2.rgb = tonemap(final_scope_2.rgb, I.P1);
-    final_scope_3.rgb = tonemap(final_scope_3.rgb, I.P1);
 
     // Result
     float3 final_scope = lerp(back, final_scope_1.rgb, final_scope_1.a);
