@@ -8,7 +8,7 @@ function normal(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_base", t_base)
 	shader:dx10texture("s_env", "$user$env_s0")
 	shader:dx10texture("s_accumulator", "$user$accum")
-	shader:dx10texture("s_screen", "$user$generic_temp")
+	shader:dx10texture("s_screen", "$user$reflection")
 	shader:dx10texture("s_glass", "fx\\glass_normal")
 
 	shader:dx10sampler("smp_base")

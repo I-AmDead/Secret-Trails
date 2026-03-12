@@ -3,7 +3,7 @@ function element_0(shader, t_base, t_second, t_detail)		-- [0] SMAA: pass 0 - ed
 	shader:begin("stub_screen_space", "smaa_edge_detect")
 		:fog(false)
 		:zb(false, false)
-	shader:dx10texture("s_image", "$user$generic0")
+	shader:dx10texture("s_image", "$user$backbuffer")
 end
 
 function element_1(shader, t_base, t_second, t_detail)		-- [1] SMAA: pass 1 - blending weight calculation
@@ -19,6 +19,6 @@ function element_2(shader, t_base, t_second, t_detail)		-- [2] SMAA: pass 2 - ne
 	shader:begin("stub_screen_space", "smaa_neighbour_blend")
 		:fog(false)
 		:zb(false, false)
-	shader:dx10texture("s_image", "$user$generic0")
+	shader:dx10texture("s_image", "$user$backbuffer")
 	shader:dx10texture("s_blendtex", "$user$smaa_blendtex")
 end

@@ -5,8 +5,8 @@ function normal(shader, t_base, t_second, t_detail)
 		:blend(true,blend.one,blend.one)
 		:sorting(2, false)
 
-	shader:dx10texture("s_vollight1", "$user$generic2")
-	shader:dx10texture("s_vollight2", "$user$generic3")
+	shader:dx10texture("s_vollight1", "$user$volumetric1")
+	shader:dx10texture("s_vollight2", "$user$volumetric2")
 
 	shader:dx10sampler("smp_linear")
 	shader:dx10sampler("smp_nofilter")
