@@ -22,7 +22,7 @@ struct VSOutput
     float3 Tex5 : TEXCOORD5;
     float3 Tex6 : TEXCOORD6;
     float4 Tex7 : TEXCOORD7;
-    float4 Color : COLOR0;
+    float3 Color : COLOR0;
     float Fog : FOG;
     float4 HPos : SV_Position;
 };
@@ -68,7 +68,7 @@ VSOutput main(VSInput I)
     O.HPos.xy = get_taa_jitter(O.HPos);
     O.Fog = saturate(calc_fogging(I.P));
 
-    O.Color = float4(L_final, 1);
+    O.Color = L_final;
 
     // Igor: for additional depth dest
     O.Tex7 = mul(m_texgen, P);

@@ -11,6 +11,7 @@
 #include "common\shadow.h"
 
 #include "common\screenspace\screenspace_common_ripples.h"
+#include "common\screenspace\settings_screenspace_TERRAIN.h"
 
 #define INDOOR_LEAKS_FIX
 
@@ -95,7 +96,11 @@ float4 main(v2p_TLD2 I) : SV_Target
 
     // [ BUMP ] -------------------------------------------
     float3 waterSplash = 0;
-    waterSplash.xy = ssfx_rain_ripples(s_water, WorldP.xz * ssfx_wetsurfaces_1.x, float3(RainInt, ssfx_wetsurfaces_1.w, 6), view_space.z); // 0.9
+
+    if (p_len < TERRAIN_PUDDLES_RIPPLES_RANGE)
+    {
+        waterSplash.xy = ssfx_rain_ripples(s_water, WorldP.xz * ssfx_wetsurfaces_1.x, float3(RainInt, ssfx_wetsurfaces_1.w, 6), view_space.z); // 0.9
+    }
 
     // Blending weights ( We don't want splashes or fall water on FLORA )
     float3 weights = WorldN.xyz * !is_flora;
