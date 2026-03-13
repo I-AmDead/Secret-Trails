@@ -11,7 +11,6 @@ struct PSInput
     float Fog : FOG;
 };
 
-// uniform samplerCUBE 	s_env;
 TextureCube s_env; //	Environment for forward rendering
 
 //////////////////////////////////////////////////////////////////////////////////////////

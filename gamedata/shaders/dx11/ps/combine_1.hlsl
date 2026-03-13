@@ -27,16 +27,6 @@ float4 main(p_screen I) : SV_Target
     float4 D = float4(gbd.C, gbd.gloss); // rgb.gloss
     float4 L = s_accumulator.Sample(smp_nofilter, I.Tex0); // diffuse.specular
 
-#ifndef SSFX_NEWGLOSS
-    if (abs(P.w - MAT_FLORA) <= 0.05)
-    {
-        // Reapply distance factor to fix overtly glossy plants in distance
-        // Unfortunately some trees etc don't seem to use the same detail shader
-        float fAtten = 1 - smoothstep(0, 50, P.z);
-        D.a *= (fAtten * fAtten);
-    }
-#endif
-
     float3 occ = float3(1.0, 1.0, 1.0);
 
 #ifdef SSAO_QUALITY

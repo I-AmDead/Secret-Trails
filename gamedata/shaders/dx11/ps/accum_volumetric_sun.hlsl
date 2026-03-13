@@ -20,7 +20,6 @@
 
 float4 sun_shafts_intensity;
 
-uniform float4 any_test;
 float4 main(p_screen_volume I) : SV_Target
 {
 #ifndef SUN_SHAFTS_QUALITY

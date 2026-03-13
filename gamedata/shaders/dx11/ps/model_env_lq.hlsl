@@ -20,11 +20,9 @@ float4 main(PSInput I) : SV_Target
 
     float3 base = lerp(t_env, t_base, t_base.a);
     float3 light = I.Color0;
-    float3 final = light * base * 2;
 
-    // Fogging
+    float3 final = light * base * 2;
     final = lerp(fog_color, final, I.Fog);
 
-    // out
     return float4(final.r, final.g, final.b, t_base.a * I.Fog * I.Fog);
 }

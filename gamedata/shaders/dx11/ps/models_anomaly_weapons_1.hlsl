@@ -129,26 +129,24 @@ f_deffer main(p_flat I)
     f_deffer O;
 
     // diffuse
-    float3 D = tbase(I.tcdh); // IN:  rgb.a
+    float3 D = tbase(I.tcdh);
     D += electric_grid(I.tcdh);
     D += electric_glitch(I.tcdh);
 
 #ifdef USE_TDETAIL
-    //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
 #endif
 
-    // hemi,sun,material
     float ms = xmaterial;
+
 #ifdef USE_LM_HEMI
     float h = s_hemi.Sample(smp_rtlinear, I.lmh).a;
 #else
     float h = I.position.w;
 #endif
 
-    // 2. Standart output
     float4 Ne = float4(normalize((float3)I.N.xyz), h);
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, 1.0)); // OUT: rgb.gloss
+    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, 1.0));
 
     return O;
 }

@@ -13,7 +13,6 @@ f_deffer main(p_flat I)
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
 #endif
 
-    // hemi,sun,material
     float ms = xmaterial;
 
 #ifdef USE_LM_HEMI

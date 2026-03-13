@@ -24,7 +24,6 @@ f_deffer main(p_flat I)
     if (m_affects.x > 0.41)
     {
         D += glitch_cube(I.tcdh);
-        // D = 0.1f;
     }
     else
     {
@@ -37,17 +36,10 @@ f_deffer main(p_flat I)
     if (m_affects.a > 0 && m_affects.x >= 0.08)
         D += watch_loading(I.tcdh);
 
-    float noise = (m_affects.x < 0.41 && m_affects.x > 0.0) ? get_noise(I.tcdh * timers.z) * m_affects.x * m_affects.x * 20 : 0.0;
-
-    D.x += noise;
-    D.y += noise;
-    D.z += noise;
-
 #ifdef USE_TDETAIL
     D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
 #endif
 
-    // hemi,sun,material
     float ms = xmaterial;
 
 #ifdef USE_LM_HEMI

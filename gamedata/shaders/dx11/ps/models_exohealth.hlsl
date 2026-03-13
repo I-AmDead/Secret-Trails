@@ -20,10 +20,5 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     tmp = clamp(tmp, 0, 0.5);
     t_base.g += tmp * t_base.a;
 
-    float noise = get_noise(Tex0 * timers.z) * m_affects.x * 2;
-    t_base.r += noise;
-    t_base.g += noise;
-    t_base.b += noise;
-
-    return float4(t_base.r, t_base.g, t_base.b, 1);
+    return float4(t_base.rgb, 1);
 }

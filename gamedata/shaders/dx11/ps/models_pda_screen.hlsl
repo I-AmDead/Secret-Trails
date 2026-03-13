@@ -21,11 +21,6 @@ float4 problems_main(v2p_TLD2 I)
 
     float4 t_vp2 = (m_affects.x < 0.27) ? s_vp2.Sample(smp_base, I.Tex0) : s_base.Sample(smp_base, I.Tex0);
 
-    float noise = get_noise(I.Tex0 * timers.z) * m_affects.x * m_affects.x * 20;
-    t_vp2.r += noise;
-    t_vp2.g += noise;
-    t_vp2.b += noise;
-
     t_vp2.rgb = (m_affects.x > 0.41) ? 0 : t_vp2.rgb;
 
     if (m_affects.a > 0 && m_affects.x >= 0.08)
@@ -34,7 +29,7 @@ float4 problems_main(v2p_TLD2 I)
     float brightness_factor = 0.5;
     t_vp2.rgb *= brightness_factor;
 
-    return float4(t_vp2.r, t_vp2.g, t_vp2.b, m_affects.z);
+    return float4(t_vp2.rgb, m_affects.z);
 }
 
 float4 main(v2p_TLD2 I) : SV_Target

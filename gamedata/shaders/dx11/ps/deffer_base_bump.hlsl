@@ -2,9 +2,6 @@
 #include "common\sload.h"
 #include "common\common_brdf.h"
 
-// SSS Settings
-#include "common\screenspace\settings_screenspace_FLORA.h"
-
 f_deffer main(p_bumped I)
 {
     surface_bumped S = sload(I);

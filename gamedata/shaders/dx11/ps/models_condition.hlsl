@@ -10,12 +10,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
     t_base.r += (0.5 < m_actor_params.z) ? 0 : 0.5;
     t_base.g -= (0.25 < m_actor_params.z) ? 0 : 0.5;
 
-    float noise = get_noise(Tex0 * timers.z) * m_affects.x * m_affects.x * 30;
-    t_base.r += noise;
-    t_base.g += noise;
-    t_base.b += noise;
-
     t_base.rgb = (m_affects.x > 0.41) ? 0 : t_base.rgb;
 
-    return float4(t_base.r, t_base.g, t_base.b, t_base.a);
+    return float4(t_base.rgb, t_base.a);
 }

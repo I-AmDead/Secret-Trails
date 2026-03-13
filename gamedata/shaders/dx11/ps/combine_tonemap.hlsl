@@ -7,8 +7,7 @@
 
 float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    float2 center = Tex0;
-    float4 color = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);
+    float4 color = s_image.Load(int3(Tex0.xy * screen_res.xy, 0), 0);
     float3 img = color.rgb;
 
     if (pnv_param_1.z == 1.f)
@@ -19,8 +18,8 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
         img.r = dot(img.rgb, luma_conversion_coeff);
         img.r *= 4.0f;
 
-        float4 diffuse = gbuffer_color(center);
-        float4 L = s_accumulator.Sample(smp_nofilter, center); // diffuse.specular
+        float4 diffuse = gbuffer_color(Tex0);
+        float4 L = s_accumulator.Sample(smp_nofilter, Tex0); // diffuse.specular
         L.rgb += L.a * SRGBToLinear(diffuse.rgb); // illum in alpha
 
         // Turn s_accumulator data in to YUV and discard UV
@@ -32,7 +31,7 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
         img *= pnv_param_2.y;
 
         // APPLY VIGNETTE
-        float vignette = calc_vignette(pnv_param_4.x, center, pnv_param_2.z + 0.02);
+        float vignette = calc_vignette(pnv_param_4.x, Tex0, pnv_param_2.z + 0.02);
 
         img = clamp(img, 0.0, 1.0);
 

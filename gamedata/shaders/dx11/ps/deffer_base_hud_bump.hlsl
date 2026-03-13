@@ -40,7 +40,6 @@ f_deffer main(p_bumped I)
     float3 Ne = mul(float3x3(I.M1, I.M2, I.M3), S.normal + float3(drops.xy * drops.w, 1.0f));
     Ne = normalize(Ne);
 
-    // hemi,sun,material
     float ms = xmaterial;
 
     S.gloss += ssfx_gloss.w;
