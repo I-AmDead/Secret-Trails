@@ -2,9 +2,7 @@
 #include "common\common.h"
 #include "common\pbr_cubemap_check.h"
 
-#ifdef SSFX_BEEFS_NVG
 #include "common\night_vision.h"
-#endif
 
 struct PSInput
 {
@@ -18,7 +16,7 @@ struct PSInput
 
 struct PSOutput
 {
-    float4 Color : SV_Target0;
+    float3 Color : SV_Target0;
     float2 Velocity : SV_Target1;
 };
 
@@ -41,33 +39,20 @@ PSOutput main(PSInput I)
 
     tonemap(sky, 1);
 
-    O.Color = float4(sky, 0.0);
+    O.Color = sky;
 
-#ifdef SSFX_BEEFS_NVG
-    float2 texturecoord = I.HPos.xy / screen_res.xy;
-    float2 texturecoord_2 = I.HPos.xy / screen_res.xy;
-
-    float lua_param_nvg_num_tubes = pnv_param_4.x; // 1, 2, 4, 1.1, or 1.2
-    float lua_param_nvg_gain_current = pnv_param_2.y;
-    float lua_param_vignette_current = pnv_param_2.z;
-
-    if (pnv_param_1.z == 1.f &&
-        ((compute_lens_mask(aspect_ratio_correction(texturecoord), lua_param_nvg_num_tubes) == 1.0f ||
-          compute_lens_mask(aspect_ratio_correction(texturecoord_2), lua_param_nvg_num_tubes) == 1.0f))) //
+    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(I.HPos.xy / screen_res.xy), pnv_param_4.x) == 1.0f)
     {
         O.Color.r = dot(O.Color.rgb * 5.0f, luma_conversion_coeff);
 
         O.Color.gb = 0.0f;
 
-        O.Color *= lua_param_nvg_gain_current * sky_brightness_factor;
+        O.Color *= pnv_param_2.y * sky_brightness_factor;
 
         O.Color = clamp(O.Color, 0.0, 1.0);
 
-        float vignette = calc_vignette(lua_param_nvg_num_tubes, texturecoord, lua_param_vignette_current);
-        float vignette_2 = calc_vignette(lua_param_nvg_num_tubes, texturecoord_2, lua_param_vignette_current);
-        O.Color *= (vignette * vignette_2);
+        O.Color *= calc_vignette(pnv_param_4.x, I.HPos.xy / screen_res.xy, pnv_param_2.z);
     }
-#endif
 
     O.Velocity = get_motion_vector(I.HPos_curr, I.HPos_old);
 

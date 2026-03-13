@@ -2,15 +2,12 @@
 
 // Check MODs
 #include "common\screenspace\check_screenspace.h"
-
-#ifdef SSFX_BEEFS_NVG
-#include "common\night_vision.h"
-#endif
-
 #include "common\screenspace\screenspace_fog.h"
 
 #include "common\lmodel.h"
 #include "common\hmodel.h"
+
+#include "common\night_vision.h"
 
 #ifdef SSAO_QUALITY
 #ifdef USE_GTAO
@@ -69,17 +66,16 @@ float4 main(p_screen I) : SV_Target
     float3 color = L.rgb + hdiffuse.rgb;
     color = LinearTosRGB(color); // gamma correct
 
-#ifdef SSFX_BEEFS_NVG
-    float lua_param_nvg_num_tubes = pnv_param_4.x; // 1, 2, 4, 1.1, or 1.2
-    // NVG reduces gloss to 0 inside mask
-    D.a *= (1.0 - compute_lens_mask(aspect_ratio_correction(I.Tex0), lua_param_nvg_num_tubes));
-#endif
+    if (pnv_param_1.z > 0.f)
+    {
+        D.a *= (1.0 - compute_lens_mask(aspect_ratio_correction(I.Tex0), pnv_param_4.x));
+    }
 
     // here should be distance fog
     float3 WorldP = mul(m_inv_V, float4(P.xyz, 1));
     float fog = SSFX_HEIGHT_FOG(P.xyz, WorldP.y, color);
 
-    float skyblend = 0.0; // saturate(fog * fog);  // ??? 0.0 ?????? ??? ??? ?? ??????? ????????
+    float skyblend = 0.0;
 
     return float4(color, skyblend);
 }
