@@ -15,8 +15,6 @@ Texture2D ssr_image;
 
 float4 main(p_screen I) : SV_Target
 {
-    // Sample buffers and prepare all requiered data ------------------
-
     // Scale TexCoor
     float2 tc = I.Tex0 * ssr_setup.x;
     float2 Pos2D = I.HPos * ssr_setup.x;
@@ -36,8 +34,10 @@ float4 main(p_screen I) : SV_Target
     // Do the SSR
     SSFX_ScreenSpaceReflections(I.Tex0, float4(P, mtl), N, gloss, ssr_result);
 
-    // Accumulation ---------------------------------------------------
+    if (ssr_result.a <= 0)
+        return ssr_result;
 
+    // Accumulation ---------------------------------------------------
     float3 prev = ssr_image.Sample(smp_nofilter, I.Tex0);
 
     // Position
@@ -63,9 +63,7 @@ float4 main(p_screen I) : SV_Target
     // Mix with previous SSR result. Higher weight more of the previous frame used
     ssr_result.rgb = lerp(ssr_result.rgb, prev, weight);
 
-    // ----------------------------------------------------------------
-
     ssr_result.rgb *= ssr_result.a > 0;
 
-    return float4(ssr_result);
+    return ssr_result;
 }

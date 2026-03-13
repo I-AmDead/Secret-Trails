@@ -4,7 +4,7 @@
 // Check Screen Space Shaders modules & addons
 #include "common\screenspace\check_screenspace.h"
 
-float4 main(p_screen_volume I) : SV_Target
+float3 main(p_screen_volume I) : SV_Target
 {
     const float bias_mul = 0.999f;
 
@@ -25,12 +25,11 @@ float4 main(p_screen_volume I) : SV_Target
         _C.w *= 0.3f;
     }
 
-    float rsqr;
-    float3 light = plight_local(_P.w, _P, _N, _C, Ldynamic_pos, Ldynamic_pos.w, rsqr);
+    float3 light = plight_local(_P, _N, _C, Ldynamic_pos, Ldynamic_pos.w);
 
 #ifdef SSFX_ENHANCED_SHADERS
-    return float4(SRGBToLinear(Ldynamic_color.rgb) * light, 0.f);
+    return SRGBToLinear(Ldynamic_color.rgb) * light;
 #else
-    return float4(Ldynamic_color * light, 0.f);
+    return Ldynamic_color * light;
 #endif
 }

@@ -14,7 +14,7 @@
 
 #include "common\shadow.h"
 
-float4 main(p_screen_volume I) : SV_Target
+float3 main(p_screen_volume I) : SV_Target
 {
     gbuffer_data gbd = gbuffer_load_data(I.Tex0.xy / I.Tex0.w, I.HPos);
 
@@ -25,7 +25,7 @@ float4 main(p_screen_volume I) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    float3 light = plight_infinity(_P.w, _P, _N, _C, Ldynamic_dir);
+    float3 light = plight_infinity(_P, _N, _C, Ldynamic_dir);
 
     float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
@@ -54,8 +54,8 @@ float4 main(p_screen_volume I) : SV_Target
     float3 result = SRGBToLinear(s);
     result *= light * SRGBToLinear(Ldynamic_color.rgb);
 
-    return blend(float4(result, 0.f), I.Tex0);
+    return blend(result, I.Tex0);
 #else
-    return blend(float4(Ldynamic_color * light * shadows, 0.f), I.Tex0);
+    return blend(Ldynamic_color * light * shadows, I.Tex0);
 #endif
 }

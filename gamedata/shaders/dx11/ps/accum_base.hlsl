@@ -7,7 +7,7 @@
 
 float4 m_lmap[2];
 
-float4 main(p_screen_volume I) : SV_Target
+float3 main(p_screen_volume I) : SV_Target
 {
     float2 tcProj = I.Tex0.xy / I.Tex0.w;
 
@@ -19,12 +19,10 @@ float4 main(p_screen_volume I) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    float m = _P.w;
-
     // FLORA FIXES & IMPROVEMENTS - SSS Update 14.2
     // Fix Flora ilumination ( Align normal to light )
 #ifdef SSFX_FLORAFIX
-    if (abs(m - MAT_FLORA) <= 0.05)
+    if (abs(_P.w - MAT_FLORA) <= 0.05)
     {
         _N.rgb = -normalize(_P - Ldynamic_pos.xyz);
         _C.w *= 0.3f;
@@ -32,8 +30,7 @@ float4 main(p_screen_volume I) : SV_Target
 #endif
 
     // ----- light-model
-    float rsqr;
-    float3 light = plight_local(m, _P, _N, _C, Ldynamic_pos, Ldynamic_pos.w, rsqr);
+    float3 light = plight_local(_P, _N, _C, Ldynamic_pos, Ldynamic_pos.w);
 
     // ----- shadow
     float4 P4 = float4(_P.xyz, 1);
@@ -58,8 +55,8 @@ float4 main(p_screen_volume I) : SV_Target
 #ifdef SSFX_ENHANCED_SHADERS
     float3 result = SRGBToLinear(lightmap.rgb) * SRGBToLinear(s);
     result *= light * SRGBToLinear(Ldynamic_color.rgb);
-    return float4(result.rgb, 0);
+    return result;
 #else
-    return float4(Ldynamic_color * light * s * lightmap, 0);
+    return Ldynamic_color * light * s * lightmap;
 #endif
 }

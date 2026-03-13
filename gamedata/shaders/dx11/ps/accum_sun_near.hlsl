@@ -14,7 +14,7 @@
 #include "common\screenspace\screenspace_shadows.h"
 #endif
 
-float4 main(p_screen_volume I) : SV_Target
+float3 main(p_screen_volume I) : SV_Target
 {
     gbuffer_data gbd = gbuffer_load_data(I.Tex0.xy / I.Tex0.w, I.HPos);
 
@@ -25,7 +25,7 @@ float4 main(p_screen_volume I) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    float3 light = plight_infinity(_P.w, _P, _N, _C, Ldynamic_dir);
+    float3 light = plight_infinity(_P, _N, _C, Ldynamic_dir);
 
     float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
@@ -38,9 +38,9 @@ float4 main(p_screen_volume I) : SV_Target
 
 #ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed
     float3 result = SRGBToLinear(s);
-    result.rgb *= light * SRGBToLinear(Ldynamic_color.rgb);
-    return float4(result.rgb, 0.f);
+    result *= light * SRGBToLinear(Ldynamic_color.rgb);
+    return result;
 #else
-    return float4(Ldynamic_color * light * s, 0.f);
+    return Ldynamic_color * light * s;
 #endif
 }

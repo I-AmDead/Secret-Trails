@@ -3,10 +3,10 @@
 Texture2D s_vollight1;
 Texture2D s_vollight2;
 
-float4 main(p_screen I) : SV_Target
+float3 main(p_screen I) : SV_Target
 {
     // Initialize accumulator
-    float4 color = 0.0f;
+    float3 color = 0.0f;
     
     // 4x4 box filter (16 taps)
     for (int j = -2; j < 2; j++)

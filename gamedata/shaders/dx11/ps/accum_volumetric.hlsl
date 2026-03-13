@@ -1,7 +1,7 @@
 #include "common\common.h"
 #include "common\shadow.h"
 
-float4 main(p_screen_volume I) : SV_Target
+float3 main(p_screen_volume I) : SV_Target
 {
     if (Ldynamic_color.w == 0.0)
         return 0;
@@ -49,5 +49,5 @@ float4 main(p_screen_volume I) : SV_Target
     total_light *= length(step_vector);
     total_light = 1.0 - exp(-total_light / 8.0);
 
-    return float4(total_light * Ldynamic_color.xyz, 0.0);
+    return total_light * Ldynamic_color.xyz;
 }

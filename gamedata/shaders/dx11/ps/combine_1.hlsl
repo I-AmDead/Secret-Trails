@@ -17,7 +17,7 @@
 #endif
 #endif
 
-float4 main(p_screen I) : SV_Target
+float3 main(p_screen I) : SV_Target
 {
     gbuffer_data gbd = gbuffer_load_data(I.Tex0, I.HPos);
 
@@ -56,16 +56,5 @@ float4 main(p_screen I) : SV_Target
     float3 color = L.rgb + hdiffuse.rgb;
     color = LinearTosRGB(color); // gamma correct
 
-    if (pnv_param_1.z > 0.f)
-    {
-        D.a *= (1.0 - compute_lens_mask(aspect_ratio_correction(I.Tex0), pnv_param_4.x));
-    }
-
-    // here should be distance fog
-    float3 WorldP = mul(m_inv_V, float4(P.xyz, 1));
-    float fog = SSFX_HEIGHT_FOG(P.xyz, WorldP.y, color);
-
-    float skyblend = 0.0;
-
-    return float4(color, skyblend);
+    return color;
 }
