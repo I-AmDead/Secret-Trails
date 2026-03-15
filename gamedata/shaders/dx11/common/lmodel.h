@@ -27,26 +27,26 @@ float3 compute_lighting(float3 N, float3 V, float3 L, float4 alb_gloss, float ma
     return light;
 }
 
-float3 plight_infinity(float4 pnt, float3 normal, float4 c_tex, float3 light_direction)
+float3 plight_infinity(float4 pnt, float3 normal, float4 c_tex)
 {
     float3 N = normalize(normal);
     float3 V = normalize(-pnt);
-    float3 L = normalize(-light_direction);
+    float3 L = normalize(-Ldynamic_dir);
 
     float3 light = compute_lighting(N, V, L, c_tex, pnt.w);
 
     return light;
 }
 
-float3 plight_local(float4 pnt, float3 normal, float4 c_tex, float3 light_position, float light_range_rsq)
+float3 plight_local(float4 pnt, float3 normal, float4 c_tex)
 {
     float atteps = 0.1f;
 
-    float3 L2P = pnt - light_position;
+    float3 L2P = pnt - Ldynamic_pos.xyz;
     float rsqr = dot(L2P, L2P);
     rsqr = max(rsqr, atteps);
 
-    float r2 = rsqr * light_range_rsq * 1.00f; // 0.85f = slightly longer, softer reach
+    float r2 = rsqr * Ldynamic_pos.w * 1.00f; // 0.85f = slightly longer, softer reach
     float att = (1.0f - r2) / (3.0f * r2 + 1.0f);
     att = saturate(att);
     att = SRGBToLinear(att);
@@ -59,20 +59,5 @@ float3 plight_local(float4 pnt, float3 normal, float4 c_tex, float3 light_positi
 
     return light * att;
 }
-
-float3 specular_phong(float3 pnt, float3 normal, float3 light_direction)
-{
-    float3 H = normalize(pnt + light_direction);
-    float nDotL = saturate(dot(normal, light_direction));
-    float nDotH = saturate(dot(normal, H));
-    float nDotV = saturate(dot(normal, pnt));
-    float lDotH = saturate(dot(light_direction, H));
-
-    return L_sun_color.rgb * Lit_Specular(nDotL, nDotH, nDotV, lDotH, 0.02, 0.1);
-}
-
-float4 blendp(float4 value, float4 tcp) { return value; }
-
-float3 blend(float3 value, float2 tc) { return value; }
 
 #endif

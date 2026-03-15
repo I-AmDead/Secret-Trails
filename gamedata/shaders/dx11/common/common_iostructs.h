@@ -61,6 +61,13 @@ struct p_TL
     float4 Color : COLOR0;
 };
 
+struct v2p_TLD_RAIN
+{
+    float2 Tex0 : TEXCOORD0;
+    float4 Tex1 : TEXCOORD1;
+    float4 HPos : SV_Position;
+};
+
 ////////////////////////////////////////////////////////////////
 //	Bloom
 

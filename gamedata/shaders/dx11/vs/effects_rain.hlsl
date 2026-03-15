@@ -8,19 +8,11 @@
 
 #include "common\common.h"
 
-// Vertex Struct
-struct VSOutput
-{
-    float2 Tex0 : TEXCOORD0;
-    float4 Tex1 : TEXCOORD1;
-    float4 HPos : SV_Position;
-};
-
 uniform float4x4 mVPTexgen;
 
-VSOutput main(v_TL I)
+v2p_TLD_RAIN main(v_TL I)
 {
-    VSOutput O;
+    v2p_TLD_RAIN O;
 
     // Basic Stuff
     O.HPos = mul(m_WVP, I.P);

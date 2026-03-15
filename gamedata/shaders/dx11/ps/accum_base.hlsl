@@ -29,10 +29,8 @@ float3 main(p_screen_volume I) : SV_Target
     }
 #endif
 
-    // ----- light-model
-    float3 light = plight_local(_P, _N, _C, Ldynamic_pos, Ldynamic_pos.w);
+    float3 light = plight_local(_P, _N, _C);
 
-    // ----- shadow
     float4 P4 = float4(_P.xyz, 1);
     float4 PS = mul(m_shadow, P4);
     float s = 1.h;
@@ -41,14 +39,13 @@ float3 main(p_screen_volume I) : SV_Target
     s = shadow(PS);
 #endif
 
-    // ----- lightmap
     float4 lightmap = 1.h;
+
 #ifdef USE_LMAP
 #ifdef USE_LMAPXFORM
     PS.xy = float2(dot(P4, m_lmap[0]), dot(P4, m_lmap[1]));
 #endif
 
-    //	Can use linear with mip point
     lightmap = s_lmap.SampleLevel(smp_rtlinear, PS.xy / PS.w, 0);
 #endif
 

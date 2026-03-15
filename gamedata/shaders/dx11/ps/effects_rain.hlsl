@@ -10,7 +10,7 @@
 
 float4 ssfx_rain_setup; // Alpha, Brigthness, Refraction, Reflection
 
-float4 main(v2p_TLD4 I) : SV_Target
+float4 main(v2p_TLD_RAIN I) : SV_Target
 {
     // Factor to adjust the effect depending on light conditions
     float HemiFactor = saturate(dot(L_hemi_color.rgb, float3(1.0f, 1.0f, 1.0f)));

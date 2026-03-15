@@ -10,7 +10,7 @@
 
 float4 ssfx_rain_setup;
 
-float4 main(v2p_TLD4 I) : SV_Target
+float4 main(v2p_TLD_RAIN I) : SV_Target
 {
     // Screen Space
     float2 PosTc = I.Tex1.xy / I.Tex1.w;

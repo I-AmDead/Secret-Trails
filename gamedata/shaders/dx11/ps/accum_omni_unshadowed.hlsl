@@ -6,9 +6,6 @@
 
 float3 main(p_screen_volume I) : SV_Target
 {
-    const float bias_mul = 0.999f;
-
-    // Sample the fat framebuffer:
     float2 tcProj = I.Tex0.xy / I.Tex0.w;
 
     gbuffer_data gbd = gbuffer_load_data(tcProj, I.HPos);
@@ -25,7 +22,7 @@ float3 main(p_screen_volume I) : SV_Target
         _C.w *= 0.3f;
     }
 
-    float3 light = plight_local(_P, _N, _C, Ldynamic_pos, Ldynamic_pos.w);
+    float3 light = plight_local(_P, _N, _C);
 
 #ifdef SSFX_ENHANCED_SHADERS
     return SRGBToLinear(Ldynamic_color.rgb) * light;

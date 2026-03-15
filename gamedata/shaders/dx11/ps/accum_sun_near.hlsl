@@ -25,7 +25,7 @@ float3 main(p_screen_volume I) : SV_Target
     float4 _N = float4(gbd.N, gbd.hemi);
     float4 _C = float4(gbd.C, gbd.gloss);
 
-    float3 light = plight_infinity(_P, _N, _C, Ldynamic_dir);
+    float3 light = plight_infinity(_P, _N, _C);
 
     float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
