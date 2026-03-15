@@ -1,5 +1,5 @@
 #include "common\common.h"
-#include "common\infrared.h"
+#include "common\thermal_utils.h"
 
 uniform float4 m_affects;
 

@@ -5,14 +5,27 @@
     =====================================================================
 */
 
+#ifdef HEATNVG
+#include "common\common.h"
+#include "common\night_vision.h"
+#endif
+
 Texture2D s_heat;
+
+#ifdef HEATNVG
+uniform float4 heat_vision_steps;
+uniform float4 heat_vision_blurring;
+uniform float4 heat_fade_distance;
+#define FADE_DISTANCE_START 1.0
+#define FADE_DISTANCE_END 10.0
+#else
+#define FADE_DISTANCE_START 1.0
+#define FADE_DISTANCE_END 100.0
+#endif
 
 ///////////////////////////////////////////////////////
 // COLOR SETTINGS HERE
 ///////////////////////////////////////////////////////
-
-#define FADE_DISTANCE_START 0.0
-#define FADE_DISTANCE_END 100.0
 
 #define COLOR_FAR_MIN float3(0.0, 0.03, 0.07)
 #define COLOR_FAR_MAX float3(0.0, 0.03, 0.15)
@@ -59,14 +72,23 @@ float3 greyscale(float3 img)
 
 float3 infrared(float depth, float3 normal, float2 HPos, float2 Tex0)
 {
-    int BW = 1;
+#ifdef HEATNVG
+    float heat_mode = pnv_param_1.z - 2.f;
+#else
+    float heat_mode = 1.0;
+#endif
 
     float3 hotness = s_heat.Load(int3(Tex0 * screen_res.xy, 0), 0);
     float3 mixed;
 
     if (hotness.x > 0.0)
     {
+
+#ifdef HEATNVG
+        int samples = lerp(heat_vision_blurring.x, heat_vision_blurring.y, smoothstep(0.0, heat_vision_blurring.z, depth));
+#else
         int samples = lerp(15, 4, smoothstep(0.0, 60, depth));
+#endif
 
         mixed = normal_blur(HPos, samples);
         mixed = normalize(mixed);
@@ -78,7 +100,22 @@ float3 infrared(float depth, float3 normal, float2 HPos, float2 Tex0)
         }
         else
         {
+#ifdef HEATNVG
+            float step1 = heat_vision_steps.x;
+            float step2 = heat_vision_steps.y;
+            float step3 = heat_vision_steps.z;
+
+            if (projection > 0.0 && projection < step1)
+                mixed = color_gradient_very_low;
+            else if (projection >= step1 && projection < step2)
+                mixed = lerp(color_gradient_very_low, color_gradient_low, smoothstep(step1, step2, projection));
+            else if (projection >= step2 && projection < step3)
+                mixed = lerp(color_gradient_low, color_gradient_warm, smoothstep(step2, step3, projection));
+            else if (projection >= step3 && projection <= 1.0)
+                mixed = lerp(color_gradient_warm, color_gradient_hot, smoothstep(step3, 1.0, projection));
+#else
             mixed = lerp(color_gradient_very_low, color_gradient_hot, smoothstep(0, 1.0, projection));
+#endif
         }
 
         mixed = lerp(color_background_max, mixed, hotness.x);
@@ -115,26 +152,22 @@ float3 infrared(float depth, float3 normal, float2 HPos, float2 Tex0)
     else
     {
         float projection = dot(normalize(normal), float3(0.0, 0.0, -1.0));
-
         if (depth <= 0)
-        {
             depth = FADE_DISTANCE_END;
-        }
 
         if (depth < FADE_DISTANCE_START)
-        {
             mixed = lerp(color_background_min, color_background_max, projection);
-        }
         else
         {
             float arg = smoothstep(FADE_DISTANCE_START, FADE_DISTANCE_END, clamp(depth, FADE_DISTANCE_START, FADE_DISTANCE_END));
-            float3 min_color = lerp(color_background_min, COLOR_FAR_MIN - float3(0.0, 0.0, 0.03), arg);
-            float3 max_color = lerp(color_background_max, COLOR_FAR_MAX - float3(0.0, 0.0, 0.05), arg);
+            float3 min_color = lerp(color_background_min, COLOR_FAR_MIN - heat_mode * float3(0.0, 0.0, 0.03), arg);
+            float3 max_color = lerp(color_background_max, COLOR_FAR_MAX - heat_mode * float3(0.0, 0.0, 0.05), arg);
             mixed = lerp(min_color, max_color, projection);
         }
     }
 
-    mixed = greyscale(mixed);
+    if (heat_mode == 1.0)
+        mixed = greyscale(mixed);
 
     return mixed;
 }

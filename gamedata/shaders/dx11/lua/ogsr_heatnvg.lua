@@ -1,4 +1,6 @@
 function element_0(shader, t_base, t_second, t_detail)
+	shader:add_shader_options("HEATNVG", "1")
+
 	shader:begin("stub_screen_space", "ogsr_heatnvg")
 		:fog(false)
 		:zb(false, false)
@@ -15,4 +17,6 @@ function element_0(shader, t_base, t_second, t_detail)
 	shader:dx10sampler("smp_base")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
+
+	shader:clear_shader_options()
 end
