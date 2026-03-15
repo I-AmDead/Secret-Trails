@@ -9,7 +9,9 @@ local tex_rainsplash = "fx\\water_sbumpvolume"
 local tex_caustics = "fx\\water_caustics"
 
 function normal(shader, t_base, t_second, t_detail)
-	shader:begin("water_river", "water_regular")
+	shader:add_shader_options("RIVER_WATER", "1")
+
+	shader:begin("water", "water")
 		:sorting(2, false)
 		:blend(true,blend.srcalpha,blend.invsrcalpha)
 		:zb(true,false)
@@ -33,4 +35,6 @@ function normal(shader, t_base, t_second, t_detail)
 	shader:dx10sampler("smp_linear")
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
+
+	shader:clear_shader_options()
 end

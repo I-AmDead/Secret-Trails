@@ -34,9 +34,13 @@ function element_1(shader, t_base, t_second, t_detail)
 end
 
 function element_2(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_omni_normal", true)
+	shader:add_shader_options("USE_SHADOW", "1")
+	elements(shader, t_base, t_second, t_detail, "accum_base", true)
+	shader:clear_shader_options()
 end
 
 function element_3(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_omni_normal", true)
+	shader:add_shader_options("USE_SHADOW", "1")
+	elements(shader, t_base, t_second, t_detail, "accum_base", true)
+	shader:clear_shader_options()
 end

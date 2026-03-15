@@ -1,5 +1,5 @@
-function elements(shader, t_base, t_second, t_detail, ps_shader, jitter_enable)
-	shader:begin("accum_volume", ps_shader)
+function elements(shader, t_base, t_second, t_detail, jitter_enable)
+	shader:begin("accum_volume", "accum_base")
 		:fog(false)
 		:zb(false, false)
 		:blend(true, blend.one, blend.one)
@@ -30,13 +30,22 @@ function element_0(shader, t_base, t_second, t_detail)
 end
 
 function element_1(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_spot_unshadowed", false)
+	shader:add_shader_options("USE_LMAP", "1")
+	elements(shader, t_base, t_second, t_detail, true)
+	shader:clear_shader_options()
 end
 
 function element_2(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_spot_normal", true)
+	shader:add_shader_options("USE_LMAP", "1")
+	shader:add_shader_options("USE_SHADOW", "1")
+	elements(shader, t_base, t_second, t_detail, true)
+	shader:clear_shader_options()
 end
 
 function element_3(shader, t_base, t_second, t_detail)
-	elements(shader, t_base, t_second, t_detail, "accum_spot_fullsize", true)
+	shader:add_shader_options("USE_LMAP", "1")
+	shader:add_shader_options("USE_LMAPXFORM", "1")
+	shader:add_shader_options("USE_SHADOW", "1")
+	elements(shader, t_base, t_second, t_detail, true)
+	shader:clear_shader_options()
 end
