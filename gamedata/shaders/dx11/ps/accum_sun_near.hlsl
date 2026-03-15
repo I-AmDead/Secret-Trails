@@ -1,18 +1,18 @@
 #include "common\common.h"
 #include "common\lmodel.h"
 
-#if SUN_QUALITY > 2
-#define USE_ULTRA_SHADOWS
-#endif
-
-#include "common\shadow.h"
-
 // Check Screen Space Shaders modules & addons
 #include "common\screenspace\check_screenspace.h"
 
 #ifdef SSFX_SSS
 #include "common\screenspace\screenspace_shadows.h"
 #endif
+
+#if SUN_QUALITY > 2
+#define USE_ULTRA_SHADOWS
+#endif
+
+#include "common\shadow.h"
 
 float3 main(p_screen_volume I) : SV_Target
 {
