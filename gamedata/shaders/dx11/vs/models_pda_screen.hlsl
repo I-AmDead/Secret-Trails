@@ -13,7 +13,7 @@ v2p_TLD4 _main(v_model I)
     // calculate fade
     float3 dir_v = normalize(mul(m_WV, I.P));
     float3 norm_v = normalize(mul(m_WV, I.N));
-    float fade = abs(dot(dir_v, norm_v));
+    float fade = 0.9 * abs(dot(dir_v, norm_v));
     O.Color = fade;
 
     // HUD Rain drops - SSS Update 17
