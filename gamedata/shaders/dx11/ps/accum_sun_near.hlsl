@@ -8,10 +8,6 @@
 #include "common\screenspace\screenspace_shadows.h"
 #endif
 
-#if SUN_QUALITY > 2
-#define USE_ULTRA_SHADOWS
-#endif
-
 #include "common\shadow.h"
 
 float3 main(p_screen_volume I) : SV_Target
@@ -29,18 +25,17 @@ float3 main(p_screen_volume I) : SV_Target
 
     float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
-    float s = sunmask(P4);
-    s *= shadow(PS);
+    float shadows = shadow(PS);
 
 #ifdef SSFX_SSS
-    s *= SSFX_ScreenSpaceShadows(_P, I.HPos);
+    shadows *= SSFX_ScreenSpaceShadows(_P, I.HPos);
 #endif
 
 #ifdef SSFX_ENHANCED_SHADERS // We have Enhanced Shaders installed
-    float3 result = SRGBToLinear(s);
+    float3 result = SRGBToLinear(shadows);
     result *= light * SRGBToLinear(Ldynamic_color.rgb);
     return result;
 #else
-    return Ldynamic_color * light * s;
+    return Ldynamic_color * light * shadows;
 #endif
 }

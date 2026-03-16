@@ -1,7 +1,5 @@
 #include "common\common.h"
 
-#undef USE_ULTRA_SHADOWS
-
 #define RAY_PATH 2.0h
 #define JITTER_TEXTURE_SIZE 64.0f
 

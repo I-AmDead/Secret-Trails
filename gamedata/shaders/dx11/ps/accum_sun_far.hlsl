@@ -8,10 +8,6 @@
 #include "common\screenspace\screenspace_shadows.h"
 #endif
 
-#if SUN_QUALITY > 2
-#define USE_ULTRA_SHADOWS
-#endif
-
 #include "common\shadow.h"
 
 float3 main(p_screen_volume I) : SV_Target
@@ -30,10 +26,8 @@ float3 main(p_screen_volume I) : SV_Target
     float4 P4 = float4(_P.xyz, 1.0);
     float4 PS = mul(m_shadow, P4);
 
-    // SHADOWS FIXES - SSS Update 14.7
-    // New far edge fading code
-    float s = shadow(PS); // Far Shadows
-    float shadows = sunmask(P4); // Clouds. Don't fade clouds.
+    // Far Shadows
+    float shadows = shadow(PS);
 
     // Fade UV
     float2 FadeUV = PS.xy / PS.w;
@@ -41,17 +35,14 @@ float3 main(p_screen_volume I) : SV_Target
     // Fade calc
     float4 fade = smoothstep(0.f, 0.1f, float4(FadeUV.x, 1.f - FadeUV.x, FadeUV.y, 1.f - FadeUV.y));
     float f = fade.x * fade.y * fade.z * fade.w;
-    s += (1.f - s) * (1.f - f);
+    shadows += (1.f - shadows) * (1.f - f);
 
 #ifdef SSFX_SSS
-    s *= SSFX_ScreenSpaceShadows_Far(_P, I.HPos);
+    shadows *= SSFX_ScreenSpaceShadows_Far(_P, I.HPos);
 #endif
 
-    // Add Shadows
-    shadows *= s;
-
 #ifdef SSFX_ENHANCED_SHADERS
-    float3 result = SRGBToLinear(s);
+    float3 result = SRGBToLinear(shadows);
     result *= light * SRGBToLinear(Ldynamic_color.rgb);
 
     return result;

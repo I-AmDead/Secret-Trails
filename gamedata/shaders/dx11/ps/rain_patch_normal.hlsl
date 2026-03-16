@@ -23,6 +23,45 @@ Texture2D s_waterFall;
 
 float4 RainFallof;
 
+#ifdef INDOOR_LEAKS_FIX
+
+float shadow_hw(float4 tc)
+{
+    float s0 = sample_hw_pcf(tc, float4(-1, -1, 0, 0));
+    float s1 = sample_hw_pcf(tc, float4(+1, -1, 0, 0));
+    float s2 = sample_hw_pcf(tc, float4(-1, +1, 0, 0));
+    float s3 = sample_hw_pcf(tc, float4(+1, +1, 0, 0));
+
+    return (s0 + s1 + s2 + s3) / 4.h;
+}
+
+#else
+
+float4 test(float4 tc, float2 offset)
+{
+    tc.xyz /= tc.w;
+    tc.xy += offset;
+    return s_smap.SampleCmpLevelZero(smp_smap, tc.xy, tc.z).x;
+}
+
+float shadow_rain(float4 tc, float2 tcJ) // jittered sampling
+{
+    float4 r;
+
+    const float scale = (4.0 / float(SMAP_size));
+
+    float4 J0 = jitter0.Sample(smp_linear, tcJ) * scale;
+    float4 J1 = jitter1.Sample(smp_linear, tcJ) * scale;
+
+    r.x = test(tc, J0.xy).x;
+    r.y = test(tc, J0.wz).y;
+    r.z = test(tc, J1.xy).z;
+    r.w = test(tc, J1.wz).x;
+    return dot(r, 1.0 / 4.0);
+}
+
+#endif
+
 float3 GetWaterFall(Texture2D s_texture, float2 tc)
 {
     // 0.75 1.5 0.2 0.5
