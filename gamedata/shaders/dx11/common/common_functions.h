@@ -200,8 +200,8 @@ gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d)
     float4 C = s_diffuse.Sample(smp_nofilter, tc);
 
     // 3d view space pos reconstruction math
-    pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
-    gbd.P = float3(P.z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), P.z);
+    pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * screen_res.xy;
+    gbd.P = float3(P.z * (pos2d * projection_params.zw - projection_params.xy), P.z);
 
     // reconstruct N
     gbd.N = gbuf_unpack_normal(P.xy);
@@ -220,7 +220,7 @@ gbuffer_data gbuffer_load_data(float2 tc : TEXCOORD, float2 pos2d)
 
 gbuffer_data gbuffer_load_data_offset(float2 tc : TEXCOORD, float2 OffsetTC : TEXCOORD, float2 pos2d)
 {
-    float2 delta = ((OffsetTC - tc) * pos_decompression_params2.xy);
+    float2 delta = ((OffsetTC - tc) * screen_res.xy);
 
     return gbuffer_load_data(OffsetTC, pos2d + delta);
 }
@@ -241,8 +241,8 @@ float3 gbuffer_view_space(float2 tc, float2 pos2d)
     float pos = s_position.Sample(smp_nofilter, tc).z;
 
     // 3d view space pos reconstruction math
-    pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * pos_decompression_params2.xy;
-    float3 view_space = float3(pos * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), pos);
+    pos2d = pos2d - m_taa_jitter.xy * float2(0.5f, -0.5f) * screen_res.xy;
+    float3 view_space = float3(pos * (pos2d * projection_params.zw - projection_params.xy), pos);
 
     return view_space;
 }

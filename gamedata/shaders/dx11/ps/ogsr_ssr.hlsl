@@ -24,7 +24,7 @@ float4 main(p_screen I) : SV_Target
     float gloss = s_diffuse.Sample(smp_nofilter, tc).a;
 
     // Reconstruct Position, Normal and Material
-    float3 P = float3(Pos.z * (Pos2D * pos_decompression_params.zw - pos_decompression_params.xy), Pos.z);
+    float3 P = float3(Pos.z * (Pos2D * projection_params.zw - projection_params.xy), Pos.z);
     float3 N = gbuf_unpack_normal(Pos.xy);
     float mtl = gbuf_unpack_mtl(Pos.w);
 

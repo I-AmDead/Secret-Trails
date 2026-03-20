@@ -39,7 +39,7 @@ uniform float4 ssfx_is_underground;
 float4 main(PSInput I) : SV_Target
 {
     // 3d view space pos reconstruction math
-    float3 Pv = float3(I.Tex7.z * (I.HPos.xy * pos_decompression_params.zw - pos_decompression_params.xy), I.Tex7.z);
+    float3 Pv = float3(I.Tex7.z * (I.HPos.xy * projection_params.zw - projection_params.xy), I.Tex7.z);
 
     // Normal Textures
     float3 n0 = s_nmap.Sample(smp_base, I.Tex1.xy);
@@ -158,7 +158,7 @@ float4 main(PSInput I) : SV_Target
     float wdepth = gbuffer_depth(PosTc + Refraction_UV); // Simp: ??? ?? ???????? ????????? ??????? ?? taa jitter, ?????? ??? ?? ???? ????? ? ????? ?? ????????
 
     // 3d view space pos reconstruction math
-    float3 _P2 = float3(wdepth * (I.HPos.xy * pos_decompression_params.zw - pos_decompression_params.xy), wdepth);
+    float3 _P2 = float3(wdepth * (I.HPos.xy * projection_params.zw - projection_params.xy), wdepth);
 
     // Bottom of the water to world space ( Project the caustics and water fog )
     float3 w_b = mul(m_inv_V, float4(_P2, 1));

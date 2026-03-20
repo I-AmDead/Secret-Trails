@@ -50,8 +50,7 @@ cbuffer static_globals
     uniform float3 eye_position;
     uniform float3 eye_direction;
 
-    uniform float4 pos_decompression_params;
-    uniform float4 pos_decompression_params2;
+    uniform float4 projection_params;
 
     uniform float4 parallax;
     uniform float4 rain_params; // x = raindensity, y = wetness

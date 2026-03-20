@@ -17,7 +17,7 @@ float3 main(p_screen_volume I) : SV_Target
     depth = depth < 1e-4 ? 10000.0 : depth;
     depth = min(depth, I.HPos.w);
 
-    float3 view_space_pos = float3(depth * (screen_pixel_coords * pos_decompression_params.zw - pos_decompression_params.xy), depth);
+    float3 view_space_pos = float3(depth * (screen_pixel_coords * projection_params.zw - projection_params.xy), depth);
     float3 world_pos = mul(m_inv_V, float4(view_space_pos, 1.0)).xyz;
 
     uint num_steps = 8; // Количество шагов луча

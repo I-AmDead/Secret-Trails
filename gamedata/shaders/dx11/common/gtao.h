@@ -32,32 +32,32 @@ float fast_acos(float v)
 
 float GTAO_Offsets(float2 uv)
 {
-    int2 position = (int2)(uv * pos_decompression_params2.xy / GTAO_TC_MUL);
+    int2 position = (int2)(uv * screen_res.xy / GTAO_TC_MUL);
     return 0.25f * (float)((position.y - position.x) & 3);
 }
 
 float GTAO_Noise(float2 position) { return frac(52.9829189f * frac(dot(position, float2(0.06711056f, 0.00583715f)))); }
 
-float3 gbuf_unpack_position(float z, float2 pos2d) { return float3(z * (pos2d * pos_decompression_params.zw - pos_decompression_params.xy), z); }
+float3 gbuf_unpack_position(float z, float2 pos2d) { return float3(z * (pos2d * projection_params.zw - projection_params.xy), z); }
 
 float3 unpack_position(float2 tc)
 {
     float depth = s_position.Sample(smp_nofilter, tc).z;
-    return gbuf_unpack_position((depth > 0.01f ? depth : 1000.f), tc * pos_decompression_params2.xy);
+    return gbuf_unpack_position((depth > 0.01f ? depth : 1000.f), tc * screen_res.xy);
 }
 
 float3 calc_gtao(float3 cPosV, float3 normalV, float2 cTexCoord)
 {
     float fov = atan(1.0 / m_P._m11);
-    float proj_scale = float(pos_decompression_params2.y) / (tan(fov * 0.5f) * 2.f);
+    float proj_scale = float(screen_res.y) / (tan(fov * 0.5f) * 2.f);
     float screen_radius = (GTAO_RADIUS * 0.5f * proj_scale) / cPosV.z;
     float3 viewV = -normalize(cPosV);
 
     float noiseOffset = GTAO_Offsets(cTexCoord);
-    float noiseDirection = GTAO_Noise(cTexCoord * pos_decompression_params2.xy);
+    float noiseDirection = GTAO_Noise(cTexCoord * screen_res.xy);
 
     float falloff_mul = 2.f / pow(GTAO_RADIUS, 2.f);
-    float screen_res_mul = 1.f / GTAO_SAMPLE * pos_decompression_params2.zw;
+    float screen_res_mul = 1.f / GTAO_SAMPLE * screen_res.zw;
     float pi_by_slices = 3.14f / GTAO_SLICES;
 
     float visibility = 0.f;
