@@ -19,7 +19,7 @@ uniform float4 heat_fade_distance;
 #define FADE_DISTANCE_START 1.0
 #define FADE_DISTANCE_END 10.0
 #else
-#define FADE_DISTANCE_START 1.0
+#define FADE_DISTANCE_START 0.0
 #define FADE_DISTANCE_END 100.0
 #endif
 
