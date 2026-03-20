@@ -7,24 +7,24 @@ local time_factor = get_float("alife", "time_factor")
 
 local nlc7_act_breath = {
     [ "wht" ] = {
-      { "actor\\nlc7\\without_mask_1_",  2, 1.2 },
-      { "actor\\nlc7\\without_mask_2_",  2, 1.1 },
-      { "actor\\nlc7\\without_mask_3_",  6, 1   },
+      { "actor\\nlc7\\without_mask_1_",  2, 1.6 },
+      { "actor\\nlc7\\without_mask_2_",  2, 1.5 },
+      { "actor\\nlc7\\without_mask_3_",  6, 1.4 },
     },
     [ "gas" ] = {
-      { "actor\\nlc7\\gas_mask_1_",      6, 1.0 },
-      { "actor\\nlc7\\gas_mask_2_",     10, 0.9 },
-      { "actor\\nlc7\\gas_mask_3_",     10, 0.8 },
+      { "actor\\nlc7\\gas_mask_1_",      6, 1.6 },
+      { "actor\\nlc7\\gas_mask_2_",     10, 1.5 },
+      { "actor\\nlc7\\gas_mask_3_",     10, 1.3 },
     },
     [ "exo" ] = {
-      { "actor\\nlc7\\exo_mask_1_",      9, 1.7 },
+      { "actor\\nlc7\\exo_mask_1_",      9, 1.6 },
       { "actor\\nlc7\\exo_mask_2_",      9, 1.5 },
       { "actor\\nlc7\\exo_mask_3_",      8, 1.3 },
     },
     [ "scn" ] = {
-      { "actor\\nlc7\\scient_mask_1_",   2, 1.6 },
-      { "actor\\nlc7\\scient_mask_2_",   2, 1.4 },
-      { "actor\\nlc7\\scient_mask_3_",   6, 1.2 },
+      { "actor\\nlc7\\scient_mask_1_",   2, 1.1 },
+      { "actor\\nlc7\\scient_mask_2_",   2, 1.0 },
+      { "actor\\nlc7\\scient_mask_3_",   6, 0.9 },
     },
   }
 
@@ -258,11 +258,12 @@ function nlc7_actor_heart()
 
         local snd_fname = nlc7_act_breath[tip][step][1] .. math.random(nlc7_act_breath[tip][step][2])
         local snd = xr_sound.get_safe_sound_object(snd_fname)
-        snd.volume = 2.0 - nlc7_act_breath[tip][step][3] - r_h
+        local power_volume = (2.0 - nlc7_act_breath[tip][step][3]) - r_h
 
         if tip ~= "wht" or r_h < 0.79 then
             snd:play(db.actor, 0, sound_object.s2d)
         end
+        snd.volume = math.clamp(power_volume, 0.4, 1.0)
     elseif game_options.opt_breath and tip ~= "wht" and time_delt >= (r_h * 1500) * (0.4 / step) + step * 90 then
         modifyValue(breath_size, 0, "breath_size")
     end
