@@ -1,10 +1,6 @@
 #include "common\common.h"
 
-#if defined(SM_4_1) || defined(SM_5)
 #define SMAA_HLSL_4_1
-#else
-#define SMAA_HLSL_4
-#endif
 
 #define SMAA_RT_METRICS screen_res.zwxy
 
