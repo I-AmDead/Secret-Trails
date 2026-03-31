@@ -42,12 +42,6 @@ float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
     // Sample scene with refracted texcoord
     float3 image = s_image.Sample(smp_nofilter, refr_tc.xy).xyz;
 
-    float3 blurredImage = s_blur_2.Sample(smp_nofilter, refr_tc.xy).xyz;
-
-    float2 center = float2(0.5, 0.5);
-    float distFromCenter = length(refr_tc.xy - center);
-    image = lerp(image, blurredImage, (m_actor_params.y / 10) * abs(distFromCenter * 1.5));
-
     // Add glass reflection on top
     if (mask_control.y == 1)
         image = visor_reflection(image, Tex0.xy);

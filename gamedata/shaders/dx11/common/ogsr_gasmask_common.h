@@ -32,7 +32,7 @@ uniform float breath_idx;
 uniform float4 raindrop_restart;
 
 // Gasmask settings
-#define GM_DIST_INT 0.05 // Refraction intensity
+#define GM_DIST_INT 0.02 // Refraction intensity
 #define GM_DIFF_INT 0.25 // Diffuse cracks intensity
 #define GM_VIG_INT 0.5 // Vignette intensity
 

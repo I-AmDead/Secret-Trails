@@ -3,7 +3,6 @@ function element_0(shader, t_base, t_second, t_detail)
 		:fog(false)
 		:zb(false, false)
 	shader:dx10texture("s_image", "$user$backbuffer")
-	shader:dx10texture("s_blur_2", "$user$blur_2")
 
 	shader:dx10texture("s_mask_nm_1", "shaders\\gasmasks\\mask_nm_1")
 	shader:dx10texture("s_mask_nm_2", "shaders\\gasmasks\\mask_nm_2")
