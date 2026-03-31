@@ -40,7 +40,7 @@ float3 Lit_GGX(float NdotL, float NdotH, float NdotV, float VdotH, float3 F0, fl
     float V = G2_Smith_Correlated(NdotL, NdotV, a);
 
     // Fresnel
-    float3 f90Atten = saturate(1.0 - rough);
+    float3 f90Atten = saturate(50 * F0); // UE4 specular shadowing
     float3 F = F_Shlick(F0, f90Atten, VdotH);
 
     // Numerator

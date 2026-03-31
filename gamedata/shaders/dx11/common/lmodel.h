@@ -5,23 +5,23 @@
 #include "common\common_brdf.h"
 #include "common\pbr_brdf.h"
 
-float3 compute_lighting(float3 N, float3 V, float3 L, float4 alb_gloss, float mat_id)
+float3 compute_lighting(float3 N, float3 V, float3 L, float4 albedo, float mat_id)
 {
     bool m_terrain = abs(mat_id - 0.95) <= 0.04f;
     if (m_terrain)
         mat_id = 0;
 
-    float3 albedo = calc_albedo(alb_gloss, mat_id);
-    float3 specular = calc_specular(alb_gloss, mat_id);
-    float rough = calc_rough(alb_gloss.a, mat_id);
-    calc_foliage(albedo.rgb, specular, rough, alb_gloss, mat_id);
+    albedo.rgb = calc_albedo(albedo, mat_id);
+    float3 specular = calc_specular(albedo, mat_id);
+    float rough = calc_rough(albedo.a, mat_id);
+    calc_foliage(albedo.rgb, specular, rough, albedo, mat_id);
 
-    float3 light = Lit_BRDF(rough, albedo, specular, V, N, L);
+    float3 light = Lit_BRDF(rough, albedo.rgb, specular, V, N, L);
 
     if (abs(mat_id - MAT_FLORA) <= MAT_FLORA_ELIPSON)
     {
         float3 subsurface = SSS(N, V, L);
-        light += subsurface * albedo;
+        light += subsurface * albedo.rgb;
     }
 
     return light;
@@ -59,5 +59,21 @@ float3 plight_local(float4 pnt, float3 normal, float4 c_tex)
 
     return light * att;
 }
+
+float3 specular_phong(float3 pnt, float3 normal, float3 light_direction)
+{
+    float3 H = normalize(pnt + light_direction);
+    float nDotL = saturate(dot(normal, light_direction));
+    float nDotH = saturate(dot(normal, H));
+    float nDotV = saturate(dot(normal, pnt));
+    float lDotH = saturate(dot(light_direction, H));
+
+    return L_sun_color.rgb * Lit_Specular(nDotL, nDotH, nDotV, lDotH, 0.02, 0.1);
+}
+
+
+half4 blendp(half4 value, float4 tcp) { return value; }
+
+half4 blend(half4 value, float2 tc) { return value; }
 
 #endif
