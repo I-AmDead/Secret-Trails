@@ -190,7 +190,7 @@ float4 main(PSInput I) : SV_Target
     float3 turbidity = lerp(base_tex, screen, smoothstep(G_SSR_WATER_FOG_MAXDEPTH, -G_SSR_WATER_TURBIDITY, waterFog));
 
     // Let's start the accumulation... First the water result and reflection.
-    float3 acc = lerp(turbidity, reflection, fresnel_amount * G_SSR_WATER_REFLECTION);
+    float3 acc = lerp(turbidity, reflection, saturate(fresnel_amount * G_SSR_WATER_REFLECTION));
 
     // Caustics. Fade through water fog
     acc = acc + CA * smoothstep(G_SSR_WATER_FOG_MAXDEPTH + 0.5f, 0.0f, waterFog) * saturate(waterFog * 3.0f);
@@ -206,9 +206,9 @@ float4 main(PSInput I) : SV_Target
     float fogging = SSFX_FOGGING(1.0 - I.Fog, w_s.y);
     acc = lerp(fog_color, acc, fogging);
 
-    // Soft border
-    float border_alpha = smoothstep(0.0, G_SSR_WATER_SOFTBORDER, waterDepth);
+	// Refraction "Transparency"
+	acc = lerp(screen, acc, (smoothstep( 0.0, G_SSR_WATER_SOFTBORDER, waterDepth + fresnel_amount) * fogging * fogging));
 
-    // Done
-    return float4(acc, fogging * fogging * border_alpha);
+	// Done ( waterDepth - 0.1f to compensate the parallax offset )
+	return  float4(acc, saturate(saturate(waterDepth - 0.1f) * 10.0f));
 }
