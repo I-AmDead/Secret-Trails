@@ -17,7 +17,7 @@
 #endif
 #endif
 
-float3 main(p_screen I) : SV_Target
+float4 main(p_screen I) : SV_Target
 {
     gbuffer_data gbd = gbuffer_load_data(I.Tex0, I.HPos);
 
@@ -56,5 +56,5 @@ float3 main(p_screen I) : SV_Target
     float3 color = L.rgb + hdiffuse.rgb;
     color = LinearTosRGB(color); // gamma correct
 
-    return color;
+    return float4(color, 0.f);
 }
