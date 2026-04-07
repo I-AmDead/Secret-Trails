@@ -13,6 +13,8 @@
 #include "common\screenspace\screenspace_debanding.h"
 #endif
 
+#include "common\screenspace\screenspace_lut.h"
+
 #include "common\screenspace\screenspace_fog.h"
 #include "common\screenspace\settings_screenspace_FOG.h"
 
@@ -62,6 +64,7 @@ float3 main(p_screen I) : SV_Target
 
     // Vanilla color grading ( Exposure, saturation and gamma )
     img = img_corrections(img);
+    img = img_lut(img);
 
     img += rad_effect(img.rgb, center);
 

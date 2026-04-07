@@ -57,6 +57,7 @@ function element_3(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_flares", "$user$flares")
 	shader:dx10texture("s_noise", "fx\\fx_noise2")
 	shader:dx10texture("s_blur_2", "$user$blur_2")
+	shader:dx10texture("s_lut_atlas", "shaders\\lut_atlas")
 
 	shader:dx10sampler("smp_nofilter")
 	shader:dx10sampler("smp_rtlinear")
