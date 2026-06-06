@@ -45,7 +45,8 @@ Texture2D s_prev_frame;
 Texture2D s_inside;
 Texture2D s_dirt;
 Texture2D s_heat_map;
-TextureCube s_reflection;
+TextureCube s_reflection_in;
+TextureCube s_reflection_out;
 
 float4 m_hud_params;
 uniform float4 s3ds_param_1;
@@ -54,6 +55,8 @@ uniform float4 s3ds_param_3;
 uniform float4 s3ds_param_4;
 uniform float4 mark_number;
 uniform float4 mark_color;
+
+uniform float2 actor_hideout;
 
 struct PSInput
 {
@@ -265,12 +268,17 @@ float3 sample_reflections(float2 tc, float parallax_factor, float radius, float 
     float3 normalmap = !is_flat ? sample_lens_normalmap(tc, radius) : float3(0.0, 0.0, 1.0);
     float3 lensnormal = normalize(float3(dot(normalmap, TBNw_inv[0]), dot(normalmap, TBNw_inv[1]), dot(normalmap, TBNw_inv[2])));
 
-    float3 reflections = s_reflection.SampleLevel(smp_base, reflect(normalize(normalize(w_pos - eye_position) - normalize(w_nrm) * parallax_factor), lensnormal), 0).rgb;
+    float3 reflect_tc = reflect(normalize(normalize(w_pos - eye_position) - normalize(w_nrm) * parallax_factor), lensnormal);
+    float3 indoor_reflections = s_reflection_in.SampleLevel(smp_base, reflect_tc, 0).rgb;
+    float3 outdoor_reflections = s_reflection_out.SampleLevel(smp_base, reflect_tc, 0).rgb;
+    float3 reflections = lerp(indoor_reflections, outdoor_reflections, 1.0 - actor_hideout.y);
 
     if (!is_flat)
         reflections *= sample_vignette(tc);
 
-    return reflections * normalize(0.3 + L_ambient.rgb + L_hemi_color.rgb);
+    reflections *= normalize(0.3 + L_ambient.rgb + L_hemi_color.rgb);
+
+    return reflections;
 }
 
 float3 sample_specular(float2 tc, float parallax_factor, float radius, float specular_factor, float dirt_factor, float3x3 TBNw_inv, float3 w_pos, float3 w_nrm, bool see_through)
