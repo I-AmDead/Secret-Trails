@@ -56,5 +56,10 @@ float4 main(p_screen I) : SV_Target
     float3 color = L.rgb + hdiffuse.rgb;
     color = LinearTosRGB(color); // gamma correct
 
+    float3 pos = P.xyz;
+    float distance = length(pos);
+    float fog = saturate(distance * fog_params.w + fog_params.x);
+    color = lerp(color, fog_color, fog);
+
     return float4(color, 0.f);
 }
