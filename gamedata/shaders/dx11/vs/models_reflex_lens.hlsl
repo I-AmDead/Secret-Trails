@@ -3,12 +3,12 @@
 
 struct VSOutput
 {
+    float4 HPos : SV_Position;
     float2 Tex0 : TEXCOORD0;
     float3 T : TEXCOORD1;
     float3 B : TEXCOORD2;
     float3 N : TEXCOORD3;
     float3 P : TEXCOORD4;
-    float4 HPos : SV_Position;
 };
 
 VSOutput _main(v_model I)
