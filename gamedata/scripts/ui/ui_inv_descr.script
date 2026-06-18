@@ -789,3 +789,39 @@ function CUIDescriptionWnd:AddIndent(size)
 	self.addH = self.addH + size
 	st:SetHeight(size)
 end
+
+local wnd = nil
+
+local function inventory_open()
+    if not wnd then
+        wnd = ui_inv_descr.CUIDescriptionWnd(level.get_inventory_wnd())
+    end
+end
+
+local function body_open()
+    if not wnd then
+        wnd = ui_inv_descr.CUIDescriptionWnd(level.get_car_body_wnd())
+    end
+end
+
+local function trade_open()
+    if not wnd then
+        wnd = ui_inv_descr.CUIDescriptionWnd(level.get_trade_wnd())
+    end
+end
+
+local function all_close()
+    if wnd then
+        wnd:Remove()
+        wnd = nil
+    end
+end
+
+function attach(sm)
+	sm:subscribe({signal = "on_inventory_open", fun = inventory_open})
+	sm:subscribe({signal = "on_inventory_hide", fun = all_close})
+	sm:subscribe({signal = "on_body_open", fun = body_open})
+	sm:subscribe({signal = "on_body_hide", fun = all_close})
+	sm:subscribe({signal = "on_trade_open", fun = trade_open})
+	sm:subscribe({signal = "on_trade_hide", fun = all_close})
+end
