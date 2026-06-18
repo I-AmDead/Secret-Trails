@@ -32,15 +32,15 @@ local function count_item_by_section(section)
 	return count
 end
 
-class "CUI_InvButton" ( CUIScriptWnd )
-function CUI_InvButton:__init( slot_num ) super()
-	local id = "slot_"..slot_num
+class "CUI_InvButton" (CUIScriptWnd)
+function CUI_InvButton:__init(slot_num) super()
+	local id = "slot_" .. slot_num
 	self.slot = CUIButton()
 	self.slot:SetWindowName("CUI_InvButton_slot_"..slot_num)
 	self.slot:SetAutoDelete( true )
-	CIconParams( item_in_slot[slot_num]() ):set_shader( self.slot )
-	self.slot:Init( unpack(slots_pos[slot_num]) )
-	self:Register( self.slot, id )
+	CIconParams(item_in_slot[slot_num]()):set_shader( self.slot )
+	self.slot:Init(unpack(slots_pos[slot_num]))
+	self:Register(self.slot, id)
 
 	self:SetAutoDelete(true)
 	self:Show(true)
@@ -98,18 +98,44 @@ local function add_hud()
 	end
 end
 
-local function on_drag_drop(obj)
-	local section = obj:section()
-	local quickslot = get_string(section, "eat_portions_num")
-	if not quickslot or not slot_focus then return end
-
-	ogse.save_var("item_in_slot_"..slot_focus, section)
-	CIconParams(section):set_shader(slots_wnd_storage[slot_focus].slot)
-	count_item_slot[slot_focus] = count_item_by_section(section)
+local function slot_change(slot, section)
+	ogse.save_var("item_in_slot_" .. slot, section)
+	CIconParams(section):set_shader(slots_wnd_storage[slot].slot)
+	count_item_slot[slot] = count_item_by_section(section)
 
 	local snd_obj = xr_sound.get_safe_sound_object([[interface\inv_slot]])
 	snd_obj:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
 	add_hud()
+end
+
+local function on_item_menu(menu, obj, cellitem)
+	if not obj then return end
+
+	local quickslot = get_string(obj:section(), "eat_portions_num")
+	if not quickslot then return end
+
+	for i = 1, 4 do
+		menu:AddItem(game.translate_string("st_move_on_quick_slot") .. " " .. i, 1000 + i)
+	end
+end
+
+local function on_item_menu_execute(item_tag, obj, cellitem)
+	if not obj then return end
+
+	for i = 1, 4 do
+		if obj:section() ~= item_in_slot[i]() then
+			if item_tag == 1000 + i then
+				slot_change(i, obj:section())
+			end
+		end
+	end
+end
+
+local function on_drag_drop(obj)
+	local quickslot = get_string(obj:section(), "eat_portions_num")
+	if not quickslot or not slot_focus then return end
+
+	slot_change(slot_focus, obj:section())
 end
 
 local function on_item_take(obj)
@@ -195,10 +221,12 @@ end
 function attach(sm)
 	sm:subscribe({ signal = "on_inventory_open", fun = inventory_open })
 	sm:subscribe({ signal = "on_inventory_hide", fun = inventory_hide })
-	sm:subscribe({ signal = "on_fake_drag_drop", fun = on_drag_drop   })
-	sm:subscribe({ signal = "on_take",           fun = on_item_take   })
-	sm:subscribe({ signal = "on_drop",           fun = on_item_drop   })
-	sm:subscribe({ signal = "on_use",            fun = on_item_drop   })
-	sm:subscribe({ signal = "on_key_down",	     fun = on_key_down    })
-	sm:subscribe({ signal = "on_first_update",   fun = add_hud	  })
+	sm:subscribe({ signal = "on_item_menu",      fun = on_item_menu })
+	sm:subscribe({ signal = "on_item_menu_execute", fun = on_item_menu_execute })
+	sm:subscribe({ signal = "on_fake_drag_drop", fun = on_drag_drop })
+	sm:subscribe({ signal = "on_take",           fun = on_item_take })
+	sm:subscribe({ signal = "on_drop",           fun = on_item_drop })
+	sm:subscribe({ signal = "on_use",            fun = on_item_drop })
+	sm:subscribe({ signal = "on_key_down",	     fun = on_key_down })
+	sm:subscribe({ signal = "on_first_update",   fun = add_hud })
 end
