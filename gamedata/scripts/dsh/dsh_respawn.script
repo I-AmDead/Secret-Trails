@@ -176,12 +176,12 @@ function dsh_respawner:init_respawn_params() --Вычитываем настро
     self.respawn_section = r_spawns(ini, "respawn", "respawn_section", self.sectSpawnProps)
     ASSERT(self.respawn_section, "RESPAWN: [%s] field 'respawn_section' doesn't exist.", self.name)
     self.spawn_once = get_bool("respawn", "spawn_once", false, ini) --Спавнится ли предмет однократно. В огсе таких нет, но для совместимости оставлю проверку.
-    self.min_count = get_float("respawn", "min_count", 0, ini)
-    self.max_count = get_float("respawn", "max_count", -1, ini)
+    self.min_count = get_u32("respawn", "min_count", 0, ini)
+    self.max_count = get_u32("respawn", "max_count", -1, ini)
     if self.min_count > self.max_count and self.max_count ~= -1 then
         abort("RESPAWN: [%s] min_count > max_count", self.name)
     end
-    self.max_spawn = get_float("respawn", "max_spawn", 1, ini)
+    self.max_spawn = get_u32("respawn", "max_spawn", 1, ini)
     local str_conditions = get_string("respawn", "conditions", 100, ini)
     self.conditions = xr_logic.parse_condlist(self.object, "respawn", "conditions", str_conditions)
 
@@ -195,6 +195,18 @@ function dsh_respawner:init_respawn_params() --Вычитываем настро
     self.item_spawn = get_bool("respawn", "item_spawn", false, ini)
 
     --log3("--[%s] respawner [%s] item_spawn is [%s]", script_name(), self.name, self.item_spawn)
+
+    self.amk_name = get_string("respawn", "amk_name", nil, ini)
+
+    self.creature_binded_logic = get_string("respawn", "creature_binded_logic", nil, ini)
+    if self.creature_binded_logic then
+        local ini = dsh.cached_ini_file("scripts\\amk\\" .. self.creature_binded_logic .. ".ltx")
+        if ini:section_exist("smart_terrains") then
+            self.smart_terrains = get_section_keys_and_values("smart_terrains", ini)
+        end
+        self.creature_binded_logic = ini:get_as_string()
+        ASSERT((self.smart_terrains and self.smart_terrains.none), "[%s]: %s: wrong smart_terrains", script_name(), self.name)
+    end
 end
 
 function dsh_respawner:reinit_respawn_params()
@@ -394,26 +406,15 @@ function dsh_respawner:create(prob)
 
         local sobj
         if not parent_id then
-            sobj = alife():create(
-                spawn_section,
-                self.object.position,
-                self.object.m_level_vertex_id,
-                self.object.m_game_vertex_id
-            )
+            sobj = alife():create(spawn_section, self.object.position, self.object.m_level_vertex_id, self.object.m_game_vertex_id)
         	--log3("~~[%s] spawned object [%s] in resp [%s]", script_name(), sobj:name(), self.name)
         else
-            sobj = alife():create(
-                spawn_section,
-                self.object.position,
-                self.object.m_level_vertex_id,
-                self.object.m_game_vertex_id,
-                parent_id
-            )
+            sobj = alife():create(spawn_section, self.object.position, self.object.m_level_vertex_id, self.object.m_game_vertex_id, parent_id)
             --log3("~~[%s] spawned item [%s] in resp [%s]", script_name(), sobj:name(), self.name)
         end
 
         local tt = self.sectSpawnProps[spawn_section]
-        if not self.parent then
+        if not self.parent and not self.creature_binded_logic then
             if tt.check == true then
                 sobj:brain():update()
                 if sobj:smart_terrain_id() == 65535 then
@@ -431,6 +432,9 @@ function dsh_respawner:create(prob)
             end
         end
 
+        if self.creature_binded_logic then
+            sobj.custom_data = self.creature_binded_logic
+        end
 
         --if sobj then
         --    log3("~~[%s] spawned object [%s] in resp [%s]", script_name(), sobj:name(), self.name)
