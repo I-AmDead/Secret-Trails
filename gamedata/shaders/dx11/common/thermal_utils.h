@@ -83,7 +83,6 @@ float3 infrared(float depth, float3 normal, float2 HPos, float2 Tex0)
 
     if (hotness.x > 0.0)
     {
-
 #ifdef HEATNVG
         int samples = lerp(heat_vision_blurring.x, heat_vision_blurring.y, smoothstep(0.0, heat_vision_blurring.z, depth));
 #else

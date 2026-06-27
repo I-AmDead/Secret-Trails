@@ -275,7 +275,7 @@ f_deffer main(p_bumped I)
         // Puddles Ripples ------------------------------------------------
 
 #ifdef G_PUDDLES_RIPPLES
-    if (rain_params.x > 0.0f && I.position.z < TERRAIN_PUDDLES_RIPPLES_RANGE)
+        if (rain_params.x > 0.0f && I.position.z < TERRAIN_PUDDLES_RIPPLES_RANGE)
         {
             float rain_int = saturate(rain_params.x * 1.5f);
 
@@ -302,7 +302,6 @@ f_deffer main(p_bumped I)
 
             // Mix ripples
             ripplesNormal = ripplesNormal * 0.666f + float3(rainRipples * 0.333f, 0);
-
         }
 #endif
 

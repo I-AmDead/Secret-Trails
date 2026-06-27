@@ -26,7 +26,7 @@ float3 main(p_screen_volume I) : SV_Target
     float3 step_vector = ray_dir * ray_length;
 
     float3 current_pos = eye_position + step_vector * step_offset;
-    
+
     float total_light = 0.0;
 
     [loop] for (uint step = 0; step < num_steps; ++step)

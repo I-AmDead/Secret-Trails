@@ -9,7 +9,7 @@ float4 blur_params;
 
 float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
 {
-    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(Tex0), pnv_param_4.x) == 1.0f) // if NVGs are enabled 
+    if (pnv_param_1.z == 1.f && compute_lens_mask(aspect_ratio_correction(Tex0), pnv_param_4.x) == 1.0f) // if NVGs are enabled
     {
         float3 image;
 
@@ -181,7 +181,7 @@ float3 main(float2 Tex0 : TEXCOORD0) : SV_Target
                     {
                         color.rb = sqrt(color.rb);
                     }
-            
+
                     color_average += color;
                 }
             }

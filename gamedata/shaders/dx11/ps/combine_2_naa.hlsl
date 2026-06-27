@@ -26,7 +26,7 @@ Texture2D s_flares;
 float3 main(p_screen I) : SV_Target
 {
     float2 center = I.Tex0;
-    
+
     float3 view_space = gbuffer_view_space(center, I.HPos.xy);
 
     float3 img = s_image.Load(int3(center.xy * screen_res.xy, 0), 0);

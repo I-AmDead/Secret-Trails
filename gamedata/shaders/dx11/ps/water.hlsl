@@ -206,9 +206,9 @@ float4 main(PSInput I) : SV_Target
     float fogging = SSFX_FOGGING(1.0 - I.Fog, w_s.y);
     acc = lerp(fog_color, acc, fogging);
 
-	// Refraction "Transparency"
-	acc = lerp(screen, acc, (smoothstep( 0.0, G_SSR_WATER_SOFTBORDER, waterDepth + fresnel_amount) * fogging * fogging));
+    // Refraction "Transparency"
+    acc = lerp(screen, acc, (smoothstep(0.0, G_SSR_WATER_SOFTBORDER, waterDepth + fresnel_amount) * fogging * fogging));
 
-	// Done ( waterDepth - 0.1f to compensate the parallax offset )
-	return  float4(acc, saturate(saturate(waterDepth - 0.1f) * 10.0f));
+    // Done ( waterDepth - 0.1f to compensate the parallax offset )
+    return float4(acc, saturate(saturate(waterDepth - 0.1f) * 10.0f));
 }

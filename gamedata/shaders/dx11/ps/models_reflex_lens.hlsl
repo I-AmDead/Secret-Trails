@@ -20,7 +20,7 @@ struct PSInput
     float3 P : TEXCOORD4;
 };
 
-TextureCube s_env0; 
+TextureCube s_env0;
 TextureCube s_env1;
 
 float3 sample_sky(float3 dir)

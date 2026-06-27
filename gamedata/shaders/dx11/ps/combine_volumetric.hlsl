@@ -7,7 +7,7 @@ float3 main(p_screen I) : SV_Target
 {
     // Initialize accumulator
     float3 color = 0.0f;
-    
+
     // 4x4 box filter (16 taps)
     for (int j = -2; j < 2; j++)
     {
@@ -19,7 +19,7 @@ float3 main(p_screen I) : SV_Target
             color += s_vollight2[offset];
         }
     }
-    
+
     // Normalize by number of samples (16 taps)
     color *= 0.0625;
 

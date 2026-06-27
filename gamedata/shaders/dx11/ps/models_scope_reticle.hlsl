@@ -474,7 +474,6 @@ float4 main(PSInput I) : SV_Target
     float2 exit_pupil_tc = project(I.Tex0, V_tangent.xy, -EYE_RELIEF, EXIT_PUPIL * (SETTING(FILTER_MODE, ST_SEE_THROUGH) ? 1 : m_hud_params.x));
     float4 shadow_texture = sample_shadow(exit_pupil_tc, SHADOW_WIDTH + 0.02 * (current_zoom - 1));
 
-
     // LED-illuminated inside walls
     float4 inside = s_inside.Sample(smp_base, clamp((reticle_lens_tc - 0.5) * 0.62 + 0.5, 0, 1));
     inside = float4(mark_color.rgb * inside.r, inside.a);
