@@ -11,6 +11,7 @@ v2p_bumped _main(v_model I, float3 psp)
     O.hpos_curr = O.hpos;
     O.hpos_old = mul(m_WVP_old, I.P_old);
     O.hpos.xy = get_taa_jitter(O.hpos);
+
     float2 tc = I.Tex0;
     float3 Pe = mul(m_WV, w_pos);
     O.tcdh = tc;
@@ -20,8 +21,7 @@ v2p_bumped _main(v_model I, float3 psp)
     float3 hc_pos = (float3)hemi_cube_pos_faces;
     float3 hc_neg = (float3)hemi_cube_neg_faces;
     float3 hc_mixed = (Nw < 0) ? hc_neg : hc_pos;
-    float hemi_val = dot(hc_mixed, abs(Nw));
-    hemi_val = saturate(hemi_val);
+    float hemi_val = saturate(dot(hc_mixed, abs(Nw)));
 
     O.position = float4(Pe, hemi_val); // Use L_material.x for old behaviour;
 
