@@ -295,6 +295,13 @@ local function on_first_update()
             local pp = patrol("mil_levsha_larger_mil_levsha_walk")
             alife():teleport_object(id_by_sid(story_ids.garbage_levsha), pp:point(0), pp:level_vertex_id(0), pp:game_vertex_id(0))
         end
+
+        if db.actor:has_info("petrenko_weapon_start") and not ogse.var_exists("security_spawn") then
+            local obj = spawn_patrol("free_security", "security_free_1_walk")
+            obj.custom_data = "[logic]\ncfg = scripts\\new\\free_security.ltx"
+            alife():assign_story_id(obj.id, story_ids.free_security)
+            ogse.save_var("security_spawn", true)
+        end
     end
 
     if level.name() == "l08_yantar" then
@@ -579,12 +586,6 @@ local function on_info(npc, info_id)
     if db.actor:has_info("bloodsucker_strong_ucen_need") and db.actor:has_info("bloodsucker_strong_ucen_dead")
     and db.actor:dont_has_info("ucen_need_metka_bloodsucker_have") then
         db.actor:give_info_portion("ucen_need_metka_fail")
-    end
-
-    if info_id == "petrenko_weapon_start" then
-        local obj = spawn_patrol("free_security", "security_free_1_walk")
-        obj.custom_data = "[logic]\ncfg = scripts\\new\\free_security.ltx"
-        alife():assign_story_id(obj.id, story_ids.free_security)
     end
 end
 
