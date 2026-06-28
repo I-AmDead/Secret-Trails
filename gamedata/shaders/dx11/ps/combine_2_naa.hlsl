@@ -3,6 +3,7 @@
 #include "common\img_corrections.h"
 #include "common\ogsr_radiation_effect.h"
 #include "common\effects_flare.h"
+#include "common\atm.h"
 
 // Check Screen Space Shaders modules
 #include "common\screenspace\check_screenspace.h"
@@ -34,6 +35,7 @@ float3 main(p_screen I) : SV_Target
     img = mblur(center, view_space, img.rgb);
 
     float4 bloom = s_ssfx_bloom.Sample(smp_rtlinear, center);
+    bloom = BrokeBloom(bloom);
 
 // Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
 #ifdef SSFX_DEBAND
@@ -65,6 +67,12 @@ float3 main(p_screen I) : SV_Target
     // Vanilla color grading ( Exposure, saturation and gamma )
     img = img_corrections(img);
     img = img_lut(img);
+
+    // ATM
+    img = Curves(img);
+    img = DPX(img);
+    img = Uncharted2Tonemap(img);
+    img = TechnicolorATM(img);
 
     img += rad_effect(img.rgb, center);
 

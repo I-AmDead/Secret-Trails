@@ -34,6 +34,9 @@ PSOutput main(PSInput I)
 
     sky *= I.Color.rgb;
 
+
+    sky = vibrance(sky, 1.3f);
+
     // final tone-mapping
     PSOutput O;
 

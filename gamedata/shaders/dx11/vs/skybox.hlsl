@@ -22,7 +22,7 @@ VSOutput main(VSInput I)
 {
     VSOutput O;
 
-    float4 tpos = mul(I.P, 2000);
+    float4 tpos = mul(I.P, 1000);
     O.HPos = mul(m_WVP, tpos);
     O.HPos.z = O.HPos.w;
     O.HPos_curr = O.HPos;
