@@ -4,10 +4,10 @@
 struct VSOutput
 {
     float2 Tex0 : TEXCOORD0;
-    float3 T : TEXCOORD1;
-    float3 B : TEXCOORD2;
-    float3 N : TEXCOORD3;
-    float3 P : TEXCOORD4;
+    float3 T : TANGENT0;
+    float3 B : BINORMAL0;
+    float3 N : NORMAL0;
+    float3 P : POSITION0;
     float4 HPos : SV_Position;
 };
 

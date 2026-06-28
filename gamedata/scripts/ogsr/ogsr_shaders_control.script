@@ -117,9 +117,12 @@ end
 function mark_control(wpn, force, bind)
     local scope_name = get_string(wpn:section(), "scope_name", nil) or wpn:section()
     local dots_number = get_u32(scope_name, "dots_number", 0)
+    local dots_offset = get_vector(scope_name, "dots_offset", vector():set(0, 0, 1))
     local backlight = get_bool(scope_name, "backlight_reticle", false)
 
     if dots_number == 0 and not backlight then return end
+
+    shader_set_custom_param("mark_offset", dots_offset.x, dots_offset.y, dots_offset.z)
 
     if bind == key_bindings.kSWITCH_MARK and backlight then return end
 
