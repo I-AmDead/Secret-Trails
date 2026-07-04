@@ -152,16 +152,6 @@ function anomaly_binder:get_rad_intensity()
     end	
 end
 
-function get_max_radlevel()
-    local radlevel = 0
-    for k, v in pairs(radzone_deeps) do
-        if v > radlevel then
-            radlevel = v
-        end
-    end
-    return radlevel
-end
-
 function anomaly_binder:net_destroy()
     if radzone_sect[self.object:section()] then
         self:unsubscribe()
@@ -201,4 +191,110 @@ end
 
 function anomaly_binder:on_exit(zone, obj)
     self.sm:call("on_zone_exit", zone, obj)
+end
+
+function get_max_radlevel()
+    local radlevel = 0
+    for k, v in pairs(radzone_deeps) do
+        if v > radlevel then
+            radlevel = v
+        end
+    end
+    return radlevel
+end
+
+local last_click = 0
+local miminal_click_period = 120
+local click_peroid = 1500
+local geiger_snd = nil
+
+local function on_update()
+    local rads = get_max_radlevel()
+    if rads > 0 then
+        local rnd_val = rads
+        if rads < 7 then
+            rnd_val = rnd_val + 1
+        end
+
+        local tg = time_global()
+        if last_click == 0 then
+            geiger_snd = sound_object("detectors\\geiger_" .. math.random(rnd_val))
+            if geiger_snd then
+                geiger_snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+                last_click = tg
+            end
+        else
+            local shift_val = math.random(-500, 500)
+            local timeout = math.ceil((click_peroid + shift_val) / rads)
+            if timeout < miminal_click_period then
+                timeout = miminal_click_period
+            end
+		
+            if tg > (last_click + timeout) then
+                geiger_snd = sound_object("detectors\\geiger_" .. math.random(rnd_val))
+                if geiger_snd then
+                    geiger_snd:play_no_feedback(db.actor, sound_object.s2d, 0, vector(), 0.7)
+                    last_click = tg
+                end
+            end
+        end
+    else	
+        if last_click > 0 then
+            last_click = 0
+        end		
+    end
+end
+
+local subscribed = false
+
+function subscribe()
+    if not subscribed then
+        subscribed = {{signal = "on_update", fun = on_update}}
+        for _, v in pairs(subscribed) do
+            ogsr_signals.get_mgr():subscribe(v)
+        end
+    end
+end
+
+function unsubscribe()
+    if subscribed then
+        for _, v in pairs(subscribed) do
+            ogsr_signals.get_mgr():unsubscribe(v)
+        end
+
+        subscribed = nil
+    end
+end
+
+local id_detector_in_slot
+
+function on_item_to_slot(obj)
+    local sect = obj:section()
+    if string.find(sect, "detector") then
+        id_detector_in_slot = obj:id()
+        if device().precache_frame < 1 then
+            subscribe()
+        end
+    end
+end
+
+function on_item_to_ruck(obj)
+    if obj:id() == id_detector_in_slot then
+        id_detector_in_slot = nil
+        unsubscribe()
+    end
+end
+
+function on_first_update()
+    local obj = db.actor:item_in_slot(8)
+    if obj then
+        subscribe()
+    end
+end
+
+function attach(sm)
+    sm:subscribe({signal = "on_first_update", fun = this.on_first_update})
+    sm:subscribe({signal = "on_item_to_slot", fun = this.on_item_to_slot})
+    sm:subscribe({signal = "on_item_to_ruck", fun = this.on_item_to_ruck})
+    sm:subscribe({signal = "on_drop",         fun = this.on_item_to_ruck})
 end
