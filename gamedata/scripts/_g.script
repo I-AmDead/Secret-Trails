@@ -297,36 +297,8 @@ function parse_nums( s )
 end
 -------------------------------------------------------------------------------------------------------
 
-function get_clsid(npc)
-	--Надо бы изучить, в каких случаях сюда попадают несуществующие объекты,
-	--Исправить это, и тогда можно будет убрать эти нагромождения отсюда.
-	if not npc then return nil end
-	if npc and npc.id then
-		if type(npc.id) == "function" then
-			local id = npc:id()
-			local sobj = alife():object(id)
-			if sobj then
-				return npc:clsid()
-			else
-				--log1(debug.traceback())
-				--log3("!!DEBUG_GETCLSID NO_SRVOBJ [%s, %s]", id, npc:name() )
-				return nil
-			end
-		elseif type(npc.id) == "number" then
-			return npc:clsid()
-		else
-			log1(debug.traceback())
-			log1("!!DEBUG_GETCLSID GET_SOMETHING_STRANGE")
-			return nil
-		end
-	else
-		log1(debug.traceback())
-		log1("!!DEBUG_GETCLSID DEAD_ON_ARRIVAL")
-		return nil
-	end
-	--
-	--if npc then return npc:clsid() end
-	--return nil
+function get_clsid(obj)
+	if obj then return obj:clsid() end
 end
 
 
