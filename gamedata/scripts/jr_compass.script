@@ -1,10 +1,8 @@
 local compass_objects = {}
 
-local compass_y = 737
-local compass_w = 512
-local compass_h = 32
-local dir_w = 400
-local dir_h = 20
+local UI_BASE = {width = 1024, height = 768}
+
+local COMPASS = {y = 737, w = 512, h = 32}
 
 local COLORS = {
     enemy = GetARGB(255, 255, 60, 60),
@@ -46,13 +44,10 @@ local spot_settings = {
 
 local dev = device()
 
-UI_BASE_WIDTH = 1024.0
-UI_BASE_HEIGHT = 768.0
-
 local bio_showing = ogse.load_var("biomap_show", true)
 
 function get_current_kx()
-    return (dev.height / dev.width) / (UI_BASE_HEIGHT / UI_BASE_WIDTH)
+    return (dev.height / dev.width) / (UI_BASE.height / UI_BASE.width)
 end
 
 class "ui_compass" (CUIScriptWnd)
@@ -77,8 +72,8 @@ function ui_compass:__init()
     st:InitTexture("ui\\compas\\compas")
     st:SetStretchTexture(true)
     st:SetColorA(75)
-    st:SetWndPos(512 - compass_w / 2, compass_y)
-    st:SetWndSize(compass_w, compass_h)
+    st:SetWndPos(512 - COMPASS.w / 2, COMPASS.y)
+    st:SetWndSize(COMPASS.w, COMPASS.h)
 
     self.panel:AttachChild(st)
 end
@@ -132,12 +127,12 @@ function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_t
     st:SetTextColorEx(color or COLORS.def)
     st:SetColor(color or COLORS.def)
 
-    st:SetWndPos(512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2, compass_y + (delta_y or 0))
+    st:SetWndPos(512 - COMPASS.w / 2 + COMPASS.w * math.clamp(x, 0, 1) - st:GetWidth() / 2, COMPASS.y + (delta_y or 0))
     st:Show(show_always or (x >= 0 and x <= 1))
 
     if spot_type then
-        local pos_x = 512 - compass_w / 2 + compass_w * math.clamp(x, 0, 1) - st:GetWidth() / 2
-        local pos_y = compass_y + (delta_y or 0)
+        local pos_x = 512 - COMPASS.w / 2 + COMPASS.w * math.clamp(x, 0, 1) - st:GetWidth() / 2
+        local pos_y = COMPASS.y + (delta_y or 0)
     
         local scale
         if x <= 0.5 then
@@ -216,24 +211,29 @@ function ui_compass:Update()
         return get_x_static(dir_h)
     end
 
-    self:show_point("N", get_x_static(- pi / 2), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("S", get_x_static(pi / 2), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("W", get_x_static(0), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("E", get_x_static(-pi), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
+    local directions = {
+        {"N", -math.pi / 2}, 
+        {"S", math.pi / 2}, 
+        {"W", 0}, 
+        {"E", -math.pi},
+        {"NE", -3 * math.pi / 4}, 
+        {"SE", 3 * math.pi / 4},
+        {"NW", -math.pi / 4}, 
+        {"SW", math.pi / 4}
+    }
 
-    self:show_point("NE", get_x_static(-3 * pi / 4), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("SE", get_x_static(3 * pi / 4), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("NW", get_x_static(- pi / 4), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
-    self:show_point("SW", get_x_static(pi / 4), nil, COLORS.def, 0, nil, nil, nil):SetPriority(100)
+    for _, dir in ipairs(directions) do
+        self:show_point(dir[1], get_x_static(dir[2], cam_h), nil, COLORS.custom, 0, nil, nil, nil):SetPriority(100)
+    end
 
-    local d = (2 * pi) / 24
-    local s = -pi / 2
+    local d = (2 * math.pi) / 24
+    local s = -math.pi / 2
     for i = 1, 24 do
         s = s + d
         if i % 3 ~= 0 then
-            self:show_point("compass_dot_"..i, get_x_static(s), "|", COLORS.def, 15, nil, nil, "ui_font_audex_10"):SetPriority(-120)
+            self:show_point("compass_dot_"..i, get_x_static(s), "|", COLORS.custom, 18, nil, nil, "ui_font_audex_10"):SetPriority(-120)
         else
-            self:show_point("compass_dot_"..i, get_x_static(s), "|", COLORS.def, 13, nil, nil, "ui_font_audex_15"):SetPriority(-120)
+            self:show_point("compass_dot_"..i, get_x_static(s), "|", COLORS.custom, 16, nil, nil, "ui_font_audex_15"):SetPriority(-120)
         end
     end
 
