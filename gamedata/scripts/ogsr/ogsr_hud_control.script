@@ -102,9 +102,8 @@ local function on_update()
 		local target = db.actor:active_item()
 		if target then
 			local hud_sect = get_string(target:section(), "hud")
-			local shell_bone = get_string(hud_sect, "shell_bone")
-			local shell_point = get_vector(hud_sect, "shell_point", vector():set(0, 0, 0))
-			local shell_bone_pos = target:bone_position(shell_bone and shell_bone or wpn_body, true)
+			local shell_bone = get_string(hud_sect, "shell_bone", "wpn_body")
+			local shell_bone_pos = target:bone_position(shell_bone, true)
 			local shell_pos = vector().add(shell_bone_pos, device().cam_pos)
 			local pos = game.world2ui(shell_pos, true)
 			gun_jammed:SetWndSize(256, 256)
@@ -123,7 +122,7 @@ local function on_update()
 			quick_info:SetWndSize(256, 128)
 			local wnd_size = quick_info:GetWndSize()
 			if target:is_stalker() and target:alive() then
-				pos.y = pos.y - 128
+				pos.y = pos.y - wnd_size.y
 			end
 			quick_info:SetWndPos(pos.x - (wnd_size.x * 0.5), pos.y - (wnd_size.y * 0.5))
 		else
