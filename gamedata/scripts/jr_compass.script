@@ -18,13 +18,13 @@ local spot_settings = {
     ["red_location"] = {"red_location", nil, GetARGB(255, 255, 60, 60)},
     ["blue_location"] = {"blue_location", nil, GetARGB(255, 59, 255, 124)},
     ["level_changer"] = {"level_changer", nil, GetARGB(255, 70, 180, 255)},
-    ["crlc_big"] = {"crlc_big", nil, GetARGB(255, 255, 180, 70)},
-    ["crlc_mdl"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
-    ["crlc_small"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
-    ["eliminate_lager"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
-    ["defend_lager"] = {"crlc_small", nil, GetARGB(255, 70, 180, 255)},
-    ["kill_stalker"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60)},
-    ["find_item_location"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70)},
+    ["crlc_big"] = {"crlc_big", nil, GetARGB(255, 255, 180, 70), 30},
+    ["crlc_mdl"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70), 15},
+    ["crlc_small"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70), 15},
+    ["eliminate_lager"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60), 15},
+    ["defend_lager"] = {"crlc_small", nil, GetARGB(255, 70, 180, 255), 15},
+    ["kill_stalker"] = {"crlc_small", nil, GetARGB(255, 255, 60, 60), 15},
+    ["find_item_location"] = {"crlc_small", nil, GetARGB(255, 255, 180, 70), 15},
     ["yellow_flag_location"] = {"unknown", nil, GetARGB(255, 255, 180, 70)},
     ["anomaly_zone_location"] = {"unknown", nil, GetARGB(255, 255, 60, 60)},
 
@@ -42,6 +42,8 @@ local spot_settings = {
     [clsid.zone_psy_s] = {"zone_psy", "PsyField", GetARGB(255, 70, 180, 255)}                   -- Пси зона
 }
 
+local zone_find = false
+
 local dev = device()
 
 local bio_showing = ogse.load_var("biomap_show", true)
@@ -51,31 +53,26 @@ function get_current_kx()
 end
 
 class "ui_compass" (CUIScriptWnd)
-function ui_compass:__init()
-    super()
+function ui_compass:__init() super()
 
     self.points = {}
 
     self:SetWndPos(0, 0)
     self:SetWndSize(1024, 256)
 
-    local pl = CUIStatic()
-    pl:SetWndPos(0, 0)
-    pl:SetWndSize(1024, 256)
-    self:AttachChild(pl)
-
-    self.panel = pl
-
-    local st = CUIStatic()
-
-    st:SetAutoDelete(true)
-    st:InitTexture("ui\\compas\\compas")
-    st:SetStretchTexture(true)
-    st:SetColorA(75)
-    st:SetWndPos(512 - COMPASS.w / 2, COMPASS.y)
-    st:SetWndSize(COMPASS.w, COMPASS.h)
-
-    self.panel:AttachChild(st)
+    self.panel = CUIStatic()
+    self.panel:SetWndPos(0, 0)
+    self.panel:SetWndSize(1024, 256)
+    self:AttachChild(self.panel)
+    
+    self.bg = CUIStatic()
+    self.bg:SetAutoDelete(true)
+    self.bg:InitTexture("ui\\compas\\compas")
+    self.bg:SetStretchTexture(true)
+    self.bg:SetColorA(75)
+    self.bg:SetWndPos(512 - COMPASS.w / 2, COMPASS.y)
+    self.bg:SetWndSize(COMPASS.w, COMPASS.h)
+    self.panel:AttachChild(self.bg)
 end
 
 function ui_compass:__finalize()
@@ -88,10 +85,6 @@ function ui_compass:reset()
     for i, v in pairs(self.points) do
         v:Show(false)
     end
-end
-
-function ui_compass:direction(vis_h)
-    self.dir:SetText(string.format("%d", vis_h))
 end
 
 function ui_compass:show_point(id, x, title, color, delta_y, show_always, spot_type, font_name)
@@ -180,6 +173,9 @@ function ui_compass:Update()
 
     self.panel:Show(true)
 
+    local color = lerp_color(COLORS.custom, COLORS.quest, zone_find, "zone_find")
+    self.bg:SetColor(color)
+
     local dev_pos = dev.cam_pos
 
     local pi = math.pi
@@ -189,8 +185,6 @@ function ui_compass:Update()
 
     local cam_h = h - pi / 2
     local vis_h = h * (180 / math.pi)
-
-    --self:direction(vis_h >= 0 and vis_h or (360 + vis_h))
 
     local function get_x_static(dir_h)
         local cam_h_real = cam_h
@@ -238,24 +232,26 @@ function ui_compass:Update()
     end
 
     for i, v in pairs(compass_objects) do
-        local pos = v.obj and v.obj:position() or v.position
-        local x = get_x(pos)
+        if not v.show then
+            local pos = v.obj and v.obj:position() or v.position
+            local x = get_x(pos)
 
-        local st = self:show_point(i, x, "", v.color, 5, v.show_always, v.spot)
+            local st = self:show_point(i, x, "", v.color, 5, v.show_always, v.spot)
 
-        st.position = pos
-        st.x = x
-        st.text = v.text
-        st.color = v.color
+            st.position = pos
+            st.x = x
+            st.text = v.text
+            st.color = v.color
 
-        local pr = ((1 - (math.abs(x - 0.5) * 2)) * 1000)
-        st:SetPriority(v.priority or pr)
+            local pr = ((1 - (math.abs(x - 0.5) * 2)) * 1000)
+            st:SetPriority(v.priority or pr)
 
-        local priority = (v.priority and v.priority > pr) and v.priority or pr
+            local priority = (v.priority and v.priority > pr) and v.priority or pr
 
-        if priority > self.highest_pr and (x >= 0 and x <= 1)then
-            self.highest_pr = priority
-            self.highest_st = st
+            if priority > self.highest_pr and (x >= 0 and x <= 1)then
+                self.highest_pr = priority
+                self.highest_st = st
+            end
         end
     end
 
@@ -341,7 +337,7 @@ local function actor_on_update()
             local quest = ogse.is_quest_npc(obj)
             local distance = bio_radar and f_dist * 2 or f_dist
 
-            if not enemy or db.actor:see(obj) then
+            if not enemy or (db.actor:see(obj) or bio_radar) then
                 if pos:distance_to_sqr(dev_pos) < distance then
                     compass_objects[obj:id()] =
                     {
@@ -379,12 +375,25 @@ local function actor_on_update()
 
                 if pos:distance_to_sqr(dev_pos) < distance then
                     local spot_type = IsAnomaly(obj) and get_clsid(obj) or spot.type
+
+                    local is_crlc = spot_settings[spot_type][4]
+                    if is_crlc then
+                        local radius = spot_settings[spot_type][4] or 5
+                        local dist = pos:distance_to(dev_pos)
+                        if dist <= radius then
+                            zone_find = true
+                        else
+                            zone_find = false
+                        end
+                    end
+
                     compass_objects[obj:id()] =
                     {
                         obj = obj,
                         text = game.translate_string(spot_settings[spot_type][2] or (spot.hint and string.len(spot.hint) < 40) and spot.hint or nil) or nil,
                         color = spot_settings[spot_type][3] or COLORS.def,
-                        spot = spot_settings[spot_type][1] or "unknown"
+                        spot = spot_settings[spot_type][1] or "unknown",
+                        show = is_crlc and zone_find or nil
                     }
                 end
             end
