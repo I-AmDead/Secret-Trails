@@ -1375,3 +1375,33 @@ function alife_create(section, level_name, pos)
     local lv, gv = get_lv_gv(level_name, pos)
     return alife():create(section, pos, lv, gv)
 end
+
+local lerp_states = {} 
+function lerp_color(c1, c2, condition, id, speed)
+    local state = lerp_states[id]
+    if not state then
+        state = {t = 0, speed = speed or 0.03}
+        lerp_states[id] = state
+    end
+
+    local target = condition and 1 or 0
+    state.t = state.t + (target - state.t) * state.speed
+
+    local a1 = bit.band(bit.rshift(c1, 24), 0xFF)
+    local r1 = bit.band(bit.rshift(c1, 16), 0xFF)
+    local g1 = bit.band(bit.rshift(c1, 8), 0xFF)
+    local b1 = bit.band(c1, 0xFF)
+
+    local a2 = bit.band(bit.rshift(c2, 24), 0xFF)
+    local r2 = bit.band(bit.rshift(c2, 16), 0xFF)
+    local g2 = bit.band(bit.rshift(c2, 8), 0xFF)
+    local b2 = bit.band(c2, 0xFF)
+
+    local t = state.t
+    local a = a1 + (a2 - a1) * t
+    local r = r1 + (r2 - r1) * t
+    local g = g1 + (g2 - g1) * t
+    local b = b1 + (b2 - b1) * t
+
+    return GetARGB(math.floor(a), math.floor(r), math.floor(g), math.floor(b))
+end
