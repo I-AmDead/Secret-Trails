@@ -7,13 +7,16 @@
 
 float4 m_lmap[2];
 
+//LVutner: Force early-z
+[earlydepthstencil]
 float3 main(p_screen_volume I) : SV_Target
 {
     float2 tcProj = I.Tex0.xy / I.Tex0.w;
 
     gbuffer_data gbd = gbuffer_load_data(tcProj, I.HPos);
 
-    gbd.P += gbd.N * 0.025f;
+    // Emulate virtual offset
+    gbd.P += gbd.N * 0.015f;
 
     float4 _P = float4(gbd.P, gbd.mtl);
     float4 _N = float4(gbd.N, gbd.hemi);
@@ -33,13 +36,13 @@ float3 main(p_screen_volume I) : SV_Target
 
     float4 P4 = float4(_P.xyz, 1);
     float4 PS = mul(m_shadow, P4);
-    float s = 1.h;
+    float s = 1.f;
 
 #ifdef USE_SHADOW
     s = shadow(PS);
 #endif
 
-    float4 lightmap = 1.h;
+    float4 lightmap = 1.f;
 
 #ifdef USE_LMAP
 #ifdef USE_LMAPXFORM
