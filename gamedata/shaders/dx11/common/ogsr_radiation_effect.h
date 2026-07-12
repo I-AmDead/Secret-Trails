@@ -4,10 +4,8 @@ uniform float3 radiation_effect;
 
 struct RadiationEffectConstants
 {
-    static const float Size = 55.f;
-    static const float Power = 0.75f;
-    static const float PowerNoise = 1.6f;
-    static const float PowerInRadZone = 0.055f;
+    static const float Spacing = 70.f;
+    static const float Power = 4.0f;
 };
 
 float random(float n) { return frac(cos(n) * 343.42f); }
@@ -20,34 +18,38 @@ float random_IGN(float2 position, float offset = 0.f)
     return frac(magic.z * frac(dot(position + offset, magic.xy)));
 }
 
-float4 generate_green_points(float2 uv, float frequency, float amplitude, float spacing)
+float2 generate_green_points(float2 uv, float spacing)
 {
-    uv.x = uv.x * (screen_res.x * screen_res.w) / (1.2f * random_range()) + timers.x * 0.14f;
+    uv /= random_range();
 
     float2 gridUV = round(uv * spacing) / spacing;
 
-    float smoothingFactor = smoothstep(0.09f, 0.014f, distance(uv, gridUV) * spacing);
+    float phase = random_IGN(gridUV, 0.0) * 6.2832;
 
-    float noiseValue = random_IGN(gridUV, random(timers.x) * 0.1f);
+    float speed = lerp(0.5, 1.5, radiation_effect.z) + random_IGN(gridUV, 1.0);
+    float amp = lerp(0.03, 0.015, radiation_effect.z);
 
-    return float4(0.f, noiseValue, 0.f, smoothingFactor);
+    float2 offset = float2(cos(phase + timers.x * speed * 1.2), sin(phase - timers.x * speed * 1.2)) * amp;
+    float2 pointPos = gridUV + offset;
+
+    float dist = distance(uv, pointPos);
+    float smoothingFactor = smoothstep(0.09f, 0.014f, dist * spacing);
+
+    float noiseValue = random_IGN(gridUV, random(timers.x * 0.5));
+
+    return float2(noiseValue, smoothingFactor);
 }
 
 float3 rad_effect(float3 color, float2 tc)
 {
     float fRadEffect = lerp(0, RadiationEffectConstants::Power, radiation_effect.z);
-    float3 radiation = float3(0.f, 0.f, 0.f);
 
-    float factor;
     float2 center = float2(0.5, 0.5);
     float distFromCenter = length(tc.xy - center);
-    float fade = smoothstep(0.2, 0.95, distFromCenter);
-    float3 green_points;
+    float fade = smoothstep(lerp(0.3, 0.05, radiation_effect.z), 1.0, distFromCenter);
 
-    float4(green_points, factor) = generate_green_points(tc.xy, 0.85f, 0.9f, RadiationEffectConstants::Size);
+    float2 green_points = generate_green_points(tc.xy, RadiationEffectConstants::Spacing);
+    float3 radiation = smoothstep(0.8f, 0.95f, float3(0.f, green_points.x, 0.f)) * (fRadEffect * fade * green_points.y);
 
-    radiation.rgb += (smoothstep(0.9f, 0.99f, (green_points)) * (RadiationEffectConstants::PowerNoise * (fRadEffect * 2) * fade * factor));
-
-    // Output
     return radiation;
 }
