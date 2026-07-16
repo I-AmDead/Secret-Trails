@@ -8,7 +8,7 @@
 
 #include "common\screenspace\screenspace_common.h"
 
-Texture2D s_ssfx_bloom;
+Texture2D s_bloom;
 Texture2D s_starburst;
 Texture2D s_bloom_lens;
 Texture2D s_ssfx_lensdirt;
@@ -41,9 +41,9 @@ float4 main(float2 Tex0 : TEXCOORD0) : SV_Target
 
     float4 bloom = 0;
 
-    bloom.r = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy + (float2(4.5f, 5.3f) / screen_res.xy)).r;
-    bloom.ga = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy).ga;
-    bloom.b = s_ssfx_bloom.Sample(smp_rtlinear, Tex0.xy - (float2(3.2f, 4.1f) / screen_res.xy)).b;
+    bloom.r = s_bloom.Sample(smp_rtlinear, Tex0.xy + (float2(4.5f, 5.3f) / screen_res.xy)).r;
+    bloom.ga = s_bloom.Sample(smp_rtlinear, Tex0.xy).ga;
+    bloom.b = s_bloom.Sample(smp_rtlinear, Tex0.xy - (float2(3.2f, 4.1f) / screen_res.xy)).b;
 
     // Adjust intensity
     bloom = pow(abs(bloom), 0.5f);

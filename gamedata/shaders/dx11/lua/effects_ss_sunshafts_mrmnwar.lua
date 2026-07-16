@@ -4,6 +4,7 @@ function element_0(shader, t_base, t_second, t_detail)		-- [0]
 		:zb(false, false)
 	shader:dx10texture("s_position", "$user$position")
 	shader:dx10texture("s_image", "$user$backbuffer")
+	shader:dx10sampler("smp_nofilter")
 end
 
 function element_1(shader, t_base, t_second, t_detail)		-- [1]
