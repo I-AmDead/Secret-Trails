@@ -21,7 +21,6 @@
 
 uniform float4 m_flare_params;
 
-Texture2D s_ssfx_bloom;
 Texture2D s_flares;
 
 float3 main(p_screen I) : SV_Target
@@ -34,7 +33,7 @@ float3 main(p_screen I) : SV_Target
 
     img = mblur(center, view_space, img.rgb);
 
-    float4 bloom = s_ssfx_bloom.Sample(smp_rtlinear, center);
+    float4 bloom = s_bloom.Sample(smp_rtlinear, center);
     bloom = BrokeBloom(bloom);
 
 // Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5

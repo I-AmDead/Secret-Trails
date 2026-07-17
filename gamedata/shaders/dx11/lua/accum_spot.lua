@@ -21,21 +21,12 @@ function elements(shader, t_base, t_second, t_detail, jitter_enable)
 end
 
 function element_0(shader, t_base, t_second, t_detail)
-	shader:begin("stub_notransform", "copy")
-		:fog(false)
-		:zb(false, false)
-	shader:dx10texture("s_generic", "$user$accum")
-	shader:dx10sampler("smp_base")
-	shader:dx10sampler("smp_nofilter")
-end
-
-function element_1(shader, t_base, t_second, t_detail)
 	shader:add_shader_options("USE_LMAP", "1")
 	elements(shader, t_base, t_second, t_detail, false)
 	shader:clear_shader_options()
 end
 
-function element_2(shader, t_base, t_second, t_detail)
+function element_1(shader, t_base, t_second, t_detail)
 	shader:add_shader_options("USE_LMAP", "1")
 	shader:add_shader_options("USE_LMAPXFORM", "1")
 	shader:add_shader_options("USE_SHADOW", "1")
@@ -43,7 +34,7 @@ function element_2(shader, t_base, t_second, t_detail)
 	shader:clear_shader_options()
 end
 
-function element_3(shader, t_base, t_second, t_detail)
+function element_2(shader, t_base, t_second, t_detail)
 	shader:add_shader_options("USE_LMAP", "1")
 	shader:add_shader_options("USE_SHADOW", "1")
 	elements(shader, t_base, t_second, t_detail, true)

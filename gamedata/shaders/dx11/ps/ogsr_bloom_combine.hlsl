@@ -8,7 +8,6 @@
 
 #include "common\screenspace\screenspace_common.h"
 
-Texture2D s_bloom;
 Texture2D s_starburst;
 Texture2D s_bloom_lens;
 Texture2D s_ssfx_lensdirt;
