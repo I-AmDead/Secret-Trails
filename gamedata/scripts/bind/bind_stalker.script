@@ -31,8 +31,6 @@ function actor_binder:net_spawn(data)
 
     level.enable_input() --НЕ УДАЛЯТЬ!
 
-    actor_stats.add_to_ranking(self.object:id())
-
     if rx_ai then
         rx_ai.actor_net_spawn()
     end
@@ -50,9 +48,6 @@ function actor_binder:net_spawn(data)
 end
 
 function actor_binder:net_destroy()
-
-    actor_stats.remove_from_ranking(self.object:id())
-
     db.del_actor(self.object)
 
     self.object:set_callback(callback.inventory_info, nil)

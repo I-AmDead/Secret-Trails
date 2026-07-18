@@ -230,10 +230,6 @@ function se_stalker:on_register()
     alife():remove_in_restrictions(self)
     cse_alife_human_stalker.on_register(self)
 
-    if not forbidden_comms[self:community()] then
-        actor_stats.add_to_ranking(self.id)
-    end
-
     if not self.has_none_true and self:smart_terrain_id() == 65535 then
         self:brain():update()
     end
@@ -249,10 +245,6 @@ function se_stalker:on_unregister()
     cse_alife_human_stalker.on_unregister(self)
 
     smart_terrain.unregister_npc(self)
-
-    if not forbidden_comms[self:community()] then
-        actor_stats.remove_from_ranking(self.id)
-    end
 end
 --------------------
 function se_stalker:on_death(killer)
