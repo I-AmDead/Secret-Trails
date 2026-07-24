@@ -10,7 +10,7 @@ function attach(sm)
     sm:subscribe({ signal = "on_save", fun = this.on_save })
 end
 
-local t_common = get_u32("options", "t_common") --Минимальное кол-во часов до следуюшего респавна. Максимальное кол-во часов = t_common * 2
+local t_common = get_u32("options", "t_common", 2) --Минимальное кол-во часов до следуюшего респавна. Максимальное кол-во часов = t_common * 2
 
 local all_spawn_respawners = {} --Таблица [имя] = id с респаунерами из оллспавна
 local all_spawned_obj = {} --Хэш id всех созданных объектов. В качестве значения будет имя респаунера.
@@ -41,7 +41,11 @@ function on_spawn()
             local respawn = dsh_respawner(name)
             active[name] = respawn
             if not ogse_st_mgr.timer_exists(name) then
-                respawn:refresh_spawned_obj()
+                if respawn.amk_name then
+                    respawn:refresh_spawned_obj()
+                else
+                    respawn:schedule_next_spawn()
+                end
             end
         else
             release_respawner_by_name(name)
@@ -177,7 +181,7 @@ function dsh_respawner:init_respawn_params() --Вычитываем настро
     ASSERT(self.respawn_section, "RESPAWN: [%s] field 'respawn_section' doesn't exist.", self.name)
     self.spawn_once = get_bool("respawn", "spawn_once", false, ini) --Спавнится ли предмет однократно. В огсе таких нет, но для совместимости оставлю проверку.
     self.min_count = get_u32("respawn", "min_count", 0, ini)
-    self.max_count = get_u32("respawn", "max_count", -1, ini)
+    self.max_count = get_u32("respawn", "max_count", 1, ini)
     if self.min_count > self.max_count and self.max_count ~= -1 then
         abort("RESPAWN: [%s] min_count > max_count", self.name)
     end
