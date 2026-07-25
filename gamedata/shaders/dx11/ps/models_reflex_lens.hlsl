@@ -20,18 +20,20 @@ struct PSInput
     float3 P : TEXCOORD4;
 };
 
-TextureCube s_env0;
-TextureCube s_env1;
+TextureCube s_reflection_in;
+TextureCube s_reflection_out;
+
+uniform float2 actor_hideout;
 
 float3 sample_sky(float3 dir)
 {
     dir.y = (dir.y - max(cos(dir.x) * 0.65, cos(dir.z) * 0.65)) * 2.1;
     dir.y -= -0.35;
 
-    float3 sky0 = s_env0.SampleLevel(smp_base, dir, 0).xyz;
-    float3 sky1 = s_env1.SampleLevel(smp_base, dir, 0).xyz;
+    float3 indoor_reflections = s_reflection_in.SampleLevel(smp_base, dir, 0).xyz;
+    float3 outdoor_reflections = s_reflection_out.SampleLevel(smp_base, dir, 0).xyz;
 
-    return lerp(sky0, sky1, L_ambient.w);
+    return lerp(indoor_reflections, outdoor_reflections, 1.0 - actor_hideout.y);
 }
 
 float current_lum()

@@ -12,8 +12,8 @@
 #include "common\nv_utils.h"
 #include "common\thermal_utils.h"
 
-#define REFLECTIONS_FACTOR 0.15
-#define SPECULAR_FACTOR 2.0
+#define REFLECTIONS_FACTOR 0.05
+#define SPECULAR_FACTOR 1.0
 
 #define PI 3.1415926
 
