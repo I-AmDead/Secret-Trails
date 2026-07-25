@@ -1,5 +1,6 @@
 #include "common\common.h"
 #include "common\sload.h"
+#include "common\screenspace\screenspace_hud_raindrops.h"
 
 float2 rand2(float2 p) { return frac(float2(sin(p.x * 591.32 + p.y * 154.077), cos(p.x * 391.32 + p.y * 49.077))); }
 
@@ -116,7 +117,8 @@ float3 magmaFunc(float3 color, float2 uv, float detail, float power, float color
 
 float4 slime2(float2 uv)
 {
-    uv.x += timers.x * .01;
+    uv.x += timers.x * 0.1;
+    uv.y += timers.x * 0.1;
     float4 fragColor = float4(0.0, 0.0, 0.0, 1.0);
     fragColor.rgb += magmaFunc(float3(0.0, 1.5, 0.45), uv, 3., 2.5, 1.15, 1.5, false, 1.5);
     fragColor.rgb += magmaFunc(float3(0.0, 1.5, 0.4), uv, 6., 3., .4, 1., false, 0.);
@@ -124,21 +126,55 @@ float4 slime2(float2 uv)
     return fragColor;
 }
 
-f_deffer main(p_flat I)
+f_deffer main(p_bumped I)
 {
     f_deffer O;
 
-    // diffuse
-    float3 D = tbase(I.tcdh); // IN:  rgb.a
+    surface_bumped S = sload(I);
 
-    // D += slime(I.tcdh) * 0.2;
-    D += slime2(I.tcdh);
-
-#ifdef USE_TDETAIL
-    D.rgb = 2 * D.rgb * s_detail.Sample(smp_base, I.tcdbump).rgb;
+#if WPN_ANOMALY_EFFECT == 1
+    S.base.rgb += electric_grid(I.tcdh);
+    S.base.rgb += electric_glitch(I.tcdh);
+#else
+    S.base.rgb += slime2(I.tcdh);
 #endif
 
+#ifdef USE_AREF
+    hashed_alpha_test(I.tcdh.xy, S.base.a);
+#endif
+
+    // HUD Rain drops - SSS Update 17
+    // https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders/
+
+    float4 drops = 0; // xy = Normal | z = Overall str | w = reflection str
+
+    if (ssfx_hud_drops_1.y > 0)
+    {
+        // Calc droplets
+        drops.xyz = ssfx_hud_raindrops(s_hud_rain, I.RDrops.xyz, 1.0f);
+
+        // Only apply to facing up surfaces [ World Y+ ]
+        drops.xyz *= saturate(I.RDrops.w);
+
+        // Intensity from script ( Cover + Rain intensity )
+        drops.xyz *= ssfx_hud_drops_1.y;
+
+        // Refraction
+        I.tcdh.xy = I.tcdh.xy + drops.xy * ssfx_hud_drops_1.w;
+
+        // Reflection adjustments
+        drops.w = ssfx_hud_drops_1.z * dot(L_hemi_color, SSFX_HUD_LIGHTVECTOR);
+        drops.w = max(drops.w, 3.0f);
+    }
+
+    // Add sampled normal and droplets
+    float3 Ne = mul(float3x3(I.M1, I.M2, I.M3), S.normal + float3(drops.xy * drops.w, 1.0f));
+    Ne = normalize(Ne);
+
     float ms = xmaterial;
+
+    S.gloss += ssfx_gloss.w;
+    S.gloss += (ssfx_hud_drops_1.y * ssfx_hud_drops_2.z) + drops.z * ssfx_hud_drops_2.w;
 
 #ifdef USE_LM_HEMI
     float h = s_hemi.Sample(smp_rtlinear, I.lmh).a;
@@ -146,8 +182,9 @@ f_deffer main(p_flat I)
     float h = I.position.w;
 #endif
 
-    float4 Ne = float4(normalize((float3)I.N.xyz), h);
-    O = pack_gbuffer(Ne, float4(I.position.xyz + Ne.xyz * def_virtualh / 2.h, ms), float4(D.rgb, 1.0));
+    O = pack_gbuffer(float4(Ne, h), float4(I.position.xyz + Ne * S.height * def_virtualh, ms), float4(S.base.rgb, S.gloss));
+
+    O.Velocity = get_motion_vector(I.hpos_curr, I.hpos_old);
 
     return O;
 }
