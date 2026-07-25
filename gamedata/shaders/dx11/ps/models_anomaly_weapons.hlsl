@@ -32,29 +32,6 @@ float4 electric_grid(float2 uv)
     return float4(0.0, 0.0, val * (grid.x + grid.y), 1.0);
 }
 
-float3 MIX(float3 x, float3 y) { return abs(x - y); }
-
-float CV(float3 c, float2 uv)
-{
-    float size = 640.0 * 0.003;
-    float l = clamp(size * (length(c.xy - uv) - c.z), 0.0, 1.0);
-    return 1.0 - l;
-}
-
-float4 electric_glitch(float2 uv)
-{
-    float4 color = float4(0, 0, 0, 1);
-    for (int i = 0; i < 20; i += 1)
-    {
-        float3 c = float3(1.0, 1.0, 1.0);
-        color.rgb = MIX(color.rgb, c * CV(float3((1.0 + sin(timers.x * 0.52 + (i - 1400.0) * 1.35)) * 0.5, (1.0 + sin(timers.x * 0.73 + (i - 1200.0) * 1.61)) * 0.5, 0.0), uv));
-    }
-    color.rgb = (1.0 - color.rgb) * 1.01;
-    color.rgb = pow(color.rgb, float3(42.0, 32.0, 12.0));
-
-    return color;
-}
-
 // Value Noise by Inigo Quilez - iq/2013
 // https://www.shadertoy.com/view/lsf3WH
 float noise2(float2 st)
@@ -65,27 +42,6 @@ float noise2(float2 st)
 
     return lerp(lerp(dot(rand2(i + float2(0.0, 0.0)), f - float2(0.0, 0.0)), dot(rand2(i + float2(1.0, 0.0)), f - float2(1.0, 0.0)), u.x),
                 lerp(dot(rand2(i + float2(0.0, 1.0)), f - float2(0.0, 1.0)), dot(rand2(i + float2(1.0, 1.0)), f - float2(1.0, 1.0)), u.x), u.y);
-}
-
-// Value Noise by Inigo Quilez - iq/2013
-// https://www.shadertoy.com/view/lsf3WH
-float4 slime(float2 uv)
-{
-    float3 orange = float3(0.0, 0.45, 0.0);
-    float3 yellow = float3(0.0, 1.0, 0.0);
-
-    uv *= 2.0;
-
-    uv.y += cos(timers.x / 10.0) * .1 + timers.x / 10.0;
-    uv.x *= sin(timers.x * 1.0 + uv.y * 4.0) * .1 + .8;
-    uv += noise2(uv * 6.25 + timers.x / 5.0);
-
-    float col = smoothstep(0.01, 0.2, noise2(uv * 3.0)) + smoothstep(0.01, 0.2, noise2(uv * 6.0 + 0.5)) + smoothstep(0.01, 0.3, noise2(uv * 7.0 + 0.2));
-
-    orange.rgb += .3 * sin(uv.y * 4.0 + timers.x / 1.0) * sin(uv.x * 5.0 + timers.x / 1.0);
-
-    float color = smoothstep(0.0, 1.0, col);
-    return float4(lerp(yellow, orange, float3(color, color, color)), 1.0);
 }
 
 float3 magmaFunc(float3 color, float2 uv, float detail, float power, float colorMul, float glowRate, bool animate, float noiseAmount)
@@ -115,14 +71,12 @@ float3 magmaFunc(float3 color, float2 uv, float detail, float power, float color
     return outColor;
 }
 
-float4 slime2(float2 uv)
+float3 slime(float2 uv)
 {
     uv.x += timers.x * 0.1;
     uv.y += timers.x * 0.1;
-    float4 fragColor = float4(0.0, 0.0, 0.0, 1.0);
-    fragColor.rgb += magmaFunc(float3(0.0, 1.5, 0.45), uv, 3., 2.5, 1.15, 1.5, false, 1.5);
-    fragColor.rgb += magmaFunc(float3(0.0, 1.5, 0.4), uv, 6., 3., .4, 1., false, 0.);
-    fragColor.rgb += magmaFunc(float3(0.0, 1.5, 0.4), uv, 8., 4., .2, 1.9, true, 0.5);
+    float3 fragColor = float3(0.0, 0.0, 0.0);
+    fragColor += magmaFunc(float3(0.0, 1.5, 0.4), uv, 8.0, 4.0, 0.2, 1.9, true, 0.5);
     return fragColor;
 }
 
@@ -134,9 +88,11 @@ f_deffer main(p_bumped I)
 
 #if WPN_ANOMALY_EFFECT == 1
     S.base.rgb += electric_grid(I.tcdh);
-    S.base.rgb += electric_glitch(I.tcdh);
+    S.base.rgb += electric_grid(I.tcdh * 5.f);
+    S.base.rgb += electric_grid(I.tcdh * 10.f);
 #else
-    S.base.rgb += slime2(I.tcdh);
+    S.base.rgb += slime(I.tcdh * 2.f);
+    S.base.rgb += slime(I.tcdh * 5.f);
 #endif
 
 #ifdef USE_AREF
