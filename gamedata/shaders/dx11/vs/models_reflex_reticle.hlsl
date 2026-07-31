@@ -3,11 +3,11 @@
 
 struct VSOutput
 {
-    float2 Tex0 : TEXCOORD0;
-    float3 T : TANGENT0;
-    float3 B : BINORMAL0;
     float3 N : NORMAL0;
     float3 P : POSITION0;
+    float2 Tex0 : TEXCOORD0;
+    float4 HPos_curr : TEXCOORD1;
+    float4 HPos_old  : TEXCOORD2;
     float4 HPos : SV_Position;
 };
 
@@ -16,14 +16,14 @@ VSOutput _main(v_model I)
     VSOutput O;
 
     O.HPos = mul(m_WVP, I.P);
+    O.HPos_curr = O.HPos;
+    O.HPos_old = mul(m_WVP_old, I.P_old);
     O.HPos.xy = get_taa_jitter(O.HPos);
 
-    O.Tex0 = I.Tex0.xy;
-
-    O.T = mul(m_W, I.T).xyz;
-    O.B = mul(m_W, I.B).xyz;
     O.N = mul(m_W, I.N).xyz;
     O.P = mul(m_W, I.P).xyz;
+
+    O.Tex0 = I.Tex0.xy;
 
     return O;
 }

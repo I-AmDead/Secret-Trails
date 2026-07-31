@@ -20,11 +20,17 @@ uniform float3 mark_offset;
 
 struct PSInput
 {
-    float2 Tex0 : TEXCOORD0;
-    float3 T : TANGENT0;
-    float3 B : BINORMAL0;
     float3 N : NORMAL0;
     float3 P : POSITION0;
+    float2 Tex0 : TEXCOORD0;
+    float4 HPos_curr : TEXCOORD1;
+    float4 HPos_old  : TEXCOORD2;
+};
+
+struct PSOutput
+{
+    float4 Color : SV_Target0;
+    float2 Velocity : SV_Target1;
 };
 
 int mark_sides()
@@ -75,7 +81,7 @@ float2 project(float2 tc, float2 tangent, float distance, float size)
     return parallax_tc + mark_offset.xy;
 }
 
-float4 main(PSInput I) : SV_Target
+PSOutput main(PSInput I) : SV_Target
 {
     float3x3 TBN = cotangent_frame(I.N, I.P, I.Tex0.xy);
     float3 V_tangent = normalize(float3(dot(-I.P, TBN[0]), dot(-I.P, TBN[1]), dot(-I.P, TBN[2])));
@@ -96,5 +102,10 @@ float4 main(PSInput I) : SV_Target
 
     float4 final = float4(mark_texture.rgb, random(timers.xz) > mig ? 0.f : mark_texture.a);
 
-    return final;
+    PSOutput O;
+
+    O.Color = final;
+    O.Velocity = get_motion_vector(I.HPos_curr, I.HPos_old);
+
+    return O;
 }

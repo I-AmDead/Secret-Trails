@@ -9,7 +9,7 @@ function normal(shader, t_base, t_second, t_detail)
 	shader:dx10texture("s_base", t_base)
 	shader:dx10texture("s_tonemap", "$user$tonemap")
 	shader:dx10texture("s_reflection_in", "wpn\\scope_utility\\reflection")
-	shader:dx10texture("s_reflection_out", "$user$sky1")
+	shader:dx10texture("s_reflection_out", "$user$sky0")
 
 	shader:dx10sampler("smp_rtlinear")
 	shader:dx10sampler("smp_base")
