@@ -28,7 +28,6 @@ uniform float4 mask_control;
 uniform float3 drops_control;
 
 uniform float breath_size;
-uniform float breath_idx;
 uniform float4 raindrop_restart;
 
 // Gasmask settings
