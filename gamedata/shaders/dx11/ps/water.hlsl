@@ -203,7 +203,7 @@ float4 main(PSInput I) : SV_Target
 #endif
 
     // Fogging
-    float fogging = SSFX_FOGGING(1.0 - I.Fog, w_s.y);
+    float fogging = SSFX_FOGGING(0.6 - I.Fog, w_s.y);
     acc = lerp(fog_color, acc, fogging);
 
     // Refraction "Transparency"
