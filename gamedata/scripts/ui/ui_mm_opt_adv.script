@@ -129,9 +129,12 @@ function opt_adv:InitControls(xml, handler)
                 if color then
                     caption:SetTextColor(unpack(color))
                 end
+
+                if desc then
+                    caption:SetHint(game.translate_string(desc))
+                end
+
                 handler:Register(caption, "option_adv_cap_" .. opt_key)
-                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_RECEIVED, function() handler:OnOptionFocus(desc) end)
-                handler:AddCallback("option_adv_cap_" .. opt_key, ui_events.STATIC_FOCUS_LOST, function() handler:OnOptionBlur() end)
 
                 local need_restart = control_params.depend and control_params.depend == "restart"
                 local ctl = control_init_funs[ctr_type](xml, item, control_params)

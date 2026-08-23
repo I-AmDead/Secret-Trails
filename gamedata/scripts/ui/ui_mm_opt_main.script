@@ -1,38 +1,3 @@
-class "CUIOptionDescrText"
-function CUIOptionDescrText:__init(owner)
-    local xml = CScriptXmlInit()
-    xml:ParseFile("script_wnd\\ui_mm_opt.xml")
-
-    self.owner = owner
-    self.bg = xml:InitFrame("frame_hint", self.owner)
-    self.bg:SetAutoDelete(true)
-    self.bg:Show(false)
-
-    self.text = xml:InitStatic("hint_description", self.bg)
-    self.text:SetAutoDelete(true)
-    self.text:Show(false)
-end
-
-function CUIOptionDescrText:ShowText(key)
-    if not key or key == "" then return end
-    local txt = game.translate_string(key)
-    self.text:SetText(txt)
-    self.text:AdjustHeightToText()
-    local x, y = self.owner:GetMousePosX(), self.owner:GetMousePosY()
-    local scr_w, scr_h = 1024, 768
-    local nx = math.min(x + 16, scr_w - self.text:GetWidth() - 20)
-    local ny = math.min(y + 16, scr_h - self.text:GetHeight() - 20)
-    self.bg:SetWndPos(nx, ny)
-    self.bg:SetWndSize(self.text:GetWidth() + 10, self.text:GetHeight() + 10)
-    self.bg:Show(true)
-    self.text:Show(true)
-end
-
-function CUIOptionDescrText:Hide()
-    self.bg:Show(false)
-    self.text:Show(false)
-end
-
 local hint_colors = {
     ["gray"]   = { 255, 255, 255, 255 },
     ["white"]  = { 255, 255, 255, 255 },
@@ -221,8 +186,6 @@ function options_dialog:InitControls()
 
     self.frame_buttons = xml:InitFrame("main_dialog:frame_buttons", self)
 
-    self.opt_descr_wnd = CUIOptionDescrText(self)
-
     local pages = {}
 
     local function add_page(title, control)
@@ -410,14 +373,4 @@ end
 
 function options_dialog:show_need_restart_wnd()
     need_restart = true
-end
-
-function options_dialog:OnOptionFocus(hint)
-    if not hint or hint == "" then return end
-    self.opt_descr_wnd:ShowText(hint)
-end
-
-function options_dialog:OnOptionBlur()
-    local desc_ctrl = game_options.description_ctrl
-    self.opt_descr_wnd:Hide()
 end
