@@ -2,7 +2,7 @@
 
 #define G_SSR_WATER_QUALITY 0 // Quality of the water. ( 0 = low | 1 = medium | 2 = high | 3 = Very High | 4 = Ultra )
 
-#define G_SSR_WATER_WAVES 0.05f // Water waves intensity
+#define G_SSR_WATER_WAVES 0.03f // Water waves intensity
 #define G_SSR_WATER_REFLECTION 0.7f // Reflection intensity. ( 1.0f = 100% )
 #define G_SSR_WATER_REFRACTION 0.03f // Intensity of refraction distortion
 
