@@ -20,7 +20,6 @@ float4 overheat(float2 uv)
     col = clamp(col, 0.0, 1.0);
     float heartbeat = fmod(timers.z * 1.3, 1.0) * smoothstep(10.0, 20.0, timers.z);
     col -= heartbeat * 0.01;
-    // clamp((timers.z - 10.0) * 0.02, 0.0, 0.02);
 
     float raa = ra(uv + frac(timers.z));
     col *= float3(raa, raa, raa) * 0.05 + 0.95;

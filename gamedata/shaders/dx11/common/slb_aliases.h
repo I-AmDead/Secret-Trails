@@ -9,16 +9,6 @@
 #define SLB_UNROLL(x)
 #define SLB_STATIC_CONST const
 
-/// HLSL shit
-#define frac(x) fract(x)
-#define saturate(x) clamp(x, 0.0, 1.0)
-#define mul(a, b) (a * b)
-#define reversebits(x) bitfieldReverse(x)
-#define asuint(x) floatBitsToUint(x)
-#define lerp(a, b, x) mix(a, b, x)
-#define ddx(x) dFdx(x)
-#define ddy(x) dFdy(x)
-
 #define float2 vec2
 #define float3 vec3
 #define float4 vec4
