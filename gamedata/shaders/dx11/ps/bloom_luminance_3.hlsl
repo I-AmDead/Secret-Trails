@@ -33,7 +33,5 @@ float4 main(p_filter I) : SV_Target
     float scale_prev = s_tonemap.Sample(smp_nofilter, I.Tex0).x;
     float rvalue = lerp(scale_prev, scale, MiddleGray.w);
 
-    clamp(rvalue, 1.0 / 128.0, 64.0);
-
-    return rvalue;
+    return  clamp(rvalue, 1.0 / 128.0, 64.0);
 }
