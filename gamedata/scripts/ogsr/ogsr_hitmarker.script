@@ -1,12 +1,9 @@
 local settings_marker = {
     visible = false,
-    size_hit = 32,
-    size_die = 64,
-    texture = "ui\\hit_marker\\hit_marker",
-    color_hit = {255, 255, 160, 0},
-    color_die = {255, 255, 0, 0},
-    alpha = 255,
-    scale = 1.0
+    size = 64,
+    texture_hit = "ui\\hit_marker\\hit",
+    texture_kill = "ui\\hit_marker\\kill",
+    alpha = 0
 }
 
 local snd_hit = sound_object("interface\\hitmarker_sound_1")
@@ -34,11 +31,10 @@ function init_hit_marker_texture()
         wnd:Show(false)
         wnd:SetAutoDelete(false)
         wnd:SetStretchTexture(true)
-        wnd:InitTexture(settings_marker.texture)
     end
 end
 
-local wnd_size
+local wnd_size = 0
 
 function show_hit_marker(die)
     if not game_options.opt_hitmark then return end
@@ -46,14 +42,17 @@ function show_hit_marker(die)
     local hit_markers = get_hud():GetCustomStatic("hit_markers") or get_hud():AddCustomStatic("hit_markers")
     if hit_markers then
         settings_marker.visible = true
-        settings_marker.alpha = 255
+        settings_marker.alpha = 125
 
-        wnd_size = die and settings_marker.size_die or settings_marker.size_hit
-    
+        wnd_size = 0
+
         local wnd = hit_markers:wnd()
+        wnd:InitTexture(die and settings_marker.texture_kill or settings_marker.texture_hit)
         wnd:Show(true)
-        wnd:SetColor(GetARGB(unpack(die and settings_marker.color_die or settings_marker.color_hit)))
-        wnd:SetAlphaValue(255)
+        wnd:SetAutoDelete(false)
+        wnd:SetStretchTexture(true)
+        wnd:SetWndSize(wnd_size, wnd_size)
+        wnd:SetAlphaValue(settings_marker.alpha)
     end
 end
 
@@ -66,15 +65,19 @@ local function update_hit_marker(delta_time)
     if hit_markers then
         local cx, cy = get_crosshair_screen_position()
 
-        settings_marker.alpha = settings_marker.alpha - 5
-        wnd_size = wnd_size - 2
+        settings_marker.alpha = settings_marker.alpha + 3
+
+        wnd_size = wnd_size + 3
+        if wnd_size > settings_marker.size then
+            wnd_size = settings_marker.size
+        end
 
         local wnd = hit_markers:wnd()
         wnd:SetWndSize(wnd_size, wnd_size)
         wnd:SetWndPos(cx - wnd_size / 2, cy - wnd_size / 2)
         wnd:SetAlphaValue(settings_marker.alpha)
 
-        if settings_marker.alpha < 30 then
+        if settings_marker.alpha > 250 then
             settings_marker.visible = false
             wnd:Show(false)
         end
